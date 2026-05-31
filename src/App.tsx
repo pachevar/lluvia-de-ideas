@@ -233,7 +233,7 @@ function App() {
           <img src={logoEditorial} className="brand-logo" alt="Editorial Lluvia de Ideas" />
           <div className="brand-text">
             <h2>Lluvia de Ideas</h2>
-            <p>Jugamos para aprender, aprendemos para crear</p>
+            <p>Portal</p>
           </div>
         </div>
         <nav className="nav-menu">
@@ -280,7 +280,7 @@ function App() {
         {activeTab === 'inicio' && (
           <div className="tab-pane animate-fade-in">
             <section className="welcome-hero">
-              <h1 className="gradient-text">Aprender es una Aventura</h1>
+              <h1 className="gradient-text">Jugamos para aprender, aprendemos para crear</h1>
               <p className="subtitle">
                 Explora nuestras aplicaciones didácticas interactivas, adquiere material de calidad de la Editorial Lluvia de Ideas y realiza tus transacciones de forma segura.
               </p>
