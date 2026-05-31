@@ -1576,20 +1576,230 @@
   text-align: center;
 }
 
-/* Responsive Overrides */
-@media (max-width: 1024px) {
-  .app-header {
-    flex-direction: column;
-    gap: 20px;
-    padding: 20px;
-  }
+/* Mobile Toggle & Menu Group */
+.header-right-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.mobile-menu-toggle {
+  display: none;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 26px;
+  height: 20px;
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  z-index: 150;
+  border: none;
+}
+
+.hamburger-bar {
+  width: 26px;
+  height: 3px;
+  background-color: #0e0717; /* Contraste oscuro con cabecera blanca */
+  border-radius: 9px;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  transform-origin: 1px;
+}
+
+/* Transición a 'X' cuando está abierto */
+.mobile-menu-toggle.open .hamburger-bar:nth-child(1) {
+  transform: rotate(45deg) translate(2px, 1px);
+}
+.mobile-menu-toggle.open .hamburger-bar:nth-child(2) {
+  opacity: 0;
+  transform: scale(0);
+}
+.mobile-menu-toggle.open .hamburger-bar:nth-child(3) {
+  transform: rotate(-45deg) translate(2px, -1px);
+}
+
+/* Cajón del Menú Móvil (Drawer Overlay) */
+.mobile-menu-drawer {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(6, 3, 11, 0.7);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  z-index: 99;
+  display: flex;
+  justify-content: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.mobile-menu-drawer.open {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.mobile-drawer-content {
+  width: 80%;
+  max-width: 320px;
+  height: 100%;
+  padding: 130px 24px 40px; /* Margen para no chocar con la cabecera */
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  border-radius: 0;
+  border: none;
+  border-left: 1px solid var(--border-color);
+  transform: translateX(100%);
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.mobile-menu-drawer.open .mobile-drawer-content {
+  transform: translateX(0);
+}
+
+.mobile-nav-link {
+  padding: 14px 20px;
+  border-radius: 16px;
+  color: var(--text-main);
+  font-size: 1.05rem;
+  font-weight: 700;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  transition: all 0.2s ease;
+  width: 100%;
+}
+
+.mobile-nav-link:hover, .mobile-nav-link.active {
+  background: rgba(147, 51, 234, 0.15);
+  border-color: rgba(147, 51, 234, 0.3);
+  color: #fff;
+}
+
+.mobile-dropdown-section {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.mobile-dropdown-trigger {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.mobile-submenu {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-left: 16px;
+  margin-top: 4px;
+}
+
+.mobile-sub-link {
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  color: var(--text-muted);
+  text-align: left;
+  background: rgba(255, 255, 255, 0.01);
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.mobile-sub-link:hover, .mobile-sub-link.active {
+  color: var(--tertiary);
+  background: rgba(217, 70, 239, 0.08);
+  border-color: rgba(217, 70, 239, 0.2);
+}
+
+/* Reglas Responsivas de Sobreescritura (Móvil/Tablet) */
+@media (max-width: 900px) {
+  /* Ocultar menú de escritorio, mostrar botón de hamburguesa móvil */
   .nav-menu {
-    flex-wrap: wrap;
+    display: none;
+  }
+  
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
+  .brand-logo {
+    height: 70px; /* Reducción de escala para móviles */
+  }
+
+  .app-header {
+    padding: 12px 24px;
+    border-radius: 20px;
+  }
+
+  .gradient-text {
+    font-size: 2.4rem;
+  }
+
+  .subtitle {
+    font-size: 1.05rem;
+    margin-bottom: 24px;
+  }
+
+  /* Grid layouts en columna simple */
+  .widgets-grid,
+  .products-grid,
+  .basic-elements-buttons {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .cta-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .btn {
+    width: 100%;
     justify-content: center;
   }
-  .welcome-hero h1 {
-    font-size: 2.8rem;
+
+  .game-stats-row {
+    flex-direction: column;
+    gap: 12px;
+    align-items: center;
   }
+
+  .loteria-flow-grid,
+  .casa-flow-grid,
+  .lab-wrapper,
+  .payment-flow-grid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .loteria-grid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  
+  .loteria-slot {
+    height: 90px;
+  }
+
+  .slot-emoji {
+    font-size: 1.8rem;
+  }
+
+  .story-display-panel {
+    padding: 20px;
+    min-height: 280px;
+  }
+
+  .riddle-form {
+    flex-direction: column;
+  }
+  
   .app-footer {
     flex-direction: column;
     gap: 14px;

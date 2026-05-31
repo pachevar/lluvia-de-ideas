@@ -60,6 +60,10 @@ function App() {
   // Navigation & Tabs
   const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos' | 'pagos'>('inicio');
 
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isMobileJuegosOpen, setIsMobileJuegosOpen] = useState(false);
+
   // Cart State
   const [cart, setCart] = useState<Product[]>([]);
   
@@ -408,6 +412,8 @@ function App() {
             <p>Portal</p>
           </div>
         </div>
+        
+        {/* Desktop Navigation */}
         <nav className="nav-menu">
           <button 
             className={`nav-link ${activeTab === 'inicio' ? 'active' : ''}`}
@@ -483,12 +489,125 @@ function App() {
           </button>
         </nav>
         
-        {/* Cart Quick Info */}
-        <div className="cart-indicator" onClick={() => setActiveTab('productos')}>
-          <span className="cart-icon">🛒</span>
-          {cart.length > 0 && <span className="cart-badge animate-fade-in">{cart.length}</span>}
+        {/* Right Header Group (Cart & Hamburger) */}
+        <div className="header-right-group">
+          {/* Cart Quick Info */}
+          <div className="cart-indicator" onClick={() => setActiveTab('productos')}>
+            <span className="cart-icon">🛒</span>
+            {cart.length > 0 && <span className="cart-badge animate-fade-in">{cart.length}</span>}
+          </div>
+
+          {/* Mobile Menu Toggle Button */}
+          <button 
+            className={`mobile-menu-toggle ${isMobileMenuOpen ? 'open' : ''}`}
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            aria-label="Toggle menu"
+          >
+            <span className="hamburger-bar"></span>
+            <span className="hamburger-bar"></span>
+            <span className="hamburger-bar"></span>
+          </button>
         </div>
       </header>
+
+      {/* Mobile Navigation Drawer */}
+      <div className={`mobile-menu-drawer ${isMobileMenuOpen ? 'open' : ''}`}>
+        <div className="mobile-drawer-content card-glass">
+          <button 
+            className={`mobile-nav-link ${activeTab === 'inicio' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('inicio');
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            🏠 Inicio
+          </button>
+          
+          <div className="mobile-dropdown-section">
+            <button 
+              className="mobile-nav-link mobile-dropdown-trigger"
+              onClick={() => setIsMobileJuegosOpen(!isMobileJuegosOpen)}
+            >
+              🎮 Juegos Interactivos {isMobileJuegosOpen ? '▴' : '▾'}
+            </button>
+            {isMobileJuegosOpen && (
+              <div className="mobile-submenu">
+                <button 
+                  className={`mobile-sub-link ${activeTab === 'apps-mate' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('apps-mate');
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  🧠 Reto Matemático
+                </button>
+                <button 
+                  className={`mobile-sub-link ${activeTab === 'apps-loteria' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('apps-loteria');
+                    startLotteryGame();
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  🃏 Lotería de Leyendas
+                </button>
+                <button 
+                  className={`mobile-sub-link ${activeTab === 'apps-casa' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveTab('apps-casa');
+                    setSelectedRoom(null);
+                    setRiddleFeedback({ type: null, text: '' });
+                    setIsMobileMenuOpen(false);
+                  }}
+                >
+                  🏚️ Casa de Leyendas
+                </button>
+              </div>
+            )}
+          </div>
+
+          <button 
+            className={`mobile-nav-link ${activeTab === 'juracan' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('juracan');
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            🌪️ Universo de Juracán
+          </button>
+
+          <button 
+            className={`mobile-nav-link ${activeTab === 'laboratorios' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('laboratorios');
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            🧪 Laboratorios
+          </button>
+
+          <button 
+            className={`mobile-nav-link ${activeTab === 'productos' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('productos');
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            📚 Catálogo
+          </button>
+
+          <button 
+            className={`mobile-nav-link ${activeTab === 'pagos' ? 'active' : ''}`}
+            onClick={() => {
+              setActiveTab('pagos');
+              setPaymentStatus('idle');
+              setIsMobileMenuOpen(false);
+            }}
+          >
+            💸 Pagos
+          </button>
+        </div>
+      </div>
 
       {/* Main Content Area */}
       <main className="main-content">
