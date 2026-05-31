@@ -229,7 +229,7 @@ function App() {
       {/* Header Navigation */}
       <header className="app-header card-glass">
         <div className="brand">
-          <span className="brand-logo">🌌</span>
+          <span className="brand-logo">🔮</span>
           <div className="brand-text">
             <h2>Lluvia de Ideas</h2>
             <p>Portal Educativo</p>
