@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import logoEditorial from './assets/logo editorial.png';
 import './App.css';
 
 // Type definitions
@@ -229,10 +230,10 @@ function App() {
       {/* Header Navigation */}
       <header className="app-header card-glass">
         <div className="brand">
-          <span className="brand-logo">🔮</span>
+          <img src={logoEditorial} className="brand-logo" alt="Editorial Lluvia de Ideas" />
           <div className="brand-text">
             <h2>Lluvia de Ideas</h2>
-            <p>Portal Educativo</p>
+            <p>Jugamos para aprender, aprendemos para crear</p>
           </div>
         </div>
         <nav className="nav-menu">
