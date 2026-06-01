@@ -128,11 +128,11 @@
   font-size: 4rem;
   font-weight: 800;
   letter-spacing: -0.04em;
-  background: linear-gradient(135deg, #ffffff 10%, var(--primary) 60%, var(--tertiary) 100%);
+  background: linear-gradient(135deg, var(--text-title) 0%, var(--primary) 55%, var(--tertiary) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   margin-bottom: 20px;
-  filter: drop-shadow(0 4px 12px rgba(0,0,0,0.3));
+  filter: drop-shadow(0 4px 10px rgba(74, 21, 128, 0.08));
 }
 .subtitle {
   font-size: 1.25rem;
