@@ -1,6 +1,10 @@
 import { useState, useEffect } from 'react';
 import logoEditorial from './assets/logo editorial.png';
 import './App.css';
+import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { db } from './firebase';
+import Gerencia from './Gerencia';
+import type { PortalConfig, StoryConfig } from './Gerencia';
 
 // Importar imágenes de cuentos del Popol Vuh
 import camazotzTitulo from './cuentos/Camazotz titulo.png';
@@ -63,172 +67,204 @@ const LOTERIA_DECK = [
   { id: 9, name: "El Carretón", icon: "🛒", description: "Suena de noche anunciando leyendas ancestrales." }
 ];
 
-// Cuentos del Popol Vuh
-const POPOL_VUH_STORIES = [
-  {
-    id: "camazotz",
-    title: "Camazotz (El Dios Murciélago)",
-    image: camazotzTitulo,
-    role: "Señor de la Noche y la Muerte en Xibalbá",
-    summary: "En la cosmología maya y el libro sagrado del Popol Vuh, Camazotz es un temible dios murciélago asociado con la oscuridad, la noche y el sacrificio. Habita en Zotzilha (la Casa de los Murciélagos) en el inframundo de Xibalbá. Cuando los gemelos héroes, Hunahpú e Ixbalanqué, tuvieron que pernoctar en este lúgubre recinto, Hunahpú asomó su cabeza para comprobar si ya amanecía y fue decapitado por el veloz vuelo de Camazotz, quien llevó su cabeza al juego de pelota para regocijo de los señores de Xibalbá."
-  },
-  {
-    id: "ixkik",
-    title: "Ixkik (Luna de Sangre)",
-    image: ixkikTitulo,
-    role: "Madre de los Gemelos Héroes del Popol Vuh",
-    summary: "Ixkik, hija del señor de Xibalbá Cuchumaquic, es una figura de audacia femenina y maternidad mística. Atraída por la prohibición, se acercó al árbol de morro donde colgaba la cabeza de Hun-Hunahpú. La calavera escupió en su palma y le concedió la descendencia de los héroes gemelos. Acusada de deshonra en el inframundo, esquivó a sus verdugos entregándoles un corazón falso hecho de savia roja y ascendió a la superficie de la tierra para ganarse la confianza de Ixmukané y proteger a sus hijos."
-  },
-  {
-    id: "ixmukanne",
-    title: "Ixmukané (La Abuela Creadora)",
-    image: ixmukanneTitulo,
-    role: "Diosa Primordial del Maíz y Adivina Sagrada",
-    summary: "Ixmukané (también llamada Xmucané) es la abuela divina, sabia y tejedora del destino de la creación en el Popol Vuh. Junto a su consorte Ixpiyacoc, participó en los tres intentos de creación del universo. Es ella quien mole la mazorca de maíz amarillo y blanco nueve veces para moldear la carne y la sangre de los primeros cuatro hombres de maíz verdaderos. Su sabiduría espiritual guía a las generaciones y representa la conexión con las raíces de la tierra."
-  },
-  {
-    id: "juracan",
-    title: "Juracán (El Corazón del Cielo)",
-    image: juracanTitulo,
-    role: "Dios Primordial de las Tormentas, el Viento y el Fuego",
-    summary: "Juracán (U K'ux Kaj, el Corazón del Cielo) es el dios creador del viento y las tormentas en el Popol Vuh. Su soplo cósmico y su relámpago dieron el impulso inicial para moldear la geografía terrestre y las aguas primordiales. Desató el gran diluvio que castigó a los hombres de madera en la segunda creación por su falta de memoria e ingratitud. Su nombre ha trascendido el tiempo dando origen al término lingüístico moderno 'huracán'."
-  },
-  {
-    id: "ququmatz",
-    title: "Ququmatz (La Serpiente Emplumada)",
-    image: ququmatzTitulo,
-    role: "Dios Soberano de la Sabiduría, el Agua y el Viento",
-    summary: "Ququmatz es el dios creador representado como la Serpiente Emplumada de plumas verdes y azules resplandecientes. En el Popol Vuh, se une a Tepeu y Juracán para diseñar y dar vida al mundo habitado. Es una deidad con facultades chamánicas excepcionales: capaz de descender al inframundo, transformarse en jaguar, águila o serpiente de cascabel, y ascender a los cielos. Simboliza la perfecta armonía entre el conocimiento celestial y la fuerza de la tierra."
+// Cuentos del Popol Vuh local image helper
+const getStoryImage = (storyId: string, imageOverride?: string) => {
+  if (imageOverride) return imageOverride;
+  switch (storyId) {
+    case 'camazotz': return camazotzTitulo;
+    case 'ixkik': return ixkikTitulo;
+    case 'ixmukanne': return ixmukanneTitulo;
+    case 'juracan': return juracanTitulo;
+    case 'ququmatz': return ququmatzTitulo;
+    default: return '';
   }
-];
+};
 
-// Módulos del Laboratorio de Animación Educativa
-const LAB_MODULES = [
-  {
-    id: 1,
-    title: "Máquina de Cuentos",
-    icon: "🎭",
-    competency: "Diseña estrategias lúdicas para el desbloqueo creativo y la estructuración espontánea de relatos en el aula.",
-    skills: [
-      "Fluidez e imaginación narrativa",
-      "Agilidad mental",
-      "Pensamiento asociativo",
-      "Capacidad para guiar a los alumnos en la superación del 'miedo a la hoja en blanco'"
+// Configuración Predeterminada del Portal
+const DEFAULT_CONFIG: PortalConfig = {
+  hero: {
+    slogan: "jugamos para aprender, aprendemos para crear"
+  },
+  minecraft: {
+    ip: "mc.lluviadeideaseditorial.com",
+    url: "https://mc.lluviadeideaseditorial.com/"
+  },
+  stories: [
+    {
+      id: "camazotz",
+      title: "Camazotz (El Dios Murciélago)",
+      role: "Señor de la Noche y la Muerte en Xibalbá",
+      summary: "En la cosmología maya y el libro sagrado del Popol Vuh, Camazotz es un temible dios murciélago asociado con la oscuridad, la noche y el sacrificio. Habita en Zotzilha (la Casa de los Murciélagos) en el inframundo de Xibalbá. Cuando los gemelos héroes, Hunahpú e Ixbalanqué, tuvieron que pernoctar en este lúgubre recinto, Hunahpú asomó su cabeza para comprobar si ya amanecía y fue decapitado por el veloz vuelo de Camazotz, quien llevó su cabeza al juego de pelota para regocijo de los señores de Xibalbá."
+    },
+    {
+      id: "ixkik",
+      title: "Ixkik (Luna de Sangre)",
+      role: "Madre de los Gemelos Héroes del Popol Vuh",
+      summary: "Ixkik, hija del señor de Xibalbá Cuchumaquic, es una figura de audacia femenina y maternidad mística. Atraída por la prohibición, se acercó al árbol de morro donde colgaba la cabeza de Hun-Hunahpú. La calavera escupió en su palma y le concedió la descendencia de los héroes gemelos. Acusada de deshonra en el inframundo, esquivó a sus verdugos entregándoles un corazón falso hecho de savia roja y ascendió a la superficie de la tierra para ganarse la confianza de Ixmukané y proteger a sus hijos."
+    },
+    {
+      id: "ixmukanne",
+      title: "Ixmukané (La Abuela Creadora)",
+      role: "Diosa Primordial del Maíz y Adivina Sagrada",
+      summary: "Ixmukané (también llamada Xmucané) es la abuela divina, sabia y tejedora del destino de la creación en el Popol Vuh. Junto a su consorte Ixpiyacoc, participó en los tres intentos de creación del universo. Es ella quien mole la mazorca de maíz amarillo y blanco nueve veces para moldear la carne y la sangre de los primeros cuatro hombres de maíz verdaderos. Su sabiduría espiritual guía a las generaciones y representa la conexión con las raíces de la tierra."
+    },
+    {
+      id: "juracan",
+      title: "Juracán (El Corazón del Cielo)",
+      role: "Dios Primordial de las Tormentas, el Viento y el Fuego",
+      summary: "Juracán (U K'ux Kaj, el Corazón del Cielo) es el dios creador del viento y las tormentas en el Popol Vuh. Su soplo cósmico y su relámpago dieron el impulso inicial para moldear la geografía terrestre y las aguas primordiales. Desató el gran diluvio que castigó a los hombres de madera en la segunda creación por su falta de memoria e ingratitud. Su nombre ha trascendido el tiempo dando origen al término lingüístico moderno 'huracán'."
+    },
+    {
+      id: "ququmatz",
+      title: "Ququmatz (La Serpiente Emplumada)",
+      role: "Dios Soberano de la Sabiduría, el Agua y el Viento",
+      summary: "Ququmatz es el dios creador representado como la Serpiente Emplumada de plumas verdes y azules resplandecientes. En el Popol Vuh, se une a Tepeu y Juracán para diseñar y dar vida al mundo habitado. Es una deidad con facultades chamánicas excepcionales: capaz de descender al inframundo, transformarse en jaguar, águila o serpiente de cascabel, y ascender a los cielos. Simboliza la perfecta armonía entre el conocimiento celestial y la fuerza de la tierra."
+    }
+  ],
+  gateways: {
+    labDesc: "¡Conviértete en un experto en herramientas pedagógicas de vanguardia! Explora metodologías activas a través del arte, el teatro, la gamificación y el diseño sostenible para transformar tu aula.",
+    casaDesc: "Una antigua mansión embrujada esconde los relatos del Sombrerón, la Siguanaba y el Cadejo. Recorre cada habitación, resuelve los acertijos cifrados con astucia y libera los mitos de Guatemala."
+  },
+  laboratorios: {
+    intro: "¡Conviértete en un experto en herramientas de vanguardia para hacer de tu clase un lugar innovador, dinámico y creativo! Explora nuestros 10 módulos formativos diseñados para transformar la práctica docente y cautivar a tus estudiantes a través de experiencias de aprendizaje basadas en la narrativa, el juego y la expresión artística.",
+    modules: [
+      {
+        id: 1,
+        title: "Máquina de Cuentos",
+        icon: "🎭",
+        competency: "Diseña estrategias lúdicas para el desbloqueo creativo y la estructuración espontánea de relatos en el aula.",
+        skills: [
+          "Fluidez e imaginación narrativa",
+          "Agilidad mental",
+          "Pensamiento asociativo",
+          "Capacidad para guiar a los alumnos en la superación del 'miedo a la hoja en blanco'"
+        ]
+      },
+      {
+        id: 2,
+        title: "Arte Terapia y sus Herramientas",
+        icon: "🎨",
+        competency: "Utiliza la expresión plástica y visual como un canal de contención emocional, autoconocimiento y diagnóstico del clima escolar.",
+        skills: [
+          "Empatía",
+          "Escucha activa a través del arte",
+          "Sensibilidad estética",
+          "Manejo de dinámicas de relajación y resolución de conflictos mediante el color y la forma"
+        ]
+      },
+      {
+        id: 3,
+        title: "Creación de Personajes e Historias (El Viaje del Héroe)",
+        icon: "🗺️",
+        competency: "Aplica la estructura arquetípica del Viaje del Héroe para diseñar secuencias didácticas motivadoras donde el estudiante se convierta en el protagonista de su propio aprendizaje.",
+        skills: [
+          "Pensamiento de diseño narrativo (storytelling)",
+          "Análisis de personajes",
+          "Estructuración de metas y desafíos pedagógicos",
+          "Fomento de la resiliencia en los alumnos"
+        ]
+      },
+      {
+        id: 4,
+        title: "El Escenario para Enseñar (Herramientas de Teatro)",
+        icon: "🎪",
+        competency: "Domina el espacio áulico utilizando la voz, el cuerpo y la presencia escénica como recursos didácticos de alto impacto para captar la atención.",
+        skills: [
+          "Expresión corporal",
+          "Modulación de la voz",
+          "Manejo de la improvisación frente a imprevistos",
+          "Proyección escénica para mantener el interés del grupo"
+        ]
+      },
+      {
+        id: 5,
+        title: "Construcción de Personajes (Taller Práctico con Reciclaje)",
+        icon: "🛠️",
+        competency: "Desarrolla proyectos tridimensionales utilizando materiales de descarte, vinculando la conciencia ambiental con la conceptualización de personajes.",
+        skills: [
+          "Psicomotricidad fina",
+          "Pensamiento ecológico y sostenible",
+          "Resolución de problemas con recursos limitados",
+          "Pedagogía basada en el diseño manual (maker)"
+        ]
+      },
+      {
+        id: 6,
+        title: "Emprendiendo en el Aula",
+        icon: "🚀",
+        competency: "Implementa metodologías activas que ayuden a los estudiantes a identificar sus talentos individuales, pasiones y potencial emprendedor.",
+        skills: [
+          "Pensamiento crítico",
+          "Visión de liderazgo",
+          "Orientación al logro",
+          "Resiliencia ante el fracaso",
+          "Metodologías para el descubrimiento vocacional"
+        ]
+      },
+      {
+        id: 7,
+        title: "Escritura Creativa en el Universo de Juracán",
+        icon: "🌪️",
+        competency: "Integra la mitología e identidad cultural local como detonantes para la creación de textos literarios y el análisis crítico de textos históricos.",
+        skills: [
+          "Redacción literaria",
+          "Contextualización cultural",
+          "Investigación histórica-mitológica",
+          "Reinterpretación de narrativas ancestrales aplicadas al currículo"
+        ]
+      },
+      {
+        id: 8,
+        title: "Danza Ancestral",
+        icon: "💃",
+        competency: "Utiliza el movimiento corporal rítmico y la reconexión con las raíces culturales para liberar tensiones y desbloquear barreras emocionales colectivas.",
+        skills: [
+          "Expresión rítmica",
+          "Superación del pánico escénico",
+          "Desinhibición formativa",
+          "Cohesión grupal",
+          "Autoconfianza física"
+        ]
+      },
+      {
+        id: 9,
+        title: "Lectura Creativa",
+        icon: "📖",
+        competency: "Transforma el acto pasivo de la lectura en una experiencia sensorial y escénica interactiva (lectura dramatizada, paisajes sonoros, etc.).",
+        skills: [
+          "Comprensión lectora profunda",
+          "Interpretación vocal",
+          "Animación lectora",
+          "Capacidad para despertar el hábito de la lectura mediante el juego"
+        ]
+      },
+      {
+        id: 10,
+        title: "Gamificación: Construyendo Narrativas Interactivas",
+        icon: "🎮",
+        competency: "Diseña entornos de aprendizaje basados en la mecánica de los juegos (puntos, niveles, misiones) para potenciar la motivación intrínseca del estudiante.",
+        skills: [
+          "Pensamiento lógico-lúdico",
+          "Diseño de experiencias de usuario (UX) pedagógicas",
+          "Estructuración de sistemas de recompensa",
+          "Evaluación formativa interactiva"
+        ]
+      }
     ]
   },
-  {
-    id: 2,
-    title: "Arte Terapia y sus Herramientas",
-    icon: "🎨",
-    competency: "Utiliza la expresión plástica y visual como un canal de contención emocional, autoconocimiento y diagnóstico del clima escolar.",
-    skills: [
-      "Empatía",
-      "Escucha activa a través del arte",
-      "Sensibilidad estética",
-      "Manejo de dinámicas de relajación y resolución de conflictos mediante el color y la forma"
-    ]
-  },
-  {
-    id: 3,
-    title: "Creación de Personajes e Historias (El Viaje del Héroe)",
-    icon: "🗺️",
-    competency: "Aplica la estructura arquetípica del Viaje del Héroe para diseñar secuencias didácticas motivadoras donde el estudiante se convierta en el protagonista de su propio aprendizaje.",
-    skills: [
-      "Pensamiento de diseño narrativo (storytelling)",
-      "Análisis de personajes",
-      "Estructuración de metas y desafíos pedagógicos",
-      "Fomento de la resiliencia en los alumnos"
-    ]
-  },
-  {
-    id: 4,
-    title: "El Escenario para Enseñar (Herramientas de Teatro)",
-    icon: "🎪",
-    competency: "Domina el espacio áulico utilizando la voz, el cuerpo y la presencia escénica como recursos didácticos de alto impacto para captar la atención.",
-    skills: [
-      "Expresión corporal",
-      "Modulación de la voz",
-      "Manejo de la improvisación frente a imprevistos",
-      "Proyección escénica para mantener el interés del grupo"
-    ]
-  },
-  {
-    id: 5,
-    title: "Construcción de Personajes (Taller Práctico con Reciclaje)",
-    icon: "🛠️",
-    competency: "Desarrolla proyectos tridimensionales utilizando materiales de descarte, vinculando la conciencia ambiental con la conceptualización de personajes.",
-    skills: [
-      "Psicomotricidad fina",
-      "Pensamiento ecológico y sostenible",
-      "Resolución de problemas con recursos limitados",
-      "Pedagogía basada en el diseño manual (maker)"
-    ]
-  },
-  {
-    id: 6,
-    title: "Emprendiendo en el Aula",
-    icon: "🚀",
-    competency: "Implementa metodologías activas que ayuden a los estudiantes a identificar sus talentos individuales, pasiones y potencial emprendedor.",
-    skills: [
-      "Pensamiento crítico",
-      "Visión de liderazgo",
-      "Orientación al logro",
-      "Resiliencia ante el fracaso",
-      "Metodologías para el descubrimiento vocacional"
-    ]
-  },
-  {
-    id: 7,
-    title: "Escritura Creativa en el Universo de Juracán",
-    icon: "🌪️",
-    competency: "Integra la mitología e identidad cultural local como detonantes para la creación de textos literarios y el análisis crítico de textos históricos.",
-    skills: [
-      "Redacción literaria",
-      "Contextualización cultural",
-      "Investigación histórica-mitológica",
-      "Reinterpretación de narrativas ancestrales aplicadas al currículo"
-    ]
-  },
-  {
-    id: 8,
-    title: "Danza Ancestral",
-    icon: "💃",
-    competency: "Utiliza el movimiento corporal rítmico y la reconexión con las raíces culturales para liberar tensiones y desbloquear barreras emocionales colectivas.",
-    skills: [
-      "Expresión rítmica",
-      "Superación del pánico escénico",
-      "Desinhibición formativa",
-      "Cohesión grupal",
-      "Autoconfianza física"
-    ]
-  },
-  {
-    id: 9,
-    title: "Lectura Creativa",
-    icon: "📖",
-    competency: "Transforma el acto pasivo de la lectura en una experiencia sensorial y escénica interactiva (lectura dramatizada, paisajes sonoros, etc.).",
-    skills: [
-      "Comprensión lectora profunda",
-      "Interpretación vocal",
-      "Animación lectora",
-      "Capacidad para despertar el hábito de la lectura mediante el juego"
-    ]
-  },
-  {
-    id: 10,
-    title: "Gamificación: Construyendo Narrativas Interactivas",
-    icon: "🎮",
-    competency: "Diseña entornos de aprendizaje basados en la mecánica de los juegos (puntos, niveles, misiones) para potenciar la motivación intrínseca del estudiante.",
-    skills: [
-      "Pensamiento lógico-lúdico",
-      "Diseño de experiencias de usuario (UX) pedagógicas",
-      "Estructuración de sistemas de recompensa",
-      "Evaluación formativa interactiva"
-    ]
+  colors: {
+    primary: "#a855f7",
+    tertiary: "#ec4899",
+    'bg-main': "#fbf9ff",
+    'text-title': "#1a082e"
   }
-];
+};
 
 function App() {
+  // Routing & Firestore State
+  const [config, setConfig] = useState<PortalConfig>(DEFAULT_CONFIG);
+  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+
   // Navigation & Tabs
   const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos'>('inicio');
 
@@ -237,21 +273,71 @@ function App() {
   const [isMobileJuegosOpen, setIsMobileJuegosOpen] = useState(false);
 
   // Cuentos Popol Vuh Modal State
-  interface LegendStory {
-    id: string;
-    title: string;
-    image: string;
-    summary: string;
-    role: string;
-  }
-  const [activeStory, setActiveStory] = useState<LegendStory | null>(null);
+  const [activeStory, setActiveStory] = useState<StoryConfig | null>(null);
   const [isCopied, setIsCopied] = useState(false);
 
   const copyIPToClipboard = () => {
-    navigator.clipboard.writeText('mc.lluviadeideaseditorial.com');
+    navigator.clipboard.writeText(config.minecraft?.ip || 'mc.lluviadeideaseditorial.com');
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 2000);
   };
+
+  // Sync with window.location for SPA routing
+  useEffect(() => {
+    const handleLocationChange = () => {
+      setCurrentPath(window.location.pathname);
+    };
+    window.addEventListener('popstate', handleLocationChange);
+    return () => window.removeEventListener('popstate', handleLocationChange);
+  }, []);
+
+  const navigateTo = (path: string) => {
+    window.history.pushState({}, '', path);
+    setCurrentPath(path);
+  };
+
+  // Sync with Firestore config
+  useEffect(() => {
+    const configDocRef = doc(db, 'config', 'portal');
+    
+    const unsubscribe = onSnapshot(configDocRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setConfig(docSnap.data() as PortalConfig);
+      } else {
+        // Initialize with default config
+        setDoc(configDocRef, DEFAULT_CONFIG).catch(err => {
+          console.error("Error initializing config in firestore:", err);
+        });
+      }
+    }, (err) => {
+      console.error("Firestore listener error:", err);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Apply color variables to document element
+  useEffect(() => {
+    if (config && config.colors) {
+      Object.entries(config.colors).forEach(([key, val]) => {
+        document.documentElement.style.setProperty(`--${key}`, val);
+      });
+    }
+  }, [config]);
+
+  const saveConfigToFirestore = async (newConfig: PortalConfig) => {
+    const configDocRef = doc(db, 'config', 'portal');
+    await setDoc(configDocRef, newConfig);
+  };
+
+  const resetConfigToFirestore = async () => {
+    const configDocRef = doc(db, 'config', 'portal');
+    await setDoc(configDocRef, DEFAULT_CONFIG);
+  };
+
+  // Derived states
+  const storiesList = config.stories || DEFAULT_CONFIG.stories;
+  const modulesList = config.laboratorios?.modules || DEFAULT_CONFIG.laboratorios.modules;
 
   // Cart State
   const [cart, setCart] = useState<Product[]>([]);
@@ -481,9 +567,16 @@ function App() {
     return cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
   };
 
-
-
-
+  if (currentPath === '/gerencia') {
+    return (
+      <Gerencia
+        config={config}
+        onSave={saveConfigToFirestore}
+        onReset={resetConfigToFirestore}
+        onBackToPortal={() => navigateTo('/')}
+      />
+    );
+  }
 
   return (
     <div className="app-container">
@@ -695,7 +788,7 @@ function App() {
         {activeTab === 'inicio' && (
           <div className="tab-pane animate-fade-in">
             <section className="welcome-hero">
-              <h1 className="gradient-text">Jugamos para aprender, aprendemos para crear</h1>
+              <h1 className="gradient-text">{config.hero?.slogan || "Jugamos para aprender, aprendemos para crear"}</h1>
               <p className="subtitle">
                 Explora nuestras aplicaciones didácticas interactivas, adquiere material de calidad de la Editorial Lluvia de Ideas y realiza tus transacciones de forma segura.
               </p>
@@ -742,7 +835,7 @@ function App() {
                 </div>
                 <div>
                   <div className="mc-connection-panel">
-                    <span className="mc-ip-text">mc.lluviadeideaseditorial.com</span>
+                    <span className="mc-ip-text">{config.minecraft?.ip || "mc.lluviadeideaseditorial.com"}</span>
                     <button 
                       className={`btn-copy ${isCopied ? 'copied' : ''}`} 
                       onClick={copyIPToClipboard}
@@ -753,7 +846,7 @@ function App() {
                   </div>
                   <div className="card-actions">
                     <a 
-                      href="https://mc.lluviadeideaseditorial.com/" 
+                      href={config.minecraft?.url || "https://mc.lluviadeideaseditorial.com/"} 
                       target="_blank" 
                       rel="noopener noreferrer" 
                       className="btn btn-minecraft"
@@ -773,14 +866,14 @@ function App() {
               </p>
               
               <div className="cuentos-covers-grid">
-                {POPOL_VUH_STORIES.map((story) => (
+                {storiesList.map((story) => (
                   <div 
                     key={story.id} 
                     className="cuento-book-card card-glass" 
                     onClick={() => setActiveStory(story)}
                   >
                     <div className="book-3d-wrapper">
-                      <img src={story.image} alt={story.title} className="cuento-book-image" />
+                      <img src={getStoryImage(story.id, story.imageOverride)} alt={story.title} className="cuento-book-image" />
                       <div className="book-spine"></div>
                     </div>
                     <h4 className="cuento-book-title">{story.title.split(' (')[0]}</h4>
@@ -800,7 +893,7 @@ function App() {
                     <h3>Laboratorio de Animación Educativa</h3>
                   </div>
                   <p>
-                    ¡Conviértete en un experto en herramientas pedagógicas de vanguardia! Explora metodologías activas a través del arte, el teatro, la gamificación y el diseño sostenible para transformar tu aula.
+                    {config.gateways?.labDesc || "¡Conviértete en un experto en herramientas pedagógicas de vanguardia! Explora metodologías activas a través del arte, el teatro, la gamificación y el diseño sostenible para transformar tu aula."}
                   </p>
                   <button className="btn btn-secondary" onClick={() => setActiveTab('laboratorios')}>
                     Entrar al Laboratorio 🚀
@@ -814,7 +907,7 @@ function App() {
                     <h3>La Casa de las Leyendas</h3>
                   </div>
                   <p>
-                    Una antigua mansión embrujada esconde los relatos del Sombrerón, la Siguanaba y el Cadejo. Recorre cada habitación, resuelve los acertijos cifrados con astucia y libera los mitos de Guatemala.
+                    {config.gateways?.casaDesc || "Una antigua mansión embrujada esconde los relatos del Sombrerón, la Siguanaba y el Cadejo. Recorre cada habitación, resuelve los acertijos cifrados con astucia y libera los mitos de Guatemala."}
                   </p>
                   <button className="btn btn-secondary" onClick={() => {
                     setActiveTab('apps-casa');
@@ -1246,14 +1339,14 @@ function App() {
                 <span className="badge badge-tertiary">Innovación Pedagógica</span>
                 <h2 className="gradient-text">Laboratorio de Animación Educativa</h2>
                 <p className="lab-intro-lead">
-                  ¡Conviértete en un experto en herramientas de vanguardia para hacer de tu clase un lugar innovador, dinámico y creativo! Explora nuestros 10 módulos formativos diseñados para transformar la práctica docente y cautivar a tus estudiantes a través de experiencias de aprendizaje basadas en la narrativa, el juego y la expresión artística.
+                  {config.laboratorios?.intro || "¡Conviértete en un experto en herramientas de vanguardia para hacer de tu clase un lugar innovador, dinámico y creativo! Explora nuestros 10 módulos formativos diseñados para transformar la práctica docente y cautivar a tus estudiantes a través de experiencias de aprendizaje basadas en la narrativa, el juego y la expresión artística."}
                 </p>
               </div>
 
               <div className="lab-layout-container">
                 {/* Sidebar vertical tabs (for desktop) / Horizontal scroll chips (for mobile) */}
                 <div className="lab-sidebar-tabs">
-                  {LAB_MODULES.map((mod) => (
+                  {modulesList.map((mod) => (
                     <button
                       key={mod.id}
                       className={`lab-tab-button ${activeLabModule === mod.id ? 'active' : ''}`}
@@ -1270,7 +1363,7 @@ function App() {
 
                 {/* Selected Module Detail Panel */}
                 {(() => {
-                  const selectedMod = LAB_MODULES.find(m => m.id === activeLabModule) || LAB_MODULES[0];
+                  const selectedMod = modulesList.find(m => m.id === activeLabModule) || modulesList[0];
                   return (
                     <div className="lab-module-details-panel card-glass animate-fade-in" key={selectedMod.id}>
                       <div className="module-detail-header">
@@ -1406,7 +1499,7 @@ function App() {
           <span className="divider">•</span>
           <span>GitHub Verified</span>
           <span className="divider">•</span>
-          <span>Soporte Técnico</span>
+          <span className="footer-gerencia-link" onClick={() => navigateTo('/gerencia')} style={{ cursor: 'pointer', textDecoration: 'underline' }}>Gerencia ⚙️</span>
         </div>
       </footer>
 
@@ -1424,7 +1517,7 @@ function App() {
             <div className="modal-grid">
               <div className="modal-left-book">
                 <div className="book-3d-showcase">
-                  <img src={activeStory.image} alt={activeStory.title} className="modal-book-image" />
+                  <img src={getStoryImage(activeStory.id, activeStory.imageOverride)} alt={activeStory.title} className="modal-book-image" />
                   <div className="book-spine-showcase"></div>
                 </div>
               </div>
