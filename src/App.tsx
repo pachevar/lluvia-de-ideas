@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import logoEditorial from './assets/logo editorial.png';
 import './App.css';
 
+// Importar imágenes de cuentos del Popol Vuh
+import camazotzTitulo from './cuentos/Camazotz titulo.png';
+import ixkikTitulo from './cuentos/Ixkik titulo.png';
+import ixmukanneTitulo from './cuentos/Ixmukanne titulo.png';
+import juracanTitulo from './cuentos/Juracan titulo.png';
+import ququmatzTitulo from './cuentos/Ququmatz titulo.png';
+
 // Type definitions
 interface Product {
   id: number;
@@ -56,6 +63,45 @@ const LOTERIA_DECK = [
   { id: 9, name: "El Carretón", icon: "🛒", description: "Suena de noche anunciando leyendas ancestrales." }
 ];
 
+// Cuentos del Popol Vuh
+const POPOL_VUH_STORIES = [
+  {
+    id: "camazotz",
+    title: "Camazotz (El Dios Murciélago)",
+    image: camazotzTitulo,
+    role: "Señor de la Noche y la Muerte en Xibalbá",
+    summary: "En la cosmología maya y el libro sagrado del Popol Vuh, Camazotz es un temible dios murciélago asociado con la oscuridad, la noche y el sacrificio. Habita en Zotzilha (la Casa de los Murciélagos) en el inframundo de Xibalbá. Cuando los gemelos héroes, Hunahpú e Ixbalanqué, tuvieron que pernoctar en este lúgubre recinto, Hunahpú asomó su cabeza para comprobar si ya amanecía y fue decapitado por el veloz vuelo de Camazotz, quien llevó su cabeza al juego de pelota para regocijo de los señores de Xibalbá."
+  },
+  {
+    id: "ixkik",
+    title: "Ixkik (Luna de Sangre)",
+    image: ixkikTitulo,
+    role: "Madre de los Gemelos Héroes del Popol Vuh",
+    summary: "Ixkik, hija del señor de Xibalbá Cuchumaquic, es una figura de audacia femenina y maternidad mística. Atraída por la prohibición, se acercó al árbol de morro donde colgaba la cabeza de Hun-Hunahpú. La calavera escupió en su palma y le concedió la descendencia de los héroes gemelos. Acusada de deshonra en el inframundo, esquivó a sus verdugos entregándoles un corazón falso hecho de savia roja y ascendió a la superficie de la tierra para ganarse la confianza de Ixmukané y proteger a sus hijos."
+  },
+  {
+    id: "ixmukanne",
+    title: "Ixmukané (La Abuela Creadora)",
+    image: ixmukanneTitulo,
+    role: "Diosa Primordial del Maíz y Adivina Sagrada",
+    summary: "Ixmukané (también llamada Xmucané) es la abuela divina, sabia y tejedora del destino de la creación en el Popol Vuh. Junto a su consorte Ixpiyacoc, participó en los tres intentos de creación del universo. Es ella quien mole la mazorca de maíz amarillo y blanco nueve veces para moldear la carne y la sangre de los primeros cuatro hombres de maíz verdaderos. Su sabiduría espiritual guía a las generaciones y representa la conexión con las raíces de la tierra."
+  },
+  {
+    id: "juracan",
+    title: "Juracán (El Corazón del Cielo)",
+    image: juracanTitulo,
+    role: "Dios Primordial de las Tormentas, el Viento y el Fuego",
+    summary: "Juracán (U K'ux Kaj, el Corazón del Cielo) es el dios creador del viento y las tormentas en el Popol Vuh. Su soplo cósmico y su relámpago dieron el impulso inicial para moldear la geografía terrestre y las aguas primordiales. Desató el gran diluvio que castigó a los hombres de madera en la segunda creación por su falta de memoria e ingratitud. Su nombre ha trascendido el tiempo dando origen al término lingüístico moderno 'huracán'."
+  },
+  {
+    id: "ququmatz",
+    title: "Ququmatz (La Serpiente Emplumada)",
+    image: ququmatzTitulo,
+    role: "Dios Soberano de la Sabiduría, el Agua y el Viento",
+    summary: "Ququmatz es el dios creador representado como la Serpiente Emplumada de plumas verdes y azules resplandecientes. En el Popol Vuh, se une a Tepeu y Juracán para diseñar y dar vida al mundo habitado. Es una deidad con facultades chamánicas excepcionales: capaz de descender al inframundo, transformarse en jaguar, águila o serpiente de cascabel, y ascender a los cielos. Simboliza la perfecta armonía entre el conocimiento celestial y la fuerza de la tierra."
+  }
+];
+
 function App() {
   // Navigation & Tabs
   const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos' | 'pagos'>('inicio');
@@ -63,6 +109,23 @@ function App() {
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isMobileJuegosOpen, setIsMobileJuegosOpen] = useState(false);
+
+  // Cuentos Popol Vuh Modal State
+  interface LegendStory {
+    id: string;
+    title: string;
+    image: string;
+    summary: string;
+    role: string;
+  }
+  const [activeStory, setActiveStory] = useState<LegendStory | null>(null);
+  const [isCopied, setIsCopied] = useState(false);
+
+  const copyIPToClipboard = () => {
+    navigator.clipboard.writeText('mc.lluviadeideaseditorial.com');
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 2000);
+  };
 
   // Cart State
   const [cart, setCart] = useState<Product[]>([]);
@@ -642,6 +705,123 @@ function App() {
                 <button className="btn btn-secondary" onClick={() => setActiveTab('productos')}>
                   Ver Catálogo de Libros 📚
                 </button>
+              </div>
+            </section>
+
+            {/* Minecraft & Lotería Showcase Section */}
+            <section className="home-showcase-section minecraft-loteria-grid">
+              {/* Lotería Card */}
+              <div className="showcase-card loteria-showcase card-glass animate-fade-in">
+                <div>
+                  <div className="showcase-badge">🧠 Juego Tradicional</div>
+                  <h3>Lotería de las Leyendas</h3>
+                  <p>
+                    Pon a prueba tu conocimiento de la tradición oral guatemalteca. El Sombrerón, La Llorona y La Siguanaba te esperan en este cartón interactivo de 3x3. ¡Gana cantando Lotería!
+                  </p>
+                </div>
+                <div className="card-actions">
+                  <button className="btn btn-primary" onClick={() => {
+                    setActiveTab('apps-loteria');
+                    startLotteryGame();
+                  }}>
+                    Jugar Lotería Web 🃏
+                  </button>
+                </div>
+              </div>
+
+              {/* Minecraft Server Card */}
+              <div className="showcase-card minecraft-showcase card-glass animate-fade-in">
+                <div>
+                  <div className="showcase-badge mc-badge">⚔️ Servidor Educativo</div>
+                  <h3>Universo Minecraft Lluvia de Ideas</h3>
+                  <p>
+                    ¡Jugamos para aprender en un mundo tridimensional! Únete a nuestro servidor escolar de Minecraft. Construye templos míticos de Juracán, explora biomas fantásticos y aprende colaborativamente.
+                  </p>
+                </div>
+                <div>
+                  <div className="mc-connection-panel">
+                    <span className="mc-ip-text">mc.lluviadeideaseditorial.com</span>
+                    <button 
+                      className={`btn-copy ${isCopied ? 'copied' : ''}`} 
+                      onClick={copyIPToClipboard}
+                      title="Copiar IP del servidor"
+                    >
+                      {isCopied ? '¡Copiado! ✓' : '📋 Copiar IP'}
+                    </button>
+                  </div>
+                  <div className="card-actions">
+                    <a 
+                      href="https://mc.lluviadeideaseditorial.com/" 
+                      target="_blank" 
+                      rel="noopener noreferrer" 
+                      className="btn btn-minecraft"
+                    >
+                      Entrar al Servidor 🌌
+                    </a>
+                  </div>
+                </div>
+              </div>
+            </section>
+
+            {/* Cuentos de Leyendas (Interactive Gallery) */}
+            <section className="home-showcase-section cuentos-gallery-section">
+              <h3 className="section-title text-center">📖 El Estante de los Cuentos (Popol Vuh)</h3>
+              <p className="section-subtitle text-center">
+                Haz clic en la portada de cada libro interactivo para conocer a las deidades y leyendas ancestrales de nuestra mitología.
+              </p>
+              
+              <div className="cuentos-covers-grid">
+                {POPOL_VUH_STORIES.map((story) => (
+                  <div 
+                    key={story.id} 
+                    className="cuento-book-card card-glass" 
+                    onClick={() => setActiveStory(story)}
+                  >
+                    <div className="book-3d-wrapper">
+                      <img src={story.image} alt={story.title} className="cuento-book-image" />
+                      <div className="book-spine"></div>
+                    </div>
+                    <h4 className="cuento-book-title">{story.title.split(' (')[0]}</h4>
+                    <span className="cuento-book-badge">Ver Leyenda 👁️</span>
+                  </div>
+                ))}
+              </div>
+            </section>
+
+            {/* Gateways Grid: Laboratorios & Casa de las Leyendas */}
+            <section className="home-showcase-section gateways-grid-section">
+              <div className="gateways-grid">
+                {/* Laboratorios Card */}
+                <div className="gateway-card lab-gateway card-glass">
+                  <div className="gateway-header">
+                    <span className="gateway-icon">🧪</span>
+                    <h3>Laboratorios de Alquimia</h3>
+                  </div>
+                  <p>
+                    ¡Conviértete en un aprendiz de alquimista! Mezcla los elementos primordiales de la naturaleza (Fuego, Agua, Tierra, Aire) para forjar compuestos mágicos y ampliar tu estante personal de descubrimientos científicos.
+                  </p>
+                  <button className="btn btn-secondary" onClick={() => setActiveTab('laboratorios')}>
+                    Entrar al Laboratorio 🔮
+                  </button>
+                </div>
+
+                {/* Casa de las Leyendas Card */}
+                <div className="gateway-card casa-gateway card-glass">
+                  <div className="gateway-header">
+                    <span className="gateway-icon">🏚️</span>
+                    <h3>La Casa de las Leyendas</h3>
+                  </div>
+                  <p>
+                    Una antigua mansión embrujada esconde los relatos del Sombrerón, la Siguanaba y el Cadejo. Recorre cada habitación, resuelve los acertijos cifrados con astucia y libera los mitos de Guatemala.
+                  </p>
+                  <button className="btn btn-secondary" onClick={() => {
+                    setActiveTab('apps-casa');
+                    setSelectedRoom(null);
+                    setRiddleFeedback({ type: null, text: '' });
+                  }}>
+                    Explorar la Casa 🗝️
+                  </button>
+                </div>
               </div>
             </section>
 
@@ -1527,6 +1707,40 @@ function App() {
           <span>Soporte Técnico</span>
         </div>
       </footer>
+
+      {/* Popol Vuh Story Modal */}
+      {activeStory && (
+        <div className="modal-overlay" onClick={() => setActiveStory(null)}>
+          <div className="modal-content card-glass animate-zoom-in" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="modal-close-btn" 
+              onClick={() => setActiveStory(null)}
+              aria-label="Cerrar detalles del cuento"
+            >
+              ✕
+            </button>
+            <div className="modal-grid">
+              <div className="modal-left-book">
+                <div className="book-3d-showcase">
+                  <img src={activeStory.image} alt={activeStory.title} className="modal-book-image" />
+                  <div className="book-spine-showcase"></div>
+                </div>
+              </div>
+              <div className="modal-right-info">
+                <span className="modal-role-badge">✨ {activeStory.role}</span>
+                <h2 className="gradient-text modal-story-title">{activeStory.title}</h2>
+                <div className="modal-divider"></div>
+                <p className="modal-story-summary">{activeStory.summary}</p>
+                <div className="modal-actions-footer">
+                  <button className="btn btn-primary" onClick={() => setActiveStory(null)}>
+                    Entendido, Seguir Explorando 👍
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
