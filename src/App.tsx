@@ -104,7 +104,7 @@ const POPOL_VUH_STORIES = [
 
 function App() {
   // Navigation & Tabs
-  const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos' | 'pagos'>('inicio');
+  const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos'>('inicio');
 
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -163,14 +163,7 @@ function App() {
   const [discoveredElements, setDiscoveredElements] = useState<string[]>([]);
   const [labFeedback, setLabFeedback] = useState<string>('Selecciona dos elementos básicos y haz clic en Mezclar.');
 
-  // Payment Form State
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardName, setCardName] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvv, setCardCvv] = useState('');
-  const [isCardFlipped, setIsCardFlipped] = useState(false);
-  const [paymentStatus, setPaymentStatus] = useState<'idle' | 'processing' | 'success'>('idle');
-  const [paymentError, setPaymentError] = useState('');
+
 
   // Math game generator
   const generateQuestion = (diff: typeof difficulty) => {
@@ -399,70 +392,9 @@ function App() {
     return cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
   };
 
-  // Payment gateway simulation
-  const handlePayment = (e: React.FormEvent) => {
-    e.preventDefault();
-    setPaymentError('');
-    
-    // Simple validation
-    if (cardNumber.replace(/\s/g, '').length !== 16) {
-      setPaymentError('El número de tarjeta debe tener 16 dígitos.');
-      return;
-    }
-    if (cardName.trim() === '') {
-      setPaymentError('Por favor, ingresa el nombre del titular.');
-      return;
-    }
-    if (!/^\d{2}\/\d{2}$/.test(cardExpiry)) {
-      setPaymentError('La fecha debe estar en formato MM/AA.');
-      return;
-    }
-    if (cardCvv.length < 3) {
-      setPaymentError('El CVV debe tener 3 dígitos.');
-      return;
-    }
 
-    setPaymentStatus('processing');
-    setTimeout(() => {
-      setPaymentStatus('success');
-      setCart([]); // Clear cart
-      // Reset payment fields
-      setCardNumber('');
-      setCardName('');
-      setCardExpiry('');
-      setCardCvv('');
-    }, 2500);
-  };
 
-  // Card formatting
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    const formatted = value.replace(/(\d{4})(?=\d)/g, '$1 ');
-    setCardNumber(formatted.substring(0, 19));
-  };
 
-  const handleExpiryChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    let formatted = value;
-    if (value.length > 2) {
-      formatted = `${value.substring(0, 2)}/${value.substring(2, 4)}`;
-    }
-    setCardExpiry(formatted.substring(0, 5));
-  };
-
-  const handleCvvChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    setCardCvv(value.substring(0, 3));
-  };
-
-  // Detect card brand
-  const getCardType = () => {
-    const firstDigit = cardNumber.charAt(0);
-    if (firstDigit === '4') return 'Visa';
-    if (firstDigit === '5') return 'Mastercard';
-    if (firstDigit === '3') return 'Amex';
-    return 'Credit Card';
-  };
 
   return (
     <div className="app-container">
@@ -540,15 +472,6 @@ function App() {
             onClick={() => setActiveTab('productos')}
           >
             Catálogo
-          </button>
-          <button 
-            className={`nav-link ${activeTab === 'pagos' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('pagos');
-              setPaymentStatus('idle');
-            }}
-          >
-            Pagos
           </button>
         </nav>
         
@@ -673,16 +596,6 @@ function App() {
             📚 Catálogo
           </button>
 
-          <button 
-            className={`mobile-nav-link ${activeTab === 'pagos' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveTab('pagos');
-              setPaymentStatus('idle');
-              setIsMobileMenuOpen(false);
-            }}
-          >
-            💸 Pagos
-          </button>
         </div>
       </div>
 
@@ -1352,9 +1265,6 @@ function App() {
                       <h5>Tu Carrito ({cart.length})</h5>
                       <span className="cart-total-price">${getTotalCartPrice()}</span>
                     </div>
-                    <button className="btn btn-primary btn-sm" onClick={() => setActiveTab('pagos')}>
-                      Proceder al Pago 💸
-                    </button>
                   </div>
                 )}
               </div>
@@ -1408,9 +1318,9 @@ function App() {
                   <div className="cart-footer-detailed">
                     <div className="total-label">Total a Pagar:</div>
                     <div className="total-amount">${getTotalCartPrice()}</div>
-                    <button className="btn btn-primary" onClick={() => setActiveTab('pagos')}>
-                      Pagar Ahora
-                    </button>
+                    <p className="cart-advisory-text">
+                      📧 Escríbenos a <strong>lluviadeideaseditorial@gmail.com</strong> para coordinar la entrega de tus libros.
+                    </p>
                   </div>
                 </div>
               )}
@@ -1418,192 +1328,7 @@ function App() {
           </div>
         )}
 
-        {/* Tab 6: Pasarela de Pagos */}
-        {activeTab === 'pagos' && (
-          <div className="tab-pane animate-fade-in">
-            <section className="payment-section">
-              <div className="section-intro">
-                <span className="badge badge-success">Transacción Segura</span>
-                <h2 className="gradient-text">Pasarela de Pagos</h2>
-                <p>Completa tu compra con seguridad cifrada SSL respaldada por Firebase.</p>
-              </div>
 
-              {paymentStatus === 'success' ? (
-                <div className="payment-success-card card-glass animate-fade-in">
-                  <div className="success-icon-wrapper">
-                    <span className="success-checkmark">✔</span>
-                  </div>
-                  <h3>¡Pago Realizado con Éxito!</h3>
-                  <p>Tu orden ha sido procesada. El material digital ya está disponible y tus productos físicos están listos para envío.</p>
-                  
-                  <div className="receipt-box">
-                    <div className="receipt-row">
-                      <span>Estado:</span>
-                      <span className="text-success font-bold">Aprobado</span>
-                    </div>
-                    <div className="receipt-row">
-                      <span>ID Transacción:</span>
-                      <span className="font-mono">TXN-{Math.floor(Math.random() * 900000) + 100000}</span>
-                    </div>
-                    <div className="receipt-row">
-                      <span>Canal de pago:</span>
-                      <span>Firebase Gateway</span>
-                    </div>
-                  </div>
-                  
-                  <button className="btn btn-primary" onClick={() => setActiveTab('inicio')}>
-                    Volver al Inicio
-                  </button>
-                </div>
-              ) : (
-                <div className="payment-flow-grid">
-                  
-                  {/* Left Column: Interactive Credit Card Visualizer */}
-                  <div className="card-visual-column">
-                    <div className={`credit-card ${isCardFlipped ? 'flipped' : ''}`}>
-                      {/* Front Side */}
-                      <div className="card-front">
-                        <div className="card-glow"></div>
-                        <div className="card-header-row">
-                          <span className="chip"></span>
-                          <span className="card-brand-label">{getCardType()}</span>
-                        </div>
-                        <div className="card-number-display">
-                          {cardNumber || '•••• •••• •••• ••••'}
-                        </div>
-                        <div className="card-footer-row">
-                          <div className="card-holder-group">
-                            <span className="card-label">Titular</span>
-                            <span className="card-value">{cardName.toUpperCase() || 'NOMBRE APELLIDO'}</span>
-                          </div>
-                          <div className="card-expiry-group">
-                            <span className="card-label">Vence</span>
-                            <span className="card-value">{cardExpiry || 'MM/AA'}</span>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* Back Side */}
-                      <div className="card-back">
-                        <div className="magnetic-strip"></div>
-                        <div className="signature-area">
-                          <span className="cvv-display">{cardCvv || '•••'}</span>
-                        </div>
-                        <div className="back-footer">
-                          <p>Esta tarjeta es simulada de forma segura.</p>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Order summary box */}
-                    <div className="order-summary-box card-glass">
-                      <h4>Resumen de Compra</h4>
-                      <div className="summary-list">
-                        {cart.length === 0 ? (
-                          <div className="empty-summary">No hay artículos en tu carrito. Agrega productos en la pestaña de Catálogo.</div>
-                        ) : (
-                          cart.map((item, idx) => (
-                            <div key={idx} className="summary-item">
-                              <span>{item.title}</span>
-                              <span className="font-bold">${item.price}</span>
-                            </div>
-                          ))
-                        )}
-                      </div>
-                      <div className="summary-total">
-                        <span>Total:</span>
-                        <span className="total-price-val">${getTotalCartPrice()}</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Right Column: Checkout Form */}
-                  <div className="payment-form-card card-glass">
-                    <h3>Detalles de Pago</h3>
-                    
-                    {paymentError && <div className="payment-error-banner">{paymentError}</div>}
-                    
-                    <form onSubmit={handlePayment} className="payment-form">
-                      <div className="input-group">
-                        <label>Número de Tarjeta</label>
-                        <input 
-                          type="text" 
-                          placeholder="4000 1234 5678 9010"
-                          value={cardNumber}
-                          onChange={handleCardNumberChange}
-                          onFocus={() => setIsCardFlipped(false)}
-                          required
-                          className="form-input"
-                        />
-                      </div>
-
-                      <div className="input-group">
-                        <label>Nombre del Titular</label>
-                        <input 
-                          type="text" 
-                          placeholder="Juan Pérez"
-                          value={cardName}
-                          onChange={(e) => setCardName(e.target.value)}
-                          onFocus={() => setIsCardFlipped(false)}
-                          required
-                          className="form-input"
-                        />
-                      </div>
-
-                      <div className="input-row">
-                        <div className="input-group">
-                          <label>Fecha de Expiración</label>
-                          <input 
-                            type="text" 
-                            placeholder="MM/AA"
-                            value={cardExpiry}
-                            onChange={handleExpiryChange}
-                            onFocus={() => setIsCardFlipped(false)}
-                            required
-                            className="form-input"
-                          />
-                        </div>
-
-                        <div className="input-group">
-                          <label>CVC / CVV</label>
-                          <input 
-                            type="text" 
-                            placeholder="123"
-                            value={cardCvv}
-                            onChange={handleCvvChange}
-                            onFocus={() => setIsCardFlipped(true)}
-                            onBlur={() => setIsCardFlipped(false)}
-                            required
-                            className="form-input"
-                          />
-                        </div>
-                      </div>
-
-                      <button 
-                        type="submit" 
-                        className="btn btn-primary btn-large btn-pay"
-                        disabled={paymentStatus === 'processing' || cart.length === 0}
-                      >
-                        {paymentStatus === 'processing' ? (
-                          <span className="spinner-wrapper">
-                            <span className="spinner"></span> Procesando...
-                          </span>
-                        ) : (
-                          `Pagar $${getTotalCartPrice()}`
-                        )}
-                      </button>
-                      
-                      {cart.length === 0 && (
-                        <p className="warning-text">⚠️ Debes añadir artículos al carrito antes de realizar el pago.</p>
-                      )}
-                    </form>
-                  </div>
-
-                </div>
-              )}
-            </section>
-          </div>
-        )}
 
       </main>
 
