@@ -511,8 +511,22 @@ function App() {
       </header>
 
       {/* Mobile Navigation Drawer */}
-      <div className={`mobile-menu-drawer ${isMobileMenuOpen ? 'open' : ''}`}>
-        <div className="mobile-drawer-content card-glass">
+      <div 
+        className={`mobile-menu-drawer ${isMobileMenuOpen ? 'open' : ''}`}
+        onClick={() => setIsMobileMenuOpen(false)}
+      >
+        <div 
+          className="mobile-drawer-content card-glass"
+          onClick={(e) => e.stopPropagation()}
+        >
+          <button 
+            className="mobile-drawer-close"
+            onClick={() => setIsMobileMenuOpen(false)}
+            aria-label="Cerrar menú"
+          >
+            ✕
+          </button>
+          
           <button 
             className={`mobile-nav-link ${activeTab === 'inicio' ? 'active' : ''}`}
             onClick={() => {
