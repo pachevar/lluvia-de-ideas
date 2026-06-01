@@ -21,24 +21,24 @@
   --warning-hsl: 38, 92%, 50%;
   --warning: hsl(var(--warning-hsl));
 
-  /* Magical Dark Theme (Deep Purple Universe) */
-  --bg-main: #06030b;
-  --bg-surface: #0e0717;
-  --bg-surface-hover: #190e29;
-  --text-title: #ffffff;
-  --text-main: #ebdfff; /* Soft magical lavender */
-  --text-muted: #9482a5;
-  --border-color: #211234;
-  --border-glow: rgba(147, 51, 234, 0.25);
+  /* Magical Light Theme (Bright Creative Lavender) */
+  --bg-main: #fbf9ff;
+  --bg-surface: #ffffff;
+  --bg-surface-hover: #f3ebff;
+  --text-title: #1a082e;      /* Deep royal purple */
+  --text-main: #3d2f53;       /* Deep slate lavender */
+  --text-muted: #8c7e9f;      /* Soft lavender gray */
+  --border-color: #ebdffc;    /* Soft lavender border */
+  --border-glow: rgba(147, 51, 234, 0.15);
 
-  --glass-bg: rgba(14, 7, 23, 0.65);
-  --glass-border: rgba(255, 255, 255, 0.04);
-  --glass-shadow: rgba(0, 0, 0, 0.6);
+  --glass-bg: rgba(255, 255, 255, 0.75);
+  --glass-border: rgba(147, 51, 234, 0.12);
+  --glass-shadow: rgba(74, 21, 128, 0.05);
 
-  --shadow-sm: 0 4px 8px rgba(0, 0, 0, 0.4);
-  --shadow-md: 0 8px 16px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 16px 36px rgba(0, 0, 0, 0.6);
-  --shadow-glow: 0 0 25px rgba(147, 51, 234, 0.25);
+  --shadow-sm: 0 4px 10px rgba(74, 21, 128, 0.04);
+  --shadow-md: 0 8px 24px rgba(74, 21, 128, 0.06);
+  --shadow-lg: 0 16px 40px rgba(74, 21, 128, 0.1);
+  --shadow-glow: 0 0 25px rgba(147, 51, 234, 0.12);
 
   /* Typography */
   --font-headline: 'Comfortaa', cursive, system-ui, sans-serif;
@@ -47,7 +47,7 @@
 
   font-size: 16px;
   line-height: 1.6;
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 * {
@@ -75,9 +75,9 @@ body::before {
   left: -10%;
   width: 120vw;
   height: 120vh;
-  background: radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.15) 0%, transparent 50%),
-              radial-gradient(circle at 15% 85%, rgba(34, 197, 94, 0.1) 0%, transparent 55%),
-              radial-gradient(circle at 50% 50%, rgba(217, 70, 239, 0.08) 0%, transparent 45%);
+  background: radial-gradient(circle at 80% 20%, rgba(147, 51, 234, 0.08) 0%, transparent 50%),
+              radial-gradient(circle at 15% 85%, rgba(34, 197, 94, 0.04) 0%, transparent 55%),
+              radial-gradient(circle at 50% 50%, rgba(217, 70, 239, 0.05) 0%, transparent 45%);
   pointer-events: none;
   z-index: -1;
 }
