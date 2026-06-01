@@ -102,6 +102,132 @@ const POPOL_VUH_STORIES = [
   }
 ];
 
+// Módulos del Laboratorio de Animación Educativa
+const LAB_MODULES = [
+  {
+    id: 1,
+    title: "Máquina de Cuentos",
+    icon: "🎭",
+    competency: "Diseña estrategias lúdicas para el desbloqueo creativo y la estructuración espontánea de relatos en el aula.",
+    skills: [
+      "Fluidez e imaginación narrativa",
+      "Agilidad mental",
+      "Pensamiento asociativo",
+      "Capacidad para guiar a los alumnos en la superación del 'miedo a la hoja en blanco'"
+    ]
+  },
+  {
+    id: 2,
+    title: "Arte Terapia y sus Herramientas",
+    icon: "🎨",
+    competency: "Utiliza la expresión plástica y visual como un canal de contención emocional, autoconocimiento y diagnóstico del clima escolar.",
+    skills: [
+      "Empatía",
+      "Escucha activa a través del arte",
+      "Sensibilidad estética",
+      "Manejo de dinámicas de relajación y resolución de conflictos mediante el color y la forma"
+    ]
+  },
+  {
+    id: 3,
+    title: "Creación de Personajes e Historias (El Viaje del Héroe)",
+    icon: "🗺️",
+    competency: "Aplica la estructura arquetípica del Viaje del Héroe para diseñar secuencias didácticas motivadoras donde el estudiante se convierta en el protagonista de su propio aprendizaje.",
+    skills: [
+      "Pensamiento de diseño narrativo (storytelling)",
+      "Análisis de personajes",
+      "Estructuración de metas y desafíos pedagógicos",
+      "Fomento de la resiliencia en los alumnos"
+    ]
+  },
+  {
+    id: 4,
+    title: "El Escenario para Enseñar (Herramientas de Teatro)",
+    icon: "🎪",
+    competency: "Domina el espacio áulico utilizando la voz, el cuerpo y la presencia escénica como recursos didácticos de alto impacto para captar la atención.",
+    skills: [
+      "Expresión corporal",
+      "Modulación de la voz",
+      "Manejo de la improvisación frente a imprevistos",
+      "Proyección escénica para mantener el interés del grupo"
+    ]
+  },
+  {
+    id: 5,
+    title: "Construcción de Personajes (Taller Práctico con Reciclaje)",
+    icon: "🛠️",
+    competency: "Desarrolla proyectos tridimensionales utilizando materiales de descarte, vinculando la conciencia ambiental con la conceptualización de personajes.",
+    skills: [
+      "Psicomotricidad fina",
+      "Pensamiento ecológico y sostenible",
+      "Resolución de problemas con recursos limitados",
+      "Pedagogía basada en el diseño manual (maker)"
+    ]
+  },
+  {
+    id: 6,
+    title: "Emprendiendo en el Aula",
+    icon: "🚀",
+    competency: "Implementa metodologías activas que ayuden a los estudiantes a identificar sus talentos individuales, pasiones y potencial emprendedor.",
+    skills: [
+      "Pensamiento crítico",
+      "Visión de liderazgo",
+      "Orientación al logro",
+      "Resiliencia ante el fracaso",
+      "Metodologías para el descubrimiento vocacional"
+    ]
+  },
+  {
+    id: 7,
+    title: "Escritura Creativa en el Universo de Juracán",
+    icon: "🌪️",
+    competency: "Integra la mitología e identidad cultural local como detonantes para la creación de textos literarios y el análisis crítico de textos históricos.",
+    skills: [
+      "Redacción literaria",
+      "Contextualización cultural",
+      "Investigación histórica-mitológica",
+      "Reinterpretación de narrativas ancestrales aplicadas al currículo"
+    ]
+  },
+  {
+    id: 8,
+    title: "Danza Ancestral",
+    icon: "💃",
+    competency: "Utiliza el movimiento corporal rítmico y la reconexión con las raíces culturales para liberar tensiones y desbloquear barreras emocionales colectivas.",
+    skills: [
+      "Expresión rítmica",
+      "Superación del pánico escénico",
+      "Desinhibición formativa",
+      "Cohesión grupal",
+      "Autoconfianza física"
+    ]
+  },
+  {
+    id: 9,
+    title: "Lectura Creativa",
+    icon: "📖",
+    competency: "Transforma el acto pasivo de la lectura en una experiencia sensorial y escénica interactiva (lectura dramatizada, paisajes sonoros, etc.).",
+    skills: [
+      "Comprensión lectora profunda",
+      "Interpretación vocal",
+      "Animación lectora",
+      "Capacidad para despertar el hábito de la lectura mediante el juego"
+    ]
+  },
+  {
+    id: 10,
+    title: "Gamificación: Construyendo Narrativas Interactivas",
+    icon: "🎮",
+    competency: "Diseña entornos de aprendizaje basados en la mecánica de los juegos (puntos, niveles, misiones) para potenciar la motivación intrínseca del estudiante.",
+    skills: [
+      "Pensamiento lógico-lúdico",
+      "Diseño de experiencias de usuario (UX) pedagógicas",
+      "Estructuración de sistemas de recompensa",
+      "Evaluación formativa interactiva"
+    ]
+  }
+];
+
 function App() {
   // Navigation & Tabs
   const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos'>('inicio');
@@ -158,12 +284,7 @@ function App() {
   const [windStrength, setWindStrength] = useState<number>(10);
 
   // Laboratorios State
-  const [element1, setElement1] = useState<string | null>(null);
-  const [element2, setElement2] = useState<string | null>(null);
-  const [discoveredElements, setDiscoveredElements] = useState<string[]>([]);
-  const [labFeedback, setLabFeedback] = useState<string>('Selecciona dos elementos básicos y haz clic en Mezclar.');
-
-
+  const [activeLabModule, setActiveLabModule] = useState<number>(1);
 
   // Math game generator
   const generateQuestion = (diff: typeof difficulty) => {
@@ -345,39 +466,7 @@ function App() {
     return { title: "Huracán Ancestral 🌀🌪️", desc: "Fuerza destructiva total. El dios desata toda su energía cósmica sobre el portal." };
   };
 
-  // Laboratorios Logic
-  const mixElements = () => {
-    if (!element1 || !element2) {
-      setLabFeedback('Debes seleccionar dos elementos para mezclar.');
-      return;
-    }
-
-    const pair = [element1, element2].sort().join('+');
-    let result = '';
-
-    switch (pair) {
-      case '🔥+💧': result = 'Vapor (💨)'; break;
-      case '🔥+🪨': result = 'Lava (🌋)'; break;
-      case '💧+🪨': result = 'Barro (🧱)'; break;
-      case '💨+💧': result = 'Lluvia (🌧️)'; break;
-      case '💨+🔥': result = 'Relámpago (⚡)'; break;
-      case '💨+🪨': result = 'Polvo Estelar (✨)'; break;
-      default: result = 'Mezcla Inestable 💥 (No se descubrió nada nuevo)';
-    }
-
-    if (result.includes('💥')) {
-      setLabFeedback(`¡PUM! La mezcla entre ${element1} y ${element2} fue inestable. ¡Prueba otra combinación!`);
-    } else {
-      setLabFeedback(`¡Éxito! Mezclaste ${element1} y ${element2} y creaste: ${result}`);
-      if (!discoveredElements.includes(result)) {
-        setDiscoveredElements(prev => [...prev, result]);
-      }
-    }
-
-    // Reset selectors
-    setElement1(null);
-    setElement2(null);
-  };
+  // Laboratorios Logic - Managed inline via activeLabModule state
 
   // Shopping Cart Logic
   const addToCart = (product: Product) => {
@@ -707,14 +796,14 @@ function App() {
                 {/* Laboratorios Card */}
                 <div className="gateway-card lab-gateway card-glass">
                   <div className="gateway-header">
-                    <span className="gateway-icon">🧪</span>
-                    <h3>Laboratorios de Alquimia</h3>
+                    <span className="gateway-icon">🎨</span>
+                    <h3>Laboratorio de Animación Educativa</h3>
                   </div>
                   <p>
-                    ¡Conviértete en un aprendiz de alquimista! Mezcla los elementos primordiales de la naturaleza (Fuego, Agua, Tierra, Aire) para forjar compuestos mágicos y ampliar tu estante personal de descubrimientos científicos.
+                    ¡Conviértete en un experto en herramientas pedagógicas de vanguardia! Explora metodologías activas a través del arte, el teatro, la gamificación y el diseño sostenible para transformar tu aula.
                   </p>
                   <button className="btn btn-secondary" onClick={() => setActiveTab('laboratorios')}>
-                    Entrar al Laboratorio 🔮
+                    Entrar al Laboratorio 🚀
                   </button>
                 </div>
 
@@ -1152,96 +1241,73 @@ function App() {
         {/* Tab 4: Laboratorios */}
         {activeTab === 'laboratorios' && (
           <div className="tab-pane animate-fade-in">
-            <section className="game-section">
+            <section className="game-section lab-section-new">
               <div className="section-intro">
-                <span className="badge badge-tertiary">Ciencia Divertida</span>
-                <h2 className="gradient-text">Laboratorio de Alquimia</h2>
-                <p>Combina dos elementos naturales básicos para catalizar reacciones y descubrir nuevos fenómenos.</p>
+                <span className="badge badge-tertiary">Innovación Pedagógica</span>
+                <h2 className="gradient-text">Laboratorio de Animación Educativa</h2>
+                <p className="lab-intro-lead">
+                  ¡Conviértete en un experto en herramientas de vanguardia para hacer de tu clase un lugar innovador, dinámico y creativo! Explora nuestros 10 módulos formativos diseñados para transformar la práctica docente y cautivar a tus estudiantes a través de experiencias de aprendizaje basadas en la narrativa, el juego y la expresión artística.
+                </p>
               </div>
 
-              <div className="lab-wrapper card-glass">
-                <div className="lab-mixing-area">
-                  <h3>Mesa de Combinaciones</h3>
-                  
-                  <div className="mixing-slots">
-                    {/* Slot 1 */}
-                    <div className="mixing-slot-card">
-                      <span className="slot-title">Elemento 1</span>
-                      <div className="slot-display">
-                        {element1 ? (
-                          <div className="selected-element-big animate-bounce">
-                            {element1 === '🔥' && '🔥 Fuego'}
-                            {element1 === '💧' && '💧 Agua'}
-                            {element1 === '🪨' && '🪨 Tierra'}
-                            {element1 === '💨' && '💨 Aire'}
-                          </div>
-                        ) : (
-                          <span className="slot-empty-icon">❓</span>
-                        )}
-                      </div>
-                    </div>
-
-                    <span className="mixing-plus">+</span>
-
-                    {/* Slot 2 */}
-                    <div className="mixing-slot-card">
-                      <span className="slot-title">Elemento 2</span>
-                      <div className="slot-display">
-                        {element2 ? (
-                          <div className="selected-element-big animate-bounce">
-                            {element2 === '🔥' && '🔥 Fuego'}
-                            {element2 === '💧' && '💧 Agua'}
-                            {element2 === '🪨' && '🪨 Tierra'}
-                            {element2 === '💨' && '💨 Aire'}
-                          </div>
-                        ) : (
-                          <span className="slot-empty-icon">❓</span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-
-                  <button className="btn btn-primary btn-large btn-pay" onClick={mixElements} disabled={!element1 || !element2}>
-                    ¡Mezclar Elementos! 🧪
-                  </button>
-
-                  <div className="lab-feedback-bubble">
-                    <p>{labFeedback}</p>
-                  </div>
+              <div className="lab-layout-container">
+                {/* Sidebar vertical tabs (for desktop) / Horizontal scroll chips (for mobile) */}
+                <div className="lab-sidebar-tabs">
+                  {LAB_MODULES.map((mod) => (
+                    <button
+                      key={mod.id}
+                      className={`lab-tab-button ${activeLabModule === mod.id ? 'active' : ''}`}
+                      onClick={() => setActiveLabModule(mod.id)}
+                    >
+                      <span className="lab-tab-icon">{mod.icon}</span>
+                      <span className="lab-tab-title-text">
+                        <span className="lab-tab-num">Módulo {mod.id}</span>
+                        <span className="lab-tab-name">{mod.title}</span>
+                      </span>
+                    </button>
+                  ))}
                 </div>
 
-                {/* Elements selection dashboard */}
-                <div className="lab-selectors-panel">
-                  <h4>Elementos Básicos Disponibles</h4>
-                  <div className="basic-elements-buttons">
-                    <button className="btn btn-secondary" onClick={() => !element1 ? setElement1('🔥') : setElement2('🔥')}>
-                      🔥 Fuego
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => !element1 ? setElement1('💧') : setElement2('💧')}>
-                      💧 Agua
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => !element1 ? setElement1('🪨') : setElement2('🪨')}>
-                      🪨 Tierra
-                    </button>
-                    <button className="btn btn-secondary" onClick={() => !element1 ? setElement1('💨') : setElement2('💨')}>
-                      💨 Aire
-                    </button>
-                  </div>
-
-                  {/* Discovered Shelf */}
-                  <div className="discovered-shelf-box">
-                    <h4>✨ Tus Descubrimientos ({discoveredElements.length})</h4>
-                    {discoveredElements.length > 0 ? (
-                      <div className="discovered-badges-grid">
-                        {discoveredElements.map((el, idx) => (
-                          <span key={idx} className="badge badge-success animate-fade-in">{el}</span>
-                        ))}
+                {/* Selected Module Detail Panel */}
+                {(() => {
+                  const selectedMod = LAB_MODULES.find(m => m.id === activeLabModule) || LAB_MODULES[0];
+                  return (
+                    <div className="lab-module-details-panel card-glass animate-fade-in" key={selectedMod.id}>
+                      <div className="module-detail-header">
+                        <span className="module-large-icon">{selectedMod.icon}</span>
+                        <div>
+                          <span className="module-detail-badge">Módulo {selectedMod.id}</span>
+                          <h3>{selectedMod.title}</h3>
+                        </div>
                       </div>
-                    ) : (
-                      <p className="empty-shelf-text">Tu estante de descubrimientos está vacío. ¡Haz mezclas para llenarlo!</p>
-                    )}
-                  </div>
-                </div>
+
+                      <div className="module-detail-content">
+                        <div className="competency-box">
+                          <h4>🎯 Competencia</h4>
+                          <p>{selectedMod.competency}</p>
+                        </div>
+
+                        <div className="skills-box">
+                          <h4>✨ Habilidades a Desarrollar</h4>
+                          <ul className="skills-list">
+                            {selectedMod.skills.map((skill, index) => (
+                              <li key={index}>
+                                <span className="skill-bullet">✦</span>
+                                <span className="skill-text">{skill}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+
+                      <div className="module-detail-footer">
+                        <p className="footer-callout">
+                          💡 <em>Aplica estas metodologías activas y lidera el cambio pedagógico en tu aula.</em>
+                        </p>
+                      </div>
+                    </div>
+                  );
+                })()}
               </div>
             </section>
           </div>
