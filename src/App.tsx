@@ -67,6 +67,31 @@ const LOTERIA_DECK = [
   { id: 9, name: "El Carretón", icon: "🛒", description: "Suena de noche anunciando leyendas ancestrales." }
 ];
 
+// SPA route mapping helpers
+const getTabFromPath = (path: string): 'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos' | 'gerencia' => {
+  if (path === '/gerencia') return 'gerencia';
+  if (path === '/laboratorios') return 'laboratorios';
+  if (path === '/juegos/reto-matematico') return 'apps-mate';
+  if (path === '/juegos/loteria') return 'apps-loteria';
+  if (path === '/juegos/la-casa') return 'apps-casa';
+  if (path === '/universo-de-juracan') return 'juracan';
+  if (path === '/catalogo') return 'productos';
+  return 'inicio';
+};
+
+const getPathFromTab = (tab: string): string => {
+  switch (tab) {
+    case 'gerencia': return '/gerencia';
+    case 'laboratorios': return '/laboratorios';
+    case 'apps-mate': return '/juegos/reto-matematico';
+    case 'apps-loteria': return '/juegos/loteria';
+    case 'apps-casa': return '/juegos/la-casa';
+    case 'juracan': return '/universo-de-juracan';
+    case 'productos': return '/catalogo';
+    default: return '/';
+  }
+};
+
 // Cuentos del Popol Vuh local image helper
 const getStoryImage = (storyId: string, imageOverride?: string) => {
   if (imageOverride) return imageOverride;
@@ -265,8 +290,11 @@ function App() {
   const [config, setConfig] = useState<PortalConfig>(DEFAULT_CONFIG);
   const [currentPath, setCurrentPath] = useState(window.location.pathname);
 
-  // Navigation & Tabs
-  const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos'>('inicio');
+  // Navigation & Tabs initialized based on window.location
+  const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos'>(() => {
+    const tab = getTabFromPath(window.location.pathname);
+    return tab === 'gerencia' ? 'inicio' : tab;
+  });
 
   // Mobile Menu State
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -294,6 +322,18 @@ function App() {
   const navigateTo = (path: string) => {
     window.history.pushState({}, '', path);
     setCurrentPath(path);
+  };
+
+  // Sync tab with path routing
+  useEffect(() => {
+    const tab = getTabFromPath(currentPath);
+    if (tab !== 'gerencia') {
+      setActiveTab(tab);
+    }
+  }, [currentPath]);
+
+  const navigateToTab = (tab: 'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos') => {
+    navigateTo(getPathFromTab(tab));
   };
 
   // Sync with Firestore config
@@ -594,7 +634,7 @@ function App() {
         <nav className="nav-menu">
           <button 
             className={`nav-link ${activeTab === 'inicio' ? 'active' : ''}`}
-            onClick={() => setActiveTab('inicio')}
+            onClick={() => navigateToTab('inicio')}
           >
             Inicio
           </button>
@@ -609,14 +649,14 @@ function App() {
             <div className="nav-dropdown">
               <button 
                 className={`dropdown-link ${activeTab === 'apps-mate' ? 'active' : ''}`}
-                onClick={() => setActiveTab('apps-mate')}
+                onClick={() => navigateToTab('apps-mate')}
               >
                 🧠 Reto Matemático
               </button>
               <button 
                 className={`dropdown-link ${activeTab === 'apps-loteria' ? 'active' : ''}`}
                 onClick={() => {
-                  setActiveTab('apps-loteria');
+                  navigateToTab('apps-loteria');
                   startLotteryGame();
                 }}
               >
@@ -625,7 +665,7 @@ function App() {
               <button 
                 className={`dropdown-link ${activeTab === 'apps-casa' ? 'active' : ''}`}
                 onClick={() => {
-                  setActiveTab('apps-casa');
+                  navigateToTab('apps-casa');
                   setSelectedRoom(null);
                   setRiddleFeedback({ type: null, text: '' });
                 }}
@@ -637,21 +677,21 @@ function App() {
 
           <button 
             className={`nav-link ${activeTab === 'juracan' ? 'active' : ''}`}
-            onClick={() => setActiveTab('juracan')}
+            onClick={() => navigateToTab('juracan')}
           >
             Universo de Juracán
           </button>
 
           <button 
             className={`nav-link ${activeTab === 'laboratorios' ? 'active' : ''}`}
-            onClick={() => setActiveTab('laboratorios')}
+            onClick={() => navigateToTab('laboratorios')}
           >
             Laboratorios
           </button>
 
           <button 
             className={`nav-link ${activeTab === 'productos' ? 'active' : ''}`}
-            onClick={() => setActiveTab('productos')}
+            onClick={() => navigateToTab('productos')}
           >
             Catálogo
           </button>
@@ -660,7 +700,7 @@ function App() {
         {/* Right Header Group (Cart & Hamburger) */}
         <div className="header-right-group">
           {/* Cart Quick Info */}
-          <div className="cart-indicator" onClick={() => setActiveTab('productos')}>
+          <div className="cart-indicator" onClick={() => navigateToTab('productos')}>
             <span className="cart-icon">🛒</span>
             {cart.length > 0 && <span className="cart-badge animate-fade-in">{cart.length}</span>}
           </div>
@@ -698,7 +738,7 @@ function App() {
           <button 
             className={`mobile-nav-link ${activeTab === 'inicio' ? 'active' : ''}`}
             onClick={() => {
-              setActiveTab('inicio');
+              navigateToTab('inicio');
               setIsMobileMenuOpen(false);
             }}
           >
@@ -717,7 +757,7 @@ function App() {
                 <button 
                   className={`mobile-sub-link ${activeTab === 'apps-mate' ? 'active' : ''}`}
                   onClick={() => {
-                    setActiveTab('apps-mate');
+                    navigateToTab('apps-mate');
                     setIsMobileMenuOpen(false);
                   }}
                 >
@@ -726,7 +766,7 @@ function App() {
                 <button 
                   className={`mobile-sub-link ${activeTab === 'apps-loteria' ? 'active' : ''}`}
                   onClick={() => {
-                    setActiveTab('apps-loteria');
+                    navigateToTab('apps-loteria');
                     startLotteryGame();
                     setIsMobileMenuOpen(false);
                   }}
@@ -736,7 +776,7 @@ function App() {
                 <button 
                   className={`mobile-sub-link ${activeTab === 'apps-casa' ? 'active' : ''}`}
                   onClick={() => {
-                    setActiveTab('apps-casa');
+                    navigateToTab('apps-casa');
                     setSelectedRoom(null);
                     setRiddleFeedback({ type: null, text: '' });
                     setIsMobileMenuOpen(false);
@@ -751,7 +791,7 @@ function App() {
           <button 
             className={`mobile-nav-link ${activeTab === 'juracan' ? 'active' : ''}`}
             onClick={() => {
-              setActiveTab('juracan');
+              navigateToTab('juracan');
               setIsMobileMenuOpen(false);
             }}
           >
@@ -761,7 +801,7 @@ function App() {
           <button 
             className={`mobile-nav-link ${activeTab === 'laboratorios' ? 'active' : ''}`}
             onClick={() => {
-              setActiveTab('laboratorios');
+              navigateToTab('laboratorios');
               setIsMobileMenuOpen(false);
             }}
           >
@@ -771,7 +811,7 @@ function App() {
           <button 
             className={`mobile-nav-link ${activeTab === 'productos' ? 'active' : ''}`}
             onClick={() => {
-              setActiveTab('productos');
+              navigateToTab('productos');
               setIsMobileMenuOpen(false);
             }}
           >
@@ -794,10 +834,10 @@ function App() {
               </p>
               
               <div className="cta-container">
-                <button className="btn btn-primary" onClick={() => setActiveTab('apps-mate')}>
+                <button className="btn btn-primary" onClick={() => navigateToTab('apps-mate')}>
                   Empezar a Jugar 🚀
                 </button>
-                <button className="btn btn-secondary" onClick={() => setActiveTab('productos')}>
+                <button className="btn btn-secondary" onClick={() => navigateToTab('productos')}>
                   Ver Catálogo de Libros 📚
                 </button>
               </div>
@@ -816,7 +856,7 @@ function App() {
                 </div>
                 <div className="card-actions">
                   <button className="btn btn-primary" onClick={() => {
-                    setActiveTab('apps-loteria');
+                    navigateToTab('apps-loteria');
                     startLotteryGame();
                   }}>
                     Jugar Lotería Web 🃏
@@ -895,7 +935,7 @@ function App() {
                   <p>
                     {config.gateways?.labDesc || "¡Conviértete en un experto en herramientas pedagógicas de vanguardia! Explora metodologías activas a través del arte, el teatro, la gamificación y el diseño sostenible para transformar tu aula."}
                   </p>
-                  <button className="btn btn-secondary" onClick={() => setActiveTab('laboratorios')}>
+                  <button className="btn btn-secondary" onClick={() => navigateToTab('laboratorios')}>
                     Entrar al Laboratorio 🚀
                   </button>
                 </div>
@@ -910,7 +950,7 @@ function App() {
                     {config.gateways?.casaDesc || "Una antigua mansión embrujada esconde los relatos del Sombrerón, la Siguanaba y el Cadejo. Recorre cada habitación, resuelve los acertijos cifrados con astucia y libera los mitos de Guatemala."}
                   </p>
                   <button className="btn btn-secondary" onClick={() => {
-                    setActiveTab('apps-casa');
+                    navigateToTab('apps-casa');
                     setSelectedRoom(null);
                     setRiddleFeedback({ type: null, text: '' });
                   }}>
