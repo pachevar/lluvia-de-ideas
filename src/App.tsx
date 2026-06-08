@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import logoEditorial from './assets/logo editorial.png';
 import './App.css';
-import { doc, setDoc, onSnapshot } from 'firebase/firestore';
+import { doc, setDoc, onSnapshot, collection, addDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import Gerencia from './Gerencia';
+import CotizacionView from './CotizacionView';
 import type { PortalConfig, StoryConfig } from './Gerencia';
 
 // Importar imágenes de cuentos del Popol Vuh
@@ -105,6 +107,24 @@ const getStoryImage = (storyId: string, imageOverride?: string) => {
   }
 };
 
+// Cronograma de módulos del laboratorio
+const getModuleDate = (moduleId: number): string => {
+  const dates = [
+    "Viernes, 12 de Junio",
+    "Viernes, 3 de Julio",
+    "Viernes, 17 de Julio",
+    "Viernes, 31 de Julio",
+    "Viernes, 14 de Agosto",
+    "Viernes, 28 de Agosto",
+    "Viernes, 11 de Septiembre",
+    "Viernes, 25 de Septiembre",
+    "Por acordar con el grupo (antes de finalizar sep.)",
+    "Por acordar con el grupo (antes de finalizar sep.)"
+  ];
+  return dates[moduleId - 1] || "";
+};
+
+
 // Configuración Predeterminada del Portal
 const DEFAULT_CONFIG: PortalConfig = {
   hero: {
@@ -167,18 +187,6 @@ const DEFAULT_CONFIG: PortalConfig = {
       },
       {
         id: 2,
-        title: "Arte Terapia y sus Herramientas",
-        icon: "🎨",
-        competency: "Utiliza la expresión plástica y visual como un canal de contención emocional, autoconocimiento y diagnóstico del clima escolar.",
-        skills: [
-          "Empatía",
-          "Escucha activa a través del arte",
-          "Sensibilidad estética",
-          "Manejo de dinámicas de relajación y resolución de conflictos mediante el color y la forma"
-        ]
-      },
-      {
-        id: 3,
         title: "Creación de Personajes e Historias (El Viaje del Héroe)",
         icon: "🗺️",
         competency: "Aplica la estructura arquetípica del Viaje del Héroe para diseñar secuencias didácticas motivadoras donde el estudiante se convierta en el protagonista de su propio aprendizaje.",
@@ -190,15 +198,27 @@ const DEFAULT_CONFIG: PortalConfig = {
         ]
       },
       {
-        id: 4,
-        title: "El Escenario para Enseñar (Herramientas de Teatro)",
-        icon: "🎪",
-        competency: "Domina el espacio áulico utilizando la voz, el cuerpo y la presencia escénica como recursos didácticos de alto impacto para captar la atención.",
+        id: 3,
+        title: "Lectura Creativa",
+        icon: "📖",
+        competency: "Transforma el acto pasivo de la lectura en una experiencia sensorial y escénica interactiva (lectura dramatizada, paisajes sonoros, etc.).",
         skills: [
-          "Expresión corporal",
-          "Modulación de la voz",
-          "Manejo de la improvisación frente a imprevistos",
-          "Proyección escénica para mantener el interés del grupo"
+          "Comprensión lectora profunda",
+          "Interpretación vocal",
+          "Animación lectora",
+          "Capacidad para despertar el hábito de la lectura mediante el juego"
+        ]
+      },
+      {
+        id: 4,
+        title: "Arte Terapia y sus Herramientas",
+        icon: "🎨",
+        competency: "Utiliza la expresión plástica y visual como un canal de contención emocional, autoconocimiento y diagnóstico del clima escolar.",
+        skills: [
+          "Empatía",
+          "Escucha activa a través del arte",
+          "Sensibilidad estética",
+          "Manejo de dinámicas de relajación y resolución de conflictos mediante el color y la forma"
         ]
       },
       {
@@ -215,6 +235,30 @@ const DEFAULT_CONFIG: PortalConfig = {
       },
       {
         id: 6,
+        title: "Escritura Creativa en el Universo de Juracán",
+        icon: "🌪️",
+        competency: "Integra la mitología e identidad cultural local como detonantes para la creación de textos literarios y el análisis crítico de textos históricos.",
+        skills: [
+          "Redacción literaria",
+          "Contextualización cultural",
+          "Investigación histórica-mitológica",
+          "Reinterpretación de narrativas ancestrales aplicadas al currículo"
+        ]
+      },
+      {
+        id: 7,
+        title: "El Escenario para Enseñar (Herramientas de Teatro)",
+        icon: "🎪",
+        competency: "Domina el espacio áulico utilizando la voz, el cuerpo y la presencia escénica como recursos didácticos de alto impacto para captar la atención.",
+        skills: [
+          "Expresión corporal",
+          "Modulación de la voz",
+          "Manejo de la improvisación frente a imprevistos",
+          "Proyección escénica para mantener el interés del grupo"
+        ]
+      },
+      {
+        id: 8,
         title: "Emprendiendo en el Aula",
         icon: "🚀",
         competency: "Implementa metodologías activas que ayuden a los estudiantes a identificar sus talentos individuales, pasiones y potencial emprendedor.",
@@ -227,19 +271,7 @@ const DEFAULT_CONFIG: PortalConfig = {
         ]
       },
       {
-        id: 7,
-        title: "Escritura Creativa en el Universo de Juracán",
-        icon: "🌪️",
-        competency: "Integra la mitología e identidad cultural local como detonantes para la creación de textos literarios y el análisis crítico de textos históricos.",
-        skills: [
-          "Redacción literaria",
-          "Contextualización cultural",
-          "Investigación histórica-mitológica",
-          "Reinterpretación de narrativas ancestrales aplicadas al currículo"
-        ]
-      },
-      {
-        id: 8,
+        id: 9,
         title: "Danza Ancestral",
         icon: "💃",
         competency: "Utiliza el movimiento corporal rítmico y la reconexión con las raíces culturales para liberar tensiones y desbloquear barreras emocionales colectivas.",
@@ -249,18 +281,6 @@ const DEFAULT_CONFIG: PortalConfig = {
           "Desinhibición formativa",
           "Cohesión grupal",
           "Autoconfianza física"
-        ]
-      },
-      {
-        id: 9,
-        title: "Lectura Creativa",
-        icon: "📖",
-        competency: "Transforma el acto pasivo de la lectura en una experiencia sensorial y escénica interactiva (lectura dramatizada, paisajes sonoros, etc.).",
-        skills: [
-          "Comprensión lectora profunda",
-          "Interpretación vocal",
-          "Animación lectora",
-          "Capacidad para despertar el hábito de la lectura mediante el juego"
         ]
       },
       {
@@ -288,11 +308,13 @@ const DEFAULT_CONFIG: PortalConfig = {
 function App() {
   // Routing & Firestore State
   const [config, setConfig] = useState<PortalConfig>(DEFAULT_CONFIG);
-  const [currentPath, setCurrentPath] = useState(window.location.pathname);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const currentPath = location.pathname;
 
-  // Navigation & Tabs initialized based on window.location
+  // Navigation & Tabs initialized based on location
   const [activeTab, setActiveTab] = useState<'inicio' | 'apps-mate' | 'apps-loteria' | 'apps-casa' | 'juracan' | 'laboratorios' | 'productos'>(() => {
-    const tab = getTabFromPath(window.location.pathname);
+    const tab = getTabFromPath(location.pathname);
     return tab === 'gerencia' ? 'inicio' : tab;
   });
 
@@ -310,18 +332,8 @@ function App() {
     setTimeout(() => setIsCopied(false), 2000);
   };
 
-  // Sync with window.location for SPA routing
-  useEffect(() => {
-    const handleLocationChange = () => {
-      setCurrentPath(window.location.pathname);
-    };
-    window.addEventListener('popstate', handleLocationChange);
-    return () => window.removeEventListener('popstate', handleLocationChange);
-  }, []);
-
   const navigateTo = (path: string) => {
-    window.history.pushState({}, '', path);
-    setCurrentPath(path);
+    navigate(path);
   };
 
   // Sync tab with path routing
@@ -411,6 +423,16 @@ function App() {
 
   // Laboratorios State
   const [activeLabModule, setActiveLabModule] = useState<number>(1);
+
+  // Inscripción de Maestros State
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [regName, setRegName] = useState('');
+  const [regPhone, setRegPhone] = useState('');
+  const [regSchool, setRegSchool] = useState('');
+  const [regAgreed, setRegAgreed] = useState(false);
+  const [regLoading, setRegLoading] = useState(false);
+  const [regSuccess, setRegSuccess] = useState(false);
+  const [regError, setRegError] = useState('');
 
   // Math game generator
   const generateQuestion = (diff: typeof difficulty) => {
@@ -599,6 +621,55 @@ function App() {
     setCart(prev => [...prev, product]);
   };
 
+  // Laboratorios Registration Logic
+  const handleRegisterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setRegError('');
+    setRegSuccess(false);
+
+    if (!regName.trim() || !regPhone.trim() || !regSchool.trim()) {
+      setRegError('Por favor, completa todos los campos del formulario.');
+      return;
+    }
+
+    if (!regAgreed) {
+      setRegError('Debes aceptar el compromiso de asistencia para enviar el formulario.');
+      return;
+    }
+
+    if (regPhone.trim().length !== 8) {
+      setRegError('El número de teléfono debe tener exactamente 8 dígitos.');
+      return;
+    }
+
+    setRegLoading(true);
+    try {
+      await addDoc(collection(db, 'inscripciones'), {
+        name: regName.trim(),
+        phone: '+502 ' + regPhone.trim(),
+        school: regSchool.trim(),
+        agreed: regAgreed,
+        timestamp: new Date().toISOString()
+      });
+      setRegSuccess(true);
+      // Reset form
+      setRegName('');
+      setRegPhone('');
+      setRegSchool('');
+      setRegAgreed(false);
+      // Close modal after delay
+      setTimeout(() => {
+        setIsRegisterModalOpen(false);
+        setRegSuccess(false);
+      }, 3000);
+    } catch (err: any) {
+      console.error("Error saving registration:", err);
+      setRegError('Ocurrió un error al enviar tu inscripción. Inténtalo de nuevo.');
+    } finally {
+      setRegLoading(false);
+    }
+  };
+
   const removeFromCart = (index: number) => {
     setCart(prev => prev.filter((_, i) => i !== index));
   };
@@ -606,6 +677,11 @@ function App() {
   const getTotalCartPrice = () => {
     return cart.reduce((sum, item) => sum + item.price, 0).toFixed(2);
   };
+
+  if (currentPath.startsWith('/cotizacion/')) {
+    const id = currentPath.split('/')[2];
+    return <CotizacionView id={id} />;
+  }
 
   if (currentPath === '/gerencia') {
     return (
@@ -699,11 +775,7 @@ function App() {
         
         {/* Right Header Group (Cart & Hamburger) */}
         <div className="header-right-group">
-          {/* Cart Quick Info */}
-          <div className="cart-indicator" onClick={() => navigateToTab('productos')}>
-            <span className="cart-icon">🛒</span>
-            {cart.length > 0 && <span className="cart-badge animate-fade-in">{cart.length}</span>}
-          </div>
+
 
           {/* Mobile Menu Toggle Button */}
           <button 
@@ -1384,63 +1456,188 @@ function App() {
               </div>
 
               <div className="lab-layout-container">
-                {/* Sidebar vertical tabs (for desktop) / Horizontal scroll chips (for mobile) */}
-                <div className="lab-sidebar-tabs">
-                  {modulesList.map((mod) => (
-                    <button
-                      key={mod.id}
-                      className={`lab-tab-button ${activeLabModule === mod.id ? 'active' : ''}`}
-                      onClick={() => setActiveLabModule(mod.id)}
-                    >
-                      <span className="lab-tab-icon">{mod.icon}</span>
-                      <span className="lab-tab-title-text">
-                        <span className="lab-tab-num">Módulo {mod.id}</span>
-                        <span className="lab-tab-name">{mod.title}</span>
-                      </span>
-                    </button>
-                  ))}
+                {/* Desktop Layout */}
+                <div className="lab-desktop-layout">
+                  <div className="lab-sidebar-tabs">
+                    {modulesList.map((mod) => (
+                      <button
+                        key={mod.id}
+                        className={`lab-tab-button ${activeLabModule === mod.id ? 'active' : ''}`}
+                        onClick={() => setActiveLabModule(mod.id)}
+                      >
+                        <span className="lab-tab-icon">{mod.icon}</span>
+                        <span className="lab-tab-title-text">
+                          <span className="lab-tab-num">Módulo {mod.id}</span>
+                          <span className="lab-tab-name">{mod.title}</span>
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Selected Module Detail Panel */}
+                  {(() => {
+                    const selectedMod = modulesList.find(m => m.id === activeLabModule) || modulesList[0];
+                    return (
+                      <div className="lab-module-details-panel card-glass animate-fade-in" key={selectedMod.id}>
+                        <div className="module-detail-header">
+                          <span className="module-large-icon">{selectedMod.icon}</span>
+                          <div>
+                            <span className="module-detail-badge">Módulo {selectedMod.id}</span>
+                            <h3>{selectedMod.title}</h3>
+                          </div>
+                        </div>
+
+                        <div className="module-detail-content">
+                          <div className="competency-box">
+                            <h4>🎯 Competencia</h4>
+                            <p>{selectedMod.competency}</p>
+                          </div>
+
+                          <div className="skills-box">
+                            <h4>✨ Habilidades a Desarrollar</h4>
+                            <ul className="skills-list">
+                              {selectedMod.skills.map((skill, index) => (
+                                <li key={index}>
+                                  <span className="skill-bullet">✦</span>
+                                  <span className="skill-text">{skill}</span>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        </div>
+
+                        <div className="module-detail-footer">
+                          <p className="footer-callout">
+                            💡 <em>Aplica estas metodologías activas y lidera el cambio pedagógico en tu aula.</em>
+                          </p>
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
-                {/* Selected Module Detail Panel */}
-                {(() => {
-                  const selectedMod = modulesList.find(m => m.id === activeLabModule) || modulesList[0];
-                  return (
-                    <div className="lab-module-details-panel card-glass animate-fade-in" key={selectedMod.id}>
-                      <div className="module-detail-header">
-                        <span className="module-large-icon">{selectedMod.icon}</span>
-                        <div>
-                          <span className="module-detail-badge">Módulo {selectedMod.id}</span>
-                          <h3>{selectedMod.title}</h3>
-                        </div>
+                {/* Mobile Layout: Accordion */}
+                <div className="lab-mobile-accordion">
+                  {modulesList.map((mod) => {
+                    const isOpen = activeLabModule === mod.id;
+                    return (
+                      <div
+                        key={mod.id}
+                        className={`lab-accordion-item card-glass ${isOpen ? 'open' : ''}`}
+                      >
+                        <button
+                          className="lab-accordion-header"
+                          onClick={() => setActiveLabModule(isOpen ? 0 : mod.id)}
+                        >
+                          <span className="accordion-icon">{mod.icon}</span>
+                          <div className="accordion-header-text">
+                            <span className="accordion-num">Módulo {mod.id}</span>
+                            <h3 className="accordion-title">{mod.title}</h3>
+                          </div>
+                          <span className="accordion-arrow">{isOpen ? '▲' : '▼'}</span>
+                        </button>
+
+                        {isOpen && (
+                          <div className="lab-accordion-content animate-fade-in">
+                            <div className="competency-box">
+                              <h4>🎯 Competencia</h4>
+                              <p>{mod.competency}</p>
+                            </div>
+
+                            <div className="skills-box">
+                              <h4>✨ Habilidades a Desarrollar</h4>
+                              <ul className="skills-list">
+                                {mod.skills.map((skill, index) => (
+                                  <li key={index}>
+                                    <span className="skill-bullet">✦</span>
+                                    <span className="skill-text">{skill}</span>
+                                  </li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        )}
                       </div>
+                    );
+                  })}
+                </div>
+              </div>
 
-                      <div className="module-detail-content">
-                        <div className="competency-box">
-                          <h4>🎯 Competencia</h4>
-                          <p>{selectedMod.competency}</p>
-                        </div>
-
-                        <div className="skills-box">
-                          <h4>✨ Habilidades a Desarrollar</h4>
-                          <ul className="skills-list">
-                            {selectedMod.skills.map((skill, index) => (
-                              <li key={index}>
-                                <span className="skill-bullet">✦</span>
-                                <span className="skill-text">{skill}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      </div>
-
-                      <div className="module-detail-footer">
-                        <p className="footer-callout">
-                          💡 <em>Aplica estas metodologías activas y lidera el cambio pedagógico en tu aula.</em>
-                        </p>
+              {/* Sección de Cronograma */}
+              <div className="lab-schedule-section">
+                <div className="schedule-header">
+                  <span className="badge badge-primary">Calendario</span>
+                  <h3 className="gradient-text">📅 Cronograma del Laboratorio</h3>
+                  <p className="schedule-intro-text">
+                    Organiza tu agenda para asistir a las sesiones en vivo de cada módulo. Haz clic en cualquier tarjeta de fecha para ver los detalles del módulo correspondiente en el panel superior.
+                  </p>
+                  
+                  <div className="schedule-info-bar card-glass">
+                    <div className="schedule-info-item">
+                      <span className="info-icon">⏰</span>
+                      <div className="info-text">
+                        <strong>Horario:</strong> 2:00 PM a 5:00 PM
                       </div>
                     </div>
-                  );
-                })()}
+                    <div className="schedule-info-item">
+                      <span className="info-icon">📍</span>
+                      <div className="info-text">
+                        <strong>Lugar:</strong> Lugar céntrico por confirmar
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                
+                <div className="schedule-grid">
+                  {modulesList.map((mod) => {
+                    const isUpcoming = mod.id > 8;
+                    const dateText = getModuleDate(mod.id);
+                    return (
+                      <div
+                        key={mod.id}
+                        className={`schedule-card card-glass ${activeLabModule === mod.id ? 'active' : ''} ${isUpcoming ? 'upcoming-card' : ''}`}
+                        onClick={() => {
+                          setActiveLabModule(mod.id);
+                          document.querySelector('.lab-section-new')?.scrollIntoView({ behavior: 'smooth' });
+                        }}
+                      >
+                        <div className="schedule-card-header">
+                          <span className="schedule-mod-num">Módulo {mod.id}</span>
+                          <span className="schedule-badge-type">Presencial</span>
+                        </div>
+                        <h4 className="schedule-mod-title">{mod.title}</h4>
+                        
+                        <div className="schedule-card-details">
+                          <div className="schedule-detail-row">
+                            <span className="schedule-detail-icon">📅</span>
+                            <span className="schedule-detail-text">
+                              <strong>Fecha:</strong> {dateText}
+                            </span>
+                          </div>
+                          <div className="schedule-detail-row">
+                            <span className="schedule-detail-icon">⏰</span>
+                            <span className="schedule-detail-text">
+                              <strong>Horario:</strong> {isUpcoming ? "Por definir (con el grupo)" : "2:00 PM a 5:00 PM"}
+                            </span>
+                          </div>
+                          <div className="schedule-detail-row">
+                            <span className="schedule-detail-icon">📍</span>
+                            <span className="schedule-detail-text">
+                              <strong>Lugar:</strong> Lugar céntrico por confirmar
+                            </span>
+                          </div>
+                        </div>
+                        
+                        <span className="schedule-icon-bg">{mod.icon}</span>
+                      </div>
+                    );
+                  })}
+                </div>
+                <div className="lab-registration-cta-row" style={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
+                  <button className="btn btn-primary btn-large animate-pulse" onClick={() => setIsRegisterModalOpen(true)}>
+                    📝 Inscribirse al Laboratorio de Animación Educativa
+                  </button>
+                </div>
               </div>
             </section>
           </div>
@@ -1576,6 +1773,161 @@ function App() {
           </div>
         </div>
       )}
+
+      {/* Registration Modal for Laboratorios */}
+      {isRegisterModalOpen && (
+        <div className="modal-overlay" onClick={() => setIsRegisterModalOpen(false)}>
+          <div className="modal-content card-glass register-modal-content animate-zoom-in" onClick={(e) => e.stopPropagation()}>
+            <button 
+              className="modal-close-btn" 
+              onClick={() => setIsRegisterModalOpen(false)}
+              aria-label="Cerrar formulario"
+            >
+              ✕
+            </button>
+            <div className="register-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px', padding: '10px 0' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span className="register-modal-icon" style={{ fontSize: '2rem' }}>📝</span>
+                <h2 className="gradient-text" style={{ fontSize: '2rem', margin: 0 }}>Inscripción al Laboratorio</h2>
+              </div>
+              <p className="register-modal-desc" style={{ color: 'var(--text-muted)', fontSize: '0.95rem', margin: 0 }}>
+                Completa tus datos para reservar tu cupo en las sesiones presenciales de animación educativa.
+              </p>
+
+              <form onSubmit={handleRegisterSubmit} className="register-modal-form" style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '10px' }}>
+                <div className="form-group-lab" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label htmlFor="reg-name" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-title)' }}>Nombre Completo</label>
+                  <input 
+                    id="reg-name"
+                    type="text" 
+                    placeholder="Escribe tu nombre y apellido"
+                    value={regName}
+                    onChange={(e) => setRegName(e.target.value)}
+                    required
+                    disabled={regLoading || regSuccess}
+                    style={{ background: 'rgba(147, 51, 234, 0.04)', border: '1px solid var(--border-color)', padding: '12px 16px', borderRadius: '12px', color: 'var(--text-main)', fontSize: '0.95rem', outline: 'none' }}
+                  />
+                </div>
+
+                <div className="form-group-lab" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label htmlFor="reg-phone" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-title)' }}>Teléfono / WhatsApp</label>
+                  <div className="phone-input-wrapper" style={{ display: 'flex', alignItems: 'stretch' }}>
+                    <span className="phone-prefix" style={{ display: 'flex', alignItems: 'center', background: 'rgba(147, 51, 234, 0.08)', border: '1px solid var(--border-color)', borderRight: 'none', padding: '0 14px', borderRadius: '12px 0 0 12px', fontSize: '0.95rem', fontWeight: 650, color: 'var(--text-title)', userSelect: 'none' }}>
+                      +502
+                    </span>
+                    <input 
+                      id="reg-phone"
+                      type="tel" 
+                      placeholder="4567 8901"
+                      maxLength={8}
+                      value={regPhone}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/[^0-9]/g, '');
+                        if (val.length <= 8) setRegPhone(val);
+                      }}
+                      required
+                      disabled={regLoading || regSuccess}
+                      style={{ flex: 1, background: 'rgba(147, 51, 234, 0.04)', border: '1px solid var(--border-color)', padding: '12px 16px', borderRadius: '0 12px 12px 0', color: 'var(--text-main)', fontSize: '0.95rem', outline: 'none' }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group-lab" style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  <label htmlFor="reg-school" style={{ fontSize: '0.85rem', fontWeight: 700, color: 'var(--text-title)' }}>Colegio o Instituto de enseñanza</label>
+                  <input 
+                    id="reg-school"
+                    type="text" 
+                    placeholder="Nombre del establecimiento educativo"
+                    value={regSchool}
+                    onChange={(e) => setRegSchool(e.target.value)}
+                    required
+                    disabled={regLoading || regSuccess}
+                    style={{ background: 'rgba(147, 51, 234, 0.04)', border: '1px solid var(--border-color)', padding: '12px 16px', borderRadius: '12px', color: 'var(--text-main)', fontSize: '0.95rem', outline: 'none' }}
+                  />
+                </div>
+
+                <div className="commitment-callout" style={{ background: 'rgba(245, 158, 11, 0.08)', borderLeft: '4px solid var(--warning)', padding: '12px 16px', borderRadius: '8px' }}>
+                  <p style={{ margin: 0, fontSize: '0.82rem', color: '#b45309', lineHeight: '1.4' }}>
+                    ⚠️ <strong>Nota de compromiso:</strong> El taller es completamente gratuito pero requiere de tu asistencia y participación constante en todas las sesiones presenciales del cronograma.
+                  </p>
+                </div>
+
+                <div className="checkbox-lab-container" style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', marginTop: '4px' }}>
+                  <input 
+                    id="reg-agree"
+                    type="checkbox"
+                    checked={regAgreed}
+                    onChange={(e) => setRegAgreed(e.target.checked)}
+                    disabled={regLoading || regSuccess}
+                    style={{ marginTop: '3px', cursor: 'pointer', width: '16px', height: '16px' }}
+                  />
+                  <label htmlFor="reg-agree" style={{ fontSize: '0.82rem', color: 'var(--text-main)', cursor: 'pointer', lineHeight: '1.4' }}>
+                    Acepto asistir presencialmente a los módulos y comprometerme con la formación.
+                  </label>
+                </div>
+
+                {regError && <div className="form-error-banner" style={{ color: 'var(--danger)', background: 'rgba(239, 68, 68, 0.1)', padding: '10px', borderRadius: '10px', fontSize: '0.85rem', textAlign: 'center', fontWeight: 600 }}>{regError}</div>}
+                {regSuccess && (
+                  <div className="form-success-banner" style={{ color: 'var(--secondary)', background: 'rgba(34, 197, 94, 0.1)', padding: '12px', borderRadius: '10px', fontSize: '0.9rem', textAlign: 'center', fontWeight: 700 }}>
+                    🎉 ¡Inscripción enviada con éxito! Tu cupo ha sido reservado.
+                  </div>
+                )}
+
+                <div className="register-form-actions" style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px' }}>
+                  <button 
+                    type="button" 
+                    className="btn btn-secondary btn-sm" 
+                    onClick={() => setIsRegisterModalOpen(false)}
+                    disabled={regLoading}
+                  >
+                    Cancelar
+                  </button>
+                  <button 
+                    type="submit" 
+                    className="btn btn-primary btn-sm"
+                    disabled={regLoading || regSuccess || !regAgreed}
+                  >
+                    {regLoading ? 'Enviando...' : 'Enviar Inscripción 🚀'}
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Floating Action Buttons */}
+      <div className="floating-action-buttons">
+        {/* Floating Cart Button */}
+        {cart.length > 0 && (
+          <button 
+            className="floating-btn floating-cart-btn animate-zoom-in"
+            onClick={() => navigateToTab('productos')}
+            aria-label="Ver carrito"
+          >
+            <span className="floating-icon">🛒</span>
+            <span className="floating-badge">{cart.length}</span>
+          </button>
+        )}
+        
+        {/* Floating WhatsApp Button */}
+        <div className="whatsapp-floating-wrapper">
+          <div className="whatsapp-tooltip">¿Necesitas ayuda? Escríbenos</div>
+          <a 
+            href="https://wa.me/50246741239" 
+            target="_blank" 
+            rel="noopener noreferrer" 
+            className="floating-btn floating-whatsapp-btn"
+            aria-label="Contactar por WhatsApp"
+          >
+            <span className="floating-icon">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.549 4.142 1.594 5.945L.057 24l6.326-1.666a11.844 11.844 0 005.666 1.442h.005c6.556 0 11.892-5.335 11.895-11.893a11.82 11.82 0 00-3.48-8.413Z" />
+              </svg>
+            </span>
+          </a>
+        </div>
+      </div>
     </div>
   );
 }
