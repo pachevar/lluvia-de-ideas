@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { collection, doc, addDoc, updateDoc, onSnapshot, query, limit, where } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { BingoGame, BingoCustomization } from '../../types';
@@ -48,6 +49,58 @@ const isBgLight = (hexColor: string) => {
 
 export default function AdminBingoTab() {
   const [activeGame, setActiveGame] = useState<BingoGame | null>(null);
+
+  // Custom Alert / Confirm Dialog State
+  const [dialogConfig, setDialogConfig] = useState<{
+    isOpen: boolean;
+    type: 'alert' | 'confirm';
+    title: string;
+    message: string;
+    icon: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  } | null>(null);
+
+  const showConfirm = (message: string, title: string = 'Confirmación', icon: string = '⚠️', confirmText: string = 'Aceptar', cancelText: string = 'Cancelar') => {
+    return new Promise<boolean>((resolve) => {
+      setDialogConfig({
+        isOpen: true,
+        type: 'confirm',
+        title,
+        message,
+        icon,
+        confirmText,
+        cancelText,
+        onConfirm: () => {
+          setDialogConfig(null);
+          resolve(true);
+        },
+        onCancel: () => {
+          setDialogConfig(null);
+          resolve(false);
+        }
+      });
+    });
+  };
+
+  const showAlert = (message: string, title: string = 'Mensaje', icon: string = '📢', confirmText: string = 'Entendido') => {
+    return new Promise<void>((resolve) => {
+      setDialogConfig({
+        isOpen: true,
+        type: 'alert',
+        title,
+        message,
+        icon,
+        confirmText,
+        onConfirm: () => {
+          setDialogConfig(null);
+          resolve();
+        }
+      });
+    });
+  };
   const [loading, setLoading] = useState(true);
   
   // Customization States
@@ -258,17 +311,17 @@ export default function AdminBingoTab() {
     }
   };
 
-  const addSponsor = () => {
+  const addSponsor = async () => {
     if (!newSponsorName.trim()) {
-      alert("Por favor escribe el nombre de la marca.");
+      await showAlert("Por favor escribe el nombre de la marca.", "Campos Requeridos", "🏷️");
       return;
     }
     if (!newSponsorLogo) {
-      alert("Por favor sube un logotipo para la marca.");
+      await showAlert("Por favor sube un logotipo para la marca.", "Campos Requeridos", "🖼️");
       return;
     }
     if (sponsorsList.length >= 10) {
-      alert("Has alcanzado el límite de 10 marcas patrocinadoras.");
+      await showAlert("Has alcanzado el límite de 10 marcas patrocinadoras.", "Límite Excedido", "⚠️");
       return;
     }
 
@@ -294,7 +347,7 @@ export default function AdminBingoTab() {
 
   const addMapping = async () => {
     if (!mappingLabel.trim()) {
-      alert("Por favor agrega una etiqueta para la figura.");
+      await showAlert("Por favor agrega una etiqueta para la figura.", "Campos Requeridos", "🏷️");
       return;
     }
     const updatedMap = {
@@ -348,8 +401,15 @@ export default function AdminBingoTab() {
     setCustomSubtitle(preset.subtitle);
   };
 
-  const restoreToDefaults = () => {
-    if (window.confirm('¿Estás seguro de que deseas restaurar la configuración visual y de temas por defecto del Bingo? Esto también borrará los mapeos de figuras personalizados.')) {
+  const restoreToDefaults = async () => {
+    const confirm = await showConfirm(
+      '¿Estás seguro de que deseas restaurar la configuración visual y de temas por defecto del Bingo? Esto también borrará los mapeos de figuras personalizados.',
+      'Restaurar Valores',
+      '⚠️',
+      'SÍ, RESTAURAR',
+      'CANCELAR'
+    );
+    if (confirm) {
       setGameTitle('Gran Bingo Familiar');
       setHeaderImage('');
       setPrimaryColor('#a855f7');
@@ -373,7 +433,7 @@ export default function AdminBingoTab() {
       setSponsorAudioAnnounce(false);
       setSponsorsList([]);
       
-      alert('Configuración restaurada a valores clásicos predeterminados. Recuerda guardar para aplicar en base de datos.');
+      await showAlert('Configuración restaurada a valores clásicos predeterminados. Recuerda guardar para aplicar en base de datos.', 'Restauración Exitosa', '🔄');
     }
   };
 
@@ -391,9 +451,9 @@ export default function AdminBingoTab() {
     return false;
   };
 
-  const playVoiceDemo = () => {
+  const playVoiceDemo = async () => {
     if (!('speechSynthesis' in window)) {
-      alert("Tu navegador no soporta síntesis de voz.");
+      await showAlert("Tu navegador no soporta síntesis de voz.", "Función No Soportada", "🔊");
       return;
     }
     window.speechSynthesis.cancel();
@@ -455,10 +515,10 @@ export default function AdminBingoTab() {
         winningPattern: winningPattern,
         customization: getCustomizationObject()
       });
-      alert("¡Configuración visual y de juego guardada! 🎉");
+      await showAlert("¡Configuración visual y de juego guardada! 🎉", "Guardado Exitoso", "💾");
     } catch (err) {
       console.error(err);
-      alert("Error al actualizar la personalización.");
+      await showAlert("Error al actualizar la personalización.", "Error", "❌");
     }
   };
 
@@ -477,10 +537,10 @@ export default function AdminBingoTab() {
         active: true,
         customization: getCustomizationObject()
       });
-      alert("¡Bingo creado! La tómbola y la configuración ya están disponibles en Juegos Interactivos.");
+      await showAlert("¡Bingo creado! La tómbola y la configuración ya están disponibles en Juegos Interactivos.", "Juego Creado", "🚀");
     } catch (err) {
       console.error(err);
-      alert("Error al crear el juego.");
+      await showAlert("Error al crear el juego.", "Error", "❌");
     }
   };
 
@@ -1343,9 +1403,9 @@ export default function AdminBingoTab() {
                 <button
                   key={preset.id}
                   type="button"
-                  onClick={() => {
+                  onClick={async () => {
                     applyPreset(preset);
-                    alert(`¡Preset "${preset.name}" cargado! Recuerda hacer clic en "Guardar Cambios Visuales" al final.`);
+                    await showAlert(`¡Preset "${preset.name}" cargado! Recuerda hacer clic en "Guardar Cambios Visuales" al final.`, "Preset Cargado", "🎨");
                   }}
                   style={{
                     display: 'flex',
@@ -1640,6 +1700,61 @@ export default function AdminBingoTab() {
           </button>
         )}
       </div>
+
+      {/* Custom Alert/Confirm Modal */}
+      {dialogConfig?.isOpen && createPortal(
+        <div className="player-modal-overlay" style={{ zIndex: 999999 }} onClick={() => {
+          if (dialogConfig.type === 'alert' && dialogConfig.onConfirm) {
+            dialogConfig.onConfirm();
+          } else if (dialogConfig.type === 'confirm' && dialogConfig.onCancel) {
+            dialogConfig.onCancel();
+          }
+        }}>
+          <div className="player-modal" onClick={(e) => e.stopPropagation()} style={{ 
+            borderColor: primaryColor || 'var(--cyber-primary)',
+            boxShadow: `0 0 25px ${(primaryColor || '#a855f7')}55`
+          }}>
+            <span className="player-modal-icon" style={{ fontSize: '3rem', display: 'block', marginBottom: '10px' }}>
+              {dialogConfig.icon}
+            </span>
+            <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-gamer)', color: '#fff', marginBottom: '12px' }}>
+              {dialogConfig.title}
+            </h3>
+            <p style={{ fontSize: '0.9rem', lineHeight: '1.4', marginBottom: '20px', color: '#e2dbf0' }}>
+              {dialogConfig.message}
+            </p>
+            <div className="player-modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              {dialogConfig.type === 'confirm' && (
+                <button
+                  className="btn-modal-cancel"
+                  onClick={dialogConfig.onCancel}
+                  style={{ flex: 1, padding: '10px', fontSize: '0.85rem' }}
+                >
+                  {dialogConfig.cancelText || 'Cancelar'}
+                </button>
+              )}
+              <button
+                className="btn btn-primary"
+                onClick={dialogConfig.onConfirm}
+                style={{ 
+                  flex: 1, 
+                  padding: '10px', 
+                  fontSize: '0.85rem', 
+                  background: primaryColor || 'var(--cyber-primary)', 
+                  borderRadius: '10px',
+                  border: 'none',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                {dialogConfig.confirmText || 'Aceptar'}
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
     </div>
   );
 }

@@ -51,6 +51,58 @@ export default function BingoHub() {
   // Scrolling terminal logs
   const [systemLogs, setSystemLogs] = useState<{ time: string; text: string; type: string }[]>([]);
 
+  // Custom Alert / Confirm Dialog State
+  const [dialogConfig, setDialogConfig] = useState<{
+    isOpen: boolean;
+    type: 'alert' | 'confirm';
+    title: string;
+    message: string;
+    icon: string;
+    confirmText?: string;
+    cancelText?: string;
+    onConfirm?: () => void;
+    onCancel?: () => void;
+  } | null>(null);
+
+  const showConfirm = (message: string, title: string = 'Confirmación', icon: string = '⚠️', confirmText: string = 'Aceptar', cancelText: string = 'Cancelar') => {
+    return new Promise<boolean>((resolve) => {
+      setDialogConfig({
+        isOpen: true,
+        type: 'confirm',
+        title,
+        message,
+        icon,
+        confirmText,
+        cancelText,
+        onConfirm: () => {
+          setDialogConfig(null);
+          resolve(true);
+        },
+        onCancel: () => {
+          setDialogConfig(null);
+          resolve(false);
+        }
+      });
+    });
+  };
+
+  const showAlert = (message: string, title: string = 'Mensaje', icon: string = '📢', confirmText: string = 'Entendido') => {
+    return new Promise<void>((resolve) => {
+      setDialogConfig({
+        isOpen: true,
+        type: 'alert',
+        title,
+        message,
+        icon,
+        confirmText,
+        onConfirm: () => {
+          setDialogConfig(null);
+          resolve();
+        }
+      });
+    });
+  };
+
   const addLog = (text: string, type: 'system' | 'success' | 'warning' = 'system') => {
     const time = new Date().toLocaleTimeString('es-GT', { hour12: false });
     setSystemLogs(prev => [{ time, text, type }, ...prev].slice(0, 30));
@@ -203,11 +255,11 @@ export default function BingoHub() {
         return copy;
       });
       
-      alert(`🏆 ¡Ganador ${card.playerName} registrado con éxito en el historial!`);
+      await showAlert(`¡Ganador ${card.playerName} registrado con éxito en el historial!`, "Ganador Confirmado", "🏆");
       addLog(`HOST: Ganador confirmado -> ${card.playerName} (Cartón ${card.id})`, "success");
     } catch (err) {
       console.error(err);
-      alert("Error al guardar en el historial de ganadores.");
+      await showAlert("Error al guardar en el historial de ganadores.", "Error", "❌");
     }
   };
 
@@ -353,7 +405,7 @@ export default function BingoHub() {
     if (!activeGame) return;
     const maxBalls = 75;
     if (activeGame.drawnNumbers.length >= maxBalls) {
-      alert("¡Ya se sacaron todas las bolas!");
+      await showAlert("¡Ya se sacaron todas las bolas!", "Juego Completado", "🎱");
       return;
     }
 
@@ -375,7 +427,14 @@ export default function BingoHub() {
 
   const handleRestartGame = async () => {
     if (!activeGame) return;
-    if (window.confirm("⚠️ ¿Estás seguro de que deseas REINICIAR la tómbola? Se vaciarán todas las bolas cantadas y se regresará a la etapa de registro de jugadores. Esta acción no se puede deshacer.")) {
+    const confirm = await showConfirm(
+      "¿Estás seguro de que deseas REINICIAR la tómbola? Se vaciarán todas las bolas cantadas y se regresará a la etapa de registro de jugadores. Esta acción no se puede deshacer.",
+      "Reiniciar Partida",
+      "⚠️",
+      "SÍ, REINICIAR",
+      "CANCELAR"
+    );
+    if (confirm) {
       try {
         await updateDoc(doc(db, 'bingo_games', activeGame.id), {
           drawnNumbers: [],
@@ -387,7 +446,7 @@ export default function BingoHub() {
         addLog("HOST: Partida reiniciada correctamente.", "warning");
       } catch (err) {
         console.error(err);
-        alert("Error al reiniciar la partida.");
+        await showAlert("Error al reiniciar la partida.", "Error", "❌");
       }
     }
   };
@@ -416,7 +475,7 @@ export default function BingoHub() {
           matrix
         };
         if (cardData.gameId !== activeGame.id) {
-          alert("Este cartón no pertenece al juego activo.");
+          await showAlert("Este cartón no pertenece al juego activo.", "Validación", "❌");
           return;
         }
 
@@ -430,16 +489,23 @@ export default function BingoHub() {
         }));
         addLog(`HOST: Validación de cartón completada para ${cardData.playerName}. Resultado: ${result.isWinner ? 'GANADOR' : 'INCOMPLETO'}`);
       } else {
-        alert("Cartón no encontrado. Verifica el ID.");
+        await showAlert("Cartón no encontrado. Verifica el ID.", "Validación", "🔍");
       }
     } catch (err) {
       console.error(err);
-      alert("Error al validar el cartón.");
+      await showAlert("Error al validar el cartón.", "Error", "❌");
     }
   };
 
   const handleDeletePlayer = async (cardId: string, playerName: string) => {
-    if (!window.confirm(`¿Seguro que deseas eliminar al jugador "${playerName}" de esta sesión de Bingo? Su cartón dejará de ser válido.`)) {
+    const confirm = await showConfirm(
+      `¿Seguro que deseas eliminar al jugador "${playerName}" de esta sesión de Bingo? Su cartón dejará de ser válido.`,
+      "Eliminar Jugador",
+      "👤",
+      "ELIMINAR",
+      "CANCELAR"
+    );
+    if (!confirm) {
       return;
     }
     try {
@@ -447,13 +513,20 @@ export default function BingoHub() {
       addLog(`HOST: Jugador "${playerName}" eliminado por el Host.`, "warning");
     } catch (err) {
       console.error(err);
-      alert("Error al eliminar el jugador.");
+      await showAlert("Error al eliminar el jugador.", "Error", "❌");
     }
   };
 
   const handleClearAllPlayers = async () => {
     if (!activeGame) return;
-    if (!window.confirm(`⚠️ ADVERTENCIA CRÍTICA:\n¿Seguro que deseas eliminar a TODOS los (${registeredCards.length}) jugadores inscritos de esta sesión?\nEsta acción no se puede deshacer y todos los cartones activos quedarán invalidados.`)) {
+    const confirm = await showConfirm(
+      `¿Seguro que deseas eliminar a TODOS los (${registeredCards.length}) jugadores inscritos de esta sesión? Esta acción no se puede deshacer y todos los cartones activos quedarán invalidados.`,
+      "ADVERTENCIA CRÍTICA",
+      "⚠️",
+      "SÍ, ELIMINAR TODOS",
+      "CANCELAR"
+    );
+    if (!confirm) {
       return;
     }
     try {
@@ -461,10 +534,10 @@ export default function BingoHub() {
       await Promise.all(deletePromises);
       
       addLog(`HOST: Se han limpiado todos los jugadores inscritos de la sesión.`, "warning");
-      alert("¡Todos los jugadores inscritos han sido eliminados de la sesión! 🧹");
+      await showAlert("¡Todos los jugadores inscritos han sido eliminados de la sesión! 🧹", "Sesión Limpia", "🧹");
     } catch (err) {
       console.error(err);
-      alert("Error al limpiar los jugadores.");
+      await showAlert("Error al limpiar los jugadores.", "Error", "❌");
     }
   };
 
@@ -1333,6 +1406,61 @@ export default function BingoHub() {
             >
               Continuar Juego ➔
             </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* Custom Alert/Confirm Modal */}
+      {dialogConfig?.isOpen && createPortal(
+        <div className="player-modal-overlay" style={{ zIndex: 999999 }} onClick={() => {
+          if (dialogConfig.type === 'alert' && dialogConfig.onConfirm) {
+            dialogConfig.onConfirm();
+          } else if (dialogConfig.type === 'confirm' && dialogConfig.onCancel) {
+            dialogConfig.onCancel();
+          }
+        }}>
+          <div className="player-modal" onClick={(e) => e.stopPropagation()} style={{ 
+            borderColor: activeGame?.customization?.primaryColor || 'var(--cyber-primary)',
+            boxShadow: `0 0 25px ${(activeGame?.customization?.primaryColor || '#a855f7')}55`
+          }}>
+            <span className="player-modal-icon" style={{ fontSize: '3rem', display: 'block', marginBottom: '10px' }}>
+              {dialogConfig.icon}
+            </span>
+            <h3 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-gamer)', color: '#fff', marginBottom: '12px' }}>
+              {dialogConfig.title}
+            </h3>
+            <p style={{ fontSize: '0.9rem', lineHeight: '1.4', marginBottom: '20px', color: '#e2dbf0' }}>
+              {dialogConfig.message}
+            </p>
+            <div className="player-modal-actions" style={{ display: 'flex', gap: '10px', justifyContent: 'center' }}>
+              {dialogConfig.type === 'confirm' && (
+                <button
+                  className="btn-modal-cancel"
+                  onClick={dialogConfig.onCancel}
+                  style={{ flex: 1, padding: '10px', fontSize: '0.85rem' }}
+                >
+                  {dialogConfig.cancelText || 'Cancelar'}
+                </button>
+              )}
+              <button
+                className="btn btn-primary"
+                onClick={dialogConfig.onConfirm}
+                style={{ 
+                  flex: 1, 
+                  padding: '10px', 
+                  fontSize: '0.85rem', 
+                  background: activeGame?.customization?.primaryColor || 'var(--cyber-primary)', 
+                  borderRadius: '10px',
+                  border: 'none',
+                  color: '#fff',
+                  fontWeight: 'bold',
+                  cursor: 'pointer'
+                }}
+              >
+                {dialogConfig.confirmText || 'Aceptar'}
+              </button>
+            </div>
           </div>
         </div>,
         document.body
