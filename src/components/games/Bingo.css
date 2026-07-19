@@ -2224,3 +2224,74 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
+/* Live balls ticker and responsive badges */
+.live-balls-ticker {
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-bottom: 4px;
+}
+
+.live-balls-ticker-label {
+  font-size: 0.85rem;
+  color: #fff;
+  opacity: 0.9;
+  flex-shrink: 0;
+}
+
+.live-balls-ticker-empty {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+}
+
+.live-ball-badge {
+  color: #ffffff;
+  padding: 3px 6px;
+  border-radius: 8px;
+  font-weight: bold;
+  font-size: 0.78rem;
+  font-family: monospace;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  transition: all 0.3s;
+  flex-shrink: 0;
+}
+
+.live-ball-badge.latest {
+  padding: 4px 8px;
+  font-size: 0.9rem;
+}
+
+.live-ball-letter {
+  font-weight: 900;
+}
+
+.live-ball-number {
+  opacity: 0.85;
+}
+
+.live-ball-badge.latest .live-ball-number {
+  opacity: 1;
+}
+
+@media (max-width: 576px) {
+  .live-balls-ticker {
+    gap: 6px;
+  }
+  .live-balls-ticker-label {
+    font-size: 0.78rem;
+  }
+  .live-ball-badge {
+    padding: 2px 5px;
+    font-size: 0.72rem;
+    border-radius: 6px;
+  }
+  .live-ball-badge.latest {
+    padding: 3px 6px;
+    font-size: 0.8rem;
+  }
+}
+

@@ -520,17 +520,10 @@ export default function BingoCardView() {
         </div>
 
         {gameData.status === 'playing' && (
-          <div className="live-balls-ticker" style={{ 
-            marginTop: '15px', 
-            display: 'flex', 
-            alignItems: 'center', 
-            gap: '8px', 
-            overflowX: 'auto',
-            paddingBottom: '4px' 
-          }}>
-            <strong style={{ fontSize: '0.85rem', color: '#fff', opacity: 0.9, flexShrink: 0 }}>Últimas bolas:</strong>
+          <div className="live-balls-ticker">
+            <strong className="live-balls-ticker-label">Últimas bolas:</strong>
             {gameData.drawnNumbers.length === 0 ? (
-              <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Aún ninguna</span>
+              <span className="live-balls-ticker-empty">Aún ninguna</span>
             ) : (
               gameData.drawnNumbers.slice(-4).map((num, i, arr) => {
                 const isLatest = i === arr.length - 1;
@@ -541,28 +534,17 @@ export default function BingoCardView() {
                 if (num > 60 && num <= 75) letter = 'O';
                 
                 return (
-                  <span key={i} style={{
+                  <span key={i} className={`live-ball-badge ${isLatest ? 'latest' : ''}`} style={{
                     background: isLatest 
                       ? `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)` 
                       : 'rgba(255, 255, 255, 0.08)',
-                    color: '#ffffff',
-                    padding: isLatest ? '4px 8px' : '3px 6px',
-                    borderRadius: '8px',
-                    fontWeight: 'bold',
-                    fontSize: isLatest ? '0.9rem' : '0.78rem',
                     border: isLatest 
                       ? `1px solid ${accentColor}` 
                       : '1px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: isLatest ? `0 0 10px ${primaryColor}44` : 'none',
-                    fontFamily: 'monospace',
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '2px',
-                    transition: 'all 0.3s',
-                    flexShrink: 0
+                    boxShadow: isLatest ? `0 0 10px ${primaryColor}44` : 'none'
                   }}>
-                    <span style={{ color: isLatest ? '#fff' : primaryColor, fontWeight: 900 }}>{letter}</span>
-                    <span style={{ opacity: isLatest ? 1 : 0.85 }}>{num}</span>
+                    <span className="live-ball-letter" style={{ color: isLatest ? '#fff' : primaryColor }}>{letter}</span>
+                    <span className="live-ball-number">{num}</span>
                   </span>
                 );
               })
