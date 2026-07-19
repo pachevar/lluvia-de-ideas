@@ -501,24 +501,52 @@ export default function BingoCardView() {
         </div>
 
         {gameData.status === 'playing' && (
-          <div className="live-balls-ticker" style={{ marginTop: '15px', display: 'flex', alignItems: 'center', gap: '10px', overflowX: 'auto' }}>
-            <strong style={{ fontSize: '0.9rem', color: primaryColor }}>Últimas bolas:</strong>
+          <div className="live-balls-ticker" style={{ 
+            marginTop: '15px', 
+            display: 'flex', 
+            alignItems: 'center', 
+            gap: '8px', 
+            overflowX: 'auto',
+            paddingBottom: '4px' 
+          }}>
+            <strong style={{ fontSize: '0.85rem', color: '#fff', opacity: 0.9, flexShrink: 0 }}>Últimas bolas:</strong>
             {gameData.drawnNumbers.length === 0 ? (
               <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)' }}>Aún ninguna</span>
             ) : (
-              gameData.drawnNumbers.slice(-4).map((num, i, arr) => (
-                <span key={i} style={{
-                  background: i === arr.length - 1 ? primaryColor : 'rgba(0,0,0,0.05)',
-                  color: i === arr.length - 1 ? 'white' : 'var(--text-title)',
-                  padding: '6px 12px',
-                  borderRadius: '20px',
-                  fontWeight: i === arr.length - 1 ? 'bold' : 'normal',
-                  fontSize: i === arr.length - 1 ? '1.1rem' : '0.9rem',
-                  transition: 'all 0.3s'
-                }}>
-                  {num}
-                </span>
-              ))
+              gameData.drawnNumbers.slice(-4).map((num, i, arr) => {
+                const isLatest = i === arr.length - 1;
+                let letter = 'B';
+                if (num > 15 && num <= 30) letter = 'I';
+                if (num > 30 && num <= 45) letter = 'N';
+                if (num > 45 && num <= 60) letter = 'G';
+                if (num > 60 && num <= 75) letter = 'O';
+                
+                return (
+                  <span key={i} style={{
+                    background: isLatest 
+                      ? `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)` 
+                      : 'rgba(255, 255, 255, 0.08)',
+                    color: '#ffffff',
+                    padding: isLatest ? '4px 8px' : '3px 6px',
+                    borderRadius: '8px',
+                    fontWeight: 'bold',
+                    fontSize: isLatest ? '0.9rem' : '0.78rem',
+                    border: isLatest 
+                      ? `1px solid ${accentColor}` 
+                      : '1px solid rgba(255, 255, 255, 0.15)',
+                    boxShadow: isLatest ? `0 0 10px ${primaryColor}44` : 'none',
+                    fontFamily: 'monospace',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '2px',
+                    transition: 'all 0.3s',
+                    flexShrink: 0
+                  }}>
+                    <span style={{ color: isLatest ? '#fff' : primaryColor, fontWeight: 900 }}>{letter}</span>
+                    <span style={{ opacity: isLatest ? 1 : 0.85 }}>{num}</span>
+                  </span>
+                );
+              })
             )}
           </div>
         )}
