@@ -346,10 +346,10 @@ export default function BingoCardView() {
         className="bingo-card-view-pane theme-classic" 
         style={{ 
           display: 'flex', 
-          alignItems: 'center', 
+          alignItems: 'flex-start', 
           justifyContent: 'center', 
           minHeight: '100vh',
-          padding: '20px'
+          padding: '80px 20px 20px'
         }}
       >
         <div 
