@@ -349,8 +349,7 @@ export default function BingoCardView() {
           alignItems: 'center', 
           justifyContent: 'center', 
           minHeight: '100vh',
-          padding: '20px',
-          background: '#06020f'
+          padding: '20px'
         }}
       >
         <div 
@@ -362,7 +361,7 @@ export default function BingoCardView() {
             borderRadius: '24px',
             border: '2px solid #a855f7',
             boxShadow: '0 0 30px rgba(168, 85, 247, 0.25)',
-            background: 'rgba(13, 6, 28, 0.85)',
+            background: 'rgba(13, 6, 28, 0.96)',
             backdropFilter: 'blur(15px)',
             WebkitBackdropFilter: 'blur(15px)',
             display: 'flex',
