@@ -2377,3 +2377,129 @@
   }
 }
 
+/* ==========================================================================
+   WINNER TICKET VOUCHER DESIGN (html2canvas source)
+   ========================================================================== */
+.winner-ticket-canvas-source {
+  width: 380px;
+  background: radial-gradient(circle at 10% 20%, #171033 0%, #06020f 100%);
+  border: 3px solid #22c55e;
+  border-radius: 20px;
+  padding: 30px;
+  color: #ffffff;
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  box-shadow: 0 0 35px rgba(34, 197, 94, 0.4);
+  position: absolute;
+  left: -9999px;
+  top: 0;
+}
+
+.ticket-header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  text-align: center;
+  width: 100%;
+}
+
+.ticket-title {
+  font-family: 'Orbitron', sans-serif;
+  font-weight: 900;
+  font-size: 1.4rem;
+  letter-spacing: 2px;
+  color: #ffffff;
+  text-shadow: 0 0 10px rgba(0, 240, 255, 0.5);
+  margin: 0;
+}
+
+.ticket-subtitle {
+  font-size: 0.75rem;
+  color: #00f0ff;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  opacity: 0.9;
+  margin: 0;
+}
+
+.ticket-divider {
+  width: 100%;
+  border: none;
+  border-top: 2px dashed rgba(255, 255, 255, 0.2);
+  margin: 5px 0;
+}
+
+.ticket-badge-verified {
+  background: rgba(34, 197, 94, 0.12);
+  color: #39ff14;
+  border: 1.5px solid rgba(57, 255, 20, 0.4);
+  border-radius: 50px;
+  padding: 6px 16px;
+  font-size: 0.75rem;
+  font-weight: bold;
+  font-family: 'Orbitron', sans-serif;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.2);
+}
+
+.ticket-info-grid {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin: 10px 0;
+}
+
+.ticket-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  font-size: 0.85rem;
+}
+
+.ticket-info-row .label {
+  color: #8c7e9f;
+  text-transform: uppercase;
+  font-size: 0.7rem;
+  letter-spacing: 0.5px;
+}
+
+.ticket-info-row .value {
+  font-weight: bold;
+  color: #ffffff;
+}
+
+.ticket-info-row .value.highlight {
+  color: #39ff14;
+  font-size: 0.95rem;
+}
+
+.ticket-info-row .value.code {
+  font-family: monospace;
+  color: #00f0ff;
+  font-size: 1.05rem;
+  background: rgba(0, 0, 0, 0.4);
+  padding: 4px 10px;
+  border-radius: 6px;
+  border: 1px solid rgba(0, 240, 255, 0.25);
+  letter-spacing: 0.5px;
+}
+
+.ticket-footer {
+  text-align: center;
+  font-size: 0.65rem;
+  color: #8c7e9f;
+  margin-top: 5px;
+  line-height: 1.4;
+  width: 100%;
+}
+

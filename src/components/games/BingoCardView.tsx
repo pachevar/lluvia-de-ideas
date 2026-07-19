@@ -5,6 +5,7 @@ import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { BingoCard, BingoGame } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
+import html2canvas from 'html2canvas';
 import './Bingo.css';
 
 interface ConfettiParticle {
@@ -23,6 +24,33 @@ export default function BingoCardView() {
   const [gameData, setGameData] = useState<BingoGame | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
+  const ticketRef = useRef<HTMLDivElement>(null);
+  const [isDownloading, setIsDownloading] = useState(false);
+
+  const downloadWinnerTicket = async () => {
+    if (!ticketRef.current || !cardData || !gameData) return;
+    setIsDownloading(true);
+    try {
+      const canvas = await html2canvas(ticketRef.current, {
+        scale: 3,
+        backgroundColor: null,
+        logging: false,
+        useCORS: true
+      });
+
+      const image = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      link.href = image;
+      link.download = `Ticket_Ganador_Bingo_${cardData.playerName.replace(/\s+/g, '_')}.png`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    } catch (err) {
+      console.error("Error al generar la imagen del ticket:", err);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   // Local state for marked slots
   const [markedSlots, setMarkedSlots] = useState<boolean[][]>(Array(5).fill(null).map(() => Array(5).fill(false)));
@@ -1098,7 +1126,89 @@ export default function BingoCardView() {
             <div className="player-modal-code" style={{ fontSize: '1.3rem', borderColor: '#22c55e', color: '#22c55e', padding: '8px 16px', background: 'rgba(34, 197, 94, 0.1)', borderRadius: '8px', border: '1px solid #22c55e', fontFamily: 'monospace', fontWeight: 'bold', margin: '20px auto', display: 'inline-block' }}>
               🔑 Código: #{cartonId}
             </div>
+            
+            {/* Elemento oculto para captura del Ticket de Ganador */}
+            <div ref={ticketRef} className="winner-ticket-canvas-source">
+              <div className="ticket-header">
+                <span style={{ fontSize: '3rem' }}>🏆</span>
+                <h3 className="ticket-title">BINGO VIRTUAL</h3>
+                <p className="ticket-subtitle">Lluvia de Ideas Editorial</p>
+              </div>
+              
+              <div className="ticket-divider"></div>
+              
+              <div className="ticket-badge-verified">
+                🟢 Verificado por Host
+              </div>
+              
+              <div className="ticket-info-grid">
+                <div className="ticket-info-row">
+                  <span className="label">Jugador:</span>
+                  <span className="value highlight">{cardData.playerName}</span>
+                </div>
+                <div className="ticket-info-row">
+                  <span className="label">Código de Reclamo:</span>
+                  <span className="value code">#{cartonId}</span>
+                </div>
+                <div className="ticket-info-row">
+                  <span className="label">Patrón Ganador:</span>
+                  <span className="value">
+                    {gameData.winningPattern === 'full' && 'Cartón Lleno'}
+                    {gameData.winningPattern === 'line' && 'Línea'}
+                    {gameData.winningPattern === 'diagonal' && 'Diagonal'}
+                    {gameData.winningPattern === 'four_corners' && '4 Esquinas'}
+                  </span>
+                </div>
+                <div className="ticket-info-row">
+                  <span className="label">Sesión:</span>
+                  <span className="value">{gameData.title}</span>
+                </div>
+                <div className="ticket-info-row">
+                  <span className="label">Fecha y Hora:</span>
+                  <span className="value" style={{ fontSize: '0.8rem' }}>
+                    {new Date().toLocaleString('es-GT', { timeZone: 'America/Guatemala' })}
+                  </span>
+                </div>
+              </div>
+              
+              <div className="ticket-divider"></div>
+              
+              <div className="ticket-footer">
+                Presenta esta imagen al organizador<br />
+                para validar y reclamar tu premio.
+              </div>
+            </div>
+
             <div className="player-modal-actions" style={{ width: '100%' }}>
+              <button
+                className="btn btn-primary"
+                onClick={downloadWinnerTicket}
+                disabled={isDownloading}
+                style={{
+                  width: '100%',
+                  padding: '12px 32px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #00f0ff 0%, #0284c7 100%)',
+                  color: '#ffffff',
+                  border: 'none',
+                  fontWeight: 'bold',
+                  fontSize: '1.05rem',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 15px rgba(0, 240, 255, 0.3)',
+                  marginBottom: '12px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '8px'
+                }}
+              >
+                {isDownloading ? (
+                  <>⌛ Generando Ticket...</>
+                ) : (
+                  <>📸 Guardar Ticket de Premio</>
+                )}
+              </button>
+
               <button
                 className="btn btn-primary"
                 onClick={() => setWinnerDismissed(true)}
