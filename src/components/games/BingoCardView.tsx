@@ -122,8 +122,27 @@ export default function BingoCardView() {
     if (spanishVoice) {
       utterance.voice = spanishVoice;
     } else {
-      utterance.lang = 'es-ES';
+      utterance.lang = 'es-GT';
     }
+    utterance.pitch = 1.0;
+    utterance.rate = 0.9;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  const speakConfirmation = () => {
+    if (!('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance("Cantar bolas activado");
+    
+    const voices = window.speechSynthesis.getVoices();
+    const spanishVoice = voices.find(v => v.lang.startsWith('es'));
+    if (spanishVoice) {
+      utterance.voice = spanishVoice;
+    } else {
+      utterance.lang = 'es-GT';
+    }
+    utterance.pitch = 1.0;
+    utterance.rate = 1.0;
     window.speechSynthesis.speak(utterance);
   };
 
@@ -577,7 +596,7 @@ export default function BingoCardView() {
           </label>
         </div>
 
-        {/* Voice Mode (TTS) Switch */}
+        {/* Voice Mode Switch */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -587,15 +606,19 @@ export default function BingoCardView() {
           paddingTop: '10px'
         }}>
           <span style={{ fontSize: '0.8rem', color: '#fff', opacity: 0.9, fontWeight: 'bold' }}>
-            🔊 Cantar bolas por voz (TTS)
+            🔊 Cantar bolas por voz
           </span>
           <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0 }}>
             <input 
               type="checkbox" 
               checked={voiceMode}
               onChange={(e) => {
-                setVoiceMode(e.target.checked);
-                localStorage.setItem('bingo_voice_mode', e.target.checked ? 'true' : 'false');
+                const checked = e.target.checked;
+                setVoiceMode(checked);
+                localStorage.setItem('bingo_voice_mode', checked ? 'true' : 'false');
+                if (checked) {
+                  speakConfirmation();
+                }
               }}
             />
             <span className="cyber-slider"></span>
