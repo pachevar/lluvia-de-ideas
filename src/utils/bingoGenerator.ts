@@ -163,3 +163,97 @@ export const validateBingoCard = (
 export const validateFullCard = (matrix: (number | null)[][], drawnNumbers: number[]): { isWinner: boolean, missingNumbers: number[] } => {
   return validateBingoCard(matrix, drawnNumbers, 'full');
 };
+
+/**
+ * Compara dos matrices de cartones de Bingo para detectar si hay una colisión crítica.
+ * Devuelve true si los cartones son demasiado similares o tienen el mismo conjunto ganador
+ * en patrones clave (esquinas, diagonales, líneas o > 12 números en común).
+ */
+export const checkCardCollision = (
+  matrixA: (number | null)[][], 
+  matrixB: (number | null)[][]
+): boolean => {
+  const getNumbers = (matrix: (number | null)[][]): Set<number> => {
+    const s = new Set<number>();
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const val = matrix[r][c];
+        if (val !== null) s.add(val);
+      }
+    }
+    return s;
+  };
+
+  const setA = getNumbers(matrixA);
+  const setB = getNumbers(matrixB);
+
+  // 1. Similitud Excesiva (más de 12 números en común de 24 posibles)
+  let intersectionCount = 0;
+  for (const num of setA) {
+    if (setB.has(num)) {
+      intersectionCount++;
+    }
+  }
+  if (intersectionCount > 12) return true;
+
+  // 2. Colisión en las Cuatro Esquinas
+  const cornersA = new Set([matrixA[0][0], matrixA[0][4], matrixA[4][0], matrixA[4][4]]);
+  const cornersB = new Set([matrixB[0][0], matrixB[0][4], matrixB[4][0], matrixB[4][4]]);
+  let cornerMatches = 0;
+  for (const val of cornersA) {
+    if (cornersB.has(val)) cornerMatches++;
+  }
+  if (cornerMatches === 4) return true;
+
+  // 3. Colisión en Diagonales (excluyendo el centro null)
+  const getDiag1 = (m: (number | null)[][]) => [m[0][0], m[1][1], m[3][3], m[4][4]].filter((v): v is number => v !== null);
+  const getDiag2 = (m: (number | null)[][]) => [m[0][4], m[1][3], m[3][1], m[4][0]].filter((v): v is number => v !== null);
+
+  const diag1A = new Set(getDiag1(matrixA));
+  const diag1B = new Set(getDiag1(matrixB));
+  const diag2A = new Set(getDiag2(matrixA));
+  const diag2B = new Set(getDiag2(matrixB));
+
+  const compareSets = (sA: Set<any>, sB: Set<any>) => {
+    if (sA.size !== sB.size) return false;
+    for (const val of sA) {
+      if (!sB.has(val)) return false;
+    }
+    return true;
+  };
+
+  // Comparar diag1 con diag1 y diag2 con diag2
+  if (compareSets(diag1A, diag1B) || compareSets(diag2A, diag2B)) return true;
+  // Comparar de forma cruzada diag1 con diag2
+  if (compareSets(diag1A, diag2B) || compareSets(diag2A, diag1B)) return true;
+
+  // 4. Colisión en Líneas (Filas o Columnas completas)
+  const getLines = (m: (number | null)[][]): Set<number>[] => {
+    const lines: Set<number>[] = [];
+    // Filas
+    for (let r = 0; r < 5; r++) {
+      const line = m[r].filter((v): v is number => v !== null);
+      lines.push(new Set(line));
+    }
+    // Columnas
+    for (let c = 0; c < 5; c++) {
+      const line = [];
+      for (let r = 0; r < 5; r++) {
+        if (m[r][c] !== null) line.push(m[r][c] as number);
+      }
+      lines.push(new Set(line));
+    }
+    return lines;
+  };
+
+  const linesA = getLines(matrixA);
+  const linesB = getLines(matrixB);
+
+  for (const lineA of linesA) {
+    for (const lineB of linesB) {
+      if (compareSets(lineA, lineB)) return true;
+    }
+  }
+
+  return false;
+};

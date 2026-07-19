@@ -1,10 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { collection, query, where, onSnapshot, getDocs, limit, updateDoc, doc, setDoc, getDoc, addDoc, orderBy, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, orderBy, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import type { BingoGame, BingoCard } from '../../types';
-import { generateBingoMatrix, hashBingoMatrix, validateBingoCard } from '../../utils/bingoGenerator';
+import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardCollision } from '../../utils/bingoGenerator';
 import './Bingo.css';
 
 // Import book covers for gaming-themed advertising banners
@@ -551,17 +551,25 @@ export default function BingoHub() {
     try {
       let matrix = generateBingoMatrix();
       let hash = hashBingoMatrix(matrix);
-      let isUnique = false;
+      let isCardAcceptable = false;
+      let attempts = 0;
 
-      while (!isUnique) {
-        const hashQuery = query(
-          collection(db, 'bingo_cards'),
-          where('gameId', '==', activeGame.id),
-          where('hash', '==', hash)
-        );
-        const hashDocs = await getDocs(hashQuery);
-        if (hashDocs.empty) {
-          isUnique = true;
+      while (!isCardAcceptable && attempts < 500) {
+        attempts++;
+        const hasCollision = registeredCards.some(otherCard => {
+          if (!otherCard.matrix) return false;
+          const otherMatrix = [
+            otherCard.matrix.r0,
+            otherCard.matrix.r1,
+            otherCard.matrix.r2,
+            otherCard.matrix.r3,
+            otherCard.matrix.r4
+          ];
+          return checkCardCollision(matrix, otherMatrix);
+        });
+
+        if (!hasCollision) {
+          isCardAcceptable = true;
         } else {
           matrix = generateBingoMatrix();
           hash = hashBingoMatrix(matrix);
