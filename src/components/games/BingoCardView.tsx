@@ -340,7 +340,100 @@ export default function BingoCardView() {
   };
 
   if (loading) return <div className="bingo-card-view-pane"><div className="spinner"></div></div>;
-  if (error) return <div className="bingo-card-view-pane card-glass" style={{ margin: '20px', padding: '20px', textAlign: 'center' }}><h2>❌ {error}</h2></div>;
+  if (error) {
+    return (
+      <div 
+        className="bingo-card-view-pane theme-classic" 
+        style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center', 
+          minHeight: '100vh',
+          padding: '20px',
+          background: '#06020f'
+        }}
+      >
+        <div 
+          className="cyber-panel" 
+          style={{ 
+            maxWidth: '450px', 
+            width: '100%', 
+            padding: '40px 30px', 
+            borderRadius: '24px',
+            border: '2px solid #a855f7',
+            boxShadow: '0 0 30px rgba(168, 85, 247, 0.25)',
+            background: 'rgba(13, 6, 28, 0.85)',
+            backdropFilter: 'blur(15px)',
+            WebkitBackdropFilter: 'blur(15px)',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            gap: '20px',
+            color: '#e2dbf0',
+            textAlign: 'center'
+          }}
+        >
+          <span style={{ fontSize: '4.5rem', display: 'block', filter: 'drop-shadow(0 0 10px rgba(236,72,153,0.6))', animation: 'pulseIcon 2s infinite ease-in-out' }}>
+            🔌
+          </span>
+          
+          <h2 style={{ 
+            margin: 0, 
+            fontSize: '1.8rem', 
+            fontFamily: 'var(--font-gamer, Orbitron, sans-serif)', 
+            fontWeight: 900,
+            color: '#ffffff',
+            textTransform: 'uppercase',
+            letterSpacing: '1.5px',
+            textShadow: '0 0 10px rgba(0, 240, 255, 0.5)'
+          }}>
+            Cartón No Activo
+          </h2>
+          
+          <p style={{ 
+            margin: 0, 
+            fontSize: '0.95rem', 
+            lineHeight: '1.5', 
+            color: '#e2dbf0', 
+            opacity: 0.95 
+          }}>
+            {error}. Es probable que la sesión de juego haya finalizado o el organizador haya limpiado el registro de jugadores.
+          </p>
+          
+          <div style={{ width: '100%', height: '1px', background: 'rgba(168, 85, 247, 0.2)', margin: '10px 0' }}></div>
+          
+          <p style={{ margin: 0, fontSize: '0.8rem', color: '#00f0ff', opacity: 0.8, textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+            ¿Quieres unirte a una nueva partida?
+          </p>
+
+          <button 
+            type="button" 
+            onClick={() => navigate('/juegos/bingo')}
+            style={{
+              padding: '14px 28px',
+              borderRadius: '12px',
+              background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+              color: '#ffffff',
+              border: 'none',
+              fontWeight: 'bold',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              boxShadow: '0 4px 15px rgba(168, 85, 247, 0.4)',
+              transition: 'all 0.2s',
+              width: '100%',
+              fontFamily: 'var(--font-gamer, Orbitron, sans-serif)',
+              textTransform: 'uppercase',
+              letterSpacing: '1px'
+            }}
+            onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.02)'}
+            onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
+          >
+            Ir al Lobby del Bingo ➔
+          </button>
+        </div>
+      </div>
+    );
+  }
   if (!cardData || !gameData) return null;
 
   const cust = gameData.customization;
