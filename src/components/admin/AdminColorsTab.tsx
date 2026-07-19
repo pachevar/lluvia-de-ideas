@@ -1,5 +1,5 @@
 
-import type { PortalConfig } from '../../Gerencia';
+import type { PortalConfig } from '../../types';
 
 interface AdminColorsTabProps {
   localConfig: PortalConfig;

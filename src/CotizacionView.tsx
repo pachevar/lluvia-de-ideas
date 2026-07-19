@@ -81,7 +81,7 @@ const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
         sealUrl: quote.sealUrl,
         signatureUrl: quote.signatureUrl,
         signerName: quote.signerName
-      }, window.location.origin);
+      });
     });
   };
 

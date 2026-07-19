@@ -18,5 +18,25 @@ service cloud.firestore {
       allow read: if true; // Lectura pública para que el cliente vea el link
       allow write: if request.auth != null; // Solo admin (gerencia) puede crear/modificar
     }
+    
+    // Colección de juegos de bingo
+    match /bingo_games/{gameId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Colección de cartones de bingo
+    match /bingo_cards/{cardId} {
+      allow read, create: if true;
+      allow update: if request.auth != null || 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['shoutedBingo', 'shoutedAt']));
+      allow delete: if request.auth != null;
+    }
+
+    // Colección de historial de ganadores
+    match /bingo_winners_history/{winnerId} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
   }
 }

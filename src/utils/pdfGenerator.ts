@@ -17,19 +17,21 @@ export interface PDFQuoteData {
   signerName?: string;
 }
 
-export const generateCotizacionPDF = async (quote: PDFQuoteData, originUrl: string) => {
+export const generateCotizacionPDF = async (quote: PDFQuoteData) => {
   const doc = new jsPDF({ format: 'letter' });
   
   const loadImage = (src: string): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
       const img = new Image();
-      img.crossOrigin = 'Anonymous';
+      if (!src.startsWith('data:')) {
+        img.crossOrigin = 'Anonymous';
+      }
       img.onload = () => resolve(img);
       img.onerror = (e) => reject(e);
       
       // Bypass Firebase Storage CORS issues for jsPDF Canvas
       if (src.includes('firebasestorage.googleapis.com')) {
-        img.src = 'https://corsproxy.io/?' + encodeURIComponent(src);
+        img.src = 'https://api.allorigins.win/raw?url=' + encodeURIComponent(src);
       } else {
         img.src = src;
       }
@@ -156,7 +158,14 @@ export const generateCotizacionPDF = async (quote: PDFQuoteData, originUrl: stri
   doc.setTextColor(220, 38, 38);
   doc.text(`Cotización válida por ${quote.validDays} días.`, 14, finalY + 62);
 
-  let signatureY = finalY + 75;
+  if (quote.id) {
+    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(10);
+    doc.setTextColor(0, 102, 204);
+    doc.textWithLink(`Ver versión en línea: https://lluviadeideasgt.com/cotizacion/${quote.id}`, 14, finalY + 68, { url: `https://lluviadeideasgt.com/cotizacion/${quote.id}` });
+  }
+
+  let signatureY = finalY + 80;
 
   if (quote.signatureUrl) {
     try {
@@ -192,13 +201,6 @@ export const generateCotizacionPDF = async (quote: PDFQuoteData, originUrl: stri
     } catch (e) {
       console.warn("Could not load seal image", e);
     }
-  }
-
-  if (quote.id) {
-    doc.setFont('helvetica', 'normal');
-    doc.setFontSize(9);
-    doc.setTextColor(100, 100, 255);
-    doc.textWithLink(`Ver en línea: ${originUrl}/cotizacion/${quote.id}`, 14, signatureY + 40, { url: `${originUrl}/cotizacion/${quote.id}` });
   }
 
   doc.save(`Cotizacion_LluviaDeIdeas_${new Date(quote.createdAt).getTime()}.pdf`);

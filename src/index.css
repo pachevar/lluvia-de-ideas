@@ -60,7 +60,8 @@
 }
 
 body {
-  background-color: var(--bg-main);
+  background: radial-gradient(circle at 50% 50%, #004b87 0%, #001f3f 70%, #000a1a 100%);
+  background-attachment: fixed;
   color: var(--text-main);
   min-height: 100vh;
   overflow-x: hidden;
