@@ -966,28 +966,27 @@ export default function BingoHub() {
                       <span>🏆 Historial de Ganadores Históricos</span>
                     </div>
                     {winnersHistory.length > 0 ? (
-                      <table className="winners-history-table">
-                        <thead>
-                          <tr>
-                            <th>Jugador</th>
-                            <th>Sesión</th>
-                            <th>Patrón</th>
-                            <th>Bolas</th>
-                            <th>Fecha</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {winnersHistory.map((w) => (
-                            <tr key={w.id}>
-                              <td style={{ fontWeight: 'bold', color: 'var(--cyber-green)' }}>{w.playerName}</td>
-                              <td>{w.gameTitle}</td>
-                              <td>{w.winningPattern}</td>
-                              <td>{w.drawnCount} bolas</td>
-                              <td>{new Date(w.timestamp).toLocaleDateString('es-GT')}</td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
+                      <div className="winners-history-list">
+                        {winnersHistory.map((w) => (
+                          <div key={w.id} className="winner-history-item">
+                            <div className="winner-item-header">
+                              <span className="winner-badge">🏆 Ganador</span>
+                              <strong className="winner-name">{w.playerName}</strong>
+                              <span className="winner-balls">{w.drawnCount} bolas</span>
+                            </div>
+                            <div className="winner-item-body">
+                              <span className="winner-session" title={w.gameTitle}>{w.gameTitle}</span>
+                              <span className="winner-pattern">
+                                {w.winningPattern === 'full' && 'Lleno'}
+                                {w.winningPattern === 'line' && 'Línea'}
+                                {w.winningPattern === 'diagonal' && 'Diagonal'}
+                                {w.winningPattern === 'four_corners' && 'Esquinas'}
+                              </span>
+                              <span className="winner-date">{new Date(w.timestamp).toLocaleDateString('es-GT')}</span>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     ) : (
                       <div style={{ fontSize: '0.75rem', opacity: 0.5, textAlign: 'center', padding: '10px', color: '#8c7e9f' }}>
                         No hay ganadores registrados aún.
