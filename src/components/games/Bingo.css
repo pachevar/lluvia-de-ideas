@@ -2377,25 +2377,135 @@
   }
 }
 
-/* ==========================================================================
-   WINNER TICKET VOUCHER DESIGN (html2canvas source)
-   ========================================================================== */
+/* Estilo Base Estructural del Ticket */
 .winner-ticket-canvas-source {
   width: 380px;
-  background: radial-gradient(circle at 10% 20%, #171033 0%, #06020f 100%);
-  border: 3px solid #22c55e;
   border-radius: 20px;
   padding: 30px;
-  color: #ffffff;
   font-family: 'Plus Jakarta Sans', sans-serif;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 20px;
-  box-shadow: 0 0 35px rgba(34, 197, 94, 0.4);
   position: absolute;
   left: -9999px;
   top: 0;
+}
+
+/* ==========================================================================
+   TEMAS DINÁMICOS PARA IDENTIFICACIÓN RÁPIDA DE RONDA (MEDIDA DE SEGURIDAD)
+   ========================================================================== */
+
+/* 1. Tema Clásico Místico 🔮 */
+.ticket-theme-classic {
+  background: radial-gradient(circle at 10% 20%, #2e1065 0%, #0f052d 100%);
+  border: 3px solid #a855f7;
+  box-shadow: 0 0 35px rgba(168, 85, 247, 0.4);
+  color: #ffffff;
+}
+.ticket-theme-classic .ticket-title {
+  text-shadow: 0 0 10px rgba(168, 85, 247, 0.6);
+}
+.ticket-theme-classic .ticket-subtitle {
+  color: #c084fc;
+}
+.ticket-theme-classic .ticket-badge-verified {
+  background: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+  border: 1.5px solid rgba(168, 85, 247, 0.4);
+  box-shadow: 0 0 15px rgba(168, 85, 247, 0.25);
+}
+.ticket-theme-classic .ticket-info-row .value.highlight {
+  color: #c084fc;
+}
+.ticket-theme-classic .ticket-info-row .value.code {
+  color: #a855f7;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* 2. Tema Fantasía Neón 👾 */
+.ticket-theme-neon {
+  background: radial-gradient(circle at 10% 20%, #0c0a1c 0%, #020108 100%);
+  border: 3px solid #ff007f;
+  box-shadow: 0 0 35px rgba(255, 0, 127, 0.4);
+  color: #ffffff;
+}
+.ticket-theme-neon .ticket-title {
+  text-shadow: 0 0 10px rgba(255, 0, 127, 0.6);
+}
+.ticket-theme-neon .ticket-subtitle {
+  color: #00f0ff;
+}
+.ticket-theme-neon .ticket-badge-verified {
+  background: rgba(57, 255, 20, 0.1);
+  color: #39ff14;
+  border: 1.5px solid rgba(57, 255, 20, 0.4);
+  box-shadow: 0 0 15px rgba(57, 255, 20, 0.3);
+}
+.ticket-theme-neon .ticket-info-row .value.highlight {
+  color: #00f0ff;
+}
+.ticket-theme-neon .ticket-info-row .value.code {
+  color: #ff007f;
+  border: 1px solid rgba(255, 0, 127, 0.35);
+  background: rgba(0, 0, 0, 0.5);
+}
+
+/* 3. Tema Bosque Sagrado 🌳 */
+.ticket-theme-forest {
+  background: radial-gradient(circle at 10% 20%, #064e3b 0%, #022c22 100%);
+  border: 3px solid #10b981;
+  box-shadow: 0 0 35px rgba(16, 185, 129, 0.4);
+  color: #ffffff;
+}
+.ticket-theme-forest .ticket-title {
+  text-shadow: 0 0 10px rgba(16, 185, 129, 0.6);
+}
+.ticket-theme-forest .ticket-subtitle {
+  color: #f59e0b;
+}
+.ticket-theme-forest .ticket-badge-verified {
+  background: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1.5px solid rgba(245, 158, 11, 0.4);
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.25);
+}
+.ticket-theme-forest .ticket-info-row .value.highlight {
+  color: #10b981;
+}
+.ticket-theme-forest .ticket-info-row .value.code {
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  background: rgba(0, 0, 0, 0.4);
+}
+
+/* 4. Tema Pastel Suave 🌸 */
+.ticket-theme-pastel {
+  background: radial-gradient(circle at 10% 20%, #471233 0%, #1c0211 100%);
+  border: 3px solid #f472b6;
+  box-shadow: 0 0 35px rgba(244, 114, 182, 0.4);
+  color: #ffffff;
+}
+.ticket-theme-pastel .ticket-title {
+  text-shadow: 0 0 10px rgba(244, 114, 182, 0.6);
+}
+.ticket-theme-pastel .ticket-subtitle {
+  color: #38bdf8;
+}
+.ticket-theme-pastel .ticket-badge-verified {
+  background: rgba(56, 189, 248, 0.12);
+  color: #7dd3fc;
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.25);
+}
+.ticket-theme-pastel .ticket-info-row .value.highlight {
+  color: #f472b6;
+}
+.ticket-theme-pastel .ticket-info-row .value.code {
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  background: rgba(0, 0, 0, 0.4);
 }
 
 .ticket-header {

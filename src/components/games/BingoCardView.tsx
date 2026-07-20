@@ -468,6 +468,7 @@ export default function BingoCardView() {
   const accentColor = cust?.accentColor || '#ec4899';
   const backgroundColor = cust?.backgroundColor || '#fbf9ff';
   const markerEmoji = cust?.markerEmoji || '⭐';
+  const ticketTheme = cust?.themeName || 'classic';
 
 
 
@@ -1128,11 +1129,11 @@ export default function BingoCardView() {
             </div>
             
             {/* Elemento oculto para captura del Ticket de Ganador */}
-            <div ref={ticketRef} className="winner-ticket-canvas-source">
+            <div ref={ticketRef} className={`winner-ticket-canvas-source ticket-theme-${ticketTheme}`}>
               <div className="ticket-header">
                 <span style={{ fontSize: '3rem' }}>🏆</span>
-                <h3 className="ticket-title">BINGO VIRTUAL</h3>
-                <p className="ticket-subtitle">Lluvia de Ideas Editorial</p>
+                <h3 className="ticket-title">{gameData.title.toUpperCase()}</h3>
+                <p className="ticket-subtitle">{gameData.customization?.subtitle || 'Bingo Virtual Lluvia de Ideas'}</p>
               </div>
               
               <div className="ticket-divider"></div>
@@ -1151,6 +1152,16 @@ export default function BingoCardView() {
                   <span className="value code">#{cartonId}</span>
                 </div>
                 <div className="ticket-info-row">
+                  <span className="label">Código Sesión:</span>
+                  <span className="value code">{gameData.id.slice(0, 5).toUpperCase()}</span>
+                </div>
+                <div className="ticket-info-row">
+                  <span className="label">Firma de Tema:</span>
+                  <span className="value" style={{ textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold' }}>
+                    {ticketTheme}
+                  </span>
+                </div>
+                <div className="ticket-info-row">
                   <span className="label">Patrón Ganador:</span>
                   <span className="value">
                     {gameData.winningPattern === 'full' && 'Cartón Lleno'}
@@ -1158,10 +1169,6 @@ export default function BingoCardView() {
                     {gameData.winningPattern === 'diagonal' && 'Diagonal'}
                     {gameData.winningPattern === 'four_corners' && '4 Esquinas'}
                   </span>
-                </div>
-                <div className="ticket-info-row">
-                  <span className="label">Sesión:</span>
-                  <span className="value">{gameData.title}</span>
                 </div>
                 <div className="ticket-info-row">
                   <span className="label">Fecha y Hora:</span>
