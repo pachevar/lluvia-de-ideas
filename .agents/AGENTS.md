@@ -18,7 +18,7 @@ Este archivo contiene reglas y directrices específicas para el espacio de traba
    - **Repositorio**: `https://github.com/pachevar/lluvia-de-ideas.git`
    - **Usuario local**: `lluviadeideaseditorial`
    - **Correo local**: `lluviadeideaseditorial@gmail.com`
-   - **Aislamiento de credenciales**: Se ha configurado `credential.useHttpPath` de forma local. En cualquier operación remota de Git, se deben usar las credenciales del usuario de GitHub **pachevar**.
+   - **Autenticación y Credenciales**: El usuario de GitHub `pasaporteqr1` está configurado como colaborador con permisos de escritura en el repositorio `pachevar/lluvia-de-ideas.git`. La URL remota de origin almacena las credenciales autorizadas del PAT token para permitir operaciones directas de `git push origin main` sin bloqueos de tty.
 
 ## Directrices de Desarrollo
 
