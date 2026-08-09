@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../firebase';
 import type { PortalConfig, CustomHexagon, HexLayer } from '../../types';
+import { DEFAULT_CONFIG } from '../../context/PortalConfigContext';
 import { getCandidateHexes } from '../../utils/hexUtils';
 import { HexagonGrid } from '../map/HexagonGrid';
 import GradientBuilder from './GradientBuilder';
@@ -139,9 +140,27 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     setEditingHex(null);
   };
 
+  const handleResetMapToDefault = () => {
+    if (window.confirm('¿Deseas restablecer el mapa del Mundo Virtual al diseño predeterminado sincronizado con todas las secciones actuales del portal (Creatika, 100tek, Juegos, etc.)?')) {
+      setLocalConfig(prev => {
+        if (!prev) return prev;
+        return {
+          ...prev,
+          map: DEFAULT_CONFIG.map
+        };
+      });
+      setEditingHex(null);
+    }
+  };
+
   return (
     <div className="admin-card card-glass animate-fade-in">
-      <h3>🌍 Editor de Mundo Virtual</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
+        <h3 style={{ margin: 0 }}>🌍 Editor de Mundo Virtual</h3>
+        <button className="btn btn-secondary btn-sm" onClick={handleResetMapToDefault} title="Sincroniza el mapa con todas las páginas activas del portal">
+          🔄 Sincronizar Mapa con Páginas Actuales
+        </button>
+      </div>
       <p className="tab-section-desc">Configura los hexágonos interactivos del mapa principal. El mapa se expande basado en un sistema de coordenadas (Fila, Columna).</p>
 
       <div style={{ height: '500px', border: '2px solid var(--border-color)', borderRadius: '16px', overflow: 'hidden', marginBottom: '20px' }}>

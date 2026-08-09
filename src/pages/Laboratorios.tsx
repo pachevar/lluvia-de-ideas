@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { collection, addDoc } from 'firebase/firestore';
@@ -23,7 +24,13 @@ const getModuleDate = (moduleId: number): string => {
 };
 
 export default function Laboratorios() {
+  const { labId } = useParams<{ labId?: string }>();
+  const navigate = useNavigate();
   const { config } = usePortalConfig();
+
+  // Active laboratory sub-view: defaults to 'animacion-educativa'
+  const activeSubLab = labId || 'animacion-educativa';
+
   const modulesList = config.laboratorios?.modules || [];
   const [activeLabModule, setActiveLabModule] = useState<number>(1);
 
@@ -85,108 +92,93 @@ export default function Laboratorios() {
 
   return (
     <div className="tab-pane animate-fade-in">
-      <section className="game-section lab-section-new">
-        <div className="section-intro">
-          <span className="badge badge-tertiary">Innovación Pedagógica</span>
-          <h2 className="gradient-text">Laboratorio de Animación Educativa</h2>
-          <p className="lab-intro-lead">
-            {config.laboratorios?.intro}
-          </p>
+      {/* Encabezado y Selector de Sub-Laboratorios */}
+      <div style={{ textAlign: 'center', marginBottom: '30px' }}>
+        <span className="badge badge-tertiary">Centro de Innovación Educativa</span>
+        <h1 className="gradient-text" style={{ fontSize: '2.5rem', margin: '10px 0' }}>Laboratorios Formativos</h1>
+        <p style={{ color: 'var(--text-muted)', maxWidth: '650px', margin: '0 auto 25px', lineHeight: '1.5' }}>
+          Espacios prácticos de formación y metodologías activas diseñados para potenciar la creatividad y la innovación docente en el aula.
+        </p>
+
+        {/* Submenú de Laboratorios */}
+        <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <button 
+            className={`btn ${activeSubLab === 'animacion-educativa' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => navigate('/laboratorios/animacion-educativa')}
+            style={{ borderRadius: '9999px', padding: '10px 20px', fontWeight: 'bold', fontSize: '0.9rem' }}
+          >
+            🎬 Animación Educativa
+          </button>
+          <button 
+            className={`btn ${activeSubLab === 'robotica-educativa' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => navigate('/laboratorios/robotica-educativa')}
+            style={{ borderRadius: '9999px', padding: '10px 20px', fontWeight: 'bold', fontSize: '0.9rem' }}
+          >
+            🤖 Robótica Educativa <small style={{ opacity: 0.8, fontSize: '0.7rem', marginLeft: '4px' }}>(Próximamente)</small>
+          </button>
+          <button 
+            className={`btn ${activeSubLab === 'pensamiento-cientifico' ? 'btn-primary' : 'btn-secondary'}`}
+            onClick={() => navigate('/laboratorios/pensamiento-cientifico')}
+            style={{ borderRadius: '9999px', padding: '10px 20px', fontWeight: 'bold', fontSize: '0.9rem' }}
+          >
+            🔬 Pensamiento Científico <small style={{ opacity: 0.8, fontSize: '0.7rem', marginLeft: '4px' }}>(Próximamente)</small>
+          </button>
         </div>
+      </div>
 
-        <div className="lab-layout-container">
-          {/* Desktop Layout */}
-          <div className="lab-desktop-layout">
-            <div className="lab-sidebar-tabs">
-              {modulesList.map((mod) => (
-                <button
-                  key={mod.id}
-                  className={`lab-tab-button ${activeLabModule === mod.id ? 'active' : ''}`}
-                  onClick={() => setActiveLabModule(mod.id)}
-                >
-                  <span className="lab-tab-icon">{mod.icon}</span>
-                  <span className="lab-tab-title-text">
-                    <span className="lab-tab-num">Módulo {mod.id}</span>
-                    <span className="lab-tab-name">{mod.title}</span>
-                  </span>
-                </button>
-              ))}
-            </div>
-
-            {(() => {
-              const selectedMod = modulesList.find(m => m.id === activeLabModule) || modulesList[0];
-              if (!selectedMod) return null;
-              return (
-                <div className="lab-module-details-panel card-glass animate-fade-in" key={selectedMod.id}>
-                  <div className="module-detail-header">
-                    <span className="module-large-icon">{selectedMod.icon}</span>
-                    <div>
-                      <span className="module-detail-badge">Módulo {selectedMod.id}</span>
-                      <h3>{selectedMod.title}</h3>
-                    </div>
-                  </div>
-
-                  <div className="module-detail-content">
-                    <div className="competency-box">
-                      <h4>🎯 Competencia</h4>
-                      <p>{selectedMod.competency}</p>
-                    </div>
-
-                    <div className="skills-box">
-                      <h4>✨ Habilidades a Desarrollar</h4>
-                      <ul className="skills-list">
-                        {selectedMod.skills.map((skill, index) => (
-                          <li key={index}>
-                            <span className="skill-bullet">✦</span>
-                            <span className="skill-text">{skill}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  </div>
-
-                  <div className="module-detail-footer">
-                    <p className="footer-callout">
-                      💡 <em>Aplica estas metodologías activas y lidera el cambio pedagógico en tu aula.</em>
-                    </p>
-                  </div>
-                </div>
-              );
-            })()}
+      {/* --- SUB-LABORATORIO 1: ANIMACIÓN EDUCATIVA (INFORMACIÓN ACTUAL) --- */}
+      {(activeSubLab === 'animacion-educativa' || !activeSubLab) && (
+        <section className="game-section lab-section-new animate-fade-in">
+          <div className="section-intro">
+            <span className="badge badge-primary">Módulo Activo 2026</span>
+            <h2 className="gradient-text">Laboratorio de Animación Educativa</h2>
+            <p className="lab-intro-lead">
+              {config.laboratorios?.intro}
+            </p>
           </div>
 
-          {/* Mobile Layout: Accordion */}
-          <div className="lab-mobile-accordion">
-            {modulesList.map((mod) => {
-              const isOpen = activeLabModule === mod.id;
-              return (
-                <div
-                  key={mod.id}
-                  className={`lab-accordion-item card-glass ${isOpen ? 'open' : ''}`}
-                >
+          <div className="lab-layout-container">
+            {/* Desktop Layout */}
+            <div className="lab-desktop-layout">
+              <div className="lab-sidebar-tabs">
+                {modulesList.map((mod) => (
                   <button
-                    className="lab-accordion-header"
-                    onClick={() => setActiveLabModule(isOpen ? 0 : mod.id)}
+                    key={mod.id}
+                    className={`lab-tab-button ${activeLabModule === mod.id ? 'active' : ''}`}
+                    onClick={() => setActiveLabModule(mod.id)}
                   >
-                    <span className="accordion-icon">{mod.icon}</span>
-                    <div className="accordion-header-text">
-                      <span className="accordion-num">Módulo {mod.id}</span>
-                      <h3 className="accordion-title">{mod.title}</h3>
-                    </div>
-                    <span className="accordion-arrow">{isOpen ? '▲' : '▼'}</span>
+                    <span className="lab-tab-icon">{mod.icon}</span>
+                    <span className="lab-tab-title-text">
+                      <span className="lab-tab-num">Módulo {mod.id}</span>
+                      <span className="lab-tab-name">{mod.title}</span>
+                    </span>
                   </button>
+                ))}
+              </div>
 
-                  {isOpen && (
-                    <div className="lab-accordion-content animate-fade-in">
+              {(() => {
+                const selectedMod = modulesList.find(m => m.id === activeLabModule) || modulesList[0];
+                if (!selectedMod) return null;
+                return (
+                  <div className="lab-module-details-panel card-glass animate-fade-in" key={selectedMod.id}>
+                    <div className="module-detail-header">
+                      <span className="module-large-icon">{selectedMod.icon}</span>
+                      <div>
+                        <span className="module-detail-badge">Módulo {selectedMod.id}</span>
+                        <h3>{selectedMod.title}</h3>
+                      </div>
+                    </div>
+
+                    <div className="module-detail-content">
                       <div className="competency-box">
                         <h4>🎯 Competencia</h4>
-                        <p>{mod.competency}</p>
+                        <p>{selectedMod.competency}</p>
                       </div>
 
                       <div className="skills-box">
                         <h4>✨ Habilidades a Desarrollar</h4>
                         <ul className="skills-list">
-                          {mod.skills.map((skill, index) => (
+                          {selectedMod.skills.map((skill, index) => (
                             <li key={index}>
                               <span className="skill-bullet">✦</span>
                               <span className="skill-text">{skill}</span>
@@ -195,93 +187,195 @@ export default function Laboratorios() {
                         </ul>
                       </div>
                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
 
-        {/* Schedule */}
-        <div className="lab-schedule-section">
-          <div className="schedule-header">
-            <span className="badge badge-primary">Calendario</span>
-            <h3 className="gradient-text">📅 Cronograma del Laboratorio</h3>
-            <p className="schedule-intro-text">
-              Organiza tu agenda para asistir a las sesiones en vivo de cada módulo. Haz clic en cualquier tarjeta de fecha para ver los detalles del módulo correspondiente en el panel superior.
-            </p>
-            
-            <div className="schedule-info-bar card-glass">
-              <div className="schedule-info-item">
-                <span className="info-icon">⏰</span>
-                <div className="info-text">
-                  <strong>Horario:</strong> 2:00 PM a 5:00 PM
+                    <div className="module-detail-footer">
+                      <p className="footer-callout">
+                        💡 <em>Aplica estas metodologías activas y lidera el cambio pedagógico en tu aula.</em>
+                      </p>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
+
+            {/* Mobile Layout: Accordion */}
+            <div className="lab-mobile-accordion">
+              {modulesList.map((mod) => {
+                const isOpen = activeLabModule === mod.id;
+                return (
+                  <div
+                    key={mod.id}
+                    className={`lab-accordion-item card-glass ${isOpen ? 'open' : ''}`}
+                  >
+                    <button
+                      className="lab-accordion-header"
+                      onClick={() => setActiveLabModule(isOpen ? 0 : mod.id)}
+                    >
+                      <span className="accordion-icon">{mod.icon}</span>
+                      <div className="accordion-header-text">
+                        <span className="accordion-num">Módulo {mod.id}</span>
+                        <h3 className="accordion-title">{mod.title}</h3>
+                      </div>
+                      <span className="accordion-arrow">{isOpen ? '▲' : '▼'}</span>
+                    </button>
+
+                    {isOpen && (
+                      <div className="lab-accordion-content animate-fade-in">
+                        <div className="competency-box">
+                          <h4>🎯 Competencia</h4>
+                          <p>{mod.competency}</p>
+                        </div>
+
+                        <div className="skills-box">
+                          <h4>✨ Habilidades a Desarrollar</h4>
+                          <ul className="skills-list">
+                            {mod.skills.map((skill, index) => (
+                              <li key={index}>
+                                <span className="skill-bullet">✦</span>
+                                <span className="skill-text">{skill}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Schedule */}
+          <div className="lab-schedule-section">
+            <div className="schedule-header">
+              <span className="badge badge-primary">Calendario</span>
+              <h3 className="gradient-text">📅 Cronograma del Laboratorio</h3>
+              <p className="schedule-intro-text">
+                Organiza tu agenda para asistir a las sesiones en vivo de cada módulo. Haz clic en cualquier tarjeta de fecha para ver los detalles del módulo correspondiente en el panel superior.
+              </p>
+              
+              <div className="schedule-info-bar card-glass">
+                <div className="schedule-info-item">
+                  <span className="info-icon">⏰</span>
+                  <div className="info-text">
+                    <strong>Horario:</strong> 2:00 PM a 5:00 PM
+                  </div>
                 </div>
-              </div>
-              <div className="schedule-info-item">
-                <span className="info-icon">📍</span>
-                <div className="info-text">
-                  <strong>Lugar:</strong> Lugar céntrico por confirmar
+                <div className="schedule-info-item">
+                  <span className="info-icon">📍</span>
+                  <div className="info-text">
+                    <strong>Lugar:</strong> Lugar céntrico por confirmar
+                  </div>
                 </div>
               </div>
             </div>
-          </div>
-          
-          <div className="schedule-grid">
-            {modulesList.map((mod) => {
-              const isUpcoming = mod.id > 8;
-              const dateText = formatDateSpanish(mod.date || getModuleDate(mod.id));
-              const timeText = mod.time || (isUpcoming ? "Por definir (con el grupo)" : "2:00 PM a 5:00 PM");
-              const locationText = mod.location || "Lugar céntrico por confirmar";
-              const typeText = mod.type || "Presencial";
-              return (
-                <div
-                  key={mod.id}
-                  className={`schedule-card card-glass ${activeLabModule === mod.id ? 'active' : ''} ${isUpcoming ? 'upcoming-card' : ''}`}
-                  onClick={() => {
-                    setActiveLabModule(mod.id);
-                    document.querySelector('.lab-section-new')?.scrollIntoView({ behavior: 'smooth' });
-                  }}
-                >
-                  <div className="schedule-card-header">
-                    <span className="schedule-mod-num">Módulo {mod.id}</span>
-                    <span className="schedule-badge-type">{typeText}</span>
+            
+            <div className="schedule-grid">
+              {modulesList.map((mod) => {
+                const isUpcoming = mod.id > 8;
+                const dateText = formatDateSpanish(mod.date || getModuleDate(mod.id));
+                const timeText = mod.time || (isUpcoming ? "Por definir (con el grupo)" : "2:00 PM a 5:00 PM");
+                const locationText = mod.location || "Lugar céntrico por confirmar";
+                const typeText = mod.type || "Presencial";
+                return (
+                  <div
+                    key={mod.id}
+                    className={`schedule-card card-glass ${activeLabModule === mod.id ? 'active' : ''} ${isUpcoming ? 'upcoming-card' : ''}`}
+                    onClick={() => {
+                      setActiveLabModule(mod.id);
+                      document.querySelector('.lab-section-new')?.scrollIntoView({ behavior: 'smooth' });
+                    }}
+                  >
+                    <div className="schedule-card-header">
+                      <span className="schedule-mod-num">Módulo {mod.id}</span>
+                      <span className="schedule-badge-type">{typeText}</span>
+                    </div>
+                    <h4 className="schedule-mod-title">{mod.title}</h4>
+                    
+                    <div className="schedule-card-details">
+                      <div className="schedule-detail-row">
+                        <span className="schedule-detail-icon">📅</span>
+                        <span className="schedule-detail-text">
+                          <strong>Fecha:</strong> {dateText}
+                        </span>
+                      </div>
+                      <div className="schedule-detail-row">
+                        <span className="schedule-detail-icon">⏰</span>
+                        <span className="schedule-detail-text">
+                          <strong>Horario:</strong> {timeText}
+                        </span>
+                      </div>
+                      <div className="schedule-detail-row">
+                        <span className="schedule-detail-icon">📍</span>
+                        <span className="schedule-detail-text">
+                          <strong>Lugar:</strong> {locationText}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    <span className="schedule-icon-bg">{mod.icon}</span>
                   </div>
-                  <h4 className="schedule-mod-title">{mod.title}</h4>
-                  
-                  <div className="schedule-card-details">
-                    <div className="schedule-detail-row">
-                      <span className="schedule-detail-icon">📅</span>
-                      <span className="schedule-detail-text">
-                        <strong>Fecha:</strong> {dateText}
-                      </span>
-                    </div>
-                    <div className="schedule-detail-row">
-                      <span className="schedule-detail-icon">⏰</span>
-                      <span className="schedule-detail-text">
-                        <strong>Horario:</strong> {timeText}
-                      </span>
-                    </div>
-                    <div className="schedule-detail-row">
-                      <span className="schedule-detail-icon">📍</span>
-                      <span className="schedule-detail-text">
-                        <strong>Lugar:</strong> {locationText}
-                      </span>
-                    </div>
-                  </div>
-                  
-                  <span className="schedule-icon-bg">{mod.icon}</span>
-                </div>
-              );
-            })}
+                );
+              })}
+            </div>
+            <div className="lab-registration-cta-row" style={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
+              <button className="btn btn-primary btn-large animate-pulse" onClick={() => setIsRegisterModalOpen(true)}>
+                📝 Inscribirse al Laboratorio de Animación Educativa
+              </button>
+            </div>
           </div>
-          <div className="lab-registration-cta-row" style={{ display: 'flex', justifyContent: 'center', marginTop: '40px' }}>
-            <button className="btn btn-primary btn-large animate-pulse" onClick={() => setIsRegisterModalOpen(true)}>
-              📝 Inscribirse al Laboratorio de Animación Educativa
+        </section>
+      )}
+
+      {/* --- SUB-LABORATORIO 2: ROBÓTICA EDUCATIVA (PRÓXIMAMENTE) --- */}
+      {activeSubLab === 'robotica-educativa' && (
+        <section className="game-section lab-section-new animate-fade-in">
+          <div className="section-intro" style={{ textAlign: 'center' }}>
+            <span className="badge badge-tertiary">Próximo Laboratorio</span>
+            <h2 className="gradient-text">🤖 Laboratorio de Robótica Educativa</h2>
+            <p className="lab-intro-lead" style={{ maxWidth: '700px', margin: '15px auto' }}>
+              Espacio práctico de innovación tecnológica orientado al diseño de sensores, automatización básica y pensamiento computacional aplicable a proyectos escolares.
+            </p>
+          </div>
+
+          <div className="card-glass" style={{ padding: '40px', borderRadius: '24px', textAlign: 'center', maxWidth: '750px', margin: '0 auto' }}>
+            <span style={{ fontSize: '4rem', display: 'block', marginBottom: '15px' }}>🤖🛠️⚙️</span>
+            <h3 style={{ fontSize: '1.5rem', color: 'var(--text-title)', marginBottom: '12px' }}>Próxima Apertura 2026</h3>
+            <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '25px' }}>
+              Estamos preparando la infraestructura de kits y módulos de formación en robótica para docentes. Al igual que el Laboratorio de Animación Educativa, contará con sesiones presenciales y certificación.
+            </p>
+
+            <button className="btn btn-primary" onClick={() => navigate('/laboratorios/animacion-educativa')}>
+              🎬 Ver Laboratorio Activo de Animación Educativa ➔
             </button>
           </div>
-        </div>
-      </section>
+        </section>
+      )}
+
+      {/* --- SUB-LABORATORIO 3: PENSAMIENTO CIENTÍFICO (PRÓXIMAMENTE) --- */}
+      {activeSubLab === 'pensamiento-cientifico' && (
+        <section className="game-section lab-section-new animate-fade-in">
+          <div className="section-intro" style={{ textAlign: 'center' }}>
+            <span className="badge badge-tertiary">Próximo Laboratorio</span>
+            <h2 className="gradient-text">🔬 Laboratorio de Pensamiento Científico</h2>
+            <p className="lab-intro-lead" style={{ maxWidth: '700px', margin: '15px auto' }}>
+              Formación docente en formulación de hipótesis, experimentación STEAM, física recreativa y divulgación científica infantil.
+            </p>
+          </div>
+
+          <div className="card-glass" style={{ padding: '40px', borderRadius: '24px', textAlign: 'center', maxWidth: '750px', margin: '0 auto' }}>
+            <span style={{ fontSize: '4rem', display: 'block', marginBottom: '15px' }}>🔬🪐🧪</span>
+            <h3 style={{ fontSize: '1.5rem', color: 'var(--text-title)', marginBottom: '12px' }}>Próxima Apertura 2026</h3>
+            <p style={{ color: 'var(--text-muted)', lineHeight: '1.6', marginBottom: '25px' }}>
+              Un espacio dedicado al método científico práctico, astronomía interactiva y maquetas vectoriales para el aula de clase.
+            </p>
+
+            <button className="btn btn-primary" onClick={() => navigate('/laboratorios/animacion-educativa')}>
+              🎬 Ver Laboratorio Activo de Animación Educativa ➔
+            </button>
+          </div>
+        </section>
+      )}
 
       {/* Registration Modal */}
       {isRegisterModalOpen && createPortal(

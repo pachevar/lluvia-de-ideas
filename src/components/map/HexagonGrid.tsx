@@ -37,10 +37,6 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
 
   return (
     <div className="map-viewport">
-      <div className="map-ui-overlay">
-        <h1 className="map-ui-title">Mundo Virtual</h1>
-        <p className="map-ui-subtitle">Arrastra para explorar • Rueda para zoom</p>
-      </div>
 
       <TransformWrapper
         initialScale={initialScale}

@@ -5,6 +5,7 @@ import './index.css'
 import App from './App.tsx'
 import { PortalConfigProvider } from './context/PortalConfigContext'
 import { CartProvider } from './context/CartContext'
+import { AuthProvider } from './context/AuthContext'
 
 import ErrorBoundary from './components/ErrorBoundary'
 
@@ -13,9 +14,11 @@ createRoot(document.getElementById('root')!).render(
     <ErrorBoundary>
       <BrowserRouter>
         <PortalConfigProvider>
-          <CartProvider>
-            <App />
-          </CartProvider>
+          <AuthProvider>
+            <CartProvider>
+              <App />
+            </CartProvider>
+          </AuthProvider>
         </PortalConfigProvider>
       </BrowserRouter>
     </ErrorBoundary>

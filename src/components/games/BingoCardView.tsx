@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { doc, onSnapshot, updateDoc } from 'firebase/firestore';
+import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
-import type { BingoCard, BingoGame } from '../../types';
+import type { BingoCard, BingoGame, BingoPrize } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
 import html2canvas from 'html2canvas';
 import './Bingo.css';
@@ -17,6 +17,33 @@ interface ConfettiParticle {
   delay: number;
 }
 
+const DEFAULT_SAMPLE_PRIZES: BingoPrize[] = [
+  {
+    id: 'p1',
+    title: '🥇 Premio Mayor: Smart TV 55" 4K HDR',
+    description: 'Pantalla inteligente de alta resolución con conectividad WiFi y sonido envolvente para el ganador principal.',
+    image: 'https://images.unsplash.com/photo-1593784991095-a205069470b6?w=600&auto=format&fit=crop&q=60',
+    category: 'Tecnología',
+    order: 3
+  },
+  {
+    id: 'p2',
+    title: '🥈 Segundo Premio: Tablet Educativa 10"',
+    description: 'Tablet de alto rendimiento ideal para estudio, lectura digital e interacción con contenidos educativos.',
+    image: 'https://images.unsplash.com/photo-1544244015-0df4b3ffc6b0?w=600&auto=format&fit=crop&q=60',
+    category: 'Estudio',
+    order: 2
+  },
+  {
+    id: 'p3',
+    title: '🥉 Premio Especial 1: Colección de Libros Lluvia de Ideas',
+    description: 'Paquete de libros infantiles y juveniles ilustrados con historias mágicas de nuestra editorial.',
+    image: 'https://images.unsplash.com/photo-1512820790803-83ca734da794?w=600&auto=format&fit=crop&q=60',
+    category: 'Editorial',
+    order: 1
+  }
+];
+
 export default function BingoCardView() {
   const { cartonId } = useParams<{ cartonId: string }>();
   const navigate = useNavigate();
@@ -26,6 +53,15 @@ export default function BingoCardView() {
   const [error, setError] = useState('');
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Secondary Card Gamer Menu & Prizes Modal States
+  const [isCardMenuOpen, setIsCardMenuOpen] = useState(false);
+  const [showPrizesModal, setShowPrizesModal] = useState(false);
+  const [prizesSort, setPrizesSort] = useState<'asc' | 'desc' | 'category'>('asc');
+  const sliderRef = useRef<HTMLDivElement>(null);
+  const [selectedPrizeIndex, setSelectedPrizeIndex] = useState<number | null>(null);
+  const [isImageZoomed, setIsImageZoomed] = useState(false);
+  const [dismissedWinnerTs, setDismissedWinnerTs] = useState<number | null>(null);
 
   const downloadWinnerTicket = async () => {
     if (!ticketRef.current || !cardData || !gameData) return;
@@ -66,11 +102,14 @@ export default function BingoCardView() {
   const [showBingoModal, setShowBingoModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [activeSponsorModal, setActiveSponsorModal] = useState<any | null>(null);
+  const [isSponsorFlipped, setIsSponsorFlipped] = useState(false);
 
   // Voice announcement and confirmation states
   const [voiceMode, setVoiceMode] = useState(() => localStorage.getItem('bingo_voice_mode') === 'true');
   const [winnerDismissed, setWinnerDismissed] = useState(false);
   const prevDrawnCountRef = useRef(0);
+
+
 
   const initAudio = () => {
     if (!audioCtxRef.current) {
@@ -240,7 +279,9 @@ export default function BingoCardView() {
             });
           }
         } else {
-          setError("No se encontró este cartón. Revisa el enlace.");
+          localStorage.removeItem('my_bingo_card_id');
+          if (cartonId) localStorage.removeItem(`bingo_marks_${cartonId}`);
+          setError("La sesión de juego fue limpiada por el organizador. Ya puedes volver al inicio para generar tu nuevo cartón.");
           setLoading(false);
         }
       }, (err) => {
@@ -274,6 +315,45 @@ export default function BingoCardView() {
     }
     prevDrawnCountRef.current = currentCount;
   }, [gameData?.drawnNumbers, voiceMode]);
+
+  // Limpiar marcas y almacenamiento si la partida se reinicia o se inicia una nueva ronda
+  const lastResetRef = useRef<number | null>(null);
+
+  useEffect(() => {
+    if (!gameData || !cartonId) return;
+
+    const currentReset = gameData.lastResetAt || 0;
+    const isDrawnEmpty = !gameData.drawnNumbers || gameData.drawnNumbers.length === 0;
+
+    if (
+      gameData.status === 'waiting' ||
+      isDrawnEmpty ||
+      (lastResetRef.current !== null && lastResetRef.current !== currentReset)
+    ) {
+      // Limpiar marcas locales (dejar solo el comodín central en true)
+      const clearedMarks = Array(5).fill(null).map(() => Array(5).fill(false));
+      clearedMarks[2][2] = true;
+
+      setMarkedSlots(clearedMarks);
+      localStorage.removeItem(`bingo_marks_${cartonId}`);
+
+      // Resetear estados adicionales del jugador
+      setWinnerDismissed(false);
+      setShowBingoModal(false);
+      prevDrawnCountRef.current = 0;
+    }
+    lastResetRef.current = currentReset;
+  }, [gameData?.status, gameData?.drawnNumbers?.length, gameData?.lastResetAt, cartonId]);
+
+  useEffect(() => {
+    if (activeSponsorModal) {
+      setIsSponsorFlipped(false);
+      const timer = setTimeout(() => {
+        setIsSponsorFlipped(true);
+      }, 1500);
+      return () => clearTimeout(timer);
+    }
+  }, [activeSponsorModal]);
 
   const toggleMark = (row: number, col: number) => {
     if (row === 2 && col === 2) return;
@@ -339,20 +419,130 @@ export default function BingoCardView() {
     }, 5000);
   };
 
-  const shoutBingo = async () => {
-    triggerConfetti();
-    try {
-      if (cartonId) {
-        const cardRef = doc(db, 'bingo_cards', cartonId);
-        await updateDoc(cardRef, {
-          shoutedBingo: true,
-          shoutedAt: Date.now()
-        });
-        setShowBingoModal(true);
+  const checkHasWinningPattern = (slots: boolean[][], pattern: string): boolean => {
+    if (!slots || slots.length < 5) return false;
+
+    const isMarked = (r: number, c: number) => {
+      if (r === 2 && c === 2) return true; // Casilla central FREE
+      return Boolean(slots[r]?.[c]);
+    };
+
+    if (pattern === 'full') {
+      for (let r = 0; r < 5; r++) {
+        for (let c = 0; c < 5; c++) {
+          if (!isMarked(r, c)) return false;
+        }
       }
-    } catch (e) {
-      console.error(e);
+      return true;
+    }
+
+    if (pattern === 'four_corners') {
+      return isMarked(0, 0) && isMarked(0, 4) && isMarked(4, 0) && isMarked(4, 4);
+    }
+
+    if (pattern === 'diagonal') {
+      let diag1 = true;
+      for (let i = 0; i < 5; i++) {
+        if (!isMarked(i, i)) diag1 = false;
+      }
+      let diag2 = true;
+      for (let i = 0; i < 5; i++) {
+        if (!isMarked(i, 4 - i)) diag2 = false;
+      }
+      return diag1 || diag2;
+    }
+
+    if (pattern === 'line') {
+      for (let r = 0; r < 5; r++) {
+        let rowMarked = true;
+        for (let c = 0; c < 5; c++) {
+          if (!isMarked(r, c)) rowMarked = false;
+        }
+        if (rowMarked) return true;
+      }
+      for (let c = 0; c < 5; c++) {
+        let colMarked = true;
+        for (let r = 0; r < 5; r++) {
+          if (!isMarked(r, c)) colMarked = false;
+        }
+        if (colMarked) return true;
+      }
+      return false;
+    }
+
+    // Default fallback: require full house
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        if (!isMarked(r, c)) return false;
+      }
+    }
+    return true;
+  };
+
+  const shoutBingo = async () => {
+    if (!cardData || !gameData || !cartonId) return;
+
+    const pattern = gameData.winningPattern || 'full';
+    if (!checkHasWinningPattern(markedSlots, pattern)) {
+      alert("⚠️ Para cantar Bingo debes haber marcado en tu cartón todas las casillas requeridas según el patrón activo de la partida.");
+      return;
+    }
+
+    try {
+      const { setDoc, getDoc } = await import('firebase/firestore');
+      
+      // Verificación Concurrente: Solo un jugador a la vez puede cantar Bingo
+      if (gameData.id) {
+        const gameRef = doc(db, 'bingo_games', gameData.id);
+        const gameSnap = await getDoc(gameRef);
+        if (gameSnap.exists()) {
+          const gData = gameSnap.data();
+          const activeClaim = gData.activeClaim;
+          if (activeClaim && activeClaim.status === 'pending' && activeClaim.cardId !== cartonId) {
+            alert(`⚠️ ¡Atención! El jugador "${activeClaim.playerName || 'un participante'}" ya ha cantado Bingo y su cartón se encuentra en proceso de verificación con el Host. Espera a que el Host verifique ese cartón.`);
+            return;
+          }
+        }
+      }
+
+      // Convertir markedSlots (2D) a objeto seguro
+      const markedObject = {
+        r0: (markedSlots[0] || []).map(v => Boolean(v)),
+        r1: (markedSlots[1] || []).map(v => Boolean(v)),
+        r2: (markedSlots[2] || []).map(v => Boolean(v)),
+        r3: (markedSlots[3] || []).map(v => Boolean(v)),
+        r4: (markedSlots[4] || []).map(v => Boolean(v))
+      };
+
+      const cardRef = doc(db, 'bingo_cards', cartonId);
+      await setDoc(cardRef, {
+        shoutedBingo: true,
+        shoutedAt: Date.now(),
+        markedSlots: markedObject
+      }, { merge: true });
+
+      if (gameData?.id) {
+        try {
+          await setDoc(doc(db, 'bingo_games', gameData.id), {
+            lastBingoShoutAt: Date.now(),
+            activeClaim: {
+              cardId: cartonId,
+              playerName: cardData.playerName || 'Jugador',
+              phone: cardData.phone || '',
+              claimedAt: Date.now(),
+              status: 'pending'
+            }
+          }, { merge: true });
+        } catch (gErr) {
+          console.warn("Could not update game activeClaim", gErr);
+        }
+      }
+
+      triggerConfetti();
       setShowBingoModal(true);
+    } catch (e) {
+      console.error("Error al registrar grito de Bingo en Firestore:", e);
+      alert("Error de conexión al cantar Bingo. Verifica tu conexión e inténtalo de nuevo.");
     }
   };
 
@@ -520,6 +710,200 @@ export default function BingoCardView() {
   return (
     <div className={`bingo-card-view-pane animate-fade-in ${getThemeClass()}`} style={{ ...customStyles, paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
 
+      {/* Tirador Flotante Pegado al Borde de la Pantalla (Viewport Flush Fixed Handle) */}
+      {createPortal(
+        <button 
+          className={`card-gamer-sidebar-handle ${showPrizesModal ? 'active' : ''}`}
+          onClick={() => setShowPrizesModal(true)}
+          aria-label="Abrir Galería de Premios"
+          style={{
+            position: 'fixed',
+            top: '55px',
+            left: 0,
+            zIndex: 99997,
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '8px',
+            padding: '14px 6px',
+            width: '36px',
+            borderRadius: '0 16px 16px 0',
+            background: 'rgba(13, 6, 28, 0.95)',
+            border: `2px solid ${primaryColor}`,
+            borderLeft: 'none',
+            boxShadow: `4px 0 25px ${primaryColor}77`,
+            color: '#fff',
+            cursor: 'pointer',
+            fontFamily: 'var(--font-gamer, Orbitron, sans-serif)',
+            backdropFilter: 'blur(14px)',
+            WebkitBackdropFilter: 'blur(14px)',
+            transition: 'all 0.3s cubic-bezier(0.16, 1, 0.3, 1)'
+          }}
+          title="Ver Galería de Premios"
+        >
+          <span style={{ fontSize: '1.25rem', filter: `drop-shadow(0 0 8px ${primaryColor})` }}>🎁</span>
+          
+          <span 
+            style={{ 
+              writingMode: 'vertical-rl',
+              transform: 'rotate(180deg)',
+              fontSize: '0.68rem', 
+              fontWeight: 900,
+              letterSpacing: '1.5px', 
+              color: primaryColor,
+              textTransform: 'uppercase',
+              whiteSpace: 'nowrap',
+              textShadow: `0 0 10px ${primaryColor}aa`
+            }}
+          >
+            PREMIOS
+          </span>
+
+          <span style={{ fontSize: '0.65rem', color: '#ffffff', opacity: 0.9 }}>
+            🔍
+          </span>
+        </button>,
+        document.body
+      )}
+
+      {/* Drawer Lateral Desplegable del Cartón */}
+      {isCardMenuOpen && createPortal(
+        <div 
+          className="card-gamer-drawer-overlay animate-fade-in" 
+          onClick={() => setIsCardMenuOpen(false)}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(5, 2, 12, 0.7)',
+            backdropFilter: 'blur(8px)',
+            WebkitBackdropFilter: 'blur(8px)',
+            zIndex: 99998
+          }}
+        >
+          <div 
+            className="card-gamer-sidebar-drawer animate-slide-right"
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '290px',
+              maxWidth: '85vw',
+              height: '100vh',
+              background: 'rgba(13, 6, 28, 0.98)',
+              borderRight: `2px solid ${primaryColor}`,
+              boxShadow: `10px 0 40px rgba(0,0,0,0.8), 0 0 25px ${primaryColor}55`,
+              padding: '24px 20px',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '16px',
+              zIndex: 99999,
+              overflowY: 'auto'
+            }}
+          >
+            {/* Header del Menú Lateral */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '16px' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontFamily: 'var(--font-gamer)', letterSpacing: '1px', textTransform: 'uppercase', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🎮</span> Menú Cartón
+                </h3>
+                <span style={{ fontSize: '0.72rem', color: primaryColor, opacity: 0.9, marginTop: '2px', display: 'block' }}>
+                  {gameData?.title || 'Bingo Virtual'}
+                </span>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setIsCardMenuOpen(false)}
+                style={{ background: 'none', border: 'none', color: '#fff', fontSize: '1.4rem', cursor: 'pointer', opacity: 0.7, padding: '4px' }}
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Opciones del Menú */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', flex: 1 }}>
+              
+              {/* Opción 1: Lista de Premios */}
+              <button 
+                type="button"
+                onClick={() => {
+                  setIsCardMenuOpen(false);
+                  setShowPrizesModal(true);
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  width: '100%',
+                  padding: '14px 16px',
+                  borderRadius: '16px',
+                  background: `linear-gradient(135deg, ${primaryColor}25 0%, ${accentColor}25 100%)`,
+                  border: `1px solid ${primaryColor}66`,
+                  color: '#ffffff',
+                  fontWeight: 'bold',
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  boxShadow: `0 4px 15px ${primaryColor}22`,
+                  transition: 'all 0.2s'
+                }}
+              >
+                <span style={{ fontSize: '1.4rem' }}>🎁</span>
+                <div style={{ flex: 1 }}>
+                  <span style={{ display: 'block', fontSize: '0.9rem' }}>Galería de Premios</span>
+                  <small style={{ fontSize: '0.7rem', color: '#cbd5e1' }}>Ver premios acumulados</small>
+                </div>
+                <span style={{ fontSize: '0.85rem', color: primaryColor }}>➔</span>
+              </button>
+
+              {/* Info de Estado del Cartón */}
+              <div style={{ background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', borderRadius: '16px', padding: '14px' }}>
+                <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', fontWeight: 'bold', display: 'block', marginBottom: '6px' }}>
+                  🎯 Patrón Activo de Victoria
+                </span>
+                <strong style={{ fontSize: '0.92rem', color: '#fff', display: 'block' }}>
+                  {gameData?.winningPattern === 'full' && '🏆 Cartón Lleno'}
+                  {gameData?.winningPattern === 'line' && '📏 Cualquier Línea'}
+                  {gameData?.winningPattern === 'diagonal' && '📐 Diagonal'}
+                  {gameData?.winningPattern === 'four_corners' && '🔲 4 Esquinas'}
+                </strong>
+              </div>
+
+              {/* Botón de Abandonar Cartón */}
+              <button
+                type="button"
+                onClick={() => {
+                  setIsCardMenuOpen(false);
+                  handleAbandonCard();
+                }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  width: '100%',
+                  padding: '12px 14px',
+                  borderRadius: '14px',
+                  background: 'rgba(239, 68, 68, 0.1)',
+                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                  color: '#f87171',
+                  fontWeight: 'bold',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  marginTop: 'auto'
+                }}
+              >
+                <span>🚪</span> Cambiar / Salir del Cartón
+              </button>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
       {/* Confetti Render */}
       {confetti.map(p => (
         <div
@@ -568,33 +952,28 @@ export default function BingoCardView() {
         </div>
       )}
 
-
-
-
-
       <div 
-        className={`bingo-personal-header card-glass ${cust?.cardTheme ? `card-theme-${cust.cardTheme}` : 'card-theme-classic'}`} 
+        className={`bingo-personal-header card-glass ${cust?.cardTheme ? `card-theme-${cust.cardTheme}` : 'card-theme-classic'} status-${gameData?.status || 'waiting'}`} 
         style={{ 
           margin: '15px auto', 
           maxWidth: '100%', 
-          padding: '16px 20px', 
           position: 'sticky', 
           top: '10px', 
           zIndex: 10, 
-          borderColor: primaryColor,
-          borderRadius: '16px',
-          boxShadow: `0 8px 32px rgba(0, 0, 0, 0.4), 0 0 15px ${primaryColor}40`,
-          borderWidth: '2px',
-          borderStyle: 'solid'
+          borderRadius: '18px',
+          background: 'rgba(13, 6, 28, 0.95)',
+          border: `2px solid ${primaryColor}`,
+          boxShadow: `0 8px 30px rgba(0,0,0,0.6), 0 0 20px ${primaryColor}44`,
+          color: '#ffffff'
         }}
       >
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px' }}>
+        <div className="header-flex-wrapper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', padding: '16px 20px' }}>
           <div style={{ minWidth: 0, flex: 1 }}>
-            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6, display: 'block', marginBottom: '2px' }}>Jugador</span>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, textShadow: '0 2px 4px rgba(0,0,0,0.5)', letterSpacing: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span className="player-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#cbd5e1', fontWeight: 'bold', display: 'block', marginBottom: '2px' }}>Jugador</span>
+            <h3 className="player-name-title" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#ffffff', textShadow: '0 0 10px rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.9)', letterSpacing: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               {cardData.playerName}
             </h3>
-            <div style={{ marginTop: '8px' }}>
+            <div className="badge-status-container" style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
               <span 
                 className="badge" 
                 style={{ 
@@ -615,12 +994,44 @@ export default function BingoCardView() {
                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fff', display: 'inline-block' }}></span>
                 {gameData.status === 'playing' ? 'En Juego' : gameData.status === 'waiting' ? 'Esperando...' : 'Finalizado'}
               </span>
+
+              {gameData.status === 'playing' && (() => {
+                const missing = getProximityStatus();
+                if (missing === null) return null;
+                if (missing === 0) {
+                  return (
+                    <span className="badge animate-pulse" style={{ background: '#22c55e', color: '#fff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', boxShadow: '0 0 12px #22c55e' }}>
+                      🌟 ¡BINGO!
+                    </span>
+                  );
+                }
+                if (missing === 1) {
+                  return (
+                    <span className="badge animate-pulse" style={{ background: '#ef4444', color: '#fff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', boxShadow: '0 0 12px #ef4444' }}>
+                      🔥 ¡A 1 BOLA DE GANAR!
+                    </span>
+                  );
+                }
+                if (missing === 2) {
+                  return (
+                    <span className="badge" style={{ background: '#f59e0b', color: '#fff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                      ⚡ ¡A 2 BOLAS DE GANAR!
+                    </span>
+                  );
+                }
+                return (
+                  <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#e2dbf0', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                    🎯 Faltan {missing} bolas
+                  </span>
+                );
+              })()}
             </div>
           </div>
           
           <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-            <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', opacity: 0.6, marginBottom: '4px', display: 'block' }}>ID CARTÓN</span>
+            <span className="id-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', opacity: 0.6, marginBottom: '4px', display: 'block' }}>ID CARTÓN</span>
             <code 
+              className="card-id-code"
               style={{ 
                 fontSize: '1.1rem', 
                 background: 'rgba(0,0,0,0.4)', 
@@ -673,59 +1084,62 @@ export default function BingoCardView() {
           </div>
         )}
 
-        {/* Assist Mode integrated inside the header card */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-          marginTop: '15px',
-          paddingTop: '10px'
-        }}>
-          <span style={{ fontSize: '0.8rem', color: '#fff', opacity: 0.9, fontWeight: 'bold' }}>
-            🤖 Modo Asistido (Ayuda visual)
-          </span>
-          <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0 }}>
-            <input 
-              type="checkbox" 
-              checked={assistMode}
-              onChange={(e) => {
-                initAudio();
-                setAssistMode(e.target.checked);
-                playFeedbackSound(false, true);
-              }}
-            />
-            <span className="cyber-slider"></span>
-          </label>
-        </div>
+        {/* Panel de Configuración Interno del Cabezal */}
+        <div className="header-settings-panel">
+          {/* Assist Mode integrated inside the header card */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            paddingTop: '12px',
+            paddingBottom: '4px'
+          }}>
+            <span style={{ fontSize: '0.8rem', color: '#fff', opacity: 0.9, fontWeight: 'bold' }}>
+              🤖 Modo Asistido (Ayuda visual)
+            </span>
+            <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0 }}>
+              <input 
+                type="checkbox" 
+                checked={assistMode}
+                onChange={(e) => {
+                  initAudio();
+                  setAssistMode(e.target.checked);
+                  playFeedbackSound(false, true);
+                }}
+              />
+              <span className="cyber-slider"></span>
+            </label>
+          </div>
 
-        {/* Voice Mode Switch */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          borderTop: '1px solid rgba(255, 255, 255, 0.15)',
-          marginTop: '10px',
-          paddingTop: '10px'
-        }}>
-          <span style={{ fontSize: '0.8rem', color: '#fff', opacity: 0.9, fontWeight: 'bold' }}>
-            🔊 Cantar bolas por voz
-          </span>
-          <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0 }}>
-            <input 
-              type="checkbox" 
-              checked={voiceMode}
-              onChange={(e) => {
-                const checked = e.target.checked;
-                setVoiceMode(checked);
-                localStorage.setItem('bingo_voice_mode', checked ? 'true' : 'false');
-                if (checked) {
-                  speakConfirmation();
-                }
-              }}
-            />
-            <span className="cyber-slider"></span>
-          </label>
+          {/* Voice Mode Switch */}
+          <div style={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
+            paddingTop: '10px',
+            paddingBottom: '8px'
+          }}>
+            <span style={{ fontSize: '0.8rem', color: '#fff', opacity: 0.9, fontWeight: 'bold' }}>
+              🔊 Cantar bolas por voz
+            </span>
+            <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0 }}>
+              <input 
+                type="checkbox" 
+                checked={voiceMode}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setVoiceMode(checked);
+                  localStorage.setItem('bingo_voice_mode', checked ? 'true' : 'false');
+                  if (checked) {
+                    speakConfirmation();
+                  }
+                }}
+              />
+              <span className="cyber-slider"></span>
+            </label>
+          </div>
         </div>
       </div>
 
@@ -769,6 +1183,10 @@ export default function BingoCardView() {
                 const isMarked = markedSlots[row][col];
                 const isDrawn = !isFree && value !== null && gameData.drawnNumbers.includes(value);
 
+                // Flags para el Modo Ayuda Visual
+                const isMarkedUndrawnAssist = assistMode && isMarked && !isDrawn && !isFree;
+                const isMarkedDrawnAssist = assistMode && isMarked && isDrawn && !isFree;
+
                 // Check mapping for the number
                 const map = value !== null ? (cust?.numberToImageMap as any)?.[value] : null;
 
@@ -777,15 +1195,25 @@ export default function BingoCardView() {
                     key={`${row}-${col}`}
                     onClick={() => toggleMark(row, col)}
                     disabled={isFree}
-                    className={`bingo-cell ${isMarked ? 'marked' : ''} ${isDrawn ? 'drawn' : ''} ${assistMode && isDrawn && !isMarked ? 'unmarked-drawn' : ''}`}
+                    className={`bingo-cell ${isMarked ? 'marked' : ''} ${isDrawn ? 'drawn' : ''} ${assistMode && isDrawn && !isMarked ? 'unmarked-drawn' : ''} ${isMarkedUndrawnAssist ? 'marked-undrawn-assist' : ''} ${isMarkedDrawnAssist ? 'marked-drawn-assist' : ''}`}
                     style={{
                       aspectRatio: '1/1',
                       borderRadius: '10px',
                       cursor: isFree ? 'default' : 'pointer',
-                      transition: 'all 0.2s',
+                      transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                       position: 'relative',
                       padding: '4px',
-                      ...((cust?.cardTheme === 'classic' || !cust?.cardTheme) ? {
+                      ...(isMarkedUndrawnAssist ? {
+                        border: '2.5px solid #ef4444',
+                        boxShadow: '0 0 18px rgba(239, 68, 68, 0.85), inset 0 0 10px rgba(239, 68, 68, 0.3)',
+                        background: 'rgba(239, 68, 68, 0.15)',
+                        color: '#f87171'
+                      } : isMarkedDrawnAssist ? {
+                        border: '2.5px solid #22c55e',
+                        boxShadow: '0 0 18px rgba(34, 197, 94, 0.85), inset 0 0 10px rgba(34, 197, 94, 0.3)',
+                        background: 'rgba(34, 197, 94, 0.15)',
+                        color: '#4ade80'
+                      } : (cust?.cardTheme === 'classic' || !cust?.cardTheme) ? {
                         border: isDrawn ? `2px solid #22c55e` : '1px solid var(--border-color)',
                         background: isMarked ? `rgba(168, 85, 247, 0.08)` : 'white',
                         color: 'var(--text-title)',
@@ -1005,7 +1433,7 @@ export default function BingoCardView() {
         document.body
       )}
 
-      {/* ====== PLAYER SPONSOR BANNER MODAL ====== */}
+      {/* ====== PLAYER SPONSOR BANNER MODAL CON EFECTO FLIP CARD ====== */}
       {activeSponsorModal && createPortal(
         <div 
           className="player-modal-overlay animate-fade-in" 
@@ -1026,90 +1454,183 @@ export default function BingoCardView() {
           }}
         >
           <div 
-            className="text-center animate-zoom-in"
+            className="sponsor-flip-card"
             onClick={(e) => e.stopPropagation()}
-            style={{
-              padding: '40px 30px',
-              maxWidth: '500px',
-              width: '90%',
-              borderRadius: '32px',
-              background: backgroundColor || '#0f172a',
-              border: `4px solid ${primaryColor}`,
-              boxShadow: `0 0 65px ${primaryColor}55, inset 0 0 30px rgba(0,0,0,0.5)`,
-              display: 'flex',
-              flexDirection: 'column',
-              alignItems: 'center',
-              gap: '20px',
-              color: isLight ? '#1f2937' : '#ffffff'
-            }}
           >
-            {/* Sponsor Logo (Bigger and more prominent) */}
-            <div style={{
-              width: '280px',
-              height: '160px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: 'white',
-              borderRadius: '24px',
-              padding: '16px',
-              boxShadow: '0 12px 32px rgba(0,0,0,0.3)',
-              border: `2px solid ${accentColor}`
-            }}>
-              <img 
-                src={activeSponsorModal.logo} 
-                alt={activeSponsorModal.name} 
-                style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
-              />
-            </div>
-            
-            <h3 style={{ 
-              margin: 0, 
-              fontSize: '2.1rem', 
-              color: isLight ? 'var(--text-title)' : '#ffffff', 
-              fontWeight: 800,
-              textShadow: isLight ? 'none' : `0 2px 10px ${primaryColor}aa`
-            }}>
-              {activeSponsorModal.name}
-            </h3>
-            
-            {activeSponsorModal.message && (
-              <p style={{ 
-                margin: 0, 
-                fontSize: '1.2rem', 
-                color: isLight ? 'var(--text-main)' : '#f1f5f9', 
-                fontStyle: 'italic', 
-                lineHeight: '1.4',
-                textAlign: 'center',
-                textShadow: isLight ? 'none' : '0 2px 4px rgba(0,0,0,0.5)'
-              }}>
-                "{activeSponsorModal.message}"
-              </p>
-            )}
-            
-            {/* Action button to dismiss */}
-            <button 
-              type="button" 
-              onClick={() => setActiveSponsorModal(null)}
-              style={{
-                padding: '12px 32px',
-                borderRadius: '14px',
-                background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`,
-                color: '#ffffff',
-                border: 'none',
-                fontWeight: 'bold',
-                fontSize: '1.05rem',
-                cursor: 'pointer',
-                boxShadow: `0 4px 15px ${primaryColor}55`,
-                transition: 'all 0.2s',
-                marginTop: '15px',
-                width: '100%'
-              }}
-              onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-              onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
+            <div 
+              className={`sponsor-flip-card-inner ${isSponsorFlipped ? 'flipped' : ''}`}
+              onClick={() => setIsSponsorFlipped(true)}
             >
-              Continuar Juego ➔
-            </button>
+              {/* CARA FRONTAL: Contenido del Patrocinador */}
+              <div 
+                className="sponsor-flip-card-front"
+                style={{
+                  background: backgroundColor || '#0f172a',
+                  border: `4px solid ${primaryColor}`,
+                  boxShadow: `0 0 65px ${primaryColor}55, inset 0 0 30px rgba(0,0,0,0.5)`,
+                  color: isLight ? '#1f2937' : '#ffffff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '20px',
+                  borderRadius: '32px'
+                }}
+              >
+                {/* Sponsor Logo */}
+                <div style={{
+                  width: '100%',
+                  maxWidth: '280px',
+                  height: '150px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'white',
+                  borderRadius: '20px',
+                  padding: '14px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                  border: `2px solid ${accentColor}`,
+                  marginTop: '10px'
+                }}>
+                  <img 
+                    src={activeSponsorModal.logo} 
+                    alt={activeSponsorModal.name} 
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                  />
+                </div>
+                
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: '2rem', 
+                  color: isLight ? 'var(--text-title)' : '#ffffff', 
+                  fontWeight: 800,
+                  textShadow: isLight ? 'none' : `0 2px 10px ${primaryColor}aa`
+                }}>
+                  {activeSponsorModal.name}
+                </h3>
+                
+                {activeSponsorModal.message && (
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '1.15rem', 
+                    color: isLight ? 'var(--text-main)' : '#f1f5f9', 
+                    fontStyle: 'italic', 
+                    lineHeight: '1.4',
+                    textAlign: 'center',
+                    textShadow: isLight ? 'none' : '0 2px 4px rgba(0,0,0,0.5)',
+                    maxWidth: '90%'
+                  }}>
+                    "{activeSponsorModal.message}"
+                  </p>
+                )}
+                
+                <button 
+                  type="button" 
+                  onClick={() => setActiveSponsorModal(null)}
+                  style={{
+                    padding: '12px 30px',
+                    borderRadius: '14px',
+                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`,
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    boxShadow: `0 4px 15px ${primaryColor}55`,
+                    transition: 'all 0.2s',
+                    marginTop: '15px',
+                    width: '100%'
+                  }}
+                >
+                  Continuar Juego ➔
+                </button>
+              </div>
+
+              {/* CARA TRASERA: El Patrocinador */}
+              <div 
+                className="sponsor-flip-card-back"
+                style={{
+                  background: backgroundColor || '#0f172a',
+                  border: `4px solid ${primaryColor}`,
+                  boxShadow: `0 0 65px ${primaryColor}55, inset 0 0 30px rgba(0,0,0,0.5)`,
+                  color: isLight ? '#1f2937' : '#ffffff',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: '20px',
+                  borderRadius: '32px'
+                }}
+              >
+                {/* Sponsor Logo */}
+                <div style={{
+                  width: '100%',
+                  maxWidth: '280px',
+                  height: '150px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'white',
+                  borderRadius: '20px',
+                  padding: '14px',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
+                  border: `2px solid ${accentColor}`,
+                  marginTop: '10px'
+                }}>
+                  <img 
+                    src={activeSponsorModal.logo} 
+                    alt={activeSponsorModal.name} 
+                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
+                  />
+                </div>
+                
+                <h3 style={{ 
+                  margin: 0, 
+                  fontSize: '2rem', 
+                  color: isLight ? 'var(--text-title)' : '#ffffff', 
+                  fontWeight: 800,
+                  textShadow: isLight ? 'none' : `0 2px 10px ${primaryColor}aa`
+                }}>
+                  {activeSponsorModal.name}
+                </h3>
+                
+                {activeSponsorModal.message && (
+                  <p style={{ 
+                    margin: 0, 
+                    fontSize: '1.15rem', 
+                    color: isLight ? 'var(--text-main)' : '#f1f5f9', 
+                    fontStyle: 'italic', 
+                    lineHeight: '1.4',
+                    textAlign: 'center',
+                    textShadow: isLight ? 'none' : '0 2px 4px rgba(0,0,0,0.5)',
+                    maxWidth: '90%'
+                  }}>
+                    "{activeSponsorModal.message}"
+                  </p>
+                )}
+                
+                <button 
+                  type="button" 
+                  onClick={() => setActiveSponsorModal(null)}
+                  style={{
+                    padding: '12px 30px',
+                    borderRadius: '14px',
+                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`,
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '1rem',
+                    cursor: 'pointer',
+                    boxShadow: `0 4px 15px ${primaryColor}55`,
+                    transition: 'all 0.2s',
+                    marginTop: '15px',
+                    width: '100%'
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
+                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
+                >
+                  Continuar Juego ➔
+                </button>
+              </div>
+            </div>
           </div>
         </div>,
         document.body
@@ -1138,11 +1659,29 @@ export default function BingoCardView() {
               
               <div className="ticket-divider"></div>
               
-              <div className="ticket-badge-verified">
-                🟢 Verificado por Host
+              <div className="ticket-badge-winner" style={{
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                color: '#ffffff',
+                padding: '8px 18px',
+                borderRadius: '50px',
+                fontWeight: '900',
+                fontSize: '1.1rem',
+                letterSpacing: '1px',
+                textAlign: 'center',
+                boxShadow: '0 4px 15px rgba(34, 197, 94, 0.4)',
+                margin: '10px auto',
+                display: 'inline-block'
+              }}>
+                🎉 ¡Felicidades Ganador!
               </div>
               
               <div className="ticket-info-grid">
+                <div className="ticket-info-row" style={{ gridColumn: 'span 2', background: 'rgba(255, 215, 0, 0.12)', padding: '10px 14px', borderRadius: '12px', border: '1px solid rgba(255, 215, 0, 0.4)', textAlign: 'center' }}>
+                  <span className="value highlight" style={{ color: '#ffd700', fontWeight: '900', fontSize: '1.2rem', display: 'block', width: '100%' }}>
+                    🎁 {gameData.currentPrizeTitle || 'Premio Mayor de la Sesión'}
+                  </span>
+                </div>
+
                 <div className="ticket-info-row">
                   <span className="label">Jugador:</span>
                   <span className="value highlight">{cardData.playerName}</span>
@@ -1156,12 +1695,6 @@ export default function BingoCardView() {
                   <span className="value code">{gameData.id.slice(0, 5).toUpperCase()}</span>
                 </div>
                 <div className="ticket-info-row">
-                  <span className="label">Firma de Tema:</span>
-                  <span className="value" style={{ textTransform: 'uppercase', fontSize: '0.8rem', fontWeight: 'bold' }}>
-                    {ticketTheme}
-                  </span>
-                </div>
-                <div className="ticket-info-row">
                   <span className="label">Patrón Ganador:</span>
                   <span className="value">
                     {gameData.winningPattern === 'full' && 'Cartón Lleno'}
@@ -1170,7 +1703,7 @@ export default function BingoCardView() {
                     {gameData.winningPattern === 'four_corners' && '4 Esquinas'}
                   </span>
                 </div>
-                <div className="ticket-info-row">
+                <div className="ticket-info-row" style={{ gridColumn: 'span 2' }}>
                   <span className="label">Fecha y Hora:</span>
                   <span className="value" style={{ fontSize: '0.8rem' }}>
                     {new Date().toLocaleString('es-GT', { timeZone: 'America/Guatemala' })}
@@ -1239,6 +1772,453 @@ export default function BingoCardView() {
         </div>,
         document.body
       )}
+
+      {/* ====== GALERÍA DE PREMIOS MODAL ====== */}
+      {showPrizesModal && createPortal(
+        <div className="player-modal-overlay animate-fade-in" onClick={() => { setShowPrizesModal(false); setSelectedPrizeIndex(null); }} style={{ background: 'rgba(5, 2, 12, 0.88)', zIndex: 99999, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+          <div 
+            className="player-modal card-glass animate-zoom-in" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              maxWidth: '820px', 
+              width: '100%', 
+              maxHeight: '92vh', 
+              display: 'flex', 
+              flexDirection: 'column',
+              padding: '24px', 
+              borderRadius: '28px',
+              border: `2px solid ${primaryColor}`,
+              boxShadow: `0 0 45px ${primaryColor}55`,
+              background: 'rgba(13, 6, 28, 0.96)',
+              overflow: 'hidden'
+            }}
+          >
+            {/* Header Compacto con Select Desplegable de Ordenamiento */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px', gap: '12px', flexWrap: 'wrap' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.8rem' }}>🎁</span>
+                <h3 style={{ margin: 0, fontSize: '1.3rem', color: '#fff', fontFamily: 'var(--font-gamer)', textShadow: `0 0 12px ${primaryColor}aa` }}>
+                  Galería de Premios
+                </h3>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                {/* Desplegable de Ordenamiento */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,0.06)', padding: '5px 12px', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.12)' }}>
+                  <label htmlFor="prizes-sort-select" style={{ fontSize: '0.76rem', color: '#cbd5e1', fontWeight: 'bold', whiteSpace: 'nowrap' }}>
+                    Organizar:
+                  </label>
+                  <select
+                    id="prizes-sort-select"
+                    value={prizesSort}
+                    onChange={(e) => setPrizesSort(e.target.value as 'asc' | 'desc' | 'category')}
+                    style={{
+                      background: 'rgba(13, 6, 28, 0.95)',
+                      color: '#ffffff',
+                      border: `1px solid ${primaryColor}`,
+                      borderRadius: '8px',
+                      padding: '4px 8px',
+                      fontSize: '0.76rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      outline: 'none',
+                      boxShadow: `0 0 10px ${primaryColor}44`
+                    }}
+                  >
+                    <option value="asc" style={{ background: '#0d061c', color: '#fff' }}>⬇️ Menor a Mayor</option>
+                    <option value="desc" style={{ background: '#0d061c', color: '#fff' }}>⬆️ Mayor a Menor</option>
+                    <option value="category" style={{ background: '#0d061c', color: '#fff' }}>🏷️ Por Categoría</option>
+                  </select>
+                </div>
+
+                <button 
+                  type="button" 
+                  onClick={() => { setShowPrizesModal(false); setSelectedPrizeIndex(null); }}
+                  style={{ background: 'rgba(255,255,255,0.1)', border: 'none', color: '#fff', width: '34px', height: '34px', borderRadius: '50%', fontSize: '1.1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', transition: 'background 0.2s' }}
+                  aria-label="Cerrar galería"
+                >
+                  ✕
+                </button>
+              </div>
+            </div>
+
+            {/* Slider de Showcase Horizontal (Sin Scroll Vertical Incómodo) */}
+            {(() => {
+              const prizesToDisplay = (cust?.prizes && cust.prizes.length > 0) ? cust.prizes : DEFAULT_SAMPLE_PRIZES;
+              const sortedPrizes = [...prizesToDisplay].sort((a, b) => {
+                if (prizesSort === 'asc') return (a.order || 0) - (b.order || 0);
+                if (prizesSort === 'desc') return (b.order || 0) - (a.order || 0);
+                if (prizesSort === 'category') return (a.category || '').localeCompare(b.category || '');
+                return 0;
+              });
+
+              const handleScrollSlider = (direction: 'left' | 'right') => {
+                if (sliderRef.current) {
+                  const amount = direction === 'left' ? -300 : 300;
+                  sliderRef.current.scrollBy({ left: amount, behavior: 'smooth' });
+                }
+              };
+
+              return (
+                <div className="prizes-showcase-container">
+                  {/* Flechas de Navegación del Slider */}
+                  {sortedPrizes.length > 1 && (
+                    <>
+                      <button 
+                        type="button" 
+                        className="slider-nav-btn prev"
+                        onClick={() => handleScrollSlider('left')}
+                        aria-label="Premio anterior"
+                      >
+                        ◀
+                      </button>
+                      <button 
+                        type="button" 
+                        className="slider-nav-btn next"
+                        onClick={() => handleScrollSlider('right')}
+                        aria-label="Premio siguiente"
+                      >
+                        ▶
+                      </button>
+                    </>
+                  )}
+
+                  {/* Carrusel Deslizable de Premios */}
+                  <div className="prizes-showcase-slider" ref={sliderRef}>
+                    {sortedPrizes.map((prize, idx) => (
+                      <div 
+                        key={prize.id} 
+                        className="prize-card-item"
+                        onClick={() => {
+                          setSelectedPrizeIndex(idx);
+                          setIsImageZoomed(false);
+                        }}
+                      >
+                        <div className="prize-image-wrapper">
+                          <img src={prize.image} alt={prize.title} />
+                          <span style={{ position: 'absolute', top: '10px', right: '10px', background: primaryColor, color: '#fff', fontSize: '0.7rem', fontWeight: 'bold', padding: '4px 10px', borderRadius: '9999px', boxShadow: '0 3px 10px rgba(0,0,0,0.6)', zIndex: 2 }}>
+                            Nivel #{prize.order || (idx + 1)}
+                          </span>
+                          <div className="prize-image-overlay">
+                            <span className="prize-zoom-btn-badge">
+                              🔍 Tap para Ampliar
+                            </span>
+                          </div>
+                        </div>
+
+                        <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', flex: 1, justifyContent: 'space-between' }}>
+                          <div>
+                            {prize.category && (
+                              <span style={{ fontSize: '0.7rem', color: accentColor, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', marginBottom: '6px', display: 'block' }}>
+                                {prize.category}
+                              </span>
+                            )}
+                            <h4 style={{ margin: '0 0 8px 0', fontSize: '1.05rem', color: '#fff', fontFamily: 'var(--font-gamer)', lineHeight: '1.3' }}>
+                              {prize.title}
+                            </h4>
+                            <p style={{ margin: 0, fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.45', display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                              {prize.description}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSelectedPrizeIndex(idx);
+                              setIsImageZoomed(false);
+                            }}
+                            style={{
+                              marginTop: '14px',
+                              padding: '8px 14px',
+                              borderRadius: '12px',
+                              border: `1.5px solid ${primaryColor}88`,
+                              background: `linear-gradient(135deg, ${primaryColor}22 0%, rgba(255,255,255,0.05) 100%)`,
+                              color: '#fff',
+                              fontSize: '0.78rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              transition: 'all 0.2s'
+                            }}
+                          >
+                            🔍 Estudiar Premio
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Indicador de Deslizamiento */}
+                  <div style={{ textAlign: 'center', marginTop: '4px', fontSize: '0.75rem', color: '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}>
+                    <span>👈 Desliza horizontalmente para ver todos los premios ({sortedPrizes.length}) 👉</span>
+                  </div>
+                </div>
+              );
+            })()}
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ====== VISOR AMPLIADO DE IMAGEN DE PREMIO (LIGHTBOX FULLSCREEN) ====== */}
+      {selectedPrizeIndex !== null && (() => {
+        const prizesToDisplay = (cust?.prizes && cust.prizes.length > 0) ? cust.prizes : DEFAULT_SAMPLE_PRIZES;
+        const sortedPrizes = [...prizesToDisplay].sort((a, b) => {
+          if (prizesSort === 'asc') return (a.order || 0) - (b.order || 0);
+          if (prizesSort === 'desc') return (b.order || 0) - (a.order || 0);
+          if (prizesSort === 'category') return (a.category || '').localeCompare(b.category || '');
+          return 0;
+        });
+
+        const activePrize = sortedPrizes[selectedPrizeIndex] || sortedPrizes[0];
+        if (!activePrize) return null;
+
+        const handleNextPrize = (e?: React.MouseEvent) => {
+          e?.stopPropagation();
+          setSelectedPrizeIndex((prev) => (prev !== null && prev < sortedPrizes.length - 1 ? prev + 1 : 0));
+          setIsImageZoomed(false);
+        };
+
+        const handlePrevPrize = (e?: React.MouseEvent) => {
+          e?.stopPropagation();
+          setSelectedPrizeIndex((prev) => (prev !== null && prev > 0 ? prev - 1 : sortedPrizes.length - 1));
+          setIsImageZoomed(false);
+        };
+
+        return createPortal(
+          <div 
+            className="prize-lightbox-overlay"
+            onClick={() => { setSelectedPrizeIndex(null); setIsImageZoomed(false); }}
+          >
+            <div 
+              className="prize-lightbox-card card-glass"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Top Bar inside Lightbox */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid rgba(255,255,255,0.1)', background: 'rgba(10, 3, 20, 0.8)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ background: primaryColor, color: '#fff', fontSize: '0.75rem', fontWeight: 'bold', padding: '4px 12px', borderRadius: '9999px', boxShadow: `0 0 12px ${primaryColor}88` }}>
+                    Nivel #{activePrize.order || (selectedPrizeIndex + 1)}
+                  </span>
+                  {activePrize.category && (
+                    <span style={{ fontSize: '0.75rem', color: accentColor, fontWeight: 'bold', textTransform: 'uppercase' }}>
+                      {activePrize.category}
+                    </span>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {/* Botón Toggle Zoom */}
+                  <button
+                    type="button"
+                    onClick={() => setIsImageZoomed(!isImageZoomed)}
+                    style={{
+                      background: isImageZoomed ? primaryColor : 'rgba(255,255,255,0.12)',
+                      border: '1px solid rgba(255,255,255,0.2)',
+                      color: '#fff',
+                      padding: '6px 14px',
+                      borderRadius: '12px',
+                      fontSize: '0.78rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    {isImageZoomed ? '🔍 Zoom (1.8x) Activo' : '🔍 Zoom Acercar'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => { setSelectedPrizeIndex(null); setIsImageZoomed(false); }}
+                    style={{
+                      background: 'rgba(255,255,255,0.15)',
+                      border: 'none',
+                      color: '#fff',
+                      width: '38px',
+                      height: '38px',
+                      borderRadius: '50%',
+                      fontSize: '1.2rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center'
+                    }}
+                    aria-label="Cerrar visor de imagen"
+                  >
+                    ✕
+                  </button>
+                </div>
+              </div>
+
+              {/* Viewport Principal de la Imagen */}
+              <div 
+                className={`prize-lightbox-viewport ${isImageZoomed ? 'zoomed' : ''}`}
+                onClick={() => setIsImageZoomed(!isImageZoomed)}
+                title="Toca la imagen para alternar zoom"
+              >
+                <img 
+                  src={activePrize.image} 
+                  alt={activePrize.title}
+                  className={`prize-lightbox-img ${isImageZoomed ? 'zoomed' : ''}`} 
+                />
+
+                {/* Controles Laterales (Prev / Next) dentro de la imagen */}
+                {sortedPrizes.length > 1 && (
+                  <>
+                    <button 
+                      type="button" 
+                      onClick={handlePrevPrize}
+                      style={{
+                        position: 'absolute',
+                        left: '16px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '50%',
+                        background: 'rgba(10, 3, 20, 0.75)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1.5px solid rgba(255,255,255,0.3)',
+                        color: '#fff',
+                        fontSize: '1.3rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        zIndex: 10,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.6)'
+                      }}
+                      aria-label="Premio anterior"
+                    >
+                      ◀
+                    </button>
+                    <button 
+                      type="button" 
+                      onClick={handleNextPrize}
+                      style={{
+                        position: 'absolute',
+                        right: '16px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        width: '46px',
+                        height: '46px',
+                        borderRadius: '50%',
+                        background: 'rgba(10, 3, 20, 0.75)',
+                        backdropFilter: 'blur(10px)',
+                        border: '1.5px solid rgba(255,255,255,0.3)',
+                        color: '#fff',
+                        fontSize: '1.3rem',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        cursor: 'pointer',
+                        zIndex: 10,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.6)'
+                      }}
+                      aria-label="Premio siguiente"
+                    >
+                      ▶
+                    </button>
+                  </>
+                )}
+
+                {/* Badge de Instrucción de Zoom en la imagen */}
+                <div style={{ position: 'absolute', bottom: '12px', left: '50%', transform: 'translateX(-50%)', background: 'rgba(0,0,0,0.65)', backdropFilter: 'blur(8px)', color: '#e2e8f0', fontSize: '0.72rem', padding: '4px 14px', borderRadius: '9999px', border: '1px solid rgba(255,255,255,0.15)', pointerEvents: 'none' }}>
+                  {isImageZoomed ? '🔍 Toca la imagen para alejar' : '🔍 Toca la imagen para acercar (1.8x)'}
+                </div>
+              </div>
+
+              {/* Panel de Detalles del Premio */}
+              <div style={{ padding: '20px 24px', background: 'rgba(13, 6, 28, 0.98)', borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                <h3 style={{ margin: '0 0 8px 0', fontSize: '1.35rem', color: '#fff', fontFamily: 'var(--font-gamer)', textShadow: `0 0 10px ${primaryColor}88` }}>
+                  {activePrize.title}
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.9rem', color: '#cbd5e1', lineHeight: '1.5' }}>
+                  {activePrize.description}
+                </p>
+
+                {sortedPrizes.length > 1 && (
+                  <div style={{ marginTop: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px dashed rgba(255,255,255,0.1)', paddingTop: '12px' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                      Premio {selectedPrizeIndex + 1} de {sortedPrizes.length}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: primaryColor, fontWeight: 'bold' }}>
+                      💡 Usa ◄ ► en tu teclado o botones para explorar
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>,
+          document.body
+        );
+      })()}
+
+      {/* ====== NOTIFICACIÓN GLOBAL EN TIEMPO REAL DE GANADOR CONFIRMADO ====== */}
+      {gameData?.latestWinner && gameData.latestWinner.timestamp !== dismissedWinnerTs && createPortal(
+        <div 
+          className="player-modal-overlay animate-fade-in" 
+          onClick={() => setDismissedWinnerTs(gameData.latestWinner?.timestamp || Date.now())}
+          style={{ background: 'rgba(5, 2, 12, 0.92)', zIndex: 100002, padding: '16px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <div 
+            className="player-modal card-glass animate-zoom-in modal-success" 
+            onClick={(e) => e.stopPropagation()}
+            style={{ 
+              maxWidth: '500px', 
+              width: '100%', 
+              textAlign: 'center',
+              padding: '28px 24px', 
+              borderRadius: '28px',
+              border: '2px solid #22c55e',
+              boxShadow: '0 0 60px rgba(34, 197, 94, 0.6), 0 25px 60px rgba(0,0,0,0.9)',
+              background: 'rgba(13, 6, 28, 0.98)',
+              position: 'relative'
+            }}
+          >
+            <span style={{ fontSize: '3.6rem', display: 'block', margin: '0 auto 10px', animation: 'pulse 1s infinite alternate' }}>
+              🏆🎉
+            </span>
+            <h3 style={{ fontFamily: 'var(--font-gamer)', color: '#22c55e', fontSize: '1.5rem', margin: '0 0 10px 0', textShadow: '0 0 15px rgba(34, 197, 94, 0.6)' }}>
+              ¡TENEMOS GANADOR EN VIVO!
+            </h3>
+            <p style={{ fontSize: '1.05rem', color: '#ffffff', margin: '0 0 14px 0', lineHeight: '1.5' }}>
+              El jugador <strong style={{ color: '#f59e0b', fontSize: '1.25rem', textShadow: '0 0 10px rgba(245, 158, 11, 0.6)' }}>{gameData.latestWinner.playerName}</strong> ha ganado el premio:
+            </p>
+            <div style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: '18px', padding: '14px 18px', marginBottom: '20px' }}>
+              <span style={{ fontSize: '1.15rem', fontWeight: 900, color: '#a855f7', display: 'block', fontFamily: 'var(--font-gamer)', textShadow: '0 0 12px rgba(168,85,247,0.6)' }}>
+                🎁 {gameData.latestWinner.prizeTitle}
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setDismissedWinnerTs(gameData.latestWinner?.timestamp || Date.now())}
+              style={{
+                padding: '12px 28px',
+                borderRadius: '14px',
+                border: 'none',
+                background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
+                color: '#ffffff',
+                fontSize: '0.92rem',
+                fontWeight: 'bold',
+                cursor: 'pointer',
+                boxShadow: '0 4px 20px rgba(34, 197, 94, 0.5)',
+                transition: 'transform 0.2s'
+              }}
+            >
+              👏 ¡Felicitar al Ganador!
+            </button>
+          </div>
+        </div>,
+        document.body
+      )}
+
     </div>
   );
 }

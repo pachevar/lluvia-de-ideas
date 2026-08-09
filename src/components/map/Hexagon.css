@@ -161,7 +161,7 @@
 /* Map viewport styles */
 .map-viewport {
   width: 100%;
-  height: calc(100vh - 220px); /* Subtract header/footer/padding space */
+  height: calc(100vh - 100px); /* Subtract footer/padding space, top menu is gone */
   min-height: 500px;
   overflow: hidden;
   background: transparent;
@@ -276,7 +276,7 @@
 /* --- Mobile Optimizations --- */
 @media (max-width: 768px) {
   .map-viewport {
-    height: calc(100vh - 160px);
+    height: calc(100vh - 80px); /* Maximized vertical space for mobile exploration */
     min-height: 400px;
     border-radius: 0;
   }

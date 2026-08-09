@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { PortalConfig } from '../types';
+import { generateDefaultTechTree } from '../utils/techTreeUtils';
 
 interface PortalConfigContextProps {
   config: PortalConfig;
@@ -175,24 +176,157 @@ export const DEFAULT_CONFIG: PortalConfig = {
     'bg-main': "#fbf9ff",
     'text-title': "#1a082e"
   },
+  creatika: {
+    storyMachineIntro: "Combina personaje, escenario y conflicto para generar ideas de historias al instante.",
+    colorTheoryIntro: "Explora la ciencia del color, modos HSL, contrastes y armonías interactivas."
+  },
+  tek100: {
+    numberSequencesIntro: "Descubre patrones lógicos, sucesiones algebraicas y retos de agilidad mental.",
+    solarSystemIntro: "Navega en 3D por la órbita de los planetas y sus magnitudes astronómicas."
+  },
+  catalogoConfig: {
+    announcement: "¡Nuevas publicaciones y guías pedagógicas disponibles para el ciclo escolar!",
+    whatsappPhone: "50246741239"
+  },
+  landingConfig: {
+    cards: {
+      sutz: {
+        title: 'Sutz Descubre',
+        badge: 'Mundo Virtual',
+        kicheTag: "Nube en K'iche'",
+        desc: 'Un mundo virtual que evoluciona con el estudiante y su aprendizaje.'
+      },
+      creatika: {
+        title: 'Creatika',
+        badge: 'Expresión & Arte',
+        kicheTag: 'Creatividad',
+        desc: 'Suite de herramientas para el desarrollo de la creatividad y las habilidades artísticas y estéticas.'
+      },
+      tek100: {
+        title: '100tek',
+        badge: 'Metodología STEAM',
+        kicheTag: 'Ciencia & STEM',
+        desc: 'Espacio para la metodología STEAM o STEM.'
+      },
+      lab: {
+        title: 'LAB',
+        badge: 'Integración Educativa',
+        kicheTag: 'Talleres & Materiales',
+        desc: 'Talleres y materiales originales para una perfecta integración educativa.'
+      }
+    },
+    sections: {
+      sutz: {
+        title: 'Sutz Descubre',
+        badge: 'MUNDO VIRTUAL',
+        body: "Un mundo virtual que evoluciona con el estudiante y su aprendizaje. En idioma K'iche', Sutz significa Nube. Es un mapa hexagonal interactivo diseñado para adaptar el conocimiento, las leyendas culturales y las lecciones didácticas al ritmo de cada alumno.",
+        bullets: [
+          'Aprendizaje Evolutivo: Adaptación constante según el avance del estudiante.',
+          'Navegación Hexagonal: Descubrimiento de biomas, montañas, bosques y desafíos.',
+          'Raíces Culturales: Integración de la mitología del Popol Vuh y saberes ancestrales.'
+        ],
+        bgImage: ''
+      },
+      creatika: {
+        title: 'Creatika',
+        badge: 'EXPRESIÓN & ARTE',
+        body: 'Suite de herramientas para el desarrollo de la creatividad y las habilidades artísticas y estéticas. Estimula el pensamiento divergente, la composición cromática y la creación literaria interactiva.',
+        bullets: [
+          'Código del Estudiante: Manifiesto de autonomía, criterio ético y pensamiento crítico.',
+          'Código Docente: Marco interactivo de competencias para el maestro contemporáneo.',
+          'Teoría del Color: Explorador interactivo de armonías visuales y sensibilidad estética.',
+          'Máquina de Cuentos: Generador creativo para la escritura de narrativas originales.'
+        ],
+        bgImage: ''
+      },
+      tek100: {
+        title: '100tek',
+        badge: 'METODOLOGÍA STEAM / STEM',
+        body: 'Espacio para la metodología STEAM o STEM (Science, Technology, Engineering, Arts, Mathematics). Integra simulaciones astronómicas, secuencias lógicas y pensamiento computacional.',
+        bullets: [
+          'Sistema Solar 3D: Simulación del espacio para la comprensión de fenómenos astronómicos.',
+          'Secuencias Numéricas: Desafíos para fortalecer el razonamiento matemático abstracto.',
+          'Pensamiento Científico: Enfoque interdisciplinario centrado en la investigación.'
+        ],
+        bgImage: ''
+      },
+      lab: {
+        title: 'LAB',
+        badge: 'INTEGRACIÓN EDUCATIVA',
+        body: 'Talleres y materiales originales para una perfecta integración educativa. Recursos diseñados para facilitar la labor docente y enriquecer las dinámicas en el aula.',
+        bullets: [
+          'Materiales Didácticos: Recursos pedagógicos alineados a las competencias clave.',
+          'Animación Educativa: Laboratorios audiovisuales que potencian la comprensión.',
+          'Talleres Integrales: Guías metodológicas para docentes y estudiantes.'
+        ],
+        bgImage: ''
+      }
+    }
+  },
+  techTreeNodes: generateDefaultTechTree(),
   map: [
+
     {
       id: "0,0",
       row: 0,
       col: 0,
-      title: "Lluvia de Ideas",
-      glowColor: "rgba(255, 255, 255, 0.8)",
+      title: "Portal Lluvia de Ideas",
+      glowColor: "rgba(255, 255, 255, 0.85)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
       layerInteractive: { type: "icon", value: "🌌" },
       action: { type: "none", target: "" }
     },
     {
+      id: "-1,-1",
+      row: -1,
+      col: -1,
+      title: "Máquina de Cuentos",
+      glowColor: "rgba(236, 72, 153, 0.85)",
+      layerBg: { type: "none", value: "" },
+      layerDeco: { type: "none", value: "" },
+      layerInteractive: { type: "icon", value: "🎰" },
+      action: { type: "navigate", target: "/creatika/maquina-de-cuentos" }
+    },
+    {
+      id: "1,-1",
+      row: 1,
+      col: -1,
+      title: "Teoría del Color",
+      glowColor: "rgba(245, 158, 11, 0.85)",
+      layerBg: { type: "none", value: "" },
+      layerDeco: { type: "none", value: "" },
+      layerInteractive: { type: "icon", value: "🎨" },
+      action: { type: "navigate", target: "/creatika/teoria-del-color" }
+    },
+    {
+      id: "1,1",
+      row: 1,
+      col: 1,
+      title: "Secuencias Numéricas",
+      glowColor: "rgba(56, 189, 248, 0.85)",
+      layerBg: { type: "none", value: "" },
+      layerDeco: { type: "none", value: "" },
+      layerInteractive: { type: "icon", value: "🔢" },
+      action: { type: "navigate", target: "/100tek/secuencias-numericas" }
+    },
+    {
+      id: "0,2",
+      row: 0,
+      col: 2,
+      title: "Sistema Solar Interactivo",
+      glowColor: "rgba(168, 85, 247, 0.85)",
+      layerBg: { type: "none", value: "" },
+      layerDeco: { type: "none", value: "" },
+      layerInteractive: { type: "icon", value: "🪐" },
+      action: { type: "navigate", target: "/100tek/sistema-solar" }
+    },
+    {
       id: "-1,0",
       row: -1,
       col: 0,
       title: "Bingo Virtual",
-      glowColor: "rgba(255, 100, 100, 0.8)",
+      glowColor: "rgba(239, 68, 68, 0.85)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
       layerInteractive: { type: "icon", value: "🎲" },
@@ -202,8 +336,8 @@ export const DEFAULT_CONFIG: PortalConfig = {
       id: "1,0",
       row: 1,
       col: 0,
-      title: "Catálogo",
-      glowColor: "rgba(100, 150, 255, 0.8)",
+      title: "Catálogo Editorial",
+      glowColor: "rgba(59, 130, 246, 0.85)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
       layerInteractive: { type: "icon", value: "📚" },
@@ -213,8 +347,8 @@ export const DEFAULT_CONFIG: PortalConfig = {
       id: "0,-1",
       row: 0,
       col: -1,
-      title: "Laboratorios",
-      glowColor: "rgba(100, 255, 150, 0.8)",
+      title: "Laboratorios Pedagógicos",
+      glowColor: "rgba(34, 197, 94, 0.85)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
       layerInteractive: { type: "icon", value: "🧪" },
@@ -225,7 +359,7 @@ export const DEFAULT_CONFIG: PortalConfig = {
       row: 0,
       col: 1,
       title: "Minecraft",
-      glowColor: "rgba(50, 200, 100, 0.8)",
+      glowColor: "rgba(16, 185, 129, 0.85)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
       layerInteractive: { type: "icon", value: "⚔️" },
@@ -236,21 +370,21 @@ export const DEFAULT_CONFIG: PortalConfig = {
       row: -1,
       col: 1,
       title: "Universo de Juracán",
-      glowColor: "rgba(200, 100, 255, 0.8)",
+      glowColor: "rgba(168, 85, 247, 0.85)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
       layerInteractive: { type: "icon", value: "🌪️" },
       action: { type: "navigate", target: "/universo-de-juracan" }
     },
     {
-      id: "1,-1",
-      row: 1,
+      id: "2,-1",
+      row: 2,
       col: -1,
       title: "Camazotz",
       glowColor: "rgba(255, 200, 100, 0.6)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
-      layerInteractive: { type: "image", value: "/assets/Camazotz%20titulo-C5JiC7dN.png" }, // Placeholder, we should keep using the dynamic loader or require user to upload
+      layerInteractive: { type: "image", value: "/assets/Camazotz%20titulo-C5JiC7dN.png" },
       action: { type: "modal", target: "story-camazotz" }
     },
     {
@@ -265,9 +399,9 @@ export const DEFAULT_CONFIG: PortalConfig = {
       action: { type: "modal", target: "story-ixkik" }
     },
     {
-      id: "1,1",
-      row: 1,
-      col: 1,
+      id: "-2,0",
+      row: -2,
+      col: 0,
       title: "Ixmukané",
       glowColor: "rgba(255, 200, 100, 0.6)",
       layerBg: { type: "none", value: "" },
@@ -276,10 +410,10 @@ export const DEFAULT_CONFIG: PortalConfig = {
       action: { type: "modal", target: "story-ixmukanne" }
     },
     {
-      id: "-2,0",
+      id: "-2,1",
       row: -2,
-      col: 0,
-      title: "Juracán",
+      col: 1,
+      title: "Juracán (Mito)",
       glowColor: "rgba(255, 200, 100, 0.6)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
@@ -287,9 +421,9 @@ export const DEFAULT_CONFIG: PortalConfig = {
       action: { type: "modal", target: "story-juracan" }
     },
     {
-      id: "-1,-1",
+      id: "-1,2",
       row: -1,
-      col: -1,
+      col: 2,
       title: "Ququmatz",
       glowColor: "rgba(255, 200, 100, 0.6)",
       layerBg: { type: "none", value: "" },
@@ -313,6 +447,18 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const data = docSnap.data() as PortalConfig;
         if (!data.map) {
           data.map = DEFAULT_CONFIG.map;
+        }
+        if (!data.creatika) {
+          data.creatika = DEFAULT_CONFIG.creatika;
+        }
+        if (!data.tek100) {
+          data.tek100 = DEFAULT_CONFIG.tek100;
+        }
+        if (!data.catalogoConfig) {
+          data.catalogoConfig = DEFAULT_CONFIG.catalogoConfig;
+        }
+        if (!data.techTreeNodes) {
+          data.techTreeNodes = DEFAULT_CONFIG.techTreeNodes;
         }
         setConfig(data);
       } else {

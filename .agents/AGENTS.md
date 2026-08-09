@@ -13,6 +13,7 @@ Este archivo contiene reglas y directrices específicas para el espacio de traba
    - **Cuenta**: `lluviadeideaseditorial@gmail.com`
    - **Proyecto**: `lluviadeideas-educativo` (Proyecto de producción activo en `.firebaserc`)
    - **Despliegue**: El comando de compilación es `npm run build` y el despliegue es `firebase deploy`.
+   - **Políticas de Despliegue**: Por solicitud explícita del usuario, cada vez que se realicen y verifiquen cambios en el código, se debe compilar y desplegar inmediatamente a producción.
 2. **GitHub**:
    - **Repositorio**: `https://github.com/pachevar/lluvia-de-ideas.git`
    - **Usuario local**: `lluviadeideaseditorial`

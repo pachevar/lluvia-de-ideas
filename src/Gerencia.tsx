@@ -8,7 +8,7 @@ import type { PortalConfig } from './types';
 
 // Admin Components
 import AdminLogin from './components/admin/AdminLogin';
-import AdminSidebar from './components/admin/AdminSidebar';
+import AdminSidebar, { type AdminTabType } from './components/admin/AdminSidebar';
 import AdminTabInicio from './components/admin/AdminTabInicio';
 import AdminTabLaboratorios from './components/admin/AdminTabLaboratorios';
 import AdminColorsTab from './components/admin/AdminColorsTab';
@@ -16,6 +16,10 @@ import AdminTabInscripciones from './components/admin/AdminTabInscripciones';
 import AdminTabCotizador from './components/admin/AdminTabCotizador';
 import AdminBingoTab from './components/admin/AdminBingoTab';
 import AdminTabMundoVirtual from './components/admin/AdminTabMundoVirtual';
+import AdminTabCreatika from './components/admin/AdminTabCreatika';
+import AdminTab100tek from './components/admin/AdminTab100tek';
+import AdminTabCatalogo from './components/admin/AdminTabCatalogo';
+import AdminTabTechTree from './components/admin/AdminTabTechTree';
 
 export default function Gerencia() {
   const { config, loading: configLoading, saveConfigToFirestore, resetConfigToFirestore } = usePortalConfig();
@@ -25,7 +29,7 @@ export default function Gerencia() {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
   
-  const [activeAdminTab, setActiveAdminTab] = useState<'inicio' | 'mapa' | 'laboratorios' | 'colors' | 'inscripciones' | 'cotizador' | 'bingo'>('inicio');
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTabType>('inicio');
   const [localConfig, setLocalConfig] = useState<PortalConfig | null>(null);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [saving, setSaving] = useState(false);
@@ -199,8 +203,23 @@ export default function Gerencia() {
           {activeAdminTab === 'inicio' && (
             <AdminTabInicio 
               localConfig={localConfig} 
+              setLocalConfig={setLocalConfig}
               updateField={updateField} 
               updateStory={updateStory} 
+            />
+          )}
+
+          {activeAdminTab === 'creatika' && (
+            <AdminTabCreatika 
+              localConfig={localConfig} 
+              updateField={updateField} 
+            />
+          )}
+
+          {activeAdminTab === '100tek' && (
+            <AdminTab100tek 
+              localConfig={localConfig} 
+              updateField={updateField} 
             />
           )}
 
@@ -211,12 +230,26 @@ export default function Gerencia() {
             />
           )}
 
+          {activeAdminTab === 'techtree' && (
+            <AdminTabTechTree 
+              localConfig={localConfig} 
+              updateField={updateField} 
+            />
+          )}
+
           {activeAdminTab === 'laboratorios' && (
             <AdminTabLaboratorios 
               localConfig={localConfig} 
               setLocalConfig={setLocalConfig} 
               updateModule={updateModule} 
               updateModuleSkill={updateModuleSkill} 
+            />
+          )}
+
+          {activeAdminTab === 'catalogo' && (
+            <AdminTabCatalogo 
+              localConfig={localConfig} 
+              updateField={updateField} 
             />
           )}
 

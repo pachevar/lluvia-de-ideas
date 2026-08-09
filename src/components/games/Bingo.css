@@ -87,50 +87,53 @@
 .game-section {
   position: relative;
   z-index: 1;
-  max-width: 100%;
-  padding: 0 15px;
+  max-width: 1750px;
+  padding: 0 16px;
   margin: 0 auto;
 }
 
 .bingo-gamer-header {
   text-align: center;
-  margin-bottom: 25px;
+  margin-bottom: 12px;
   position: relative;
 }
 
 .bingo-gamer-header h1 {
   font-family: var(--font-gamer);
   font-weight: 900;
-  font-size: 2.8rem;
+  font-size: 2.2rem;
   letter-spacing: 2px;
   text-transform: uppercase;
   color: #fff;
   text-shadow: 0 0 10px rgba(168, 85, 247, 0.8), 0 0 20px rgba(236, 72, 153, 0.5);
-  margin-bottom: 5px;
+  margin-bottom: 4px;
 }
 
 .bingo-gamer-header p {
   color: var(--cyber-cyan);
   font-family: var(--font-gamer);
-  font-size: 0.95rem;
+  font-size: 0.85rem;
   letter-spacing: 1px;
   text-transform: uppercase;
   opacity: 0.8;
   text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
 }
 
-/* Main Dashboard Grid Layout (Web) */
+/* Main Dashboard Grid Layout (Web Widescreen Optimized) */
 .bingo-dashboard-grid {
   display: grid;
-  grid-template-columns: 1fr 2.2fr;
-  gap: 24px;
-  margin-top: 20px;
+  grid-template-columns: minmax(320px, 350px) 1fr;
+  gap: 18px;
+  margin-top: 10px;
+  max-width: 1750px;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 @media (max-width: 991.98px) {
   .bingo-dashboard-grid {
     grid-template-columns: 1fr;
-    gap: 16px;
+    gap: 14px;
   }
 }
 
@@ -138,7 +141,7 @@
   background: var(--cyber-panel, rgba(13, 6, 28, 0.75));
   border: 2px solid var(--cyber-primary, rgba(168, 85, 247, 0.25));
   border-radius: var(--border-radius-gamer);
-  padding: 20px;
+  padding: 14px 16px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3), inset 0 0 15px rgba(255, 255, 255, 0.05);
   backdrop-filter: blur(15px);
   -webkit-backdrop-filter: blur(15px);
@@ -155,7 +158,7 @@
   width: 100%;
   height: 3px;
   background: linear-gradient(90deg, transparent, var(--cyber-primary), var(--cyber-accent), var(--cyber-cyan), transparent);
-  animation: hologramLine 4s infinite linear;
+  animation: hologramLine 8s infinite linear;
 }
 
 .cyber-panel:hover {
@@ -168,8 +171,8 @@
   justify-content: space-between;
   align-items: center;
   border-bottom: 2px solid rgba(168, 85, 247, 0.2);
-  padding-bottom: 12px;
-  margin-bottom: 18px;
+  padding-bottom: 8px;
+  margin-bottom: 12px;
 }
 
 .cyber-panel-title {
@@ -345,14 +348,14 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 20px 0;
+  padding: 6px 0 10px;
 }
 
 /* Glowing background halo behind ball */
 .cyber-halo {
   position: absolute;
-  width: 260px;
-  height: 260px;
+  width: 200px;
+  height: 200px;
   background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(236, 72, 153, 0.05) 50%, transparent 70%);
   border-radius: 50%;
   top: 50%;
@@ -366,8 +369,8 @@
 /* The Hologram Tombola Frame representation */
 .hologram-tombola-frame {
   position: relative;
-  width: 250px;
-  height: 250px;
+  width: 180px;
+  height: 180px;
   border-radius: 50%;
   border: 3px double rgba(0, 240, 255, 0.25);
   display: flex;
@@ -399,16 +402,16 @@
 
 /* Futuristic gaming sphere for the drawn ball */
 .gamer-ball {
-  width: 160px;
-  height: 160px;
+  width: 125px;
+  height: 125px;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 35%, #fff, var(--cyber-primary) 45%, var(--cyber-accent) 80%, #000 100%);
   box-shadow: 
-    0 15px 35px rgba(0, 0, 0, 0.6), 
-    0 0 30px rgba(168, 85, 247, 0.6), 
-    inset 0 -10px 20px rgba(0, 0, 0, 0.8),
-    inset 0 10px 20px rgba(255, 255, 255, 0.6);
-  border: 6px solid #fff;
+    0 10px 25px rgba(0, 0, 0, 0.6), 
+    0 0 25px rgba(168, 85, 247, 0.6), 
+    inset 0 -8px 16px rgba(0, 0, 0, 0.8),
+    inset 0 8px 16px rgba(255, 255, 255, 0.6);
+  border: 4px solid #fff;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -425,14 +428,14 @@
   border-color: var(--cyber-cyan);
   background: radial-gradient(circle at 35% 35%, #fff, var(--cyber-cyan) 45%, var(--cyber-primary) 80%, #000 100%);
   box-shadow: 
-    0 15px 35px rgba(0, 0, 0, 0.6), 
-    0 0 40px var(--cyber-cyan-glow), 
-    inset 0 -10px 20px rgba(0,0,0,0.8);
+    0 10px 25px rgba(0, 0, 0, 0.6), 
+    0 0 30px var(--cyber-cyan-glow), 
+    inset 0 -8px 16px rgba(0,0,0,0.8);
 }
 
 .gamer-ball-letter {
   font-family: var(--font-gamer);
-  font-size: 1.4rem;
+  font-size: 1.15rem;
   font-weight: 900;
   color: #fff;
   text-shadow: 0 2px 4px rgba(0,0,0,0.5);
@@ -442,12 +445,12 @@
 
 .gamer-ball-number {
   font-family: var(--font-gamer);
-  font-size: 4.6rem;
+  font-size: 3.4rem;
   font-weight: 900;
   color: #fff;
   text-shadow: 2px 3px 6px rgba(0,0,0,0.6), 0 0 10px rgba(255, 255, 255, 0.8);
-  line-height: 1.1;
-  margin-top: -5px;
+  line-height: 1;
+  margin-top: -3px;
 }
 
 .gamer-ball-label {
@@ -457,6 +460,117 @@
   text-transform: uppercase;
   font-weight: 700;
   text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+}
+
+/* Horizontal Row Stage Flex Alignment */
+.tombola-horizontal-stage-flex {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 24px;
+  width: 100%;
+  max-width: 680px;
+  margin: 0 auto;
+}
+
+@media (max-width: 768px) {
+  .tombola-horizontal-stage-flex {
+    flex-direction: column;
+    gap: 14px;
+  }
+}
+
+/* Dual Container High-Legibility Showcase for Drawn Ball */
+.number-display-showcase {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  z-index: 5;
+  width: 100%;
+  flex: 1;
+}
+
+.letter-display-box {
+  flex: 0 0 115px;
+  height: 125px;
+  background: rgba(13, 6, 28, 0.95);
+  border: 2px solid var(--cyber-cyan, #00f0ff);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35), inset 0 0 15px rgba(0, 240, 255, 0.15);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.letter-display-box .tag {
+  font-family: var(--font-gamer);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  margin-bottom: 2px;
+}
+
+.letter-display-box .value {
+  font-family: var(--font-gamer);
+  font-size: 3.8rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 0 16px currentColor;
+}
+
+.number-display-box {
+  flex: 1;
+  height: 125px;
+  background: rgba(13, 6, 28, 0.95);
+  border: 2.5px solid var(--cyber-primary, #a855f7);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.05);
+  position: relative;
+  overflow: hidden;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 0 15px;
+}
+
+.number-display-box .tag {
+  font-family: var(--font-gamer);
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--cyber-cyan, #00f0ff);
+  margin-bottom: 2px;
+}
+
+.number-display-box .value {
+  font-family: var(--font-gamer);
+  font-size: 4.8rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0,0,0,0.9);
+}
+
+.number-display-box .sub-label {
+  font-size: 0.72rem;
+  color: #a855f7;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-top: 2px;
 }
 
 /* Sound and Config controls */
@@ -743,16 +857,27 @@
   width: 100%;
   background: rgba(3, 1, 7, 0.9) !important;
   border: 2px solid rgba(168, 85, 247, 0.4) !important;
-  border-radius: 8px !important;
-  padding: 14px 16px 14px 44px !important;
+  border-radius: 12px !important;
+  padding: 12px 14px 12px 38px !important;
   color: #fff !important;
   font-family: var(--font-gamer) !important;
-  font-size: 1.05rem !important;
+  font-size: 0.88rem !important;
   font-weight: 700 !important;
-  letter-spacing: 0.5px !important;
+  letter-spacing: 0.3px !important;
   outline: none !important;
   transition: all 0.3s !important;
   box-shadow: inset 0 0 8px rgba(0, 0, 0, 0.6) !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+}
+
+.cyber-input::placeholder {
+  color: rgba(255, 255, 255, 0.5) !important;
+  font-size: 0.78rem !important;
+  font-weight: 600 !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.2px !important;
 }
 
 .cyber-input:focus {
@@ -862,6 +987,7 @@
 .gamer-btn-host-draw {
   background: linear-gradient(135deg, var(--cyber-cyan) 0%, var(--cyber-primary) 100%) !important;
   box-shadow: 0 4px 15px rgba(0, 240, 255, 0.4) !important;
+  white-space: nowrap !important;
 }
 
 .gamer-btn-host-success {
@@ -1198,9 +1324,10 @@
    ANIMATIONS & KEYFRAMES
    ========================================================================== */
 @keyframes hologramLine {
-  0% { transform: translateY(0); opacity: 0.8; }
-  50% { opacity: 0.3; }
-  100% { transform: translateY(280px); opacity: 0.8; }
+  0% { top: -5%; opacity: 0; }
+  10% { opacity: 0.95; }
+  90% { opacity: 0.95; }
+  100% { top: 105%; opacity: 0; }
 }
 
 @keyframes pulseIcon {
@@ -2026,6 +2153,38 @@
   to { background: rgba(0, 240, 255, 0.35); }
 }
 
+/* Assist Mode: Casilla marcada que NO ha salido en la tómbola (Borde Rojo brillante e inconfundible) */
+.bingo-cell.marked-undrawn-assist,
+.bingo-card-container .bingo-cell.marked-undrawn-assist,
+[class*="card-theme-"] .bingo-cell.marked-undrawn-assist,
+div .bingo-cell.marked-undrawn-assist {
+  border: 3.5px solid #ef4444 !important;
+  box-shadow: 0 0 22px #ef4444, inset 0 0 12px rgba(239, 68, 68, 0.5) !important;
+  background: rgba(239, 68, 68, 0.25) !important;
+  color: #ffffff !important;
+  outline: 2px solid #ef4444 !important;
+  outline-offset: -2px !important;
+  animation: pulse-marked-undrawn 1s infinite alternate !important;
+}
+
+@keyframes pulse-marked-undrawn {
+  from { box-shadow: 0 0 12px #ef4444, inset 0 0 8px rgba(239, 68, 68, 0.3); }
+  to { box-shadow: 0 0 28px #ff2222, inset 0 0 16px rgba(239, 68, 68, 0.8); }
+}
+
+/* Assist Mode: Casilla marcada que SÍ ha salido en la tómbola (Borde Verde brillante) */
+.bingo-cell.marked-drawn-assist,
+.bingo-card-container .bingo-cell.marked-drawn-assist,
+[class*="card-theme-"] .bingo-cell.marked-drawn-assist,
+div .bingo-cell.marked-drawn-assist {
+  border: 3.5px solid #22c55e !important;
+  box-shadow: 0 0 22px #22c55e, inset 0 0 12px rgba(34, 197, 94, 0.5) !important;
+  background: rgba(34, 197, 94, 0.25) !important;
+  color: #ffffff !important;
+  outline: 2px solid #22c55e !important;
+  outline-offset: -2px !important;
+}
+
 /* Public Tombola Shout Overlay */
 .public-bingo-shout-overlay {
   position: absolute;
@@ -2093,18 +2252,20 @@
 
 /* Host Shout Modal Overlay */
 .host-shout-modal-overlay {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
-  height: 100vh;
-  background: rgba(6, 2, 15, 0.85);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  z-index: 1000;
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+  right: 0 !important;
+  bottom: 0 !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  background: rgba(6, 2, 15, 0.92) !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  z-index: 9999999 !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
 }
 
 .host-shout-modal {
@@ -2314,6 +2475,14 @@
   gap: 8px;
   flex-wrap: wrap;
   padding-bottom: 4px;
+  padding-left: 20px;
+  padding-right: 20px;
+}
+
+.header-settings-panel {
+  padding-left: 20px;
+  padding-right: 20px;
+  padding-bottom: 10px;
 }
 
 .live-balls-ticker-label {
@@ -2612,4 +2781,509 @@
   line-height: 1.4;
   width: 100%;
 }
+
+/* Estilos Base del Header del Cartón (BingoCardView) */
+.bingo-personal-header {
+  padding: 0 !important; /* El padding se maneja ahora en el wrapper interno */
+  border-width: 2px;
+  border-style: solid;
+  transition: all 0.4s ease;
+}
+
+/* Indicadores de Estado Creativos (Glow Borders) */
+.bingo-personal-header.status-playing {
+  animation: borderGlowPlaying 2.5s infinite alternate;
+}
+.bingo-personal-header.status-waiting {
+  animation: borderGlowWaiting 3s infinite alternate;
+}
+.bingo-personal-header.status-finished {
+  animation: borderGlowFinished 3s infinite alternate;
+}
+
+@keyframes borderGlowPlaying {
+  0% {
+    border-color: #22c55e !important;
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.25), 0 0 10px rgba(34, 197, 94, 0.15) !important;
+  }
+  50% {
+    border-color: #10b981 !important;
+    box-shadow: 0 6px 25px rgba(16, 185, 129, 0.6), 0 0 20px rgba(16, 185, 129, 0.35) !important;
+  }
+  100% {
+    border-color: #22c55e !important;
+    box-shadow: 0 4px 15px rgba(34, 197, 94, 0.25), 0 0 10px rgba(34, 197, 94, 0.15) !important;
+  }
+}
+
+@keyframes borderGlowWaiting {
+  0% {
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15) !important;
+  }
+  50% {
+    border-color: #d97706 !important;
+    box-shadow: 0 6px 20px rgba(217, 119, 6, 0.4) !important;
+  }
+  100% {
+    border-color: #f59e0b !important;
+    box-shadow: 0 4px 15px rgba(245, 158, 11, 0.15) !important;
+  }
+}
+
+@keyframes borderGlowFinished {
+  0% {
+    border-color: #ec4899 !important;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15) !important;
+  }
+  50% {
+    border-color: #db2777 !important;
+    box-shadow: 0 6px 20px rgba(219, 39, 119, 0.4) !important;
+  }
+  100% {
+    border-color: #ec4899 !important;
+    box-shadow: 0 4px 12px rgba(236, 72, 153, 0.15) !important;
+  }
+}
+
+/* Ajustes del Header de Cartón en Móvil */
+@media (max-width: 768px) {
+  .bingo-personal-header {
+    margin: 12px 4px !important;
+  }
+  .bingo-personal-header .header-flex-wrapper {
+    padding: 12px 18px !important; /* Márgenes internos ergonómicos y elegantes */
+  }
+  .bingo-personal-header .player-label,
+  .bingo-personal-header .id-label,
+  .bingo-personal-header .badge-status-container {
+    display: none !important; /* Oculta labels estáticas y señal textual */
+  }
+  .bingo-personal-header .header-flex-wrapper {
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    width: 100% !important;
+    gap: 12px !important;
+  }
+  .bingo-personal-header .player-name-title {
+    font-size: 1.1rem !important;
+    margin: 0 !important;
+    max-width: 65% !important;
+    letter-spacing: 0.5px !important;
+  }
+  .bingo-personal-header .card-id-code {
+    font-size: 0.85rem !important;
+    padding: 5px 12px !important; /* Más respiro a la burbuja de ID */
+    margin: 0 !important;
+    border-radius: 10px !important; /* Bordes más suaves */
+  }
+  .live-balls-ticker {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+  }
+  .header-settings-panel {
+    padding-left: 18px !important;
+    padding-right: 18px !important;
+    padding-bottom: 8px !important;
+  }
+}
+
+/* ==========================================================================
+   Efecto Flip Card 3D para Modales de Patrocinadores
+   ========================================================================== */
+.sponsor-flip-card {
+  background-color: transparent;
+  width: 700px;
+  max-width: 94vw;
+  height: 680px;
+  perspective: 1500px; /* Habilitar perspectiva 3D */
+  z-index: 10;
+}
+
+@media (max-width: 768px) {
+  .sponsor-flip-card {
+    height: 450px; /* Un poco más pequeño en móviles */
+  }
+}
+
+.sponsor-flip-card-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  text-align: center;
+  transition: transform 1.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  transform-style: preserve-3d;
+  cursor: pointer;
+}
+
+.sponsor-flip-card-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.sponsor-flip-card-front,
+.sponsor-flip-card-back {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  -webkit-backface-visibility: hidden; /* Proteger Safari */
+  backface-visibility: hidden;
+  border-radius: 32px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+/* Cara Frontal (Misma información que la trasera) */
+.sponsor-flip-card-front {
+  transform: rotateY(0deg);
+}
+
+/* Cara Trasera (El Patrocinador real) */
+.sponsor-flip-card-back {
+  transform: rotateY(180deg);
+}
+
+/* ==========================================================================
+   GALERÍA DE PREMIOS Y VISOR AMPLIADO (LIGHTBOX)
+   ========================================================================== */
+.prizes-showcase-container {
+  position: relative;
+  width: 100%;
+  margin-top: 10px;
+}
+
+.prizes-showcase-slider {
+  display: flex;
+  gap: 18px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+  padding: 10px 6px 20px 6px;
+  scroll-behavior: smooth;
+}
+
+.prizes-showcase-slider::-webkit-scrollbar {
+  display: none;
+}
+
+.prize-card-item {
+  flex: 0 0 calc(50% - 10px);
+  min-width: 260px;
+  max-width: 330px;
+  scroll-snap-align: center;
+  border-radius: 24px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.4);
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 0.3s ease, border-color 0.3s ease;
+  cursor: pointer;
+}
+
+.prize-card-item:hover {
+  transform: translateY(-6px) scale(1.02);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6), 0 0 25px rgba(168, 85, 247, 0.3);
+  border-color: rgba(168, 85, 247, 0.5);
+}
+
+.prize-image-wrapper {
+  position: relative;
+  width: 100%;
+  height: 180px;
+  background: #080314;
+  overflow: hidden;
+}
+
+.prize-image-wrapper img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.5s ease;
+}
+
+.prize-card-item:hover .prize-image-wrapper img {
+  transform: scale(1.08);
+}
+
+.prize-image-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to top, rgba(10, 3, 20, 0.95) 0%, rgba(10, 3, 20, 0.2) 50%, transparent 100%);
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  padding-bottom: 14px;
+  opacity: 0.85;
+  transition: opacity 0.3s ease;
+}
+
+.prize-card-item:hover .prize-image-overlay {
+  opacity: 1;
+}
+
+.prize-zoom-btn-badge {
+  background: rgba(255, 255, 255, 0.18);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 16px;
+  border-radius: 9999px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.prize-card-item:hover .prize-zoom-btn-badge {
+  background: rgba(168, 85, 247, 0.8);
+  border-color: #d8b4fe;
+  transform: scale(1.05);
+}
+
+.slider-nav-btn {
+  position: absolute;
+  top: 45%;
+  transform: translateY(-50%);
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(15, 7, 32, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  z-index: 10;
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6);
+  transition: all 0.25s ease;
+}
+
+.slider-nav-btn:hover {
+  background: rgba(168, 85, 247, 0.9);
+  border-color: #fff;
+  box-shadow: 0 0 20px rgba(168, 85, 247, 0.8);
+  transform: translateY(-50%) scale(1.1);
+}
+
+.slider-nav-btn.prev {
+  left: -14px;
+}
+
+.slider-nav-btn.next {
+  right: -14px;
+}
+
+/* Lightbox Modal Visor Ampliado */
+.prize-lightbox-overlay {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(4, 2, 12, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  z-index: 100000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.25s ease;
+}
+
+.prize-lightbox-card {
+  position: relative;
+  width: 100%;
+  max-width: 850px;
+  max-height: 92vh;
+  background: rgba(15, 7, 32, 0.96);
+  border-radius: 28px;
+  border: 2px solid rgba(168, 85, 247, 0.6);
+  box-shadow: 0 0 60px rgba(168, 85, 247, 0.35), 0 25px 60px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: zoomIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.prize-lightbox-viewport {
+  position: relative;
+  width: 100%;
+  height: 52vh;
+  min-height: 300px;
+  background: #05020c;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  cursor: zoom-in;
+}
+
+.prize-lightbox-viewport.zoomed {
+  cursor: zoom-out;
+}
+
+.prize-lightbox-img {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  transition: transform 0.35s cubic-bezier(0.25, 1, 0.5, 1);
+  user-select: none;
+  -webkit-user-drag: none;
+}
+
+.prize-lightbox-img.zoomed {
+  transform: scale(1.8);
+}
+
+@media (max-width: 768px) {
+  .prize-card-item {
+    flex: 0 0 88%;
+    min-width: 250px;
+    max-width: 100%;
+  }
+
+  .slider-nav-btn {
+    display: none;
+  }
+
+  .prize-lightbox-viewport {
+    height: 40vh;
+    min-height: 240px;
+  }
+}
+
+/* ==========================================================================
+   MOBILE INSTRUCTIONS TRIGGER & MODAL
+   ========================================================================== */
+/* Vertical Flush Handle for Mobile Instructions (matches Prizes tab style) */
+.bingo-instructions-vertical-handle {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .bingo-instructions-vertical-handle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: fixed;
+    top: 55px;
+    left: 0;
+    z-index: 99990;
+    padding: 14px 6px;
+    width: 36px;
+    border-radius: 0 16px 16px 0;
+    background: rgba(13, 6, 28, 0.95);
+    border: 2px solid #a855f7;
+    border-left: none;
+    box-shadow: 4px 0 25px rgba(168, 85, 247, 0.65), 0 0 15px rgba(236, 72, 153, 0.4);
+    color: #fff;
+    cursor: pointer;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  }
+
+  .bingo-instructions-vertical-handle:active {
+    transform: scale(0.94);
+  }
+}
+
+@keyframes slideDrawerRight {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.bingo-instructions-drawer {
+  animation: slideDrawerRight 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+.bingo-instructions-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(4, 1, 12, 0.94);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  animation: fadeIn 0.25s ease-out;
+}
+
+.bingo-instructions-modal {
+  width: 100%;
+  max-width: 580px;
+  max-height: 90vh;
+  background: rgba(18, 9, 36, 0.98);
+  border: 2px solid rgba(168, 85, 247, 0.6);
+  border-radius: 24px;
+  box-shadow: 0 0 50px rgba(168, 85, 247, 0.35), 0 25px 50px rgba(0, 0, 0, 0.9);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: #fff;
+}
+
+.bingo-instructions-header {
+  padding: 16px 20px;
+  background: linear-gradient(90deg, rgba(168, 85, 247, 0.25) 0%, rgba(236, 72, 153, 0.25) 100%);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.bingo-instructions-nav {
+  display: flex;
+  gap: 6px;
+  padding: 10px 16px;
+  background: rgba(0, 0, 0, 0.4);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow-x: auto;
+  white-space: nowrap;
+}
+
+.bingo-instructions-tab-btn {
+  padding: 8px 14px;
+  border-radius: 12px;
+  border: none;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+  background: transparent;
+  color: #94a3b8;
+}
+
+.bingo-instructions-tab-btn.active {
+  background: linear-gradient(135deg, #a855f7 0%, #ec4899 100%);
+  color: #fff;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.5);
+}
+
+.bingo-instructions-body {
+  padding: 20px;
+  overflow-y: auto;
+  flex: 1;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
 

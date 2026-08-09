@@ -22,21 +22,38 @@ service cloud.firestore {
     // Colección de juegos de bingo
     match /bingo_games/{gameId} {
       allow read: if true;
-      allow write: if request.auth != null;
+      allow write: if true;
     }
     
     // Colección de cartones de bingo
     match /bingo_cards/{cardId} {
-      allow read, create: if true;
-      allow update: if request.auth != null || 
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['shoutedBingo', 'shoutedAt']));
+      allow read, create, update: if true;
       allow delete: if request.auth != null;
     }
 
     // Colección de historial de ganadores
     match /bingo_winners_history/{winnerId} {
+      allow read, create, update: if true;
+      allow delete: if request.auth != null;
+    }
+
+    // Colección de códigos de activación para Bingo
+    match /bingo_codes/{codeId} {
+      allow read: if true;
+      allow create, delete: if request.auth != null;
+      allow update: if true;
+    }
+
+    // Colección de promotores de Bingo
+    match /bingo_promoters/{promoterId} {
       allow read: if true;
       allow write: if request.auth != null;
+    }
+
+    // Colección de usuarios del portal (estudiantes, docentes, administradores)
+    match /users/{userId} {
+      allow read: if request.auth != null;
+      allow create, update, delete: if request.auth != null && request.auth.uid == userId;
     }
   }
 }

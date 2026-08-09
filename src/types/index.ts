@@ -45,6 +45,51 @@ export interface CustomHexagon {
   action: HexInteractiveAction; // Lógica de acción al hacer clic
 }
 
+export interface CreatikaConfig {
+  storyMachineIntro?: string;
+  colorTheoryIntro?: string;
+}
+
+export interface Tek100Config {
+  numberSequencesIntro?: string;
+  solarSystemIntro?: string;
+}
+
+export interface CatalogoConfig {
+  announcement?: string;
+  whatsappPhone?: string;
+}
+
+export interface LandingSectionConfig {
+  title?: string;
+  badge?: string;
+  body?: string;
+  bullets?: string[];
+  bgImage?: string;
+}
+
+export interface LandingCardConfig {
+  title?: string;
+  badge?: string;
+  kicheTag?: string;
+  desc?: string;
+}
+
+export interface LandingConfig {
+  cards?: {
+    sutz?: LandingCardConfig;
+    creatika?: LandingCardConfig;
+    tek100?: LandingCardConfig;
+    lab?: LandingCardConfig;
+  };
+  sections?: {
+    sutz?: LandingSectionConfig;
+    creatika?: LandingSectionConfig;
+    tek100?: LandingSectionConfig;
+    lab?: LandingSectionConfig;
+  };
+}
+
 export interface PortalConfig {
   hero: {
     slogan: string;
@@ -69,7 +114,25 @@ export interface PortalConfig {
     'text-title': string;
   };
   map?: CustomHexagon[];
+  creatika?: CreatikaConfig;
+  tek100?: Tek100Config;
+  techTreeNodes?: Record<string, TechNode>;
+  catalogoConfig?: CatalogoConfig;
+  landingConfig?: LandingConfig;
 }
+
+export interface TechNode {
+  id: string; // "c1-n1", "c2-n1", etc.
+  col: number; // 1 to 30
+  indexInCol: number; // 1..3, 1..6, or 1..12
+  title: string;
+  shortDescription: string;
+  icon: string;
+  image?: string;
+  parents: string[]; // parent node IDs
+  unlocked?: boolean;
+}
+
 
 export interface Product {
   id: number;
@@ -95,6 +158,15 @@ export interface Sponsor {
   message?: string;
 }
 
+export interface BingoPrize {
+  id: string;
+  title: string;
+  description: string;
+  image: string; // base64 or URL
+  category?: string;
+  order: number; // 1 = menor, 2 = medio, 3 = mayor, etc.
+}
+
 export interface BingoCustomization {
   headerImage?: string; // base64 or URL
   headerHeight?: number; // height in px
@@ -110,6 +182,22 @@ export interface BingoCustomization {
   cardTheme?: 'classic' | 'cyberpunk' | 'dark' | 'light';
   sponsorConfig?: SponsorConfig;
   sponsors?: Sponsor[];
+  prizes?: BingoPrize[];
+  accessConfig?: {
+    mode: 'free' | 'code';
+    massiveMode?: boolean;
+    maxOverlapThreshold?: number;
+    formFields: {
+      phone: { enabled: boolean; required: boolean };
+      location: { enabled: boolean; required: boolean };
+    };
+    paymentInfo?: {
+      sinpeNumber?: string;
+      bankAccount?: string;
+      whatsappNumber?: string;
+      paymentInstructions?: string;
+    };
+  };
 }
 
 export interface BingoGame {
@@ -121,6 +209,14 @@ export interface BingoGame {
   createdAt: number;
   active: boolean;
   customization?: BingoCustomization;
+  currentPrizeId?: string;
+  currentPrizeTitle?: string;
+  lastResetAt?: number;
+  latestWinner?: {
+    playerName: string;
+    prizeTitle: string;
+    timestamp: number;
+  };
 }
 
 export interface BingoCard {
@@ -133,6 +229,18 @@ export interface BingoCard {
   shoutedBingo?: boolean;
   shoutedAt?: number;
   winnerConfirmed?: boolean;
+  phone?: string;
+  location?: string;
+  promoterCode?: string;
+}
+
+export interface BingoPromoter {
+  id: string; // Código del promotor (ej. PROMO10)
+  promoterName: string;
+  contact?: string;
+  commission?: number; // Comisión o compensación acordada
+  createdAt: number;
+  active: boolean;
 }
 
 export interface CotizacionItem {

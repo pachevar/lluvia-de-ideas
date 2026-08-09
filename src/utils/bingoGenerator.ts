@@ -1,4 +1,4 @@
-// Utilidad para generación de lógicas de Bingo
+// Utilidad para generación de lógicas de Bingo y Matemáticas Anticolisión
 
 // Columnas de un cartón tradicional de 75 bolas
 const BINGO_RANGES = [
@@ -73,9 +73,37 @@ export const hashBingoMatrix = (matrix: (number | null)[][]): string => {
 export const validateBingoCard = (
   matrix: (number | null)[][], 
   drawnNumbers: number[], 
-  pattern: string = 'full'
+  pattern: string = 'full',
+  markedSlots?: any
 ): { isWinner: boolean, missingNumbers: number[] } => {
-  const getVal = (row: number, col: number): number | null => matrix[row][col];
+  if (!matrix || !Array.isArray(matrix)) {
+    return { isWinner: false, missingNumbers: [] };
+  }
+
+  const isCovered = (r: number, c: number): boolean => {
+    if (!matrix[r]) return false;
+    const val = matrix[r][c];
+    if (val === null) return true; // Centro (espacio libre) siempre cubierto
+
+    // 1. Debe haber salido en la tómbola
+    if (!drawnNumbers.includes(val)) return false;
+
+    // 2. Si se provee la matriz/objeto de casillas marcadas, DEBE estar marcada por el usuario
+    if (markedSlots) {
+      let isMarked = true;
+      const mObj = markedSlots as any;
+      if (Array.isArray(markedSlots) && markedSlots[r]) {
+        isMarked = Boolean(markedSlots[r][c]);
+      } else if (typeof markedSlots === 'object' && mObj[`r${r}`]) {
+        isMarked = Boolean(mObj[`r${r}`][c]);
+      }
+      if (!isMarked) return false;
+    }
+
+    return true;
+  };
+
+  const getVal = (row: number, col: number): number | null => matrix[row] ? matrix[row][col] : null;
 
   // Caso 1: Cartón Lleno
   if (pattern === 'full') {
@@ -83,7 +111,7 @@ export const validateBingoCard = (
     for (let r = 0; r < 5; r++) {
       for (let c = 0; c < 5; c++) {
         const val = getVal(r, c);
-        if (val !== null && !drawnNumbers.includes(val)) {
+        if (val !== null && !isCovered(r, c)) {
           missing.push(val);
         }
       }
@@ -98,8 +126,9 @@ export const validateBingoCard = (
       { r: 4, c: 0 }, { r: 4, c: 4 }
     ];
     const missing = corners
-      .map(p => getVal(p.r, p.c))
-      .filter((val): val is number => val !== null && !drawnNumbers.includes(val));
+      .map(p => ({ val: getVal(p.r, p.c), covered: isCovered(p.r, p.c) }))
+      .filter(p => p.val !== null && !p.covered)
+      .map(p => p.val as number);
     return { isWinner: missing.length === 0, missingNumbers: missing };
   }
 
@@ -109,12 +138,14 @@ export const validateBingoCard = (
     const diag2 = [{r:0,c:4}, {r:1,c:3}, {r:2,c:2}, {r:3,c:1}, {r:4,c:0}];
     
     const missingDiag1 = diag1
-      .map(p => getVal(p.r, p.c))
-      .filter((val): val is number => val !== null && !drawnNumbers.includes(val));
+      .map(p => ({ val: getVal(p.r, p.c), covered: isCovered(p.r, p.c) }))
+      .filter(p => p.val !== null && !p.covered)
+      .map(p => p.val as number);
       
     const missingDiag2 = diag2
-      .map(p => getVal(p.r, p.c))
-      .filter((val): val is number => val !== null && !drawnNumbers.includes(val));
+      .map(p => ({ val: getVal(p.r, p.c), covered: isCovered(p.r, p.c) }))
+      .filter(p => p.val !== null && !p.covered)
+      .map(p => p.val as number);
 
     if (missingDiag1.length === 0) return { isWinner: true, missingNumbers: [] };
     if (missingDiag2.length === 0) return { isWinner: true, missingNumbers: [] };
@@ -134,7 +165,7 @@ export const validateBingoCard = (
       const missingRow: number[] = [];
       for (let c = 0; c < 5; c++) {
         const val = getVal(r, c);
-        if (val !== null && !drawnNumbers.includes(val)) missingRow.push(val);
+        if (val !== null && !isCovered(r, c)) missingRow.push(val);
       }
       if (missingRow.length === 0) return { isWinner: true, missingNumbers: [] };
       if (missingRow.length < bestMissing.length) bestMissing = missingRow;
@@ -145,7 +176,7 @@ export const validateBingoCard = (
       const missingCol: number[] = [];
       for (let r = 0; r < 5; r++) {
         const val = getVal(r, c);
-        if (val !== null && !drawnNumbers.includes(val)) missingCol.push(val);
+        if (val !== null && !isCovered(r, c)) missingCol.push(val);
       }
       if (missingCol.length === 0) return { isWinner: true, missingNumbers: [] };
       if (missingCol.length < bestMissing.length) bestMissing = missingCol;
@@ -165,20 +196,23 @@ export const validateFullCard = (matrix: (number | null)[][], drawnNumbers: numb
 };
 
 /**
- * Compara dos matrices de cartones de Bingo para detectar si hay una colisión crítica.
- * Devuelve true si los cartones son demasiado similares o tienen el mismo conjunto ganador
- * en patrones clave (esquinas, diagonales, líneas o > 12 números en común).
+ * Compara dos matrices de cartones de Bingo para detectar si hay una colisión o similitud excesiva.
+ * Garantiza la separación matemática reduciendo la intersección máxima a 8 números (33%).
  */
 export const checkCardCollision = (
   matrixA: (number | null)[][], 
-  matrixB: (number | null)[][]
+  matrixB: (number | null)[][],
+  maxOverlap: number = 8
 ): boolean => {
+  if (!matrixA || !matrixB || !Array.isArray(matrixA) || !Array.isArray(matrixB)) return false;
+
   const getNumbers = (matrix: (number | null)[][]): Set<number> => {
     const s = new Set<number>();
     for (let r = 0; r < 5; r++) {
+      if (!matrix[r]) continue;
       for (let c = 0; c < 5; c++) {
         const val = matrix[r][c];
-        if (val !== null) s.add(val);
+        if (val !== null && val !== undefined) s.add(val);
       }
     }
     return s;
@@ -187,59 +221,39 @@ export const checkCardCollision = (
   const setA = getNumbers(matrixA);
   const setB = getNumbers(matrixB);
 
-  // 1. Similitud Excesiva (más de 12 números en común de 24 posibles)
+  // 1. Similitud Excesiva (máximo 'maxOverlap' números en común de 24 posibles)
   let intersectionCount = 0;
   for (const num of setA) {
     if (setB.has(num)) {
       intersectionCount++;
     }
   }
-  if (intersectionCount > 12) return true;
+  if (intersectionCount > maxOverlap) return true;
 
-  // 2. Colisión en las Cuatro Esquinas
-  const cornersA = new Set([matrixA[0][0], matrixA[0][4], matrixA[4][0], matrixA[4][4]]);
-  const cornersB = new Set([matrixB[0][0], matrixB[0][4], matrixB[4][0], matrixB[4][4]]);
+  // 2. Colisión en las Cuatro Esquinas (máximo 2 en común)
+  const getCornerVal = (m: (number | null)[][], r: number, c: number) => m && m[r] ? m[r][c] : null;
+  const cornersA = new Set([getCornerVal(matrixA, 0, 0), getCornerVal(matrixA, 0, 4), getCornerVal(matrixA, 4, 0), getCornerVal(matrixA, 4, 4)].filter(v => v !== null));
+  const cornersB = new Set([getCornerVal(matrixB, 0, 0), getCornerVal(matrixB, 0, 4), getCornerVal(matrixB, 4, 0), getCornerVal(matrixB, 4, 4)].filter(v => v !== null));
+  
   let cornerMatches = 0;
   for (const val of cornersA) {
     if (cornersB.has(val)) cornerMatches++;
   }
-  if (cornerMatches === 4) return true;
+  if (cornerMatches >= 3) return true;
 
-  // 3. Colisión en Diagonales (excluyendo el centro null)
-  const getDiag1 = (m: (number | null)[][]) => [m[0][0], m[1][1], m[3][3], m[4][4]].filter((v): v is number => v !== null);
-  const getDiag2 = (m: (number | null)[][]) => [m[0][4], m[1][3], m[3][1], m[4][0]].filter((v): v is number => v !== null);
-
-  const diag1A = new Set(getDiag1(matrixA));
-  const diag1B = new Set(getDiag1(matrixB));
-  const diag2A = new Set(getDiag2(matrixA));
-  const diag2B = new Set(getDiag2(matrixB));
-
-  const compareSets = (sA: Set<any>, sB: Set<any>) => {
-    if (sA.size !== sB.size) return false;
-    for (const val of sA) {
-      if (!sB.has(val)) return false;
-    }
-    return true;
-  };
-
-  // Comparar diag1 con diag1 y diag2 con diag2
-  if (compareSets(diag1A, diag1B) || compareSets(diag2A, diag2B)) return true;
-  // Comparar de forma cruzada diag1 con diag2
-  if (compareSets(diag1A, diag2B) || compareSets(diag2A, diag1B)) return true;
-
-  // 4. Colisión en Líneas (Filas o Columnas completas)
+  // 3. Colisión en Líneas (Filas o Columnas completas)
   const getLines = (m: (number | null)[][]): Set<number>[] => {
     const lines: Set<number>[] = [];
-    // Filas
+    if (!m || !Array.isArray(m)) return lines;
     for (let r = 0; r < 5; r++) {
-      const line = m[r].filter((v): v is number => v !== null);
+      if (!m[r]) continue;
+      const line = m[r].filter((v): v is number => v !== null && v !== undefined);
       lines.push(new Set(line));
     }
-    // Columnas
     for (let c = 0; c < 5; c++) {
       const line = [];
       for (let r = 0; r < 5; r++) {
-        if (m[r][c] !== null) line.push(m[r][c] as number);
+        if (m[r] && m[r][c] !== null && m[r][c] !== undefined) line.push(m[r][c] as number);
       }
       lines.push(new Set(line));
     }
@@ -251,7 +265,11 @@ export const checkCardCollision = (
 
   for (const lineA of linesA) {
     for (const lineB of linesB) {
-      if (compareSets(lineA, lineB)) return true;
+      let lineMatches = 0;
+      for (const val of lineA) {
+        if (lineB.has(val)) lineMatches++;
+      }
+      if (lineMatches >= 4) return true;
     }
   }
 

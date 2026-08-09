@@ -14,8 +14,8 @@ export default function AdminTabLaboratorios({ localConfig, setLocalConfig, upda
 
   return (
     <div className="admin-card card-glass animate-fade-in">
-      <h3>🧪 Configuración de la Sección de Laboratorios</h3>
-      <p className="tab-section-desc">Configura los textos generales y define las competencias y habilidades de los 10 módulos formativos.</p>
+      <h3>🧪 Configuración del Laboratorio de Animación Educativa</h3>
+      <p className="tab-section-desc">Configura los textos introductorios, competencias y habilidades de los 10 módulos formativos del laboratorio de animación.</p>
 
       <div className="admin-form-section">
         <h4>Introducción del Laboratorio</h4>
