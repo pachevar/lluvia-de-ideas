@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../firebase';
 import type { PortalConfig, TechNode } from '../../types';
 import { generateDefaultTechTree } from '../../utils/techTreeUtils';
 
@@ -9,6 +11,7 @@ interface AdminTabTechTreeProps {
 
 export default function AdminTabTechTree({ localConfig, updateField }: AdminTabTechTreeProps) {
   const [selectedColumn, setSelectedColumn] = useState<number>(1);
+  const [uploadingNodeId, setUploadingNodeId] = useState<string | null>(null);
 
   const techNodes: Record<string, TechNode> = localConfig.techTreeNodes || generateDefaultTechTree();
 
@@ -25,6 +28,24 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
       };
     }
     updateField('techTreeNodes' as keyof PortalConfig, '', updatedMap);
+  };
+
+  const handleImageUpload = async (nodeId: string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingNodeId(nodeId);
+    try {
+      const fileRef = ref(storage, `tech_tree_images/${nodeId}_${Date.now()}_${file.name}`);
+      await uploadBytes(fileRef, file);
+      const url = await getDownloadURL(fileRef);
+      handleNodeChange(nodeId, 'image', url);
+    } catch (err) {
+      console.error("Error subiendo imagen de tecnología a Firebase Storage:", err);
+      alert("Error al subir la imagen a Firebase Storage.");
+    } finally {
+      setUploadingNodeId(null);
+    }
   };
 
   const handleResetTechTree = () => {
@@ -97,43 +118,108 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
               </label>
             </div>
 
-            {/* Form Fields */}
-            <div className="admin-form-group" style={{ marginBottom: '10px' }}>
-              <label style={{ fontSize: '0.78rem', fontWeight: 700, color: '#ffffff', display: 'block', marginBottom: '4px' }}>
-                Título de la Tecnología
-              </label>
-              <input 
-                type="text"
-                value={node.title || ''}
-                onChange={(e) => handleNodeChange(node.id, 'title', e.target.value)}
-                placeholder="Ej. Inteligencia Artificial Maya"
-                style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#fff', padding: '8px', borderRadius: '10px', fontSize: '0.88rem' }}
-              />
-            </div>
+            {/* Sección de Imagen Personalizada y Formulario */}
+            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr', gap: '14px', marginBottom: '12px' }}>
+              {/* Lado Izquierdo: Vista Previa y Botón de Subida a Firebase */}
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <div style={{
+                  width: '80px',
+                  height: '80px',
+                  borderRadius: '12px',
+                  overflow: 'hidden',
+                  background: 'rgba(10, 15, 30, 0.9)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative'
+                }}>
+                  {node.image ? (
+                    <img src={node.image} alt={node.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : (
+                    <span style={{ fontSize: '2rem' }}>{node.icon || '⚙️'}</span>
+                  )}
+                  {uploadingNodeId === node.id && (
+                    <div style={{
+                      position: 'absolute',
+                      top: 0, left: 0, right: 0, bottom: 0,
+                      background: 'rgba(0, 0, 0, 0.75)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#38bdf8',
+                      fontSize: '0.72rem',
+                      fontWeight: 800
+                    }}>
+                      Subiendo...
+                    </div>
+                  )}
+                </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr', gap: '10px', marginBottom: '10px' }}>
-              <div className="admin-form-group">
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                  Ícono
+                <label 
+                  className="btn btn-glass"
+                  style={{
+                    fontSize: '0.68rem',
+                    padding: '4px 6px',
+                    width: '100%',
+                    textAlign: 'center',
+                    cursor: 'pointer',
+                    borderColor: 'rgba(56, 189, 248, 0.4)',
+                    color: '#38bdf8',
+                    fontWeight: 700
+                  }}
+                >
+                  {uploadingNodeId === node.id ? '⏳ Subiendo...' : '📁 Subir Imagen'}
+                  <input 
+                    type="file" 
+                    accept="image/*"
+                    onChange={(e) => handleImageUpload(node.id, e)}
+                    disabled={uploadingNodeId === node.id}
+                    style={{ display: 'none' }}
+                  />
                 </label>
-                <input 
-                  type="text"
-                  value={node.icon || '⚙️'}
-                  onChange={(e) => handleNodeChange(node.id, 'icon', e.target.value)}
-                  style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#fff', padding: '8px', borderRadius: '10px', textAlign: 'center', fontSize: '1.2rem' }}
-                />
               </div>
-              <div className="admin-form-group">
-                <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '4px' }}>
-                  URL Imagen (Opcional)
-                </label>
-                <input 
-                  type="text"
-                  value={node.image || ''}
-                  onChange={(e) => handleNodeChange(node.id, 'image', e.target.value)}
-                  placeholder="https://..."
-                  style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#fff', padding: '8px', borderRadius: '10px', fontSize: '0.82rem' }}
-                />
+
+              {/* Lado Derecho: Campos Principales */}
+              <div>
+                <div className="admin-form-group" style={{ marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.75rem', fontWeight: 700, color: '#ffffff', display: 'block', marginBottom: '3px' }}>
+                    Título de la Tecnología
+                  </label>
+                  <input 
+                    type="text"
+                    value={node.title || ''}
+                    onChange={(e) => handleNodeChange(node.id, 'title', e.target.value)}
+                    placeholder="Ej. Inteligencia Artificial Maya"
+                    style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#fff', padding: '6px 10px', borderRadius: '8px', fontSize: '0.85rem' }}
+                  />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '70px 1fr', gap: '8px' }}>
+                  <div className="admin-form-group">
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '3px' }}>
+                      Ícono
+                    </label>
+                    <input 
+                      type="text"
+                      value={node.icon || '⚙️'}
+                      onChange={(e) => handleNodeChange(node.id, 'icon', e.target.value)}
+                      style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#fff', padding: '6px', borderRadius: '8px', textAlign: 'center', fontSize: '1.1rem' }}
+                    />
+                  </div>
+                  <div className="admin-form-group">
+                    <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#94a3b8', display: 'block', marginBottom: '3px' }}>
+                      URL de Imagen (o usa botón)
+                    </label>
+                    <input 
+                      type="text"
+                      value={node.image || ''}
+                      onChange={(e) => handleNodeChange(node.id, 'image', e.target.value)}
+                      placeholder="https://..."
+                      style={{ width: '100%', background: 'rgba(15, 23, 42, 0.8)', border: '1px solid rgba(255, 255, 255, 0.15)', color: '#fff', padding: '6px 10px', borderRadius: '8px', fontSize: '0.78rem' }}
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 

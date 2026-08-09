@@ -122,27 +122,36 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                           className={`tech-node-card card-glass ${node.unlocked ? 'unlocked' : 'locked'}`}
                           onClick={() => setInspectNode(node)}
                         >
-                          <div className="tech-node-top">
-                            <span className="tech-node-icon">
-                              {node.image ? (
-                                <img src={node.image} alt={node.title} className="tech-node-img-thumb" />
-                              ) : (
-                                node.icon
-                              )}
-                            </span>
-                            <span className="tech-node-id">{node.id}</span>
-                          </div>
-                          <h4 className="tech-node-title">{node.title}</h4>
-                          <p className="tech-node-desc">{node.shortDescription}</p>
-                          <div className="tech-node-footer">
-                            <span className="tech-node-status-badge">
-                              {node.unlocked ? '🔓 Disponible' : '🔒 Requerido'}
-                            </span>
-                            {node.parents && node.parents.length > 0 && (
-                              <span className="tech-node-parents-count" title={`Depende de ${node.parents.length} tecnologías`}>
-                                🔗 {node.parents.length}
-                              </span>
+                          {/* Lado Izquierdo: Marco de Imagen Personalizada */}
+                          <div className="tech-node-left-frame">
+                            {node.image ? (
+                              <img src={node.image} alt={node.title} className="tech-node-custom-img" />
+                            ) : (
+                              <div className="tech-node-placeholder-frame">
+                                <span className="tech-node-placeholder-icon">{node.icon}</span>
+                                <span className="tech-node-placeholder-badge">SUBIR IMG</span>
+                              </div>
                             )}
+                          </div>
+
+                          {/* Lado Derecho: Textos y Metadatos */}
+                          <div className="tech-node-right-content">
+                            <div className="tech-node-top">
+                              <span className="tech-node-id">{node.id}</span>
+                              <span className="tech-node-status-pill">{node.unlocked ? '🔓' : '🔒'}</span>
+                            </div>
+                            <h4 className="tech-node-title">{node.title}</h4>
+                            <p className="tech-node-desc">{node.shortDescription}</p>
+                            <div className="tech-node-footer">
+                              <span className="tech-node-status-badge">
+                                {node.unlocked ? 'Disponible' : 'Requerido'}
+                              </span>
+                              {node.parents && node.parents.length > 0 && (
+                                <span className="tech-node-parents-count" title={`Depende de ${node.parents.length} tecnologías`}>
+                                  🔗 {node.parents.length}
+                                </span>
+                              )}
+                            </div>
                           </div>
                         </div>
                       );

@@ -222,8 +222,8 @@
 }
 
 .tech-tree-column {
-  width: 260px;
-  min-width: 260px;
+  width: 310px;
+  min-width: 310px;
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -257,27 +257,90 @@
   gap: 12px;
 }
 
-/* Node Cards */
+/* Node Cards with Left-Side Dedicated Image Frame */
 .tech-node-card {
   background: rgba(15, 23, 42, 0.85);
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
-  padding: 14px;
+  padding: 12px;
   cursor: pointer;
   transition: all 0.25s ease;
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  position: relative;
+  overflow: hidden;
 }
 
 .tech-node-card:hover {
   transform: translateY(-2px);
   border-color: rgba(56, 189, 248, 0.6);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.2);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 18px rgba(56, 189, 248, 0.25);
+}
+
+/* Lado Izquierdo: Marco de Imagen */
+.tech-node-left-frame {
+  width: 80px;
+  min-width: 80px;
+  border-radius: 12px;
+  overflow: hidden;
+  background: rgba(10, 15, 30, 0.9);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+}
+
+.tech-node-custom-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.tech-node-placeholder-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  padding: 6px;
+  box-sizing: border-box;
+  background: radial-gradient(circle at 50% 50%, rgba(56, 189, 248, 0.15) 0%, rgba(15, 23, 42, 0.9) 100%);
+}
+
+.tech-node-placeholder-icon {
+  font-size: 1.8rem;
+  margin-bottom: 2px;
+}
+
+.tech-node-placeholder-badge {
+  font-size: 0.58rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 2px 4px;
+  border-radius: 4px;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+/* Lado Derecho: Contenido */
+.tech-node-right-content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
 }
 
 .tech-node-top {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 4px;
 }
 
 .tech-node-icon {
