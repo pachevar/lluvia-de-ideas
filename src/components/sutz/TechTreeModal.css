@@ -1047,6 +1047,275 @@
   color: var(--cyan);
 }
 
+.nexo-jump-pill.active {
+  border-color: var(--cyan);
+  background: rgba(0, 229, 255, 0.2);
+  color: var(--cyan);
+  box-shadow: 0 0 10px rgba(0, 229, 255, 0.5);
+}
+
+/* CONMUTADOR DE VISTAS */
+.nexo-view-switcher {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(6, 9, 20, 0.9);
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+}
+
+.nexo-view-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--dim);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+}
+
+.nexo-view-btn.active {
+  background: rgba(0, 229, 255, 0.2);
+  color: var(--cyan);
+  border: 1px solid var(--cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+/* VISTA LISTA VERTICAL MÓVIL */
+.nexo-mobile-list-container {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px clamp(12px, 3vw, 40px) 70px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mobile-period-section {
+  background: rgba(11, 17, 36, 0.7);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.mobile-period-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.mobile-period-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 6px;
+  color: #05070f;
+}
+
+.mobile-period-header h3 {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 13px;
+  letter-spacing: 1px;
+  margin: 0;
+  color: #ffffff;
+}
+
+.mobile-period-count {
+  margin-left: auto;
+  font-size: 11px;
+  color: var(--dim);
+}
+
+.mobile-period-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 12px;
+}
+
+.mobile-tech-card {
+  background: linear-gradient(160deg, rgba(16, 22, 46, 0.95), rgba(8, 12, 26, 0.98));
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  padding: 12px;
+  display: flex;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobile-tech-card:hover {
+  border-color: var(--cyan);
+  transform: translateY(-2px);
+}
+
+.mobile-tech-card.unlocked { border-color: var(--green); }
+.mobile-tech-card.ready { border-color: var(--gold); }
+
+.mobile-tech-icon {
+  width: 48px;
+  height: 48px;
+  flex: 0 0 48px;
+  border-radius: 10px;
+  background: #060a16;
+  border: 1px solid var(--line);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+}
+
+.mobile-tech-icon img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.mobile-tech-icon span {
+  font-size: 1.5rem;
+}
+
+.mobile-tech-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-tech-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.mobile-tech-top h4 {
+  font-size: 13px;
+  font-weight: 700;
+  margin: 0;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.mobile-status-badge {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 8.5px;
+  letter-spacing: 0.8px;
+  padding: 2px 6px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+.mobile-status-badge.unlocked { color: var(--green); background: rgba(61, 255, 176, 0.1); }
+.mobile-status-badge.ready { color: var(--gold); background: rgba(255, 194, 77, 0.1); }
+.mobile-status-badge.locked { color: var(--dim); background: rgba(255, 255, 255, 0.05); }
+
+.mobile-tech-info p {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--dim);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.mobile-tech-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.mobile-cost-chip {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9.5px;
+  color: var(--gold);
+}
+
+.mobile-inspect-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--cyan);
+  background: rgba(0, 229, 255, 0.1);
+  color: var(--cyan);
+  cursor: pointer;
+}
+
+/* STICKY BOTTOM BAR MÓVIL */
+.nexo-sticky-bottom-bar {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: rgba(6, 9, 20, 0.95);
+  backdrop-filter: blur(10px);
+  border-top: 1px solid var(--line);
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sticky-nav-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: 1px;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(11, 17, 36, 0.8);
+  color: var(--cyan);
+  cursor: pointer;
+}
+
+.sticky-nav-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.sticky-col-indicator {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 11px;
+  letter-spacing: 1.5px;
+  color: var(--text);
+  font-weight: 700;
+}
+
+.sticky-study-btn {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  border: 1px solid var(--cyan);
+  background: linear-gradient(90deg, var(--cyan), #38bdf8);
+  color: #05070f;
+  cursor: pointer;
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.5);
+}
+
 /* ============ OPTIMIZACIÓN RESPONSIVA POTENTE PARA MÓVILES (<= 768px) ============ */
 @media (max-width: 768px) {
   .nexo-overlay {

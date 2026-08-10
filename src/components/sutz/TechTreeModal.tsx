@@ -40,11 +40,14 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   const [winShown, setWinShown] = useState<boolean>(false);
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
+  const [mobileViewMode, setMobileViewMode] = useState<'board' | 'list'>('board');
+  const [currentActiveCol, setCurrentActiveCol] = useState<number>(1);
   const [hoveredTechId, setHoveredTechId] = useState<string | null>(null);
   const [inspectNode, setInspectNode] = useState<TechItem | null>(null);
 
   // Jump smoothly to a specific column on mobile/desktop
   const handleJumpToCol = (colNum: number) => {
+    setCurrentActiveCol(colNum);
     const colEl = document.getElementById(`nexo-col-${colNum}`);
     if (colEl && boardWrapRef.current) {
       colEl.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
@@ -316,14 +319,33 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
             )}
           </div>
 
+          <div className="nexo-view-switcher">
+            <button 
+              className={`nexo-view-btn ${mobileViewMode === 'board' ? 'active' : ''}`}
+              onClick={() => {
+                setMobileViewMode('board');
+                setTimeout(updateWiresLayout, 200);
+              }}
+              title="Vista de Matriz de Conectores"
+            >
+              🗺️ Matriz
+            </button>
+            <button 
+              className={`nexo-view-btn ${mobileViewMode === 'list' ? 'active' : ''}`}
+              onClick={() => setMobileViewMode('list')}
+              title="Vista de Lista Vertical Móvil"
+            >
+              📱 Lista Móvil
+            </button>
+          </div>
+
           <div className="nexo-col-jump-group">
             <span className="jump-label">Ir a Época:</span>
             <select 
               className="nexo-jump-select"
+              value={currentActiveCol}
               onChange={(e) => handleJumpToCol(Number(e.target.value))}
-              defaultValue=""
             >
-              <option value="" disabled>Ir a Columna (1 - 30)...</option>
               {Array.from({ length: 30 }, (_, i) => i + 1).map(c => {
                 const meta = TECH_TREE_COLUMNS_META[c];
                 return (
@@ -336,7 +358,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
 
             <div className="nexo-jump-pills">
               {[1, 2, 5, 8, 11, 16, 23, 30].map(c => (
-                <button key={c} className="nexo-jump-pill" onClick={() => handleJumpToCol(c)}>
+                <button key={c} className={`nexo-jump-pill ${currentActiveCol === c ? 'active' : ''}`} onClick={() => handleJumpToCol(c)}>
                   Col {c}
                 </button>
               ))}
@@ -344,116 +366,177 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           </div>
         </div>
 
-        {/* TABLERO & CONECTORES SVG */}
-        <div 
-          className="nexo-board-wrap" 
-          ref={boardWrapRef}
-          onScroll={() => { setTooltip(null); updateWiresLayout(); }}
-        >
-          <div className="nexo-board" ref={boardRef}>
-            
-            <svg id="nexo-wires" ref={svgRef}>
-              <defs>
+        {/* MODO 1: TABLERO & CONECTORES SVG (MATRIZ) */}
+        {mobileViewMode === 'board' && (
+          <div 
+            className="nexo-board-wrap" 
+            ref={boardWrapRef}
+            onScroll={() => { setTooltip(null); updateWiresLayout(); }}
+          >
+            <div className="nexo-board" ref={boardRef}>
+              
+              <svg id="nexo-wires" ref={svgRef}>
+                <defs>
+                  {techsList.flatMap(t => t.deps.map(d => {
+                    const colorFrom = TIER_COLOR[byId[d]?.tier || 1] || '#00e5ff';
+                    const colorTo = TIER_COLOR[t.tier] || '#ff2ec4';
+                    return (
+                      <linearGradient key={`grad-${d}-${t.id}`} id={`g-${d}-${t.id}`} gradientUnits="userSpaceOnUse">
+                        <stop offset="0" stopColor={colorFrom} />
+                        <stop offset="1" stopColor={colorTo} />
+                      </linearGradient>
+                    );
+                  }))}
+                </defs>
+
                 {techsList.flatMap(t => t.deps.map(d => {
-                  const colorFrom = TIER_COLOR[byId[d]?.tier || 1] || '#00e5ff';
-                  const colorTo = TIER_COLOR[t.tier] || '#ff2ec4';
+                  const color = TIER_COLOR[t.tier] || '#00e5ff';
+                  const isWireOn = unlocked.has(t.id);
+                  const isWireReady = unlocked.has(d) && !isWireOn;
+                  const isWireHl = hoveredTechId === t.id || hoveredTechId === d;
+                  const wireStateClass = isWireOn ? 'on' : isWireReady ? 'ready' : 'off';
+
                   return (
-                    <linearGradient key={`grad-${d}-${t.id}`} id={`g-${d}-${t.id}`} gradientUnits="userSpaceOnUse">
-                      <stop offset="0" stopColor={colorFrom} />
-                      <stop offset="1" stopColor={colorTo} />
-                    </linearGradient>
+                    <g 
+                      key={`wire-${d}-${t.id}`} 
+                      className={`wire-g ${wireStateClass} ${isWireHl ? 'hl' : ''}`}
+                      style={{ '--c': color } as React.CSSProperties}
+                    >
+                      <path id={`path-${d}-${t.id}`} stroke={`url(#g-${d}-${t.id})`} />
+                      <circle id={`c1-${d}-${t.id}`} r="3.4" />
+                      <circle id={`c2-${d}-${t.id}`} r="3.4" />
+                    </g>
                   );
                 }))}
-              </defs>
+              </svg>
 
-              {techsList.flatMap(t => t.deps.map(d => {
-                const color = TIER_COLOR[t.tier] || '#00e5ff';
-                const isWireOn = unlocked.has(t.id);
-                const isWireReady = unlocked.has(d) && !isWireOn;
-                const isWireHl = hoveredTechId === t.id || hoveredTechId === d;
-                const wireStateClass = isWireOn ? 'on' : isWireReady ? 'ready' : 'off';
+              {/* COLUMNAS */}
+              {columnsList.map(({ tier, techs }) => {
+                const colClass = `c${Math.min(tier, 5)}`;
+                const colMeta = TECH_TREE_COLUMNS_META[tier] || { title: `Columna ${tier}`, tier: `Nivel ${tier}`, badgeColor: '#00e5ff' };
 
                 return (
-                  <g 
-                    key={`wire-${d}-${t.id}`} 
-                    className={`wire-g ${wireStateClass} ${isWireHl ? 'hl' : ''}`}
-                    style={{ '--c': color } as React.CSSProperties}
-                  >
-                    <path id={`path-${d}-${t.id}`} stroke={`url(#g-${d}-${t.id})`} />
-                    <circle id={`c1-${d}-${t.id}`} r="3.4" />
-                    <circle id={`c2-${d}-${t.id}`} r="3.4" />
-                  </g>
-                );
-              }))}
-            </svg>
+                  <div key={tier} id={`nexo-col-${tier}`} className={`nexo-col ${colClass}`}>
+                    <div className="nexo-col-head" style={{ borderColor: colMeta.badgeColor }}>
+                      <span className="nexo-col-tag" style={{ color: colMeta.badgeColor, borderColor: colMeta.badgeColor }}>COL {tier}</span>
+                      <h2 title={colMeta.title}>{colMeta.title}</h2>
+                      <span className="nexo-col-count">{techs.length} nodos</span>
+                    </div>
 
-            {/* COLUMNAS */}
+                    <div className="nexo-col-cards">
+                      {techs.map(t => {
+                        const status = getCardStatus(t);
+                        const isPoor = status === 'ready' && points < t.cost;
+                        const isDepHl = hoveredTechId ? byId[hoveredTechId]?.deps.includes(t.id) : false;
+                        const matchesSearch = !searchQuery || 
+                          t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          t.desc.toLowerCase().includes(searchQuery.toLowerCase());
+
+                        if (searchQuery && !matchesSearch) return null;
+
+                        return (
+                          <div
+                            key={t.id}
+                            ref={el => { cardRefs.current[t.id] = el; }}
+                            className={`nexo-card ${status} ${isPoor ? 'poor' : ''} ${isDepHl ? 'dep-hl' : ''}`}
+                            onClick={() => setInspectNode(t)}
+                            onMouseEnter={(e) => {
+                              setHoveredTechId(t.id);
+                              const r = e.currentTarget.getBoundingClientRect();
+                              setTooltip({
+                                show: true,
+                                tech: t,
+                                x: Math.max(140, Math.min(window.innerWidth - 140, r.left + r.width / 2)),
+                                y: Math.max(70, r.top - 100)
+                              });
+                            }}
+                            onMouseLeave={() => {
+                              setHoveredTechId(null);
+                              setTooltip(null);
+                            }}
+                          >
+                            <div className="imgbox">
+                              {t.icon.startsWith('http') || t.icon.startsWith('/') ? (
+                                <img src={t.icon} alt={t.name} loading="lazy" />
+                              ) : (
+                                <span style={{ fontSize: '1.8rem' }}>{t.icon}</span>
+                              )}
+                              <div className="badge lock">🔒</div>
+                              <div className="badge check">✓</div>
+                            </div>
+
+                            <div className="info">
+                              <div className="name-row">
+                                <h3>{t.name}</h3>
+                                <span className="lvl">N{t.tier}</span>
+                              </div>
+                              <p>{t.desc}</p>
+                              <div className="meta">
+                                <span className="chip cost">◆ {t.cost}</span>
+                                <span className="chip gain">+{t.income} ◈/s</span>
+                                <span className="status">
+                                  {status === 'unlocked' ? 'ACTIVA' : status === 'ready' ? 'DISPONIBLE' : 'BLOQUEADA'}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* MODO 2: VISTA LISTA VERTICAL MÓVIL (ACORDEÓN DE ÉPOCAS) */}
+        {mobileViewMode === 'list' && (
+          <div className="nexo-mobile-list-container">
             {columnsList.map(({ tier, techs }) => {
-              const colClass = `c${Math.min(tier, 5)}`;
               const colMeta = TECH_TREE_COLUMNS_META[tier] || { title: `Columna ${tier}`, tier: `Nivel ${tier}`, badgeColor: '#00e5ff' };
+              const filteredTechs = techs.filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.desc.toLowerCase().includes(searchQuery.toLowerCase()));
+
+              if (searchQuery && filteredTechs.length === 0) return null;
 
               return (
-                <div key={tier} id={`nexo-col-${tier}`} className={`nexo-col ${colClass}`}>
-                  <div className="nexo-col-head" style={{ borderColor: colMeta.badgeColor }}>
-                    <span className="nexo-col-tag" style={{ color: colMeta.badgeColor, borderColor: colMeta.badgeColor }}>COL {tier}</span>
-                    <h2 title={colMeta.title}>{colMeta.title}</h2>
-                    <span className="nexo-col-count">{techs.length} nodos</span>
+                <div key={tier} className="mobile-period-section">
+                  <div className="mobile-period-header" style={{ borderColor: colMeta.badgeColor }}>
+                    <span className="mobile-period-badge" style={{ background: colMeta.badgeColor }}>COL {tier}</span>
+                    <h3>{colMeta.title}</h3>
+                    <span className="mobile-period-count">{filteredTechs.length} nodos</span>
                   </div>
 
-                  <div className="nexo-col-cards">
-                    {techs.map(t => {
+                  <div className="mobile-period-cards-grid">
+                    {filteredTechs.map(t => {
                       const status = getCardStatus(t);
-                      const isPoor = status === 'ready' && points < t.cost;
-                      const isDepHl = hoveredTechId ? byId[hoveredTechId]?.deps.includes(t.id) : false;
-                      const matchesSearch = !searchQuery || 
-                        t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                        t.desc.toLowerCase().includes(searchQuery.toLowerCase());
-
-                      if (searchQuery && !matchesSearch) return null;
 
                       return (
-                        <div
-                          key={t.id}
-                          ref={el => { cardRefs.current[t.id] = el; }}
-                          className={`nexo-card ${status} ${isPoor ? 'poor' : ''} ${isDepHl ? 'dep-hl' : ''}`}
+                        <div 
+                          key={t.id} 
+                          className={`mobile-tech-card ${status}`}
                           onClick={() => setInspectNode(t)}
-                          onMouseEnter={(e) => {
-                            setHoveredTechId(t.id);
-                            const r = e.currentTarget.getBoundingClientRect();
-                            setTooltip({
-                              show: true,
-                              tech: t,
-                              x: Math.max(140, Math.min(window.innerWidth - 140, r.left + r.width / 2)),
-                              y: Math.max(70, r.top - 100)
-                            });
-                          }}
-                          onMouseLeave={() => {
-                            setHoveredTechId(null);
-                            setTooltip(null);
-                          }}
                         >
-                          <div className="imgbox">
+                          <div className="mobile-tech-icon">
                             {t.icon.startsWith('http') || t.icon.startsWith('/') ? (
-                              <img src={t.icon} alt={t.name} loading="lazy" />
+                              <img src={t.icon} alt={t.name} />
                             ) : (
-                              <span style={{ fontSize: '1.8rem' }}>{t.icon}</span>
+                              <span>{t.icon}</span>
                             )}
-                            <div className="badge lock">🔒</div>
-                            <div className="badge check">✓</div>
                           </div>
-
-                          <div className="info">
-                            <div className="name-row">
-                              <h3>{t.name}</h3>
-                              <span className="lvl">N{t.tier}</span>
+                          <div className="mobile-tech-info">
+                            <div className="mobile-tech-top">
+                              <h4>{t.name}</h4>
+                              <span className={`mobile-status-badge ${status}`}>
+                                {status === 'unlocked' ? '🔓 ACTIVA' : status === 'ready' ? '⚡ DISPONIBLE' : '🔒 BLOQUEADA'}
+                              </span>
                             </div>
                             <p>{t.desc}</p>
-                            <div className="meta">
-                              <span className="chip cost">◆ {t.cost}</span>
-                              <span className="chip gain">+{t.income} ◈/s</span>
-                              <span className="status">
-                                {status === 'unlocked' ? 'ACTIVA' : status === 'ready' ? 'DISPONIBLE' : 'BLOQUEADA'}
-                              </span>
+                            <div className="mobile-tech-actions">
+                              <span className="mobile-cost-chip">◆ {t.cost}</span>
+                              <button className="mobile-inspect-btn" onClick={(e) => { e.stopPropagation(); setInspectNode(t); }}>
+                                👁️ Inspeccionar & Proyecto 🚀
+                              </button>
                             </div>
                           </div>
                         </div>
@@ -464,6 +547,33 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
               );
             })}
           </div>
+        )}
+
+        {/* STICKY BOTTOM CONTROLLER MÓVIL */}
+        <div className="nexo-sticky-bottom-bar">
+          <button 
+            className="sticky-nav-btn"
+            onClick={() => handleJumpToCol(Math.max(1, currentActiveCol - 1))}
+            disabled={currentActiveCol <= 1}
+          >
+            ◀ Previa
+          </button>
+
+          <span className="sticky-col-indicator">
+            COL {currentActiveCol} / 30
+          </span>
+
+          <button 
+            className="sticky-nav-btn"
+            onClick={() => handleJumpToCol(Math.min(30, currentActiveCol + 1))}
+            disabled={currentActiveCol >= 30}
+          >
+            Siguiente ▶
+          </button>
+
+          <button className="sticky-study-btn" onClick={handleStudy}>
+            ⚡ +5 ◈
+          </button>
         </div>
 
         {/* LARGE NODE INSPECTOR MODAL */}
