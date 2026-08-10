@@ -1,6 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import type { TechNode } from '../../types';
 import { getNodesByColumn } from '../../utils/techTreeUtils';
+import { TECH_TREE_COLUMNS_META } from '../../data/techTreeData';
 import './TechTreeModal.css';
 
 interface TechTreeModalProps {
@@ -97,12 +98,14 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
               
               if (isFiltered) return null;
 
+              const colMeta = TECH_TREE_COLUMNS_META[col] || { title: `Columna ${col}`, tier: `Col ${col}`, badgeColor: '#38bdf8' };
+
               return (
                 <div key={col} id={`tech-column-${col}`} className={`tech-tree-column col-tier-${col === 1 ? '1' : col <= 15 ? '6' : '12'}`}>
                   {/* Column Header Header */}
-                  <div className="column-header">
-                    <span className="column-number">COL {col}</span>
-                    <span className="column-count-badge">
+                  <div className="column-header" style={{ borderColor: colMeta.badgeColor }}>
+                    <span className="column-number" style={{ color: colMeta.badgeColor }}>COL {col}</span>
+                    <span className="column-count-badge" style={{ background: 'rgba(255,255,255,0.06)', padding: '2px 6px', borderRadius: '6px' }}>
                       {col === 1 ? '3 Nodos' : col <= 15 ? '6 Nodos' : '12 Nodos'}
                     </span>
                   </div>
