@@ -607,7 +607,14 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
         {/* LARGE NODE INSPECTOR MODAL */}
         {inspectNode && (
           <div className="nexo-inspector-overlay" onClick={() => setInspectNode(null)}>
-            <div className="nexo-inspector-card" onClick={(e) => e.stopPropagation()}>
+            <div 
+              className="nexo-inspector-card" 
+              style={{
+                '--tech-color': getTechColor(inspectNode),
+                '--tech-glow': getTechColor(inspectNode) + 'aa'
+              } as React.CSSProperties}
+              onClick={(e) => e.stopPropagation()}
+            >
               <button className="nexo-inspector-close" onClick={() => setInspectNode(null)} title="Cerrar visor">✕</button>
 
               <div className="inspector-header-box">
@@ -622,6 +629,16 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                 <div className="inspector-titles">
                   <div className="inspector-badges">
                     <span className="inspector-badge-pill">COLUMNA {inspectNode.tier}</span>
+                    <span 
+                      className="inspector-area-badge" 
+                      style={{ 
+                        borderColor: getTechColor(inspectNode), 
+                        color: getTechColor(inspectNode),
+                        background: getTechColor(inspectNode) + '22'
+                      }}
+                    >
+                      ÁREA {inspectNode.category || (getTechColor(inspectNode) === '#00e5ff' ? 'STEM' : getTechColor(inspectNode) === '#d946ef' ? 'HUMANIDADES' : 'APRENDIZAJE')}
+                    </span>
                     <span className={`inspector-badge-status ${getCardStatus(inspectNode)}`}>
                       {getCardStatus(inspectNode) === 'unlocked' ? '🔓 DESBLOQUEADA (ACTIVA)' : getCardStatus(inspectNode) === 'ready' ? '⚡ DISPONIBLE' : '🔒 BLOQUEADA'}
                     </span>
