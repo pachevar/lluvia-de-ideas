@@ -370,7 +370,7 @@
   gap: 20px;
 }
 
-/* ============ TARJETAS (40% más cortas de ancho y 40% más altas) ============ */
+/* ESTADOS Y BRULLO NEÓN DE TARJETAS */
 .nexo-card {
   position: relative;
   display: flex;
@@ -383,13 +383,21 @@
   user-select: none;
   outline: none;
   background: linear-gradient(160deg, rgba(16,22,46,.92), rgba(8,12,26,.96));
-  border: 1px solid var(--line);
+  border: 1px solid var(--tech-color, var(--line));
   transition: transform .25s, box-shadow .3s, border-color .3s, opacity .3s;
 }
 
+/* BRULLO NEÓN AGRESIVO AL TOCAR / PASAR CURSOR */
 .nexo-card:hover,
-.nexo-card:focus-visible {
-  transform: translateY(-3px);
+.nexo-card:focus-visible,
+.nexo-card:active {
+  transform: translateY(-4px) scale(1.03);
+  border-color: var(--tech-color) !important;
+  box-shadow: 
+    0 0 25px var(--tech-color),
+    0 0 50px var(--tech-glow),
+    inset 0 0 15px var(--tech-glow) !important;
+  z-index: 10;
 }
 
 .nexo-card .imgbox {
@@ -432,7 +440,7 @@
   background: rgba(5,8,18,.88);
 }
 
-.nexo-card .badge.lock { border: 1px solid var(--line); color: var(--dim); }
+.nexo-card .badge.lock { border: 1px solid var(--line); color: #ffffff; }
 .nexo-card .badge.check { border: 1px solid var(--green); color: var(--green); box-shadow: 0 0 10px -2px var(--green); }
 
 .nexo-card .info {
@@ -462,12 +470,12 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 9px;
   letter-spacing: 1px;
-  color: var(--acc);
-  border: 1px solid var(--acc);
+  color: var(--tech-color, var(--acc));
+  border: 1px solid var(--tech-color, var(--acc));
   border-radius: 5px;
   padding: 2px 5px;
   flex: 0 0 auto;
-  box-shadow: 0 0 8px -3px var(--acc-glow);
+  box-shadow: 0 0 8px -3px var(--tech-glow, var(--acc-glow));
 }
 
 .nexo-card .info p {
@@ -501,26 +509,43 @@
 .nexo-card .chip.gain { display: none; color: var(--green); border-color: rgba(61,255,176,.4); }
 .nexo-card .status { margin-left: auto; font-family: 'Orbitron', sans-serif; font-size: 9px; letter-spacing: 1.5px; color: var(--dim); }
 
-/* ESTADOS TARJETAS */
-.nexo-card.locked { opacity: .55; cursor: not-allowed; }
-.nexo-card.locked img { filter: grayscale(.95) brightness(.4); }
+/* NODOS BLOQUEADOS CON BRULLO BLANCO */
+.nexo-card.locked {
+  opacity: .75;
+  border-color: rgba(255, 255, 255, 0.4);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.15);
+}
+
+.nexo-card.locked img { filter: grayscale(.85) brightness(.5); }
 .nexo-card.locked .badge.lock { display: flex; }
 
-.nexo-card.ready {
-  border-color: color-mix(in srgb, var(--acc) 55%, transparent);
+.nexo-card.locked:hover,
+.nexo-card.locked:active {
   opacity: 1;
+  border-color: #ffffff !important;
+  box-shadow: 
+    0 0 25px #ffffff,
+    0 0 50px rgba(255, 255, 255, 0.9),
+    inset 0 0 15px rgba(255, 255, 255, 0.4) !important;
+}
+
+/* NODOS DISPONIBLES */
+.nexo-card.ready {
+  border-color: var(--tech-color);
+  opacity: 1;
+  box-shadow: 0 0 16px -2px var(--tech-glow);
   animation: nexoReadyPulse 2.2s infinite;
 }
 
 .nexo-card.ready img { filter: saturate(.95) brightness(.92); }
-.nexo-card.ready:hover { box-shadow: 0 0 26px -6px var(--acc-glow), 0 6px 18px -8px #000; }
-.nexo-card.ready .status { color: var(--acc); }
+.nexo-card.ready .status { color: var(--tech-color); }
 .nexo-card.ready.poor .chip.cost { color: var(--red); border-color: rgba(255,77,109,.45); animation: nexoBlink 1s infinite; }
 
+/* NODOS DESBLOQUEADOS / ACTIVOS */
 .nexo-card.unlocked {
-  border-color: var(--acc);
+  border-color: var(--tech-color);
   opacity: 1;
-  box-shadow: 0 0 22px -6px var(--acc-glow), inset 0 0 30px -22px var(--acc-glow);
+  box-shadow: 0 0 22px -4px var(--tech-glow), inset 0 0 25px -18px var(--tech-glow);
 }
 
 .nexo-card.unlocked img { filter: none; }
@@ -528,7 +553,7 @@
 .nexo-card.unlocked .chip.gain { display: inline-flex; }
 .nexo-card.unlocked .chip.cost { display: none; }
 .nexo-card.unlocked .status { color: var(--green); }
-.nexo-card.unlocked .name-row h3 { text-shadow: 0 0 10px var(--acc-glow); }
+.nexo-card.unlocked .name-row h3 { text-shadow: 0 0 10px var(--tech-glow); }
 
 @keyframes nexoReadyPulse {
   0%, 100% { box-shadow: 0 0 10px -6px var(--acc-glow); }
@@ -1145,22 +1170,42 @@
 
 .mobile-tech-card {
   background: linear-gradient(160deg, rgba(16, 22, 46, 0.95), rgba(8, 12, 26, 0.98));
-  border: 1px solid var(--line);
+  border: 1px solid var(--tech-color, var(--line));
   border-radius: 12px;
   padding: 12px;
   display: flex;
   gap: 12px;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.25s ease;
 }
 
-.mobile-tech-card:hover {
-  border-color: var(--cyan);
-  transform: translateY(-2px);
+.mobile-tech-card:hover,
+.mobile-tech-card:active {
+  border-color: var(--tech-color) !important;
+  box-shadow: 
+    0 0 25px var(--tech-color),
+    0 0 45px var(--tech-glow),
+    inset 0 0 12px var(--tech-glow) !important;
+  transform: translateY(-3px) scale(1.02);
 }
 
-.mobile-tech-card.unlocked { border-color: var(--green); }
-.mobile-tech-card.ready { border-color: var(--gold); }
+.mobile-tech-card.locked {
+  border-color: rgba(255, 255, 255, 0.35);
+  opacity: 0.7;
+}
+
+.mobile-tech-card.locked:hover,
+.mobile-tech-card.locked:active {
+  border-color: #ffffff !important;
+  box-shadow: 
+    0 0 25px #ffffff,
+    0 0 45px rgba(255, 255, 255, 0.9),
+    inset 0 0 12px rgba(255, 255, 255, 0.4) !important;
+  opacity: 1;
+}
+
+.mobile-tech-card.unlocked { border-color: var(--tech-color); box-shadow: 0 0 15px -4px var(--tech-glow); }
+.mobile-tech-card.ready { border-color: var(--tech-color); box-shadow: 0 0 12px -3px var(--tech-glow); }
 
 .mobile-tech-icon {
   width: 48px;

@@ -19,7 +19,23 @@ interface TechItem {
   deps: string[];
   icon: string;
   desc: string;
+  category?: 'STEM' | 'HUMANIDADES' | 'APRENDIZAJE';
 }
+
+export const LINE_COLOR: Record<string, string> = {
+  STEM: '#00e5ff',        // Línea 1: Cyan Neón (como está)
+  HUMANIDADES: '#d946ef', // Línea 2: Lila / Morado Neón
+  APRENDIZAJE: '#ff7700'  // Línea 3: Anaranjado Neón
+};
+
+export const getTechColor = (t: TechItem): string => {
+  if (t.category && LINE_COLOR[t.category]) {
+    return LINE_COLOR[t.category];
+  }
+  if (t.id.includes('-n1') || t.id.includes('-n2') || t.id.includes('-n3') || t.id.includes('-n4')) return '#00e5ff';
+  if (t.id.includes('-n5') || t.id.includes('-n6') || t.id.includes('-n7') || t.id.includes('-n8')) return '#d946ef';
+  return '#ff7700';
+};
 
 const TIER_COLOR: Record<number, string> = {
   1: '#00e5ff',
@@ -76,7 +92,8 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
       income: 2 + (n.col - 1) * 2,
       deps: n.parents || [],
       icon: n.image || n.icon || '⚙️',
-      desc: n.shortDescription
+      desc: n.shortDescription,
+      category: n.category
     }));
   }, [nodesMap]);
 
@@ -378,8 +395,9 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
               <svg id="nexo-wires" ref={svgRef}>
                 <defs>
                   {techsList.flatMap(t => t.deps.map(d => {
-                    const colorFrom = TIER_COLOR[byId[d]?.tier || 1] || '#00e5ff';
-                    const colorTo = TIER_COLOR[t.tier] || '#ff2ec4';
+                    const parent = byId[d];
+                    const colorFrom = parent ? getTechColor(parent) : '#00e5ff';
+                    const colorTo = getTechColor(t);
                     return (
                       <linearGradient key={`grad-${d}-${t.id}`} id={`g-${d}-${t.id}`} gradientUnits="userSpaceOnUse">
                         <stop offset="0" stopColor={colorFrom} />
@@ -390,7 +408,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                 </defs>
 
                 {techsList.flatMap(t => t.deps.map(d => {
-                  const color = TIER_COLOR[t.tier] || '#00e5ff';
+                  const color = getTechColor(t);
                   const isWireOn = unlocked.has(t.id);
                   const isWireReady = unlocked.has(d) && !isWireOn;
                   const isWireHl = hoveredTechId === t.id || hoveredTechId === d;
@@ -433,12 +451,17 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                           t.desc.toLowerCase().includes(searchQuery.toLowerCase());
 
                         if (searchQuery && !matchesSearch) return null;
+                        const techColor = getTechColor(t);
 
                         return (
                           <div
                             key={t.id}
                             ref={el => { cardRefs.current[t.id] = el; }}
                             className={`nexo-card ${status} ${isPoor ? 'poor' : ''} ${isDepHl ? 'dep-hl' : ''}`}
+                            style={{
+                              '--tech-color': techColor,
+                              '--tech-glow': techColor + 'cc'
+                            } as React.CSSProperties}
                             onClick={() => setInspectNode(t)}
                             onMouseEnter={(e) => {
                               setHoveredTechId(t.id);
@@ -510,11 +533,16 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                   <div className="mobile-period-cards-grid">
                     {filteredTechs.map(t => {
                       const status = getCardStatus(t);
+                      const techColor = getTechColor(t);
 
                       return (
                         <div 
                           key={t.id} 
                           className={`mobile-tech-card ${status}`}
+                          style={{
+                            '--tech-color': techColor,
+                            '--tech-glow': techColor + 'cc'
+                          } as React.CSSProperties}
                           onClick={() => setInspectNode(t)}
                         >
                           <div className="mobile-tech-icon">

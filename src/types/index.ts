@@ -129,6 +129,7 @@ export interface TechNode {
   shortDescription: string;
   icon: string;
   image?: string;
+  category?: 'STEM' | 'HUMANIDADES' | 'APRENDIZAJE';
   parents: string[]; // parent node IDs
   unlocked?: boolean;
 }

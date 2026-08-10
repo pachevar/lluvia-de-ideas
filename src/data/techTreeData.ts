@@ -470,6 +470,7 @@ export function generateInitialTechTreeData(): Record<string, TechNode> {
         title: rawData.title,
         shortDescription: rawData.desc,
         icon: rawData.icon,
+        category: rawData.category,
         parents,
         unlocked: col === 1
       };
