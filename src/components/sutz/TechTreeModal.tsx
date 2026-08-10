@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { TechNode } from '../../types';
 import { TECH_TREE_COLUMNS_META, INITIAL_TECH_TREE_DATA } from '../../data/techTreeData';
 import './TechTreeModal.css';
@@ -33,11 +34,13 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   onClose,
   nodesMap
 }) => {
+  const navigate = useNavigate();
   const [points, setPoints] = useState<number>(100);
   const [unlocked, setUnlocked] = useState<Set<string>>(new Set());
   const [winShown, setWinShown] = useState<boolean>(false);
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
   const [hoveredTechId, setHoveredTechId] = useState<string | null>(null);
+  const [inspectNode, setInspectNode] = useState<TechItem | null>(null);
 
   // Floating text feedback and toast messages state
   const [toasts, setToasts] = useState<{ id: number; msg: string; type: 'ok' | 'warn' | 'err' }[]>([]);
@@ -165,7 +168,34 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     }, 900);
   };
 
-  const tryUnlock = (t: TechItem, e: React.MouseEvent<HTMLDivElement>) => {
+  const getProjectUrlForNode = (t: TechItem): string => {
+    const name = t.name.toLowerCase();
+    if (name.includes('color') || name.includes('diseño') || name.includes('arte') || name.includes('estética')) {
+      return '/juegos/teoria-color';
+    }
+    if (name.includes('cuento') || name.includes('lenguaje') || name.includes('literaria') || name.includes('poesía') || name.includes('narrativa')) {
+      return '/maquina-de-cuentos';
+    }
+    if (name.includes('astronomía') || name.includes('cosmos') || name.includes('física') || name.includes('gravedad') || name.includes('espacial')) {
+      return '/juegos/sistema-solar';
+    }
+    if (name.includes('número') || name.includes('cálculo') || name.includes('álgebra') || name.includes('lógica') || name.includes('matemática')) {
+      return '/juegos/secuencias-numericas';
+    }
+    if (name.includes('código') || name.includes('programación') || name.includes('computación') || name.includes('algoritmo')) {
+      return '/codigo-estudiante';
+    }
+    return '/laboratorios';
+  };
+
+  const handleLaunchProject = (t: TechItem) => {
+    const url = getProjectUrlForNode(t);
+    onClose();
+    navigate(url);
+  };
+
+  const tryUnlock = (t: TechItem, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
     if (unlocked.has(t.id)) {
       addToast(`⚡ Ya dominas <b>${t.name}</b>`, 'warn');
       return;
@@ -183,10 +213,12 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     setPoints(prev => prev - t.cost);
     setUnlocked(prev => new Set(prev).add(t.id));
 
-    const r = e.currentTarget.getBoundingClientRect();
-    const color = TIER_COLOR[t.tier] || '#00e5ff';
-    triggerFloatText(r.left + r.width / 2, r.top, `-${t.cost} ◈`, '#ff4d6d');
-    triggerFloatText(r.left + r.width / 2, r.top + 22, '⚡ DESBLOQUEADA', color);
+    if (e) {
+      const r = e.currentTarget.getBoundingClientRect();
+      const color = TIER_COLOR[t.tier] || '#00e5ff';
+      triggerFloatText(r.left + r.width / 2, r.top, `-${t.cost} ◈`, '#ff4d6d');
+      triggerFloatText(r.left + r.width / 2, r.top + 22, '⚡ DESBLOQUEADA', color);
+    }
     addToast(`⚡ ¡<b>${t.name}</b> desbloqueada! +${t.income} ◈/s`, 'ok');
 
     if (unlocked.size + 1 === techsList.length && !winShown) {
@@ -326,7 +358,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                           key={t.id}
                           ref={el => { cardRefs.current[t.id] = el; }}
                           className={`nexo-card ${status} ${isPoor ? 'poor' : ''} ${isDepHl ? 'dep-hl' : ''}`}
-                          onClick={(e) => tryUnlock(t, e)}
+                          onClick={() => setInspectNode(t)}
                           onMouseEnter={(e) => {
                             setHoveredTechId(t.id);
                             const r = e.currentTarget.getBoundingClientRect();
@@ -375,6 +407,98 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
             })}
           </div>
         </div>
+
+        {/* LARGE NODE INSPECTOR MODAL */}
+        {inspectNode && (
+          <div className="nexo-inspector-overlay" onClick={() => setInspectNode(null)}>
+            <div className="nexo-inspector-card" onClick={(e) => e.stopPropagation()}>
+              <button className="nexo-inspector-close" onClick={() => setInspectNode(null)} title="Cerrar visor">✕</button>
+
+              <div className="inspector-header-box">
+                <div className="inspector-icon-frame">
+                  {inspectNode.icon.startsWith('http') || inspectNode.icon.startsWith('/') ? (
+                    <img src={inspectNode.icon} alt={inspectNode.name} />
+                  ) : (
+                    <span>{inspectNode.icon}</span>
+                  )}
+                </div>
+
+                <div className="inspector-titles">
+                  <div className="inspector-badges">
+                    <span className="inspector-badge-pill">COLUMNA {inspectNode.tier}</span>
+                    <span className={`inspector-badge-status ${getCardStatus(inspectNode)}`}>
+                      {getCardStatus(inspectNode) === 'unlocked' ? '🔓 DESBLOQUEADA (ACTIVA)' : getCardStatus(inspectNode) === 'ready' ? '⚡ DISPONIBLE' : '🔒 BLOQUEADA'}
+                    </span>
+                  </div>
+                  <h3>{inspectNode.name}</h3>
+                </div>
+              </div>
+
+              <div className="inspector-body-content">
+                <div className="inspector-section-block">
+                  <h4>📝 Concepto & Descripción Pedagógica</h4>
+                  <p>{inspectNode.desc}</p>
+                </div>
+
+                <div className="inspector-section-block">
+                  <h4>🔗 Antecedentes y Tecnologías Previas</h4>
+                  {inspectNode.deps && inspectNode.deps.length > 0 ? (
+                    <div className="inspector-parents-grid">
+                      {inspectNode.deps.map(depId => {
+                        const parent = byId[depId];
+                        return (
+                          <div 
+                            key={depId} 
+                            className="inspector-parent-chip"
+                            onClick={() => parent && setInspectNode(parent)}
+                            title="Haz clic para inspeccionar este antecedente"
+                          >
+                            <span>{parent ? parent.icon : '⚙️'}</span>
+                            <strong>{parent ? parent.name : depId}</strong>
+                            <span>{unlocked.has(depId) ? '✓' : '🔒'}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p style={{ fontStyle: 'italic', color: 'var(--green)' }}>🌱 Nodo Raíz Inicial (Sin requisitos previos)</p>
+                  )}
+                </div>
+
+                {/* FEATURED CLASSROOM PROJECT CTA */}
+                <div className="inspector-project-cta">
+                  <h4>🚀 PROYECTO DE TRABAJO AÚLICO PARA ESTUDIANTES</h4>
+                  <p>
+                    Abre el laboratorio y herramienta de aprendizaje asociada a <strong>{inspectNode.name}</strong> para trabajar dinámicas de aula, talleres creativos y actividades con los alumnos.
+                  </p>
+
+                  <button 
+                    className="inspector-btn-launch"
+                    onClick={() => handleLaunchProject(inspectNode)}
+                  >
+                    <span>🚀 INICIAR PROYECTO AÚLICO EN LA PLATAFORMA</span>
+                  </button>
+                </div>
+              </div>
+
+              <div className="inspector-actions-row">
+                {!unlocked.has(inspectNode.id) && getCardStatus(inspectNode) === 'ready' && (
+                  <button 
+                    className="nexo-btn neon"
+                    onClick={() => {
+                      tryUnlock(inspectNode);
+                    }}
+                  >
+                    ⚡ DESBLOQUEAR NODO (-{inspectNode.cost} ◈)
+                  </button>
+                )}
+                <button className="nexo-btn ghost" onClick={() => setInspectNode(null)}>
+                  Cerrar Visor
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* TOOLTIP FLOATING */}
         {tooltip && tooltip.tech && (
