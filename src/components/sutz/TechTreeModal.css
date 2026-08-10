@@ -942,3 +942,249 @@
   padding-top: 10px;
 }
 
+/* ============ NAVBAR MÓVIL Y BÚSQUEDA RÁPIDA ============ */
+.nexo-mobile-toolbar {
+  position: relative;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  padding: 8px clamp(14px, 3vw, 40px);
+  border-bottom: 1px solid var(--line);
+  background: rgba(8, 13, 29, 0.7);
+}
+
+.nexo-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 220px;
+}
+
+.nexo-search-input {
+  width: 100%;
+  padding: 8px 32px 8px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: rgba(6, 9, 20, 0.85);
+  color: var(--text);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  outline: none;
+  transition: all 0.25s ease;
+  box-sizing: border-box;
+}
+
+.nexo-search-input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 12px rgba(0, 229, 255, 0.4);
+}
+
+.nexo-search-clear {
+  position: absolute;
+  right: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: transparent;
+  border: none;
+  color: var(--dim);
+  cursor: pointer;
+  font-size: 12px;
+}
+
+.nexo-col-jump-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.jump-label {
+  font-size: 11px;
+  font-family: 'Orbitron', sans-serif;
+  color: var(--dim);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
+
+.nexo-jump-select {
+  padding: 7px 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line);
+  background: rgba(11, 17, 36, 0.9);
+  color: var(--cyan);
+  font-family: 'Rajdhani', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  outline: none;
+  cursor: pointer;
+}
+
+.nexo-jump-pills {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.nexo-jump-pill {
+  font-family: 'Orbitron', sans-serif;
+  font-size: 9px;
+  letter-spacing: 0.8px;
+  padding: 4px 8px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(0, 229, 255, 0.05);
+  color: var(--text);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.nexo-jump-pill:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+/* ============ OPTIMIZACIÓN RESPONSIVA POTENTE PARA MÓVILES (<= 768px) ============ */
+@media (max-width: 768px) {
+  .nexo-overlay {
+    padding: 0;
+    align-items: flex-start;
+  }
+
+  .nexo-container {
+    width: 100vw;
+    height: 100vh;
+    margin-top: 0;
+    border-radius: 0;
+    border: none;
+  }
+
+  .nexo-header {
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .nexo-header h1 {
+    font-size: 15px;
+    letter-spacing: 1px;
+  }
+
+  .nexo-header .tag {
+    font-size: 10px;
+  }
+
+  .nexo-hud {
+    width: 100%;
+    margin-left: 0;
+    gap: 8px;
+    justify-content: space-between;
+  }
+
+  .nexo-stat {
+    min-width: 0;
+    flex: 1;
+    padding: 5px 8px;
+  }
+
+  .nexo-stat label {
+    font-size: 8.5px;
+    margin-bottom: 1px;
+  }
+
+  .nexo-stat .val {
+    font-size: 13px;
+  }
+
+  .nexo-bar {
+    min-width: 70px;
+    height: 6px;
+  }
+
+  .nexo-btn {
+    padding: 8px 10px;
+    font-size: 9.5px;
+    letter-spacing: 0.8px;
+  }
+
+  .nexo-legend {
+    padding: 8px 12px 0;
+    font-size: 10.5px;
+    gap: 10px;
+  }
+
+  .nexo-legend .hint {
+    display: none;
+  }
+
+  .nexo-mobile-toolbar {
+    padding: 6px 12px;
+    gap: 8px;
+  }
+
+  .nexo-col-jump-group {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .nexo-jump-select {
+    flex: 1;
+    font-size: 12px;
+  }
+
+  .nexo-col {
+    width: 180px;
+    min-width: 180px;
+  }
+
+  .nexo-col-head h2 {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .nexo-card {
+    padding: 10px 8px;
+    min-height: 130px;
+  }
+
+  .nexo-card .imgbox {
+    height: 72px;
+    flex: 0 0 72px;
+  }
+
+  .nexo-card .name-row h3 {
+    font-size: 12.5px;
+  }
+
+  .nexo-inspector-card {
+    width: 96vw;
+    max-height: 92vh;
+    padding: 20px 16px;
+    border-radius: 16px;
+  }
+
+  .inspector-header-box {
+    gap: 12px;
+  }
+
+  .inspector-icon-frame {
+    width: 64px;
+    height: 64px;
+    flex: 0 0 64px;
+  }
+
+  .inspector-titles h3 {
+    font-size: 1.1rem;
+  }
+
+  .inspector-btn-launch {
+    padding: 12px 14px;
+    font-size: 10.5px;
+    letter-spacing: 1px;
+  }
+}
+

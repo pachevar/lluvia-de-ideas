@@ -39,8 +39,18 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   const [unlocked, setUnlocked] = useState<Set<string>>(new Set());
   const [winShown, setWinShown] = useState<boolean>(false);
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
+  const [searchQuery, setSearchQuery] = useState<string>('');
   const [hoveredTechId, setHoveredTechId] = useState<string | null>(null);
   const [inspectNode, setInspectNode] = useState<TechItem | null>(null);
+
+  // Jump smoothly to a specific column on mobile/desktop
+  const handleJumpToCol = (colNum: number) => {
+    const colEl = document.getElementById(`nexo-col-${colNum}`);
+    if (colEl && boardWrapRef.current) {
+      colEl.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+      setTimeout(updateWiresLayout, 350);
+    }
+  };
 
   // Floating text feedback and toast messages state
   const [toasts, setToasts] = useState<{ id: number; msg: string; type: 'ok' | 'warn' | 'err' }[]>([]);
@@ -288,7 +298,50 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           <span><i className="dot off"></i>Bloqueada</span>
           <span><i className="dot ready"></i>Disponible</span>
           <span><i className="dot on"></i>Desbloqueada</span>
-          <span className="hint">Pasa el cursor sobre una tecnología para ver sus dependencias · Haz clic para desbloquearla</span>
+          <span className="hint">Pasa el cursor/toca una tecnología para ver detalles · Haz clic para abrir visor</span>
+        </div>
+
+        {/* TOOLBAR NAVEGACIÓN MÓVIL Y BÚSQUEDA RÁPIDA */}
+        <div className="nexo-mobile-toolbar">
+          <div className="nexo-search-box">
+            <input 
+              type="text" 
+              placeholder="🔍 Buscar tecnología (ej. Fuego, IA, ADN)..." 
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="nexo-search-input"
+            />
+            {searchQuery && (
+              <button className="nexo-search-clear" onClick={() => setSearchQuery('')}>✕</button>
+            )}
+          </div>
+
+          <div className="nexo-col-jump-group">
+            <span className="jump-label">Ir a Época:</span>
+            <select 
+              className="nexo-jump-select"
+              onChange={(e) => handleJumpToCol(Number(e.target.value))}
+              defaultValue=""
+            >
+              <option value="" disabled>Ir a Columna (1 - 30)...</option>
+              {Array.from({ length: 30 }, (_, i) => i + 1).map(c => {
+                const meta = TECH_TREE_COLUMNS_META[c];
+                return (
+                  <option key={c} value={c}>
+                    Col {c}: {meta ? meta.title : `Columna ${c}`}
+                  </option>
+                );
+              })}
+            </select>
+
+            <div className="nexo-jump-pills">
+              {[1, 2, 5, 8, 11, 16, 23, 30].map(c => (
+                <button key={c} className="nexo-jump-pill" onClick={() => handleJumpToCol(c)}>
+                  Col {c}
+                </button>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* TABLERO & CONECTORES SVG */}
@@ -340,7 +393,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
               const colMeta = TECH_TREE_COLUMNS_META[tier] || { title: `Columna ${tier}`, tier: `Nivel ${tier}`, badgeColor: '#00e5ff' };
 
               return (
-                <div key={tier} className={`nexo-col ${colClass}`}>
+                <div key={tier} id={`nexo-col-${tier}`} className={`nexo-col ${colClass}`}>
                   <div className="nexo-col-head" style={{ borderColor: colMeta.badgeColor }}>
                     <span className="nexo-col-tag" style={{ color: colMeta.badgeColor, borderColor: colMeta.badgeColor }}>COL {tier}</span>
                     <h2 title={colMeta.title}>{colMeta.title}</h2>
@@ -352,6 +405,11 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                       const status = getCardStatus(t);
                       const isPoor = status === 'ready' && points < t.cost;
                       const isDepHl = hoveredTechId ? byId[hoveredTechId]?.deps.includes(t.id) : false;
+                      const matchesSearch = !searchQuery || 
+                        t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                        t.desc.toLowerCase().includes(searchQuery.toLowerCase());
+
+                      if (searchQuery && !matchesSearch) return null;
 
                       return (
                         <div
