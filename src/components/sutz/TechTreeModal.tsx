@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import type { TechNode } from '../../types';
+import { TECH_TREE_COLUMNS_META, INITIAL_TECH_TREE_DATA } from '../../data/techTreeData';
 import './TechTreeModal.css';
 
 interface TechTreeModalProps {
@@ -18,24 +19,6 @@ interface TechItem {
   icon: string;
   desc: string;
 }
-
-const DEFAULT_TECHS: TechItem[] = [
-  { id: 'alfabetizacion', tier: 1, name: 'Alfabetización Digital', cost: 50, income: 2, deps: [], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1825802c4-1d7f-4425-bc45-477c2f37f797.png', desc: 'Domina dispositivos y herramientas digitales para aprender sin límites.' },
-  { id: 'logica', tier: 1, name: 'Pensamiento Lógico', cost: 50, income: 2, deps: [], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/111b7c14e-cd28-45c0-b539-d707d4ddb9d7.png', desc: 'Entrena el razonamiento y la resolución de problemas paso a paso.' },
-  { id: 'colaboracion', tier: 1, name: 'Trabajo Colaborativo', cost: 50, income: 2, deps: [], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/13d388f36-d166-4eb0-b000-e3f46b021d6d.png', desc: 'Construye conocimiento en equipo y comparte lo que sabes.' },
-  { id: 'programacion', tier: 2, name: 'Programación Básica', cost: 80, income: 4, deps: ['logica'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1713ed7e0-9ff4-404e-bfa2-e6f7dd40c7bb.png', desc: 'Escribe tu primer código y convierte ideas en soluciones.' },
-  { id: 'robotica', tier: 2, name: 'Robótica Educativa', cost: 80, income: 4, deps: ['logica', 'alfabetizacion'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1b7ae764d-fb46-40eb-ae7e-ba7bbecf605d.png', desc: 'Construye robots y aprende ciencia dándoles vida.' },
-  { id: 'diseno', tier: 2, name: 'Diseño Digital', cost: 80, income: 4, deps: ['alfabetizacion'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/142aad3cb-d009-4020-bafa-0beb1312ff5c.png', desc: 'Crea piezas visuales que comuniquen tus ideas con impacto.' },
-  { id: 'multimedia', tier: 2, name: 'Producción Multimedia', cost: 80, income: 4, deps: ['alfabetizacion', 'colaboracion'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/187f2a081-f448-40ed-b254-2fe66db5ffc4.png', desc: 'Produce videos, podcasts y contenidos que educan.' },
-  { id: 'datos', tier: 2, name: 'Análisis de Datos', cost: 80, income: 4, deps: ['logica'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/19c87a36e-0bae-4cba-b9ad-8aa566e25265.png', desc: 'Interpreta información y toma decisiones con evidencia.' },
-  { id: 'ciudadania', tier: 2, name: 'Ciudadanía Digital', cost: 80, income: 4, deps: ['colaboracion'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1f9838923-277f-412b-b10b-4609ea81233e.png', desc: 'Participa en línea con ética, respeto y seguridad.' },
-  { id: 'ia', tier: 3, name: 'Inteligencia Artificial', cost: 120, income: 6, deps: ['programacion', 'datos'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/128cedd36-34b7-4c12-a558-4cead478bae0.png', desc: 'Entrena modelos inteligentes que personalizan el aprendizaje.' },
-  { id: 'videojuegos', tier: 3, name: 'Videojuegos Educativos', cost: 120, income: 6, deps: ['programacion', 'diseno'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1726508df-cf96-40fb-9dc8-8f7a101d2e0d.png', desc: 'Diseña juegos que transforman estudiar en aventura.' },
-  { id: 'ciberseguridad', tier: 3, name: 'Ciberseguridad', cost: 120, income: 6, deps: ['ciudadania', 'datos'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1c38384f2-b8cd-44de-a2c0-2dc14e2be549.png', desc: 'Protege la información y navega blindado en la red.' },
-  { id: 'iot', tier: 3, name: 'Internet de las Cosas', cost: 120, income: 6, deps: ['robotica', 'programacion'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1d168c422-cfc8-4fc8-a39e-32f25a03628a.png', desc: 'Conecta objetos inteligentes al servicio del aula.' },
-  { id: 'ra', tier: 3, name: 'Realidad Aumentada', cost: 120, income: 6, deps: ['diseno', 'multimedia'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1b242740b-662e-476d-b0e8-366d5e0e006d.png', desc: 'Superpón capas digitales y haz tus clases inmersivas.' },
-  { id: 'bigdata', tier: 3, name: 'Big Data Educativo', cost: 120, income: 6, deps: ['datos', 'multimedia'], icon: 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1eaaae314-6008-408c-aaae-eb0552c8a81e.png', desc: 'Analiza grandes datos para mejorar la educación.' }
-];
 
 const TIER_COLOR: Record<number, string> = {
   1: '#00e5ff',
@@ -66,21 +49,19 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
 
-  // Map nodes from nodesMap prop or use DEFAULT_TECHS
+  // Map nodes from nodesMap prop or use INITIAL_TECH_TREE_DATA (267 nodes across 30 cols)
   const techsList: TechItem[] = useMemo(() => {
-    if (nodesMap && Object.keys(nodesMap).length > 0) {
-      return Object.values(nodesMap).map(n => ({
-        id: n.id,
-        tier: n.col,
-        name: n.title,
-        cost: 50 + (n.col - 1) * 35,
-        income: 2 + (n.col - 1) * 2,
-        deps: n.parents || [],
-        icon: n.image || 'https://image.qwenlm.ai/public_source/e91b88c4-947d-4a76-b7ca-d8baaae65dc3/1825802c4-1d7f-4425-bc45-477c2f37f797.png',
-        desc: n.shortDescription
-      }));
-    }
-    return DEFAULT_TECHS;
+    const activeNodes = (nodesMap && Object.keys(nodesMap).length > 0) ? nodesMap : INITIAL_TECH_TREE_DATA;
+    return Object.values(activeNodes).map(n => ({
+      id: n.id,
+      tier: n.col,
+      name: n.title,
+      cost: 50 + (n.col - 1) * 20,
+      income: 2 + (n.col - 1) * 2,
+      deps: n.parents || [],
+      icon: n.image || n.icon || '⚙️',
+      desc: n.shortDescription
+    }));
   }, [nodesMap]);
 
   const byId = useMemo(() => {
@@ -324,13 +305,14 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
             {/* COLUMNAS */}
             {columnsList.map(({ tier, techs }) => {
               const colClass = `c${Math.min(tier, 5)}`;
+              const colMeta = TECH_TREE_COLUMNS_META[tier] || { title: `Columna ${tier}`, tier: `Nivel ${tier}`, badgeColor: '#00e5ff' };
 
               return (
                 <div key={tier} className={`nexo-col ${colClass}`}>
-                  <div className="nexo-col-head">
-                    <span className="nexo-col-tag">NIVEL {tier}</span>
-                    <h2>Columna {tier}</h2>
-                    <span className="nexo-col-count">{techs.length} tecnologías</span>
+                  <div className="nexo-col-head" style={{ borderColor: colMeta.badgeColor }}>
+                    <span className="nexo-col-tag" style={{ color: colMeta.badgeColor, borderColor: colMeta.badgeColor }}>COL {tier}</span>
+                    <h2 title={colMeta.title}>{colMeta.title}</h2>
+                    <span className="nexo-col-count">{techs.length} nodos</span>
                   </div>
 
                   <div className="nexo-col-cards">
