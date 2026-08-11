@@ -295,10 +295,10 @@
 .nexo-board {
   position: relative;
   display: flex;
-  gap: clamp(48px, 5vw, 90px);
+  gap: clamp(50px, 5.5vw, 95px);
   min-width: max-content;
   margin: 0 auto;
-  align-items: flex-start;
+  align-items: stretch;
 }
 
 #nexo-wires {
@@ -311,8 +311,8 @@
 
 .nexo-col {
   flex: 1;
-  width: 275px;
-  min-width: 275px;
+  width: 280px;
+  min-width: 280px;
   display: flex;
   flex-direction: column;
   z-index: 1;
@@ -328,7 +328,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
   padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
@@ -366,18 +366,19 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  gap: 10px;
+  justify-content: space-evenly;
+  gap: 15px;
+  padding: 8px 0;
 }
 
-/* ESTADOS Y BRULLO NEÓN DE TARJETAS (COMPACTAS & ELEGANTES) */
+/* ESTADOS Y BRULLO NEÓN DE TARJETAS (ELEGANTES Y PROPORCIONADAS) */
 .nexo-card {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 8px;
   padding: 12px 12px;
-  min-height: 135px;
+  min-height: 140px;
   border-radius: 12px;
   cursor: pointer;
   user-select: none;
