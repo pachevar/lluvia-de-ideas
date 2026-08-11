@@ -74,7 +74,6 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   // Floating text feedback and toast messages state
   const [toasts, setToasts] = useState<{ id: number; msg: string; type: 'ok' | 'warn' | 'err' }[]>([]);
   const [floatTexts, setFloatTexts] = useState<{ id: number; x: number; y: number; txt: string; color: string }[]>([]);
-  const [tooltip, setTooltip] = useState<{ show: boolean; tech: TechItem | null; x: number; y: number } | null>(null);
 
   const boardRef = useRef<HTMLDivElement>(null);
   const boardWrapRef = useRef<HTMLDivElement>(null);
@@ -362,7 +361,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           <span><i className="dot off"></i>Bloqueada</span>
           <span><i className="dot ready"></i>Disponible</span>
           <span><i className="dot on"></i>Desbloqueada</span>
-          <span className="hint">Pasa el cursor/toca una tecnología para ver detalles · Haz clic para abrir visor</span>
+          <span className="hint">Haz clic en una tecnología para inspeccionar sus detalles y acceder al proyecto 🚀</span>
         </div>
 
         {/* TOOLBAR NAVEGACIÓN MÓVIL Y BÚSQUEDA RÁPIDA */}
@@ -432,7 +431,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           <div 
             className="nexo-board-wrap" 
             ref={boardWrapRef}
-            onScroll={() => { setTooltip(null); updateWiresLayout(); }}
+            onScroll={updateWiresLayout}
           >
             <div className="nexo-board" ref={boardRef}>
               
@@ -512,20 +511,8 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                               '--tech-glow': techColor + 'cc'
                             } as React.CSSProperties}
                             onClick={() => setInspectNode(t)}
-                            onMouseEnter={(e) => {
-                              setHoveredTechId(t.id);
-                              const r = e.currentTarget.getBoundingClientRect();
-                              setTooltip({
-                                show: true,
-                                tech: t,
-                                x: Math.max(140, Math.min(window.innerWidth - 140, r.left + r.width / 2)),
-                                y: Math.max(70, r.top - 100)
-                              });
-                            }}
-                            onMouseLeave={() => {
-                              setHoveredTechId(null);
-                              setTooltip(null);
-                            }}
+                            onMouseEnter={() => setHoveredTechId(t.id)}
+                            onMouseLeave={() => setHoveredTechId(null)}
                           >
                             <div className="imgbox">
                               {t.icon.startsWith('http') || t.icon.startsWith('/') ? (
@@ -762,39 +749,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           </div>
         )}
 
-        {/* TOOLTIP FLOATING */}
-        {tooltip && tooltip.tech && (
-          <div 
-            className={`nexo-tooltip ${tooltip.show ? 'show' : ''}`}
-            style={{ left: `${tooltip.x}px`, top: `${tooltip.y}px` }}
-          >
-            <h4>{tooltip.tech.name}</h4>
-            <div className="tip-req">
-              {tooltip.tech.deps.length > 0 ? (
-                <>
-                  <span style={{ color: 'var(--dim)', border: 'none', padding: 0 }}>Requiere:</span>
-                  {tooltip.tech.deps.map(d => {
-                    const isOk = unlocked.has(d);
-                    return (
-                      <span key={d} className={isOk ? 'ok' : 'no'}>
-                        {byId[d]?.name || d} {isOk ? '✓' : '🔒'}
-                      </span>
-                    );
-                  })}
-                </>
-              ) : (
-                <span className="ok">Sin requisitos previos</span>
-              )}
-            </div>
-            <div className="tip-meta">
-              {unlocked.has(tooltip.tech.id) ? (
-                <>⚡ Activa · genera +{tooltip.tech.income} ◈/s</>
-              ) : (
-                <>Costo: <b>{tooltip.tech.cost} ◈</b> · genera +{tooltip.tech.income} ◈/s</>
-              )}
-            </div>
-          </div>
-        )}
+
 
         {/* TOAST NOTIFICATIONS */}
         <div id="nexo-toasts">
