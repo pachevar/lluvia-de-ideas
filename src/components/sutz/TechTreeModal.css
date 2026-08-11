@@ -295,10 +295,10 @@
 .nexo-board {
   position: relative;
   display: flex;
-  gap: clamp(56px, 6vw, 110px);
+  gap: clamp(48px, 5vw, 90px);
   min-width: max-content;
   margin: 0 auto;
-  align-items: stretch;
+  align-items: flex-start;
 }
 
 #nexo-wires {
@@ -311,8 +311,8 @@
 
 .nexo-col {
   flex: 1;
-  width: 285px;
-  min-width: 285px;
+  width: 275px;
+  min-width: 275px;
   display: flex;
   flex-direction: column;
   z-index: 1;
@@ -328,8 +328,8 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 16px;
-  padding: 10px 14px;
+  margin-bottom: 12px;
+  padding: 8px 12px;
   border: 1px solid var(--line);
   border-radius: 12px;
   background: linear-gradient(90deg, rgba(13,20,48,.85), rgba(9,13,28,.45));
@@ -340,7 +340,7 @@
   font-family: 'Orbitron', sans-serif;
   font-size: 10px;
   letter-spacing: 2px;
-  padding: 4px 8px;
+  padding: 3px 7px;
   border-radius: 6px;
   border: 1px solid var(--acc);
   color: var(--acc);
@@ -349,7 +349,7 @@
 
 .nexo-col-head h2 {
   font-family: 'Orbitron', sans-serif;
-  font-size: 13px;
+  font-size: 12px;
   letter-spacing: 1.5px;
   text-transform: uppercase;
   margin: 0;
@@ -366,32 +366,32 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
-  gap: 20px;
+  justify-content: flex-start;
+  gap: 10px;
 }
 
-/* ESTADOS Y BRULLO NEÓN DE TARJETAS (PROPORCIÓN ÁUREA 1.618: 285px x 176px) */
+/* ESTADOS Y BRULLO NEÓN DE TARJETAS (COMPACTAS & ELEGANTES) */
 .nexo-card {
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  padding: 16px 14px;
-  min-height: 176px;
-  border-radius: 14px;
+  gap: 8px;
+  padding: 12px 12px;
+  min-height: 135px;
+  border-radius: 12px;
   cursor: pointer;
   user-select: none;
   outline: none;
   background: linear-gradient(160deg, rgba(16,22,46,.92), rgba(8,12,26,.96));
   border: 1px solid var(--tech-color, var(--line));
-  transition: transform .25s, box-shadow .3s, border-color .3s, opacity .3s;
+  transition: transform .25s, box-shadow .3s, border-color .3s, opacity .3s, filter .3s;
 }
 
 /* BRULLO NEÓN AGRESIVO AL TOCAR / PASAR CURSOR */
 .nexo-card:hover,
 .nexo-card:focus-visible,
 .nexo-card:active {
-  transform: translateY(-4px) scale(1.03);
+  transform: translateY(-3px) scale(1.03);
   border-color: var(--tech-color) !important;
   box-shadow: 
     0 0 25px var(--tech-color),
@@ -403,9 +403,9 @@
 .nexo-card .imgbox {
   position: relative;
   width: 100%;
-  height: 95px;
-  flex: 0 0 95px;
-  border-radius: 10px;
+  height: 68px;
+  flex: 0 0 68px;
+  border-radius: 8px;
   overflow: hidden;
   border: 1px solid var(--line);
   background: #060a16;
@@ -560,6 +560,45 @@
   50% { box-shadow: 0 0 20px -4px var(--acc-glow); }
 }
 
+.nexo-card.hovered-main {
+  transform: translateY(-4px) scale(1.04) !important;
+  border-color: var(--tech-color) !important;
+  box-shadow: 
+    0 0 25px var(--tech-color),
+    0 0 50px var(--tech-glow),
+    inset 0 0 15px var(--tech-glow) !important;
+  z-index: 20 !important;
+}
+
+.nexo-card.dep-ancestor {
+  border-color: #00e5ff !important;
+  box-shadow: 0 0 20px rgba(0, 229, 255, 0.7), inset 0 0 10px rgba(0, 229, 255, 0.3) !important;
+  animation: nexoPulseAncestor 1.2s infinite alternate !important;
+  z-index: 15 !important;
+}
+
+.nexo-card.dep-descendant {
+  border-color: #ff2ec4 !important;
+  box-shadow: 0 0 20px rgba(255, 46, 196, 0.7), inset 0 0 10px rgba(255, 46, 196, 0.3) !important;
+  animation: nexoPulseDescendant 1.2s infinite alternate !important;
+  z-index: 15 !important;
+}
+
+.nexo-card.dim-unrelated {
+  opacity: 0.38 !important;
+  filter: brightness(0.6) grayscale(0.5) !important;
+}
+
+@keyframes nexoPulseAncestor {
+  from { box-shadow: 0 0 10px rgba(0, 229, 255, 0.4); }
+  to { box-shadow: 0 0 22px rgba(0, 229, 255, 0.95); }
+}
+
+@keyframes nexoPulseDescendant {
+  from { box-shadow: 0 0 10px rgba(255, 46, 196, 0.4); }
+  to { box-shadow: 0 0 22px rgba(255, 46, 196, 0.95); }
+}
+
 .nexo-card.dep-hl { border-color: var(--acc); box-shadow: 0 0 18px -4px var(--acc-glow); }
 .nexo-card.shake { animation: nexoShake .4s; }
 @keyframes nexoShake {
@@ -570,18 +609,42 @@
 }
 
 /* ============ CABLES (SVG) ============ */
-.wire-g { transition: opacity .35s, filter .35s; }
-.wire-g path { fill: none; stroke-width: 2; }
-.wire-g circle { fill: var(--c); opacity: .9; }
+.wire-g { transition: opacity .35s ease, filter .35s ease; }
+.wire-g path { fill: none; stroke-width: 2.2px; transition: stroke-width .25s ease; }
+.wire-g circle { fill: var(--c); opacity: .9; transition: r .25s ease, fill .25s ease; }
 .wire-g.off { opacity: .18; filter: grayscale(1) brightness(.8); }
 .wire-g.ready { opacity: .85; }
 .wire-g.ready path { stroke-dasharray: 7 9; animation: nexoFlow 1.1s linear infinite; }
 .wire-g.on { opacity: 1; filter: drop-shadow(0 0 4px var(--c)) drop-shadow(0 0 10px var(--c)); }
-.wire-g.on path { stroke-width: 2.6; }
-.wire-g.hl { opacity: 1; filter: drop-shadow(0 0 6px var(--c)); }
-.wire-g.hl path { stroke-width: 3.4; }
+.wire-g.on path { stroke-width: 2.6px; }
+
+/* ANIMACIÓN ELÉCTRICA FLUIDA AL SEÑALAR UN CUADRO CONECTADO */
+.wire-g.hl { 
+  opacity: 1 !important; 
+  filter: drop-shadow(0 0 8px var(--c)) drop-shadow(0 0 16px var(--c)) !important; 
+  z-index: 10;
+}
+.wire-g.hl path { 
+  stroke-width: 3.8px !important; 
+  stroke-dasharray: 8 6 !important;
+  animation: nexoFlowFast 0.55s linear infinite !important; 
+}
+.wire-g.hl circle { 
+  r: 4.8px !important;
+  fill: #ffffff !important;
+  stroke: var(--c) !important;
+  stroke-width: 2px !important;
+  filter: drop-shadow(0 0 8px var(--c)) !important;
+}
+
+/* OTROS CABLES ATENUADOS CUANDO UN CUADRO ESTÁ SEÑALADO */
+.wire-g.dim {
+  opacity: 0.08 !important;
+  filter: grayscale(0.8) !important;
+}
 
 @keyframes nexoFlow { to { stroke-dashoffset: -16; } }
+@keyframes nexoFlowFast { from { stroke-dashoffset: 0; } to { stroke-dashoffset: -28; } }
 
 /* ============ TOOLTIP ============ */
 .nexo-tooltip {

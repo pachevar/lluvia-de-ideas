@@ -110,6 +110,50 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     }));
   }, [techsList]);
 
+  // Active dependency highlight tree when hovering a node
+  const hoveredDependencySet = useMemo(() => {
+    if (!hoveredTechId) {
+      return { ancestors: new Set<string>(), descendants: new Set<string>(), activeWires: new Set<string>() };
+    }
+
+    const ancestors = new Set<string>();
+    const descendants = new Set<string>();
+    const activeWires = new Set<string>();
+
+    // Collect ancestors (prerequisites)
+    const queueAncestors = [hoveredTechId];
+    while (queueAncestors.length > 0) {
+      const curr = queueAncestors.shift()!;
+      const item = byId[curr];
+      if (item && item.deps) {
+        for (const parentId of item.deps) {
+          activeWires.add(`${parentId}->${curr}`);
+          if (!ancestors.has(parentId)) {
+            ancestors.add(parentId);
+            queueAncestors.push(parentId);
+          }
+        }
+      }
+    }
+
+    // Collect descendants (dependent nodes)
+    const queueDescendants = [hoveredTechId];
+    while (queueDescendants.length > 0) {
+      const curr = queueDescendants.shift()!;
+      for (const item of techsList) {
+        if (item.deps && item.deps.includes(curr)) {
+          activeWires.add(`${curr}->${item.id}`);
+          if (!descendants.has(item.id)) {
+            descendants.add(item.id);
+            queueDescendants.push(item.id);
+          }
+        }
+      }
+    }
+
+    return { ancestors, descendants, activeWires };
+  }, [hoveredTechId, byId, techsList]);
+
   // Calculate passive income per second
   const currentIncome = useMemo(() => {
     return techsList.reduce((s, t) => s + (unlocked.has(t.id) ? t.income : 0), 0);
@@ -411,13 +455,15 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                   const color = getTechColor(t);
                   const isWireOn = unlocked.has(t.id);
                   const isWireReady = unlocked.has(d) && !isWireOn;
-                  const isWireHl = hoveredTechId === t.id || hoveredTechId === d;
+                  const wireKey = `${d}->${t.id}`;
+                  const isWireHl = hoveredTechId ? hoveredDependencySet.activeWires.has(wireKey) : false;
+                  const isWireDim = hoveredTechId ? !isWireHl : false;
                   const wireStateClass = isWireOn ? 'on' : isWireReady ? 'ready' : 'off';
 
                   return (
                     <g 
                       key={`wire-${d}-${t.id}`} 
-                      className={`wire-g ${wireStateClass} ${isWireHl ? 'hl' : ''}`}
+                      className={`wire-g ${wireStateClass} ${isWireHl ? 'hl' : ''} ${isWireDim ? 'dim' : ''}`}
                       style={{ '--c': color } as React.CSSProperties}
                     >
                       <path id={`path-${d}-${t.id}`} stroke={`url(#g-${d}-${t.id})`} />
@@ -445,7 +491,10 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                       {techs.map(t => {
                         const status = getCardStatus(t);
                         const isPoor = status === 'ready' && points < t.cost;
-                        const isDepHl = hoveredTechId ? byId[hoveredTechId]?.deps.includes(t.id) : false;
+                        const isHoveredMain = hoveredTechId === t.id;
+                        const isAncestor = hoveredDependencySet.ancestors.has(t.id);
+                        const isDescendant = hoveredDependencySet.descendants.has(t.id);
+                        const isDimUnrelated = hoveredTechId ? (!isHoveredMain && !isAncestor && !isDescendant) : false;
                         const matchesSearch = !searchQuery || 
                           t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
                           t.desc.toLowerCase().includes(searchQuery.toLowerCase());
@@ -457,7 +506,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                           <div
                             key={t.id}
                             ref={el => { cardRefs.current[t.id] = el; }}
-                            className={`nexo-card ${status} ${isPoor ? 'poor' : ''} ${isDepHl ? 'dep-hl' : ''}`}
+                            className={`nexo-card ${status} ${isPoor ? 'poor' : ''} ${isHoveredMain ? 'hovered-main' : ''} ${isAncestor ? 'dep-ancestor' : ''} ${isDescendant ? 'dep-descendant' : ''} ${isDimUnrelated ? 'dim-unrelated' : ''}`}
                             style={{
                               '--tech-color': techColor,
                               '--tech-glow': techColor + 'cc'
