@@ -98,7 +98,16 @@ export default function Home() {
       <header className="landing-top-bar">
         <div className="landing-top-bar-content">
           <div className="landing-brand">
-            <img src={logoEditorial} alt="Editorial Lluvia de Ideas" className="landing-logo" />
+            <img 
+              src={logoEditorial} 
+              alt="Editorial Lluvia de Ideas" 
+              className="landing-logo"
+              decoding="async"
+              // @ts-ignore
+              fetchpriority="high"
+              width="180"
+              height="40"
+            />
             <span className="landing-brand-name">Editorial Lluvia de Ideas</span>
           </div>
           <div className="landing-top-links">
