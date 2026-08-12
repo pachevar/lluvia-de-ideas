@@ -13,6 +13,7 @@ export default function Home() {
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     document.body.classList.add('home-page-active');
@@ -93,7 +94,7 @@ export default function Home() {
           </div>
           <div className="landing-top-links">
             <span className="landing-top-slogan">Descubre el ecosistema educativo</span>
-            <div className="landing-top-actions">
+            <div className="landing-top-actions desktop-actions">
               <button 
                 className="top-btn top-btn-sutz" 
                 onClick={() => navigate('/sutz')}
@@ -112,16 +113,6 @@ export default function Home() {
                 <span className="top-btn-icon">🧠</span>
                 <span className="btn-text-full">Neurociencia Aula</span>
                 <span className="btn-text-short">🧠 Neuro</span>
-              </button>
-
-              <button 
-                className="top-btn top-btn-libros" 
-                onClick={() => navigate('/libros')}
-                title="Explorar la constelación pedagógica de nuestros libros"
-              >
-                <span className="top-btn-icon">📖</span>
-                <span className="btn-text-full">Nuestros Libros</span>
-                <span className="btn-text-short">📖 Libros</span>
               </button>
 
               {user ? (
@@ -174,6 +165,51 @@ export default function Home() {
                   <span className="btn-text-full">Iniciar Sesión</span>
                   <span className="btn-text-short">Entrar</span>
                 </button>
+              )}
+            </div>
+
+            {/* Menú Desplegable Móvil */}
+            <div style={{ position: 'relative' }}>
+              <button 
+                className="top-mobile-toggle"
+                onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                aria-label="Abrir menú de navegación"
+              >
+                <span>{isMobileMenuOpen ? '✕' : '☰'}</span> Menú ▾
+              </button>
+
+              {isMobileMenuOpen && (
+                <div className="top-mobile-dropdown animate-fade-in">
+                  <button 
+                    className="top-btn top-btn-sutz" 
+                    onClick={() => { navigate('/sutz'); setIsMobileMenuOpen(false); }}
+                  >
+                    <span className="top-btn-icon">☁️</span> Probar Sutz
+                  </button>
+
+                  <button 
+                    className="top-btn top-btn-neuro" 
+                    onClick={() => { navigate('/neurociencia'); setIsMobileMenuOpen(false); }}
+                  >
+                    <span className="top-btn-icon">🧠</span> Neurociencia Aula
+                  </button>
+
+                  {user ? (
+                    <button 
+                      className="top-btn top-btn-user"
+                      onClick={() => { logout(); setIsMobileMenuOpen(false); }}
+                    >
+                      <span className="top-btn-icon">🚪</span> Cerrar Sesión ({user.email?.split('@')[0]})
+                    </button>
+                  ) : (
+                    <button 
+                      className="top-btn top-btn-login" 
+                      onClick={() => { setIsAuthModalOpen(true); setIsMobileMenuOpen(false); }}
+                    >
+                      <span className="top-btn-icon">👤</span> Iniciar Sesión
+                    </button>
+                  )}
+                </div>
               )}
             </div>
           </div>
@@ -336,37 +372,6 @@ export default function Home() {
                 <li key={idx}>🎨 {bullet}</li>
               ))}
             </ul>
-
-            <div className="creatika-submodules-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '20px' }}>
-              <button 
-                className="btn btn-glass"
-                onClick={() => navigate('/creatika/codigo-estudiante')}
-                style={{ borderColor: 'rgba(56, 189, 248, 0.5)', color: '#38bdf8', fontSize: '0.85rem', fontWeight: 700 }}
-              >
-                🎓 Código del Estudiante ↗
-              </button>
-              <button 
-                className="btn btn-glass"
-                onClick={() => navigate('/creatika/codigo-docente')}
-                style={{ borderColor: 'rgba(251, 113, 133, 0.5)', color: '#fb7185', fontSize: '0.85rem', fontWeight: 700 }}
-              >
-                📜 Código Docente ↗
-              </button>
-              <button 
-                className="btn btn-glass"
-                onClick={() => navigate('/creatika/maquina-de-cuentos')}
-                style={{ fontSize: '0.85rem', fontWeight: 700 }}
-              >
-                🎰 Máquina de Cuentos ↗
-              </button>
-              <button 
-                className="btn btn-glass"
-                onClick={() => navigate('/creatika/teoria-del-color')}
-                style={{ fontSize: '0.85rem', fontWeight: 700 }}
-              >
-                🎨 Teoría del Color ↗
-              </button>
-            </div>
           </div>
         </div>
       </section>

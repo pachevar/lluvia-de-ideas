@@ -4603,6 +4603,62 @@ body.home-page-active .app-footer {
   gap: 12px;
 }
 
+/* Mobile Top Nav Dropdown */
+.top-mobile-toggle {
+  display: none;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s ease;
+}
+
+.top-mobile-toggle:hover {
+  background: rgba(255, 255, 255, 0.2);
+  border-color: #38bdf8;
+}
+
+.top-mobile-dropdown {
+  position: absolute;
+  top: 100%;
+  right: 16px;
+  width: 250px;
+  background: rgba(15, 23, 42, 0.96);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  padding: 12px;
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  z-index: 200;
+  margin-top: 8px;
+}
+
+.top-mobile-dropdown .top-btn {
+  width: 100%;
+  justify-content: flex-start;
+  padding: 10px 14px;
+}
+
+@media (max-width: 768px) {
+  .landing-top-actions.desktop-actions {
+    display: none !important;
+  }
+  .top-mobile-toggle {
+    display: inline-flex !important;
+    align-items: center;
+    gap: 6px;
+  }
+}
+
 .top-btn {
   display: inline-flex;
   align-items: center;
