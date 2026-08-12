@@ -235,7 +235,15 @@ export default function Home() {
       <section className="landing-hero">
         <div className="landing-hero-backdrop"></div>
         <div className="landing-hero-content">
-          <span className="hero-pill-badge">✨ Bienvenido a un universo de herramientas educativas</span>
+          <span 
+            className="hero-pill-badge"
+            onClick={() => setIsPromoModalOpen(true)}
+            style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+            title="Haz clic para ver videos de guía y consejos"
+          >
+            <span>✨ Conoce más de nuestra potente herramienta</span>
+            <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>🎬 Ver Consejos ➔</span>
+          </span>
           <h1 className="hero-main-title">
             ¡Explora, aprende y crea con <span className="highlight-text">Lluvia de Ideas</span>!
           </h1>
