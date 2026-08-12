@@ -436,9 +436,24 @@ export const DEFAULT_CONFIG: PortalConfig = {
 
 const PortalConfigContext = createContext<PortalConfigContextProps | undefined>(undefined);
 
+const getInitialConfig = (): PortalConfig => {
+  try {
+    const cached = localStorage.getItem('portal_config_cache');
+    if (cached) {
+      const parsed = JSON.parse(cached);
+      if (parsed && typeof parsed === 'object') {
+        return { ...DEFAULT_CONFIG, ...parsed };
+      }
+    }
+  } catch (err) {
+    console.warn("Could not read cached config from localStorage:", err);
+  }
+  return DEFAULT_CONFIG;
+};
+
 export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [config, setConfig] = useState<PortalConfig>(DEFAULT_CONFIG);
-  const [loading, setLoading] = useState(true);
+  const [config, setConfig] = useState<PortalConfig>(getInitialConfig);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const configDocRef = doc(db, 'config', 'portal');
@@ -460,6 +475,14 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (!data.techTreeNodes) {
           data.techTreeNodes = DEFAULT_CONFIG.techTreeNodes;
         }
+        
+        // Cache to localStorage for instant 0ms loads on page refresh
+        try {
+          localStorage.setItem('portal_config_cache', JSON.stringify(data));
+        } catch (e) {
+          // ignore quota limits
+        }
+
         setConfig(data);
       } else {
         setDoc(configDocRef, DEFAULT_CONFIG).catch(err => {

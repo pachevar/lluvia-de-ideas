@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import './PromoVideoSection.css';
 
 interface PromoVideoSectionProps {
@@ -13,8 +14,9 @@ export default function PromoVideoSection({
   badge = '🎬 Video Promocional',
   description = 'Te invitamos a ver nuestro video promocional para conocer cómo nuestras plataformas, libros interactivos y herramientas digitales transforman el aprendizaje en el aula.'
 }: PromoVideoSectionProps) {
-  // YouTube embed URL for YouTube Shorts
-  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=0&rel=0&modestbranding=1&playsinline=1`;
+  const [isPlaying, setIsPlaying] = useState(false);
+  const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  const thumbnailUrl = `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`;
 
   return (
     <section className="promo-video-section animate-fade-in">
@@ -42,13 +44,23 @@ export default function PromoVideoSection({
               <div className="phone-speaker"></div>
             </div>
             <div className="phone-screen-container">
-              <iframe
-                src={embedUrl}
-                title="Video Promocional Lluvia de Ideas"
-                loading="lazy"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-                allowFullScreen
-              ></iframe>
+              {isPlaying ? (
+                <iframe
+                  src={embedUrl}
+                  title="Video Promocional Lluvia de Ideas"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                  allowFullScreen
+                ></iframe>
+              ) : (
+                <div className="video-facade-container" onClick={() => setIsPlaying(true)} role="button" tabIndex={0}>
+                  <img src={thumbnailUrl} alt={title} className="facade-thumbnail" loading="lazy" decoding="async" />
+                  <div className="facade-overlay-gradient"></div>
+                  <button className="facade-play-btn" aria-label="Reproducir video promocional">
+                    <span className="play-icon-triangle">▶</span>
+                  </button>
+                  <span className="facade-play-label">VER VIDEO PROMOCIONAL</span>
+                </div>
+              )}
             </div>
           </div>
 
