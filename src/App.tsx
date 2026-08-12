@@ -5,10 +5,10 @@ import './App.css';
 import { useCart } from './context/CartContext';
 
 import Home from './pages/Home';
-import Gerencia from './Gerencia';
-import CotizacionView from './CotizacionView';
 
-// Lazy load other routes
+// Lazy load heavy routes
+const Gerencia = React.lazy(() => import('./Gerencia'));
+const CotizacionView = React.lazy(() => import('./CotizacionView'));
 const Sutz = React.lazy(() => import('./pages/Sutz'));
 const Laboratorios = React.lazy(() => import('./pages/Laboratorios'));
 const Juracan = React.lazy(() => import('./pages/Juracan'));
@@ -48,12 +48,28 @@ function App() {
 
   // Specific check for Gerencia and Cotizacion View
   if (currentPath === '/gerencia' || currentPath === '/gerencia/') {
-    return <Gerencia />;
+    return (
+      <Suspense fallback={
+        <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', background: '#090d1d', color: '#00e5ff' }}>
+          <p>Cargando módulo de gerencia...</p>
+        </div>
+      }>
+        <Gerencia />
+      </Suspense>
+    );
   }
 
   if (currentPath.startsWith('/cotizacion/')) {
     const id = currentPath.split('/')[2];
-    return <CotizacionView id={id} />;
+    return (
+      <Suspense fallback={
+        <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', background: '#090d1d', color: '#00e5ff' }}>
+          <p>Cargando propuesta comercial...</p>
+        </div>
+      }>
+        <CotizacionView id={id} />
+      </Suspense>
+    );
   }
 
   const isBingoCardView = currentPath.includes('/juegos/bingo');

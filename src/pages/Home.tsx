@@ -13,7 +13,6 @@ export default function Home() {
 
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
-  const [isCreatikaMenuOpen, setIsCreatikaMenuOpen] = useState(false);
 
   useEffect(() => {
     document.body.classList.add('home-page-active');
@@ -95,54 +94,6 @@ export default function Home() {
           <div className="landing-top-links">
             <span className="landing-top-slogan">Descubre el ecosistema educativo</span>
             <div className="landing-top-actions">
-              {/* Dropdown de Creatika en Barra Superior */}
-              <div className="top-user-menu">
-                <button 
-                  className="top-btn top-btn-user"
-                  onClick={() => setIsCreatikaMenuOpen(!isCreatikaMenuOpen)}
-                  style={{
-                    background: 'rgba(251, 113, 133, 0.15)',
-                    borderColor: 'rgba(251, 113, 133, 0.4)',
-                    color: '#fb7185'
-                  }}
-                >
-                  <span className="top-btn-icon">✨</span>
-                  <span className="btn-text-full">Creatika ▾</span>
-                  <span className="btn-text-short">✨ ▾</span>
-                </button>
-
-                {isCreatikaMenuOpen && (
-                  <div className="top-user-dropdown card-glass animate-fade-in" style={{ width: '230px', left: 0, right: 'auto' }}>
-                    <button 
-                      className="dropdown-item" 
-                      onClick={() => { navigate('/creatika/codigo-estudiante'); setIsCreatikaMenuOpen(false); }}
-                      style={{ color: '#38bdf8', fontWeight: 700 }}
-                    >
-                      🎓 Código del Estudiante
-                    </button>
-                    <button 
-                      className="dropdown-item" 
-                      onClick={() => { navigate('/creatika/codigo-docente'); setIsCreatikaMenuOpen(false); }}
-                      style={{ color: '#fb7185', fontWeight: 700 }}
-                    >
-                      📜 Código Docente
-                    </button>
-                    <button 
-                      className="dropdown-item" 
-                      onClick={() => { navigate('/creatika/maquina-de-cuentos'); setIsCreatikaMenuOpen(false); }}
-                    >
-                      🎰 Máquina de Cuentos
-                    </button>
-                    <button 
-                      className="dropdown-item" 
-                      onClick={() => { navigate('/creatika/teoria-del-color'); setIsCreatikaMenuOpen(false); }}
-                    >
-                      🎨 Teoría del Color
-                    </button>
-                  </div>
-                )}
-              </div>
-
               <button 
                 className="top-btn top-btn-sutz" 
                 onClick={() => navigate('/sutz')}

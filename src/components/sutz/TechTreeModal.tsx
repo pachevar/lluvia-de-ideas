@@ -51,8 +51,24 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   nodesMap
 }) => {
   const navigate = useNavigate();
-  const [points, setPoints] = useState<number>(100);
-  const [unlocked, setUnlocked] = useState<Set<string>>(new Set());
+  const [points, setPoints] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem('sutz_tech_tree_points_v1');
+      return saved !== null ? Number(saved) : 100;
+    } catch {
+      return 100;
+    }
+  });
+
+  const [unlocked, setUnlocked] = useState<Set<string>>(() => {
+    try {
+      const saved = localStorage.getItem('sutz_tech_tree_unlocked_v1');
+      return saved ? new Set(JSON.parse(saved)) : new Set();
+    } catch {
+      return new Set();
+    }
+  });
+
   const [winShown, setWinShown] = useState<boolean>(false);
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
@@ -60,6 +76,23 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   const [currentActiveCol, setCurrentActiveCol] = useState<number>(1);
   const [hoveredTechId, setHoveredTechId] = useState<string | null>(null);
   const [inspectNode, setInspectNode] = useState<TechItem | null>(null);
+
+  // Save state to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('sutz_tech_tree_points_v1', points.toString());
+    } catch (e) {
+      console.warn('Could not save points to localStorage:', e);
+    }
+  }, [points]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('sutz_tech_tree_unlocked_v1', JSON.stringify(Array.from(unlocked)));
+    } catch (e) {
+      console.warn('Could not save unlocked nodes to localStorage:', e);
+    }
+  }, [unlocked]);
 
   // Jump smoothly to a specific column on mobile/desktop
   const handleJumpToCol = (colNum: number) => {
@@ -79,6 +112,35 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   const boardWrapRef = useRef<HTMLDivElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
+  const rafRef = useRef<number | null>(null);
+
+  // Keyboard navigation shortcuts
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (inspectNode) {
+          setInspectNode(null);
+        } else {
+          onClose();
+        }
+      } else if (e.key === 'ArrowRight') {
+        setCurrentActiveCol(prev => {
+          const next = Math.min(30, prev + 1);
+          handleJumpToCol(next);
+          return next;
+        });
+      } else if (e.key === 'ArrowLeft') {
+        setCurrentActiveCol(prev => {
+          const next = Math.max(1, prev - 1);
+          handleJumpToCol(next);
+          return next;
+        });
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, inspectNode, onClose]);
 
   // Map nodes from nodesMap prop or use INITIAL_TECH_TREE_DATA (267 nodes across 30 cols)
   const techsList: TechItem[] = useMemo(() => {
@@ -167,47 +229,50 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     return () => clearInterval(interval);
   }, [isOpen, currentIncome]);
 
-  // Layout wire calculation for SVG SVG connectors
+  // Layout wire calculation for SVG connectors (requestAnimationFrame optimized at 60fps)
   const updateWiresLayout = () => {
-    if (!boardRef.current || !svgRef.current) return;
-    const boardEl = boardRef.current;
-    const svgEl = svgRef.current;
-    const b = boardEl.getBoundingClientRect();
+    if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    rafRef.current = requestAnimationFrame(() => {
+      if (!boardRef.current || !svgRef.current) return;
+      const boardEl = boardRef.current;
+      const svgEl = svgRef.current;
+      const b = boardEl.getBoundingClientRect();
 
-    svgEl.setAttribute('width', `${b.width}`);
-    svgEl.setAttribute('height', `${b.height}`);
-    svgEl.setAttribute('viewBox', `0 0 ${b.width} ${b.height}`);
+      svgEl.setAttribute('width', `${b.width}`);
+      svgEl.setAttribute('height', `${b.height}`);
+      svgEl.setAttribute('viewBox', `0 0 ${b.width} ${b.height}`);
 
-    techsList.forEach(t => {
-      t.deps.forEach(d => {
-        const fromCard = cardRefs.current[d];
-        const toCard = cardRefs.current[t.id];
-        const pathEl = document.getElementById(`path-${d}-${t.id}`);
-        const c1El = document.getElementById(`c1-${d}-${t.id}`);
-        const c2El = document.getElementById(`c2-${d}-${t.id}`);
-        const gradEl = document.getElementById(`g-${d}-${t.id}`);
+      techsList.forEach(t => {
+        t.deps.forEach(d => {
+          const fromCard = cardRefs.current[d];
+          const toCard = cardRefs.current[t.id];
+          const pathEl = document.getElementById(`path-${d}-${t.id}`);
+          const c1El = document.getElementById(`c1-${d}-${t.id}`);
+          const c2El = document.getElementById(`c2-${d}-${t.id}`);
+          const gradEl = document.getElementById(`g-${d}-${t.id}`);
 
-        if (fromCard && toCard && pathEl && c1El && c2El && gradEl) {
-          const f = fromCard.getBoundingClientRect();
-          const toRect = toCard.getBoundingClientRect();
+          if (fromCard && toCard && pathEl && c1El && c2El && gradEl) {
+            const f = fromCard.getBoundingClientRect();
+            const toRect = toCard.getBoundingClientRect();
 
-          const x1 = f.right - b.left;
-          const y1 = f.top + f.height / 2 - b.top;
-          const x2 = toRect.left - b.left;
-          const y2 = toRect.top + toRect.height / 2 - b.top;
-          const dx = Math.max(46, (x2 - x1) * 0.5);
+            const x1 = f.right - b.left;
+            const y1 = f.top + f.height / 2 - b.top;
+            const x2 = toRect.left - b.left;
+            const y2 = toRect.top + toRect.height / 2 - b.top;
+            const dx = Math.max(46, (x2 - x1) * 0.5);
 
-          pathEl.setAttribute('d', `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`);
-          c1El.setAttribute('cx', `${x1}`);
-          c1El.setAttribute('cy', `${y1}`);
-          c2El.setAttribute('cx', `${x2}`);
-          c2El.setAttribute('cy', `${y2}`);
+            pathEl.setAttribute('d', `M ${x1} ${y1} C ${x1 + dx} ${y1}, ${x2 - dx} ${y2}, ${x2} ${y2}`);
+            c1El.setAttribute('cx', `${x1}`);
+            c1El.setAttribute('cy', `${y1}`);
+            c2El.setAttribute('cx', `${x2}`);
+            c2El.setAttribute('cy', `${y2}`);
 
-          gradEl.setAttribute('x1', `${x1}`);
-          gradEl.setAttribute('y1', `${y1}`);
-          gradEl.setAttribute('x2', `${x2}`);
-          gradEl.setAttribute('y2', `${y2}`);
-        }
+            gradEl.setAttribute('x1', `${x1}`);
+            gradEl.setAttribute('y1', `${y1}`);
+            gradEl.setAttribute('x2', `${x2}`);
+            gradEl.setAttribute('y2', `${y2}`);
+          }
+        });
       });
     });
   };
@@ -219,6 +284,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     window.addEventListener('resize', updateWiresLayout);
     return () => {
       clearTimeout(timer);
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', updateWiresLayout);
     };
   }, [isOpen, techsList, unlocked]);
@@ -300,20 +366,6 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     }
   };
 
-  const handleStudy = (e: React.MouseEvent<HTMLButtonElement>) => {
-    setPoints(prev => prev + 5);
-    const r = e.currentTarget.getBoundingClientRect();
-    triggerFloatText(r.left + r.width / 2, r.top - 4, '+5 ◈', '#00e5ff');
-  };
-
-  const handleReset = () => {
-    setPoints(100);
-    setUnlocked(new Set());
-    setWinShown(false);
-    setShowWinOverlay(false);
-    addToast('↺ Árbol reiniciado. ¡Nueva partida!', 'warn');
-  };
-
   const getCardStatus = (t: TechItem) => {
     if (unlocked.has(t.id)) return 'unlocked';
     if (t.deps.every(d => unlocked.has(d))) return 'ready';
@@ -349,20 +401,10 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
             </div>
 
             <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <button className="nexo-btn neon" onClick={handleStudy}>⚡ ESTUDIAR +5</button>
-              <button className="nexo-btn ghost" onClick={handleReset}>↺ REINICIAR</button>
               <button className="nexo-close-btn" onClick={onClose} title="Cerrar modal">✕</button>
             </div>
           </div>
         </header>
-
-        {/* LEYENDA */}
-        <div className="nexo-legend">
-          <span><i className="dot off"></i>Bloqueada</span>
-          <span><i className="dot ready"></i>Disponible</span>
-          <span><i className="dot on"></i>Desbloqueada</span>
-          <span className="hint">Haz clic en una tecnología para inspeccionar sus detalles y acceder al proyecto 🚀</span>
-        </div>
 
         {/* TOOLBAR NAVEGACIÓN MÓVIL Y BÚSQUEDA RÁPIDA */}
         <div className="nexo-mobile-toolbar">
@@ -410,7 +452,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                 const meta = TECH_TREE_COLUMNS_META[c];
                 return (
                   <option key={c} value={c}>
-                    Col {c}: {meta ? meta.title : `Columna ${c}`}
+                    {c}: {meta ? meta.title : `Época ${c}`}
                   </option>
                 );
               })}
@@ -419,7 +461,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
             <div className="nexo-jump-pills">
               {[1, 2, 5, 8, 11, 16, 23, 30].map(c => (
                 <button key={c} className={`nexo-jump-pill ${currentActiveCol === c ? 'active' : ''}`} onClick={() => handleJumpToCol(c)}>
-                  Col {c}
+                  {c}
                 </button>
               ))}
             </div>
@@ -480,10 +522,9 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
 
                 return (
                   <div key={tier} id={`nexo-col-${tier}`} className={`nexo-col ${colClass}`}>
-                    <div className="nexo-col-head" style={{ borderColor: colMeta.badgeColor }}>
-                      <span className="nexo-col-tag" style={{ color: colMeta.badgeColor, borderColor: colMeta.badgeColor }}>COL {tier}</span>
+                    <div className="nexo-col-head">
+                      <span className="nexo-col-tag" style={{ color: colMeta.badgeColor, borderColor: colMeta.badgeColor }}>{tier}</span>
                       <h2 title={colMeta.title}>{colMeta.title}</h2>
-                      <span className="nexo-col-count">{techs.length} nodos</span>
                     </div>
 
                     <div className="nexo-col-cards">
@@ -560,10 +601,9 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
 
               return (
                 <div key={tier} className="mobile-period-section">
-                  <div className="mobile-period-header" style={{ borderColor: colMeta.badgeColor }}>
-                    <span className="mobile-period-badge" style={{ background: colMeta.badgeColor }}>COL {tier}</span>
+                  <div className="mobile-period-header">
+                    <span className="mobile-period-badge" style={{ background: colMeta.badgeColor }}>{tier}</span>
                     <h3>{colMeta.title}</h3>
-                    <span className="mobile-period-count">{filteredTechs.length} nodos</span>
                   </div>
 
                   <div className="mobile-period-cards-grid">
@@ -624,7 +664,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           </button>
 
           <span className="sticky-col-indicator">
-            COL {currentActiveCol} / 30
+            ÉPOCA {currentActiveCol} / 30
           </span>
 
           <button 
@@ -633,10 +673,6 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
             disabled={currentActiveCol >= 30}
           >
             Siguiente ▶
-          </button>
-
-          <button className="sticky-study-btn" onClick={handleStudy}>
-            ⚡ +5 ◈
           </button>
         </div>
 
