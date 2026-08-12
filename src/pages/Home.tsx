@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoEditorial from '../assets/logo editorial.png';
 import PromoVideoSection from '../components/landing/PromoVideoSection';
+import PromoTipsModal from '../components/landing/PromoTipsModal';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from '../components/auth/AuthModal';
@@ -14,6 +15,14 @@ export default function Home() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState(() => {
+    const hasSeen = sessionStorage.getItem('hasSeenPromoModal');
+    if (!hasSeen) {
+      sessionStorage.setItem('hasSeenPromoModal', 'true');
+      return true;
+    }
+    return false;
+  });
 
   useEffect(() => {
     document.body.classList.add('home-page-active');
@@ -262,7 +271,26 @@ export default function Home() {
             </div>
           ))}
         </div>
+
+        {/* BOTÓN CONOCE MÁS DE NUESTRA POTENTE HERRAMIENTA */}
+        <div className="know-more-cta-container">
+          <button 
+            className="know-more-btn"
+            onClick={() => setIsPromoModalOpen(true)}
+            title="Ver videos explicativos y consejos de la plataforma"
+          >
+            <span className="know-more-icon">✨</span>
+            <span>Conoce más de nuestra potente herramienta</span>
+            <span className="know-more-arrow">🎬 ➔</span>
+          </button>
+        </div>
       </section>
+
+      {/* MODAL DE CONSEJOS Y VIDEOS INTERACTIVOS */}
+      <PromoTipsModal 
+        isOpen={isPromoModalOpen} 
+        onClose={() => setIsPromoModalOpen(false)} 
+      />
 
       {/* MÓDULO VIDEO PROMOCIONAL (YOUTUBE SHORTS) */}
       <PromoVideoSection />
