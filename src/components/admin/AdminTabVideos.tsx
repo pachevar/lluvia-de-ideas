@@ -30,7 +30,7 @@ export function extractYouTubeId(input: string): string {
 }
 
 export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTabVideosProps) {
-  const [activeSubtab, setActiveSubtab] = useState<'main' | 'modal' | 'custom'>('main');
+  const [activeSubtab, setActiveSubtab] = useState<'main' | 'modal'>('main');
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
 
   // Form state for creating/editing a tip item
@@ -59,7 +59,11 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
       title: 'Conoce Nuestra Potente Herramienta',
       videoId: 'HMFybOP8gec',
       description: 'Nuestra plataforma unifica libros de texto, experiencias pedagógicas interactivas y recursos de aprendizaje adaptativo.',
-      bullets: ['Acceso instantáneo a materiales digitales.', 'Diseño interactivo adaptado.', 'Enfoque inclusivo en K\'iche\' y Español.'],
+      bullets: [
+        'Acceso instantáneo a materiales digitales y actividades para cada grado.',
+        'Diseño interactivo adaptado para docentes, estudiantes y administradores.',
+        'Herramientas inclusivas con enfoque cultural en idioma K\'iche\' y Español.'
+      ],
       visible: true
     },
     {
@@ -69,7 +73,11 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
       title: 'Sutz: Nube de Aprendizaje Adaptativo',
       videoId: 'HMFybOP8gec',
       description: 'En idioma K\'iche\', Sutz significa Nube. Es un ecosistema interactivo basado en un mapa hexagonal de descubrimientos.',
-      bullets: ['Navega por biomas y desafíos lógicos.', 'Progresión personalizada al ritmo real.', 'Evaluaciones gamificadas sin estrés.'],
+      bullets: [
+        'Navega por biomas, montañas y desafíos lógicos.',
+        'Progresión personalizada al ritmo real de cada estudiante.',
+        'Evaluaciones gamificadas sin estrés ni presión.'
+      ],
       visible: true
     }
   ];
@@ -109,6 +117,22 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
         }
       };
     });
+  };
+
+  // Bullet points handlers
+  const handleBulletChange = (index: number, value: string) => {
+    const currentBullets = [...(tipForm.bullets || [])];
+    currentBullets[index] = value;
+    setTipForm({ ...tipForm, bullets: currentBullets });
+  };
+
+  const handleAddBulletField = () => {
+    setTipForm({ ...tipForm, bullets: [...(tipForm.bullets || []), ''] });
+  };
+
+  const handleRemoveBulletField = (index: number) => {
+    const currentBullets = (tipForm.bullets || []).filter((_, i) => i !== index);
+    setTipForm({ ...tipForm, bullets: currentBullets });
   };
 
   // Handlers for modal tips list
@@ -159,7 +183,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
   const handleEditTip = (index: number) => {
     const item = tipsList[index];
     setEditingTipIndex(index);
-    setTipForm({ ...item });
+    setTipForm({ ...item, bullets: item.bullets && item.bullets.length > 0 ? [...item.bullets] : [''] });
   };
 
   const handleDeleteTip = (index: number) => {
@@ -227,85 +251,110 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
   return (
     <div className="admin-tab-videos animate-fade-in">
       
-      {/* Sub-pestañas Internas */}
-      <div className="videos-subtabs">
-        <button
-          className={`videos-subtab-btn ${activeSubtab === 'main' ? 'active' : ''}`}
-          onClick={() => setActiveSubtab('main')}
-        >
-          📱 Video Promocional Shorts (Inicio)
-        </button>
-        <button
-          className={`videos-subtab-btn ${activeSubtab === 'modal' ? 'active' : ''}`}
-          onClick={() => setActiveSubtab('modal')}
-        >
-          🎬 Modal de Consejos & Recorridos
-        </button>
+      {/* Banner de Encabezado Premium */}
+      <div className="videos-header-banner">
+        <div className="videos-banner-text">
+          <h3><span>🎬</span> Gestor de Videos, Enlaces & Modal de Consejos</h3>
+          <p>Personaliza los enlaces de YouTube, videos de Shorts y temas explicativos del portal en tiempo real.</p>
+        </div>
+
+        <div className="videos-subtabs">
+          <button
+            className={`videos-subtab-btn ${activeSubtab === 'main' ? 'active' : ''}`}
+            onClick={() => setActiveSubtab('main')}
+          >
+            📱 Video Shorts Inicio
+          </button>
+          <button
+            className={`videos-subtab-btn ${activeSubtab === 'modal' ? 'active' : ''}`}
+            onClick={() => setActiveSubtab('modal')}
+          >
+            💡 Modal Consejos (`PromoTips`)
+          </button>
+        </div>
       </div>
 
       {/* PESTAÑA 1: VIDEO PROMOCIONAL DE INICIO */}
       {activeSubtab === 'main' && (
         <div className="video-edit-grid">
           
-          <div className="form-group-card card-glass">
-            <h3 style={{ fontSize: '1.2rem', color: '#ffffff', marginBottom: '1.25rem' }}>
-              ⚙️ Configuración del Video en la Landing Page
+          <div className="premium-form-card">
+            <h3 className="premium-card-title">
+              <span>⚙️</span> Configuración del Video en la Página de Inicio
             </h3>
 
-            <div className="form-row">
-              <label>Etiqueta / Badge Superior:</label>
+            <div className="form-field-group">
+              <label className="form-field-label">
+                <span>Insignia Superior (Badge):</span>
+                <span className="form-field-hint">Aparece en la pastilla sobre el título</span>
+              </label>
               <input 
                 type="text" 
                 value={mainBadge}
                 onChange={(e) => updateMainField('mainBadge', e.target.value)}
                 placeholder="Ej: 🎬 Video Promocional"
-                className="form-control"
+                className="premium-input"
               />
             </div>
 
-            <div className="form-row">
-              <label>Título Principal de la Sección:</label>
+            <div className="form-field-group">
+              <label className="form-field-label">
+                <span>Título Principal de la Sección:</span>
+                <span className="form-field-hint">Título con destello neón</span>
+              </label>
               <input 
                 type="text" 
                 value={mainTitle}
                 onChange={(e) => updateMainField('mainTitle', e.target.value)}
                 placeholder="Ej: Conoce Nuestro Ecosistema Educativo"
-                className="form-control"
+                className="premium-input"
               />
             </div>
 
-            <div className="form-row">
-              <label>Enlace de YouTube o Shorts:</label>
-              <input 
-                type="text" 
-                value={mainYoutubeUrl}
-                onChange={(e) => handleMainUrlChange(e.target.value)}
-                placeholder="Pega aquí cualquier link: https://youtube.com/shorts/HMFybOP8gec"
-                className="form-control"
-              />
-              <div className="youtube-extractor-notice" style={{ marginTop: '8px' }}>
-                <span>✨</span> YouTube Video ID detectado: <strong>{mainShortId}</strong>
+            <div className="form-field-group">
+              <label className="form-field-label">
+                <span>Enlace de YouTube o Shorts:</span>
+                <span className="form-field-hint">Pega cualquier enlace público</span>
+              </label>
+              <div className="youtube-url-input-wrapper">
+                <input 
+                  type="text" 
+                  value={mainYoutubeUrl}
+                  onChange={(e) => handleMainUrlChange(e.target.value)}
+                  placeholder="https://youtube.com/shorts/HMFybOP8gec"
+                  className="premium-input"
+                />
+              </div>
+              <div className="youtube-extracted-badge">
+                <span>✨</span> YouTube ID Detectado: <strong>{mainShortId}</strong>
               </div>
             </div>
 
-            <div className="form-row">
-              <label>Descripción / Párrafo Informativo:</label>
+            <div className="form-field-group">
+              <label className="form-field-label">
+                <span>Descripción Promocional:</span>
+                <span className="form-field-hint">Párrafo explicativo del video</span>
+              </label>
               <textarea 
                 rows={4}
                 value={mainDescription}
                 onChange={(e) => updateMainField('mainDescription', e.target.value)}
                 placeholder="Párrafo invitando a ver el video promocional..."
-                className="form-control"
+                className="premium-textarea"
               />
             </div>
           </div>
 
-          {/* Previsualizador en Vivo */}
-          <div className="video-preview-box">
-            <span className="video-preview-title">
-              👁️ Previsualización en Vivo de Shorts
-            </span>
-            <div className="video-preview-frame">
+          {/* Previsualizador de Video en Vivo estilo Celular */}
+          <div className="video-preview-card">
+            <div className="preview-card-header">
+              <span className="premium-card-title" style={{ fontSize: '1rem', border: 'none', padding: 0 }}>
+                📱 Vista Previa en Vivo
+              </span>
+              <span className="preview-badge-live">● EN VIVO</span>
+            </div>
+            
+            <div className="phone-mockup-mini">
               <iframe
                 src={`https://www.youtube.com/embed/${mainShortId}?autoplay=0&rel=0`}
                 title="Preview"
@@ -320,70 +369,71 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
 
       {/* PESTAÑA 2: MODAL DE CONSEJOS Y RECORRIDOS */}
       {activeSubtab === 'modal' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
             <div>
-              <h3 style={{ fontSize: '1.25rem', color: '#ffffff', margin: 0 }}>
-                🎬 Consejos & Recorridos en Video (`PromoTipsModal`)
+              <h3 style={{ fontSize: '1.3rem', color: '#ffffff', margin: 0, fontWeight: 900 }}>
+                💡 Temas & Videos Explicativos del Modal (`PromoTipsModal`)
               </h3>
-              <p style={{ color: '#94a3b8', fontSize: '0.9rem', margin: '4px 0 0 0' }}>
-                Configura los temas que aparecen cuando los usuarios abren el modal de consejos en el portal.
+              <p style={{ color: '#94a3b8', fontSize: '0.92rem', margin: '4px 0 0 0' }}>
+                Administra las pestañas con videos de YouTube y consejos interactivos para los usuarios.
               </p>
             </div>
             
             <button 
-              className="btn btn-secondary"
+              className="btn btn-secondary btn-portal-preview"
               onClick={() => setIsTestModalOpen(true)}
-              style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}
+              style={{ background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2), rgba(129, 140, 248, 0.3))', borderColor: 'rgba(56, 189, 248, 0.5)' }}
             >
-              👁️ Probar Modal en Vivo
+              <span>👁️</span> Probar Modal en Vivo
             </button>
           </div>
 
-          {/* Formulario de Creación / Edición */}
-          <div className="form-group-card card-glass">
-            <h4 style={{ color: '#38bdf8', marginBottom: '1rem' }}>
-              {editingTipIndex !== null ? '✏️ Editar Tema de Video' : '➕ Agregar Nuevo Tema de Video'}
+          {/* Formulario de Creación / Edición Premium */}
+          <div className="premium-form-card">
+            <h4 className="premium-card-title">
+              <span>{editingTipIndex !== null ? '✏️' : '➕'}</span>
+              <span>{editingTipIndex !== null ? `Editando Tema #${editingTipIndex + 1}` : 'Agregar Nuevo Tema en Video'}</span>
             </h4>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '80px 1fr 1fr', gap: '1rem' }}>
-              <div>
-                <label>Icono:</label>
+            <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr', gap: '1.25rem' }}>
+              <div className="form-field-group">
+                <label className="form-field-label">Icono:</label>
                 <input 
                   type="text" 
                   value={tipForm.icon || '🎬'} 
                   onChange={(e) => setTipForm({ ...tipForm, icon: e.target.value })}
-                  className="form-control"
-                  style={{ textAlign: 'center', fontSize: '1.2rem' }}
+                  className="premium-input"
+                  style={{ textAlign: 'center', fontSize: '1.3rem', fontWeight: 'bold' }}
                 />
               </div>
 
-              <div>
-                <label>Nombre de la Pestaña:</label>
+              <div className="form-field-group">
+                <label className="form-field-label">Nombre de Pestaña:</label>
                 <input 
                   type="text" 
                   value={tipForm.tabLabel || ''} 
                   onChange={(e) => setTipForm({ ...tipForm, tabLabel: e.target.value })}
                   placeholder="Ej: Bienvenida al Ecosistema"
-                  className="form-control"
+                  className="premium-input"
                 />
               </div>
 
-              <div>
-                <label>Título Explicativo:</label>
+              <div className="form-field-group">
+                <label className="form-field-label">Título Explicativo:</label>
                 <input 
                   type="text" 
                   value={tipForm.title || ''} 
                   onChange={(e) => setTipForm({ ...tipForm, title: e.target.value })}
                   placeholder="Ej: Conoce Nuestra Potente Herramienta"
-                  className="form-control"
+                  className="premium-input"
                 />
               </div>
             </div>
 
-            <div className="form-row" style={{ marginTop: '1rem' }}>
-              <label>Enlace o ID de YouTube:</label>
+            <div className="form-field-group">
+              <label className="form-field-label">Enlace o ID de YouTube:</label>
               <input 
                 type="text" 
                 value={tipForm.youtubeUrl || tipForm.videoId || ''} 
@@ -392,32 +442,71 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
                   const id = extractYouTubeId(url);
                   setTipForm({ ...tipForm, youtubeUrl: url, videoId: id });
                 }}
-                placeholder="Pega aquí cualquier enlace de YouTube o Shorts..."
-                className="form-control"
+                placeholder="Pega enlace de YouTube (Shorts o Video normal)..."
+                className="premium-input"
               />
-              <div className="youtube-extractor-notice" style={{ marginTop: '6px' }}>
-                <span>✨</span> ID Extraído: <strong>{extractYouTubeId(tipForm.youtubeUrl || tipForm.videoId || '')}</strong>
+              <div className="youtube-extracted-badge">
+                <span>✨</span> YouTube ID: <strong>{extractYouTubeId(tipForm.youtubeUrl || tipForm.videoId || '')}</strong>
               </div>
             </div>
 
-            <div className="form-row">
-              <label>Descripción Breve:</label>
+            <div className="form-field-group">
+              <label className="form-field-label">Descripción Informativa:</label>
               <textarea 
-                rows={2}
+                rows={3}
                 value={tipForm.description || ''} 
                 onChange={(e) => setTipForm({ ...tipForm, description: e.target.value })}
                 placeholder="Resumen instructivo del tema..."
-                className="form-control"
+                className="premium-textarea"
               />
             </div>
 
-            <div style={{ marginTop: '1rem' }}>
+            {/* Puntos Clave (Bullets) Dinámicos */}
+            <div className="form-field-group">
+              <label className="form-field-label">
+                <span>Puntos Clave / Viñetas (Bullets):</span>
+                <button 
+                  className="btn btn-outline btn-sm"
+                  onClick={handleAddBulletField}
+                  style={{ fontSize: '0.8rem', padding: '4px 10px' }}
+                >
+                  ➕ Añadir Punto Clave
+                </button>
+              </label>
+
+              <div className="bullets-editor-list">
+                {(tipForm.bullets || []).map((bullet, bIdx) => (
+                  <div key={bIdx} className="bullet-editor-row">
+                    <input 
+                      type="text"
+                      value={bullet}
+                      onChange={(e) => handleBulletChange(bIdx, e.target.value)}
+                      placeholder={`Punto clave ${bIdx + 1}...`}
+                      className="premium-input"
+                    />
+                    {(tipForm.bullets || []).length > 1 && (
+                      <button 
+                        className="btn-remove-bullet"
+                        onClick={() => handleRemoveBulletField(bIdx)}
+                        title="Eliminar punto clave"
+                      >
+                        ✕
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', gap: '12px', marginTop: '1rem' }}>
               <button 
                 className="btn btn-primary"
                 onClick={handleSaveTip}
+                style={{ padding: '12px 28px', fontWeight: 800 }}
               >
-                {editingTipIndex !== null ? '💾 Guardar Tema' : '➕ Agregar a la Lista'}
+                {editingTipIndex !== null ? '💾 Guardar Tema Editado' : '➕ Agregar Tema a la Lista'}
               </button>
+
               {editingTipIndex !== null && (
                 <button 
                   className="btn btn-secondary"
@@ -425,7 +514,6 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
                     setEditingTipIndex(null);
                     setTipForm({ tabLabel: '', icon: '🎬', title: '', youtubeUrl: '', description: '', bullets: [''] });
                   }}
-                  style={{ marginLeft: '10px' }}
                 >
                   Cancelar Edición
                 </button>
@@ -433,24 +521,34 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
             </div>
           </div>
 
-          {/* Lista de Consejos Existentes */}
-          <div className="tips-list-container">
-            <h4 style={{ color: '#ffffff', margin: 0 }}>Lista de Temas Configurados ({tipsList.length})</h4>
-            
+          {/* Lista de Tarjetas de Consejos Existentes */}
+          <div className="tips-grid-list">
+            <h4 style={{ color: '#ffffff', margin: '0 0 10px 0', fontSize: '1.15rem', fontWeight: 800 }}>
+              Lista de Temas Configurados ({tipsList.length})
+            </h4>
+
             {tipsList.map((tip, idx) => (
-              <div key={tip.id || idx} className={`tip-item-card ${tip.visible === false ? 'hidden-item' : ''}`}>
-                <div className="tip-item-info">
-                  <span className="tip-item-icon">{tip.icon}</span>
-                  <div className="tip-item-details">
-                    <h4>{tip.tabLabel} — <span style={{ color: '#38bdf8' }}>{tip.title}</span></h4>
+              <div key={tip.id || idx} className={`tip-card-item ${tip.visible === false ? 'hidden-state' : ''}`}>
+                <div className="tip-card-left">
+                  <div className="tip-card-icon-badge">{tip.icon}</div>
+                  <div className="tip-card-meta">
+                    <h4>
+                      <span>{tip.title}</span>
+                      <span className="tip-tab-chip">Pestaña: {tip.tabLabel}</span>
+                    </h4>
                     <p>{tip.description || 'Sin descripción'}</p>
-                    <span style={{ fontSize: '0.78rem', color: '#64748b' }}>YouTube ID: {tip.videoId}</span>
+                    <div className="tip-card-bullets-preview">
+                      <span className="bullet-pill-mini">📹 ID: {tip.videoId}</span>
+                      {(tip.bullets || []).map((b, bIdx) => (
+                        <span key={bIdx} className="bullet-pill-mini">✨ {b}</span>
+                      ))}
+                    </div>
                   </div>
                 </div>
 
-                <div className="tip-item-actions">
+                <div className="tip-card-actions">
                   <button 
-                    className="action-btn-icon"
+                    className="btn-icon-action"
                     onClick={() => handleMoveTip(idx, 'up')}
                     disabled={idx === 0}
                     title="Mover arriba"
@@ -458,7 +556,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
                     ⬆️
                   </button>
                   <button 
-                    className="action-btn-icon"
+                    className="btn-icon-action"
                     onClick={() => handleMoveTip(idx, 'down')}
                     disabled={idx === tipsList.length - 1}
                     title="Mover abajo"
@@ -466,23 +564,23 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
                     ⬇️
                   </button>
                   <button 
-                    className="action-btn-icon"
+                    className={`btn-icon-action ${tip.visible !== false ? 'visibility-on' : 'visibility-off'}`}
                     onClick={() => handleToggleVisibility(idx)}
                     title={tip.visible !== false ? 'Ocultar tema' : 'Mostrar tema'}
                   >
                     {tip.visible !== false ? '👁️ Visible' : '🙈 Oculto'}
                   </button>
                   <button 
-                    className="action-btn-icon"
+                    className="btn-icon-action"
                     onClick={() => handleEditTip(idx)}
-                    title="Editar"
+                    title="Editar tema"
                   >
                     ✏️ Editar
                   </button>
                   <button 
-                    className="action-btn-icon delete"
+                    className="btn-icon-action delete"
                     onClick={() => handleDeleteTip(idx)}
-                    title="Eliminar"
+                    title="Eliminar tema"
                   >
                     🗑️
                   </button>
@@ -498,6 +596,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
       <PromoTipsModal 
         isOpen={isTestModalOpen} 
         onClose={() => setIsTestModalOpen(false)} 
+        tipsList={tipsList}
       />
 
     </div>
