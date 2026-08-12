@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoEditorial from '../assets/logo editorial.png';
 import NeuroGuiaSection from '../components/landing/NeuroGuiaSection';
