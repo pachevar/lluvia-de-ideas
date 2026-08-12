@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoEditorial from '../assets/logo editorial.png';
+import PromoVideoSection from '../components/landing/PromoVideoSection';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from '../components/auth/AuthModal';
@@ -226,6 +227,9 @@ export default function Home() {
           ))}
         </div>
       </section>
+
+      {/* MÓDULO VIDEO PROMOCIONAL (YOUTUBE SHORTS) */}
+      <PromoVideoSection />
 
       {/* SECCIÓN DESCRIPTIVA 1: SUTZ DESCUBRE */}
       <section id="section-sutz" className="landing-feature-section feature-sutz">

@@ -1,0 +1,209 @@
+/* src/components/landing/PromoVideoSection.css */
+.promo-video-section {
+  position: relative;
+  padding: 4rem 1.5rem;
+  background: radial-gradient(circle at 50% 30%, rgba(37, 99, 235, 0.12) 0%, rgba(15, 23, 42, 0.6) 70%);
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  overflow: hidden;
+}
+
+.promo-video-backdrop {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background-image: 
+    radial-gradient(circle at 20% 50%, rgba(0, 229, 255, 0.06) 0%, transparent 40%),
+    radial-gradient(circle at 80% 50%, rgba(255, 46, 196, 0.06) 0%, transparent 40%);
+}
+
+.promo-video-container {
+  max-width: 1280px;
+  margin: 0 auto;
+  position: relative;
+  z-index: 2;
+}
+
+.promo-video-header {
+  text-align: center;
+  margin-bottom: 3rem;
+}
+
+.promo-video-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 18px;
+  border-radius: 30px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  font-size: 0.85rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  margin-bottom: 1rem;
+}
+
+.promo-video-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin-bottom: 1rem;
+  letter-spacing: -0.02em;
+}
+
+.promo-video-title .highlight-text {
+  background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.promo-video-description {
+  max-width: 720px;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  line-height: 1.65;
+  color: #94a3b8;
+}
+
+.promo-video-grid {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3.5rem;
+  flex-wrap: wrap;
+}
+
+/* Smartphone Mockup Frame */
+.phone-mockup-wrapper {
+  position: relative;
+  width: 320px;
+  height: 570px;
+  border-radius: 36px;
+  padding: 12px;
+  background: linear-gradient(145deg, rgba(30, 41, 59, 0.8), rgba(15, 23, 42, 0.95));
+  border: 2px solid rgba(255, 255, 255, 0.15);
+  box-shadow: 
+    0 20px 50px rgba(0, 0, 0, 0.6),
+    0 0 30px rgba(56, 189, 248, 0.25),
+    inset 0 0 15px rgba(255, 255, 255, 0.05);
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+.phone-mockup-wrapper:hover {
+  transform: translateY(-6px) scale(1.01);
+  box-shadow: 
+    0 30px 60px rgba(0, 0, 0, 0.7),
+    0 0 40px rgba(56, 189, 248, 0.4),
+    inset 0 0 20px rgba(255, 255, 255, 0.1);
+  border-color: rgba(56, 189, 248, 0.5);
+}
+
+.phone-notch {
+  position: absolute;
+  top: 18px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100px;
+  height: 18px;
+  background: #000;
+  border-bottom-left-radius: 12px;
+  border-bottom-right-radius: 12px;
+  z-index: 10;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.phone-speaker {
+  width: 36px;
+  height: 4px;
+  background: #334155;
+  border-radius: 2px;
+}
+
+.phone-screen-container {
+  width: 100%;
+  height: 100%;
+  border-radius: 26px;
+  overflow: hidden;
+  position: relative;
+  background: #000;
+}
+
+.phone-screen-container iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+  border-radius: 26px;
+}
+
+/* Feature Callout Cards next to video */
+.promo-features-card {
+  max-width: 480px;
+  padding: 2.25rem;
+  border-radius: 24px;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
+}
+
+.promo-feature-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 1.5rem;
+}
+
+.promo-feature-item:last-child {
+  margin-bottom: 0;
+}
+
+.promo-feature-icon {
+  font-size: 1.75rem;
+  background: rgba(255, 255, 255, 0.06);
+  padding: 10px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  line-height: 1;
+}
+
+.promo-feature-text h4 {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin-bottom: 4px;
+}
+
+.promo-feature-text p {
+  font-size: 0.92rem;
+  line-height: 1.5;
+  color: #94a3b8;
+}
+
+@media (max-width: 768px) {
+  .promo-video-section {
+    padding: 3rem 1rem;
+  }
+  .promo-video-title {
+    font-size: 1.65rem;
+  }
+  .promo-video-description {
+    font-size: 0.98rem;
+  }
+  .promo-video-grid {
+    gap: 2rem;
+  }
+  .phone-mockup-wrapper {
+    width: 100%;
+    max-width: 310px;
+    height: 540px;
+  }
+  .promo-features-card {
+    padding: 1.5rem;
+    width: 100%;
+  }
+}
