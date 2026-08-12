@@ -68,11 +68,22 @@ export interface LandingSectionConfig {
   bgImage?: string;
 }
 
-export interface LandingCardConfig {
-  title?: string;
-  badge?: string;
-  kicheTag?: string;
-  desc?: string;
+export interface PromoVideoItem {
+  id: string;
+  tabLabel: string;
+  icon: string;
+  title: string;
+  videoId: string;
+  youtubeUrl?: string;
+  description: string;
+  bullets: string[];
+  visible?: boolean;
+}
+
+export interface PromoFeatureCard {
+  icon: string;
+  title: string;
+  description: string;
 }
 
 export interface LandingConfig {
@@ -87,6 +98,15 @@ export interface LandingConfig {
     creatika?: LandingSectionConfig;
     tek100?: LandingSectionConfig;
     lab?: LandingSectionConfig;
+  };
+  promoVideos?: {
+    mainShortId?: string;
+    mainTitle?: string;
+    mainBadge?: string;
+    mainDescription?: string;
+    mainYoutubeUrl?: string;
+    featureCards?: PromoFeatureCard[];
+    tipsList?: PromoVideoItem[];
   };
 }
 

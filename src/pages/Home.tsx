@@ -307,10 +307,16 @@ export default function Home() {
       <PromoTipsModal 
         isOpen={isPromoModalOpen} 
         onClose={() => setIsPromoModalOpen(false)} 
+        tipsList={landingConfig.promoVideos?.tipsList}
       />
 
       {/* MÓDULO VIDEO PROMOCIONAL (YOUTUBE SHORTS) */}
-      <PromoVideoSection />
+      <PromoVideoSection 
+        videoId={landingConfig.promoVideos?.mainShortId}
+        title={landingConfig.promoVideos?.mainTitle}
+        badge={landingConfig.promoVideos?.mainBadge}
+        description={landingConfig.promoVideos?.mainDescription}
+      />
 
       {/* SECCIÓN DESCRIPTIVA 1: SUTZ DESCUBRE */}
       <section id="section-sutz" className="landing-feature-section feature-sutz">

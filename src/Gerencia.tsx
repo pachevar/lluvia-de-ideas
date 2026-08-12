@@ -12,6 +12,7 @@ import AdminSidebar from './components/admin/AdminSidebar';
 import AdminHeaderBar from './components/admin/AdminHeaderBar';
 import { type AdminTabType } from './components/admin/adminNavConfig';
 import AdminTabInicio from './components/admin/AdminTabInicio';
+import AdminTabVideos from './components/admin/AdminTabVideos';
 import AdminTabLaboratorios from './components/admin/AdminTabLaboratorios';
 import AdminColorsTab from './components/admin/AdminColorsTab';
 import AdminTabInscripciones from './components/admin/AdminTabInscripciones';
@@ -224,6 +225,13 @@ export default function Gerencia() {
               setLocalConfig={setLocalConfig}
               updateField={updateField} 
               updateStory={updateStory} 
+            />
+          )}
+
+          {activeAdminTab === 'videos' && (
+            <AdminTabVideos 
+              localConfig={localConfig} 
+              setLocalConfig={setLocalConfig} 
             />
           )}
 

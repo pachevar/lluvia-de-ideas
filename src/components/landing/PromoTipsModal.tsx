@@ -1,22 +1,14 @@
 import { useState } from 'react';
+import type { PromoVideoItem } from '../../types';
 import './PromoTipsModal.css';
 
 interface PromoTipsModalProps {
   isOpen: boolean;
   onClose: () => void;
+  tipsList?: PromoVideoItem[];
 }
 
-interface VideoTopic {
-  id: string;
-  tabLabel: string;
-  icon: string;
-  title: string;
-  videoId: string;
-  description: string;
-  bullets: string[];
-}
-
-const VIDEO_TOPICS: VideoTopic[] = [
+const DEFAULT_VIDEO_TOPICS: PromoVideoItem[] = [
   {
     id: 'welcome',
     tabLabel: 'Bienvenida al Ecosistema',
@@ -28,7 +20,8 @@ const VIDEO_TOPICS: VideoTopic[] = [
       'Acceso instantáneo a materiales digitales y actividades para cada grado.',
       'Diseño interactivo adaptado para docentes, estudiantes y administradores.',
       'Herramientas inclusivas con enfoque cultural en idioma K\'iche\' y Español.'
-    ]
+    ],
+    visible: true
   },
   {
     id: 'sutz',
@@ -41,7 +34,8 @@ const VIDEO_TOPICS: VideoTopic[] = [
       'Navega por biomas, montañas y desafíos lógicos.',
       'Progresión personalizada al ritmo real de cada estudiante.',
       'Evaluaciones gamificadas sin estrés ni presión.'
-    ]
+    ],
+    visible: true
   },
   {
     id: 'neuro',
@@ -54,7 +48,8 @@ const VIDEO_TOPICS: VideoTopic[] = [
       'Respeto al ritmo biológico y neurodesarrollo infantil.',
       'Micro-actividades para potenciar la concentración y memoria de trabajo.',
       'Estrategias de aprendizaje emocional y pensamiento crítico.'
-    ]
+    ],
+    visible: true
   },
   {
     id: 'creatika',
@@ -67,16 +62,19 @@ const VIDEO_TOPICS: VideoTopic[] = [
       'Máquina de Cuentos para la creación literaria.',
       'Laboratorio interactivo de Teoría del Color.',
       'Manifiesto del Código del Estudiante y Código Docente.'
-    ]
+    ],
+    visible: true
   }
 ];
 
-export default function PromoTipsModal({ isOpen, onClose }: PromoTipsModalProps) {
-  const [activeTopic, setActiveTopic] = useState<VideoTopic>(VIDEO_TOPICS[0]);
+export default function PromoTipsModal({ isOpen, onClose, tipsList }: PromoTipsModalProps) {
+  const activeList = (tipsList && tipsList.length > 0 ? tipsList : DEFAULT_VIDEO_TOPICS).filter(t => t.visible !== false);
+  const [activeTopic, setActiveTopic] = useState<PromoVideoItem>(activeList[0] || DEFAULT_VIDEO_TOPICS[0]);
 
   if (!isOpen) return null;
 
-  const embedUrl = `https://www.youtube.com/embed/${activeTopic.videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
+  const currentTopic = activeList.find(t => t.id === activeTopic?.id) || activeList[0] || DEFAULT_VIDEO_TOPICS[0];
+  const embedUrl = `https://www.youtube.com/embed/${currentTopic.videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
   return (
     <div className="promo-tips-overlay animate-fade-in" onClick={onClose}>
@@ -94,10 +92,10 @@ export default function PromoTipsModal({ isOpen, onClose }: PromoTipsModalProps)
 
         {/* Pestañas de Selección de Tema */}
         <div className="promo-tips-tabs">
-          {VIDEO_TOPICS.map((topic) => (
+          {activeList.map((topic) => (
             <button
               key={topic.id}
-              className={`promo-tip-tab ${activeTopic.id === topic.id ? 'active' : ''}`}
+              className={`promo-tip-tab ${currentTopic.id === topic.id ? 'active' : ''}`}
               onClick={() => setActiveTopic(topic)}
             >
               <span>{topic.icon}</span>
@@ -111,7 +109,7 @@ export default function PromoTipsModal({ isOpen, onClose }: PromoTipsModalProps)
           <div className="promo-tips-video-box">
             <iframe
               src={embedUrl}
-              title={activeTopic.title}
+              title={currentTopic.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
               allowFullScreen
             ></iframe>
@@ -120,13 +118,13 @@ export default function PromoTipsModal({ isOpen, onClose }: PromoTipsModalProps)
           <div className="promo-tips-info-box">
             <div>
               <h4 className="promo-tips-info-title">
-                {activeTopic.icon} {activeTopic.title}
+                {currentTopic.icon} {currentTopic.title}
               </h4>
               <p className="promo-tips-info-desc">
-                {activeTopic.description}
+                {currentTopic.description}
               </p>
               <ul className="promo-tips-bullets">
-                {activeTopic.bullets.map((bullet, idx) => (
+                {(currentTopic.bullets || []).map((bullet, idx) => (
                   <li key={idx}>
                     <span>✨</span> {bullet}
                   </li>

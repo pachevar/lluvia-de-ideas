@@ -1,5 +1,6 @@
 export type AdminTabType = 
   | 'inicio' 
+  | 'videos'
   | 'neurociencia'
   | 'libros'
   | 'mapa'
@@ -42,6 +43,13 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
         icon: '🏠',
         description: 'Editar encabezado principal, tarjetas y leyendas del portal',
         keywords: ['inicio', 'hero', 'landing', 'fichas', 'leyendas', 'promocional', 'portada']
+      },
+      {
+        id: 'videos',
+        label: '🎬 Videos & Secciones',
+        icon: '🎬',
+        description: 'Configuración de enlaces de YouTube, Shorts, modal de consejos y secciones dinámicas',
+        keywords: ['videos', 'youtube', 'shorts', 'consejos', 'modal', 'promocional', 'secciones', 'links']
       },
       {
         id: 'neurociencia',
