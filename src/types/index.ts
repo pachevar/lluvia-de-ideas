@@ -86,6 +86,13 @@ export interface PromoFeatureCard {
   description: string;
 }
 
+export interface LandingCardConfig {
+  title?: string;
+  badge?: string;
+  kicheTag?: string;
+  desc?: string;
+}
+
 export interface LandingConfig {
   cards?: {
     sutz?: LandingCardConfig;
