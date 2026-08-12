@@ -8,7 +8,9 @@ import type { PortalConfig } from './types';
 
 // Admin Components
 import AdminLogin from './components/admin/AdminLogin';
-import AdminSidebar, { type AdminTabType } from './components/admin/AdminSidebar';
+import AdminSidebar from './components/admin/AdminSidebar';
+import AdminHeaderBar from './components/admin/AdminHeaderBar';
+import { type AdminTabType } from './components/admin/adminNavConfig';
 import AdminTabInicio from './components/admin/AdminTabInicio';
 import AdminTabLaboratorios from './components/admin/AdminTabLaboratorios';
 import AdminColorsTab from './components/admin/AdminColorsTab';
@@ -154,6 +156,18 @@ export default function Gerencia() {
     });
   };
 
+  // Shortcut Ctrl + S / Cmd + S to save config
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+        e.preventDefault();
+        handleSaveConfig();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [localConfig]);
+
   if (loading || configLoading) {
     return (
       <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', background: 'transparent' }}>
@@ -194,13 +208,35 @@ export default function Gerencia() {
       />
 
       <main className="admin-main-panel">
-        <header className="admin-panel-header card-glass">
-          <h2>Configuración del Portal Web</h2>
-          <p>Los cambios que realices aquí se guardarán en la base de datos de Firebase y se aplicarán al instante.</p>
-        </header>
+        {/* Header Bar Modular con Breadcrumbs y Atajos */}
+        <AdminHeaderBar 
+          activeTab={activeAdminTab}
+          saving={saving}
+          saveStatus={saveStatus}
+          handleSaveConfig={handleSaveConfig}
+          onBackToPortal={onBackToPortal}
+        />
 
         <div className="admin-tab-content">
           {activeAdminTab === 'inicio' && (
+            <AdminTabInicio 
+              localConfig={localConfig} 
+              setLocalConfig={setLocalConfig}
+              updateField={updateField} 
+              updateStory={updateStory} 
+            />
+          )}
+
+          {activeAdminTab === 'neurociencia' && (
+            <div className="card-glass p-6 animate-fade-in" style={{ padding: '2rem' }}>
+              <h3 style={{ fontSize: '1.4rem', color: '#38bdf8', marginBottom: '1rem' }}>🧠 Módulo de Neurociencia Educativa</h3>
+              <p style={{ color: '#94a3b8', lineHeight: 1.6 }}>
+                Configuración de la guía práctica por etapas de neurodesarrollo. Los contenidos de las etapas (Semilla, Brote, Florecer, Fructificar) se sincronizan automáticamente con las directrices didácticas de la editorial.
+              </p>
+            </div>
+          )}
+
+          {activeAdminTab === 'libros' && (
             <AdminTabInicio 
               localConfig={localConfig} 
               setLocalConfig={setLocalConfig}

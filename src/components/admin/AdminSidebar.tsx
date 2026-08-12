@@ -1,15 +1,6 @@
-export type AdminTabType = 
-  | 'inicio' 
-  | 'creatika' 
-  | 'bingo' 
-  | '100tek' 
-  | 'mapa' 
-  | 'laboratorios' 
-  | 'catalogo' 
-  | 'inscripciones' 
-  | 'cotizador' 
-  | 'colors'
-  | 'techtree';
+import { useState } from 'react';
+import { type AdminTabType, ADMIN_NAV_CATEGORIES } from './adminNavConfig';
+import './AdminSidebar.css';
 
 interface AdminSidebarProps {
   userEmail: string | null;
@@ -34,19 +25,58 @@ export default function AdminSidebar({
   onBackToPortal,
   handleLogout
 }: AdminSidebarProps) {
+  // Search filter state
+  const [searchTerm, setSearchTerm] = useState('');
+
+  // Accordion state: initialize all categories expanded
+  const [expandedCategories, setExpandedCategories] = useState<Record<string, boolean>>({
+    portal: true,
+    ecosistema: true,
+    gestion: true,
+    sistema: true
+  });
+
+  const toggleCategory = (catId: string) => {
+    setExpandedCategories(prev => ({
+      ...prev,
+      [catId]: !prev[catId]
+    }));
+  };
+
+  // Filter items based on search term
+  const query = searchTerm.toLowerCase().trim();
+
   return (
     <aside className="admin-sidebar card-glass">
+      {/* Header Marca Gerencia */}
       <div className="admin-brand-header">
         <span className="admin-brand-icon">⚙️</span>
-        <div>
-          <h3>Gerencia</h3>
-          <span className="admin-user-email">{userEmail}</span>
+        <div className="admin-brand-text-box">
+          <h3>Panel de Gerencia</h3>
+          <span className="admin-user-email">{userEmail || 'Administrador'}</span>
         </div>
       </div>
 
-      {/* Mobile Navigation Selector */}
+      {/* Buscador Rápido en Vivo */}
+      <div className="admin-search-box">
+        <span className="search-icon">🔍</span>
+        <input 
+          type="text" 
+          placeholder="Buscar sección (ej: bingo, colores)..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          className="admin-search-input"
+        />
+        {searchTerm && (
+          <button className="search-clear-btn" onClick={() => setSearchTerm('')}>
+            ✕
+          </button>
+        )}
+      </div>
+
+      {/* Selector Móvil de Navegación */}
       <div className="admin-mobile-nav">
-        <label htmlFor="admin-nav-select" className="admin-mobile-nav-label">Seleccionar sección:</label>
+        <label htmlFor="admin-nav-select" className="admin-mobile-nav-label">Ir a sección:</label>
         <div className="admin-nav-select-wrapper">
           <select 
             id="admin-nav-select"
@@ -54,111 +84,71 @@ export default function AdminSidebar({
             onChange={(e) => setActiveAdminTab(e.target.value as AdminTabType)}
             className="admin-nav-select"
           >
-            <optgroup label="🌐 Secciones del Portal">
-              <option value="inicio">🏠 Inicio y Leyendas</option>
-              <option value="creatika">✨ Creatika</option>
-              <option value="bingo">🎮 Juegos (Bingo Masivo)</option>
-              <option value="100tek">⚡ 100tek</option>
-              <option value="mapa">🌪️ Universo de Juracán</option>
-              <option value="techtree">🌳 Árbol Tecnológico (Sutz)</option>
-              <option value="laboratorios">🧪 Laboratorios</option>
-              <option value="catalogo">📚 Catálogo Editorial</option>
-            </optgroup>
-            <optgroup label="💼 Herramientas de Gestión">
-              <option value="inscripciones">📝 Maestros Inscritos</option>
-              <option value="cotizador">💼 Cotizador Web</option>
-            </optgroup>
-            <optgroup label="🎨 Apariencia y Sistema">
-              <option value="colors">🎨 Colores y Tema</option>
-            </optgroup>
+            {ADMIN_NAV_CATEGORIES.map(cat => (
+              <optgroup key={cat.id} label={cat.title}>
+                {cat.items.map(item => (
+                  <option key={item.id} value={item.id}>
+                    {item.label}
+                  </option>
+                ))}
+              </optgroup>
+            ))}
           </select>
           <span className="admin-nav-select-arrow">▼</span>
         </div>
       </div>
 
+      {/* Menú por Categorías y Acordeón */}
       <nav className="admin-nav-menu">
-        {/* GRUPO 1: SECCIONES DEL PORTAL */}
-        <div className="admin-sidebar-category">
-          <span className="admin-sidebar-category-title">🌐 SECCIONES DEL PORTAL</span>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'inicio' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('inicio')}
-          >
-            🏠 Inicio y Leyendas
-          </button>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'creatika' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('creatika')}
-          >
-            ✨ Creatika
-          </button>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'bingo' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('bingo')}
-          >
-            🎮 Juegos (Bingo)
-          </button>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === '100tek' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('100tek')}
-          >
-            ⚡ 100tek
-          </button>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'mapa' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('mapa')}
-          >
-            🌪️ Universo de Juracán
-          </button>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'techtree' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('techtree')}
-          >
-            🌳 Árbol Tecnológico (Sutz)
-          </button>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'laboratorios' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('laboratorios')}
-          >
-            🧪 Laboratorios
-          </button>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'catalogo' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('catalogo')}
-          >
-            📚 Catálogo Editorial
-          </button>
-        </div>
+        {ADMIN_NAV_CATEGORIES.map(cat => {
+          // Filter category items if searching
+          const filteredItems = query 
+            ? cat.items.filter(item => 
+                item.label.toLowerCase().includes(query) || 
+                item.description.toLowerCase().includes(query) ||
+                item.keywords.some(k => k.toLowerCase().includes(query))
+              )
+            : cat.items;
 
-        {/* GRUPO 2: HERRAMIENTAS DE GESTIÓN */}
-        <div className="admin-sidebar-category">
-          <span className="admin-sidebar-category-title">💼 GESTIÓN Y REGISTROS</span>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'inscripciones' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('inscripciones')}
-          >
-            📝 Maestros Inscritos
-          </button>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'cotizador' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('cotizador')}
-          >
-            💼 Cotizador Web
-          </button>
-        </div>
+          // If searching and category has no matching items, hide category
+          if (query && filteredItems.length === 0) return null;
 
-        {/* GRUPO 3: APARIENCIA Y SISTEMA */}
-        <div className="admin-sidebar-category">
-          <span className="admin-sidebar-category-title">🎨 APARIENCIA</span>
-          <button 
-            className={`admin-nav-tab ${activeAdminTab === 'colors' ? 'active' : ''}`}
-            onClick={() => setActiveAdminTab('colors')}
-          >
-            🎨 Colores y Tema
-          </button>
-        </div>
+          const isExpanded = query ? true : !!expandedCategories[cat.id];
+
+          return (
+            <div key={cat.id} className="admin-sidebar-category">
+              <button 
+                className="admin-sidebar-category-trigger"
+                onClick={() => toggleCategory(cat.id)}
+              >
+                <span className="cat-title">{cat.title}</span>
+                <span className="cat-arrow">{isExpanded ? '▴' : '▾'}</span>
+              </button>
+
+              {isExpanded && (
+                <div className="admin-sidebar-category-items">
+                  {filteredItems.map(item => {
+                    const isActive = activeAdminTab === item.id;
+                    return (
+                      <button
+                        key={item.id}
+                        className={`admin-nav-tab ${isActive ? 'active' : ''}`}
+                        onClick={() => setActiveAdminTab(item.id)}
+                        title={item.description}
+                      >
+                        <span className="tab-label">{item.label}</span>
+                        {isActive && <span className="active-dot">●</span>}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          );
+        })}
       </nav>
 
+      {/* Acciones del Sidebar */}
       <div className="admin-actions-group">
         {saveStatus.message && (
           <div className={`save-status-toast ${saveStatus.type}`}>
