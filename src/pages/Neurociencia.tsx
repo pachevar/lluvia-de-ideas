@@ -12,11 +12,18 @@ export default function Neurociencia() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
 
+  useEffect(() => {
+    document.body.classList.add('home-page-active');
+    return () => {
+      document.body.classList.remove('home-page-active');
+    };
+  }, []);
+
   return (
-    <div className="tab-pane animate-fade-in" style={{ padding: '0 0 3rem 0' }}>
+    <div className="landing-page-wrapper animate-fade-in">
       
       {/* Top Navigation Bar Header */}
-      <header className="landing-top-bar" style={{ marginBottom: '1.5rem' }}>
+      <header className="landing-top-bar">
         <div className="landing-top-bar-content">
           <div className="landing-brand" onClick={() => navigate('/')} style={{ cursor: 'pointer' }}>
             <img src={logoEditorial} alt="Editorial Lluvia de Ideas" className="landing-logo" />

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoEditorial from '../assets/logo editorial.png';
 import JuracanConstellation, { DEFAULT_STORIES, type StoryNode } from '../components/books/JuracanConstellation';
@@ -16,6 +16,13 @@ export default function NuestrosLibros() {
   const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
   const [selectedStory, setSelectedStory] = useState<StoryNode | null>(DEFAULT_STORIES[0]);
   const [filterAccent, setFilterAccent] = useState<'all' | 'yellow' | 'cyan' | 'lilac'>('all');
+
+  useEffect(() => {
+    document.body.classList.add('home-page-active');
+    return () => {
+      document.body.classList.remove('home-page-active');
+    };
+  }, []);
 
   const filteredStories = filterAccent === 'all' 
     ? DEFAULT_STORIES 
