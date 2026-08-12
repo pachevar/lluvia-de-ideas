@@ -21,6 +21,7 @@ const SolarSystem = React.lazy(() => import('./pages/SolarSystem'));
 const NumberSequences = React.lazy(() => import('./pages/NumberSequences'));
 const CodigoDocente = React.lazy(() => import('./pages/CodigoDocente'));
 const CodigoEstudiante = React.lazy(() => import('./pages/CodigoEstudiante'));
+const NuestrosLibros = React.lazy(() => import('./pages/NuestrosLibros'));
 
 function App() {
   const navigate = useNavigate();
@@ -215,6 +216,13 @@ function App() {
           </div>
 
           <button 
+            className={`sidebar-link ${isTabActive('/libros') || isTabActive('/nuestros-libros') ? 'active' : ''}`}
+            onClick={() => navigateTo('/libros')}
+          >
+            <span className="sidebar-icon">📖</span> Nuestros Libros
+          </button>
+
+          <button 
             className={`sidebar-link ${isTabActive('/catalogo') ? 'active' : ''}`}
             onClick={() => navigateTo('/catalogo')}
           >
@@ -241,6 +249,9 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/sutz" element={<Sutz />} />
             <Route path="/mundo-virtual" element={<Sutz />} />
+            <Route path="/libros" element={<NuestrosLibros />} />
+            <Route path="/nuestros-libros" element={<NuestrosLibros />} />
+            <Route path="/cuento/:storyId" element={<NuestrosLibros />} />
             <Route path="/creatika/maquina-de-cuentos" element={<StoryMachine />} />
             <Route path="/creatika/teoria-del-color" element={<ColorTheory />} />
             <Route path="/creatika/codigo-docente" element={<CodigoDocente />} />
