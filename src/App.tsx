@@ -22,6 +22,7 @@ const NumberSequences = React.lazy(() => import('./pages/NumberSequences'));
 const CodigoDocente = React.lazy(() => import('./pages/CodigoDocente'));
 const CodigoEstudiante = React.lazy(() => import('./pages/CodigoEstudiante'));
 const NuestrosLibros = React.lazy(() => import('./pages/NuestrosLibros'));
+const Neurociencia = React.lazy(() => import('./pages/Neurociencia'));
 
 function App() {
   const navigate = useNavigate();
@@ -223,6 +224,13 @@ function App() {
           </button>
 
           <button 
+            className={`sidebar-link ${isTabActive('/neurociencia') ? 'active' : ''}`}
+            onClick={() => navigateTo('/neurociencia')}
+          >
+            <span className="sidebar-icon">🧠</span> Neurociencia Aula
+          </button>
+
+          <button 
             className={`sidebar-link ${isTabActive('/catalogo') ? 'active' : ''}`}
             onClick={() => navigateTo('/catalogo')}
           >
@@ -249,6 +257,7 @@ function App() {
             <Route path="/" element={<Home />} />
             <Route path="/sutz" element={<Sutz />} />
             <Route path="/mundo-virtual" element={<Sutz />} />
+            <Route path="/neurociencia" element={<Neurociencia />} />
             <Route path="/libros" element={<NuestrosLibros />} />
             <Route path="/nuestros-libros" element={<NuestrosLibros />} />
             <Route path="/cuento/:storyId" element={<NuestrosLibros />} />

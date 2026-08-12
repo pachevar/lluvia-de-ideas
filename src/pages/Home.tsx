@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import logoEditorial from '../assets/logo editorial.png';
-import NeuroGuiaSection from '../components/landing/NeuroGuiaSection';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { AuthModal } from '../components/auth/AuthModal';
@@ -106,7 +105,7 @@ export default function Home() {
 
               <button 
                 className="top-btn top-btn-neuro" 
-                onClick={() => scrollToSection('section-neurociencia')}
+                onClick={() => navigate('/neurociencia')}
                 title="Neurociencia Educativa aplicada al Aula: Guía Práctica por Etapas de Desarrollo"
               >
                 <span className="top-btn-icon">🧠</span>
@@ -471,9 +470,6 @@ export default function Home() {
           </div>
         </div>
       </section>
-
-      {/* GUÍA INTERACTIVA DE ESTRATEGIAS NEURODIDÁCTICAS */}
-      <NeuroGuiaSection />
 
     </div>
   );
