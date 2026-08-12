@@ -4629,6 +4629,22 @@ body.home-page-active .app-footer {
   border-color: rgba(255, 255, 255, 0.6);
 }
 
+.top-btn-neuro {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.25) 0%, rgba(5, 150, 105, 0.35) 100%);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.5);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.top-btn-neuro:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.4) 0%, rgba(5, 150, 105, 0.5) 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.45), 0 0 15px rgba(52, 211, 153, 0.4);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
 .top-btn-login {
   background: rgba(255, 255, 255, 0.08);
   color: #f1f5f9;

@@ -104,6 +104,16 @@ export default function Home() {
                 <span className="btn-text-short">Sutz</span>
               </button>
 
+              <button 
+                className="top-btn top-btn-neuro" 
+                onClick={() => scrollToSection('section-neurociencia')}
+                title="Neurociencia Educativa aplicada al Aula: Guía Práctica por Etapas de Desarrollo"
+              >
+                <span className="top-btn-icon">🧠</span>
+                <span className="btn-text-full">Neurociencia Aula</span>
+                <span className="btn-text-short">🧠 Neuro</span>
+              </button>
+
               {user ? (
                 <div className="top-user-menu">
                   <button 

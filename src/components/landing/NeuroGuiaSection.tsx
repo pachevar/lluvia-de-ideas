@@ -186,7 +186,7 @@ export default function NeuroGuiaSection() {
   const currentStage = STAGES.find(s => s.id === activeTabId) || STAGES[0];
 
   return (
-    <section className="neuro-guia-wrapper">
+    <section id="section-neurociencia" className="neuro-guia-wrapper">
       <div className="neuro-guia-container">
         
         {/* 1. HERO MINI */}
