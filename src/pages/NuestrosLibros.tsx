@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import JuracanConstellation, { DEFAULT_STORIES, StoryNode } from '../components/books/JuracanConstellation';
+import JuracanConstellation, { DEFAULT_STORIES, type StoryNode } from '../components/books/JuracanConstellation';
 import { useCart } from '../context/CartContext';
 import '../styles/juracan-theme.css';
 
