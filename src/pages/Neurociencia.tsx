@@ -53,6 +53,26 @@ export default function Neurociencia() {
                 <span className="btn-text-short">Sutz</span>
               </button>
 
+              <button 
+                className="top-btn top-btn-neuro" 
+                onClick={() => navigate('/neurociencia')}
+                title="Neurociencia Educativa aplicada al Aula: Guía Práctica por Etapas de Desarrollo"
+              >
+                <span className="top-btn-icon">🧠</span>
+                <span className="btn-text-full">Neurociencia Aula</span>
+                <span className="btn-text-short">🧠 Neuro</span>
+              </button>
+
+              <button 
+                className="top-btn top-btn-libros" 
+                onClick={() => navigate('/libros')}
+                title="Explorar la constelación pedagógica de nuestros libros"
+              >
+                <span className="top-btn-icon">📖</span>
+                <span className="btn-text-full">Nuestros Libros</span>
+                <span className="btn-text-short">📖 Libros</span>
+              </button>
+
               {user ? (
                 <div className="top-user-menu">
                   <button 

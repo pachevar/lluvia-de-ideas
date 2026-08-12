@@ -4645,6 +4645,22 @@ body.home-page-active .app-footer {
   border-color: rgba(255, 255, 255, 0.6);
 }
 
+.top-btn-libros {
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.25) 0%, rgba(202, 138, 4, 0.35) 100%);
+  color: #facc15;
+  border: 1px solid rgba(250, 204, 21, 0.5);
+  box-shadow: 0 4px 14px rgba(234, 179, 8, 0.25);
+  backdrop-filter: blur(8px);
+}
+
+.top-btn-libros:hover {
+  transform: translateY(-2px);
+  background: linear-gradient(135deg, rgba(234, 179, 8, 0.4) 0%, rgba(202, 138, 4, 0.5) 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(234, 179, 8, 0.45), 0 0 15px rgba(250, 204, 21, 0.4);
+  border-color: rgba(255, 255, 255, 0.6);
+}
+
 .top-btn-login {
   background: rgba(255, 255, 255, 0.08);
   color: #f1f5f9;
