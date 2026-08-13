@@ -67,10 +67,10 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
       },
       {
         id: 'mapa',
-        label: '🌪️ Universo de Juracán',
-        icon: '🌪️',
-        description: 'Configuración de historias y narrativa del ecosistema',
-        keywords: ['juracan', 'universo', 'historias', 'leyendas', 'kiche']
+        label: '☁️ Sutz Descubre',
+        icon: '☁️',
+        description: 'Editor del mapa hexagonal del mundo virtual y narrativa didáctica',
+        keywords: ['sutz', 'descubre', 'mundo virtual', 'mapa', 'hexágonos', 'juracan', 'historias', 'kiche']
       }
     ]
   },

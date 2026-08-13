@@ -17,6 +17,15 @@ const BIOMES = [
   { id: 'galaxia', name: '🌌 Vacío Estelar', value: 'radial-gradient(circle at 50% 50%, #6441A5 0%, #2a0845 100%)' },
 ];
 
+const PREDESIGNED_BACKGROUNDS = [
+  { id: 'selva', name: '🌿 Selva K\'iche\'', url: 'https://images.unsplash.com/photo-1511497584788-8767611136f6?auto=format&fit=crop&w=600&q=80' },
+  { id: 'montana', name: '⛰️ Montaña Ancestral', url: 'https://images.unsplash.com/photo-1464822759023-fed622ff2c3b?auto=format&fit=crop&w=600&q=80' },
+  { id: 'galaxia_fondo', name: '🌌 Nube Cósmica', url: 'https://images.unsplash.com/photo-1506703719100-a0f3a48c0f86?auto=format&fit=crop&w=600&q=80' },
+  { id: 'oceano_azul', name: '💧 Lago Sagrado', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=600&q=80' },
+  { id: 'templo_maya', name: '🏛️ Pirámide del Saber', url: 'https://images.unsplash.com/photo-1518638150340-f706e86654de?auto=format&fit=crop&w=600&q=80' },
+  { id: 'fuego_magma', name: '🌋 Valle de Fuego', url: 'https://images.unsplash.com/photo-1465146344425-f00d5f5c8f07?auto=format&fit=crop&w=600&q=80' }
+];
+
 const AURAS = [
   { id: 'neutra', name: '⚪ Neutra (Paso)', value: 'rgba(255,255,255,0.4)' },
   { id: 'historia', name: '📚 Sabiduría (Azul/Cian)', value: 'rgba(0,200,255,0.8)' },
@@ -33,9 +42,55 @@ interface AdminTabMundoVirtualProps {
 
 const emptyLayer = (): HexLayer => ({ type: 'none', value: '' });
 
+// Client-side WebP image compression helper
+async function compressImageWebP(file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.82): Promise<Blob> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.readAsDataURL(file);
+    reader.onload = (e) => {
+      const img = new Image();
+      img.src = e.target?.result as string;
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        let width = img.width;
+        let height = img.height;
+
+        if (width > maxWidth || height > maxHeight) {
+          if (width / height > maxWidth / maxHeight) {
+            height = Math.round((height * maxWidth) / width);
+            width = maxWidth;
+          } else {
+            width = Math.round((width * maxHeight) / height);
+            height = maxHeight;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return reject(new Error('Canvas context error'));
+
+        ctx.drawImage(img, 0, 0, width, height);
+        canvas.toBlob(
+          (blob) => {
+            if (blob) resolve(blob);
+            else reject(new Error('Blob conversion error'));
+          },
+          'image/webp',
+          quality
+        );
+      };
+      img.onerror = (err) => reject(err);
+    };
+    reader.onerror = (err) => reject(err);
+  });
+}
+
 export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: AdminTabMundoVirtualProps) {
   const [editingHex, setEditingHex] = useState<CustomHexagon | null>(null);
   const [uploadingLayer, setUploadingLayer] = useState<'layerBg' | 'layerDeco' | 'layerInteractive' | null>(null);
+  const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
   const [showGradientBuilder, setShowGradientBuilder] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
 
@@ -44,17 +99,28 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     if (!file || !editingHex) return;
     
     setUploadingLayer(layerKey);
+    setUploadStatusMsg('⚡ Comprimiendo imagen a WebP liviano...');
     try {
-      const fileRef = ref(storage, `map-assets/${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
+      const originalMB = (file.size / (1024 * 1024)).toFixed(2);
+      const compressedBlob = await compressImageWebP(file);
+      const compressedKB = (compressedBlob.size / 1024).toFixed(1);
+
+      setUploadStatusMsg(`🚀 Subiendo a Firebase Storage (${originalMB}MB ➔ ${compressedKB}KB WebP)...`);
+
+      const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+      const fileRef = ref(storage, `map-assets/${Date.now()}_${cleanName}`);
+      await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
       const url = await getDownloadURL(fileRef);
+
       setEditingHex({
         ...editingHex,
-        [layerKey]: { ...editingHex[layerKey], value: url }
+        [layerKey]: { type: 'image', value: url }
       });
+      setUploadStatusMsg(`✨ ¡Imagen WebP optimizada guardada con éxito! (${compressedKB} KB)`);
     } catch (err) {
       console.error("Error subiendo archivo:", err);
-      alert("Error al subir el archivo.");
+      alert("Error al comprimir o subir la imagen.");
+      setUploadStatusMsg(null);
     } finally {
       setUploadingLayer(null);
     }
@@ -220,44 +286,108 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
           </div>
 
           <div style={{ display: 'flex', gap: '20px', flexWrap: 'wrap', marginTop: '15px' }}>
-            {/* CAPA 1 */}
-            <div className="admin-form-group" style={{ flex: '1 1 300px', background: 'rgba(0,0,0,0.05)', padding: '15px', borderRadius: '8px' }}>
-              <label style={{ fontWeight: 'bold' }}>Capa 1: Fondo</label>
+            {/* CAPA 1: FONDO */}
+            <div className="admin-form-group" style={{ flex: '1 1 300px', background: 'rgba(0,0,0,0.12)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <label style={{ fontWeight: '800', color: '#38bdf8', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🎨 Capa 1: Fondo / Bioma
+              </label>
               
-              <select 
-                value={BIOMES.find(b => b.value === editingHex.layerBg.value)?.id || 'custom'} 
-                onChange={e => {
-                  if (e.target.value !== 'custom') {
-                    const biome = BIOMES.find(b => b.id === e.target.value);
-                    if (biome) {
-                      setEditingHex({...editingHex, layerBg: { type: 'color', value: biome.value }});
+              {/* Selector de Biomas en Degradado */}
+              <div style={{ marginTop: '8px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 600 }}>Biomas con Degradado:</span>
+                <select 
+                  value={BIOMES.find(b => b.value === editingHex.layerBg.value)?.id || 'custom'} 
+                  onChange={e => {
+                    if (e.target.value !== 'custom') {
+                      const biome = BIOMES.find(b => b.id === e.target.value);
+                      if (biome) {
+                        setEditingHex({...editingHex, layerBg: { type: 'color', value: biome.value }});
+                      }
                     }
-                  } else {
-                    setEditingHex({...editingHex, layerBg: { ...editingHex.layerBg, type: 'none' }});
-                  }
-                }}
-                style={{ marginBottom: '8px' }}
-              >
-                <option value="custom">-- Personalizado / Sin Bioma --</option>
-                {BIOMES.map(b => (
-                  <option key={b.id} value={b.id}>{b.name}</option>
-                ))}
-              </select>
+                  }}
+                  style={{ marginTop: '4px', marginBottom: '8px', width: '100%' }}
+                >
+                  <option value="custom">-- Seleccionar Bioma Neón --</option>
+                  {BIOMES.map(b => (
+                    <option key={b.id} value={b.id}>{b.name}</option>
+                  ))}
+                </select>
+              </div>
 
-              <select value={editingHex.layerBg.type} onChange={e => setEditingHex({...editingHex, layerBg: {...editingHex.layerBg, type: e.target.value as any}})}>
-                <option value="none">Ninguno</option>
-                <option value="color">Color / Degradado</option>
-                <option value="image">Imagen (URL)</option>
-              </select>
+              {/* Galería de Imágenes Prediseñadas */}
+              <div style={{ marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#38bdf8', fontWeight: 700 }}>🖼️ Imágenes Prediseñadas de Fondo:</span>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '6px', marginTop: '4px' }}>
+                  {PREDESIGNED_BACKGROUNDS.map(bg => (
+                    <button
+                      key={bg.id}
+                      type="button"
+                      className="btn btn-outline btn-sm"
+                      onClick={() => setEditingHex({
+                        ...editingHex,
+                        layerBg: { type: 'image', value: bg.url }
+                      })}
+                      style={{
+                        fontSize: '0.72rem',
+                        padding: '6px 4px',
+                        textAlign: 'center',
+                        borderColor: editingHex.layerBg.value === bg.url ? '#38bdf8' : 'rgba(255,255,255,0.15)',
+                        background: editingHex.layerBg.value === bg.url ? 'rgba(56, 189, 248, 0.2)' : 'rgba(255,255,255,0.04)',
+                        color: '#ffffff'
+                      }}
+                      title={bg.name}
+                    >
+                      {bg.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Selector de Tipo de Capa */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Modo:</span>
+                <select 
+                  value={editingHex.layerBg.type} 
+                  onChange={e => setEditingHex({...editingHex, layerBg: {...editingHex.layerBg, type: e.target.value as any}})}
+                  style={{ flex: 1 }}
+                >
+                  <option value="none">Ninguno</option>
+                  <option value="color">Color / Degradado</option>
+                  <option value="image">Imagen de Fondo (URL / Subir)</option>
+                </select>
+              </div>
+
               {editingHex.layerBg.type !== 'none' && (
-                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <input type="text" placeholder="Valor (CSS o URL)" value={editingHex.layerBg.value} onChange={e => setEditingHex({...editingHex, layerBg: {...editingHex.layerBg, value: e.target.value}})} />
+                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="URL de imagen o valor CSS..." 
+                    value={editingHex.layerBg.value} 
+                    onChange={e => setEditingHex({...editingHex, layerBg: {...editingHex.layerBg, value: e.target.value}})} 
+                    style={{ fontSize: '0.85rem' }}
+                  />
+
                   {editingHex.layerBg.type === 'image' && (
-                    <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', display: 'inline-block', textAlign: 'center' }}>
-                      {uploadingLayer === 'layerBg' ? '⏳ Subiendo...' : '📁 Subir Imagen a Firebase'}
-                      <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUpload(e, 'layerBg')} disabled={uploadingLayer === 'layerBg'} />
-                    </label>
+                    <div>
+                      <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', display: 'block', textAlign: 'center', width: '100%', fontWeight: 700 }}>
+                        {uploadingLayer === 'layerBg' ? '⏳ Comprimiendo & Subiendo...' : '📤 Subir Imagen Personalizada (Compresor WebP Auto)'}
+                        <input 
+                          type="file" 
+                          style={{ display: 'none' }} 
+                          accept="image/*" 
+                          onChange={(e) => handleUpload(e, 'layerBg')} 
+                          disabled={uploadingLayer === 'layerBg'} 
+                        />
+                      </label>
+
+                      {uploadStatusMsg && (
+                        <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#7dd3fc', background: 'rgba(56, 189, 248, 0.12)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.3)' }}>
+                          {uploadStatusMsg}
+                        </div>
+                      )}
+                    </div>
                   )}
+
                   {editingHex.layerBg.type === 'color' && (
                     <div style={{ marginTop: '5px' }}>
                       <button 
