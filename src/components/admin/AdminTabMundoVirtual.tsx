@@ -147,7 +147,6 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     }
   };
 
-  const mapData = localConfig?.map || [];
   const previewCells = [...mapData];
 
   const candidateCoords = getCandidateHexes(mapData);
