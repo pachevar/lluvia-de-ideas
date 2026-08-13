@@ -23,17 +23,30 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   editingHexRow = null,
   editingHexCol = null
 }) => {
-  // Aumentamos el tamaño del lienzo virtual para que haya mucho espacio de exploración.
-  const mapWidth = 5000;
-  const mapHeight = 4000;
+  // Dynamic cell bounds calculation so hexes are ALWAYS perfectly centered
+  const cols = cells.length > 0 ? cells.map(c => c.col) : [0];
+  const rows = cells.length > 0 ? cells.map(c => c.row) : [0];
 
-  // Calculamos el offset para que la coordenada (0,0) esté justo en el centro del canvas virtual
-  const xOffset = mapWidth / 2 - hexWidth / 2;
-  const yOffset = mapHeight / 2 - hexHeight / 2;
+  const minCol = Math.min(...cols, -1);
+  const maxCol = Math.max(...cols, 1);
+  const minRow = Math.min(...rows, -1);
+  const maxRow = Math.max(...rows, 1);
 
-  // Detectar móvil para iniciar con un zoom más lejano
+  const widthSpan = (maxCol - minCol + 3) * hexWidth;
+  const heightSpan = (maxRow - minRow + 3) * hexHeight;
+
+  const mapWidth = Math.max(1600, widthSpan);
+  const mapHeight = Math.max(1200, heightSpan);
+
+  const centerCol = (minCol + maxCol) / 2;
+  const centerRow = (minRow + maxRow) / 2;
+
+  const xOffset = mapWidth / 2 - centerCol * hexWidth - hexWidth / 2;
+  const yOffset = mapHeight / 2 - centerRow * (0.75 * hexHeight) - hexHeight / 2;
+
+  // Detectar móvil para iniciar con un zoom adaptativo
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const initialScale = isMobile ? 0.45 : 0.8;
+  const initialScale = isMobile ? 0.65 : 0.95;
 
   return (
     <div className="map-viewport">

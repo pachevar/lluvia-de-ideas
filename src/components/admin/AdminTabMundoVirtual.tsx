@@ -89,7 +89,22 @@ async function compressImageWebP(file: File, maxWidth = 1000, maxHeight = 1000, 
 }
 
 export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: AdminTabMundoVirtualProps) {
-  const [editingHex, setEditingHex] = useState<CustomHexagon | null>(null);
+  const mapData = localConfig?.map || [];
+
+  const [editingHex, setEditingHex] = useState<CustomHexagon | null>(() => {
+    return mapData.length > 0 ? { ...mapData[0] } : {
+      id: "0,0",
+      row: 0,
+      col: 0,
+      title: "Portal Principal",
+      glowColor: "rgba(255, 255, 255, 0.85)",
+      layerBg: emptyLayer(),
+      layerDeco: emptyLayer(),
+      layerInteractive: { type: "icon", value: "🌌" },
+      action: { type: "none", target: "" }
+    };
+  });
+
   const [activeInspectorTab, setActiveInspectorTab] = useState<'id' | 'l1' | 'l2' | 'l3'>('id');
   const [uploadingLayer, setUploadingLayer] = useState<'layerBg' | 'layerDeco' | 'layerInteractive' | null>(null);
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
@@ -285,7 +300,25 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
           {editingHex ? (
             <>
               <div className="inspector-header">
-                <h4><span>✏️</span> {editingHex.title || 'Hexágono'}</h4>
+                <div>
+                  <h4 style={{ margin: '0 0 4px 0' }}><span>✏️</span> {editingHex.title || 'Hexágono'}</h4>
+                  <select 
+                    value={`${editingHex.row},${editingHex.col}`}
+                    onChange={(e) => {
+                      const [r, c] = e.target.value.split(',').map(Number);
+                      const target = previewCells.find(cell => cell.row === r && cell.col === c);
+                      if (target) handlePreviewClick(target);
+                    }}
+                    className="inspector-select"
+                    style={{ fontSize: '0.78rem', padding: '3px 8px', borderRadius: '8px' }}
+                  >
+                    {mapData.map(h => (
+                      <option key={`${h.row},${h.col}`} value={`${h.row},${h.col}`}>
+                        📍 Hex ({h.row}, {h.col}) — {h.title || 'Sin Título'}
+                      </option>
+                    ))}
+                  </select>
+                </div>
                 <span className="inspector-coords-badge">Row: {editingHex.row}, Col: {editingHex.col}</span>
               </div>
 
