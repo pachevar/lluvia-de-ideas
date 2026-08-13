@@ -37,7 +37,7 @@ const renderLayer = (layer: HexLayer, className: string, isInteractive = false) 
       return <div className={className} style={{ background: layer.value }}></div>;
     case 'image':
       if (isUrl) {
-        return <img src={layer.value} alt="" className={className} loading="lazy" decoding="async" />;
+        return <img src={layer.value} alt="" className={className} loading="lazy" decoding="async" draggable={false} />;
       }
       return (
         <div className={`${className} ${isInteractive ? 'hex-icon-disc' : ''}`} style={transformStyle}>
@@ -48,7 +48,7 @@ const renderLayer = (layer: HexLayer, className: string, isInteractive = false) 
       if (isUrl) {
         return (
           <div className={`${className} ${isInteractive ? 'hex-icon-disc' : ''}`} style={transformStyle}>
-            <img src={layer.value} alt="" className="hex-icon-img" />
+            <img src={layer.value} alt="" className="hex-icon-img" draggable={false} />
           </div>
         );
       }

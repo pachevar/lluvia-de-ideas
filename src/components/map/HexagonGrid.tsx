@@ -53,16 +53,18 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
 
       <TransformWrapper
         initialScale={initialScale}
-        minScale={0.3}
-        maxScale={2.5}
+        minScale={0.35}
+        maxScale={2.8}
         centerOnInit={true}
         limitToBounds={true}
         smooth={true}
         wheel={{ disabled: true }}
+        pinch={{ step: 5 }}
+        panning={{ velocityDisabled: false }}
       >
         {({ zoomIn, zoomOut, centerView }) => (
           <div 
-            style={{ width: '100%', height: '100%', position: 'relative' }}
+            style={{ width: '100%', height: '100%', position: 'relative', touchAction: 'none' }}
             onWheel={(e) => {
               // Prevenir el scroll por defecto si es necesario
               if (e.deltaY < 0) {
@@ -79,10 +81,35 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
             </div>
             
             <TransformComponent 
-              wrapperStyle={{ width: '100%', height: '100%' }}
-              contentStyle={{ width: mapWidth, height: mapHeight, position: 'relative' }}
+              wrapperStyle={{ 
+                width: '100%', 
+                height: '100%',
+                touchAction: 'none',
+                overflow: 'hidden'
+              }}
+              contentStyle={{ 
+                width: mapWidth, 
+                height: mapHeight, 
+                position: 'relative',
+                transform: 'translate3d(0,0,0)',
+                WebkitTransform: 'translate3d(0,0,0)',
+                backfaceVisibility: 'hidden',
+                WebkitBackfaceVisibility: 'hidden',
+                willChange: 'transform'
+              }}
             >
-              <div className="hex-grid-container" style={{ width: mapWidth, height: mapHeight, position: 'relative' }}>
+              <div 
+                className="hex-grid-container" 
+                style={{ 
+                  width: mapWidth, 
+                  height: mapHeight, 
+                  position: 'relative',
+                  transform: 'translate3d(0,0,0)',
+                  WebkitTransform: 'translate3d(0,0,0)',
+                  backfaceVisibility: 'hidden',
+                  WebkitBackfaceVisibility: 'hidden'
+                }}
+              >
                 {cells.map(cell => (
                   <HexagonCell 
                     key={cell.id} 
