@@ -61,27 +61,27 @@
 }
 
 .hex-layer-bg {
-  z-index: -2;
+  z-index: 1;
   object-fit: cover;
-  opacity: 0.5;
+  opacity: 0.88;
   transition: opacity 0.3s, transform 0.5s;
 }
 
 .hex-cell-wrapper:hover .hex-layer-bg {
-  opacity: 0.85;
+  opacity: 1;
   transform: scale(1.1);
 }
 
 .hex-layer-deco {
-  z-index: -1;
+  z-index: 2;
   object-fit: contain;
   pointer-events: none;
-  opacity: 0.9;
+  opacity: 0.95;
   transition: transform 0.5s, opacity 0.3s;
 }
 
 .hex-cell-wrapper:hover .hex-layer-deco {
-  transform: scale(1.05) translateY(-5px);
+  transform: scale(1.08) translateY(-5px);
   opacity: 1;
 }
 

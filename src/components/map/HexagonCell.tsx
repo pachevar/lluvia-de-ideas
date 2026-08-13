@@ -21,16 +21,29 @@ const renderLayer = (layer: HexLayer, className: string) => {
   const transformStyle = (layer.size !== undefined || layer.rotation !== undefined || layer.offsetX !== undefined || layer.offsetY !== undefined)
     ? { 
         transform: `scale(${layer.size ?? 1.0}) rotate(${layer.rotation ?? 0}deg) translate(${layer.offsetX ?? 0}px, ${layer.offsetY ?? 0}px)`,
-        transition: 'none' // Evitar el "salto" de CSS hover si tiene transformaciones custom
+        transition: 'none'
       }
     : {};
+
+  const isUrl = typeof layer.value === 'string' && (
+    layer.value.startsWith('http://') || 
+    layer.value.startsWith('https://') || 
+    layer.value.startsWith('data:image/') || 
+    layer.value.startsWith('/')
+  );
 
   switch (layer.type) {
     case 'color':
       return <div className={className} style={{ background: layer.value }}></div>;
     case 'image':
-      return <img src={layer.value} alt="" className={className} />;
+      if (isUrl) {
+        return <img src={layer.value} alt="" className={className} loading="lazy" decoding="async" />;
+      }
+      return <div className={className} style={{ fontSize: '2.5rem', ...transformStyle }}>{layer.value}</div>;
     case 'icon':
+      if (isUrl) {
+        return <img src={layer.value} alt="" className={className} style={{ maxWidth: '75%', maxHeight: '75%', objectFit: 'contain', ...transformStyle }} />;
+      }
       return (
         <div className={className} style={transformStyle}>
           <IconRenderer iconName={layer.value} color={layer.color || '#ffffff'} size="3em" />
