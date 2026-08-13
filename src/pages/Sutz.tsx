@@ -33,7 +33,7 @@ export default function Sutz() {
 
   const [activeStory, setActiveStory] = useState<StoryConfig | null>(null);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
-  const [isGamerHudOpen, setIsGamerHudOpen] = useState(true);
+  const [isGamerHudOpen, setIsGamerHudOpen] = useState(false);
   const [isTechTreeOpen, setIsTechTreeOpen] = useState(false);
 
   useEffect(() => {
@@ -85,6 +85,7 @@ export default function Sutz() {
   const cells = [...activeCells, ...unexploredCells];
   const totalCellsCount = activeCells.length + candidateCoords.length;
   const mapCompletionPercent = totalCellsCount > 0 ? Math.round((activeCells.length / totalCellsCount) * 100) : 0;
+  const studentNickname = userProfile?.displayName || (user?.email ? user.email.split('@')[0] : 'Estudiante Explorador');
 
   if (loading) {
     return (
@@ -101,152 +102,196 @@ export default function Sutz() {
   return (
     <div className="home-map-container animate-fade-in" style={{ padding: 0, position: 'relative' }}>
       
-      {/* Sutz Header HUD Badge Centrado */}
-      <div className="sutz-hud-center-wrapper">
-        <div className="sutz-hud-badge">
-          <span className="sutz-hud-icon">☁️</span>
-          <div className="sutz-hud-text">
-            <h1 className="sutz-hud-title">Sutz Descubre</h1>
-            <p className="sutz-hud-subtitle">
-              Explora nuestro universo mitológico y educativo.
-            </p>
+      {/* HUD Superior de Recursos Gamer (Estilo Juego de Recursos) */}
+      <div className="sutz-top-hud-bar">
+        {/* Bloque 1: Avatar / Nivel / Energía Hero Box */}
+        <div className="hud-hero-box">
+          <div className="hud-castle-badge">
+            <span className="hud-badge-icon">🏛️</span>
+            <span className="hud-badge-lvl">5</span>
+          </div>
+          <div className="hud-hero-bars">
+            <div className="hud-energy-pill">
+              <span className="hud-energy-icon">⚡</span>
+              <span className="hud-energy-val">120</span>
+              <div className="hud-energy-bar"><div style={{ width: '80%' }}></div></div>
+            </div>
+            <div className="hud-hero-subtag">
+              <span className="hud-sword-icon">⚔️</span> 10,127
+            </div>
+          </div>
+        </div>
+
+        {/* Bloque 2: Recursos Educativos y de Juego (Píldoras Flotantes) */}
+        <div className="hud-resources-group">
+          {/* Pergaminos / Cuentos Popol Vuh */}
+          <div className="hud-resource-pill" title="Cuentos Popol Vuh Completados">
+            <span className="hud-res-icon">📜</span>
+            <div className="hud-res-text">
+              <span className="hud-res-val">5 / 5</span>
+            </div>
+          </div>
+
+          {/* Puntos de Sabiduría / Conocimiento */}
+          <div className="hud-resource-pill" title="Puntos de Conocimiento Sutz">
+            <span className="hud-res-icon">⚡</span>
+            <div className="hud-res-text">
+              <span className="hud-res-val">850</span>
+              <span className="hud-res-unit">◈</span>
+            </div>
+          </div>
+
+          {/* Monedas de Oro Sutz */}
+          <div className="hud-resource-pill" title="Monedas de Oro Sutz">
+            <span className="hud-res-icon">🪙</span>
+            <div className="hud-res-text">
+              <span className="hud-res-val">2.8K</span>
+            </div>
+          </div>
+
+          {/* Gemas / Cristales */}
+          <div className="hud-resource-pill premium" title="Gemas de Aprendizaje">
+            <span className="hud-res-icon">💎</span>
+            <div className="hud-res-text">
+              <span className="hud-res-val">260</span>
+            </div>
+            <span className="hud-res-badge">NUEVO</span>
           </div>
         </div>
       </div>
 
-      {/* Botón Volver a Inicio (Esquina Superior Derecha) */}
-      <button 
-        className="sutz-back-btn btn btn-glass" 
-        onClick={() => navigate('/')}
-        title="Volver a Inicio"
-      >
-        🏠 Inicio
-      </button>
-
-      {/* Panel HUD Lateral Flotante de Estrategia / Perfil de Estudiante */}
-      <div className={`sutz-gamer-panel ${isGamerHudOpen ? 'expanded' : 'collapsed'}`}>
-        <button 
-          className="sutz-gamer-panel-toggle"
-          onClick={() => setIsGamerHudOpen(!isGamerHudOpen)}
-          title={isGamerHudOpen ? 'Ocultar panel de perfil' : 'Mostrar panel de perfil'}
-        >
-          <span className="hud-toggle-icon">{isGamerHudOpen ? '◀' : '🛡️'}</span>
-          <span className="hud-toggle-label">{isGamerHudOpen ? 'PANEL' : 'PERFIL'}</span>
-        </button>
-
-        {isGamerHudOpen && (
-          <div className="sutz-gamer-card card-glass animate-fade-in">
-            {/* Header del Perfil Gamer */}
-            <div className="gamer-profile-header">
-              <div className="gamer-avatar-ring">
-                {userProfile?.photoURL ? (
-                  <img src={userProfile.photoURL} alt="Avatar" className="gamer-avatar-img" />
-                ) : (
-                  <span className="gamer-avatar-fallback">
-                    {(userProfile?.displayName || user?.email || 'E').charAt(0).toUpperCase()}
-                  </span>
-                )}
-                <span className="gamer-level-badge">LVL 5</span>
-              </div>
-              <div className="gamer-profile-meta">
-                <h3 className="gamer-username">
-                  {userProfile?.displayName || (user ? user.email?.split('@')[0] : 'Invitado Explorador')}
-                </h3>
-                <span className="gamer-title-rank">
-                  {user ? '🛡️ Explorador K\'iche\'' : '☁️ Modo Vista Previa'}
-                </span>
-              </div>
-            </div>
-
-            <hr className="gamer-divider" />
-
-            {/* Botón Árbol de Tecnología */}
-            <button 
-              className="tech-tree-open-btn"
-              onClick={() => setIsTechTreeOpen(true)}
-              style={{
-                width: '100%',
-                background: 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(168, 85, 247, 0.25) 100%)',
-                border: '1px solid rgba(56, 189, 248, 0.5)',
-                color: '#ffffff',
-                padding: '10px 14px',
-                borderRadius: '14px',
-                fontWeight: 800,
-                fontSize: '0.85rem',
-                cursor: 'pointer',
-                marginBottom: '14px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                boxShadow: '0 4px 15px rgba(56, 189, 248, 0.3)',
-                transition: 'all 0.25s ease'
-              }}
-            >
-              <span style={{ fontSize: '1.1rem' }}>🌳</span> Árbol Tecnológico (30 Cols)
-            </button>
-
-            {/* Barra de Experiencia */}
-            <div className="gamer-stat-block">
-              <div className="stat-label-row">
-                <span>Nivel de Experiencia</span>
-                <strong>1,450 / 2,000 XP</strong>
-              </div>
-              <div className="gamer-progress-bar">
-                <div className="gamer-progress-fill xp-fill" style={{ width: '72.5%' }}></div>
-              </div>
-            </div>
-
-            {/* Porcentaje de Desarrollo del Mapa */}
-            <div className="gamer-stat-block">
-              <div className="stat-label-row">
-                <span>Desarrollo del Mapa</span>
-                <strong>{mapCompletionPercent}% Explorado</strong>
-              </div>
-              <div className="gamer-progress-bar">
-                <div className="gamer-progress-fill map-fill" style={{ width: `${mapCompletionPercent}%` }}></div>
-              </div>
-            </div>
-
-            {/* Malla de Estadísticas Rápidas */}
-            <div className="gamer-stats-grid">
-              <div className="gamer-mini-stat">
-                <span className="mini-stat-icon">📜</span>
-                <div className="mini-stat-data">
-                  <small>Cuentos</small>
-                  <strong>5 / 5</strong>
-                </div>
-              </div>
-              <div className="gamer-mini-stat">
-                <span className="mini-stat-icon">⚡</span>
-                <div className="mini-stat-data">
-                  <small>Puntos</small>
-                  <strong>850 PTS</strong>
-                </div>
-              </div>
-            </div>
-
-            {/* Fila de Insignias */}
-            <div className="gamer-badges-section">
-              <span className="gamer-section-label">Insignias Alcanzadas</span>
-              <div className="gamer-badges-row">
-                <span className="gamer-badge-pill" title="Mundo Sutz">☁️ Sutz</span>
-                <span className="gamer-badge-pill" title="Popol Vuh Scholar">📜 Mitología</span>
-                <span className="gamer-badge-pill" title="Innovador STEAM">⚡ STEM</span>
-                <span className="gamer-badge-pill" title="Teoría del Color">🎨 Arte</span>
-              </div>
-            </div>
-
-            {!user && (
-              <button 
-                className="gamer-login-cta-btn"
-                onClick={() => setIsAuthModalOpen(true)}
-              >
-                🔐 Iniciar Sesión para Guardar Progreso
-              </button>
-            )}
+      {/* Sutz Header HUD Badge y Botón Inicio (Esquina Superior Derecha) */}
+      <div className="sutz-top-right-wrapper">
+        <div className="sutz-hud-badge">
+          <span className="sutz-hud-icon">☁️</span>
+          <div className="sutz-hud-text">
+            <h1 className="sutz-hud-title">Sutz Descubre</h1>
+            <p className="sutz-hud-subtitle">Mundo Virtual</p>
           </div>
-        )}
+        </div>
+
+        <button 
+          className="sutz-back-btn btn btn-glass" 
+          onClick={() => navigate('/')}
+          title="Volver a Inicio"
+        >
+          🏠 Inicio
+        </button>
+      </div>
+
+      {/* Menús Desplegables Laterales Gamer (Inician Cerrados) */}
+      <div className="sutz-lateral-triggers">
+        {/* Botón 1: Desplegable de Perfil del Estudiante */}
+        <div className="sutz-drawer-group">
+          <button 
+            className={`sutz-gamer-panel-toggle ${isGamerHudOpen ? 'active' : ''}`}
+            onClick={() => setIsGamerHudOpen(!isGamerHudOpen)}
+            title={isGamerHudOpen ? 'Ocultar perfil del estudiante' : 'Mostrar perfil del estudiante'}
+          >
+            <span className="hud-toggle-icon">{isGamerHudOpen ? '◀' : '🛡️'}</span>
+            <span className="hud-toggle-label">PERFIL</span>
+          </button>
+
+          {isGamerHudOpen && (
+            <div className="sutz-gamer-card card-glass animate-fade-in">
+              {/* Header del Perfil Gamer */}
+              <div className="gamer-profile-header">
+                <div className="gamer-avatar-ring">
+                  {userProfile?.photoURL ? (
+                    <img src={userProfile.photoURL} alt="Avatar" className="gamer-avatar-img" />
+                  ) : (
+                    <span className="gamer-avatar-fallback">
+                      {studentNickname.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                  <span className="gamer-level-badge">LVL 5</span>
+                </div>
+                <div className="gamer-profile-meta">
+                  <h3 className="gamer-username">
+                    {studentNickname}
+                  </h3>
+                  <span className="gamer-title-rank">
+                    🎓 Perfil del Estudiante
+                  </span>
+                </div>
+              </div>
+
+              <hr className="gamer-divider" />
+
+              {/* Barra de Experiencia */}
+              <div className="gamer-stat-block">
+                <div className="stat-label-row">
+                  <span>Nivel de Experiencia</span>
+                  <strong>1,450 / 2,000 XP</strong>
+                </div>
+                <div className="gamer-progress-bar">
+                  <div className="gamer-progress-fill xp-fill" style={{ width: '72.5%' }}></div>
+                </div>
+              </div>
+
+              {/* Porcentaje de Desarrollo del Mapa */}
+              <div className="gamer-stat-block">
+                <div className="stat-label-row">
+                  <span>Desarrollo del Mapa</span>
+                  <strong>{mapCompletionPercent}% Explorado</strong>
+                </div>
+                <div className="gamer-progress-bar">
+                  <div className="gamer-progress-fill map-fill" style={{ width: `${mapCompletionPercent}%` }}></div>
+                </div>
+              </div>
+
+              {/* Malla de Estadísticas Rápidas */}
+              <div className="gamer-stats-grid">
+                <div className="gamer-mini-stat">
+                  <span className="mini-stat-icon">📜</span>
+                  <div className="mini-stat-data">
+                    <small>Cuentos</small>
+                    <strong>5 / 5</strong>
+                  </div>
+                </div>
+                <div className="gamer-mini-stat">
+                  <span className="mini-stat-icon">⚡</span>
+                  <div className="mini-stat-data">
+                    <small>Puntos</small>
+                    <strong>850 PTS</strong>
+                  </div>
+                </div>
+              </div>
+
+              {/* Fila de Insignias */}
+              <div className="gamer-badges-section">
+                <span className="gamer-section-label">Insignias Alcanzadas</span>
+                <div className="gamer-badges-row">
+                  <span className="gamer-badge-pill" title="Mundo Sutz">☁️ Sutz</span>
+                  <span className="gamer-badge-pill" title="Popol Vuh Scholar">📜 Mitología</span>
+                  <span className="gamer-badge-pill" title="Innovador STEAM">⚡ STEM</span>
+                  <span className="gamer-badge-pill" title="Teoría del Color">🎨 Arte</span>
+                </div>
+              </div>
+
+              {!user && (
+                <button 
+                  className="gamer-login-cta-btn"
+                  onClick={() => setIsAuthModalOpen(true)}
+                >
+                  🔐 Iniciar Sesión para Guardar Progreso
+                </button>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Botón 2: Desplegable Independiente de Árbol de Tecnología */}
+        <div className="sutz-drawer-group">
+          <button 
+            className="sutz-gamer-panel-toggle tech-tree-trigger"
+            onClick={() => setIsTechTreeOpen(true)}
+            title="Abrir Árbol de Tecnología (30 Columnas)"
+          >
+            <span className="hud-toggle-icon">🌳</span>
+            <span className="hud-toggle-label">ÁRBOL TEC</span>
+          </button>
+        </div>
       </div>
 
       {/* Mapa Hexagonal */}

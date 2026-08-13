@@ -4159,137 +4159,335 @@ body.home-page-active .app-footer {
 }
 
 /* ==========================================================================
-   SUTZ VIRTUAL WORLD HUD HEADER & STRATEGY GAMER PANEL
+   SUTZ VIRTUAL WORLD HUD HEADER, RESOURCE BAR & STRATEGY GAMER PANELS
    ========================================================================== */
 
-/* Centered Sutz HUD Title Box */
-.sutz-hud-center-wrapper {
+/* Top HUD Resource Bar (Game-style Resource Dashboard) */
+.sutz-top-hud-bar {
   position: absolute;
-  top: 18px;
-  left: 50%;
-  transform: translateX(-50%);
+  top: 14px;
+  left: 16px;
   z-index: 100;
-  pointer-events: none;
-  display: flex;
-  justify-content: center;
-  width: auto;
-  max-width: 90vw;
-}
-
-.sutz-hud-badge {
-  pointer-events: auto;
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 12px;
+  pointer-events: auto;
+  user-select: none;
+}
+
+/* Hero Badge / Avatar Box (Level & Energy) */
+.hud-hero-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 41, 59, 0.9) 100%);
+  border: 2px solid rgba(56, 189, 248, 0.5);
+  border-radius: 16px;
+  padding: 6px 12px 6px 6px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.6), 0 0 15px rgba(56, 189, 248, 0.25);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+}
+
+.hud-castle-badge {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  background: linear-gradient(135deg, #0284c7 0%, #38bdf8 100%);
+  border: 2px solid #ffffff;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4), inset 0 2px 4px rgba(255, 255, 255, 0.4);
+}
+
+.hud-badge-icon {
+  font-size: 1.25rem;
+  line-height: 1;
+}
+
+.hud-badge-lvl {
+  position: absolute;
+  bottom: -4px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  color: #0f172a;
+  background: #ffffff;
+  padding: 0 4px;
+  border-radius: 4px;
+  line-height: 1.1;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+}
+
+.hud-hero-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.hud-energy-pill {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(90deg, #15803d 0%, #22c55e 100%);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  border-radius: 10px;
+  padding: 2px 8px;
+  color: #ffffff;
+  font-weight: 900;
+  font-size: 0.78rem;
+  box-shadow: inset 0 1px 3px rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.3);
+}
+
+.hud-energy-icon {
+  font-size: 0.85rem;
+  color: #fef08a;
+  filter: drop-shadow(0 0 4px #eab308);
+}
+
+.hud-energy-val {
+  font-family: var(--font-headline, system-ui);
+  letter-spacing: 0.5px;
+}
+
+.hud-energy-bar {
+  display: none;
+}
+
+.hud-hero-subtag {
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #e2e8f0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding-left: 2px;
+}
+
+.hud-sword-icon {
+  font-size: 0.85rem;
+}
+
+/* Resources Group */
+.hud-resources-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.hud-resource-pill {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.88) 0%, rgba(30, 41, 59, 0.92) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 24px;
+  padding: 6px 14px;
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  transition: all 0.25s ease;
+  cursor: default;
+}
+
+.hud-resource-pill:hover {
+  transform: translateY(-2px);
+  border-color: rgba(56, 189, 248, 0.5);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55), 0 0 12px rgba(56, 189, 248, 0.2);
+}
+
+.hud-resource-pill.premium {
+  border-color: rgba(239, 68, 68, 0.4);
+  background: linear-gradient(135deg, rgba(30, 15, 25, 0.92) 0%, rgba(45, 20, 35, 0.95) 100%);
+}
+
+.hud-resource-pill.premium:hover {
+  border-color: rgba(239, 68, 68, 0.8);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.55), 0 0 15px rgba(239, 68, 68, 0.35);
+}
+
+.hud-res-icon {
+  font-size: 1.15rem;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+}
+
+.hud-res-text {
+  display: flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.hud-res-val {
+  font-size: 0.92rem;
+  font-weight: 900;
+  color: #ffffff;
+  font-family: var(--font-headline, system-ui);
+  letter-spacing: 0.5px;
+}
+
+.hud-res-unit {
+  font-size: 0.8rem;
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.hud-res-badge {
+  position: absolute;
+  top: -8px;
+  right: -6px;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: #ffffff;
+  font-size: 0.6rem;
+  font-weight: 900;
+  padding: 1px 6px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.5);
+  box-shadow: 0 2px 6px rgba(220, 38, 38, 0.6);
+  animation: pulseGlow 1.8s infinite;
+}
+
+/* Top-Right HUD Wrapper (Sutz Descubre Badge & Back to Home Button) */
+.sutz-top-right-wrapper {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  pointer-events: auto;
+}
+
+.sutz-top-right-wrapper .sutz-hud-badge {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.88) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(56, 189, 248, 0.4);
-  padding: 12px 24px;
-  border-radius: 20px;
-  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.65), 0 0 25px rgba(56, 189, 248, 0.25);
+  padding: 8px 18px;
+  border-radius: 16px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.6), 0 0 20px rgba(56, 189, 248, 0.2);
   transition: all 0.3s ease;
-  text-align: left;
 }
 
-.sutz-hud-badge:hover {
+.sutz-top-right-wrapper .sutz-hud-badge:hover {
   border-color: rgba(56, 189, 248, 0.7);
-  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.75), 0 0 35px rgba(56, 189, 248, 0.4);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 25px rgba(56, 189, 248, 0.35);
 }
 
-.sutz-hud-icon {
-  font-size: 2.2rem;
-  filter: drop-shadow(0 0 12px rgba(56, 189, 248, 0.6));
+.sutz-top-right-wrapper .sutz-hud-icon {
+  font-size: 1.6rem;
+  filter: drop-shadow(0 0 10px rgba(56, 189, 248, 0.6));
   animation: floatCloud 3.5s ease-in-out infinite;
 }
 
-@keyframes floatCloud {
-  0%, 100% { transform: translateY(0px) scale(1); }
-  50% { transform: translateY(-6px) scale(1.05); }
-}
-
-.sutz-hud-title {
-  font-size: 1.45rem;
+.sutz-top-right-wrapper .sutz-hud-title {
+  font-size: 1.15rem;
   font-weight: 800;
   margin: 0;
   background: linear-gradient(90deg, #38bdf8 0%, #818cf8 50%, #c084fc 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  letter-spacing: -0.01em;
 }
 
-.sutz-hud-subtitle {
-  font-size: 0.88rem;
-  font-weight: 600;
-  color: #cbd5e1;
-  margin: 2px 0 0 0;
-  line-height: 1.35;
+.sutz-top-right-wrapper .sutz-hud-subtitle {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #94a3b8;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
-.sutz-back-btn {
-  position: absolute;
-  top: 18px;
-  right: 20px;
-  z-index: 100;
-  pointer-events: auto;
-  padding: 11px 20px;
-  border-radius: 16px;
+.sutz-top-right-wrapper .sutz-back-btn {
+  position: static;
+  padding: 9px 16px;
+  border-radius: 14px;
   font-weight: 800;
-  font-size: 0.92rem;
+  font-size: 0.85rem;
   border: 1px solid rgba(255, 255, 255, 0.2);
   background: rgba(15, 23, 42, 0.85);
   color: #ffffff;
   cursor: pointer;
   backdrop-filter: blur(12px);
-  box-shadow: 0 8px 25px rgba(0,0,0,0.5);
+  box-shadow: 0 6px 20px rgba(0,0,0,0.5);
   transition: all 0.3s cubic-bezier(0.25, 1, 0.5, 1);
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
-.sutz-back-btn:hover {
+.sutz-top-right-wrapper .sutz-back-btn:hover {
   background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
   border-color: rgba(255, 255, 255, 0.6);
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(37, 99, 235, 0.5), 0 0 20px rgba(56, 189, 248, 0.4);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.5), 0 0 15px rgba(56, 189, 248, 0.4);
 }
 
-/* Lateral Strategy Gamer HUD Panel */
-.sutz-gamer-panel {
+/* Lateral Independent Triggers */
+.sutz-lateral-triggers {
   position: absolute;
-  top: 90px;
-  left: 20px;
+  top: 85px;
+  left: 16px;
   z-index: 95;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
-  gap: 8px;
+  gap: 12px;
   pointer-events: auto;
 }
 
+.sutz-drawer-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
 .sutz-gamer-panel-toggle {
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(30, 41, 59, 0.95) 100%);
-  border: 1px solid rgba(56, 189, 248, 0.4);
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(30, 41, 59, 0.96) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.45);
   color: #ffffff;
-  padding: 8px 14px;
+  padding: 9px 16px;
   border-radius: 14px;
   font-size: 0.82rem;
-  font-weight: 800;
+  font-weight: 900;
+  letter-spacing: 0.5px;
   cursor: pointer;
   display: flex;
   align-items: center;
-  gap: 6px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.5);
-  backdrop-filter: blur(12px);
-  transition: all 0.25s ease;
+  gap: 8px;
+  box-shadow: 0 8px 20px rgba(0,0,0,0.5), 0 0 12px rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(14px);
+  transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .sutz-gamer-panel-toggle:hover {
   border-color: #38bdf8;
   background: rgba(30, 41, 59, 0.98);
-  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
-  transform: translateY(-1px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6), 0 0 20px rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px) scale(1.03);
+}
+
+.sutz-gamer-panel-toggle.active {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.9) 0%, rgba(37, 99, 235, 0.95) 100%);
+  border-color: #ffffff;
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6), 0 0 20px rgba(56, 189, 248, 0.5);
+}
+
+.sutz-gamer-panel-toggle.tech-tree-trigger {
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.92) 0%, rgba(88, 28, 135, 0.9) 100%);
+  border-color: rgba(168, 85, 247, 0.5);
+}
+
+.sutz-gamer-panel-toggle.tech-tree-trigger:hover {
+  border-color: #c084fc;
+  box-shadow: 0 10px 25px rgba(0,0,0,0.6), 0 0 20px rgba(168, 85, 247, 0.4);
 }
 
 .sutz-gamer-card {
@@ -4526,6 +4724,64 @@ body.home-page-active .app-footer {
   transform: translateY(-1px);
   box-shadow: 0 6px 18px rgba(37, 99, 235, 0.5);
   border-color: rgba(255, 255, 255, 0.6);
+}
+
+/* Sutz HUD Responsive Design */
+@media (max-width: 1024px) {
+  .sutz-top-hud-bar {
+    gap: 8px;
+  }
+  .hud-resource-pill {
+    padding: 5px 10px;
+    gap: 6px;
+  }
+  .hud-res-val {
+    font-size: 0.82rem;
+  }
+  .sutz-top-right-wrapper .sutz-hud-badge {
+    padding: 6px 12px;
+  }
+  .sutz-top-right-wrapper .sutz-hud-title {
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .sutz-top-hud-bar {
+    top: 10px;
+    left: 10px;
+    max-width: calc(100vw - 120px);
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+  .sutz-top-hud-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .sutz-top-right-wrapper {
+    top: 10px;
+    right: 10px;
+    gap: 6px;
+  }
+  .sutz-top-right-wrapper .sutz-hud-badge {
+    display: none; /* Keep clean on small mobile, back button remains */
+  }
+  .sutz-top-right-wrapper .sutz-back-btn {
+    padding: 7px 12px;
+    font-size: 0.78rem;
+  }
+  .sutz-lateral-triggers {
+    top: 75px;
+    left: 10px;
+    gap: 8px;
+  }
+  .sutz-gamer-panel-toggle {
+    padding: 7px 12px;
+    font-size: 0.75rem;
+  }
+  .sutz-gamer-card {
+    width: min(300px, calc(100vw - 20px));
+  }
 }
 
 /* ==========================================================================
