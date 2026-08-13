@@ -67,10 +67,10 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
       },
       {
         id: 'mapa',
-        label: '☁️ Sutz Descubre',
+        label: '☁️ Sutz Editor',
         icon: '☁️',
         description: 'Editor del mapa hexagonal del mundo virtual y narrativa didáctica',
-        keywords: ['sutz', 'descubre', 'mundo virtual', 'mapa', 'hexágonos', 'juracan', 'historias', 'kiche']
+        keywords: ['sutz', 'editor', 'mundo virtual', 'mapa', 'hexágonos', 'juracan', 'historias', 'kiche']
       }
     ]
   },

@@ -222,7 +222,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   return (
     <div className="admin-card card-glass animate-fade-in">
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '10px' }}>
-        <h3 style={{ margin: 0 }}>🌍 Editor de Mundo Virtual</h3>
+        <h3 style={{ margin: 0 }}>🌍 Sutz Editor: Mundo Virtual Hexagonal</h3>
         <button className="btn btn-secondary btn-sm" onClick={handleResetMapToDefault} title="Sincroniza el mapa con todas las páginas activas del portal">
           🔄 Sincronizar Mapa con Páginas Actuales
         </button>
@@ -416,45 +416,110 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
               </div>
             )}
 
-            {/* CAPA 2 */}
-            <div className="admin-form-group" style={{ flex: '1 1 300px', background: 'rgba(0,0,0,0.05)', padding: '15px', borderRadius: '8px' }}>
-              <label style={{ fontWeight: 'bold' }}>Capa 2: Decorativa</label>
-              <select value={editingHex.layerDeco.type} onChange={e => setEditingHex({...editingHex, layerDeco: {...editingHex.layerDeco, type: e.target.value as any}})}>
-                <option value="none">Ninguno</option>
-                <option value="image">Imagen (URL)</option>
-                <option value="icon">Ícono/Emoji</option>
-              </select>
+            {/* CAPA 2: DECORATIVA */}
+            <div className="admin-form-group" style={{ flex: '1 1 300px', background: 'rgba(0,0,0,0.12)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <label style={{ fontWeight: '800', color: '#c084fc', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🏰 Capa 2: Elemento Decorativo
+              </label>
+              
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Modo:</span>
+                <select 
+                  value={editingHex.layerDeco.type} 
+                  onChange={e => setEditingHex({...editingHex, layerDeco: {...editingHex.layerDeco, type: e.target.value as any}})}
+                  style={{ flex: 1 }}
+                >
+                  <option value="none">Ninguno</option>
+                  <option value="image">Imagen Decorativa (URL / Subir)</option>
+                  <option value="icon">Ícono / Emoji</option>
+                </select>
+              </div>
+
               {editingHex.layerDeco.type !== 'none' && (
-                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <input type="text" placeholder="Valor" value={editingHex.layerDeco.value} onChange={e => setEditingHex({...editingHex, layerDeco: {...editingHex.layerDeco, value: e.target.value}})} />
+                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="URL de imagen o emoji (ej. 🏰, 🌲, 🐉)..." 
+                    value={editingHex.layerDeco.value} 
+                    onChange={e => setEditingHex({...editingHex, layerDeco: {...editingHex.layerDeco, value: e.target.value}})} 
+                    style={{ fontSize: '0.85rem' }}
+                  />
+
                   {editingHex.layerDeco.type === 'image' && (
-                    <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', display: 'inline-block', textAlign: 'center' }}>
-                      {uploadingLayer === 'layerDeco' ? '⏳ Subiendo...' : '📁 Subir Imagen a Firebase'}
-                      <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUpload(e, 'layerDeco')} disabled={uploadingLayer === 'layerDeco'} />
-                    </label>
+                    <div>
+                      <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', display: 'block', textAlign: 'center', width: '100%', fontWeight: 700 }}>
+                        {uploadingLayer === 'layerDeco' ? '⏳ Comprimiendo & Subiendo...' : '📤 Subir Imagen Decorativa (Compresor WebP Auto)'}
+                        <input 
+                          type="file" 
+                          style={{ display: 'none' }} 
+                          accept="image/*" 
+                          onChange={(e) => handleUpload(e, 'layerDeco')} 
+                          disabled={uploadingLayer === 'layerDeco'} 
+                        />
+                      </label>
+
+                      {uploadingLayer === 'layerDeco' && uploadStatusMsg && (
+                        <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#c084fc', background: 'rgba(192, 132, 252, 0.12)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(192, 132, 252, 0.3)' }}>
+                          {uploadStatusMsg}
+                        </div>
+                      )}
+                    </div>
                   )}
                 </div>
               )}
             </div>
 
-            {/* CAPA 3 */}
-            <div className="admin-form-group" style={{ flex: '1 1 300px', background: 'rgba(0,0,0,0.05)', padding: '15px', borderRadius: '8px' }}>
-              <label style={{ fontWeight: 'bold' }}>Capa 3: Interactiva (Link)</label>
-              <select value={editingHex.layerInteractive.type} onChange={e => setEditingHex({...editingHex, layerInteractive: {...editingHex.layerInteractive, type: e.target.value as any}})}>
-                <option value="none">Ninguno</option>
-                <option value="icon">Ícono/Emoji</option>
-                <option value="image">Imagen (URL)</option>
-                <option value="text">Texto</option>
-              </select>
+            {/* CAPA 3: INTERACTIVA */}
+            <div className="admin-form-group" style={{ flex: '1 1 300px', background: 'rgba(0,0,0,0.12)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
+              <label style={{ fontWeight: '800', color: '#4ade80', fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🌀 Capa 3: Objeto Interactivo (Link)
+              </label>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginTop: '8px' }}>
+                <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Modo:</span>
+                <select 
+                  value={editingHex.layerInteractive.type} 
+                  onChange={e => setEditingHex({...editingHex, layerInteractive: {...editingHex.layerInteractive, type: e.target.value as any}})}
+                  style={{ flex: 1 }}
+                >
+                  <option value="none">Ninguno</option>
+                  <option value="icon">Ícono / Emoji</option>
+                  <option value="image">Imagen Interactiva (URL / Subir)</option>
+                  <option value="text">Texto / Etiqueta</option>
+                </select>
+              </div>
+
               {editingHex.layerInteractive.type !== 'none' && (
-                <div style={{ marginTop: '8px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <input type="text" placeholder="Valor" value={editingHex.layerInteractive.value} onChange={e => setEditingHex({...editingHex, layerInteractive: {...editingHex.layerInteractive, value: e.target.value}})} />
+                <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <input 
+                    type="text" 
+                    placeholder="URL de imagen o emoji (ej. 🌌, 🎭, 🎮)..." 
+                    value={editingHex.layerInteractive.value} 
+                    onChange={e => setEditingHex({...editingHex, layerInteractive: {...editingHex.layerInteractive, value: e.target.value}})} 
+                    style={{ fontSize: '0.85rem' }}
+                  />
+
                   {editingHex.layerInteractive.type === 'image' && (
-                    <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', display: 'inline-block', textAlign: 'center' }}>
-                      {uploadingLayer === 'layerInteractive' ? '⏳ Subiendo...' : '📁 Subir Imagen a Firebase'}
-                      <input type="file" style={{ display: 'none' }} accept="image/*" onChange={(e) => handleUpload(e, 'layerInteractive')} disabled={uploadingLayer === 'layerInteractive'} />
-                    </label>
+                    <div>
+                      <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', display: 'block', textAlign: 'center', width: '100%', fontWeight: 700 }}>
+                        {uploadingLayer === 'layerInteractive' ? '⏳ Comprimiendo & Subiendo...' : '📤 Subir Imagen Interactiva (Compresor WebP Auto)'}
+                        <input 
+                          type="file" 
+                          style={{ display: 'none' }} 
+                          accept="image/*" 
+                          onChange={(e) => handleUpload(e, 'layerInteractive')} 
+                          disabled={uploadingLayer === 'layerInteractive'} 
+                        />
+                      </label>
+
+                      {uploadingLayer === 'layerInteractive' && uploadStatusMsg && (
+                        <div style={{ marginTop: '6px', fontSize: '0.78rem', color: '#4ade80', background: 'rgba(74, 222, 128, 0.12)', padding: '6px 10px', borderRadius: '8px', border: '1px solid rgba(74, 222, 128, 0.3)' }}>
+                          {uploadStatusMsg}
+                        </div>
+                      )}
+                    </div>
                   )}
+
                   {editingHex.layerInteractive.type === 'icon' && (
                     <div style={{ marginTop: '5px' }}>
                       <button 
