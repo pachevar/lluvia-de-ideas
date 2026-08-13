@@ -371,45 +371,107 @@
   transform: scale(1.1);
 }
 
-/* --- Mobile Optimizations --- */
+/* --- Mobile & Touch Optimizations --- */
 @media (max-width: 768px) {
   .map-viewport {
-    height: calc(100vh - 80px); /* Maximized vertical space for mobile exploration */
-    min-height: 400px;
+    height: 100vh; /* Full mobile screen height */
+    min-height: 100vh;
     border-radius: 0;
   }
   
-  .map-ui-overlay {
-    top: 15px;
-    padding: 10px 20px;
-    width: 85%;
-  }
-  
-  .map-ui-title {
-    font-size: 1.25rem;
-  }
-  
-  .map-ui-subtitle {
-    font-size: 0.8rem;
-  }
-  
   .map-controls {
-    bottom: 15px;
-    right: 15px;
+    bottom: 20px;
+    right: 14px;
     gap: 8px;
   }
   
   .map-controls button {
-    width: 38px;
-    height: 38px;
-    font-size: 1.1rem;
+    width: 42px;
+    height: 42px;
+    font-size: 1.15rem;
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
   }
-  
-  .hex-title {
+
+  .map-controls button:active {
+    transform: scale(0.92);
+    background: rgba(56, 189, 248, 0.3);
+  }
+
+  .hex-icon-disc {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    min-height: 36px;
+  }
+
+  .hex-icon-glyph {
+    font-size: 1.15rem;
+  }
+
+  .hex-icon-img {
+    max-width: 20px;
+    max-height: 20px;
+  }
+
+  .hex-title-badge {
+    padding: 2px 6px;
+    border-radius: 8px;
+    max-width: 90%;
+  }
+
+  .hex-title-text {
+    font-size: 0.72rem;
+    line-height: 1.1;
+  }
+
+  .hex-action-pill {
+    width: 14px;
+    height: 2.5px;
+    bottom: 6px;
+  }
+
+  .hex-admin-label {
+    font-size: 0.68rem;
+    padding: 1px 8px;
+    bottom: 6px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hex-icon-disc {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+    min-height: 32px;
+  }
+
+  .hex-icon-glyph {
     font-size: 1rem;
   }
-  
-  .hex-subtitle {
-    font-size: 0.8rem;
+
+  .hex-title-text {
+    font-size: 0.68rem;
+  }
+}
+
+/* Touch-specific interaction refinement (prevents stuck hover state on mobile taps) */
+@media (hover: none) and (pointer: coarse) {
+  .hex-cell-wrapper:hover {
+    transform: none;
+    filter: drop-shadow(0 6px 14px rgba(0, 0, 0, 0.5));
+  }
+
+  .hex-cell-wrapper:active,
+  .hex-cell-wrapper.is-editing {
+    transform: scale(1.06) translateY(-4px);
+    z-index: 20;
+    filter: drop-shadow(0 10px 20px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 15px var(--hex-glow-color, rgba(56, 189, 248, 0.6)));
+  }
+
+  .hex-cell-wrapper:active .hex-icon-disc {
+    transform: scale(1.1);
+    border-color: #ffffff;
   }
 }
