@@ -72,16 +72,17 @@ export function getCandidateHexes(mapData: { row: number, col: number }[]): { ro
     occupiedCoords.add(`${hex.row},${hex.col}`);
   });
 
-  const directions = [
-    { dr: 0, dc: 1 },
-    { dr: 1, dc: 0 },
-    { dr: 1, dc: -1 },
-    { dr: 0, dc: -1 },
-    { dr: -1, dc: 0 },
-    { dr: -1, dc: 1 }
-  ];
-
   mapData.forEach(hex => {
+    const isOdd = Math.abs(hex.col) % 2 === 1;
+    const directions = [
+      { dr: -1, dc: 0 },
+      { dr: 1, dc: 0 },
+      { dr: isOdd ? 0 : -1, dc: 1 },
+      { dr: isOdd ? 1 : 0, dc: 1 },
+      { dr: isOdd ? 0 : -1, dc: -1 },
+      { dr: isOdd ? 1 : 0, dc: -1 }
+    ];
+
     directions.forEach(dir => {
       const nr = hex.row + dir.dr;
       const nc = hex.col + dir.dc;

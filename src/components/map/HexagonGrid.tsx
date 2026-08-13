@@ -16,8 +16,8 @@ interface HexagonGridProps {
 
 export const HexagonGrid: React.FC<HexagonGridProps> = ({ 
   cells, 
-  hexWidth = 180, 
-  hexHeight = 208, // 180 * 1.1547 (pointy-topped)
+  hexWidth = 208, 
+  hexHeight = 180, // 180 * 1.1547 (flat-topped)
   onHexClick,
   showLabels = false,
   editingHexRow = null,
@@ -32,7 +32,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   const minRow = Math.min(...rows, -1);
   const maxRow = Math.max(...rows, 1);
 
-  const widthSpan = (maxCol - minCol + 3) * hexWidth;
+  const widthSpan = (maxCol - minCol + 3) * (0.75 * hexWidth);
   const heightSpan = (maxRow - minRow + 3) * hexHeight;
 
   const mapWidth = Math.max(1600, widthSpan);
@@ -41,8 +41,8 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   const centerCol = (minCol + maxCol) / 2;
   const centerRow = (minRow + maxRow) / 2;
 
-  const xOffset = mapWidth / 2 - centerCol * hexWidth - hexWidth / 2;
-  const yOffset = mapHeight / 2 - centerRow * (0.75 * hexHeight) - hexHeight / 2;
+  const xOffset = mapWidth / 2 - centerCol * (0.75 * hexWidth) - hexWidth / 2;
+  const yOffset = mapHeight / 2 - centerRow * hexHeight - hexHeight / 2;
 
   // Detectar móvil para iniciar con un zoom adaptativo
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;

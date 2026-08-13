@@ -57,8 +57,8 @@ const renderLayer = (layer: HexLayer, className: string) => {
 };
 
 export const HexagonCell: React.FC<HexagonCellProps> = ({ data, hexWidth, hexHeight, xOffset, yOffset, onClick, showLabel, isEditing }) => {
-  const left = xOffset + data.col * hexWidth + (Math.abs(data.row) % 2 === 1 ? hexWidth / 2 : 0);
-  const top = yOffset + data.row * (0.75 * hexHeight);
+  const left = xOffset + data.col * (0.75 * hexWidth);
+  const top = yOffset + data.row * hexHeight + (Math.abs(data.col) % 2 === 1 ? hexHeight / 2 : 0);
 
   return (
     <div 

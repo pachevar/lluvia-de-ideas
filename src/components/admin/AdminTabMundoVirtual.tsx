@@ -281,8 +281,8 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
             <HexagonGrid 
               cells={previewCells} 
               onHexClick={handlePreviewClick} 
-              hexWidth={120} 
-              hexHeight={138} 
+              hexWidth={138} 
+              hexHeight={120} 
               showLabels={true} 
               editingHexRow={editingHex?.row}
               editingHexCol={editingHex?.col}
