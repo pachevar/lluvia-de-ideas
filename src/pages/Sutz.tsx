@@ -160,7 +160,7 @@ export default function Sutz() {
         </div>
       </div>
 
-      {/* Sutz Header HUD Badge y Botón Inicio (Esquina Superior Derecha) */}
+      {/* Sutz Header HUD Badge (Esquina Superior Derecha) */}
       <div className="sutz-top-right-wrapper">
         <div className="sutz-hud-badge">
           <span className="sutz-hud-icon">☁️</span>
@@ -169,14 +169,6 @@ export default function Sutz() {
             <p className="sutz-hud-subtitle">Mundo Virtual</p>
           </div>
         </div>
-
-        <button 
-          className="sutz-back-btn btn btn-glass" 
-          onClick={() => navigate('/')}
-          title="Volver a Inicio"
-        >
-          🏠 Inicio
-        </button>
       </div>
 
       {/* Menús Desplegables Laterales Gamer (Inician Cerrados) */}
