@@ -3,10 +3,11 @@ import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import logoEditorial from './assets/logo editorial.png';
 import './App.css';
 import { useCart } from './context/CartContext';
+import { CONTACT } from './constants';
+import PageLoader from './components/PageLoader';
 
-import Home from './pages/Home';
-
-// Lazy load heavy routes
+// Lazy load routes to code-split heavy bundles (Gerencia/PDF, cotizaciones, juegos, etc.)
+const Home = React.lazy(() => import('./pages/Home'));
 const Gerencia = React.lazy(() => import('./Gerencia'));
 const CotizacionView = React.lazy(() => import('./CotizacionView'));
 const Sutz = React.lazy(() => import('./pages/Sutz'));
@@ -21,6 +22,7 @@ const SolarSystem = React.lazy(() => import('./pages/SolarSystem'));
 const NumberSequences = React.lazy(() => import('./pages/NumberSequences'));
 const CodigoDocente = React.lazy(() => import('./pages/CodigoDocente'));
 const CodigoEstudiante = React.lazy(() => import('./pages/CodigoEstudiante'));
+const NotFound = React.lazy(() => import('./pages/NotFound'));
 const NuestrosLibros = React.lazy(() => import('./pages/NuestrosLibros'));
 const Neurociencia = React.lazy(() => import('./pages/Neurociencia'));
 
@@ -51,11 +53,7 @@ function App() {
   // Specific check for Gerencia and Cotizacion View
   if (currentPath === '/gerencia' || currentPath === '/gerencia/') {
     return (
-      <Suspense fallback={
-        <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', background: '#090d1d', color: '#00e5ff' }}>
-          <p>Cargando módulo de gerencia...</p>
-        </div>
-      }>
+      <Suspense fallback={<PageLoader />}>
         <Gerencia />
       </Suspense>
     );
@@ -64,11 +62,7 @@ function App() {
   if (currentPath.startsWith('/cotizacion/')) {
     const id = currentPath.split('/')[2];
     return (
-      <Suspense fallback={
-        <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', background: '#090d1d', color: '#00e5ff' }}>
-          <p>Cargando propuesta comercial...</p>
-        </div>
-      }>
+      <Suspense fallback={<PageLoader />}>
         <CotizacionView id={id} />
       </Suspense>
     );
@@ -104,14 +98,14 @@ function App() {
             className={`sidebar-link ${isTabActive('/') ? 'active' : ''}`}
             onClick={() => navigateTo('/')}
           >
-            <span className="sidebar-icon">🏠</span> Inicio
+            <span className="sidebar-icon" aria-hidden="true">🏠</span> Inicio
           </button>
 
           <button 
             className={`sidebar-link ${isTabActive('/sutz') || isTabActive('/mundo-virtual') ? 'active' : ''}`}
             onClick={() => navigateTo('/sutz')}
           >
-            <span className="sidebar-icon">☁️</span> Sutz (Mundo Virtual)
+            <span className="sidebar-icon" aria-hidden="true">☁️</span> Sutz (Mundo Virtual)
           </button>
 
           {/* Menú Creatika */}
@@ -120,7 +114,7 @@ function App() {
               className={`sidebar-group-trigger ${isCreatikaActive ? 'active-parent' : ''}`}
               onClick={() => setIsSidebarCreatikaOpen(!isSidebarCreatikaOpen)}
             >
-              <span className="sidebar-icon">✨</span> Creatika {isSidebarCreatikaOpen ? '▴' : '▾'}
+              <span className="sidebar-icon" aria-hidden="true">✨</span> Creatika {isSidebarCreatikaOpen ? '▴' : '▾'}
             </button>
             <div className="sidebar-submenu">
               <button 
@@ -156,7 +150,7 @@ function App() {
               className={`sidebar-group-trigger ${isJuegosActive ? 'active-parent' : ''}`}
               onClick={() => setIsSidebarJuegosOpen(!isSidebarJuegosOpen)}
             >
-              <span className="sidebar-icon">🎮</span> Juegos {isSidebarJuegosOpen ? '▴' : '▾'}
+              <span className="sidebar-icon" aria-hidden="true">🎮</span> Juegos {isSidebarJuegosOpen ? '▴' : '▾'}
             </button>
             <div className="sidebar-submenu">
               <button 
@@ -174,7 +168,7 @@ function App() {
               className={`sidebar-group-trigger ${is100tekActive ? 'active-parent' : ''}`}
               onClick={() => setIsSidebar100tekOpen(!isSidebar100tekOpen)}
             >
-              <span className="sidebar-icon">⚡</span> 100tek {isSidebar100tekOpen ? '▴' : '▾'}
+              <span className="sidebar-icon" aria-hidden="true">⚡</span> 100tek {isSidebar100tekOpen ? '▴' : '▾'}
             </button>
             <div className="sidebar-submenu">
               <button 
@@ -196,7 +190,7 @@ function App() {
             className={`sidebar-link ${isTabActive('/universo-de-juracan') ? 'active' : ''}`}
             onClick={() => navigateTo('/universo-de-juracan')}
           >
-            <span className="sidebar-icon">🌪️</span> Universo de Juracán
+            <span className="sidebar-icon" aria-hidden="true">🌪️</span> Universo de Juracán
           </button>
 
           <div className={`sidebar-group ${isSidebarLaboratoriosOpen ? 'open' : ''}`}>
@@ -204,7 +198,7 @@ function App() {
               className={`sidebar-group-trigger ${isLaboratoriosActive ? 'active-parent' : ''}`}
               onClick={() => setIsSidebarLaboratoriosOpen(!isSidebarLaboratoriosOpen)}
             >
-              <span className="sidebar-icon">🧪</span> Laboratorios {isSidebarLaboratoriosOpen ? '▴' : '▾'}
+              <span className="sidebar-icon" aria-hidden="true">🧪</span> Laboratorios {isSidebarLaboratoriosOpen ? '▴' : '▾'}
             </button>
             <div className="sidebar-submenu">
               <button 
@@ -220,21 +214,21 @@ function App() {
             className={`sidebar-link ${isTabActive('/libros') || isTabActive('/nuestros-libros') ? 'active' : ''}`}
             onClick={() => navigateTo('/libros')}
           >
-            <span className="sidebar-icon">📖</span> Nuestros Libros
+            <span className="sidebar-icon" aria-hidden="true">📖</span> Nuestros Libros
           </button>
 
           <button 
             className={`sidebar-link ${isTabActive('/neurociencia') ? 'active' : ''}`}
             onClick={() => navigateTo('/neurociencia')}
           >
-            <span className="sidebar-icon">🧠</span> Neurociencia Aula
+            <span className="sidebar-icon" aria-hidden="true">🧠</span> Neurociencia Aula
           </button>
 
           <button 
             className={`sidebar-link ${isTabActive('/catalogo') ? 'active' : ''}`}
             onClick={() => navigateTo('/catalogo')}
           >
-            <span className="sidebar-icon">📚</span> Catálogo
+            <span className="sidebar-icon" aria-hidden="true">📚</span> Catálogo
           </button>
         </nav>
 
@@ -252,7 +246,7 @@ function App() {
 
       {/* Main Content Area */}
       <main className="main-content">
-        <Suspense fallback={<div className="admin-loading-screen"><div className="spinner"></div></div>}>
+        <Suspense fallback={<PageLoader />}>
           <Routes>
             <Route path="/" element={<Home />} />
             <Route path="/sutz" element={<Sutz />} />
@@ -279,6 +273,7 @@ function App() {
             <Route path="/100tek/sistema-solar" element={<SolarSystem />} />
             <Route path="/herramientas/teoria-del-color" element={<ColorTheory />} />
             <Route path="/herramientas/sistema-solar" element={<SolarSystem />} />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
       </main>
@@ -306,7 +301,7 @@ function App() {
         <div className="whatsapp-floating-wrapper">
           <div className="whatsapp-tooltip">¿Necesitas ayuda? Escríbenos</div>
           <a 
-            href="https://wa.me/50246741239" 
+            href={CONTACT.whatsappUrl}
             target="_blank" 
             rel="noopener noreferrer" 
             className="floating-btn floating-whatsapp-btn"

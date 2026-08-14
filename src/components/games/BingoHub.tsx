@@ -5,6 +5,7 @@ import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, ge
 import { auth, db } from '../../firebase';
 import type { BingoGame, BingoCard, BingoPrize } from '../../types';
 import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardCollision } from '../../utils/bingoGenerator';
+import { CONTACT } from '../../constants';
 import './Bingo.css';
 
 const DEFAULT_SAMPLE_PRIZES: BingoPrize[] = [
@@ -2516,7 +2517,7 @@ export default function BingoHub() {
                     Si quieres más información ponte en contacto con nosotros.
                   </p>
                   <a 
-                    href="https://wa.me/50246741239?text=Hola,%20quisiera%20más%20información%20sobre%20el%20código%20de%20promotor%20del%20Bingo"
+                    href={`https://wa.me/${CONTACT.whatsappPhone}?text=Hola,%20quisiera%20más%20información%20sobre%20el%20código%20de%20promotor%20del%20Bingo`}
                     target="_blank"
                     rel="noreferrer"
                     style={{
@@ -2557,7 +2558,7 @@ export default function BingoHub() {
                   </div>
 
                   <a
-                    href="https://wa.me/50246741239?text=Hola,%20me%20interesa%20ser%20Promotor%20oficial%20del%20Bingo"
+                    href={`https://wa.me/${CONTACT.whatsappPhone}?text=Hola,%20me%20interesa%20ser%20Promotor%20oficial%20del%20Bingo`}
                     target="_blank"
                     rel="noreferrer"
                     style={{

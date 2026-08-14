@@ -3,6 +3,7 @@ import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { PortalConfig } from '../types';
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
+import { CONTACT } from '../constants';
 
 interface PortalConfigContextProps {
   config: PortalConfig;
@@ -186,7 +187,7 @@ export const DEFAULT_CONFIG: PortalConfig = {
   },
   catalogoConfig: {
     announcement: "¡Nuevas publicaciones y guías pedagógicas disponibles para el ciclo escolar!",
-    whatsappPhone: "50246741239"
+    whatsappPhone: CONTACT.whatsappPhone
   },
   landingConfig: {
     cards: {

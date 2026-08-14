@@ -1,6 +1,7 @@
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import logoEditorial from '../assets/logo editorial.png';
+import { CONTACT } from '../constants';
 
 export interface PDFQuoteData {
   id?: string;
@@ -57,9 +58,9 @@ export const generateCotizacionPDF = async (quote: PDFQuoteData) => {
   doc.setFontSize(10);
   doc.setTextColor(80, 80, 80);
   doc.setFont('helvetica', 'normal');
-  doc.text('NIT: 101269188', 120, 38);
-  doc.text('Tel: 46741239', 120, 43);
-  doc.text('Correo: lluviadeideaseditorial@gmail.com', 120, 48);
+  doc.text(`NIT: ${CONTACT.nit}`, 120, 38);
+  doc.text(`Tel: ${CONTACT.phoneDisplay}`, 120, 43);
+  doc.text(`Correo: ${CONTACT.email}`, 120, 48);
   
   doc.setFont('helvetica', 'bold');
   doc.text('Fecha:', 120, 55);
@@ -132,22 +133,22 @@ export const generateCotizacionPDF = async (quote: PDFQuoteData) => {
   doc.setFont('helvetica', 'normal');
   doc.text('Banco:', 14, finalY + 32);
   doc.setFont('helvetica', 'bold');
-  doc.text('Banco Industrial', 27, finalY + 32);
+  doc.text(CONTACT.bankName, 27, finalY + 32);
 
   doc.setFont('helvetica', 'normal');
   doc.text('Tipo de Cuenta:', 14, finalY + 37);
   doc.setFont('helvetica', 'bold');
-  doc.text('Monetaria', 42, finalY + 37);
+  doc.text(CONTACT.bankAccountType, 42, finalY + 37);
 
   doc.setFont('helvetica', 'normal');
   doc.text('No. de Cuenta:', 14, finalY + 42);
   doc.setFont('helvetica', 'bold');
-  doc.text('2330080355', 40, finalY + 42);
+  doc.text(CONTACT.bankAccount, 40, finalY + 42);
 
   doc.setFont('helvetica', 'normal');
   doc.text('A nombre de:', 14, finalY + 47);
   doc.setFont('helvetica', 'bold');
-  doc.text('Lluvia de Ideas Editorial S.A.', 38, finalY + 47);
+  doc.text(CONTACT.bankAccountHolder, 38, finalY + 47);
 
   doc.setFont('helvetica', 'italic');
   doc.setFontSize(9);
@@ -162,7 +163,8 @@ export const generateCotizacionPDF = async (quote: PDFQuoteData) => {
     doc.setFont('helvetica', 'bold');
     doc.setFontSize(10);
     doc.setTextColor(0, 102, 204);
-    doc.textWithLink(`Ver versión en línea: https://lluviadeideasgt.com/cotizacion/${quote.id}`, 14, finalY + 68, { url: `https://lluviadeideasgt.com/cotizacion/${quote.id}` });
+    const onlineUrl = `${CONTACT.siteUrl}/cotizacion/${quote.id}`;
+    doc.textWithLink(`Ver versión en línea: ${onlineUrl}`, 14, finalY + 68, { url: onlineUrl });
   }
 
   let signatureY = finalY + 80;

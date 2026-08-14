@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import logoEditorial from './assets/logo editorial.png';
+import { CONTACT } from './constants';
 
 
 interface CotizacionViewProps {
@@ -119,9 +120,9 @@ const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
           <div>
             <img src={logoEditorial} alt="Lluvia de Ideas" style={{ height: '80px', marginBottom: '10px' }} />
             <h2 style={{ margin: 0 }}>Lluvia de Ideas Editorial S.A.</h2>
-            <p style={{ margin: '5px 0', opacity: 0.8 }}>NIT: 101269188</p>
-            <p style={{ margin: '5px 0', opacity: 0.8 }}>Tel: 46741239</p>
-            <p style={{ margin: '5px 0', opacity: 0.8 }}>lluviadeideaseditorial@gmail.com</p>
+            <p style={{ margin: '5px 0', opacity: 0.8 }}>NIT: {CONTACT.nit}</p>
+            <p style={{ margin: '5px 0', opacity: 0.8 }}>Tel: {CONTACT.phoneDisplay}</p>
+            <p style={{ margin: '5px 0', opacity: 0.8 }}>{CONTACT.email}</p>
           </div>
           <div style={{ textAlign: 'right' }}>
             <h1 style={{ color: 'var(--color-primary)', margin: '0 0 10px 0' }}>COTIZACIÓN</h1>
@@ -203,7 +204,7 @@ const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
           <button onClick={downloadPDF} className="btn btn-secondary" style={{ padding: '15px 30px', fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
             📄 Descargar PDF
           </button>
-          <a href={`https://wa.me/50246741239?text=${wspMessage}`} target="_blank" rel="noreferrer" className="btn btn-primary btn-large" style={{ padding: '15px 30px', fontSize: '1.1rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', background: '#25D366' }}>
+          <a href={`https://wa.me/${CONTACT.whatsappPhone}?text=${wspMessage}`} target="_blank" rel="noopener noreferrer" className="btn btn-primary btn-large" style={{ padding: '15px 30px', fontSize: '1.1rem', textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '10px', background: '#25D366' }}>
             💬 Aprobar por WhatsApp
           </a>
         </div>

@@ -6782,4 +6782,63 @@ body.home-page-active .app-footer {
   }
 }
 
+/* Page Loader (Suspense fallback) */
+.page-loader {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.page-loader-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 24px 32px;
+  border-radius: 20px;
+  font-family: var(--font-headline);
+  color: var(--text-title);
+}
+.page-loader-card .spinner {
+  width: 34px;
+  height: 34px;
+  border-width: 4px;
+  border-color: var(--border-color);
+  border-top-color: var(--primary);
+  flex-shrink: 0;
+}
+
+/* Página 404 */
+.not-found-page {
+  min-height: 60vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 20px;
+}
+.not-found-card {
+  max-width: 480px;
+  text-align: center;
+  padding: 48px 32px;
+  border-radius: 24px;
+}
+.not-found-emoji {
+  font-size: 4rem;
+  display: block;
+  margin-bottom: 12px;
+}
+.not-found-card h2 {
+  margin-bottom: 8px;
+}
+.not-found-card p {
+  color: var(--text-muted);
+  margin-bottom: 24px;
+}
+.not-found-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
 
