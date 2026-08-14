@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
-import { HexagonCell } from './HexagonCell';
+import { HexagonCell, type HexVariant } from './HexagonCell';
 import type { CustomHexagon } from '../../types';
+import { buildIsoHexGeometry, isoProject } from '../../utils/isoHex';
 import './Hexagon.css';
 
 interface HexagonGridProps {
@@ -12,16 +13,25 @@ interface HexagonGridProps {
   showLabels?: boolean;
   editingHexRow?: number | null;
   editingHexCol?: number | null;
+  variant?: HexVariant;
+  isoDepth?: number;
 }
 
-export const HexagonGrid: React.FC<HexagonGridProps> = ({ 
-  cells, 
-  hexWidth = 208, 
+const twoDX = (cell: CustomHexagon, hexWidth: number, xOffset: number) => xOffset + cell.col * (0.75 * hexWidth);
+
+const twoDY = (cell: CustomHexagon, hexHeight: number, yOffset: number) =>
+  yOffset + cell.row * hexHeight + (Math.abs(cell.col) % 2 === 1 ? hexHeight / 2 : 0);
+
+export const HexagonGrid: React.FC<HexagonGridProps> = ({
+  cells,
+  hexWidth = 208,
   hexHeight = 180, // 180 * 1.1547 (flat-topped)
   onHexClick,
   showLabels = false,
   editingHexRow = null,
-  editingHexCol = null
+  editingHexCol = null,
+  variant = 'flat',
+  isoDepth
 }) => {
   // Dynamic cell bounds calculation so hexes are ALWAYS perfectly centered
   const cols = cells.length > 0 ? cells.map(c => c.col) : [0];
@@ -35,23 +45,69 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   const widthSpan = (maxCol - minCol + 3) * (0.75 * hexWidth);
   const heightSpan = (maxRow - minRow + 3) * hexHeight;
 
-  const mapWidth = Math.max(1600, widthSpan);
-  const mapHeight = Math.max(1200, heightSpan);
-
   const centerCol = (minCol + maxCol) / 2;
   const centerRow = (minRow + maxRow) / 2;
 
-  const xOffset = mapWidth / 2 - centerCol * (0.75 * hexWidth) - hexWidth / 2;
-  const yOffset = mapHeight / 2 - centerRow * hexHeight - hexHeight / 2;
-
-  // Detectar móvil para iniciar con un zoom adaptativo
   const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
-  const initialScale = isMobile ? 0.65 : 0.95;
+
+  const isoLayout = useMemo(() => {
+    if (variant !== 'iso') return null;
+    const geo = buildIsoHexGeometry(hexWidth, hexHeight, isoDepth);
+    const cellsList = cells.length > 0 ? cells : [];
+    let minIsoX = Infinity, maxIsoX = -Infinity, minIsoY = Infinity, maxIsoY = -Infinity;
+    cellsList.forEach(c => {
+      const p = isoProject(twoDX(c, hexWidth, 0), twoDY(c, hexHeight, 0));
+      minIsoX = Math.min(minIsoX, p.x + geo.minX);
+      maxIsoX = Math.max(maxIsoX, p.x + geo.minX + geo.tileW);
+      minIsoY = Math.min(minIsoY, p.y + geo.minY);
+      maxIsoY = Math.max(maxIsoY, p.y + geo.minY + geo.tileH);
+    });
+    if (!isFinite(minIsoX)) {
+      minIsoX = 0; maxIsoX = geo.tileW; minIsoY = 0; maxIsoY = geo.tileH;
+    }
+    const pad = Math.max(90, hexWidth);
+    return { geo, minIsoX, minIsoY, pad, mapWidth: maxIsoX - minIsoX + pad * 2, mapHeight: maxIsoY - minIsoY + pad * 2 };
+  }, [variant, cells, hexWidth, hexHeight, isoDepth]);
+
+  let mapWidth: number;
+  let mapHeight: number;
+  let xOffset: number;
+  let yOffset: number;
+  let initialScale: number;
+
+  if (variant === 'iso' && isoLayout) {
+    mapWidth = isoLayout.mapWidth;
+    mapHeight = isoLayout.mapHeight;
+    xOffset = 0;
+    yOffset = 0;
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1400;
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 900;
+    const fit = Math.min((vw - 96) / mapWidth, (vh - 180) / mapHeight);
+    initialScale = Math.min(1.2, Math.max(0.25, fit));
+  } else {
+    mapWidth = Math.max(1600, widthSpan);
+    mapHeight = Math.max(1200, heightSpan);
+    xOffset = mapWidth / 2 - centerCol * (0.75 * hexWidth) - hexWidth / 2;
+    yOffset = mapHeight / 2 - centerRow * hexHeight - hexHeight / 2;
+    const base = isMobile ? 0.65 : 0.95;
+    initialScale = variant === 'iso' ? base : base;
+  }
+
+  const isoPosFor = (cell: CustomHexagon): { left: number; top: number; zIndex: number } => {
+    const iso = isoLayout!;
+    const p = isoProject(twoDX(cell, hexWidth, xOffset), twoDY(cell, hexHeight, yOffset));
+    return {
+      left: p.x + iso.geo.minX - iso.minIsoX + iso.pad,
+      top: p.y + iso.geo.minY - iso.minIsoY + iso.pad,
+      zIndex: Math.round(p.y)
+    };
+  };
 
   return (
     <div className="map-viewport">
 
       <TransformWrapper
+        key={variant}
         initialScale={initialScale}
         minScale={0.35}
         maxScale={2.8}
@@ -66,7 +122,6 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
           <div 
             style={{ width: '100%', height: '100%', position: 'relative', touchAction: 'none' }}
             onWheel={(e) => {
-              // Prevenir el scroll por defecto si es necesario
               if (e.deltaY < 0) {
                 zoomIn(0.2, 250, "easeOut");
               } else if (e.deltaY > 0) {
@@ -99,7 +154,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
               }}
             >
               <div 
-                className="hex-grid-container" 
+                className={`hex-grid-container ${variant === 'iso' ? 'iso' : ''}`} 
                 style={{ 
                   width: mapWidth, 
                   height: mapHeight, 
@@ -121,6 +176,9 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
                     onClick={onHexClick ? () => onHexClick(cell) : undefined}
                     showLabel={showLabels}
                     isEditing={editingHexRow === cell.row && editingHexCol === cell.col}
+                    variant={variant}
+                    isoDepth={isoDepth}
+                    isoPos={variant === 'iso' ? isoPosFor(cell) : undefined}
                   />
                 ))}
               </div>

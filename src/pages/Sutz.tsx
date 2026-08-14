@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { AuthModal } from '../components/auth/AuthModal';
 import type { StoryConfig, CustomHexagon } from '../types';
 import { HexagonGrid } from '../components/map/HexagonGrid';
+import type { HexVariant } from '../components/map/HexagonCell';
 import { getCandidateHexes } from '../utils/hexUtils';
 import { TechTreeModal } from '../components/sutz/TechTreeModal';
 
@@ -35,6 +36,22 @@ export default function Sutz() {
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
   const [isGamerHudOpen, setIsGamerHudOpen] = useState(false);
   const [isTechTreeOpen, setIsTechTreeOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<HexVariant>(() => {
+    try {
+      return localStorage.getItem('sutz_view_mode') === 'iso' ? 'iso' : 'flat';
+    } catch {
+      return 'flat';
+    }
+  });
+
+  const handleViewModeChange = (mode: HexVariant) => {
+    setViewMode(mode);
+    try {
+      localStorage.setItem('sutz_view_mode', mode);
+    } catch {
+      // almacenamiento no disponible, ignorar
+    }
+  };
 
   useEffect(() => {
     document.body.classList.add('home-page-active');
@@ -287,7 +304,48 @@ export default function Sutz() {
       </div>
 
       {/* Mapa Hexagonal */}
-      <HexagonGrid cells={cells} onHexClick={handleHexClick} />
+      <HexagonGrid cells={cells} onHexClick={handleHexClick} variant={viewMode} />
+
+      {/* Selector de Vista: Isométrica 3D / Cenital (Estilo WC3 con estética Maya) */}
+      <div className="w3view-switch" role="group" aria-label="Tipo de vista del mundo virtual">
+        <div className="w3view-head">
+          <span className="w3view-glyph" aria-hidden="true">◈</span>
+          <span className="w3view-title">MODO DE VISTA</span>
+          <span className="w3view-glyph" aria-hidden="true">◈</span>
+        </div>
+        <div className="w3view-buttons">
+          <button
+            type="button"
+            className={`w3view-btn ${viewMode === 'flat' ? 'active' : ''}`}
+            onClick={() => handleViewModeChange('flat')}
+            aria-pressed={viewMode === 'flat'}
+            title="Vista Cenital (2D)"
+          >
+            <span className="w3view-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M12 2.5 L20.5 7 V17 L12 21.5 L3.5 17 V7 Z" />
+                <path d="M12 8 L16.8 11 V16 L12 19 L7.2 16 V11 Z" fill="currentColor" stroke="none" opacity="0.45" />
+              </svg>
+            </span>
+            <span className="w3view-btn-label">CENITAL</span>
+          </button>
+          <button
+            type="button"
+            className={`w3view-btn ${viewMode === 'iso' ? 'active' : ''}`}
+            onClick={() => handleViewModeChange('iso')}
+            aria-pressed={viewMode === 'iso'}
+            title="Vista Isométrica (3D)"
+          >
+            <span className="w3view-btn-icon" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="currentColor" strokeWidth="1.6">
+                <path d="M12 2 L22 11.5 L12 21 L2 11.5 Z" />
+                <path d="M12 8 L16.6 12.2 L12 16.4 L7.4 12.2 Z" fill="currentColor" stroke="none" opacity="0.45" />
+              </svg>
+            </span>
+            <span className="w3view-btn-label">ISOMÉTRICA</span>
+          </button>
+        </div>
+      </div>
 
       {/* Modal de Autenticación */}
       <AuthModal 

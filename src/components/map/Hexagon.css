@@ -2,6 +2,12 @@
   position: relative;
   width: 100%;
   height: 100%;
+  animation: hexGridFade 0.35s ease;
+}
+
+@keyframes hexGridFade {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .hex-cell-wrapper {
@@ -501,5 +507,44 @@
   .hex-cell-wrapper:active .hex-icon-disc {
     transform: scale(1.08);
     border-color: #ffffff;
+  }
+}
+
+/* ============ Vista Isométrica (Sutz 3D) ============ */
+.hex-cell-wrapper.is-iso {
+  transform-origin: 50% 40%;
+  filter: drop-shadow(0 10px 12px rgba(0, 0, 0, 0.45));
+  will-change: transform;
+}
+
+.hex-iso-wall {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background: linear-gradient(180deg,
+    rgba(15, 23, 42, 0.20) 0%,
+    rgba(8, 12, 26, 0.55) 50%,
+    rgba(2, 4, 10, 0.92) 100%);
+}
+
+.hex-cell-wrapper.is-iso .hex-inner-border {
+  inset: 0;
+  z-index: 1;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.32) 0%, rgba(255, 255, 255, 0.08) 45%, var(--hex-glow-color, rgba(56, 189, 248, 0.5)) 100%);
+}
+
+.hex-cell-wrapper.is-iso .hex-cell {
+  z-index: 2;
+  background: linear-gradient(160deg, rgba(30, 42, 66, 0.92) 0%, rgba(18, 26, 44, 0.88) 100%);
+}
+
+.hex-cell-wrapper.is-iso.is-unexplored .hex-cell {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+@media (max-width: 768px) {
+  .hex-cell-wrapper.is-iso {
+    filter: drop-shadow(0 6px 8px rgba(0, 0, 0, 0.4));
   }
 }
