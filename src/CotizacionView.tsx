@@ -36,11 +36,11 @@ const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
   }, [id]);
 
   useEffect(() => {
-    if (!quote) return;
+    if (!quote || !quote.expiresAt) return;
     
     const interval = setInterval(() => {
       const now = new Date().getTime();
-      const distance = quote.expiresAt - now;
+      const distance = (quote.expiresAt || 0) - now;
 
       if (distance < 0) {
         clearInterval(interval);
@@ -66,7 +66,7 @@ const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
     return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', color: 'white' }}><h2>{error}</h2></div>;
   }
 
-  const isExpired = new Date().getTime() > quote.expiresAt;
+  const isExpired = quote.expiresAt ? new Date().getTime() > quote.expiresAt : false;
 
   const downloadPDF = () => {
     import('./utils/pdfGenerator').then(({ generateCotizacionPDF }) => {

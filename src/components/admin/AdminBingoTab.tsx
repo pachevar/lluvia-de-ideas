@@ -387,7 +387,7 @@ export default function AdminBingoTab() {
   useEffect(() => {
     const q = query(collection(db, 'bingo_cards'));
     const unsub = onSnapshot(q, (snapshot) => {
-      const cards = snapshot.docs.map(d => ({ id: d.id, ...d.data() }));
+      const cards = snapshot.docs.map(d => ({ id: d.id, ...d.data() })) as unknown as BingoCard[];
       setRegisteredCardsList(cards);
     }, (err) => {
       console.warn("Cards snapshot error:", err);
@@ -2381,7 +2381,7 @@ export default function AdminBingoTab() {
                               {!c.used && (
                                 <button 
                                   type="button" 
-                                  onClick={() => copyDirectLinkCode(c.code)}
+                                  onClick={() => copyDirectLinkCode(c.code || '')}
                                   style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#334155', borderRadius: '6px', cursor: 'pointer', fontSize: '0.72rem', fontWeight: 'bold', padding: '3px 8px' }}
                                   title="Copiar Enlace Directo con Código pre-cargado para enviar por WhatsApp"
                                 >

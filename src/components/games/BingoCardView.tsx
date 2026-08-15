@@ -241,8 +241,9 @@ export default function BingoCardView() {
           const cData: BingoCard = {
             ...rawData,
             id: cardSnap.id,
+            gameId: rawData.gameId || '',
             matrix
-          };
+          } as BingoCard;
 
           setCardData(prevCard => {
             // Si el cartón acaba de ser confirmado como ganador en Firebase, disparamos confeti

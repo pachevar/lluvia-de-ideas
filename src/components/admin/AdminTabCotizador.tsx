@@ -357,18 +357,18 @@ export default function AdminTabCotizador() {
                     <td style={{ padding: '12px 16px' }}>{c.clientCompany || c.clientName}</td>
                     <td style={{ padding: '12px 16px' }}>Q{Number(c.subtotal).toFixed(2)}</td>
                     <td style={{ padding: '12px 16px' }}>
-                      <span style={{ color: c.expiresAt < new Date().getTime() ? '#ef4444' : 'inherit' }}>
-                        {new Date(c.expiresAt).toLocaleDateString()}
+                      <span style={{ color: (c.expiresAt && c.expiresAt < new Date().getTime()) ? '#ef4444' : 'inherit' }}>
+                        {c.expiresAt ? new Date(c.expiresAt).toLocaleDateString() : 'Sin expiración'}
                       </span>
                     </td>
                     <td style={{ padding: '12px 16px', textAlign: 'center', display: 'flex', gap: '5px', justifyContent: 'center' }}>
-                      <button className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '0.8rem' }} onClick={() => navigator.clipboard.writeText(`https://lluviadeideasgt.com/cotizacion/${c.id}`).then(() => alert('Enlace copiado!'))}>
+                      <button className="btn btn-secondary" style={{ padding: '6px 10px', fontSize: '0.8rem' }} onClick={() => navigator.clipboard.writeText(`https://lluviadeideasgt.com/cotizacion/${c.id || ''}`).then(() => alert('Enlace copiado!'))}>
                         🔗 Copiar
                       </button>
                       <button className="btn btn-primary" style={{ padding: '6px 10px', fontSize: '0.8rem' }} onClick={() => handleEditCotizacion(c)}>
                         ✏️ Editar
                       </button>
-                      <button className="btn btn-danger" style={{ padding: '6px 10px', fontSize: '0.8rem' }} onClick={() => handleDeleteCotizacion(c.id)}>
+                      <button className="btn btn-danger" style={{ padding: '6px 10px', fontSize: '0.8rem' }} onClick={() => c.id && handleDeleteCotizacion(c.id)}>
                         🗑️ Eliminar
                       </button>
                     </td>

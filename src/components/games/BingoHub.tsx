@@ -24,6 +24,9 @@ interface WinnerHistoryEntry {
   prize?: string;
   cardId?: string;
   gameId?: string;
+  drawnCount?: number;
+  gameTitle?: string;
+  winningPattern?: string;
 }
 
 const DEFAULT_SAMPLE_PRIZES: BingoPrize[] = [
@@ -799,8 +802,9 @@ export default function BingoHub() {
         const cardData: BingoCard = {
           ...rawData,
           id: cardSnap.id,
+          gameId: rawData.gameId || '',
           matrix
-        };
+        } as BingoCard;
         if (cardData.gameId !== activeGame.id) {
           await showAlert("Este cartón no pertenece al juego activo.", "Validación", "❌");
           return;
@@ -930,13 +934,14 @@ export default function BingoHub() {
           let otherMatrix: (number | null)[][];
           if (Array.isArray(otherCard.matrix)) {
             otherMatrix = otherCard.matrix;
-          } else if (otherCard.matrix.r0) {
+          } else if ((otherCard.matrix as unknown as StoredCardMatrix)?.r0) {
+            const rawM = otherCard.matrix as unknown as StoredCardMatrix;
             otherMatrix = [
-              otherCard.matrix.r0,
-              otherCard.matrix.r1,
-              otherCard.matrix.r2,
-              otherCard.matrix.r3,
-              otherCard.matrix.r4
+              rawM.r0,
+              rawM.r1,
+              rawM.r2,
+              rawM.r3,
+              rawM.r4
             ];
           } else {
             return false;
@@ -1375,7 +1380,7 @@ export default function BingoHub() {
                                 {w.winningPattern === 'diagonal' && 'Diagonal'}
                                 {w.winningPattern === 'four_corners' && 'Esquinas'}
                               </span>
-                              <span className="winner-date">{new Date(w.timestamp).toLocaleDateString('es-GT')}</span>
+                              <span className="winner-date">{w.timestamp ? new Date(w.timestamp).toLocaleDateString('es-GT') : ''}</span>
                             </div>
                           </div>
                         ))}
