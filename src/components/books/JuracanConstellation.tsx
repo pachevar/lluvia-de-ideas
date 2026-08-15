@@ -1,94 +1,15 @@
 import { useRef, useEffect, useState } from 'react';
+import type { BookProduct } from '../../types';
+import { DEFAULT_BOOKS } from '../../data/books';
 import '../../styles/juracan-theme.css';
 
-export interface StoryNode {
-  id: string;
-  title: string;
-  tagline: string;
-  accent: 'cyan' | 'yellow' | 'lilac';
-  pos: { x: number; y: number }; // Porcentajes 0-100
-  coverEmoji?: string;
-  description?: string;
-  gradeLevel?: string;
-  price?: number;
-}
-
-export const DEFAULT_STORIES: StoryNode[] = [
-  { 
-    id: '1', 
-    title: 'El Código del Maíz', 
-    tagline: 'Origen y Sustento', 
-    accent: 'yellow', 
-    pos: { x: 20, y: 30 },
-    coverEmoji: '🌽',
-    description: 'Un viaje fantástico por los orígenes del maíz sagrado, donde la biotecnología ancestral y la mitología se entrelazan para proteger los cultivos del futuro.',
-    gradeLevel: '4to a 6to Primaria',
-    price: 14.99
-  },
-  { 
-    id: '2', 
-    title: 'Cenote de Datos', 
-    tagline: 'Memoria Ancestral', 
-    accent: 'cyan', 
-    pos: { x: 50, y: 15 },
-    coverEmoji: '🌊',
-    description: 'Las profundidades cristalinas esconden registros digitales de antiguas civilizaciones. Los jóvenes exploradores descifran glifos informáticos.',
-    gradeLevel: '1ro a 3ro Básico',
-    price: 16.50
-  },
-  { 
-    id: '3', 
-    title: 'Jaguar Binario', 
-    tagline: 'Guardián del Umbral', 
-    accent: 'lilac', 
-    pos: { x: 80, y: 35 },
-    coverEmoji: '🐆',
-    description: 'El felino sagrado vigila la entrada al reino de la inteligencia artificial ética y enseña a los estudiantes el valor del criterio y la prudencia.',
-    gradeLevel: 'Diversificado',
-    price: 18.00
-  },
-  { 
-    id: '4', 
-    title: 'Tejedoras del Tiempo', 
-    tagline: 'Algoritmos Cíclicos', 
-    accent: 'cyan', 
-    pos: { x: 35, y: 75 },
-    coverEmoji: '🧶',
-    description: 'Los patrones geométricos de los textiles tradicionales Maya revelan secuencias lógicas avanzadas y matemática fractal.',
-    gradeLevel: '3ro a 6to Primaria',
-    price: 15.00
-  },
-  { 
-    id: '5', 
-    title: 'Fuego Nuevo Solar', 
-    tagline: 'Renacimiento Digital', 
-    accent: 'yellow', 
-    pos: { x: 65, y: 70 },
-    coverEmoji: '🔥',
-    description: 'Cada 52 ciclos el sol renace con nueva energía. Una aventura sobre energías renovables, astronomía y física cuántica para niños.',
-    gradeLevel: '5to y 6to Primaria',
-    price: 17.25
-  },
-  { 
-    id: '6', 
-    title: 'El Sueño del Popol Vuh', 
-    tagline: 'Corazón del Cielo', 
-    accent: 'lilac', 
-    pos: { x: 50, y: 48 },
-    coverEmoji: '📜',
-    description: 'Adaptación narrativa completa ilustrada con actividades interactivas del Popol Vuh, enfocada en la formación en valores y comprensión lectora.',
-    gradeLevel: 'Todos los grados',
-    price: 19.99
-  }
-];
-
 interface JuracanConstellationProps {
-  stories?: StoryNode[];
-  onSelectStory?: (story: StoryNode) => void;
+  stories?: BookProduct[];
+  onSelectStory?: (story: BookProduct) => void;
 }
 
 export default function JuracanConstellation({ 
-  stories = DEFAULT_STORIES,
+  stories = DEFAULT_BOOKS,
   onSelectStory 
 }: JuracanConstellationProps) {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -107,10 +28,12 @@ export default function JuracanConstellation({
       const newPaths = links
         .filter(([a, b]) => a < stories.length && b < stories.length)
         .map(([a, b]) => {
-          const x1 = (stories[a].pos.x / 100) * w;
-          const y1 = (stories[a].pos.y / 100) * h;
-          const x2 = (stories[b].pos.x / 100) * w;
-          const y2 = (stories[b].pos.y / 100) * h;
+          const pa = stories[a].pos || { x: 50, y: 50 };
+          const pb = stories[b].pos || { x: 50, y: 50 };
+          const x1 = (pa.x / 100) * w;
+          const y1 = (pa.y / 100) * h;
+          const x2 = (pb.x / 100) * w;
+          const y2 = (pb.y / 100) * h;
           
           // Curva de Bézier para efecto fluido/orgánico
           const cx = (x1 + x2) / 2;
@@ -126,7 +49,7 @@ export default function JuracanConstellation({
     return () => window.removeEventListener('resize', updateConnections);
   }, [stories]);
 
-  const handleNodeClick = (story: StoryNode) => {
+  const handleNodeClick = (story: BookProduct) => {
     setActiveStoryId(story.id);
     if (onSelectStory) {
       onSelectStory(story);
@@ -157,7 +80,7 @@ export default function JuracanConstellation({
             key={story.id}
             onClick={() => handleNodeClick(story)}
             className={`story-node glass-panel accent-${story.accent} ${isSelected ? 'selected' : ''}`}
-            style={{ left: `${story.pos.x}%`, top: `${story.pos.y}%` }}
+            style={{ left: `${(story.pos || { x: 50, y: 50 }).x}%`, top: `${(story.pos || { x: 50, y: 50 }).y}%` }}
             role="button"
             tabIndex={0}
           >

@@ -299,6 +299,7 @@ export default function Gerencia() {
           {activeAdminTab === 'catalogo' && (
             <AdminTabCatalogo 
               localConfig={localConfig} 
+              setLocalConfig={setLocalConfig}
               updateField={updateField} 
             />
           )}

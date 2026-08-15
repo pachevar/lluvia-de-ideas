@@ -60,6 +60,26 @@ export interface CatalogoConfig {
   whatsappPhone?: string;
 }
 
+export type BookAccent = 'cyan' | 'yellow' | 'lilac';
+export type BookCategory = 'primaria' | 'basico' | 'diversificado' | 'todos';
+
+export interface BookProduct {
+  id: string;
+  title: string;
+  tagline: string;
+  accent: BookAccent;
+  category: BookCategory;
+  price: number;
+  description: string;
+  gradeLevel: string;
+  badge?: string;
+  image?: string; // URL de portada (Firebase Storage)
+  coverEmoji?: string; // Portada emoji de respaldo
+  available?: boolean;
+  featured?: boolean;
+  pos?: { x: number; y: number }; // Posición en la constelación
+}
+
 export interface LandingSectionConfig {
   title?: string;
   badge?: string;
@@ -145,6 +165,7 @@ export interface PortalConfig {
   tek100?: Tek100Config;
   techTreeNodes?: Record<string, TechNode>;
   catalogoConfig?: CatalogoConfig;
+  libros?: BookProduct[];
   landingConfig?: LandingConfig;
 }
 
