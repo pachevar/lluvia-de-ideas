@@ -2,7 +2,7 @@ import type { PortalConfig } from '../../types';
 
 interface AdminTab100tekProps {
   localConfig: PortalConfig;
-  updateField: (section: string, field: string, value: any) => void;
+  updateField: (section: string, field: string, value: unknown) => void;
 }
 
 export default function AdminTab100tek({ localConfig, updateField }: AdminTab100tekProps) {

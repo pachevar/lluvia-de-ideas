@@ -74,19 +74,21 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
         await resetPassword(email);
         setMessage('Se ha enviado un enlace de recuperación a tu correo electrónico.');
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error de autenticación:', err);
+      const errorCode = (err as { code?: string }).code;
+      const errorMessage = (err as { message?: string }).message;
       let errMsg = 'Ocurrió un error inesperado. Intenta de nuevo.';
-      if (err.code === 'auth/user-not-found' || err.code === 'auth/wrong-password' || err.code === 'auth/invalid-credential') {
+      if (errorCode === 'auth/user-not-found' || errorCode === 'auth/wrong-password' || errorCode === 'auth/invalid-credential') {
         errMsg = 'Correo o contraseña incorrectos.';
-      } else if (err.code === 'auth/email-already-in-use') {
+      } else if (errorCode === 'auth/email-already-in-use') {
         errMsg = 'Este correo ya está registrado. Intenta iniciar sesión.';
-      } else if (err.code === 'auth/invalid-email') {
+      } else if (errorCode === 'auth/invalid-email') {
         errMsg = 'El correo electrónico ingresado no es válido.';
-      } else if (err.code === 'auth/weak-password') {
+      } else if (errorCode === 'auth/weak-password') {
         errMsg = 'La contraseña debe tener al menos 6 caracteres.';
-      } else if (err.message) {
-        errMsg = err.message;
+      } else if (errorMessage) {
+        errMsg = errorMessage;
       }
       setError(errMsg);
     } finally {
@@ -101,7 +103,7 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
       await loginWithGoogle();
       onClose();
       resetForm();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Error inicio con Google:', err);
       setError('No se pudo completar el inicio de sesión con Google.');
     } finally {

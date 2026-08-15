@@ -49,7 +49,7 @@ export default function GradientBuilder({ onApply, onClose }: GradientBuilderPro
     setStops(newStops);
   };
 
-  const handleStopChange = (index: number, field: 'color' | 'position', value: any) => {
+  const handleStopChange = (index: number, field: 'color' | 'position', value: unknown) => {
     const newStops = [...stops];
     newStops[index] = { ...newStops[index], [field]: value };
     setStops(newStops);

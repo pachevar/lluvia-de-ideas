@@ -6,7 +6,7 @@ import type { PortalConfig, LandingCardConfig, LandingSectionConfig } from '../.
 interface AdminTabInicioProps {
   localConfig: PortalConfig;
   setLocalConfig?: React.Dispatch<React.SetStateAction<PortalConfig | null>>;
-  updateField: (section: string, field: string, value: any) => void;
+  updateField: (section: string, field: string, value: unknown) => void;
   updateStory: (index: number, field: string, value: string) => void;
 }
 
@@ -59,7 +59,7 @@ export default function AdminTabInicio({ localConfig, updateField, setLocalConfi
     }
   };
 
-  const handleUpdateSection = (key: SectionKey, field: keyof LandingSectionConfig, value: any) => {
+  const handleUpdateSection = (key: SectionKey, field: keyof LandingSectionConfig, value: unknown) => {
     if (setLocalConfig) {
       setLocalConfig(prev => {
         if (!prev) return null;

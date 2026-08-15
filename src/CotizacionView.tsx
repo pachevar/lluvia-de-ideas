@@ -3,6 +3,7 @@ import { doc, getDoc } from 'firebase/firestore';
 import { db } from './firebase';
 import logoEditorial from './assets/logo editorial.png';
 import { CONTACT } from './constants';
+import type { Cotizacion } from './types';
 
 
 interface CotizacionViewProps {
@@ -10,7 +11,7 @@ interface CotizacionViewProps {
 }
 
 const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
-  const [quote, setQuote] = useState<any>(null);
+  const [quote, setQuote] = useState<Cotizacion | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [timeLeft, setTimeLeft] = useState<{ days: number; hours: number; minutes: number; seconds: number } | null>(null);
@@ -25,7 +26,7 @@ const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
         } else {
           setError('Cotización no encontrada o enlace inválido.');
         }
-      } catch (err) {
+      } catch {
         setError('Error al cargar la cotización.');
       } finally {
         setLoading(false);
@@ -152,7 +153,7 @@ const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
               </tr>
             </thead>
             <tbody>
-              {quote.items.map((item: any, idx: number) => (
+              {quote.items.map((item, idx) => (
                 <tr key={idx} style={{ borderBottom: '1px solid var(--border-color)' }}>
                   <td style={{ padding: '12px' }}>
                     <span style={{ fontSize: '0.8rem', color: 'var(--color-primary)', display: 'block', textTransform: 'uppercase' }}>{item.type}</span>

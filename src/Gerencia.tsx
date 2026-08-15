@@ -1,9 +1,7 @@
-import { useState, useEffect } from 'react';
-import { onAuthStateChanged, signOut } from 'firebase/auth';
-import type { User } from 'firebase/auth';
-import { auth } from './firebase';
+import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortalConfig } from './context/PortalConfigContext';
+import { useAuth } from './context/AuthContext';
 import type { PortalConfig } from './types';
 
 // Admin Components
@@ -26,25 +24,14 @@ import AdminTabTechTree from './components/admin/AdminTabTechTree';
 
 export default function Gerencia() {
   const { config, loading: configLoading, saveConfigToFirestore, resetConfigToFirestore } = usePortalConfig();
+  const { user, userProfile, isAdmin, loading: authLoading, logout } = useAuth();
   const navigate = useNavigate();
   const onBackToPortal = () => navigate('/');
 
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-  
   const [activeAdminTab, setActiveAdminTab] = useState<AdminTabType>('inicio');
   const [localConfig, setLocalConfig] = useState<PortalConfig | null>(null);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [saving, setSaving] = useState(false);
-
-  // Listen to Auth State
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-      setLoading(false);
-    });
-    return () => unsubscribe();
-  }, []);
 
   // Initialize local config copy when props config changes and not loading
   useEffect(() => {
@@ -55,13 +42,13 @@ export default function Gerencia() {
 
   const handleLogout = async () => {
     try {
-      await signOut(auth);
+      await logout();
     } catch (err) {
       console.error("Logout error:", err);
     }
   };
 
-  const handleSaveConfig = async () => {
+  const handleSaveConfig = useCallback(async () => {
     if (!localConfig) return;
     setSaving(true);
     setSaveStatus({ type: null, message: '' });
@@ -75,7 +62,7 @@ export default function Gerencia() {
     } finally {
       setSaving(false);
     }
-  };
+  }, [localConfig, saveConfigToFirestore]);
 
   const handleResetConfig = async () => {
     if (!window.confirm('¿Estás seguro de que deseas restaurar la configuración predeterminada de fábrica? Esto sobrescribirá los datos guardados.')) {
@@ -96,14 +83,14 @@ export default function Gerencia() {
   };
 
   // Helper to modify localConfig fields
-  const updateField = (section: string, field: string, value: any) => {
+  const updateField = (section: string, field: string, value: unknown) => {
     if (!localConfig) return;
     setLocalConfig(prev => {
       if (!prev) return null;
       return {
         ...prev,
         [section]: {
-          ...prev[section as keyof PortalConfig] as any,
+          ...prev[section as keyof PortalConfig] as Record<string, unknown>,
           [field]: value
         }
       };
@@ -123,7 +110,7 @@ export default function Gerencia() {
     });
   };
 
-  const updateModule = (index: number, field: string, value: any) => {
+  const updateModule = (index: number, field: string, value: unknown) => {
     if (!localConfig) return;
     const updatedModules = [...localConfig.laboratorios.modules];
     updatedModules[index] = {
@@ -167,9 +154,9 @@ export default function Gerencia() {
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [localConfig]);
+  }, [localConfig, handleSaveConfig]);
 
-  if (loading || configLoading) {
+  if (authLoading || configLoading) {
     return (
       <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', background: 'transparent' }}>
         <div style={{ width: '50px', height: '50px', border: '5px solid var(--border-color)', borderTopColor: 'var(--primary-color)', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
@@ -184,6 +171,25 @@ export default function Gerencia() {
   // Render Login Card if user is not authenticated
   if (!user) {
     return <AdminLogin onBackToPortal={onBackToPortal} />;
+  }
+
+  // Only accounts with role 'admin' (or an admin custom claim) can access the panel
+  if (!isAdmin) {
+    return (
+      <div style={{ display: 'flex', minHeight: '100vh', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', padding: '2rem', textAlign: 'center' }}>
+        <div className="card-glass" style={{ padding: '2.5rem', maxWidth: '420px', width: '100%' }}>
+          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '0.5rem' }}>🚫</span>
+          <h2 style={{ color: 'var(--danger)', marginBottom: '0.75rem' }}>Acceso Denegado</h2>
+          <p style={{ color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
+            Tu cuenta <strong>{userProfile?.email || user.email}</strong> no tiene permisos de administrador.
+            Solo cuentas con rol <strong>admin</strong> pueden acceder al Panel de Gerencia.
+          </p>
+          <button className="btn btn-primary btn-large" onClick={onBackToPortal}>
+            ⬅ Volver al Sitio Público
+          </button>
+        </div>
+      </div>
+    );
   }
 
   if (!localConfig) {

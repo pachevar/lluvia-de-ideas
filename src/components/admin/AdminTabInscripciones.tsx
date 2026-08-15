@@ -28,7 +28,7 @@ export default function AdminTabInscripciones() {
         return dateB - dateA;
       });
       setRegistrations(list);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error loading registrations:", err);
       setRegError('Error al cargar la lista de maestros inscritos.');
     } finally {

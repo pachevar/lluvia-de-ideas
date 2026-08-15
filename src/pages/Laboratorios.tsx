@@ -82,7 +82,7 @@ export default function Laboratorios() {
         setIsRegisterModalOpen(false);
         setRegSuccess(false);
       }, 3000);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Error saving registration:", err);
       setRegError('Ocurrió un error al enviar tu inscripción. Inténtalo de nuevo.');
     } finally {

@@ -3,10 +3,18 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
-import type { BingoCard, BingoGame, BingoPrize } from '../../types';
+import type { BingoCard, BingoGame, BingoPrize, Sponsor } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
 import html2canvas from 'html2canvas';
 import './Bingo.css';
+
+type StoredCardMatrix = {
+  r0: (number | null)[];
+  r1: (number | null)[];
+  r2: (number | null)[];
+  r3: (number | null)[];
+  r4: (number | null)[];
+};
 
 interface ConfettiParticle {
   id: number;
@@ -101,7 +109,7 @@ export default function BingoCardView() {
   // Player Modal states
   const [showBingoModal, setShowBingoModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
-  const [activeSponsorModal, setActiveSponsorModal] = useState<any | null>(null);
+  const [activeSponsorModal, setActiveSponsorModal] = useState<Sponsor | null>(null);
   const [isSponsorFlipped, setIsSponsorFlipped] = useState(false);
 
   // Voice announcement and confirmation states
@@ -113,7 +121,7 @@ export default function BingoCardView() {
 
   const initAudio = () => {
     if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
     }
   };
 
@@ -222,7 +230,7 @@ export default function BingoCardView() {
     const setupListeners = () => {
       unsubscribeCard = onSnapshot(doc(db, 'bingo_cards', cartonId), (cardSnap) => {
         if (cardSnap.exists()) {
-          const rawData = cardSnap.data() as any;
+          const rawData = cardSnap.data() as Partial<BingoCard> & { matrix: StoredCardMatrix };
           const matrix = [
             rawData.matrix.r0,
             rawData.matrix.r1,
@@ -314,6 +322,7 @@ export default function BingoCardView() {
       }
     }
     prevDrawnCountRef.current = currentCount;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- playFeedbackSound is a stable-by-convention closure; gameData tracked via drawnNumbers
   }, [gameData?.drawnNumbers, voiceMode]);
 
   // Limpiar marcas y almacenamiento si la partida se reinicia o se inicia una nueva ronda
@@ -343,6 +352,7 @@ export default function BingoCardView() {
       prevDrawnCountRef.current = 0;
     }
     lastResetRef.current = currentReset;
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- narrow deps track the reset source; whole gameData would retrigger on every sync
   }, [gameData?.status, gameData?.drawnNumbers?.length, gameData?.lastResetAt, cartonId]);
 
   useEffect(() => {
@@ -1188,7 +1198,7 @@ export default function BingoCardView() {
                 const isMarkedDrawnAssist = assistMode && isMarked && isDrawn && !isFree;
 
                 // Check mapping for the number
-                const map = value !== null ? (cust?.numberToImageMap as any)?.[value] : null;
+                const map = value !== null ? cust?.numberToImageMap?.[value] : null;
 
                 return (
                   <button

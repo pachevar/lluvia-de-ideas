@@ -66,6 +66,8 @@ export const hashBingoMatrix = (matrix: (number | null)[][]): string => {
   return columnsData.join('|');
 };
 
+export type MarkedSlots = (boolean | null)[][] | Record<string, (boolean | null)[]>;
+
 /**
  * Función validadora genérica por patrones.
  * Comprueba si un cartón es ganador según el patrón especificado.
@@ -74,7 +76,7 @@ export const validateBingoCard = (
   matrix: (number | null)[][], 
   drawnNumbers: number[], 
   pattern: string = 'full',
-  markedSlots?: any
+  markedSlots?: MarkedSlots
 ): { isWinner: boolean, missingNumbers: number[] } => {
   if (!matrix || !Array.isArray(matrix)) {
     return { isWinner: false, missingNumbers: [] };
@@ -91,7 +93,7 @@ export const validateBingoCard = (
     // 2. Si se provee la matriz/objeto de casillas marcadas, DEBE estar marcada por el usuario
     if (markedSlots) {
       let isMarked = true;
-      const mObj = markedSlots as any;
+      const mObj = markedSlots as Record<string, (boolean | null)[]>;
       if (Array.isArray(markedSlots) && markedSlots[r]) {
         isMarked = Boolean(markedSlots[r][c]);
       } else if (typeof markedSlots === 'object' && mObj[`r${r}`]) {

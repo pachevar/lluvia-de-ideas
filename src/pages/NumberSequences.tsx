@@ -58,7 +58,7 @@ function getPrimeFactors(num: number): number[] {
 // 3. Look-and-Say Sequence
 function getNextLookandSay(str: string): { result: string; breakdown: string } {
   let result = '';
-  let breakdownArr: string[] = [];
+  const breakdownArr: string[] = [];
   let i = 0;
 
   while (i < str.length) {
@@ -654,7 +654,7 @@ export default function NumberSequences() {
                 <button
                   key={btn.id}
                   className={`seq-chip-btn ${pascalHighlight === btn.id ? 'active' : ''}`}
-                  onClick={() => setPascalHighlight(btn.id as any)}
+                  onClick={() => setPascalHighlight(btn.id as 'none' | 'triangular' | 'evenodd')}
                 >
                   {btn.label}
                 </button>

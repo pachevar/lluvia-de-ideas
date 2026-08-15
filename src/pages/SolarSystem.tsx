@@ -493,6 +493,7 @@ export default function SolarSystem() {
 
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- orbit speeds mutate during animation; keyed by control state
   }, [isPlaying, speedMultiplier, activeTab]);
 
   // Animación del Tránsito Solar en Pestaña de Escalas
@@ -510,6 +511,7 @@ export default function SolarSystem() {
 
     transitAnimationRef.current = requestAnimationFrame(animateTransit);
     return () => cancelAnimationFrame(transitAnimationRef.current);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- transitXOffset updates every frame by design
   }, [isTransitAnimating, activeTab]);
 
   // Animación del Laboratorio de Física
@@ -656,8 +658,8 @@ export default function SolarSystem() {
   let ty = 450 - 450 * zoomLevel;
 
   if (selectedBody.id !== 'sol' && selectedBody.type !== 'cinturon') {
-    let targetX = 450;
-    let targetY = 450;
+    let targetX: number;
+    let targetY: number;
     if (selectedBody.id === 'jwst') {
       targetX = coordsJWST.x;
       targetY = coordsJWST.y;
@@ -1138,8 +1140,8 @@ export default function SolarSystem() {
 
                     {/* Anillo de Selección Cibernético (Targeting Reticle) */}
                     {selectedBody.id !== 'sol' && selectedBody.type !== 'cinturon' && (() => {
-                      let cx = 450;
-                      let cy = 450;
+                      let cx: number;
+                      let cy: number;
                       if (selectedBody.id === 'jwst') { cx = coordsJWST.x; cy = coordsJWST.y; }
                       else if (selectedBody.id === 'parker') { cx = coordsParker.x; cy = coordsParker.y; }
                       else if (selectedBody.id === 'voyager1') { cx = coordsVoyager1.x; cy = coordsVoyager1.y; }

@@ -48,6 +48,7 @@ export default function RetoMatematico() {
       setTimeLeft(prev => prev - 1);
     }, 1000);
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleTimeout declared below; timer keyed by timeLeft
   }, [timeLeft, gameState]);
 
   const handleTimeout = () => {

@@ -115,7 +115,7 @@ export const generateCotizacionPDF = async (quote: PDFQuoteData) => {
     margin: { top: 10 },
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY || 90;
+  const finalY = (doc as unknown as { lastAutoTable?: { finalY?: number } }).lastAutoTable?.finalY || 90;
   doc.setFontSize(12);
   doc.setTextColor(30, 30, 30);
   doc.setFont('helvetica', 'bold');
@@ -167,7 +167,7 @@ export const generateCotizacionPDF = async (quote: PDFQuoteData) => {
     doc.textWithLink(`Ver versión en línea: ${onlineUrl}`, 14, finalY + 68, { url: onlineUrl });
   }
 
-  let signatureY = finalY + 80;
+  const signatureY = finalY + 80;
 
   if (quote.signatureUrl) {
     try {

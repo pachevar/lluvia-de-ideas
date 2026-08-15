@@ -21,7 +21,7 @@ export default function AdminLogin({ onBackToPortal }: AdminLoginProps) {
     setLoginLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error("Login error:", err);
       setLoginError('Credenciales incorrectas. Inténtalo de nuevo.');
     } finally {
@@ -40,9 +40,10 @@ export default function AdminLogin({ onBackToPortal }: AdminLoginProps) {
     try {
       await sendPasswordResetEmail(auth, email);
       setResetMessage('¡Enlace de recuperación enviado! Revisa tu correo (incluso en spam).');
-    } catch (err: any) {
+    } catch (err: unknown) {
+      const errorCode = (err as { code?: string }).code;
       console.error("Reset password error:", err);
-      if (err.code === 'auth/user-not-found') {
+      if (errorCode === 'auth/user-not-found') {
         setLoginError('No existe ningún usuario registrado con este correo.');
       } else {
         setLoginError('Ocurrió un error al enviar el correo de recuperación.');

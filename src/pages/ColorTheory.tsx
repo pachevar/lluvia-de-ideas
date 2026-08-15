@@ -453,7 +453,7 @@ export default function ColorTheory() {
     const dx = clientX - centerX;
     const dy = clientY - centerY;
     
-    let angleRad = Math.atan2(dy, dx);
+    const angleRad = Math.atan2(dy, dx);
     let angleDeg = (angleRad * 180) / Math.PI + 90;
     if (angleDeg < 0) angleDeg += 360;
     if (angleDeg >= 360) angleDeg -= 360;

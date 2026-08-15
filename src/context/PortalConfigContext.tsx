@@ -480,7 +480,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
         // Cache to localStorage for instant 0ms loads on page refresh
         try {
           localStorage.setItem('portal_config_cache', JSON.stringify(data));
-        } catch (e) {
+        } catch {
           // ignore quota limits
         }
 

@@ -565,7 +565,7 @@ export default function StoryMachine() {
 
   const initAudio = () => {
     if (!audioCtxRef.current) {
-      audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+      audioCtxRef.current = new (window.AudioContext || (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext)();
     }
     if (audioCtxRef.current.state === 'suspended') {
       audioCtxRef.current.resume();
@@ -674,7 +674,7 @@ export default function StoryMachine() {
       }
     }, 120);
 
-    const intervals: { [key: string]: any } = {};
+    const intervals: { [key: string]: ReturnType<typeof setInterval> } = {};
     categories.forEach(cat => {
       if (!reels[cat].locked) {
         const pool = getFilteredItems(cat);
@@ -910,7 +910,7 @@ export default function StoryMachine() {
                     <button
                       key={s.id}
                       className={`ex-btn ${structureSubject === s.id ? 'active' : ''}`}
-                      onClick={() => setStructureSubject(s.id as any)}
+                      onClick={() => setStructureSubject(s.id as 'matematicas' | 'ciencias' | 'historia' | 'crecimiento')}
                     >
                       {s.label}
                     </button>
@@ -1155,7 +1155,7 @@ export default function StoryMachine() {
                   id="genre-select"
                   className="sm-select"
                   value={genreFilter}
-                  onChange={(e) => setGenreFilter(e.target.value as any)}
+                  onChange={(e) => setGenreFilter(e.target.value as 'todos' | 'fantasia' | 'scifi' | 'realismo')}
                   disabled={isAnyReelSpinning}
                 >
                   <option value="todos">Todos los Géneros</option>
@@ -1794,7 +1794,7 @@ export default function StoryMachine() {
                   <div 
                     key={mol.id}
                     className={`mol-card ${activeMolecule === mol.id ? 'active' : ''}`}
-                    onClick={() => setActiveMolecule(mol.id as any)}
+                    onClick={() => setActiveMolecule(mol.id as 'dopamina' | 'oxitocina' | 'cortisol' | 'endorfinas' | 'todos')}
                   >
                     <div>
                       <div className="mol-header-row">
@@ -2491,7 +2491,7 @@ export default function StoryMachine() {
                           key={tab.id}
                           className={`subj-btn ${anchorSubject === tab.id ? 'active' : ''}`}
                           onClick={() => {
-                            setAnchorSubject(tab.id as any);
+                            setAnchorSubject(tab.id as 'matematicas' | 'historia' | 'ciencias' | 'literatura');
                             setAnchorSimulated(false);
                           }}
                         >
@@ -2563,7 +2563,7 @@ export default function StoryMachine() {
                           <button
                             key={c.id}
                             className={`concept-btn ${anthropoConcept === c.id ? 'active' : ''}`}
-                            onClick={() => setAntrhopoConcept(c.id as any)}
+                            onClick={() => setAntrhopoConcept(c.id as 'sodio' | 'pitagoras' | 'gravedad')}
                           >
                             {c.label}
                           </button>
@@ -2700,7 +2700,7 @@ export default function StoryMachine() {
                             key={d.id}
                             className={`disrupt-btn ${disruptType === d.id ? 'active' : ''}`}
                             onClick={() => {
-                              setDisruptType(d.id as any);
+                              setDisruptType(d.id as 'experimento' | 'villano' | 'anomalia');
                               setDisruptActive(false);
                             }}
                           >

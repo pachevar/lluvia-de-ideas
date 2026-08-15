@@ -6,7 +6,7 @@ import { generateDefaultTechTree } from '../../utils/techTreeUtils';
 
 interface AdminTabTechTreeProps {
   localConfig: PortalConfig;
-  updateField: (section: keyof PortalConfig, field: string, value: any) => void;
+  updateField: (section: keyof PortalConfig, field: string, value: unknown) => void;
 }
 
 export default function AdminTabTechTree({ localConfig, updateField }: AdminTabTechTreeProps) {
@@ -19,7 +19,7 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
   const currentColumnNodes = Object.values(techNodes).filter(n => n.col === selectedColumn);
   currentColumnNodes.sort((a, b) => a.indexInCol - b.indexInCol);
 
-  const handleNodeChange = (nodeId: string, field: keyof TechNode, value: any) => {
+  const handleNodeChange = (nodeId: string, field: keyof TechNode, value: unknown) => {
     const updatedMap = { ...techNodes };
     if (updatedMap[nodeId]) {
       updatedMap[nodeId] = {

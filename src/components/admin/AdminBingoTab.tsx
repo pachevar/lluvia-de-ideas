@@ -2,8 +2,18 @@ import { useState, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import { collection, doc, addDoc, updateDoc, setDoc, deleteDoc, writeBatch, onSnapshot, query, limit, where } from 'firebase/firestore';
 import { db } from '../../firebase';
-import type { BingoGame, BingoCustomization, BingoPrize, BingoPromoter } from '../../types';
+import type { BingoGame, BingoCustomization, BingoPrize, BingoPromoter, Sponsor, BingoCard } from '../../types';
 import '../games/Bingo.css';
+
+interface GeneratedCode {
+  id: string;
+  code?: string;
+  used?: boolean;
+  usedByPlayer?: string;
+  usedByCardId?: string;
+  gameId?: string;
+  createdAt?: number;
+}
 
 const PRESETS_MAP = [
   { label: "Ceiba Sagrada", value: "🌳", type: "emoji" },
@@ -131,7 +141,7 @@ export default function AdminBingoTab() {
   const [sponsorInterval, setSponsorInterval] = useState(5);
   const [sponsorMode, setSponsorMode] = useState<'integrated' | 'modal'>('modal');
   const [sponsorAudioAnnounce, setSponsorAudioAnnounce] = useState(false);
-  const [sponsorsList, setSponsorsList] = useState<any[]>([]);
+  const [sponsorsList, setSponsorsList] = useState<Sponsor[]>([]);
 
   // New Sponsor Form States
   const [newSponsorName, setNewSponsorName] = useState('');
@@ -154,7 +164,7 @@ export default function AdminBingoTab() {
 
   // Activation Codes Manager States
   const [generateCount, setGenerateCount] = useState(20);
-  const [generatedCodesList, setGeneratedCodesList] = useState<any[]>([]);
+  const [generatedCodesList, setGeneratedCodesList] = useState<GeneratedCode[]>([]);
   const [isGenerating, setIsGenerating] = useState(false);
 
   // Prizes Gallery Manager States
@@ -171,7 +181,7 @@ export default function AdminBingoTab() {
 
   // Promotores State
   const [promotersList, setPromotersList] = useState<BingoPromoter[]>([]);
-  const [registeredCardsList, setRegisteredCardsList] = useState<any[]>([]);
+  const [registeredCardsList, setRegisteredCardsList] = useState<BingoCard[]>([]);
   const [newPromoterCode, setNewPromoterCode] = useState('');
   const [newPromoterName, setNewPromoterName] = useState('');
   const [newPromoterContact, setNewPromoterContact] = useState('');
@@ -351,12 +361,13 @@ export default function AdminBingoTab() {
       where('gameId', '==', activeGame.id)
     );
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const codes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const codes = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as GeneratedCode));
       // Ordenar por fecha de creación desc
-      codes.sort((a: any, b: any) => (b.createdAt || 0) - (a.createdAt || 0));
+      codes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
       setGeneratedCodesList(codes);
     });
     return () => unsubscribe();
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- snapshot subscription keyed by activeGame id only
   }, [activeGame?.id]);
 
   // Escuchar en tiempo real la lista de promotores de venta
@@ -618,7 +629,7 @@ export default function AdminBingoTab() {
     }
     window.speechSynthesis.cancel();
     
-    let letter = 'B';
+    const letter = 'B';
     const ball = 15;
     const utterance = new SpeechSynthesisUtterance(`Letra ${letter}... número ${ball}`);
     
@@ -1359,7 +1370,7 @@ export default function AdminBingoTab() {
                 <div style={{ borderTop: '1px solid var(--border-color)', paddingTop: '15px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                   <div className="admin-form-group">
                     <label>Tema del Anunciador de Voz</label>
-                    <select value={soundTheme} onChange={e => setSoundTheme(e.target.value as any)} style={{ padding: '10px 12px' }}>
+                    <select value={soundTheme} onChange={e => setSoundTheme(e.target.value as BingoCustomization['soundTheme'])} style={{ padding: '10px 12px' }}>
                       <option value="classic">🗣️ Español Clásico</option>
                       <option value="cyberpunk">👾 Gamer Synthwave</option>
                       <option value="retro">🕹️ Arcade Retro</option>
@@ -1538,7 +1549,7 @@ export default function AdminBingoTab() {
                   <select 
                     value={mappingType} 
                     onChange={e => {
-                      setMappingType(e.target.value as any);
+                      setMappingType(e.target.value as 'emoji' | 'image');
                       if (e.target.value === 'emoji') {
                         setMappingVal('🌳');
                       } else {
@@ -1850,7 +1861,7 @@ export default function AdminBingoTab() {
                 <label>Modo de Exposición</label>
                 <select 
                   value={sponsorMode} 
-                  onChange={e => setSponsorMode(e.target.value as any)} 
+                  onChange={e => setSponsorMode(e.target.value as 'integrated' | 'modal')} 
                   disabled={!sponsorActive}
                 >
                   <option value="modal">💥 Modal Emergente de 4s (Gran Visibilidad)</option>

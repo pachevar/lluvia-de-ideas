@@ -24,6 +24,7 @@ export default function LoteriaLeyendas() {
     if (lotteryBoard.length === 0) {
       startLotteryGame();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- seed game once on mount
   }, []);
 
   const startLotteryGame = () => {

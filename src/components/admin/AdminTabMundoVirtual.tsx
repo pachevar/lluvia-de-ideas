@@ -199,7 +199,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
       const currentMap = prev.map || [];
       const existingIdx = currentMap.findIndex(h => h.row === targetHex.row && h.col === targetHex.col);
 
-      let newMap = [...currentMap];
+      const newMap = [...currentMap];
       if (existingIdx >= 0) {
         newMap[existingIdx] = targetHex;
       } else {
@@ -499,7 +499,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     <select 
                       value={editingHex.layerDeco.type} 
                       onChange={e => {
-                        const updated = { ...editingHex, layerDeco: { ...editingHex.layerDeco, type: e.target.value as any } };
+                        const updated = { ...editingHex, layerDeco: { ...editingHex.layerDeco, type: e.target.value as 'color' | 'image' | 'icon' | 'text' | 'none' } };
                         setEditingHex(updated);
                         updateHexInGlobalConfig(updated);
                       }}
@@ -557,7 +557,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     <select 
                       value={editingHex.layerInteractive.type} 
                       onChange={e => {
-                        const updated = { ...editingHex, layerInteractive: { ...editingHex.layerInteractive, type: e.target.value as any } };
+                        const updated = { ...editingHex, layerInteractive: { ...editingHex.layerInteractive, type: e.target.value as 'color' | 'image' | 'icon' | 'text' | 'none' } };
                         setEditingHex(updated);
                         updateHexInGlobalConfig(updated);
                       }}
@@ -621,7 +621,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     <select 
                       value={editingHex.action.type} 
                       onChange={e => {
-                        const updated = { ...editingHex, action: { ...editingHex.action, type: e.target.value as any } };
+                        const updated = { ...editingHex, action: { ...editingHex.action, type: e.target.value as 'navigate' | 'external' | 'modal' | 'none' } };
                         setEditingHex(updated);
                         updateHexInGlobalConfig(updated);
                       }}

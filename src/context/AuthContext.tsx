@@ -1,6 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import type { User } from 'firebase/auth';
-import { 
+import {
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
   signOut, 
@@ -8,7 +8,8 @@ import {
   GoogleAuthProvider, 
   signInWithPopup, 
   updateProfile, 
-  onAuthStateChanged 
+  onAuthStateChanged,
+  getIdTokenResult
 } from 'firebase/auth';
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
@@ -19,14 +20,15 @@ export interface UserProfile {
   displayName: string | null;
   photoURL?: string | null;
   role: 'student' | 'teacher' | 'admin' | 'guest';
-  createdAt?: any;
-  lastLoginAt?: any;
+  createdAt?: unknown;
+  lastLoginAt?: unknown;
   institution?: string;
 }
 
 interface AuthContextType {
   user: User | null;
   userProfile: UserProfile | null;
+  isAdmin: boolean;
   loading: boolean;
   login: (email: string, pass: string) => Promise<void>;
   register: (email: string, pass: string, name: string, role?: 'student' | 'teacher') => Promise<void>;
@@ -41,10 +43,24 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
+  // Resolve admin status from the Firestore role or from a custom claim (token.admin)
+  const resolveAdminStatus = async (firebaseUser: User, profile: UserProfile | null) => {
+    const profileIsAdmin = profile?.role === 'admin';
+    let claimsIsAdmin = false;
+    try {
+      const tokenResult = await getIdTokenResult(firebaseUser);
+      claimsIsAdmin = tokenResult.claims.admin === true;
+    } catch (err) {
+      console.warn('Could not read custom claims:', err);
+    }
+    setIsAdmin(profileIsAdmin || claimsIsAdmin);
+  };
+
   // Sync user profile document in Firestore
-  const syncUserProfile = async (firebaseUser: User, extraData: Partial<UserProfile> = {}) => {
+  const syncUserProfile = async (firebaseUser: User, extraData: Partial<UserProfile> = {}): Promise<UserProfile | null> => {
     try {
       const userRef = doc(db, 'users', firebaseUser.uid);
       const docSnap = await getDoc(userRef);
@@ -56,11 +72,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
           photoURL: firebaseUser.photoURL || existingData.photoURL || null,
           displayName: firebaseUser.displayName || existingData.displayName || null,
         });
-        setUserProfile({
+        const profile: UserProfile = {
           ...existingData,
           displayName: firebaseUser.displayName || existingData.displayName,
           photoURL: firebaseUser.photoURL || existingData.photoURL,
-        });
+        };
+        setUserProfile(profile);
+        return profile;
       } else {
         const newProfile: UserProfile = {
           uid: firebaseUser.uid,
@@ -74,9 +92,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
         await setDoc(userRef, newProfile);
         setUserProfile(newProfile);
+        return newProfile;
       }
     } catch (err) {
       console.error('Error syncing user profile in Firestore:', err);
+      return null;
     }
   };
 
@@ -85,9 +105,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(currentUser);
       try {
         if (currentUser) {
-          await syncUserProfile(currentUser);
+          const profile = await syncUserProfile(currentUser);
+          await resolveAdminStatus(currentUser, profile);
         } else {
           setUserProfile(null);
+          setIsAdmin(false);
         }
       } catch (err) {
         console.error('Error procesando autenticación:', err);
@@ -102,7 +124,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const login = async (email: string, pass: string) => {
     const res = await signInWithEmailAndPassword(auth, email, pass);
     if (res.user) {
-      await syncUserProfile(res.user);
+      const profile = await syncUserProfile(res.user);
+      await resolveAdminStatus(res.user, profile);
     }
   };
 
@@ -110,7 +133,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const res = await createUserWithEmailAndPassword(auth, email, pass);
     if (res.user) {
       await updateProfile(res.user, { displayName: name });
-      await syncUserProfile(res.user, { displayName: name, role });
+      const profile = await syncUserProfile(res.user, { displayName: name, role });
+      await resolveAdminStatus(res.user, profile);
     }
   };
 
@@ -118,7 +142,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const provider = new GoogleAuthProvider();
     const res = await signInWithPopup(auth, provider);
     if (res.user) {
-      await syncUserProfile(res.user);
+      const profile = await syncUserProfile(res.user);
+      await resolveAdminStatus(res.user, profile);
     }
   };
 
@@ -126,6 +151,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await signOut(auth);
     setUser(null);
     setUserProfile(null);
+    setIsAdmin(false);
   };
 
   const resetPassword = async (email: string) => {
@@ -143,6 +169,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     <AuthContext.Provider value={{
       user,
       userProfile,
+      isAdmin,
       loading,
       login,
       register,

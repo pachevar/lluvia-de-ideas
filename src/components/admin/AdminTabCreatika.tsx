@@ -2,7 +2,7 @@ import type { PortalConfig } from '../../types';
 
 interface AdminTabCreatikaProps {
   localConfig: PortalConfig;
-  updateField: (section: string, field: string, value: any) => void;
+  updateField: (section: string, field: string, value: unknown) => void;
 }
 
 export default function AdminTabCreatika({ localConfig, updateField }: AdminTabCreatikaProps) {

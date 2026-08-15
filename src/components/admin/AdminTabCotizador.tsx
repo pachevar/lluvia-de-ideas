@@ -61,7 +61,7 @@ export default function AdminTabCotizador() {
     setCotizaNewItemPrice(0);
   };
 
-  const updateCotizaItem = (index: number, field: string, value: any) => {
+  const updateCotizaItem = (index: number, field: string, value: unknown) => {
     setCotizaItems(prev => {
       const newItems = [...prev];
       newItems[index] = { ...newItems[index], [field]: value };
@@ -273,7 +273,7 @@ export default function AdminTabCotizador() {
         <div className="admin-form-row cotizador-add-row" style={{ alignItems: 'flex-end', flexWrap: 'wrap' }}>
           <div className="admin-form-group" style={{ flex: '1 1 120px' }}>
             <label>Tipo</label>
-            <select value={cotizaNewItemType} onChange={e => setCotizaNewItemType(e.target.value as any)}>
+            <select value={cotizaNewItemType} onChange={e => setCotizaNewItemType(e.target.value as 'producto' | 'servicio')}>
               <option value="producto">Producto</option>
               <option value="servicio">Servicio</option>
             </select>
@@ -351,7 +351,7 @@ export default function AdminTabCotizador() {
                 </tr>
               </thead>
               <tbody>
-                {cotizacionesHistory.map((c: any) => (
+                {cotizacionesHistory.map((c) => (
                   <tr key={c.id} style={{ borderBottom: '1px solid var(--border-color)' }}>
                     <td style={{ padding: '12px 16px' }}>{new Date(c.createdAt).toLocaleDateString()}</td>
                     <td style={{ padding: '12px 16px' }}>{c.clientCompany || c.clientName}</td>

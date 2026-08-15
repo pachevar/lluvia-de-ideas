@@ -155,7 +155,7 @@ export function mixPaintColors(colors: PaintColor[]): {
   const blacks = colors.filter(c => c.isBlack);
   const baseColors = colors.filter(c => !c.isWhite && !c.isBlack);
 
-  let mixedRyb: [number, number, number] = [0, 0, 0];
+  let mixedRyb: [number, number, number];
   let finalRgb: [number, number, number] = [255, 255, 255];
 
   // 1. Si hay colores base (Rojo, Amarillo, Azul), calcular su promedio RYB

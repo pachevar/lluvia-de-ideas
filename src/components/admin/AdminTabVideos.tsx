@@ -155,7 +155,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
       visible: tipForm.visible ?? true
     };
 
-    let updatedList = [...tipsList];
+    const updatedList = [...tipsList];
     if (editingTipIndex !== null) {
       updatedList[editingTipIndex] = newTip;
     } else {

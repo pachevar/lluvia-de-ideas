@@ -103,7 +103,7 @@ export default function Home() {
               alt="Editorial Lluvia de Ideas" 
               className="landing-logo"
               decoding="async"
-              // @ts-ignore
+              // @ts-expect-error React 19 supports fetchpriority natively
               fetchpriority="high"
               width="180"
               height="40"

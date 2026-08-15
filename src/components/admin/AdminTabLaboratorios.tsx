@@ -5,7 +5,7 @@ import { formatDateSpanish, formatTime12h, parseTimeRange } from '../../utils/da
 interface AdminTabLaboratoriosProps {
   localConfig: PortalConfig;
   setLocalConfig: React.Dispatch<React.SetStateAction<PortalConfig | null>>;
-  updateModule: (index: number, field: string, value: any) => void;
+  updateModule: (index: number, field: string, value: unknown) => void;
   updateModuleSkill: (moduleIndex: number, skillIndex: number, value: string) => void;
 }
 

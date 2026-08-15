@@ -46,7 +46,7 @@ export function getHexLabel(row: number, col: number): string {
   ];
 
   let index = 1;
-  for (let dir of directions) {
+  for (const dir of directions) {
     for (let step = 0; step < d; step++) {
       if (currentR === row && currentQ === col) {
         return `${index}${ringChar}`;

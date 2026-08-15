@@ -3,10 +3,28 @@ import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
-import type { BingoGame, BingoCard, BingoPrize } from '../../types';
+import type { BingoGame, BingoCard, BingoPrize, Sponsor, BingoPromoter } from '../../types';
 import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardCollision } from '../../utils/bingoGenerator';
+import type { MarkedSlots } from '../../utils/bingoGenerator';
 import { CONTACT } from '../../constants';
 import './Bingo.css';
+
+type StoredCardMatrix = {
+  r0: (number | null)[];
+  r1: (number | null)[];
+  r2: (number | null)[];
+  r3: (number | null)[];
+  r4: (number | null)[];
+};
+
+interface WinnerHistoryEntry {
+  id: string;
+  timestamp?: number;
+  playerName?: string;
+  prize?: string;
+  cardId?: string;
+  gameId?: string;
+}
 
 const DEFAULT_SAMPLE_PRIZES: BingoPrize[] = [
   {
@@ -40,8 +58,8 @@ export default function BingoHub() {
   const [activeGame, setActiveGame] = useState<BingoGame | null>(null);
   const [loading, setLoading] = useState(true);
   const [isAdmin, setIsAdmin] = useState(false);
-  const [registeredCards, setRegisteredCards] = useState<any[]>([]);
-  const [winnersHistory, setWinnersHistory] = useState<any[]>([]);
+  const [registeredCards, setRegisteredCards] = useState<BingoCard[]>([]);
+  const [winnersHistory, setWinnersHistory] = useState<WinnerHistoryEntry[]>([]);
 
   
   const [playerName, setPlayerName] = useState('');
@@ -79,7 +97,7 @@ export default function BingoHub() {
   const [showAllPhones, setShowAllPhones] = useState(false);
   const [playerSearchQuery, setPlayerSearchQuery] = useState('');
   const [selectedPromoterFilter, setSelectedPromoterFilter] = useState('ALL');
-  const [promotersList, setPromotersList] = useState<any[]>([]);
+  const [promotersList, setPromotersList] = useState<BingoPromoter[]>([]);
 
   // Instructions Modal state
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
@@ -88,7 +106,7 @@ export default function BingoHub() {
   useEffect(() => {
     const qPromos = query(collection(db, 'bingo_promoters'));
     const unsubPromos = onSnapshot(qPromos, (snap) => {
-      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as BingoPromoter));
       setPromotersList(list);
     }, (err) => {
       console.warn("Could not load promoters list", err);
@@ -119,8 +137,8 @@ export default function BingoHub() {
   const [rollingBall, setRollingBall] = useState<string>('...');
 
   // Sponsor & Prizes Visual States
-  const [activeSponsorModal, setActiveSponsorModal] = useState<any | null>(null);
-  const [activeSponsorIntegrated, setActiveSponsorIntegrated] = useState<any | null>(null);
+  const [activeSponsorModal, setActiveSponsorModal] = useState<Sponsor | null>(null);
+  const [activeSponsorIntegrated, setActiveSponsorIntegrated] = useState<Sponsor | null>(null);
   const [isSponsorFlipped, setIsSponsorFlipped] = useState(false);
   const [showPrizesModal, setShowPrizesModal] = useState(false);
   const [prizesSort, setPrizesSort] = useState<'asc' | 'desc' | 'category'>('asc');
@@ -248,12 +266,13 @@ export default function BingoHub() {
           setCodeValidationStatus('valid');
           setCodeValidationMsg('Código de activación disponible 🟢');
         }
-      } catch (err) {
+      } catch {
         setCodeValidationStatus('idle');
       }
     }, 350);
 
     return () => clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- keyed by activationCode and activeGame id, not the whole game object
   }, [activationCode, activeGame?.id]);
 
   useEffect(() => {
@@ -308,6 +327,7 @@ export default function BingoHub() {
       unsubscribeAuth();
       unsubscribeGame();
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- fire-and-forget mount subscription; triggerTombolaRoll read via ref/closure
   }, []);
 
   useEffect(() => {
@@ -321,10 +341,10 @@ export default function BingoHub() {
   }, [activeSponsorModal]);
 
   // Dedicated listener for shouting cards across the current game session
-  const [shoutedCards, setShoutedCards] = useState<any[]>([]);
+  const [shoutedCards, setShoutedCards] = useState<BingoCard[]>([]);
 
   // Standalone global listener for any shouting cards across the whole bingo_cards collection
-  const [globalShoutedCards, setGlobalShoutedCards] = useState<any[]>([]);
+  const [globalShoutedCards, setGlobalShoutedCards] = useState<BingoCard[]>([]);
 
   useEffect(() => {
     const qGlobalShouts = query(
@@ -332,7 +352,7 @@ export default function BingoHub() {
       where('shoutedBingo', '==', true)
     );
     const unsubGlobalShouts = onSnapshot(qGlobalShouts, (snap) => {
-      const shouts = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      const shouts = snap.docs.map(d => ({ id: d.id, ...d.data() } as BingoCard));
       setGlobalShoutedCards(shouts);
     }, (err) => {
       console.warn("Global shouts listener error:", err);
@@ -350,10 +370,10 @@ export default function BingoHub() {
 
     const qCards = query(collection(db, 'bingo_cards'), where('gameId', '==', activeGame.id));
     const unsubscribeCards = onSnapshot(qCards, (snapshot) => {
-      const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BingoCard));
       setRegisteredCards(cards);
       // Filter shouting cards directly
-      const shouting = cards.filter((c: any) => c.shoutedBingo);
+      const shouting = cards.filter((c) => c.shoutedBingo);
       setShoutedCards(shouting);
     }, (error) => {
       console.error("Error loading cards:", error);
@@ -367,7 +387,7 @@ export default function BingoHub() {
     ...shoutedCards,
     ...globalShoutedCards,
     ...registeredCards.filter(c => c.shoutedBingo)
-  ].reduce((acc: any[], current) => {
+  ].reduce((acc: BingoCard[], current) => {
     if (!acc.some(item => item.id === current.id)) {
       acc.push(current);
     }
@@ -407,8 +427,8 @@ export default function BingoHub() {
     const qWinners = query(collection(db, 'bingo_winners_history'), limit(50));
     const unsubscribeWinners = onSnapshot(qWinners, (snapshot) => {
       const winners = snapshot.docs
-        .map(doc => ({ id: doc.id, ...doc.data() }))
-        .sort((a: any, b: any) => (b.timestamp || 0) - (a.timestamp || 0));
+        .map(doc => ({ id: doc.id, ...doc.data() } as WinnerHistoryEntry))
+        .sort((a, b) => (b.timestamp || 0) - (a.timestamp || 0));
       setWinnersHistory(winners);
     }, (error) => {
       console.error("Error loading winners history:", error);
@@ -417,7 +437,7 @@ export default function BingoHub() {
     return () => unsubscribeWinners();
   }, []);
 
-  const confirmWinner = async (card: any) => {
+  const confirmWinner = async (card: BingoCard) => {
     if (!activeGame) return;
     try {
       const prizesList = (cust?.prizes && cust.prizes.length > 0)
@@ -428,7 +448,7 @@ export default function BingoHub() {
             { id: 'p3', title: '🥉 Premio Especial 1: Colección de Libros Lluvia de Ideas' }
           ];
 
-      const currentPrizeObj = prizesList.find((p: any) => p.id === activeGame.currentPrizeId) || prizesList[0];
+      const currentPrizeObj = prizesList.find((p) => p.id === activeGame.currentPrizeId) || prizesList[0];
       const activePrizeTitle = currentPrizeObj ? currentPrizeObj.title : 'Premio Mayor';
 
       await addDoc(collection(db, 'bingo_winners_history'), {
@@ -471,7 +491,7 @@ export default function BingoHub() {
     }
   };
 
-  const rejectClaim = async (card: any) => {
+  const rejectClaim = async (card: BingoCard) => {
     try {
       await updateDoc(doc(db, 'bingo_cards', card.id), {
         shoutedBingo: false
@@ -502,11 +522,13 @@ export default function BingoHub() {
     }
     addLog(`CONECTADO: Canal de datos para "${activeGame.title}" activo.`, "success");
     addLog(`SISTEMA: Estado inicial de partida -> [${activeGame.status.toUpperCase()}].`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- log once per game id
   }, [activeGame?.id]);
 
   useEffect(() => {
     if (!activeGame) return;
     addLog(`PARTIDA: Estado del juego cambiado a [${activeGame.status.toUpperCase()}].`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- log once per status change
   }, [activeGame?.status]);
 
   // Voice announcer
@@ -766,7 +788,7 @@ export default function BingoHub() {
       const cardSnap = await getDoc(cardRef);
 
       if (cardSnap.exists()) {
-        const rawData = cardSnap.data() as any;
+        const rawData = cardSnap.data() as Partial<BingoCard> & { matrix: StoredCardMatrix; markedSlots?: MarkedSlots };
         const matrix = [
           rawData.matrix.r0,
           rawData.matrix.r1,
@@ -905,7 +927,7 @@ export default function BingoHub() {
           if (otherCard.hash && otherCard.hash === hash) return true;
 
           if (!otherCard.matrix) return false;
-          let otherMatrix: (number | null)[][] = [];
+          let otherMatrix: (number | null)[][];
           if (Array.isArray(otherCard.matrix)) {
             otherMatrix = otherCard.matrix;
           } else if (otherCard.matrix.r0) {
@@ -1201,7 +1223,7 @@ export default function BingoHub() {
                               { id: 'p2', title: '🥈 Segundo Premio: Tablet Educativa 10"' },
                               { id: 'p3', title: '🥉 Premio Especial 1: Colección de Libros Lluvia de Ideas' }
                             ];
-                        const prizeObj = prizesList.find((p: any) => p.id === selectedId);
+                        const prizeObj = prizesList.find((p) => p.id === selectedId);
                         await updateDoc(doc(db, 'bingo_games', activeGame.id), {
                           currentPrizeId: selectedId,
                           currentPrizeTitle: prizeObj ? prizeObj.title : ''
@@ -1227,7 +1249,7 @@ export default function BingoHub() {
                         { id: 'p1', title: '🥇 Premio Mayor: Smart TV 55" 4K HDR' },
                         { id: 'p2', title: '🥈 Segundo Premio: Tablet Educativa 10"' },
                         { id: 'p3', title: '🥉 Premio Especial 1: Colección de Libros Lluvia de Ideas' }
-                      ]).map((p: any) => (
+                      ]).map((p) => (
                         <option key={p.id} value={p.id} style={{ background: '#0d061c', color: '#fff' }}>
                           {p.title}
                         </option>
@@ -2146,7 +2168,7 @@ export default function BingoHub() {
                           if (last > 45 && last <= 60) { letter = 'G'; letterColor = '#22c55e'; }
                           if (last > 60 && last <= 75) { letter = 'O'; letterColor = '#f59e0b'; }
 
-                          const map = (cust?.numberToImageMap as any)?.[last];
+                          const map = cust?.numberToImageMap?.[last];
 
                           return (
                             <div className="number-display-showcase animate-zoom-in">
@@ -2209,7 +2231,7 @@ export default function BingoHub() {
                         if (num > 30 && num <= 45) letter = 'N';
                         if (num > 45 && num <= 60) letter = 'G';
                         if (num > 60 && num <= 75) letter = 'O';
-                        const map = (cust?.numberToImageMap as any)?.[num];
+                        const map = cust?.numberToImageMap?.[num];
                         
                         return (
                           <div key={i} className="drawn-number-badge-cyber">

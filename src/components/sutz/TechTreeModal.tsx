@@ -140,6 +140,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleJumpToCol intentionally not memoized
   }, [isOpen, inspectNode, onClose]);
 
   // Map nodes from nodesMap prop or use INITIAL_TECH_TREE_DATA (267 nodes across 30 cols)
@@ -287,6 +288,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', updateWiresLayout);
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateWiresLayout intentionally not memoized
   }, [isOpen, techsList, unlocked]);
 
   if (!isOpen) return null;

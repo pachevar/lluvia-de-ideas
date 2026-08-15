@@ -62,7 +62,7 @@ export default function Sutz() {
 
   const storiesList = config.stories || [];
 
-  const handleHexClick = (hex: any) => {
+  const handleHexClick = (hex: CustomHexagon) => {
     if (!hex.action || hex.action.type === 'none') return;
     
     switch (hex.action.type) {
