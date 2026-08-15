@@ -33,6 +33,23 @@ export interface HexInteractiveAction {
   target: string; // Ej: '/catalogo', 'https://...', 'story-camazotz'
 }
 
+// Pieza isométrica (PNG con transparencia) que compone el mapa en vista isométrica.
+// La lógica de capas permite traslapar imágenes: las de mayor `layer` se dibujan
+// adelante (sobre) y las de menor `layer` quedan detrás.
+export interface IsoAsset {
+  id: string;
+  name: string;
+  image: string; // URL PNG (Firebase Storage)
+  row: number; // Celda hexagonal de anclaje (define la profundidad isométrica)
+  col: number;
+  layer: number; // Orden de capa: mayor = más adelante / sobre las demás
+  width?: number; // Ancho en px (default: ancho del tile iso)
+  height?: number; // Alto en px (default: proporcional al ancho)
+  offsetX?: number; // Desplazamiento horizontal en px
+  offsetY?: number; // Desplazamiento vertical en px
+  opacity?: number; // 0..1 (default 1)
+}
+
 export interface CustomHexagon {
   id: string; // Formato de coordenada precisa: "row,col" ej: "0,0" o "-1,2"
   row: number;
@@ -161,6 +178,7 @@ export interface PortalConfig {
     'text-title': string;
   };
   map?: CustomHexagon[];
+  isoAssets?: IsoAsset[];
   creatika?: CreatikaConfig;
   tek100?: Tek100Config;
   techTreeNodes?: Record<string, TechNode>;

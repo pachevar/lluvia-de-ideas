@@ -1,7 +1,7 @@
 import React, { useMemo } from 'react';
 import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch';
 import { HexagonCell, type HexVariant } from './HexagonCell';
-import type { CustomHexagon } from '../../types';
+import type { CustomHexagon, IsoAsset } from '../../types';
 import { buildIsoHexGeometry, isoProject } from '../../utils/isoHex';
 import './Hexagon.css';
 
@@ -15,6 +15,7 @@ interface HexagonGridProps {
   editingHexCol?: number | null;
   variant?: HexVariant;
   isoDepth?: number;
+  isoAssets?: IsoAsset[];
 }
 
 const twoDX = (cell: CustomHexagon, hexWidth: number, xOffset: number) => xOffset + cell.col * (0.75 * hexWidth);
@@ -31,7 +32,8 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   editingHexRow = null,
   editingHexCol = null,
   variant = 'flat',
-  isoDepth
+  isoDepth,
+  isoAssets
 }) => {
   // Dynamic cell bounds calculation so hexes are ALWAYS perfectly centered
   const cols = cells.length > 0 ? cells.map(c => c.col) : [0];
@@ -181,6 +183,39 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
                     isoPos={variant === 'iso' ? isoPosFor(cell) : undefined}
                   />
                 ))}
+
+                {variant === 'iso' && isoLayout && isoAssets && isoAssets.length > 0 && isoAssets.map(asset => {
+                  const anchor = cells.find(c => c.row === asset.row && c.col === asset.col);
+                  if (!anchor) return null;
+                  const geo = isoLayout.geo;
+                  const p = isoProject(twoDX(anchor, hexWidth, 0), twoDY(anchor, hexHeight, 0));
+                  const left = p.x + geo.minX - isoLayout.minIsoX + isoLayout.pad;
+                  const top = p.y + geo.minY - isoLayout.minIsoY + isoLayout.pad;
+                  const w = asset.width ?? geo.tileW;
+                  const h = asset.height ?? w;
+                  const imgStyle: React.CSSProperties = {
+                    position: 'absolute',
+                    left: `${left + geo.tileW / 2 - w / 2 + (asset.offsetX ?? 0)}px`,
+                    top: `${top + geo.tileH / 2 - h / 2 + (asset.offsetY ?? 0)}px`,
+                    width: `${w}px`,
+                    height: `${h}px`,
+                    zIndex: (Math.round(p.y) + 500) * 100 + 50 + (asset.layer ?? 0),
+                    opacity: asset.opacity ?? 1,
+                    pointerEvents: 'none',
+                    userSelect: 'none',
+                    WebkitUserSelect: 'none'
+                  };
+                  return (
+                    <img
+                      key={asset.id}
+                      src={asset.image}
+                      alt={asset.name}
+                      title={asset.name}
+                      style={imgStyle}
+                      draggable={false}
+                    />
+                  );
+                })}
               </div>
             </TransformComponent>
           </div>

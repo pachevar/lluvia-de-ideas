@@ -304,7 +304,7 @@ export default function Sutz() {
       </div>
 
       {/* Mapa Hexagonal */}
-      <HexagonGrid cells={cells} onHexClick={handleHexClick} variant={viewMode} />
+      <HexagonGrid cells={cells} onHexClick={handleHexClick} variant={viewMode} isoAssets={config.isoAssets} />
 
       {/* Selector de Vista: Isométrica 3D / Cenital (Estilo WC3 con estética Maya) */}
       <div className="w3view-switch" role="group" aria-label="Tipo de vista del mundo virtual">

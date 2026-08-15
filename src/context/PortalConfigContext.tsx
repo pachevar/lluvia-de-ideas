@@ -265,6 +265,7 @@ export const DEFAULT_CONFIG: PortalConfig = {
     }
   },
   techTreeNodes: generateDefaultTechTree(),
+  isoAssets: [],
   map: [
 
     {
@@ -463,6 +464,9 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
         const data = docSnap.data() as PortalConfig;
         if (!data.map) {
           data.map = DEFAULT_CONFIG.map;
+        }
+        if (!data.isoAssets) {
+          data.isoAssets = [];
         }
         if (!data.creatika) {
           data.creatika = DEFAULT_CONFIG.creatika;
