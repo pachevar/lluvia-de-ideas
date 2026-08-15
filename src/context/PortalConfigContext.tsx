@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { PortalConfig } from '../types';
+import type { PortalConfig, TiendaConfig } from '../types';
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
 
@@ -185,7 +185,7 @@ export const DEFAULT_CONFIG: PortalConfig = {
     numberSequencesIntro: "Descubre patrones lógicos, sucesiones algebraicas y retos de agilidad mental.",
     solarSystemIntro: "Navega en 3D por la órbita de los planetas y sus magnitudes astronómicas."
   },
-  catalogoConfig: {
+  tiendaConfig: {
     announcement: "¡Nuevas publicaciones y guías pedagógicas disponibles para el ciclo escolar!",
     whatsappPhone: CONTACT.whatsappPhone
   },
@@ -337,12 +337,12 @@ export const DEFAULT_CONFIG: PortalConfig = {
       id: "1,0",
       row: 1,
       col: 0,
-      title: "Catálogo Editorial",
+      title: "Tienda de Cuentos",
       glowColor: "rgba(59, 130, 246, 0.85)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },
       layerInteractive: { type: "icon", value: "📚" },
-      action: { type: "navigate", target: "/catalogo" }
+      action: { type: "navigate", target: "/libros" }
     },
     {
       id: "0,-1",
@@ -470,8 +470,9 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (!data.tek100) {
           data.tek100 = DEFAULT_CONFIG.tek100;
         }
-        if (!data.catalogoConfig) {
-          data.catalogoConfig = DEFAULT_CONFIG.catalogoConfig;
+        if (!data.tiendaConfig) {
+          // Migración: versiones previas guardaron este dato como catalogoConfig
+          data.tiendaConfig = (data as unknown as { catalogoConfig?: TiendaConfig }).catalogoConfig || DEFAULT_CONFIG.tiendaConfig;
         }
         if (!data.techTreeNodes) {
           data.techTreeNodes = DEFAULT_CONFIG.techTreeNodes;

@@ -9,7 +9,7 @@ export type AdminTabType =
   | '100tek' 
   | 'laboratorios'
   | 'bingo' 
-  | 'catalogo' 
+  | 'tienda' 
   | 'inscripciones' 
   | 'cotizador' 
   | 'colors'
@@ -136,11 +136,11 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
         keywords: ['cotizador', 'cotizacion', 'pdf', 'propuestas', 'precios', 'presupuesto']
       },
       {
-        id: 'catalogo',
-        label: '📚 Catálogo Editorial & Precios',
-        icon: '📚',
-        description: 'Productos, precios, ofertas y stock del catálogo público',
-        keywords: ['catalogo', 'precios', 'ofertas', 'productos', 'tienda', 'carrito']
+        id: 'tienda',
+        label: '🛍️ Tienda de Cuentos',
+        icon: '🛍️',
+        description: 'Cuentos de la tienda: portadas con imagen, descripciones, precios y disponibilidad',
+        keywords: ['tienda', 'cuentos', 'libros', 'precios', 'productos', 'carrito', 'portadas']
       }
     ]
   },

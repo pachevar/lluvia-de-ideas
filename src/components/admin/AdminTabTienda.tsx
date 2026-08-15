@@ -3,7 +3,7 @@ import type { BookAccent, BookCategory, BookProduct, PortalConfig } from '../../
 import { DEFAULT_BOOKS } from '../../data/books';
 import { uploadImageToStorage } from '../../utils/imageUpload';
 
-interface AdminTabCatalogoProps {
+interface AdminTabTiendaProps {
   localConfig: PortalConfig;
   setLocalConfig: React.Dispatch<React.SetStateAction<PortalConfig | null>>;
   updateField: (section: string, field: string, value: unknown) => void;
@@ -37,8 +37,8 @@ const emptyDraft = (): BookProduct => ({
   pos: { x: 50, y: 50 }
 });
 
-export default function AdminTabCatalogo({ localConfig, setLocalConfig, updateField }: AdminTabCatalogoProps) {
-  const catalogo = localConfig.catalogoConfig || {
+export default function AdminTabTienda({ localConfig, setLocalConfig, updateField }: AdminTabTiendaProps) {
+  const tienda = localConfig.tiendaConfig || {
     announcement: "¡Nuevas publicaciones y guías pedagógicas disponibles para el ciclo escolar!",
     whatsappPhone: "50246741239"
   };
@@ -56,7 +56,7 @@ export default function AdminTabCatalogo({ localConfig, setLocalConfig, updateFi
   };
 
   const handleChange = (field: string, value: string) => {
-    updateField('catalogoConfig', field, value);
+    updateField('tiendaConfig', field, value);
   };
 
   const openNew = () => {
@@ -140,7 +140,7 @@ export default function AdminTabCatalogo({ localConfig, setLocalConfig, updateFi
             <label>Mensaje de Anuncio / Novedades</label>
             <textarea
               rows={2}
-              value={catalogo.announcement || ''}
+              value={tienda.announcement || ''}
               onChange={(e) => handleChange('announcement', e.target.value)}
               placeholder="Escribe el mensaje destacado para los clientes en el catálogo..."
             />
@@ -152,7 +152,7 @@ export default function AdminTabCatalogo({ localConfig, setLocalConfig, updateFi
             <label>Teléfono de WhatsApp para Pedidos (Código de país sin +)</label>
             <input
               type="text"
-              value={catalogo.whatsappPhone || ''}
+              value={tienda.whatsappPhone || ''}
               onChange={(e) => handleChange('whatsappPhone', e.target.value)}
               placeholder="Ejemplo: 50246741239"
             />
@@ -406,15 +406,6 @@ export default function AdminTabCatalogo({ localConfig, setLocalConfig, updateFi
             style={{ textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
           >
             🛍️ Ver Tienda de Cuentos Pública ↗
-          </a>
-          <a
-            href="/catalogo"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-secondary"
-            style={{ textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-          >
-            📚 Ver Catálogo Público ↗
           </a>
         </div>
       </div>

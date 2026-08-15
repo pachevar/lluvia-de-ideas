@@ -55,7 +55,7 @@ export interface Tek100Config {
   solarSystemIntro?: string;
 }
 
-export interface CatalogoConfig {
+export interface TiendaConfig {
   announcement?: string;
   whatsappPhone?: string;
 }
@@ -164,7 +164,7 @@ export interface PortalConfig {
   creatika?: CreatikaConfig;
   tek100?: Tek100Config;
   techTreeNodes?: Record<string, TechNode>;
-  catalogoConfig?: CatalogoConfig;
+  tiendaConfig?: TiendaConfig;
   libros?: BookProduct[];
   landingConfig?: LandingConfig;
 }

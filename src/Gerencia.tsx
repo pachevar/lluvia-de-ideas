@@ -19,7 +19,7 @@ import AdminBingoTab from './components/admin/AdminBingoTab';
 import AdminTabMundoVirtual from './components/admin/AdminTabMundoVirtual';
 import AdminTabCreatika from './components/admin/AdminTabCreatika';
 import AdminTab100tek from './components/admin/AdminTab100tek';
-import AdminTabCatalogo from './components/admin/AdminTabCatalogo';
+import AdminTabTienda from './components/admin/AdminTabTienda';
 import AdminTabTechTree from './components/admin/AdminTabTechTree';
 
 export default function Gerencia() {
@@ -296,8 +296,8 @@ export default function Gerencia() {
             />
           )}
 
-          {activeAdminTab === 'catalogo' && (
-            <AdminTabCatalogo 
+          {activeAdminTab === 'tienda' && (
+            <AdminTabTienda 
               localConfig={localConfig} 
               setLocalConfig={setLocalConfig}
               updateField={updateField} 

@@ -29,7 +29,7 @@ export default function NuestrosLibros() {
   const { config } = usePortalConfig();
   const { cart, addToCart, removeFromCart, clearCart, getTotalCartPrice } = useCart();
 
-  const catalogo = config.catalogoConfig || {};
+  const tienda = config.tiendaConfig || {};
   const books = config.libros && config.libros.length > 0 ? config.libros : DEFAULT_BOOKS;
 
   const [query, setQuery] = useState('');
@@ -72,7 +72,7 @@ export default function NuestrosLibros() {
     });
   };
 
-  const whatsapp = catalogo.whatsappPhone || '50246741239';
+  const whatsapp = tienda.whatsappPhone || '50246741239';
 
   return (
     <div className="juracan-theme-container animate-fade-in">
@@ -85,8 +85,8 @@ export default function NuestrosLibros() {
         <header className="store-header">
           <div className="store-badge-hud">✨ TIENDA DE CUENTOS · EDITORIAL LLUVIA DE IDEAS</div>
           <h1 className="store-title">Nuestros Libros & Cuentos</h1>
-          {catalogo.announcement && (
-            <p className="store-announcement">📣 {catalogo.announcement}</p>
+          {tienda.announcement && (
+            <p className="store-announcement">📣 {tienda.announcement}</p>
           )}
 
           {/* Barra de buscador + filtros */}
@@ -301,9 +301,6 @@ export default function NuestrosLibros() {
                     <div style={{ display: 'flex', gap: '10px' }}>
                       <button className="btn btn-glass" onClick={() => navigate('/creatika/maquina-de-cuentos')} style={{ flex: 1, fontSize: '0.88rem' }}>
                         🎰 Probar en Cuentos
-                      </button>
-                      <button className="btn btn-glass" onClick={() => navigate('/catalogo')} style={{ flex: 1, fontSize: '0.88rem' }}>
-                        📚 Ver Catálogo
                       </button>
                     </div>
                   </div>

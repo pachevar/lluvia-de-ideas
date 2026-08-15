@@ -11,9 +11,8 @@ const Home = React.lazy(() => import('./pages/Home'));
 const Gerencia = React.lazy(() => import('./Gerencia'));
 const CotizacionView = React.lazy(() => import('./CotizacionView'));
 const Sutz = React.lazy(() => import('./pages/Sutz'));
-const Laboratorios = React.lazy(() => import('./pages/Laboratorios'));
 const Juracan = React.lazy(() => import('./pages/Juracan'));
-const Catalogo = React.lazy(() => import('./pages/Catalogo'));
+const Laboratorios = React.lazy(() => import('./pages/Laboratorios'));
 const BingoHub = React.lazy(() => import('./components/games/BingoHub'));
 const BingoCardView = React.lazy(() => import('./components/games/BingoCardView'));
 const StoryMachine = React.lazy(() => import('./components/games/StoryMachine'));
@@ -223,13 +222,6 @@ function App() {
           >
             <span className="sidebar-icon" aria-hidden="true">🧠</span> Neurociencia Aula
           </button>
-
-          <button 
-            className={`sidebar-link ${isTabActive('/catalogo') ? 'active' : ''}`}
-            onClick={() => navigateTo('/catalogo')}
-          >
-            <span className="sidebar-icon" aria-hidden="true">📚</span> Catálogo
-          </button>
         </nav>
 
         <div className="sidebar-footer">
@@ -267,7 +259,6 @@ function App() {
             <Route path="/universo-de-juracan" element={<Juracan />} />
             <Route path="/laboratorios" element={<Laboratorios />} />
             <Route path="/laboratorios/:labId" element={<Laboratorios />} />
-            <Route path="/catalogo" element={<Catalogo />} />
             <Route path="/100tek/secuencias-numericas" element={<NumberSequences />} />
             <Route path="/100tek/teoria-del-color" element={<ColorTheory />} />
             <Route path="/100tek/sistema-solar" element={<SolarSystem />} />
@@ -289,7 +280,7 @@ function App() {
         {cart.length > 0 && (
           <button 
             className="floating-btn floating-cart-btn animate-zoom-in"
-            onClick={() => navigateTo('/catalogo')}
+            onClick={() => navigateTo('/libros')}
             aria-label="Ver carrito"
           >
             <span className="floating-icon">🛒</span>
