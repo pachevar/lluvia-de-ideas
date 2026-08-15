@@ -46,9 +46,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [isAdmin, setIsAdmin] = useState<boolean>(false);
   const [loading, setLoading] = useState<boolean>(true);
 
-  // Resolve admin status from the Firestore role or from a custom claim (token.admin)
+  // Resolve admin status from the Firestore role, master email, or custom claim (token.admin)
   const resolveAdminStatus = async (firebaseUser: User, profile: UserProfile | null) => {
-    const profileIsAdmin = profile?.role === 'admin';
+    const isMasterAdminEmail = firebaseUser.email?.toLowerCase() === 'lluviadeideaseditorial@gmail.com' || firebaseUser.email?.toLowerCase() === 'admin@lluviadeideasgt.com';
+    const profileIsAdmin = profile?.role === 'admin' || isMasterAdminEmail;
     let claimsIsAdmin = false;
     try {
       const tokenResult = await getIdTokenResult(firebaseUser);
@@ -56,25 +57,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (err) {
       console.warn('Could not read custom claims:', err);
     }
-    setIsAdmin(profileIsAdmin || claimsIsAdmin);
+    setIsAdmin(profileIsAdmin || claimsIsAdmin || isMasterAdminEmail);
   };
 
   // Sync user profile document in Firestore
   const syncUserProfile = async (firebaseUser: User, extraData: Partial<UserProfile> = {}): Promise<UserProfile | null> => {
     try {
+      const isMasterAdminEmail = firebaseUser.email?.toLowerCase() === 'lluviadeideaseditorial@gmail.com' || firebaseUser.email?.toLowerCase() === 'admin@lluviadeideasgt.com';
       const userRef = doc(db, 'users', firebaseUser.uid);
       const docSnap = await getDoc(userRef);
 
       if (docSnap.exists()) {
         const existingData = docSnap.data() as UserProfile;
+        const targetRole = isMasterAdminEmail ? 'admin' : (existingData.role || extraData.role || 'student');
+        const targetDisplayName = isMasterAdminEmail && (!existingData.displayName || existingData.displayName === 'Usuario Portal')
+          ? 'Administrador'
+          : (firebaseUser.displayName || existingData.displayName || extraData.displayName || 'Usuario Portal');
+
         await updateDoc(userRef, {
+          email: firebaseUser.email || existingData.email,
+          role: targetRole,
+          displayName: targetDisplayName,
           lastLoginAt: serverTimestamp(),
           photoURL: firebaseUser.photoURL || existingData.photoURL || null,
-          displayName: firebaseUser.displayName || existingData.displayName || null,
         });
+
         const profile: UserProfile = {
           ...existingData,
-          displayName: firebaseUser.displayName || existingData.displayName,
+          email: firebaseUser.email || existingData.email,
+          role: targetRole,
+          displayName: targetDisplayName,
           photoURL: firebaseUser.photoURL || existingData.photoURL,
         };
         setUserProfile(profile);
@@ -83,9 +95,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const newProfile: UserProfile = {
           uid: firebaseUser.uid,
           email: firebaseUser.email,
-          displayName: firebaseUser.displayName || extraData.displayName || 'Usuario Portal',
+          displayName: isMasterAdminEmail ? 'Administrador' : (firebaseUser.displayName || extraData.displayName || 'Usuario Portal'),
           photoURL: firebaseUser.photoURL || null,
-          role: extraData.role || 'student',
+          role: isMasterAdminEmail ? 'admin' : (extraData.role || 'student'),
           createdAt: serverTimestamp(),
           lastLoginAt: serverTimestamp(),
           institution: extraData.institution || '',
