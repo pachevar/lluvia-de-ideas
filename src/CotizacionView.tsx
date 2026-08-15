@@ -22,7 +22,7 @@ const CotizacionView: React.FC<CotizacionViewProps> = ({ id }) => {
         const docRef = doc(db, 'cotizaciones', id);
         const docSnap = await getDoc(docRef);
         if (docSnap.exists()) {
-          setQuote(docSnap.data());
+          setQuote({ id: docSnap.id, ...docSnap.data() } as Cotizacion);
         } else {
           setError('Cotización no encontrada o enlace inválido.');
         }
