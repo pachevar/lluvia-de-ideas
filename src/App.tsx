@@ -259,6 +259,19 @@ function App() {
             <Route path="/universo-de-juracan" element={<Juracan />} />
             <Route path="/laboratorios" element={<Laboratorios />} />
             <Route path="/laboratorios/:labId" element={<Laboratorios />} />
+            <Route path="/animacion-educativa" element={<Laboratorios />} />
+            <Route path="/robotica-educativa" element={<Laboratorios />} />
+            <Route path="/pensamiento-cientifico" element={<Laboratorios />} />
+            <Route path="/creatika" element={<StoryMachine />} />
+            <Route path="/maquina-de-cuentos" element={<StoryMachine />} />
+            <Route path="/teoria-del-color" element={<ColorTheory />} />
+            <Route path="/bingo" element={<BingoHub />} />
+            <Route path="/juegos" element={<BingoHub />} />
+            <Route path="/100tek" element={<NumberSequences />} />
+            <Route path="/secuencias-numericas" element={<NumberSequences />} />
+            <Route path="/sistema-solar" element={<SolarSystem />} />
+            <Route path="/gerencia" element={<Gerencia />} />
+            <Route path="/gerencia/*" element={<Gerencia />} />
             <Route path="/100tek/secuencias-numericas" element={<NumberSequences />} />
             <Route path="/100tek/teoria-del-color" element={<ColorTheory />} />
             <Route path="/100tek/sistema-solar" element={<SolarSystem />} />
