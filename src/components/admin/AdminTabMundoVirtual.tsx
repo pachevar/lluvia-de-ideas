@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../firebase';
-import type { PortalConfig, CustomHexagon, HexLayer, IsoAsset } from '../../types';
+import type { PortalConfig, CustomHexagon, HexLayer } from '../../types';
 import { DEFAULT_CONFIG } from '../../context/PortalConfigContext';
 import { getCandidateHexes } from '../../utils/hexUtils';
 import { HexagonGrid } from '../map/HexagonGrid';
@@ -88,51 +88,6 @@ async function compressImageWebP(file: File, maxWidth = 1000, maxHeight = 1000, 
   });
 }
 
-// Optimizador de PNG isométrico: reescala conservando la transparencia (canal alfa)
-async function compressImagePNG(file: File, maxWidth = 1600, maxHeight = 1600): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth || height > maxHeight) {
-          if (width / height > maxWidth / maxHeight) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          } else {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return reject(new Error('Canvas failure'));
-
-        ctx.clearRect(0, 0, width, height);
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error('Blob failure'));
-          },
-          'image/png'
-        );
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-}
-
 export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: AdminTabMundoVirtualProps) {
   const mapData = localConfig?.map || [];
 
@@ -155,99 +110,6 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
   const [showGradientBuilder, setShowGradientBuilder] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
-  const [editorMode, setEditorMode] = useState<'hex' | 'iso'>('hex');
-  const [selectedAssetId, setSelectedAssetId] = useState<string | null>(null);
-  const [uploadingAsset, setUploadingAsset] = useState(false);
-  const [isoStatusMsg, setIsoStatusMsg] = useState<string | null>(null);
-
-  const isoAssets = localConfig?.isoAssets || [];
-  const sortedIsoAssets = [...isoAssets].sort((a, b) => (a.layer ?? 0) - (b.layer ?? 0));
-  const selectedAsset = isoAssets.find(a => a.id === selectedAssetId) || null;
-
-  const updateIsoAssets = (next: IsoAsset[]) => {
-    setLocalConfig(prev => {
-      if (!prev) return null;
-      return { ...prev, isoAssets: next };
-    });
-  };
-
-  const updateIsoAsset = (id: string, patch: Partial<IsoAsset>) => {
-    setLocalConfig(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        isoAssets: (prev.isoAssets || []).map(a => a.id === id ? { ...a, ...patch } : a)
-      };
-    });
-  };
-
-  const moveIsoLayer = (id: string, dir: 1 | -1) => {
-    setLocalConfig(prev => {
-      if (!prev) return null;
-      const assets = [...(prev.isoAssets || [])].sort((a, b) => (a.layer ?? 0) - (b.layer ?? 0));
-      const idx = assets.findIndex(a => a.id === id);
-      const other = idx + dir;
-      if (idx < 0 || other < 0 || other >= assets.length) return prev;
-      const a = assets[idx];
-      const b = assets[other];
-      assets[idx] = { ...a, layer: b.layer ?? other };
-      assets[other] = { ...b, layer: a.layer ?? idx };
-      return { ...prev, isoAssets: assets };
-    });
-  };
-
-  const deleteIsoAsset = (id: string) => {
-    if (!window.confirm('¿Eliminar esta pieza isométrica del mapa?')) return;
-    setLocalConfig(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        isoAssets: (prev.isoAssets || []).filter(a => a.id !== id)
-      };
-    });
-    setSelectedAssetId(null);
-  };
-
-  const handleIsoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setUploadingAsset(true);
-    setIsoStatusMsg('⚡ Optimizando PNG (preservando transparencia)...');
-    try {
-      const originalKB = (file.size / 1024).toFixed(0);
-      const blob = await compressImagePNG(file);
-      const optimizedKB = (blob.size / 1024).toFixed(0);
-
-      setIsoStatusMsg(`🚀 Subiendo a Firebase (${originalKB}KB ➔ ${optimizedKB}KB PNG)...`);
-
-      const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".png";
-      const fileRef = ref(storage, `iso-assets/${Date.now()}_${cleanName}`);
-      await uploadBytes(fileRef, blob, { contentType: 'image/png' });
-      const url = await getDownloadURL(fileRef);
-
-      const anchor = editingHex ? { row: editingHex.row, col: editingHex.col } : { row: 0, col: 0 };
-      const maxLayer = isoAssets.reduce((m, a) => Math.max(m, a.layer ?? 0), 0);
-      const asset: IsoAsset = {
-        id: `iso-${Date.now()}`,
-        name: file.name.replace(/\.[^/.]+$/, ""),
-        image: url,
-        row: anchor.row,
-        col: anchor.col,
-        layer: maxLayer + 1
-      };
-
-      updateIsoAssets([...isoAssets, asset]);
-      setSelectedAssetId(asset.id);
-      setIsoStatusMsg(`✨ PNG isométrico subido. Ajusta capa, tamaño y posición para traslaparlo sobre el mapa.`);
-    } catch (err) {
-      console.error("Error subiendo pieza isométrica:", err);
-      alert("Error al comprimir o subir el PNG isométrico.");
-      setIsoStatusMsg(null);
-    } finally {
-      setUploadingAsset(false);
-    }
-  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, layerKey: 'layerBg' | 'layerDeco' | 'layerInteractive') => {
     const file = e.target.files?.[0];
@@ -395,236 +257,14 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
         </div>
 
         <div className="sutz-header-actions">
-          <div className="sutz-editor-mode-switch" role="group" aria-label="Modo de edición del mundo virtual">
-            <button
-              type="button"
-              className={`sutz-mode-btn ${editorMode === 'hex' ? 'active' : ''}`}
-              onClick={() => setEditorMode('hex')}
-            >
-              🗺️ Mapa Hexagonal
-            </button>
-            <button
-              type="button"
-              className={`sutz-mode-btn ${editorMode === 'iso' ? 'active' : ''}`}
-              onClick={() => setEditorMode('iso')}
-            >
-              🧩 Piezas Isométricas
-            </button>
-          </div>
           <button className="btn btn-secondary btn-sm" onClick={handleResetMapToDefault} title="Restaurar mapa base">
             🔄 Restablecer Mapa Base
           </button>
         </div>
       </div>
 
-      {/* EDITOR ISOMÉTRICO: Piezas PNG con lógica de capas */}
-      {editorMode === 'iso' ? (
-        <div className="sutz-dual-panel">
-
-          {/* VISTA PREVIA ISOMÉTRICA */}
-          <div className="map-canvas-card">
-            <div className="map-canvas-toolbar">
-              <span style={{ fontSize: '0.88rem', fontWeight: 800, color: '#38bdf8' }}>
-                🧩 Vista Previa Isométrica ({isoAssets.length} piezas)
-              </span>
-              <span style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                {selectedAsset ? `Pieza: ${selectedAsset.name}` : 'Selecciona una pieza para editarla'}
-              </span>
-            </div>
-
-            <div className="map-canvas-viewport">
-              <HexagonGrid
-                cells={previewCells}
-                onHexClick={handlePreviewClick}
-                hexWidth={138}
-                hexHeight={120}
-                showLabels={true}
-                variant="iso"
-                isoAssets={isoAssets}
-              />
-            </div>
-
-            <p className="map-canvas-hint">
-              💡 La pieza anclada a una celda con mayor profundidad (abajo en pantalla) se dibuja <b>delante</b> de las de menor profundidad. Usa la capa para ordenar las que se traslapan en la misma zona.
-            </p>
-          </div>
-
-          {/* ADMINISTRADOR DE PIEZAS ISOMÉTRICAS */}
-          <div className="hex-inspector-card">
-            <div className="inspector-header">
-              <div>
-                <h4 style={{ margin: 0 }}><span>🧩</span> Piezas Isométricas PNG</h4>
-                <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#94a3b8' }}>
-                  Sube tus propios PNG con transparencia y traslápalos con orden de capas.
-                </p>
-              </div>
-            </div>
-
-            <label className="upload-btn-label">
-              {uploadingAsset ? '⏳ Optimizando & Subiendo PNG...' : '📤 Subir PNG Isométrico (Transparencia)'}
-              <input
-                type="file"
-                style={{ display: 'none' }}
-                accept="image/png"
-                onChange={handleIsoUpload}
-                disabled={uploadingAsset}
-              />
-            </label>
-
-            {isoStatusMsg && <div className="upload-status-chip">{isoStatusMsg}</div>}
-
-            {/* LISTA DE PIEZAS ORDENADA POR CAPA */}
-            <div className="iso-asset-list">
-              {sortedIsoAssets.length === 0 && (
-                <p className="iso-asset-empty">
-                  Aún no hay piezas isométricas. Sube un PNG para comenzar a darle forma al mapa.
-                </p>
-              )}
-              {sortedIsoAssets.map((asset, i) => (
-                <div
-                  key={asset.id}
-                  className={`iso-asset-row ${selectedAssetId === asset.id ? 'active' : ''}`}
-                  onClick={() => setSelectedAssetId(asset.id)}
-                >
-                  <img src={asset.image} alt={asset.name} className="iso-asset-thumb" draggable={false} />
-                  <div className="iso-asset-row-meta">
-                    <span className="iso-asset-name">{asset.name}</span>
-                    <span className="iso-asset-sub">
-                      📍 ({asset.row}, {asset.col}) · Capa {asset.layer ?? i}
-                    </span>
-                  </div>
-                  <div className="iso-asset-row-btns" onClick={(e) => e.stopPropagation()}>
-                    <button
-                      title="Mover más adelante (capa +1)"
-                      onClick={() => moveIsoLayer(asset.id, 1)}
-                      disabled={i === sortedIsoAssets.length - 1}
-                    >
-                      ⬆️
-                    </button>
-                    <button
-                      title="Mover más atrás (capa -1)"
-                      onClick={() => moveIsoLayer(asset.id, -1)}
-                      disabled={i === 0}
-                    >
-                      ⬇️
-                    </button>
-                    <button
-                      title="Eliminar pieza"
-                      className="iso-asset-delete"
-                      onClick={() => deleteIsoAsset(asset.id)}
-                    >
-                      🗑️
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* INSPECTOR DE LA PIEZA SELECCIONADA */}
-            {selectedAsset && (
-              <div className="iso-asset-inspector">
-                <label className="inspector-label">Nombre:</label>
-                <input
-                  type="text"
-                  value={selectedAsset.name}
-                  onChange={e => updateIsoAsset(selectedAsset.id, { name: e.target.value })}
-                  className="inspector-input"
-                />
-
-                <label className="inspector-label">Celda de Anclaje (Profundidad Isométrica):</label>
-                <select
-                  value={`${selectedAsset.row},${selectedAsset.col}`}
-                  onChange={e => {
-                    const [r, c] = e.target.value.split(',').map(Number);
-                    updateIsoAsset(selectedAsset.id, { row: r, col: c });
-                  }}
-                  className="inspector-select"
-                >
-                  {mapData.map(h => (
-                    <option key={`${h.row},${h.col}`} value={`${h.row},${h.col}`}>
-                      📍 Hex ({h.row}, {h.col}) — {h.title || 'Sin Título'}
-                    </option>
-                  ))}
-                </select>
-
-                <div className="iso-asset-grid-fields">
-                  <div>
-                    <label className="inspector-label">Capa (z):</label>
-                    <input
-                      type="number"
-                      value={selectedAsset.layer}
-                      onChange={e => updateIsoAsset(selectedAsset.id, { layer: Number(e.target.value) || 0 })}
-                      className="inspector-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="inspector-label">Opacidad:</label>
-                    <input
-                      type="number"
-                      min={0}
-                      max={1}
-                      step={0.05}
-                      value={selectedAsset.opacity ?? 1}
-                      onChange={e => updateIsoAsset(selectedAsset.id, { opacity: Number(e.target.value) })}
-                      className="inspector-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="iso-asset-grid-fields">
-                  <div>
-                    <label className="inspector-label">Ancho (px):</label>
-                    <input
-                      type="number"
-                      value={selectedAsset.width ?? ''}
-                      placeholder="Auto (tile)"
-                      onChange={e => updateIsoAsset(selectedAsset.id, { width: Number(e.target.value) || undefined })}
-                      className="inspector-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="inspector-label">Alto (px):</label>
-                    <input
-                      type="number"
-                      value={selectedAsset.height ?? ''}
-                      placeholder="Auto"
-                      onChange={e => updateIsoAsset(selectedAsset.id, { height: Number(e.target.value) || undefined })}
-                      className="inspector-input"
-                    />
-                  </div>
-                </div>
-
-                <div className="iso-asset-grid-fields">
-                  <div>
-                    <label className="inspector-label">Offset X (px):</label>
-                    <input
-                      type="number"
-                      value={selectedAsset.offsetX ?? 0}
-                      onChange={e => updateIsoAsset(selectedAsset.id, { offsetX: Number(e.target.value) || 0 })}
-                      className="inspector-input"
-                    />
-                  </div>
-                  <div>
-                    <label className="inspector-label">Offset Y (px):</label>
-                    <input
-                      type="number"
-                      value={selectedAsset.offsetY ?? 0}
-                      onChange={e => updateIsoAsset(selectedAsset.id, { offsetY: Number(e.target.value) || 0 })}
-                      className="inspector-input"
-                    />
-                  </div>
-                </div>
-
-                <p className="iso-asset-hint">
-                  ⬆️/⬇️ cambia la capa: el PNG con capa mayor se dibuja <b>encima</b> del que tiene capa menor.
-                </p>
-              </div>
-            )}
-          </div>
-
-        </div>
-      ) : (
-        <div className="sutz-dual-panel">
+      {/* Disposición Dividida Dual (Mapa Canvas + Inspector) */}
+      <div className="sutz-dual-panel">
         {/* COLUMNA IZQUIERDA: CANVAS INTERACTIVO DEL MAPA */}
         <div className="map-canvas-card">
           <div className="map-canvas-toolbar">
@@ -1042,7 +682,6 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
         </div>
 
       </div>
-      )}
 
       {/* Modal Creador de Degradados */}
       {showGradientBuilder && editingHex && (
