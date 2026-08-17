@@ -1556,3 +1556,118 @@
   }
 }
 
+
+/* ================= HEXÁGONOS + RECURSOS DEL MUNDO ================= */
+/* El nodo ahora es un hexágono (SOLO la imagen) + panel inferior con
+   nombre, descripción y cajitas de recursos necesarios para desbloquear. */
+
+.nexo-card .nexo-hex-wrap {
+  position: relative;
+  width: 100%;
+  height: 84px;
+  flex: 0 0 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nexo-card .nexo-hex {
+  position: relative;
+  width: 92px;
+  height: 96px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  background: #060a16;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  -webkit-clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+}
+
+/* Contorno neón de la arista del hexágono */
+.nexo-card .nexo-hex::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  -webkit-clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  padding: 1.5px;
+  background: var(--tech-color, var(--acc));
+  -webkit-mask: linear-gradient(#fff 0 0) content-box, linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  opacity: .55;
+  pointer-events: none;
+}
+
+.nexo-card:hover .nexo-hex::before { opacity: 1; }
+
+/* El emoji de respaldo queda centrado */
+.nexo-card .nexo-hex span {
+  font-size: 34px;
+  line-height: 1;
+  user-select: none;
+}
+
+/* Panel inferior: nombre + descripción + recursos */
+.nexo-card .nexo-info-panel {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.nexo-card .nexo-info-panel p {
+  font-size: 11px;
+  line-height: 1.35;
+  color: var(--dim);
+  margin: 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Cajitas de recursos necesarios */
+.nexo-card .nexo-res-costs,
+.nexo-res-costs--inspector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nexo-res-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-family: 'Orbitron', sans-serif;
+  font-size: 10px;
+  letter-spacing: .3px;
+  padding: 3px 7px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  background: rgba(5,8,18,.8);
+  white-space: nowrap;
+}
+
+.nexo-res-chip .nexo-res-icon { font-size: 11px; }
+
+.nexo-res-chip .nexo-res-have {
+  font-style: normal;
+  opacity: .65;
+  font-weight: 600;
+}
+
+.nexo-res-chip.ok { color: var(--green); border-color: rgba(61,255,176,.45); }
+.nexo-res-chip.ok:hover { box-shadow: 0 0 8px -2px var(--green); }
+
+.nexo-res-chip.no { color: var(--red); border-color: rgba(255,77,109,.5); animation: nexoBlink 1.2s infinite; }
+.nexo-res-chip.no:hover { box-shadow: 0 0 8px -2px var(--red); }
+
+.nexo-card .meta { margin-top: 2px; }
+
+@keyframes nexoBlink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: .55; }
+}

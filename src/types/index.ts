@@ -179,7 +179,18 @@ export interface TechNode {
   image?: string;
   category?: 'STEM' | 'HUMANIDADES' | 'APRENDIZAJE';
   parents: string[]; // parent node IDs
+  resourceCost?: Partial<Record<SutzResourceKey, number>>; // Recursos del mundo virtual necesarios para desbloquear
   unlocked?: boolean;
+}
+
+// Recursos del mundo virtual de Sutz (compartidos entre el HUD del mapa y el Árbol de Tecnología)
+export type SutzResourceKey = 'pergaminos' | 'puntos' | 'monedas' | 'gemas';
+
+export interface SutzResources {
+  pergaminos: number;
+  puntos: number;
+  monedas: number;
+  gemas: number;
 }
 
 

@@ -1,7 +1,9 @@
 import React, { useState, useEffect, useRef, useLayoutEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { TechNode } from '../../types';
+import type { TechNode, SutzResourceKey } from '../../types';
 import { TECH_TREE_COLUMNS_META, INITIAL_TECH_TREE_DATA } from '../../data/techTreeData';
+import { SUTZ_RESOURCE_META, SUTZ_RESOURCE_KEYS, resolveResourceCost, formatSutzResource } from '../../data/sutzResources';
+import { useSutzResources } from '../../context/SutzResourcesContext';
 import './TechTreeModal.css';
 
 interface TechTreeModalProps {
@@ -14,7 +16,7 @@ interface TechItem {
   id: string;
   tier: number;
   name: string;
-  cost: number;
+  resourceCost: Record<SutzResourceKey, number>;
   income: number;
   deps: string[];
   icon: string;
@@ -51,14 +53,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   nodesMap
 }) => {
   const navigate = useNavigate();
-  const [points, setPoints] = useState<number>(() => {
-    try {
-      const saved = localStorage.getItem('sutz_tech_tree_points_v1');
-      return saved !== null ? Number(saved) : 100;
-    } catch {
-      return 100;
-    }
-  });
+  const { resources, addResources, trySubtract } = useSutzResources();
 
   const [unlocked, setUnlocked] = useState<Set<string>>(() => {
     try {
@@ -77,15 +72,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   const [hoveredTechId, setHoveredTechId] = useState<string | null>(null);
   const [inspectNode, setInspectNode] = useState<TechItem | null>(null);
 
-  // Save state to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('sutz_tech_tree_points_v1', points.toString());
-    } catch (e) {
-      console.warn('Could not save points to localStorage:', e);
-    }
-  }, [points]);
-
+  // Save unlocked state to localStorage
   useEffect(() => {
     try {
       localStorage.setItem('sutz_tech_tree_unlocked_v1', JSON.stringify(Array.from(unlocked)));
@@ -150,7 +137,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
       id: n.id,
       tier: n.col,
       name: n.title,
-      cost: 50 + (n.col - 1) * 20,
+      resourceCost: resolveResourceCost(n.col, n.resourceCost),
       income: 2 + (n.col - 1) * 2,
       deps: n.parents || [],
       icon: n.image || n.icon || '⚙️',
@@ -221,14 +208,14 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     return techsList.reduce((s, t) => s + (unlocked.has(t.id) ? t.income : 0), 0);
   }, [techsList, unlocked]);
 
-  // Passive income ticker
+  // Passive income ticker (acumula puntos de conocimiento en el monedero compartido)
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
-      setPoints(prev => prev + currentIncome / 10);
+      addResources({ puntos: currentIncome / 10 });
     }, 100);
     return () => clearInterval(interval);
-  }, [isOpen, currentIncome]);
+  }, [isOpen, currentIncome, addResources]);
 
   // Layout wire calculation for SVG connectors (requestAnimationFrame optimized at 60fps)
   const updateWiresLayout = () => {
@@ -346,21 +333,26 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
       addToast(`🔒 Primero desbloquea: ${missing.map(d => byId[d]?.name || d).join(' + ')}`, 'err');
       return;
     }
-    if (points < t.cost) {
-      addToast(`◈ Te faltan ${Math.ceil(t.cost - points)} puntos. ¡Sigue estudiando!`, 'err');
+    const shortResources = SUTZ_RESOURCE_KEYS.filter(k => resources[k] < t.resourceCost[k]);
+    if (shortResources.length > 0) {
+      const detail = shortResources
+        .map(k => `${SUTZ_RESOURCE_META[k].icon} faltan ${Math.ceil(t.resourceCost[k] - resources[k])} ${SUTZ_RESOURCE_META[k].short}`)
+        .join(' · ');
+      addToast(`🔒 ${detail}. ¡Sigue explorando el mundo virtual!`, 'err');
       return;
     }
 
-    setPoints(prev => prev - t.cost);
+    const spent = trySubtract(t.resourceCost);
+    if (!spent) return;
     setUnlocked(prev => new Set(prev).add(t.id));
 
     if (e) {
       const r = e.currentTarget.getBoundingClientRect();
       const color = TIER_COLOR[t.tier] || '#00e5ff';
-      triggerFloatText(r.left + r.width / 2, r.top, `-${t.cost} ◈`, '#ff4d6d');
+      triggerFloatText(r.left + r.width / 2, r.top, '−💎 −🪙 −⚡ −📜', '#ff4d6d');
       triggerFloatText(r.left + r.width / 2, r.top + 22, '⚡ DESBLOQUEADA', color);
     }
-    addToast(`⚡ ¡<b>${t.name}</b> desbloqueada! +${t.income} ◈/s`, 'ok');
+    addToast(`⚡ ¡<b>${t.name}</b> desbloqueada! +${t.income} ⚡/s`, 'ok');
 
     if (unlocked.size + 1 === techsList.length && !winShown) {
       setWinShown(true);
@@ -373,6 +365,9 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     if (t.deps.every(d => unlocked.has(d))) return 'ready';
     return 'locked';
   };
+
+  const hasResourcesFor = (t: TechItem) =>
+    SUTZ_RESOURCE_KEYS.every(k => resources[k] >= t.resourceCost[k]);
 
   return (
     <div className="nexo-tech-tree-modal nexo-overlay" onClick={onClose}>
@@ -389,11 +384,11 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           <div className="nexo-hud">
             <div className="nexo-stat">
               <label>Puntos de conocimiento</label>
-              <div className="val">{Math.floor(points)}<span className="unit">◈</span></div>
+              <div className="val">{formatSutzResource(Math.floor(resources.puntos))}<span className="unit">⚡</span></div>
             </div>
             <div className="nexo-stat inc">
               <label>Ingresos</label>
-              <div className="val">+{currentIncome} ◈/s</div>
+              <div className="val">+{currentIncome} ⚡/s</div>
             </div>
             <div className="nexo-stat">
               <label>Progreso <b style={{ color: 'var(--text)' }}>{unlocked.size}/{techsList.length}</b></label>
@@ -532,7 +527,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                     <div className="nexo-col-cards">
                       {techs.map(t => {
                         const status = getCardStatus(t);
-                        const isPoor = status === 'ready' && points < t.cost;
+                        const isPoor = status === 'ready' && !hasResourcesFor(t);
                         const isHoveredMain = hoveredTechId === t.id;
                         const isAncestor = hoveredDependencySet.ancestors.has(t.id);
                         const isDescendant = hoveredDependencySet.descendants.has(t.id);
@@ -548,7 +543,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                           <div
                             key={t.id}
                             ref={el => { cardRefs.current[t.id] = el; }}
-                            className={`nexo-card ${status} ${isPoor ? 'poor' : ''} ${isHoveredMain ? 'hovered-main' : ''} ${isAncestor ? 'dep-ancestor' : ''} ${isDescendant ? 'dep-descendant' : ''} ${isDimUnrelated ? 'dim-unrelated' : ''}`}
+                            className={`nexo-card nexo-card-hex ${status} ${isPoor ? 'poor' : ''} ${isHoveredMain ? 'hovered-main' : ''} ${isAncestor ? 'dep-ancestor' : ''} ${isDescendant ? 'dep-descendant' : ''} ${isDimUnrelated ? 'dim-unrelated' : ''}`}
                             style={{
                               '--tech-color': techColor,
                               '--tech-glow': techColor + 'cc'
@@ -557,25 +552,45 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                             onMouseEnter={() => setHoveredTechId(t.id)}
                             onMouseLeave={() => setHoveredTechId(null)}
                           >
-                            <div className="imgbox">
-                              {t.icon.startsWith('http') || t.icon.startsWith('/') ? (
-                                <img src={t.icon} alt={t.name} loading="lazy" />
-                              ) : (
-                                <span style={{ fontSize: '1.8rem' }}>{t.icon}</span>
-                              )}
+                            {/* HEXÁGONO: contiene únicamente la imagen de la tecnología */}
+                            <div className="nexo-hex-wrap">
+                              <div className="nexo-hex">
+                                {t.icon.startsWith('http') || t.icon.startsWith('/') ? (
+                                  <img src={t.icon} alt={t.name} loading="lazy" draggable={false} />
+                                ) : (
+                                  <span style={{ fontSize: '2.2rem' }}>{t.icon}</span>
+                                )}
+                              </div>
                               <div className="badge lock">🔒</div>
                               <div className="badge check">✓</div>
                             </div>
 
-                            <div className="info">
+                            {/* PANEL INFERIOR: nombre, descripción y cajitas de recursos necesarios */}
+                            <div className="nexo-info-panel">
                               <div className="name-row">
                                 <h3>{t.name}</h3>
                                 <span className="lvl">N{t.tier}</span>
                               </div>
                               <p>{t.desc}</p>
+                              <div className="nexo-res-costs">
+                                {SUTZ_RESOURCE_KEYS.map(k => {
+                                  const need = t.resourceCost[k];
+                                  const have = resources[k];
+                                  const ok = have >= need;
+                                  return (
+                                    <span
+                                      key={k}
+                                      className={`nexo-res-chip ${ok ? 'ok' : 'no'}`}
+                                      title={`${SUTZ_RESOURCE_META[k].label}: tienes ${formatSutzResource(have)}, necesitas ${need}`}
+                                    >
+                                      <span className="nexo-res-icon">{SUTZ_RESOURCE_META[k].icon}</span>
+                                      {need}
+                                    </span>
+                                  );
+                                })}
+                              </div>
                               <div className="meta">
-                                <span className="chip cost">◆ {t.cost}</span>
-                                <span className="chip gain">+{t.income} ◈/s</span>
+                                <span className="chip gain">+{t.income} ⚡/s</span>
                                 <span className="status">
                                   {status === 'unlocked' ? 'ACTIVA' : status === 'ready' ? 'DISPONIBLE' : 'BLOQUEADA'}
                                 </span>
@@ -638,8 +653,24 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                               </span>
                             </div>
                             <p>{t.desc}</p>
+                            <div className="nexo-res-costs">
+                              {SUTZ_RESOURCE_KEYS.map(k => {
+                                const need = t.resourceCost[k];
+                                const ok = resources[k] >= need;
+                                return (
+                                  <span
+                                    key={k}
+                                    className={`nexo-res-chip ${ok ? 'ok' : 'no'}`}
+                                    title={`${SUTZ_RESOURCE_META[k].label}: tienes ${formatSutzResource(resources[k])}, necesitas ${need}`}
+                                  >
+                                    <span className="nexo-res-icon">{SUTZ_RESOURCE_META[k].icon}</span>
+                                    {need}
+                                  </span>
+                                );
+                              })}
+                            </div>
                             <div className="mobile-tech-actions">
-                              <span className="mobile-cost-chip">◆ {t.cost}</span>
+                              <span className="mobile-cost-chip">+{t.income} ⚡/s</span>
                               <button className="mobile-inspect-btn" onClick={(e) => { e.stopPropagation(); setInspectNode(t); }}>
                                 👁️ Inspeccionar & Proyecto 🚀
                               </button>
@@ -752,6 +783,28 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                   )}
                 </div>
 
+                <div className="inspector-section-block">
+                  <h4>💎 Recursos del Mundo Virtual Necesarios</h4>
+                  <div className="nexo-res-costs">
+                    {SUTZ_RESOURCE_KEYS.map(k => {
+                      const need = inspectNode.resourceCost[k];
+                      const have = resources[k];
+                      const ok = have >= need;
+                      return (
+                        <span
+                          key={k}
+                          className={`nexo-res-chip ${ok ? 'ok' : 'no'}`}
+                          title={`${SUTZ_RESOURCE_META[k].label}: tienes ${formatSutzResource(have)}, necesitas ${need}`}
+                        >
+                          <span className="nexo-res-icon">{SUTZ_RESOURCE_META[k].icon}</span>
+                          {need}
+                          <em className="nexo-res-have">({formatSutzResource(have)})</em>
+                        </span>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* FEATURED CLASSROOM PROJECT CTA */}
                 <div className="inspector-project-cta">
                   <h4>🚀 PROYECTO DE TRABAJO AÚLICO PARA ESTUDIANTES</h4>
@@ -771,12 +824,12 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
               <div className="inspector-actions-row">
                 {!unlocked.has(inspectNode.id) && getCardStatus(inspectNode) === 'ready' && (
                   <button 
-                    className="nexo-btn neon"
+                    className={`nexo-btn neon ${hasResourcesFor(inspectNode) ? '' : 'poor'}`}
                     onClick={() => {
                       tryUnlock(inspectNode);
                     }}
                   >
-                    ⚡ DESBLOQUEAR NODO (-{inspectNode.cost} ◈)
+                    ⚡ DESBLOQUEAR NODO (gasta recursos del mundo)
                   </button>
                 )}
                 <button className="nexo-btn ghost" onClick={() => setInspectNode(null)}>

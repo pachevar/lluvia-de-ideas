@@ -2,6 +2,8 @@ import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { useAuth } from '../context/AuthContext';
+import { useSutzResources } from '../context/SutzResourcesContext';
+import { formatSutzResource } from '../data/sutzResources';
 import { AuthModal } from '../components/auth/AuthModal';
 import type { StoryConfig, CustomHexagon } from '../types';
 import { HexagonGrid } from '../components/map/HexagonGrid';
@@ -29,6 +31,7 @@ const getStoryImage = (storyId: string, imageOverride?: string) => {
 export default function Sutz() {
   const { config, loading } = usePortalConfig();
   const { user, userProfile } = useAuth();
+  const { resources, completedStories, grantStoryCompletion } = useSutzResources();
   const navigate = useNavigate();
 
   const [activeStory, setActiveStory] = useState<StoryConfig | null>(null);
@@ -125,10 +128,10 @@ export default function Sutz() {
         {/* Bloque 2: Recursos Educativos y de Juego (Píldoras Flotantes) */}
         <div className="hud-resources-group">
           {/* Pergaminos / Cuentos Popol Vuh */}
-          <div className="hud-resource-pill" title="Cuentos Popol Vuh Completados">
+          <div className="hud-resource-pill" title="Cuentos Popol Vuh Completados (otorgan Pergaminos y Puntos)">
             <span className="hud-res-icon">📜</span>
             <div className="hud-res-text">
-              <span className="hud-res-val">5 / 5</span>
+              <span className="hud-res-val">{completedStories.length} / {storiesList.length}</span>
             </div>
           </div>
 
@@ -136,7 +139,7 @@ export default function Sutz() {
           <div className="hud-resource-pill" title="Puntos de Conocimiento Sutz">
             <span className="hud-res-icon">⚡</span>
             <div className="hud-res-text">
-              <span className="hud-res-val">850</span>
+              <span className="hud-res-val">{formatSutzResource(resources.puntos)}</span>
               <span className="hud-res-unit">◈</span>
             </div>
           </div>
@@ -145,7 +148,7 @@ export default function Sutz() {
           <div className="hud-resource-pill" title="Monedas de Oro Sutz">
             <span className="hud-res-icon">🪙</span>
             <div className="hud-res-text">
-              <span className="hud-res-val">2.8K</span>
+              <span className="hud-res-val">{formatSutzResource(resources.monedas)}</span>
             </div>
           </div>
 
@@ -153,7 +156,7 @@ export default function Sutz() {
           <div className="hud-resource-pill premium" title="Gemas de Aprendizaje">
             <span className="hud-res-icon">💎</span>
             <div className="hud-res-text">
-              <span className="hud-res-val">260</span>
+              <span className="hud-res-val">{formatSutzResource(resources.gemas)}</span>
             </div>
             <span className="hud-res-badge">NUEVO</span>
           </div>
@@ -304,11 +307,11 @@ export default function Sutz() {
 
       {/* Story Modal (Popol Vuh) */}
       {activeStory && (
-        <div className="modal-overlay" onClick={() => setActiveStory(null)} style={{ zIndex: 1000 }}>
+        <div className="modal-overlay" onClick={() => { grantStoryCompletion(activeStory.id); setActiveStory(null); }} style={{ zIndex: 1000 }}>
           <div className="modal-content card-glass animate-zoom-in" onClick={(e) => e.stopPropagation()}>
             <button 
               className="modal-close-btn" 
-              onClick={() => setActiveStory(null)}
+              onClick={() => { grantStoryCompletion(activeStory.id); setActiveStory(null); }}
               aria-label="Cerrar detalles del cuento"
             >
               ✕
@@ -326,7 +329,7 @@ export default function Sutz() {
                 <div className="modal-divider"></div>
                 <p className="modal-story-summary">{activeStory.summary}</p>
                 <div className="modal-actions-footer">
-                  <button className="btn btn-primary" onClick={() => setActiveStory(null)}>
+                  <button className="btn btn-primary" onClick={() => { grantStoryCompletion(activeStory.id); setActiveStory(null); }}>
                     Entendido, Seguir Explorando 👍
                   </button>
                 </div>

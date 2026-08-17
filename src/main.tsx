@@ -4,6 +4,7 @@ import { BrowserRouter } from 'react-router-dom'
 import './index.css'
 import App from './App.tsx'
 import { PortalConfigProvider } from './context/PortalConfigContext'
+import { SutzResourcesProvider } from './context/SutzResourcesContext'
 import { CartProvider } from './context/CartContext'
 import { AuthProvider } from './context/AuthContext'
 
@@ -15,9 +16,11 @@ createRoot(document.getElementById('root')!).render(
       <BrowserRouter>
         <PortalConfigProvider>
           <AuthProvider>
-            <CartProvider>
-              <App />
-            </CartProvider>
+            <SutzResourcesProvider>
+              <CartProvider>
+                <App />
+              </CartProvider>
+            </SutzResourcesProvider>
           </AuthProvider>
         </PortalConfigProvider>
       </BrowserRouter>
