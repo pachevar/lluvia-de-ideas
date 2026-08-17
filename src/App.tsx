@@ -50,7 +50,7 @@ function App() {
   const isTabActive = (path: string) => currentPath === path;
 
   // Specific check for Gerencia and Cotizacion View
-  if (currentPath === '/gerencia' || currentPath === '/gerencia/') {
+  if (currentPath === '/gerencia' || currentPath.startsWith('/gerencia/') || currentPath.startsWith('/gerencia?') || currentPath.startsWith('/gerencia#')) {
     return (
       <Suspense fallback={<PageLoader />}>
         <Gerencia />
