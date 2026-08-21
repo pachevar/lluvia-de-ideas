@@ -1,5 +1,10 @@
-import { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import LandingTopBar from '../components/landing/LandingTopBar';
+import { usePortalConfig } from '../context/PortalConfigContext';
+import { useAuth } from '../context/AuthContext';
+import { compressImageWebP } from '../utils/imageUpload';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../firebase';
 import './ConstruyendoPersonaje.css';
 
 interface ArchetypeData {
@@ -14,6 +19,7 @@ interface ArchetypeData {
   modernExample: string;
   writingTip: string;
   color: string;
+  defaultBgBanner?: string;
 }
 
 const ARCHETYPES: ArchetypeData[] = [
@@ -98,8 +104,29 @@ const ARCHETYPES: ArchetypeData[] = [
 ];
 
 export default function ConstruyendoPersonaje() {
+  const { config, saveConfigToFirestore } = usePortalConfig();
+  const { user } = useAuth();
+
   const [selectedArchetype, setSelectedArchetype] = useState<ArchetypeData>(ARCHETYPES[0]);
   const [activeTab, setActiveTab] = useState<'psicologia' | 'arquetipos' | 'viaje' | 'herramientas' | 'taller'>('psicologia');
+
+  // Local state for images fallback/cache
+  const [localArchetypeImages, setLocalArchetypeImages] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('local_archetype_images');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+
+  // Upload modal & Lightbox states
+  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const [customUrlInput, setCustomUrlInput] = useState('');
+  const [uploadStatusText, setUploadStatusText] = useState('');
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Interactive Character Forge State
   const [charName, setCharName] = useState('Ixchel de la Selva');
@@ -129,9 +156,117 @@ export default function ConstruyendoPersonaje() {
     };
   }, []);
 
+  // Determine current image for active archetype
+  const getArchetypeImage = (archetypeId: string): string => {
+    return (
+      config.archetypeImages?.[archetypeId] ||
+      localArchetypeImages[archetypeId] ||
+      ''
+    );
+  };
+
+  const currentArchetypeImg = getArchetypeImage(selectedArchetype.id);
+
   const scrollToSection = (tab: 'psicologia' | 'arquetipos' | 'viaje' | 'herramientas' | 'taller') => {
     setActiveTab(tab);
     sectionRefs[tab]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  };
+
+  // Image Upload with Client-Side Compression
+  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    try {
+      setIsUploading(true);
+      setUploadStatusText('Comprimiendo imagen a WebP para máxima velocidad...');
+
+      // 1. Client-Side compression to high-efficiency WebP (1280x720 max)
+      const compressedBlob = await compressImageWebP(file, 1280, 720, 0.85);
+
+      let finalUrl = '';
+
+      if (user) {
+        setUploadStatusText('Subiendo a Firebase Storage seguro...');
+        const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
+        const fileRef = ref(storage, `archetypes-assets/${Date.now()}_${cleanName}`);
+        await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
+        finalUrl = await getDownloadURL(fileRef);
+
+        // Save into global Firestore Portal Config
+        const updatedImages = {
+          ...(config.archetypeImages || {}),
+          [selectedArchetype.id]: finalUrl
+        };
+        await saveConfigToFirestore({
+          ...config,
+          archetypeImages: updatedImages
+        });
+      } else {
+        // Fallback DataURL for instant local preview if offline or guest
+        finalUrl = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.readAsDataURL(compressedBlob);
+        });
+      }
+
+      // Save local cache
+      const updatedLocal = { ...localArchetypeImages, [selectedArchetype.id]: finalUrl };
+      setLocalArchetypeImages(updatedLocal);
+      localStorage.setItem('local_archetype_images', JSON.stringify(updatedLocal));
+
+      setIsUploadModalOpen(false);
+      setUploadStatusText('');
+    } catch (err) {
+      console.error('Error al procesar imagen de arquetipo:', err);
+      alert('Hubo un inconveniente al optimizar o subir la imagen. Por favor, intenta con otra imagen.');
+    } finally {
+      setIsUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  const handleSaveCustomUrl = async () => {
+    if (!customUrlInput.trim()) return;
+    const url = customUrlInput.trim();
+
+    const updatedLocal = { ...localArchetypeImages, [selectedArchetype.id]: url };
+    setLocalArchetypeImages(updatedLocal);
+    localStorage.setItem('local_archetype_images', JSON.stringify(updatedLocal));
+
+    if (user) {
+      const updatedImages = {
+        ...(config.archetypeImages || {}),
+        [selectedArchetype.id]: url
+      };
+      await saveConfigToFirestore({
+        ...config,
+        archetypeImages: updatedImages
+      });
+    }
+
+    setCustomUrlInput('');
+    setIsUploadModalOpen(false);
+  };
+
+  const handleRemoveImage = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (!window.confirm(`¿Deseas restablecer la imagen para "${selectedArchetype.name}"?`)) return;
+
+    const updatedLocal = { ...localArchetypeImages };
+    delete updatedLocal[selectedArchetype.id];
+    setLocalArchetypeImages(updatedLocal);
+    localStorage.setItem('local_archetype_images', JSON.stringify(updatedLocal));
+
+    if (user) {
+      const updatedImages = { ...(config.archetypeImages || {}) };
+      delete updatedImages[selectedArchetype.id];
+      await saveConfigToFirestore({
+        ...config,
+        archetypeImages: updatedImages
+      });
+    }
   };
 
   const handleCopyPassport = () => {
@@ -336,50 +471,132 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
       </section>
 
       {/* =========================================================================
-          MÓDULO 2: ARQUETIPOS DE PERSONAJES
+          MÓDULO 2: ARQUETIPOS DE PERSONAJES (CON IMAGEN GRANDE Y COMPRESIÓN)
           ========================================================================= */}
       <section ref={sectionRefs.arquetipos} className="personaje-section" id="arquetipos">
         <div className="section-header-block">
           <span className="section-tag">Módulo 2</span>
           <h2 className="section-main-title">Arquetipos Dinámicos: Más Allá del Héroe</h2>
           <p className="section-description">
-            Los arquetipos no son jaulas estáticas, sino <strong>roles dramáticos de energía</strong>. Cada figura secundaria existe para empujar, reflejar o desafiar al protagonista.
+            Explora las figuras esenciales de la narrativa universal. Puedes visualizar y personalizar la imagen cinematográfica de cada arquetipo con optimización de compresión automática.
           </p>
         </div>
 
         <div className="archetypes-explorer">
-          {/* Selector de Arquetipos */}
+          {/* Selector de Arquetipos con Miniatura / Icono */}
           <div className="archetypes-list" role="tablist">
-            {ARCHETYPES.map((arch) => (
-              <button
-                key={arch.id}
-                className={`archetype-item-btn ${selectedArchetype.id === arch.id ? 'active' : ''}`}
-                onClick={() => setSelectedArchetype(arch)}
-                role="tab"
-                aria-selected={selectedArchetype.id === arch.id}
-              >
-                <span className="arch-btn-icon">{arch.icon}</span>
-                <div className="arch-btn-info">
-                  <strong>{arch.name}</strong>
-                  <small>{arch.roleSubtitle.substring(0, 32)}...</small>
-                </div>
-              </button>
-            ))}
+            {ARCHETYPES.map((arch) => {
+              const archImg = getArchetypeImage(arch.id);
+              return (
+                <button
+                  key={arch.id}
+                  className={`archetype-item-btn ${selectedArchetype.id === arch.id ? 'active' : ''}`}
+                  onClick={() => setSelectedArchetype(arch)}
+                  role="tab"
+                  aria-selected={selectedArchetype.id === arch.id}
+                >
+                  <div className="arch-btn-thumb-wrap">
+                    {archImg ? (
+                      <img 
+                        src={archImg} 
+                        alt={arch.name} 
+                        className="arch-btn-thumb-img" 
+                        loading="lazy" 
+                        decoding="async" 
+                      />
+                    ) : (
+                      <span className="arch-btn-icon">{arch.icon}</span>
+                    )}
+                  </div>
+                  <div className="arch-btn-info">
+                    <strong>{arch.name}</strong>
+                    <small>{arch.roleSubtitle}</small>
+                  </div>
+                </button>
+              );
+            })}
           </div>
 
-          {/* Panel Detallado del Arquetipo Seleccionado */}
+          {/* Panel Detallado del Arquetipo Seleccionado con Gran Banner de Presentación */}
           <div className="archetype-detail-panel animate-fade-in" key={selectedArchetype.id}>
-            <div className="arch-header">
-              <div className="arch-large-icon">{selectedArchetype.icon}</div>
-              <div className="arch-header-titles">
-                <h3>{selectedArchetype.name}</h3>
-                <p className="arch-tagline">{selectedArchetype.roleSubtitle}</p>
-                <blockquote style={{ fontStyle: 'italic', color: '#94a3b8', marginTop: '6px', fontSize: '0.9rem' }}>
+            
+            {/* Visual Showcase Banner de Alta Calidad */}
+            <div className="arch-visual-showcase">
+              {currentArchetypeImg ? (
+                <>
+                  <img
+                    src={currentArchetypeImg}
+                    alt={`Presentación visual de ${selectedArchetype.name}`}
+                    className="arch-banner-img"
+                    loading="lazy"
+                    decoding="async"
+                    onClick={() => setIsLightboxOpen(true)}
+                    style={{ cursor: 'zoom-in' }}
+                  />
+                  <div className="arch-banner-gradient-overlay" />
+                </>
+              ) : (
+                <div className="arch-banner-default-art">
+                  <div className="arch-default-emblem">{selectedArchetype.icon}</div>
+                  <div className="arch-banner-gradient-overlay" />
+                </div>
+              )}
+
+              {/* Uploading Indicator */}
+              {isUploading && (
+                <div className="arch-uploading-pill">
+                  <div className="arch-spinner" />
+                  <span>{uploadStatusText || 'Optimizando imagen...'}</span>
+                </div>
+              )}
+
+              {/* Controles del Banner */}
+              <div className="arch-banner-controls">
+                {currentArchetypeImg && (
+                  <button 
+                    className="arch-ctrl-btn" 
+                    onClick={() => setIsLightboxOpen(true)}
+                    title="Ver imagen en pantalla completa"
+                  >
+                    <span>🔍</span> Ampliar
+                  </button>
+                )}
+                <button 
+                  className="arch-ctrl-btn" 
+                  onClick={() => setIsUploadModalOpen(true)}
+                  title="Subir o cambiar imagen para este arquetipo"
+                >
+                  <span>📷</span> {currentArchetypeImg ? 'Cambiar Imagen' : 'Subir Imagen'}
+                </button>
+                {currentArchetypeImg && (
+                  <button 
+                    className="arch-ctrl-btn danger" 
+                    onClick={handleRemoveImage}
+                    title="Restablecer arte por defecto"
+                  >
+                    <span>🗑️</span>
+                  </button>
+                )}
+              </div>
+
+              {/* Cita en Banner Inferior */}
+              <div className="arch-banner-caption">
+                <blockquote className="arch-caption-quote">
                   {selectedArchetype.quote}
                 </blockquote>
               </div>
             </div>
 
+            {/* Cabecera Informativa */}
+            <div className="arch-header">
+              <div className="arch-large-icon">{selectedArchetype.icon}</div>
+              <div className="arch-header-titles">
+                <h3>{selectedArchetype.name}</h3>
+                <p className="arch-tagline">{selectedArchetype.roleSubtitle}</p>
+              </div>
+            </div>
+
+            {/* Grilla de Información */}
             <div className="arch-info-grid">
               <div className="arch-info-box">
                 <h4>🎯 Función Dramática</h4>
@@ -402,6 +619,7 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
               </div>
             </div>
 
+            {/* Consejo de Escritura */}
             <div className="arch-prompt-box">
               <strong>💡 Consejo de Escritura Aplicada:</strong>
               <p>{selectedArchetype.writingTip}</p>
@@ -409,6 +627,72 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
           </div>
         </div>
       </section>
+
+      {/* Modal de Carga y Optimización de Imagen */}
+      {isUploadModalOpen && (
+        <div className="arch-modal-overlay animate-fade-in" onClick={() => setIsUploadModalOpen(false)}>
+          <div className="arch-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div className="arch-modal-header">
+              <h3>📷 Imagen para {selectedArchetype.name}</h3>
+              <button className="arch-modal-close" onClick={() => setIsUploadModalOpen(false)}>×</button>
+            </div>
+
+            <p style={{ color: '#94a3b8', fontSize: '0.88rem', lineHeight: '1.5' }}>
+              Sube una imagen grande (JPG, PNG o WebP). Se comprimirá y optimizará automáticamente en el navegador para garantizar que la página cargue de forma instantánea.
+            </p>
+
+            {/* Zona de Arrastre / Selección de Archivo */}
+            <div 
+              className="arch-drop-zone"
+              onClick={() => fileInputRef.current?.click()}
+            >
+              <div className="arch-drop-icon">🖼️</div>
+              <p><strong>Haz clic aquí</strong> para seleccionar desde tu equipo</p>
+              <small>Compresión automática a WebP ultraligero de alta fidelidad</small>
+              <input 
+                ref={fileInputRef} 
+                type="file" 
+                accept="image/*" 
+                style={{ display: 'none' }} 
+                onChange={handleImageFileChange} 
+              />
+            </div>
+
+            {/* O ingreso mediante URL externa */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <label style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600 }}>
+                O pega un enlace de imagen directo (URL):
+              </label>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input 
+                  type="url" 
+                  className="forge-input" 
+                  placeholder="https://ejemplo.com/personaje.jpg"
+                  value={customUrlInput}
+                  onChange={(e) => setCustomUrlInput(e.target.value)}
+                />
+                <button className="forge-btn forge-btn-primary" onClick={handleSaveCustomUrl} style={{ width: 'auto', padding: '0 20px' }}>
+                  Guardar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Lightbox Modal de Pantalla Completa */}
+      {isLightboxOpen && currentArchetypeImg && (
+        <div className="arch-lightbox-overlay animate-fade-in" onClick={() => setIsLightboxOpen(false)}>
+          <img 
+            src={currentArchetypeImg} 
+            alt={selectedArchetype.name} 
+            className="arch-lightbox-img" 
+          />
+          <div className="arch-lightbox-caption">
+            <span>{selectedArchetype.name}</span> — <small>{selectedArchetype.roleSubtitle}</small>
+          </div>
+        </div>
+      )}
 
       {/* =========================================================================
           MÓDULO 3: EL VIAJE DEL HÉROE Y LA EVOLUCIÓN DEL PERSONAJE

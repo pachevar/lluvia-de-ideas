@@ -167,6 +167,7 @@ export interface PortalConfig {
   tiendaConfig?: TiendaConfig;
   libros?: BookProduct[];
   landingConfig?: LandingConfig;
+  archetypeImages?: Record<string, string>;
 }
 
 export interface TechNode {

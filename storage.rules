@@ -14,6 +14,14 @@ service firebase.storage {
       allow read: if true;
       allow write: if request.auth != null;
     }
+    match /archetypes-assets/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /personajes-assets/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
     // Sellos/firmas de cotizaciones: solo lectura pública del enlace compartido
     match /cotizaciones/{allPaths=**} {
       allow read: if true;
