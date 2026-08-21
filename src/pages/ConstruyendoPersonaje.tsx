@@ -732,15 +732,27 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
         </div>
       </section>
 
-      {/* Lightbox Modal de Pantalla Completa */}
+      {/* Lightbox Modal de Pantalla Completa (Alineado al Borde Superior) */}
       {isLightboxOpen && currentArchetypeImg && (
         <div className="arch-lightbox-overlay animate-fade-in" onClick={() => setIsLightboxOpen(false)}>
-          <img 
-            src={currentArchetypeImg} 
-            alt={selectedArchetype.name} 
-            className="arch-lightbox-img" 
-          />
-          <div className="arch-lightbox-caption">
+          <div className="arch-lightbox-top-bar" onClick={(e) => e.stopPropagation()}>
+            <span className="arch-lightbox-tag">
+              <span>{selectedArchetype.icon}</span> {selectedArchetype.name}
+            </span>
+            <button className="arch-lightbox-close-btn" onClick={() => setIsLightboxOpen(false)}>
+              ✕ Cerrar Vista
+            </button>
+          </div>
+
+          <div className="arch-lightbox-img-wrap" onClick={(e) => e.stopPropagation()}>
+            <img 
+              src={currentArchetypeImg} 
+              alt={selectedArchetype.name} 
+              className="arch-lightbox-img" 
+            />
+          </div>
+
+          <div className="arch-lightbox-caption" onClick={(e) => e.stopPropagation()}>
             <span>{selectedArchetype.name}</span> — <small>{selectedArchetype.roleSubtitle}</small>
           </div>
         </div>
