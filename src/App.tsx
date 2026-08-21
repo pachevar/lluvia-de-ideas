@@ -24,6 +24,7 @@ const CodigoEstudiante = React.lazy(() => import('./pages/CodigoEstudiante'));
 const NotFound = React.lazy(() => import('./pages/NotFound'));
 const NuestrosLibros = React.lazy(() => import('./pages/NuestrosLibros'));
 const Neurociencia = React.lazy(() => import('./pages/Neurociencia'));
+const ConstruyendoPersonaje = React.lazy(() => import('./pages/ConstruyendoPersonaje'));
 
 function App() {
   const navigate = useNavigate();
@@ -127,6 +128,12 @@ function App() {
                 onClick={() => navigateTo('/creatika/teoria-del-color')}
               >
                 🎨 Teoría del Color
+              </button>
+              <button 
+                className={`sidebar-sublink ${isTabActive('/creatika/construyendo-el-personaje') || isTabActive('/construyendo-el-personaje') || isTabActive('/personajes') ? 'active' : ''}`}
+                onClick={() => navigateTo('/creatika/construyendo-el-personaje')}
+              >
+                🎭 Construyendo el Personaje
               </button>
               <button 
                 className={`sidebar-sublink ${isTabActive('/creatika/codigo-docente') || isTabActive('/codigo-docente') ? 'active' : ''}`}
@@ -249,6 +256,10 @@ function App() {
             <Route path="/cuento/:storyId" element={<NuestrosLibros />} />
             <Route path="/creatika/maquina-de-cuentos" element={<StoryMachine />} />
             <Route path="/creatika/teoria-del-color" element={<ColorTheory />} />
+            <Route path="/creatika/construyendo-el-personaje" element={<ConstruyendoPersonaje />} />
+            <Route path="/construyendo-el-personaje" element={<ConstruyendoPersonaje />} />
+            <Route path="/construyendo-personaje" element={<ConstruyendoPersonaje />} />
+            <Route path="/personajes" element={<ConstruyendoPersonaje />} />
             <Route path="/creatika/codigo-docente" element={<CodigoDocente />} />
             <Route path="/codigo-docente" element={<CodigoDocente />} />
             <Route path="/creatika/codigo-estudiante" element={<CodigoEstudiante />} />
