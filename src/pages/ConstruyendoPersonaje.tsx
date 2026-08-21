@@ -19,7 +19,6 @@ interface ArchetypeData {
   modernExample: string;
   writingTip: string;
   color: string;
-  defaultBgBanner?: string;
 }
 
 const ARCHETYPES: ArchetypeData[] = [
@@ -120,10 +119,11 @@ export default function ConstruyendoPersonaje() {
     }
   });
 
-  // Upload modal & Lightbox states
-  const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+  // In-place uploader tray and Lightbox states
+  const [isInlineUploaderOpen, setIsInlineUploaderOpen] = useState(false);
   const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  const [isDragActive, setIsDragActive] = useState(false);
   const [customUrlInput, setCustomUrlInput] = useState('');
   const [uploadStatusText, setUploadStatusText] = useState('');
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -172,14 +172,12 @@ export default function ConstruyendoPersonaje() {
     sectionRefs[tab]?.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   };
 
-  // Image Upload with Client-Side Compression
-  const handleImageFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
+  // Process and upload an image file with instant client compression
+  const processImageFile = async (file: File) => {
     if (!file) return;
-
     try {
       setIsUploading(true);
-      setUploadStatusText('Comprimiendo imagen a WebP para máxima velocidad...');
+      setUploadStatusText('Optimizando imagen...');
 
       // 1. Client-Side compression to high-efficiency WebP (1280x720 max)
       const compressedBlob = await compressImageWebP(file, 1280, 720, 0.85);
@@ -187,7 +185,7 @@ export default function ConstruyendoPersonaje() {
       let finalUrl = '';
 
       if (user) {
-        setUploadStatusText('Subiendo a Firebase Storage seguro...');
+        setUploadStatusText('Guardando imagen...');
         const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
         const fileRef = ref(storage, `archetypes-assets/${Date.now()}_${cleanName}`);
         await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
@@ -216,16 +214,59 @@ export default function ConstruyendoPersonaje() {
       setLocalArchetypeImages(updatedLocal);
       localStorage.setItem('local_archetype_images', JSON.stringify(updatedLocal));
 
-      setIsUploadModalOpen(false);
+      setIsInlineUploaderOpen(false);
       setUploadStatusText('');
     } catch (err) {
       console.error('Error al procesar imagen de arquetipo:', err);
-      alert('Hubo un inconveniente al optimizar o subir la imagen. Por favor, intenta con otra imagen.');
+      alert('Hubo un inconveniente al optimizar o subir la imagen. Por favor, intenta de nuevo.');
     } finally {
       setIsUploading(false);
       if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
+
+  const handleImageFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processImageFile(file);
+  };
+
+  // Drag & Drop handlers
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(true);
+  };
+
+  const handleDragLeave = () => {
+    setIsDragActive(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragActive(false);
+    const file = e.dataTransfer.files?.[0];
+    if (file && file.type.startsWith('image/')) {
+      processImageFile(file);
+    }
+  };
+
+  // Clipboard Paste Support (Ctrl + V)
+  useEffect(() => {
+    const handlePaste = (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items;
+      if (!items) return;
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.startsWith('image/')) {
+          const file = items[i].getAsFile();
+          if (file) {
+            processImageFile(file);
+            break;
+          }
+        }
+      }
+    };
+    window.addEventListener('paste', handlePaste);
+    return () => window.removeEventListener('paste', handlePaste);
+  }, [selectedArchetype, config, user]);
 
   const handleSaveCustomUrl = async () => {
     if (!customUrlInput.trim()) return;
@@ -247,7 +288,7 @@ export default function ConstruyendoPersonaje() {
     }
 
     setCustomUrlInput('');
-    setIsUploadModalOpen(false);
+    setIsInlineUploaderOpen(false);
   };
 
   const handleRemoveImage = async (e: React.MouseEvent) => {
@@ -313,7 +354,7 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
       setCharOccupation('Cronista del Observatorio');
       setCharWant('Preservar los pergaminos sagrados intactos');
       setCharNeed('Permitir que las nuevas generaciones reescriban el futuro');
-      setCharWound('Su sabiduría no pudo salvar a su pueblo de una catástrofe');
+      setCharWound('Su sabiduría no pudo salvar a su pueblo de una catástfe');
       setCharFear('La obsolescencia y el olvido');
       setCharVirtue('Paciencia infinita e intuición');
       setCharFlaw('Guarda secretos vitales por miedo a su uso indebido');
@@ -478,7 +519,7 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
           <span className="section-tag">Módulo 2</span>
           <h2 className="section-main-title">Arquetipos Dinámicos: Más Allá del Héroe</h2>
           <p className="section-description">
-            Explora las figuras esenciales de la narrativa universal. Puedes visualizar y personalizar la imagen cinematográfica de cada arquetipo con optimización de compresión automática.
+            Explora las figuras esenciales de la narrativa universal. Puedes visualizar y personalizar la imagen cinematográfica de cada arquetipo en el mismo panel de forma instantánea.
           </p>
         </div>
 
@@ -491,7 +532,10 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
                 <button
                   key={arch.id}
                   className={`archetype-item-btn ${selectedArchetype.id === arch.id ? 'active' : ''}`}
-                  onClick={() => setSelectedArchetype(arch)}
+                  onClick={() => {
+                    setSelectedArchetype(arch);
+                    setIsInlineUploaderOpen(false);
+                  }}
                   role="tab"
                   aria-selected={selectedArchetype.id === arch.id}
                 >
@@ -520,8 +564,13 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
           {/* Panel Detallado del Arquetipo Seleccionado con Gran Banner de Presentación */}
           <div className="archetype-detail-panel animate-fade-in" key={selectedArchetype.id}>
             
-            {/* Visual Showcase Banner de Alta Calidad */}
-            <div className="arch-visual-showcase">
+            {/* Visual Showcase Banner de Alta Calidad con Soporte Drag & Drop */}
+            <div 
+              className={`arch-visual-showcase ${isDragActive ? 'drag-active' : ''}`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
               {currentArchetypeImg ? (
                 <>
                   <img
@@ -563,7 +612,7 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
                 )}
                 <button 
                   className="arch-ctrl-btn" 
-                  onClick={() => setIsUploadModalOpen(true)}
+                  onClick={() => setIsInlineUploaderOpen(!isInlineUploaderOpen)}
                   title="Subir o cambiar imagen para este arquetipo"
                 >
                   <span>📷</span> {currentArchetypeImg ? 'Cambiar Imagen' : 'Subir Imagen'}
@@ -586,6 +635,61 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
                 </blockquote>
               </div>
             </div>
+
+            {/* In-Place Contextual Uploader Tray (Se abre en la misma posición de la sección) */}
+            {isInlineUploaderOpen && (
+              <div className="arch-inline-uploader animate-fade-in">
+                <div className="arch-inline-uploader-header">
+                  <h4>📷 Imagen para {selectedArchetype.name}</h4>
+                  <button 
+                    className="arch-inline-close-btn" 
+                    onClick={() => setIsInlineUploaderOpen(false)}
+                    title="Cerrar panel"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                {/* Zona de Selección y Arrastre Inmediata */}
+                <div 
+                  className={`arch-drop-zone ${isDragActive ? 'drag-active' : ''}`}
+                  onClick={() => fileInputRef.current?.click()}
+                  onDragOver={handleDragOver}
+                  onDragLeave={handleDragLeave}
+                  onDrop={handleDrop}
+                >
+                  <div className="arch-drop-icon">🖼️</div>
+                  <p><strong>Haz clic aquí o arrastra tu imagen</strong> (o presiona Ctrl+V para pegar)</p>
+                  <small>Optimización instantánea en formato WebP de alta velocidad</small>
+                  <input 
+                    ref={fileInputRef} 
+                    type="file" 
+                    accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp" 
+                    style={{ display: 'none' }} 
+                    onChange={handleImageFileChange} 
+                  />
+                </div>
+
+                {/* Enlace URL directo */}
+                <div className="arch-url-input-row">
+                  <input 
+                    type="url" 
+                    className="forge-input" 
+                    placeholder="O pega aquí una URL directa de imagen (https://...)"
+                    value={customUrlInput}
+                    onChange={(e) => setCustomUrlInput(e.target.value)}
+                    onKeyDown={(e) => e.key === 'Enter' && handleSaveCustomUrl()}
+                  />
+                  <button 
+                    className="forge-btn forge-btn-primary" 
+                    onClick={handleSaveCustomUrl}
+                    style={{ width: 'auto', padding: '0 20px', whiteSpace: 'nowrap' }}
+                  >
+                    Guardar
+                  </button>
+                </div>
+              </div>
+            )}
 
             {/* Cabecera Informativa */}
             <div className="arch-header">
@@ -627,58 +731,6 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
           </div>
         </div>
       </section>
-
-      {/* Modal de Carga y Optimización de Imagen */}
-      {isUploadModalOpen && (
-        <div className="arch-modal-overlay animate-fade-in" onClick={() => setIsUploadModalOpen(false)}>
-          <div className="arch-modal-card" onClick={(e) => e.stopPropagation()}>
-            <div className="arch-modal-header">
-              <h3>📷 Imagen para {selectedArchetype.name}</h3>
-              <button className="arch-modal-close" onClick={() => setIsUploadModalOpen(false)}>×</button>
-            </div>
-
-            <p style={{ color: '#94a3b8', fontSize: '0.88rem', lineHeight: '1.5' }}>
-              Sube una imagen grande (JPG, PNG o WebP). Se comprimirá y optimizará automáticamente en el navegador para garantizar que la página cargue de forma instantánea.
-            </p>
-
-            {/* Zona de Arrastre / Selección de Archivo */}
-            <div 
-              className="arch-drop-zone"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              <div className="arch-drop-icon">🖼️</div>
-              <p><strong>Haz clic aquí</strong> para seleccionar desde tu equipo</p>
-              <small>Compresión automática a WebP ultraligero de alta fidelidad</small>
-              <input 
-                ref={fileInputRef} 
-                type="file" 
-                accept="image/*" 
-                style={{ display: 'none' }} 
-                onChange={handleImageFileChange} 
-              />
-            </div>
-
-            {/* O ingreso mediante URL externa */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              <label style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 600 }}>
-                O pega un enlace de imagen directo (URL):
-              </label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                <input 
-                  type="url" 
-                  className="forge-input" 
-                  placeholder="https://ejemplo.com/personaje.jpg"
-                  value={customUrlInput}
-                  onChange={(e) => setCustomUrlInput(e.target.value)}
-                />
-                <button className="forge-btn forge-btn-primary" onClick={handleSaveCustomUrl} style={{ width: 'auto', padding: '0 20px' }}>
-                  Guardar
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
       {/* Lightbox Modal de Pantalla Completa */}
       {isLightboxOpen && currentArchetypeImg && (
