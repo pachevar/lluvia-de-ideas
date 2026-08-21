@@ -168,6 +168,14 @@ export interface PortalConfig {
   libros?: BookProduct[];
   landingConfig?: LandingConfig;
   archetypeImages?: Record<string, string>;
+  journeyStageImages?: Record<string, string>;
+  archetypesConfig?: Record<string, {
+    customTitle?: string;
+    customSubtitle?: string;
+    customQuote?: string;
+    customFunction?: string;
+    image?: string;
+  }>;
 }
 
 export interface TechNode {

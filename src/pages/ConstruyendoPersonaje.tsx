@@ -761,6 +761,16 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
         <div className="journey-timeline">
           {/* Fase 1 */}
           <div className="narrative-card journey-step-card">
+            {config.journeyStageImages?.mundo_ordinario && (
+              <div style={{ width: '100%', height: '120px', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
+                <img 
+                  src={config.journeyStageImages.mundo_ordinario} 
+                  alt="El Mundo Ordinario" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  loading="lazy" 
+                />
+              </div>
+            )}
             <span className="journey-step-number">01</span>
             <span className="journey-step-badge">🏡</span>
             <h3 className="journey-step-title">El Mundo Ordinario</h3>
@@ -774,6 +784,16 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
 
           {/* Fase 2 */}
           <div className="narrative-card journey-step-card">
+            {config.journeyStageImages?.llamada_umbral && (
+              <div style={{ width: '100%', height: '120px', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
+                <img 
+                  src={config.journeyStageImages.llamada_umbral} 
+                  alt="La Llamada y el Umbral" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  loading="lazy" 
+                />
+              </div>
+            )}
             <span className="journey-step-number">02</span>
             <span className="journey-step-badge">⚡</span>
             <h3 className="journey-step-title">La Llamada y el Umbral</h3>
@@ -787,6 +807,16 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
 
           {/* Fase 3 */}
           <div className="narrative-card journey-step-card">
+            {config.journeyStageImages?.abismo_crisis && (
+              <div style={{ width: '100%', height: '120px', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
+                <img 
+                  src={config.journeyStageImages.abismo_crisis} 
+                  alt="El Abismo / La Crisis" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  loading="lazy" 
+                />
+              </div>
+            )}
             <span className="journey-step-number">03</span>
             <span className="journey-step-badge">🔥</span>
             <h3 className="journey-step-title">El Abismo / La Crisis</h3>
@@ -800,6 +830,16 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
 
           {/* Fase 4 */}
           <div className="narrative-card journey-step-card">
+            {config.journeyStageImages?.transformacion && (
+              <div style={{ width: '100%', height: '120px', borderRadius: '12px', overflow: 'hidden', marginBottom: '14px' }}>
+                <img 
+                  src={config.journeyStageImages.transformacion} 
+                  alt="La Transformación y el Elixir" 
+                  style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                  loading="lazy" 
+                />
+              </div>
+            )}
             <span className="journey-step-number">04</span>
             <span className="journey-step-badge">🌟</span>
             <h3 className="journey-step-title">La Transformación y el Elixir</h3>

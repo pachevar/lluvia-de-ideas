@@ -10,6 +10,7 @@ export type AdminTabType =
   | 'laboratorios'
   | 'bingo' 
   | 'tienda' 
+  | 'viaje_del_heroe'
   | 'inscripciones' 
   | 'cotizador' 
   | 'colors'
@@ -92,6 +93,13 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
         icon: '✨',
         description: 'Máquina de Cuentos, Teoría del Color, Código Docente y Estudiante',
         keywords: ['creatika', 'cuentos', 'color', 'docente', 'estudiante', 'arte', 'escritura']
+      },
+      {
+        id: 'viaje_del_heroe',
+        label: '🦸 El Viaje del Héroe',
+        icon: '🦸',
+        description: 'Gestión de arquetipos, imágenes oficiales en base de datos y narrativa de personajes',
+        keywords: ['viaje del heroe', 'personajes', 'arquetipos', 'construyendo personaje', 'imagenes', 'narrativa', 'guion']
       },
       {
         id: '100tek',

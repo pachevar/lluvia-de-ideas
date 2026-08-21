@@ -21,6 +21,7 @@ import AdminTabCreatika from './components/admin/AdminTabCreatika';
 import AdminTab100tek from './components/admin/AdminTab100tek';
 import AdminTabTienda from './components/admin/AdminTabTienda';
 import AdminTabTechTree from './components/admin/AdminTabTechTree';
+import AdminTabViajeDelHeroe from './components/admin/AdminTabViajeDelHeroe';
 
 export default function Gerencia() {
   const { config, loading: configLoading, saveConfigToFirestore, resetConfigToFirestore } = usePortalConfig();
@@ -301,6 +302,13 @@ export default function Gerencia() {
               localConfig={localConfig} 
               setLocalConfig={setLocalConfig}
               updateField={updateField} 
+            />
+          )}
+
+          {activeAdminTab === 'viaje_del_heroe' && (
+            <AdminTabViajeDelHeroe 
+              localConfig={localConfig} 
+              setLocalConfig={setLocalConfig} 
             />
           )}
 
