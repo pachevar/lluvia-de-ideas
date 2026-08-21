@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { useAuth } from '../context/AuthContext';
@@ -155,6 +156,23 @@ export default function ConstruyendoPersonaje() {
       document.body.classList.remove('home-page-active');
     };
   }, []);
+
+  // Lock body scroll and close on ESC when lightbox is open
+  useEffect(() => {
+    if (isLightboxOpen) {
+      document.body.style.overflow = 'hidden';
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'Escape') setIsLightboxOpen(false);
+      };
+      window.addEventListener('keydown', handleKeyDown);
+      return () => {
+        document.body.style.overflow = '';
+        window.removeEventListener('keydown', handleKeyDown);
+      };
+    } else {
+      document.body.style.overflow = '';
+    }
+  }, [isLightboxOpen]);
 
   // Determine current image for active archetype
   const getArchetypeImage = (archetypeId: string): string => {
@@ -732,8 +750,8 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
         </div>
       </section>
 
-      {/* Lightbox Modal de Pantalla Completa (Alineado al Borde Superior) */}
-      {isLightboxOpen && currentArchetypeImg && (
+      {/* Lightbox Modal de Pantalla Completa (Alineado al Borde Superior con Portal) */}
+      {isLightboxOpen && currentArchetypeImg && typeof document !== 'undefined' && createPortal(
         <div className="arch-lightbox-overlay animate-fade-in" onClick={() => setIsLightboxOpen(false)}>
           <div className="arch-lightbox-top-bar" onClick={(e) => e.stopPropagation()}>
             <span className="arch-lightbox-tag">
@@ -755,7 +773,8 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
           <div className="arch-lightbox-caption" onClick={(e) => e.stopPropagation()}>
             <span>{selectedArchetype.name}</span> — <small>{selectedArchetype.roleSubtitle}</small>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* =========================================================================
