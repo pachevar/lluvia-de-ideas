@@ -268,7 +268,7 @@
   height: calc(100vh - 100px); /* Subtract footer/padding space, top menu is gone */
   min-height: 500px;
   overflow: hidden;
-  background: radial-gradient(circle at 50% 35%, #00386b 0%, #001f3f 45%, #000d1e 80%, #00060f 100%);
+  background: transparent;
   position: relative;
   border-radius: 0;
   box-shadow: none;

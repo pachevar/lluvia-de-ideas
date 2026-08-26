@@ -171,7 +171,13 @@ export default function Home() {
       <section id="section-sutz" className="landing-feature-section feature-sutz">
         <div className="feature-container">
           <div className="feature-card-left card-glass">
-            <div className="sutz-illustration-box section-img-interactive">
+            <div 
+              className="sutz-illustration-box section-img-interactive"
+              style={{ 
+                background: sutzSec.bgImage ? undefined : 'radial-gradient(circle at 50% 50%, #00386b 0%, #0f172a 100%)',
+                borderColor: 'rgba(56, 189, 248, 0.4)' 
+              }}
+            >
               {sutzSec.bgImage && (
                 <div 
                   className="section-img-bg" 
