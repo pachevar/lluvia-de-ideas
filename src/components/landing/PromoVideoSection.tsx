@@ -65,7 +65,7 @@ export default function PromoVideoSection({
                         <div className="play-btn-glow"></div>
                         <div className="play-btn-inner-ring"></div>
                         <svg className="play-icon-svg" viewBox="0 0 24 24" fill="currentColor">
-                          <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72L9.5 4.28a1 1 0 0 0-1.5.86z" />
+                          <path d="M7 4.5v15a1 1 0 0 0 1.52.85l11-7.5a1 1 0 0 0 0-1.7l-11-7.5A1 1 0 0 0 7 4.5z" />
                         </svg>
                         <div className="play-sparkle sp-1"></div>
                         <div className="play-sparkle sp-2"></div>
