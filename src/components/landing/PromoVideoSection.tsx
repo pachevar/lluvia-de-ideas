@@ -60,17 +60,25 @@ export default function PromoVideoSection({
                       <div className="play-pulse-ring ring-1"></div>
                       <div className="play-pulse-ring ring-2"></div>
                       <div className="play-pulse-ring ring-3"></div>
+                      <div className="play-pulse-ring ring-4"></div>
                       <button className="facade-play-btn" aria-label="Reproducir video promocional">
                         <div className="play-btn-glow"></div>
+                        <div className="play-btn-inner-ring"></div>
                         <svg className="play-icon-svg" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72L9.5 4.28a1 1 0 0 0-1.5.86z" />
                         </svg>
+                        <div className="play-sparkle sp-1"></div>
+                        <div className="play-sparkle sp-2"></div>
+                        <div className="play-sparkle sp-3"></div>
+                        <div className="play-sparkle sp-4"></div>
                       </button>
                     </div>
                     
                     <div className="facade-play-badge">
                       <span className="badge-pulse-dot"></span>
                       <span className="facade-play-text">VER VIDEO PROMOCIONAL</span>
+                      <span className="badge-duration">3:00</span>
+                      <div className="badge-shimmer"></div>
                       <svg className="badge-arrow-icon" viewBox="0 0 20 20" fill="currentColor">
                         <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
                       </svg>
