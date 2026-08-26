@@ -40,18 +40,15 @@ export const HexagonCell: React.FC<HexagonCellProps> = ({
 
   return (
     <div
-      className={`hex-cell-wrapper ${isEditing ? 'is-editing' : ''} ${isUnexplored ? 'is-unexplored' : ''} ${hasAction ? 'has-action' : ''}`}
+      className={`hex-cell-wrapper ${isEditing ? 'is-editing' : ''} ${isUnexplored ? 'is-unexplored' : ''} ${hasAction ? 'has-action' : ''} ${hasBgImage ? 'has-bg-image' : ''}`}
       title={data.title}
       style={baseStyle}
       onClick={onClick}
     >
       <div className="hex-inner-border"></div>
       <div className="hex-cell">
-        {/* Capa 1: Fondo (Preserva imágenes de fondo) */}
+        {/* Capa 1: Fondo (Preserva imágenes de fondo y continuidad) */}
         {renderHexLayer(data.layerBg, 'hex-layer hex-layer-bg')}
-
-        {/* Gradiente de sombra elegante para asegurar contraste y legibilidad */}
-        {hasBgImage && <div className="hex-layer-shade" />}
         
         {/* Capa 2: Decorativa */}
         {renderHexLayer(data.layerDeco, 'hex-layer hex-layer-deco')}
