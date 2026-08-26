@@ -55,10 +55,27 @@ export default function PromoVideoSection({
                 <div className="video-facade-container" onClick={() => setIsPlaying(true)} role="button" tabIndex={0}>
                   <img src={thumbnailUrl} alt={title} className="facade-thumbnail" loading="lazy" decoding="async" />
                   <div className="facade-overlay-gradient"></div>
-                  <button className="facade-play-btn" aria-label="Reproducir video promocional">
-                    <span className="play-icon-triangle">▶</span>
-                  </button>
-                  <span className="facade-play-label">VER VIDEO PROMOCIONAL</span>
+                  <div className="facade-content-wrapper">
+                    <div className="play-btn-pulse-container">
+                      <div className="play-pulse-ring ring-1"></div>
+                      <div className="play-pulse-ring ring-2"></div>
+                      <div className="play-pulse-ring ring-3"></div>
+                      <button className="facade-play-btn" aria-label="Reproducir video promocional">
+                        <div className="play-btn-glow"></div>
+                        <svg className="play-icon-svg" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M8 5.14v13.72a1 1 0 0 0 1.5.86l11-6.86a1 1 0 0 0 0-1.72L9.5 4.28a1 1 0 0 0-1.5.86z" />
+                        </svg>
+                      </button>
+                    </div>
+                    
+                    <div className="facade-play-badge">
+                      <span className="badge-pulse-dot"></span>
+                      <span className="facade-play-text">VER VIDEO PROMOCIONAL</span>
+                      <svg className="badge-arrow-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path fillRule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clipRule="evenodd" />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
               )}
             </div>
