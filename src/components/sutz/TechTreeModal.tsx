@@ -25,10 +25,19 @@ interface TechItem {
 }
 
 export const LINE_COLOR: Record<string, string> = {
-  STEM: '#00e5ff',        // Línea 1: Cyan Neón (como está)
-  HUMANIDADES: '#d946ef', // Línea 2: Lila / Morado Neón
-  APRENDIZAJE: '#ff7700'  // Línea 3: Anaranjado Neón
+  STEM: '#00e5ff',        // Cyan Neón
+  HUMANIDADES: '#d946ef', // Lila / Morado Neón
+  APRENDIZAJE: '#ff7700'  // Anaranjado Neón
 };
+
+export const MACRO_ERAS = [
+  { id: 1, name: '🏛️ Orígenes', range: [1, 5], color: '#00e5ff' },
+  { id: 2, name: '📜 Antigüedad', range: [6, 10], color: '#38bdf8' },
+  { id: 3, name: '⚙️ Industrial', range: [11, 15], color: '#ffc24d' },
+  { id: 4, name: '💻 Era Digital', range: [16, 20], color: '#ff2ec4' },
+  { id: 5, name: '🤖 IA y Cloud', range: [21, 25], color: '#a855f7' },
+  { id: 6, name: '🚀 Superinteligencia', range: [26, 30], color: '#3dffb0' }
+];
 
 export const getTechColor = (t: TechItem): string => {
   if (t.category && LINE_COLOR[t.category]) {
@@ -67,29 +76,15 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   const [winShown, setWinShown] = useState<boolean>(false);
   const [showWinOverlay, setShowWinOverlay] = useState<boolean>(false);
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [mobileViewMode, setMobileViewMode] = useState<'board' | 'list'>('board');
+  const [categoryFilter, setCategoryFilter] = useState<'ALL' | 'STEM' | 'HUMANIDADES' | 'APRENDIZAJE' | 'READY' | 'UNLOCKED'>('ALL');
+  
+  const [mobileViewMode, setMobileViewMode] = useState<'board' | 'epoch' | 'list'>(() => {
+    return typeof window !== 'undefined' && window.innerWidth <= 768 ? 'epoch' : 'board';
+  });
+
   const [currentActiveCol, setCurrentActiveCol] = useState<number>(1);
   const [hoveredTechId, setHoveredTechId] = useState<string | null>(null);
   const [inspectNode, setInspectNode] = useState<TechItem | null>(null);
-
-  // Save unlocked state to localStorage
-  useEffect(() => {
-    try {
-      localStorage.setItem('sutz_tech_tree_unlocked_v1', JSON.stringify(Array.from(unlocked)));
-    } catch (e) {
-      console.warn('Could not save unlocked nodes to localStorage:', e);
-    }
-  }, [unlocked]);
-
-  // Jump smoothly to a specific column on mobile/desktop
-  const handleJumpToCol = (colNum: number) => {
-    setCurrentActiveCol(colNum);
-    const colEl = document.getElementById(`nexo-col-${colNum}`);
-    if (colEl && boardWrapRef.current) {
-      colEl.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
-      setTimeout(updateWiresLayout, 350);
-    }
-  };
 
   // Floating text feedback and toast messages state
   const [toasts, setToasts] = useState<{ id: number; msg: string; type: 'ok' | 'warn' | 'err' }[]>([]);
@@ -100,6 +95,26 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   const svgRef = useRef<SVGSVGElement>(null);
   const cardRefs = useRef<Record<string, HTMLDivElement | null>>({});
   const rafRef = useRef<number | null>(null);
+
+  // Save unlocked state to localStorage
+  useEffect(() => {
+    try {
+      localStorage.setItem('sutz_tech_tree_unlocked_v1', JSON.stringify(Array.from(unlocked)));
+    } catch (e) {
+      console.warn('Could not save unlocked nodes to localStorage:', e);
+    }
+  }, [unlocked]);
+
+  // Jump smoothly to a specific column
+  const handleJumpToCol = (colNum: number) => {
+    setCurrentActiveCol(colNum);
+    if (mobileViewMode === 'board') {
+      const colEl = document.getElementById(`nexo-col-${colNum}`);
+      if (colEl && boardWrapRef.current) {
+        colEl.scrollIntoView({ behavior: 'smooth', inline: 'start', block: 'nearest' });
+      }
+    }
+  };
 
   // Keyboard navigation shortcuts
   useEffect(() => {
@@ -127,8 +142,8 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleJumpToCol intentionally not memoized
-  }, [isOpen, inspectNode, onClose]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, inspectNode, onClose, mobileViewMode]);
 
   // Map nodes from nodesMap prop or use INITIAL_TECH_TREE_DATA (267 nodes across 30 cols)
   const techsList: TechItem[] = useMemo(() => {
@@ -158,6 +173,21 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
       techs: techsList.filter(t => t.tier === tier)
     }));
   }, [techsList]);
+
+  // Helper status checkers
+  const getCardStatus = (t: TechItem) => {
+    if (unlocked.has(t.id)) return 'unlocked';
+    if (t.deps.every(d => unlocked.has(d))) return 'ready';
+    return 'locked';
+  };
+
+  const hasResourcesFor = (t: TechItem) =>
+    SUTZ_RESOURCE_KEYS.every(k => resources[k] >= t.resourceCost[k]);
+
+  // Count ready to unlock
+  const readyCount = useMemo(() => {
+    return techsList.filter(t => !unlocked.has(t.id) && t.deps.every(d => unlocked.has(d))).length;
+  }, [techsList, unlocked]);
 
   // Active dependency highlight tree when hovering a node
   const hoveredDependencySet = useMemo(() => {
@@ -208,20 +238,20 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     return techsList.reduce((s, t) => s + (unlocked.has(t.id) ? t.income : 0), 0);
   }, [techsList, unlocked]);
 
-  // Passive income ticker (acumula puntos de conocimiento en el monedero compartido)
+  // Passive income ticker - 1 segundo para máxima fluidez y cero sobrecarga de CPU
   useEffect(() => {
     if (!isOpen) return;
     const interval = setInterval(() => {
-      addResources({ puntos: currentIncome / 10 });
-    }, 100);
+      addResources({ puntos: currentIncome });
+    }, 1000);
     return () => clearInterval(interval);
   }, [isOpen, currentIncome, addResources]);
 
-  // Layout wire calculation for SVG connectors (requestAnimationFrame optimized at 60fps)
+  // Layout wire calculation for SVG connectors (Calculado solo al montar o redimensionar, NUNCA en scroll)
   const updateWiresLayout = () => {
     if (rafRef.current) cancelAnimationFrame(rafRef.current);
     rafRef.current = requestAnimationFrame(() => {
-      if (!boardRef.current || !svgRef.current) return;
+      if (!boardRef.current || !svgRef.current || mobileViewMode !== 'board') return;
       const boardEl = boardRef.current;
       const svgEl = svgRef.current;
       const b = boardEl.getBoundingClientRect();
@@ -266,17 +296,16 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
   };
 
   useLayoutEffect(() => {
-    if (!isOpen) return;
-    updateWiresLayout();
-    const timer = setTimeout(updateWiresLayout, 300);
+    if (!isOpen || mobileViewMode !== 'board') return;
+    const timer = setTimeout(updateWiresLayout, 200);
     window.addEventListener('resize', updateWiresLayout);
     return () => {
       clearTimeout(timer);
       if (rafRef.current) cancelAnimationFrame(rafRef.current);
       window.removeEventListener('resize', updateWiresLayout);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- updateWiresLayout intentionally not memoized
-  }, [isOpen, techsList, unlocked]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, mobileViewMode, techsList, unlocked]);
 
   if (!isOpen) return null;
 
@@ -338,7 +367,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
       const detail = shortResources
         .map(k => `${SUTZ_RESOURCE_META[k].icon} faltan ${Math.ceil(t.resourceCost[k] - resources[k])} ${SUTZ_RESOURCE_META[k].short}`)
         .join(' · ');
-      addToast(`🔒 ${detail}. ¡Sigue explorando el mundo virtual!`, 'err');
+      addToast(`🔒 ${detail}. ¡Explora el mundo virtual!`, 'err');
       return;
     }
 
@@ -360,117 +389,336 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
     }
   };
 
-  const getCardStatus = (t: TechItem) => {
-    if (unlocked.has(t.id)) return 'unlocked';
-    if (t.deps.every(d => unlocked.has(d))) return 'ready';
-    return 'locked';
+  // Filter tech items helper
+  const filterTech = (t: TechItem) => {
+    const matchesSearch = !searchQuery || 
+      t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
+      t.desc.toLowerCase().includes(searchQuery.toLowerCase());
+    if (!matchesSearch) return false;
+
+    if (categoryFilter === 'STEM') return t.category === 'STEM';
+    if (categoryFilter === 'HUMANIDADES') return t.category === 'HUMANIDADES';
+    if (categoryFilter === 'APRENDIZAJE') return t.category === 'APRENDIZAJE';
+    if (categoryFilter === 'READY') return getCardStatus(t) === 'ready';
+    if (categoryFilter === 'UNLOCKED') return getCardStatus(t) === 'unlocked';
+    return true;
   };
 
-  const hasResourcesFor = (t: TechItem) =>
-    SUTZ_RESOURCE_KEYS.every(k => resources[k] >= t.resourceCost[k]);
+  // Active Epoch Meta
+  const activeColMeta = TECH_TREE_COLUMNS_META[currentActiveCol] || { title: `Época ${currentActiveCol}`, tier: `Nivel ${currentActiveCol}`, badgeColor: '#00e5ff' };
+  const currentEpochTechs = techsList.filter(t => t.tier === currentActiveCol);
+  const currentEpochUnlocked = currentEpochTechs.filter(t => unlocked.has(t.id)).length;
 
   return (
     <div className="nexo-tech-tree-modal nexo-overlay" onClick={onClose}>
       <div className="nexo-container" onClick={(e) => e.stopPropagation()}>
 
-        {/* HEADER / HUD */}
+        {/* ================= HEADER / HUD ULTRA-COMPACTO ================= */}
         <header className="nexo-header">
           <div className="brand">
-            <div className="logo">◢◤ SUTZ<span>EDU</span></div>
+            <div className="brand-badge-row">
+              <span className="logo">◢◤ SUTZ<span>EDU</span></span>
+              <span className="platform-tag">ECOSISTEMA DIGITAL</span>
+            </div>
             <h1>ÁRBOL DE TECNOLOGÍA</h1>
-            <p className="tag">Ruta de habilidades para la educación del futuro</p>
           </div>
 
           <div className="nexo-hud">
-            <div className="nexo-stat">
-              <label>Puntos de conocimiento</label>
+            <div className="nexo-stat stat-puntos">
+              <label>Conocimiento</label>
               <div className="val">{formatSutzResource(Math.floor(resources.puntos))}<span className="unit">⚡</span></div>
             </div>
-            <div className="nexo-stat inc">
+            
+            <div className="nexo-stat inc stat-income">
               <label>Ingresos</label>
               <div className="val">+{currentIncome} ⚡/s</div>
             </div>
-            <div className="nexo-stat">
-              <label>Progreso <b style={{ color: 'var(--text)' }}>{unlocked.size}/{techsList.length}</b></label>
+            
+            <div className="nexo-stat stat-progress">
+              <div className="progress-labels">
+                <label>Progreso</label>
+                <b className="progress-count">{unlocked.size}/{techsList.length}</b>
+              </div>
               <div className="nexo-bar">
                 <i style={{ width: `${(unlocked.size / techsList.length) * 100}%` }}></i>
               </div>
             </div>
 
-            <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-              <button className="nexo-close-btn" onClick={onClose} title="Cerrar modal">✕</button>
-            </div>
+            <button className="nexo-close-btn" onClick={onClose} title="Cerrar modal" aria-label="Cerrar modal">✕</button>
           </div>
         </header>
 
-        {/* TOOLBAR NAVEGACIÓN MÓVIL Y BÚSQUEDA RÁPIDA */}
-        <div className="nexo-mobile-toolbar">
-          <div className="nexo-search-box">
-            <input 
-              type="text" 
-              placeholder="🔍 Buscar tecnología (ej. Fuego, IA, ADN)..." 
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="nexo-search-input"
-            />
-            {searchQuery && (
-              <button className="nexo-search-clear" onClick={() => setSearchQuery('')}>✕</button>
-            )}
-          </div>
-
-          <div className="nexo-view-switcher">
-            <button 
-              className={`nexo-view-btn ${mobileViewMode === 'board' ? 'active' : ''}`}
-              onClick={() => {
-                setMobileViewMode('board');
-                setTimeout(updateWiresLayout, 200);
-              }}
-              title="Vista de Matriz de Conectores"
-            >
-              🗺️ Matriz
-            </button>
-            <button 
-              className={`nexo-view-btn ${mobileViewMode === 'list' ? 'active' : ''}`}
-              onClick={() => setMobileViewMode('list')}
-              title="Vista de Lista Vertical Móvil"
-            >
-              📱 Lista Móvil
-            </button>
-          </div>
-
-          <div className="nexo-col-jump-group">
-            <span className="jump-label">Ir a Época:</span>
-            <select 
-              className="nexo-jump-select"
-              value={currentActiveCol}
-              onChange={(e) => handleJumpToCol(Number(e.target.value))}
-            >
-              {Array.from({ length: 30 }, (_, i) => i + 1).map(c => {
-                const meta = TECH_TREE_COLUMNS_META[c];
-                return (
-                  <option key={c} value={c}>
-                    {c}: {meta ? meta.title : `Época ${c}`}
-                  </option>
-                );
-              })}
-            </select>
-
-            <div className="nexo-jump-pills">
-              {[1, 2, 5, 8, 11, 16, 23, 30].map(c => (
-                <button key={c} className={`nexo-jump-pill ${currentActiveCol === c ? 'active' : ''}`} onClick={() => handleJumpToCol(c)}>
-                  {c}
+        {/* ================= BARRA DE HERRAMIENTAS Y ERAS ================= */}
+        <div className="nexo-control-bar">
+          
+          {/* Fila 1: Macro-Eras Navegables */}
+          <div className="nexo-eras-ribbon">
+            {MACRO_ERAS.map(era => {
+              const isCurrentEra = currentActiveCol >= era.range[0] && currentActiveCol <= era.range[1];
+              return (
+                <button
+                  key={era.id}
+                  className={`nexo-era-btn ${isCurrentEra ? 'active' : ''}`}
+                  style={{ '--era-color': era.color } as React.CSSProperties}
+                  onClick={() => handleJumpToCol(era.range[0])}
+                >
+                  <span className="era-icon-name">{era.name}</span>
+                  <span className="era-range-badge">{era.range[0]}-{era.range[1]}</span>
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
+
+          {/* Fila 2: Filtros por Disciplina y Modo de Vista */}
+          <div className="nexo-sub-controls">
+            
+            {/* Buscador */}
+            <div className="nexo-search-box">
+              <input 
+                type="text" 
+                placeholder="🔍 Buscar tecnología..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="nexo-search-input"
+              />
+              {searchQuery && (
+                <button className="nexo-search-clear" onClick={() => setSearchQuery('')}>✕</button>
+              )}
+            </div>
+
+            {/* Filtros de Categoría */}
+            <div className="nexo-filter-pills">
+              <button 
+                className={`nexo-filter-pill ${categoryFilter === 'ALL' ? 'active' : ''}`}
+                onClick={() => setCategoryFilter('ALL')}
+              >
+                🌐 Todos
+              </button>
+              <button 
+                className={`nexo-filter-pill stem ${categoryFilter === 'STEM' ? 'active' : ''}`}
+                onClick={() => setCategoryFilter('STEM')}
+              >
+                🔬 STEM
+              </button>
+              <button 
+                className={`nexo-filter-pill humanidades ${categoryFilter === 'HUMANIDADES' ? 'active' : ''}`}
+                onClick={() => setCategoryFilter('HUMANIDADES')}
+              >
+                🎨 Humanidades
+              </button>
+              <button 
+                className={`nexo-filter-pill aprendizaje ${categoryFilter === 'APRENDIZAJE' ? 'active' : ''}`}
+                onClick={() => setCategoryFilter('APRENDIZAJE')}
+              >
+                🗣️ Aprendizaje
+              </button>
+              <button 
+                className={`nexo-filter-pill ready ${categoryFilter === 'READY' ? 'active' : ''}`}
+                onClick={() => setCategoryFilter('READY')}
+                title="Tecnologías listas para desbloquear"
+              >
+                ⚡ Listas ({readyCount})
+              </button>
+            </div>
+
+            {/* Selector de Modo de Vista */}
+            <div className="nexo-view-switcher">
+              <button 
+                className={`nexo-view-btn ${mobileViewMode === 'epoch' ? 'active' : ''}`}
+                onClick={() => setMobileViewMode('epoch')}
+                title="Vista por Época / Móvil óptima"
+              >
+                📱 Época
+              </button>
+              <button 
+                className={`nexo-view-btn ${mobileViewMode === 'board' ? 'active' : ''}`}
+                onClick={() => {
+                  setMobileViewMode('board');
+                  setTimeout(updateWiresLayout, 150);
+                }}
+                title="Vista Matriz de Conectores"
+              >
+                🗺️ Matriz
+              </button>
+              <button 
+                className={`nexo-view-btn ${mobileViewMode === 'list' ? 'active' : ''}`}
+                onClick={() => setMobileViewMode('list')}
+                title="Vista Lista Completa"
+              >
+                📑 Lista
+              </button>
+            </div>
+
+          </div>
+
         </div>
 
-        {/* MODO 1: TABLERO & CONECTORES SVG (MATRIZ) */}
+        {/* ================= CONTENIDO PRINCIPAL SEGÚN MODO ================= */}
+        
+        {/* MODO 1: VISTA ÉPOCA (ÓPTIMA PARA MÓVILES Y PANTALLAS TÁCTILES) */}
+        {mobileViewMode === 'epoch' && (
+          <div className="nexo-epoch-view-container animate-fade-in">
+            
+            {/* Cabecera de la Época Activa */}
+            <div className="epoch-banner-card" style={{ borderColor: activeColMeta.badgeColor }}>
+              <div className="epoch-banner-left">
+                <div className="epoch-number-pill" style={{ background: activeColMeta.badgeColor }}>
+                  ÉPOCA {currentActiveCol}
+                </div>
+                <div className="epoch-banner-titles">
+                  <h2>{activeColMeta.title}</h2>
+                  <span className="epoch-tier-subtitle">{activeColMeta.tier}</span>
+                </div>
+              </div>
+
+              <div className="epoch-progress-badge">
+                <span className="progress-num">{currentEpochUnlocked} / {currentEpochTechs.length}</span>
+                <span className="progress-txt">Dominadas</span>
+              </div>
+            </div>
+
+            {/* Selector Rápido de Épocas (Pills Deslizables) */}
+            <div className="epoch-horizontal-slider">
+              {Array.from({ length: 30 }, (_, i) => i + 1).map(colNum => {
+                const meta = TECH_TREE_COLUMNS_META[colNum];
+                const count = techsList.filter(t => t.tier === colNum).length;
+                const unl = techsList.filter(t => t.tier === colNum && unlocked.has(t.id)).length;
+                const isComplete = unl === count && count > 0;
+
+                return (
+                  <button
+                    key={colNum}
+                    className={`epoch-slider-tab ${currentActiveCol === colNum ? 'active' : ''} ${isComplete ? 'complete' : ''}`}
+                    onClick={() => handleJumpToCol(colNum)}
+                  >
+                    <span className="tab-num">N{colNum}</span>
+                    <span className="tab-name" title={meta?.title}>{meta?.title.split(' ')[0]}</span>
+                    {isComplete && <span className="tab-check">✓</span>}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* Grid de Tarjetas de la Época Activa */}
+            <div className="epoch-cards-grid">
+              {currentEpochTechs.filter(filterTech).map(t => {
+                const status = getCardStatus(t);
+                const isPoor = status === 'ready' && !hasResourcesFor(t);
+                const techColor = getTechColor(t);
+
+                return (
+                  <div
+                    key={t.id}
+                    className={`epoch-tech-card ${status} ${isPoor ? 'poor' : ''}`}
+                    style={{
+                      '--tech-color': techColor,
+                      '--tech-glow': techColor + 'cc'
+                    } as React.CSSProperties}
+                    onClick={() => setInspectNode(t)}
+                  >
+                    {/* Encabezado de la Tarjeta con Hexágono */}
+                    <div className="epoch-card-header">
+                      <div className="epoch-hex-frame">
+                        <div className="epoch-hex-shape">
+                          {t.icon.startsWith('http') || t.icon.startsWith('/') ? (
+                            <img src={t.icon} alt={t.name} loading="lazy" decoding="async" />
+                          ) : (
+                            <span className="epoch-hex-emoji">{t.icon}</span>
+                          )}
+                        </div>
+                        <div className="epoch-hex-status-badge">
+                          {status === 'unlocked' ? '✓' : status === 'ready' ? '⚡' : '🔒'}
+                        </div>
+                      </div>
+
+                      <div className="epoch-card-meta">
+                        <div className="epoch-card-top-tags">
+                          <span 
+                            className="epoch-category-tag"
+                            style={{ color: techColor, borderColor: techColor + '66', background: techColor + '18' }}
+                          >
+                            {t.category || 'CONOCIMIENTO'}
+                          </span>
+                          <span className={`epoch-status-pill ${status}`}>
+                            {status === 'unlocked' ? 'DESBLOQUEADA' : status === 'ready' ? (isPoor ? 'FALTAN RECURSOS' : 'LISTA') : 'BLOQUEADA'}
+                          </span>
+                        </div>
+                        <h3>{t.name}</h3>
+                      </div>
+                    </div>
+
+                    {/* Descripción */}
+                    <p className="epoch-card-desc">{t.desc}</p>
+
+                    {/* Costes de Recursos Necesarios */}
+                    <div className="epoch-card-resources">
+                      <span className="res-title">Costes:</span>
+                      <div className="nexo-res-costs">
+                        {SUTZ_RESOURCE_KEYS.map(k => {
+                          const need = t.resourceCost[k];
+                          const have = resources[k];
+                          const ok = have >= need;
+                          return (
+                            <span
+                              key={k}
+                              className={`nexo-res-chip ${ok ? 'ok' : 'no'}`}
+                              title={`${SUTZ_RESOURCE_META[k].label}: tienes ${formatSutzResource(have)}, necesitas ${need}`}
+                            >
+                              <span className="nexo-res-icon">{SUTZ_RESOURCE_META[k].icon}</span>
+                              {need}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+
+                    {/* Botonera de Acción Directa */}
+                    <div className="epoch-card-actions">
+                      <span className="income-badge">+{t.income} ⚡/s</span>
+
+                      <div className="epoch-action-btns">
+                        {status === 'ready' && !unlocked.has(t.id) && (
+                          <button
+                            className={`epoch-unlock-btn ${hasResourcesFor(t) ? 'active-neon' : 'disabled-poor'}`}
+                            onClick={(e) => tryUnlock(t, e)}
+                          >
+                            ⚡ DESBLOQUEAR
+                          </button>
+                        )}
+                        <button
+                          className="epoch-inspect-btn"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setInspectNode(t);
+                          }}
+                        >
+                          👁️ Inspeccionar
+                        </button>
+                      </div>
+                    </div>
+
+                  </div>
+                );
+              })}
+
+              {currentEpochTechs.filter(filterTech).length === 0 && (
+                <div className="epoch-empty-filter-state">
+                  <p>No hay tecnologías en esta época con los filtros aplicados.</p>
+                  <button className="nexo-btn ghost" onClick={() => { setCategoryFilter('ALL'); setSearchQuery(''); }}>
+                    Limpiar Filtros
+                  </button>
+                </div>
+              )}
+            </div>
+
+          </div>
+        )}
+
+        {/* MODO 2: TABLERO & CONECTORES SVG (MATRIZ COMPLETA DE ALTO RENDIMIENTO) */}
         {mobileViewMode === 'board' && (
           <div 
             className="nexo-board-wrap" 
             ref={boardWrapRef}
-            onScroll={updateWiresLayout}
           >
             <div className="nexo-board" ref={boardRef}>
               
@@ -525,18 +773,13 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                     </div>
 
                     <div className="nexo-col-cards">
-                      {techs.map(t => {
+                      {techs.filter(filterTech).map(t => {
                         const status = getCardStatus(t);
                         const isPoor = status === 'ready' && !hasResourcesFor(t);
                         const isHoveredMain = hoveredTechId === t.id;
                         const isAncestor = hoveredDependencySet.ancestors.has(t.id);
                         const isDescendant = hoveredDependencySet.descendants.has(t.id);
                         const isDimUnrelated = hoveredTechId ? (!isHoveredMain && !isAncestor && !isDescendant) : false;
-                        const matchesSearch = !searchQuery || 
-                          t.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          t.desc.toLowerCase().includes(searchQuery.toLowerCase());
-
-                        if (searchQuery && !matchesSearch) return null;
                         const techColor = getTechColor(t);
 
                         return (
@@ -552,11 +795,11 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                             onMouseEnter={() => setHoveredTechId(t.id)}
                             onMouseLeave={() => setHoveredTechId(null)}
                           >
-                            {/* HEXÁGONO: contiene únicamente la imagen de la tecnología */}
+                            {/* HEXÁGONO: contiene la imagen de la tecnología */}
                             <div className="nexo-hex-wrap">
                               <div className="nexo-hex">
                                 {t.icon.startsWith('http') || t.icon.startsWith('/') ? (
-                                  <img src={t.icon} alt={t.name} loading="lazy" draggable={false} />
+                                  <img src={t.icon} alt={t.name} loading="lazy" decoding="async" draggable={false} />
                                 ) : (
                                   <span style={{ fontSize: '2.2rem' }}>{t.icon}</span>
                                 )}
@@ -565,7 +808,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                               <div className="badge check">✓</div>
                             </div>
 
-                            {/* PANEL INFERIOR: nombre, descripción y cajitas de recursos necesarios */}
+                            {/* PANEL INFERIOR: nombre, descripción y cajitas de recursos */}
                             <div className="nexo-info-panel">
                               <div className="name-row">
                                 <h3>{t.name}</h3>
@@ -607,20 +850,21 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           </div>
         )}
 
-        {/* MODO 2: VISTA LISTA VERTICAL MÓVIL (ACORDEÓN DE ÉPOCAS) */}
+        {/* MODO 3: VISTA LISTA VERTICAL COMPLETA */}
         {mobileViewMode === 'list' && (
           <div className="nexo-mobile-list-container">
             {columnsList.map(({ tier, techs }) => {
               const colMeta = TECH_TREE_COLUMNS_META[tier] || { title: `Columna ${tier}`, tier: `Nivel ${tier}`, badgeColor: '#00e5ff' };
-              const filteredTechs = techs.filter(t => !searchQuery || t.name.toLowerCase().includes(searchQuery.toLowerCase()) || t.desc.toLowerCase().includes(searchQuery.toLowerCase()));
+              const filteredTechs = techs.filter(filterTech);
 
-              if (searchQuery && filteredTechs.length === 0) return null;
+              if (filteredTechs.length === 0) return null;
 
               return (
                 <div key={tier} className="mobile-period-section">
-                  <div className="mobile-period-header">
-                    <span className="mobile-period-badge" style={{ background: colMeta.badgeColor }}>{tier}</span>
+                  <div className="mobile-period-header" onClick={() => handleJumpToCol(tier)}>
+                    <span className="mobile-period-badge" style={{ background: colMeta.badgeColor }}>N{tier}</span>
                     <h3>{colMeta.title}</h3>
+                    <span className="mobile-period-count">{filteredTechs.filter(t => unlocked.has(t.id)).length}/{filteredTechs.length}</span>
                   </div>
 
                   <div className="mobile-period-cards-grid">
@@ -640,7 +884,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                         >
                           <div className="mobile-tech-icon">
                             {t.icon.startsWith('http') || t.icon.startsWith('/') ? (
-                              <img src={t.icon} alt={t.name} />
+                              <img src={t.icon} alt={t.name} loading="lazy" decoding="async" />
                             ) : (
                               <span>{t.icon}</span>
                             )}
@@ -661,7 +905,6 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                                   <span
                                     key={k}
                                     className={`nexo-res-chip ${ok ? 'ok' : 'no'}`}
-                                    title={`${SUTZ_RESOURCE_META[k].label}: tienes ${formatSutzResource(resources[k])}, necesitas ${need}`}
                                   >
                                     <span className="nexo-res-icon">{SUTZ_RESOURCE_META[k].icon}</span>
                                     {need}
@@ -672,7 +915,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                             <div className="mobile-tech-actions">
                               <span className="mobile-cost-chip">+{t.income} ⚡/s</span>
                               <button className="mobile-inspect-btn" onClick={(e) => { e.stopPropagation(); setInspectNode(t); }}>
-                                👁️ Inspeccionar & Proyecto 🚀
+                                👁️ Inspeccionar 🚀
                               </button>
                             </div>
                           </div>
@@ -686,30 +929,33 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
           </div>
         )}
 
-        {/* STICKY BOTTOM CONTROLLER MÓVIL */}
+        {/* ================= BARRA FIJA INFERIOR DE NAVEGACIÓN ================= */}
         <div className="nexo-sticky-bottom-bar">
           <button 
             className="sticky-nav-btn"
             onClick={() => handleJumpToCol(Math.max(1, currentActiveCol - 1))}
             disabled={currentActiveCol <= 1}
           >
-            ◀ Previa
+            ◀ Época Anterior
           </button>
 
-          <span className="sticky-col-indicator">
-            ÉPOCA {currentActiveCol} / 30
-          </span>
+          <div className="sticky-col-info">
+            <span className="sticky-epoch-title">{activeColMeta.title}</span>
+            <span className="sticky-col-indicator">
+              ÉPOCA {currentActiveCol} DE 30
+            </span>
+          </div>
 
           <button 
             className="sticky-nav-btn"
             onClick={() => handleJumpToCol(Math.min(30, currentActiveCol + 1))}
             disabled={currentActiveCol >= 30}
           >
-            Siguiente ▶
+            Siguiente Época ▶
           </button>
         </div>
 
-        {/* LARGE NODE INSPECTOR MODAL */}
+        {/* ================= LARGE NODE INSPECTOR (BOTTOM SHEET / MODAL) ================= */}
         {inspectNode && (
           <div className="nexo-inspector-overlay" onClick={() => setInspectNode(null)}>
             <div 
@@ -733,7 +979,7 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
 
                 <div className="inspector-titles">
                   <div className="inspector-badges">
-                    <span className="inspector-badge-pill">COLUMNA {inspectNode.tier}</span>
+                    <span className="inspector-badge-pill">ÉPOCA {inspectNode.tier}</span>
                     <span 
                       className="inspector-area-badge" 
                       style={{ 
@@ -742,10 +988,10 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                         background: getTechColor(inspectNode) + '22'
                       }}
                     >
-                      ÁREA {inspectNode.category || (getTechColor(inspectNode) === '#00e5ff' ? 'STEM' : getTechColor(inspectNode) === '#d946ef' ? 'HUMANIDADES' : 'APRENDIZAJE')}
+                      {inspectNode.category || 'CONOCIMIENTO'}
                     </span>
                     <span className={`inspector-badge-status ${getCardStatus(inspectNode)}`}>
-                      {getCardStatus(inspectNode) === 'unlocked' ? '🔓 DESBLOQUEADA (ACTIVA)' : getCardStatus(inspectNode) === 'ready' ? '⚡ DISPONIBLE' : '🔒 BLOQUEADA'}
+                      {getCardStatus(inspectNode) === 'unlocked' ? '🔓 ACTIVA (DOMINADA)' : getCardStatus(inspectNode) === 'ready' ? '⚡ DISPONIBLE' : '🔒 BLOQUEADA'}
                     </span>
                   </div>
                   <h3>{inspectNode.name}</h3>
@@ -784,8 +1030,8 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                 </div>
 
                 <div className="inspector-section-block">
-                  <h4>💎 Recursos del Mundo Virtual Necesarios</h4>
-                  <div className="nexo-res-costs">
+                  <h4>💎 Recursos Necesarios del Mundo</h4>
+                  <div className="nexo-res-costs nexo-res-costs--inspector">
                     {SUTZ_RESOURCE_KEYS.map(k => {
                       const need = inspectNode.resourceCost[k];
                       const have = resources[k];
@@ -807,9 +1053,9 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
 
                 {/* FEATURED CLASSROOM PROJECT CTA */}
                 <div className="inspector-project-cta">
-                  <h4>🚀 PROYECTO DE TRABAJO AÚLICO PARA ESTUDIANTES</h4>
+                  <h4>🚀 PROYECTO DE TRABAJO AÚLICO ASOCIADO</h4>
                   <p>
-                    Abre el laboratorio y herramienta de aprendizaje asociada a <strong>{inspectNode.name}</strong> para trabajar dinámicas de aula, talleres creativos y actividades con los alumnos.
+                    Abre el laboratorio o simulador escolar vinculado a <strong>{inspectNode.name}</strong> para dinamizar actividades formativas.
                   </p>
 
                   <button 
@@ -825,11 +1071,9 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
                 {!unlocked.has(inspectNode.id) && getCardStatus(inspectNode) === 'ready' && (
                   <button 
                     className={`nexo-btn neon ${hasResourcesFor(inspectNode) ? '' : 'poor'}`}
-                    onClick={() => {
-                      tryUnlock(inspectNode);
-                    }}
+                    onClick={() => tryUnlock(inspectNode)}
                   >
-                    ⚡ DESBLOQUEAR NODO (gasta recursos del mundo)
+                    ⚡ DESBLOQUEAR NODO
                   </button>
                 )}
                 <button className="nexo-btn ghost" onClick={() => setInspectNode(null)}>
@@ -839,8 +1083,6 @@ export const TechTreeModal: React.FC<TechTreeModalProps> = ({
             </div>
           </div>
         )}
-
-
 
         {/* TOAST NOTIFICATIONS */}
         <div id="nexo-toasts">
