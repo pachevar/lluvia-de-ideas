@@ -31,7 +31,17 @@ const getStoryImage = (storyId: string, imageOverride?: string) => {
 export default function Sutz() {
   const { config, loading } = usePortalConfig();
   const { user, userProfile } = useAuth();
-  const { resources, completedStories, grantStoryCompletion } = useSutzResources();
+  const { 
+    resources, 
+    completedStories, 
+    grantStoryCompletion,
+    level,
+    currentLevelXP,
+    nextLevelXP,
+    xpPercentage,
+    badges,
+    quests
+  } = useSutzResources();
   const navigate = useNavigate();
 
   const [activeStory, setActiveStory] = useState<StoryConfig | null>(null);
@@ -111,16 +121,16 @@ export default function Sutz() {
         <div className="hud-hero-box">
           <div className="hud-castle-badge">
             <span className="hud-badge-icon">🏛️</span>
-            <span className="hud-badge-lvl">5</span>
+            <span className="hud-badge-lvl">{level}</span>
           </div>
           <div className="hud-hero-bars">
             <div className="hud-energy-pill">
               <span className="hud-energy-icon">⚡</span>
-              <span className="hud-energy-val">120</span>
-              <div className="hud-energy-bar"><div style={{ width: '80%' }}></div></div>
+              <span className="hud-energy-val">{100 + level * 5}</span>
+              <div className="hud-energy-bar"><div style={{ width: `${Math.min(100, 60 + level * 8)}%` }}></div></div>
             </div>
             <div className="hud-hero-subtag">
-              <span className="hud-sword-icon">⚔️</span> 10,127
+              <span className="hud-sword-icon">⚔️</span> {(resources.puntos * 3 + resources.pergaminos * 100 + resources.monedas).toLocaleString('es-GT')}
             </div>
           </div>
         </div>
@@ -199,7 +209,7 @@ export default function Sutz() {
                       {studentNickname.charAt(0).toUpperCase()}
                     </span>
                   )}
-                  <span className="gamer-level-badge">LVL 5</span>
+                  <span className="gamer-level-badge">LVL {level}</span>
                 </div>
                 <div className="gamer-profile-meta">
                   <h3 className="gamer-username">
@@ -213,14 +223,14 @@ export default function Sutz() {
 
               <hr className="gamer-divider" />
 
-              {/* Barra de Experiencia */}
+              {/* Barra de Experiencia Dinámica */}
               <div className="gamer-stat-block">
                 <div className="stat-label-row">
-                  <span>Nivel de Experiencia</span>
-                  <strong>1,450 / 2,000 XP</strong>
+                  <span>Nivel {level} de Sabiduría</span>
+                  <strong>{currentLevelXP} / {nextLevelXP} XP</strong>
                 </div>
                 <div className="gamer-progress-bar">
-                  <div className="gamer-progress-fill xp-fill" style={{ width: '72.5%' }}></div>
+                  <div className="gamer-progress-fill xp-fill" style={{ width: `${xpPercentage}%` }}></div>
                 </div>
               </div>
 
@@ -241,26 +251,59 @@ export default function Sutz() {
                   <span className="mini-stat-icon">📜</span>
                   <div className="mini-stat-data">
                     <small>Cuentos</small>
-                    <strong>5 / 5</strong>
+                    <strong>{completedStories.length} / {storiesList.length}</strong>
                   </div>
                 </div>
                 <div className="gamer-mini-stat">
                   <span className="mini-stat-icon">⚡</span>
                   <div className="mini-stat-data">
                     <small>Puntos</small>
-                    <strong>850 PTS</strong>
+                    <strong>{resources.puntos} PTS</strong>
                   </div>
                 </div>
               </div>
 
-              {/* Fila de Insignias */}
+              {/* Fila de Insignias Dinámica */}
               <div className="gamer-badges-section">
                 <span className="gamer-section-label">Insignias Alcanzadas</span>
                 <div className="gamer-badges-row">
-                  <span className="gamer-badge-pill" title="Mundo Sutz">☁️ Sutz</span>
-                  <span className="gamer-badge-pill" title="Popol Vuh Scholar">📜 Mitología</span>
-                  <span className="gamer-badge-pill" title="Innovador STEAM">⚡ STEM</span>
-                  <span className="gamer-badge-pill" title="Teoría del Color">🎨 Arte</span>
+                  {badges.map(b => (
+                    <span 
+                      key={b.id} 
+                      className="gamer-badge-pill" 
+                      style={{ opacity: b.unlocked ? 1 : 0.45, filter: b.unlocked ? 'none' : 'grayscale(1)' }}
+                      title={`${b.title}: ${b.desc}`}
+                    >
+                      {b.icon} {b.title}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {/* Misiones del Estudiante */}
+              <div className="gamer-badges-section" style={{ marginTop: '12px' }}>
+                <span className="gamer-section-label">Misiones del Estudiante</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
+                  {quests.map(q => (
+                    <div 
+                      key={q.id} 
+                      style={{ 
+                        background: 'rgba(255,255,255,0.06)', 
+                        padding: '8px 10px', 
+                        borderRadius: '8px', 
+                        border: q.completed ? '1px solid #10b981' : '1px solid rgba(255,255,255,0.1)' 
+                      }}
+                      title={q.desc}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem' }}>
+                        <span>{q.icon} <strong>{q.title}</strong></span>
+                        <span style={{ color: q.completed ? '#34d399' : '#fbbf24', fontWeight: 'bold' }}>
+                          {q.completed ? '¡Completada! 🏆' : `${q.progress}/${q.target}`}
+                        </span>
+                      </div>
+                      <p style={{ fontSize: '0.72rem', color: '#94a3b8', margin: '3px 0 0 0' }}>{q.desc}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
 

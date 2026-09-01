@@ -4,6 +4,8 @@ import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { compressImageWebP } from '../utils/imageUpload';
+import { generateCharacterWorksheetPDF } from '../utils/pdfGenerator';
+import { soundEffects } from '../utils/soundEffects';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
 import './ConstruyendoPersonaje.css';
@@ -329,6 +331,7 @@ export default function ConstruyendoPersonaje() {
   };
 
   const handleCopyPassport = () => {
+    soundEffects.playClick();
     const textToCopy = `=========================================
 FICHA DE PERSONAJE: ${charName.toUpperCase()}
 Arquetipo: ${charArchetype}
@@ -352,6 +355,33 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
       setCopiedNotification(true);
       setTimeout(() => setCopiedNotification(false), 3000);
     });
+  };
+
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+
+  const handleDownloadPDF = async () => {
+    soundEffects.playClick();
+    setIsPdfGenerating(true);
+    try {
+      await generateCharacterWorksheetPDF({
+        name: charName || 'Héroe Anónimo',
+        archetype: charArchetype,
+        occupation: charOccupation || 'Rol Narrativo',
+        want: charWant,
+        need: charNeed,
+        wound: charWound,
+        fear: charFear,
+        virtue: charVirtue,
+        flaw: charFlaw,
+        contradiction: charContradiction,
+        authorName: user?.displayName || user?.email?.split('@')[0] || ''
+      });
+      soundEffects.playSuccessFanfare();
+    } catch (err) {
+      console.error('Error generating character PDF:', err);
+    } finally {
+      setIsPdfGenerating(false);
+    }
   };
 
   const loadPresetExample = (type: 'guerrero' | 'sabio' | 'rebelde') => {
@@ -1134,9 +1164,23 @@ Creado con el Taller Narrativo de Editorial Lluvia de Ideas
                 <span style={{ color: '#f8fafc', fontStyle: 'italic' }}>«{charContradiction || 'Sin definir'}»</span>
               </div>
 
-              <div className="passport-actions">
-                <button className="forge-btn forge-btn-primary" onClick={handleCopyPassport}>
-                  <span>📋</span> {copiedNotification ? '¡Ficha Copiada!' : 'Copiar Ficha de Personaje'}
+              <div className="passport-actions" style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+                <button className="forge-btn forge-btn-primary" onClick={handleCopyPassport} style={{ flex: 1 }}>
+                  <span>📋</span> {copiedNotification ? '¡Ficha Copiada!' : 'Copiar Ficha'}
+                </button>
+                <button 
+                  className="forge-btn" 
+                  onClick={handleDownloadPDF} 
+                  disabled={isPdfGenerating}
+                  style={{ 
+                    flex: 1, 
+                    background: 'linear-gradient(90deg, #f43f5e, #e11d48)', 
+                    color: '#fff', 
+                    fontWeight: 700,
+                    boxShadow: '0 4px 15px rgba(244, 63, 94, 0.3)' 
+                  }}
+                >
+                  <span>🖨️</span> {isPdfGenerating ? 'Generando PDF...' : 'Descargar PDF Imprimible'}
                 </button>
               </div>
 

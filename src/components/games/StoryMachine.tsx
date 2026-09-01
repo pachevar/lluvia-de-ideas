@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { generateStoryWorksheetPDF } from '../../utils/pdfGenerator';
+import { soundEffects } from '../../utils/soundEffects';
 import './StoryMachine.css';
 
 interface ReelItem {
@@ -721,10 +723,35 @@ export default function StoryMachine() {
     return `Un ${personaje.current.title} se encuentra en el ${entorno.current.title} rodeado por una atmósfera de ${atmosfera.current.title}. Su objetivo principal es ${motivacion.current.title}.`;
   };
 
+  const [isPdfGenerating, setIsPdfGenerating] = useState(false);
+
   const copyToClipboard = () => {
+    soundEffects.playClick();
     navigator.clipboard.writeText(getCombinedPrompt());
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownloadStoryPDF = async () => {
+    soundEffects.playClick();
+    setIsPdfGenerating(true);
+    try {
+      const { personaje, entorno, atmosfera, motivacion } = reels;
+      await generateStoryWorksheetPDF({
+        title: `La Odisea del ${personaje.current.title}`,
+        genre: (personaje.current.genre || 'Fantasía').toUpperCase(),
+        character: { name: personaje.current.title, desc: personaje.current.description, emoji: personaje.current.emoji },
+        environment: { name: entorno.current.title, desc: entorno.current.description, emoji: entorno.current.emoji },
+        atmosphere: { name: atmosfera.current.title, desc: atmosfera.current.description, emoji: atmosfera.current.emoji },
+        motivation: { name: motivacion.current.title, desc: motivacion.current.description, emoji: motivacion.current.emoji },
+        generatedStoryText: getCombinedPrompt()
+      });
+      soundEffects.playSuccessFanfare();
+    } catch (err) {
+      console.error('Error generating story PDF:', err);
+    } finally {
+      setIsPdfGenerating(false);
+    }
   };
 
   const renderStructuresContent = () => (
@@ -1199,9 +1226,22 @@ export default function StoryMachine() {
                 </ul>
               </div>
 
-              <div className="sm-prompt-actions">
+              <div className="sm-prompt-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <button className="sm-spin-btn" onClick={copyToClipboard} style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}>
                   {copied ? '✅ ¡Copiado!' : '📋 Copiar Prompt'}
+                </button>
+                <button 
+                  className="sm-spin-btn" 
+                  onClick={handleDownloadStoryPDF}
+                  disabled={isPdfGenerating}
+                  style={{ 
+                    fontSize: '1rem', 
+                    padding: '0.75rem 2rem', 
+                    background: 'linear-gradient(135deg, #10b981, #059669)',
+                    boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
+                  }}
+                >
+                  {isPdfGenerating ? '⏳ Generando PDF...' : '📄 Descargar Manuscrito en PDF'}
                 </button>
               </div>
             </div>
