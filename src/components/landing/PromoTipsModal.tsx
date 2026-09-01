@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import type { PromoVideoItem } from '../../types';
+import { soundEffects } from '../../utils/soundEffects';
 import './PromoTipsModal.css';
 
 interface PromoTipsModalProps {
@@ -76,6 +77,16 @@ export default function PromoTipsModal({ isOpen, onClose, tipsList }: PromoTipsM
   const currentTopic = activeList.find(t => t.id === activeTopic?.id) || activeList[0] || DEFAULT_VIDEO_TOPICS[0];
   const embedUrl = `https://www.youtube.com/embed/${currentTopic.videoId}?autoplay=1&rel=0&modestbranding=1&playsinline=1`;
 
+  const handleSelectTab = (topic: PromoVideoItem) => {
+    soundEffects.playClick();
+    setActiveTopic(topic);
+  };
+
+  const handleClose = () => {
+    soundEffects.playClick();
+    onClose();
+  };
+
   return (
     <div className="promo-tips-overlay animate-fade-in" onClick={onClose}>
       <div className="promo-tips-modal" onClick={(e) => e.stopPropagation()}>
@@ -85,7 +96,7 @@ export default function PromoTipsModal({ isOpen, onClose, tipsList }: PromoTipsM
           <h3>
             <span>🎬</span> Ecosistema Educativo: Videos & Consejos
           </h3>
-          <button className="promo-tips-close-btn" onClick={onClose} title="Cerrar modal">
+          <button className="promo-tips-close-btn" onClick={handleClose} title="Cerrar modal">
             ✕
           </button>
         </div>
@@ -96,7 +107,7 @@ export default function PromoTipsModal({ isOpen, onClose, tipsList }: PromoTipsM
             <button
               key={topic.id}
               className={`promo-tip-tab ${currentTopic.id === topic.id ? 'active' : ''}`}
-              onClick={() => setActiveTopic(topic)}
+              onClick={() => handleSelectTab(topic)}
             >
               <span>{topic.icon}</span>
               <span>{topic.tabLabel}</span>
@@ -136,7 +147,7 @@ export default function PromoTipsModal({ isOpen, onClose, tipsList }: PromoTipsM
 
         {/* Footer del Modal */}
         <div className="promo-tips-footer">
-          <button className="promo-tips-understood-btn" onClick={onClose}>
+          <button className="promo-tips-understood-btn" onClick={handleClose}>
             ¡Entendido, explorar la plataforma! ➔
           </button>
         </div>

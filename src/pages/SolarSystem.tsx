@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { soundEffects } from '../utils/soundEffects';
 import './SolarSystem.css';
 
 // Interfaces de Datos Astronómicos Avanzados
@@ -634,6 +635,7 @@ export default function SolarSystem() {
 
   // Control de Zoom y Seguimiento
   const handleSelectBody = (body: CelestialBody) => {
+    soundEffects.playSpacePulse();
     setSelectedBody(body);
     if (body.id !== 'sol' && body.type !== 'cinturon') {
       setIsTracking(true);

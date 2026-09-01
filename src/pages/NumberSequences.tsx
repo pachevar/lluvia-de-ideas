@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { soundEffects } from '../utils/soundEffects';
 import './NumberSequences.css';
 
 // --------------------------------------------------------------------------
@@ -170,8 +171,10 @@ export default function NumberSequences() {
   // Check Fibonacci Quiz
   const handleCheckFibQuiz = () => {
     if (fibQuizInput.trim() === '21') {
+      soundEffects.playMathChime(true);
       setFibQuizStatus('correct');
     } else {
+      soundEffects.playMathChime(false);
       setFibQuizStatus('wrong');
     }
   };
@@ -190,22 +193,22 @@ export default function NumberSequences() {
 
           {/* BARRA DE NAVEGACIÓN POR PESTAÑAS */}
           <nav className="seq-nav-tabs">
-            <button className={`seq-tab-btn ${activeTab === 'fibonacci' ? 'active' : ''}`} onClick={() => setActiveTab('fibonacci')}>
+            <button className={`seq-tab-btn ${activeTab === 'fibonacci' ? 'active' : ''}`} onClick={() => { soundEffects.playClick(); setActiveTab('fibonacci'); }}>
               🌀 Fibonacci & Espiral
             </button>
-            <button className={`seq-tab-btn ${activeTab === 'primes' ? 'active' : ''}`} onClick={() => setActiveTab('primes')}>
+            <button className={`seq-tab-btn ${activeTab === 'primes' ? 'active' : ''}`} onClick={() => { soundEffects.playClick(); setActiveTab('primes'); }}>
               🧱 Primos & Criba
             </button>
-            <button className={`seq-tab-btn ${activeTab === 'lookandsay' ? 'active' : ''}`} onClick={() => setActiveTab('lookandsay')}>
+            <button className={`seq-tab-btn ${activeTab === 'lookandsay' ? 'active' : ''}`} onClick={() => { soundEffects.playClick(); setActiveTab('lookandsay'); }}>
               🗣️ Mira y Di
             </button>
-            <button className={`seq-tab-btn ${activeTab === 'collatz' ? 'active' : ''}`} onClick={() => setActiveTab('collatz')}>
+            <button className={`seq-tab-btn ${activeTab === 'collatz' ? 'active' : ''}`} onClick={() => { soundEffects.playClick(); setActiveTab('collatz'); }}>
               📉 Conjetura de Collatz
             </button>
-            <button className={`seq-tab-btn ${activeTab === 'triangular' ? 'active' : ''}`} onClick={() => setActiveTab('triangular')}>
+            <button className={`seq-tab-btn ${activeTab === 'triangular' ? 'active' : ''}`} onClick={() => { soundEffects.playClick(); setActiveTab('triangular'); }}>
               📐 Números Triangulares
             </button>
-            <button className={`seq-tab-btn ${activeTab === 'pascal' ? 'active' : ''}`} onClick={() => setActiveTab('pascal')}>
+            <button className={`seq-tab-btn ${activeTab === 'pascal' ? 'active' : ''}`} onClick={() => { soundEffects.playClick(); setActiveTab('pascal'); }}>
               🔺 Triángulo de Pascal
             </button>
           </nav>

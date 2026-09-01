@@ -5,9 +5,12 @@ import './App.css';
 import { useCart } from './context/CartContext';
 import { CONTACT } from './constants';
 import PageLoader from './components/PageLoader';
+import SoundToggle from './components/SoundToggle';
+import { soundEffects } from './utils/soundEffects';
 
 // Lazy load routes to code-split heavy bundles (Gerencia/PDF, cotizaciones, juegos, etc.)
 const Home = React.lazy(() => import('./pages/Home'));
+const CreatikaHub = React.lazy(() => import('./pages/CreatikaHub'));
 const Gerencia = React.lazy(() => import('./Gerencia'));
 const CotizacionView = React.lazy(() => import('./CotizacionView'));
 const Sutz = React.lazy(() => import('./pages/Sutz'));
@@ -40,6 +43,7 @@ function App() {
   const [isSidebarLaboratoriosOpen, setIsSidebarLaboratoriosOpen] = useState(false);
 
   const navigateTo = (path: string) => {
+    soundEffects.playClick();
     navigate(path);
     setIsSidebarOpen(false);
   };
@@ -273,7 +277,7 @@ function App() {
             <Route path="/animacion-educativa" element={<Laboratorios />} />
             <Route path="/robotica-educativa" element={<Laboratorios />} />
             <Route path="/pensamiento-cientifico" element={<Laboratorios />} />
-            <Route path="/creatika" element={<StoryMachine />} />
+            <Route path="/creatika" element={<CreatikaHub />} />
             <Route path="/maquina-de-cuentos" element={<StoryMachine />} />
             <Route path="/teoria-del-color" element={<ColorTheory />} />
             <Route path="/bingo" element={<BingoHub />} />
@@ -300,6 +304,9 @@ function App() {
 
       {/* Floating Action Buttons */}
       <div className="floating-action-buttons">
+        {/* Floating Sound Toggle */}
+        <SoundToggle />
+
         {/* Floating Cart Button */}
         {cart.length > 0 && (
           <button 

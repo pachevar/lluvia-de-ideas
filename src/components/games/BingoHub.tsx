@@ -6,6 +6,7 @@ import { auth, db } from '../../firebase';
 import type { BingoGame, BingoCard, BingoPrize, Sponsor, BingoPromoter } from '../../types';
 import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardCollision } from '../../utils/bingoGenerator';
 import type { MarkedSlots } from '../../utils/bingoGenerator';
+import { soundEffects } from '../../utils/soundEffects';
 import { CONTACT } from '../../constants';
 import './Bingo.css';
 
@@ -486,6 +487,7 @@ export default function BingoHub() {
         return copy;
       });
       
+      soundEffects.playSuccessFanfare();
       await showAlert(`¡Ganador ${card.playerName} registrado con éxito por el premio ${activePrizeTitle}!`, "Ganador Confirmado", "🏆");
       addLog(`HOST: Ganador confirmado -> ${card.playerName} por ${activePrizeTitle}`, "success");
     } catch (err) {
@@ -610,6 +612,7 @@ export default function BingoHub() {
         clearInterval(interval);
         setRollingBall(`${letter}-${finalBall}`);
         setIsRolling(false);
+        soundEffects.playBingoBall();
         announceBall(finalBall, gameData);
         addLog(`TÓMBOLA: Bola cantada -> ${letter}-${finalBall}`, "success");
 

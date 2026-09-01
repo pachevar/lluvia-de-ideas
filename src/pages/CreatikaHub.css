@@ -1,0 +1,184 @@
+.creatika-hub-wrapper {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0b0f19 70%, #030712 100%);
+  color: #f8fafc;
+  padding-bottom: 5rem;
+  font-family: inherit;
+}
+
+.creatika-hub-content {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2.5rem 1.5rem;
+}
+
+.creatika-hub-header {
+  text-align: center;
+  margin-bottom: 3.5rem;
+}
+
+.creatika-badge-hud {
+  display: inline-block;
+  padding: 6px 16px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  letter-spacing: 0.15em;
+  color: #fda4af;
+  background: rgba(244, 63, 94, 0.12);
+  border: 1px solid rgba(244, 63, 94, 0.35);
+  border-radius: 9999px;
+  margin-bottom: 1.25rem;
+  text-transform: uppercase;
+  box-shadow: 0 0 15px rgba(244, 63, 94, 0.2);
+}
+
+.creatika-main-title {
+  font-size: clamp(2rem, 5vw, 3.2rem);
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 1rem 0;
+  line-height: 1.15;
+}
+
+.creatika-title-gradient {
+  background: linear-gradient(90deg, #fb7185, #f43f5e, #c084fc, #38bdf8);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.creatika-subtitle {
+  max-width: 760px;
+  margin: 0 auto;
+  font-size: 1.1rem;
+  line-height: 1.6;
+  color: #94a3b8;
+}
+
+.creatika-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: 2rem;
+}
+
+.creatika-card {
+  border-radius: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 2rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+  backdrop-filter: blur(16px);
+  position: relative;
+  overflow: hidden;
+}
+
+.creatika-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: inherit;
+  opacity: 0.8;
+}
+
+.creatika-card:hover {
+  transform: translateY(-8px) scale(1.01);
+  box-shadow: 0 20px 35px -10px rgba(0, 0, 0, 0.5), 0 0 25px rgba(244, 63, 94, 0.2);
+  border-color: rgba(255, 255, 255, 0.3) !important;
+}
+
+.creatika-card-top {
+  display: flex;
+  align-items: center;
+  gap: 1.25rem;
+  margin-bottom: 1.5rem;
+}
+
+.creatika-icon-box {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: inset 0 0 15px rgba(255, 255, 255, 0.05);
+}
+
+.creatika-icon {
+  font-size: 2.2rem;
+  filter: drop-shadow(0 2px 8px rgba(0,0,0,0.4));
+}
+
+.creatika-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.creatika-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.creatika-badge {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.creatika-card-body {
+  margin-bottom: 2rem;
+}
+
+.creatika-card-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.75rem 0;
+}
+
+.creatika-card-desc {
+  font-size: 0.95rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.creatika-card-footer {
+  margin-top: auto;
+}
+
+.creatika-action-btn {
+  width: 100%;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 0.95rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.25);
+  transition: all 0.2s ease;
+}
+
+.creatika-action-btn:hover {
+  filter: brightness(1.15);
+  transform: scale(1.02);
+}
+
+@media (max-width: 768px) {
+  .creatika-cards-grid {
+    grid-template-columns: 1fr;
+  }
+}
