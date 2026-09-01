@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { usePortalConfig } from './context/PortalConfigContext';
 import { useAuth } from './context/AuthContext';
@@ -34,12 +34,14 @@ export default function Gerencia() {
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [saving, setSaving] = useState(false);
 
-  // Initialize local config copy when props config changes and not loading
+  // Initialize local config copy only when initial load occurs
+  const isInitialLoad = useRef(true);
   useEffect(() => {
-    if (config && !configLoading) {
+    if (config && !configLoading && (isInitialLoad.current || !localConfig)) {
       setLocalConfig(JSON.parse(JSON.stringify(config))); // Deep copy
+      isInitialLoad.current = false;
     }
-  }, [config, configLoading]);
+  }, [config, configLoading, localConfig]);
 
   const handleLogout = async () => {
     try {

@@ -461,31 +461,64 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     const unsubscribe = onSnapshot(configDocRef, (docSnap) => {
       if (docSnap.exists()) {
         const data = docSnap.data() as PortalConfig;
-        if (!data.map) {
-          data.map = DEFAULT_CONFIG.map;
-        }
-        if (!data.creatika) {
-          data.creatika = DEFAULT_CONFIG.creatika;
-        }
-        if (!data.tek100) {
-          data.tek100 = DEFAULT_CONFIG.tek100;
-        }
-        if (!data.tiendaConfig) {
-          // Migración: versiones previas guardaron este dato como catalogoConfig
-          data.tiendaConfig = (data as unknown as { catalogoConfig?: TiendaConfig }).catalogoConfig || DEFAULT_CONFIG.tiendaConfig;
-        }
-        if (!data.techTreeNodes) {
-          data.techTreeNodes = DEFAULT_CONFIG.techTreeNodes;
-        }
+
+        const defaultLanding = DEFAULT_CONFIG.landingConfig!;
+        const defaultSections = defaultLanding.sections!;
+        const mergedLanding = {
+          ...defaultLanding,
+          ...(data.landingConfig || {}),
+          cards: {
+            ...defaultLanding.cards,
+            ...(data.landingConfig?.cards || {})
+          },
+          sections: {
+            ...defaultSections,
+            ...(data.landingConfig?.sections || {}),
+            sutz: {
+              ...defaultSections.sutz,
+              ...(data.landingConfig?.sections?.sutz || {})
+            },
+            creatika: {
+              ...defaultSections.creatika,
+              ...(data.landingConfig?.sections?.creatika || {})
+            },
+            tek100: {
+              ...defaultSections.tek100,
+              ...(data.landingConfig?.sections?.tek100 || {})
+            },
+            lab: {
+              ...defaultSections.lab,
+              ...(data.landingConfig?.sections?.lab || {})
+            }
+          },
+          promoVideos: {
+            ...defaultLanding.promoVideos,
+            ...(data.landingConfig?.promoVideos || {})
+          }
+        };
+
+        const mergedConfig: PortalConfig = {
+          ...DEFAULT_CONFIG,
+          ...data,
+          hero: { ...DEFAULT_CONFIG.hero, ...(data.hero || {}) },
+          landingConfig: mergedLanding,
+          map: Array.isArray(data.map) && data.map.length > 0 ? data.map : DEFAULT_CONFIG.map,
+          techTreeNodes: data.techTreeNodes || DEFAULT_CONFIG.techTreeNodes,
+          creatika: { ...DEFAULT_CONFIG.creatika, ...(data.creatika || {}) },
+          tek100: { ...DEFAULT_CONFIG.tek100, ...(data.tek100 || {}) },
+          tiendaConfig: data.tiendaConfig || (data as unknown as { catalogoConfig?: TiendaConfig }).catalogoConfig || DEFAULT_CONFIG.tiendaConfig,
+          archetypeImages: { ...(DEFAULT_CONFIG.archetypeImages || {}), ...(data.archetypeImages || {}) },
+          journeyStageImages: { ...(DEFAULT_CONFIG.journeyStageImages || {}), ...(data.journeyStageImages || {}) }
+        };
         
         // Cache to localStorage for instant 0ms loads on page refresh
         try {
-          localStorage.setItem('portal_config_cache', JSON.stringify(data));
+          localStorage.setItem('portal_config_cache', JSON.stringify(mergedConfig));
         } catch {
           // ignore quota limits
         }
 
-        setConfig(data);
+        setConfig(mergedConfig);
       } else {
         setDoc(configDocRef, DEFAULT_CONFIG).catch(err => {
           console.error("Error initializing config in firestore:", err);
@@ -510,7 +543,11 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
   const saveConfigToFirestore = async (newConfig: PortalConfig) => {
     const configDocRef = doc(db, 'config', 'portal');
-    await setDoc(configDocRef, newConfig);
+    await setDoc(configDocRef, newConfig, { merge: true });
+    try {
+      localStorage.setItem('portal_config_cache', JSON.stringify(newConfig));
+    } catch {}
+    setConfig(newConfig);
   };
 
   const resetConfigToFirestore = async () => {

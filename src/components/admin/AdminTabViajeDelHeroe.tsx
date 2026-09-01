@@ -61,20 +61,26 @@ export default function AdminTabViajeDelHeroe({
       await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
       const downloadURL = await getDownloadURL(fileRef);
 
-      // 3. Actualizar estado local
+      // 3. Actualizar estado local y guardar permanentemente en Firestore
       if (type === 'archetype') {
         const updated = {
           ...archetypeImages,
           [id]: downloadURL
         };
-        setLocalConfig(prev => prev ? { ...prev, archetypeImages: updated } : null);
+        const updatedConfig = localConfig ? { ...localConfig, archetypeImages: updated } : null;
+        setLocalConfig(updatedConfig);
+        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
       } else {
         const updated = {
           ...journeyImages,
           [id]: downloadURL
         };
-        setLocalConfig(prev => prev ? { ...prev, journeyStageImages: updated } : null);
+        const updatedConfig = localConfig ? { ...localConfig, journeyStageImages: updated } : null;
+        setLocalConfig(updatedConfig);
+        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
       }
+      setSaveSuccessMsg(true);
+      setTimeout(() => setSaveSuccessMsg(false), 4000);
     } catch (err) {
       console.error('Error al subir imagen:', err);
       alert('Hubo un error al optimizar o subir la imagen a Firebase Storage.');

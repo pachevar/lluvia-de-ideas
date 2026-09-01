@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../firebase';
 import type { PortalConfig, CustomHexagon, HexLayer } from '../../types';
-import { DEFAULT_CONFIG } from '../../context/PortalConfigContext';
+import { DEFAULT_CONFIG, usePortalConfig } from '../../context/PortalConfigContext';
+import { compressImageWebP } from '../../utils/imageUpload';
 import { getCandidateHexes } from '../../utils/hexUtils';
 import { HexagonGrid } from '../map/HexagonGrid';
 import GradientBuilder from './GradientBuilder';
@@ -28,12 +29,12 @@ const PREDESIGNED_BACKGROUNDS = [
 ];
 
 const AURAS = [
-  { id: 'neutra', name: '⚪ Neutra (Paso)', value: 'rgba(255,255,255,0.4)' },
-  { id: 'historia', name: '📚 Sabiduría (Azul/Cian)', value: 'rgba(0,200,255,0.8)' },
-  { id: 'desafio', name: '⚔️ Desafío (Rojo Fuego)', value: 'rgba(255,50,50,0.8)' },
-  { id: 'naturaleza', name: '🌿 Naturaleza (Verde)', value: 'rgba(50,255,100,0.8)' },
-  { id: 'epica', name: '✨ Épica (Dorado)', value: 'rgba(255,215,0,0.8)' },
-  { id: 'portal', name: '🌀 Portal (Púrpura)', value: 'rgba(200,50,255,0.8)' }
+  { id: 'blanco', name: '⚪ Luz Divina', value: 'rgba(255, 255, 255, 0.85)' },
+  { id: 'oro', name: '🟡 Aura Dorada', value: 'rgba(255, 215, 0, 0.85)' },
+  { id: 'purpura', name: '🟣 Mística Púrpura', value: 'rgba(168, 85, 247, 0.85)' },
+  { id: 'cyan', name: '🔵 Furia Celeste', value: 'rgba(56, 189, 248, 0.85)' },
+  { id: 'esmeralda', name: '🟢 Fuerza Esmeralda', value: 'rgba(34, 197, 94, 0.85)' },
+  { id: 'carmesi', name: '🔴 Poder Carmesí', value: 'rgba(239, 68, 68, 0.85)' },
 ];
 
 interface AdminTabMundoVirtualProps {
@@ -41,103 +42,75 @@ interface AdminTabMundoVirtualProps {
   setLocalConfig: React.Dispatch<React.SetStateAction<PortalConfig | null>>;
 }
 
-const emptyLayer = (): HexLayer => ({ type: 'none', value: '' });
-
-// Compresor de imágenes WebP en el cliente
-async function compressImageWebP(file: File, maxWidth = 1000, maxHeight = 1000, quality = 0.82): Promise<Blob> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.readAsDataURL(file);
-    reader.onload = (e) => {
-      const img = new Image();
-      img.src = e.target?.result as string;
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        let width = img.width;
-        let height = img.height;
-
-        if (width > maxWidth || height > maxHeight) {
-          if (width / height > maxWidth / maxHeight) {
-            height = Math.round((height * maxWidth) / width);
-            width = maxWidth;
-          } else {
-            width = Math.round((width * maxHeight) / height);
-            height = maxHeight;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return reject(new Error('Canvas failure'));
-
-        ctx.drawImage(img, 0, 0, width, height);
-        canvas.toBlob(
-          (blob) => {
-            if (blob) resolve(blob);
-            else reject(new Error('Blob failure'));
-          },
-          'image/webp',
-          quality
-        );
-      };
-      img.onerror = (err) => reject(err);
-    };
-    reader.onerror = (err) => reject(err);
-  });
-}
-
 export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: AdminTabMundoVirtualProps) {
-  const mapData = localConfig?.map || [];
+  const { saveConfigToFirestore } = usePortalConfig();
+  const mapData = localConfig.map || [];
 
-  const [editingHex, setEditingHex] = useState<CustomHexagon | null>(() => {
-    return mapData.length > 0 ? { ...mapData[0] } : {
-      id: "0,0",
-      row: 0,
-      col: 0,
-      title: "Portal Principal",
-      glowColor: "rgba(255, 255, 255, 0.85)",
-      layerBg: emptyLayer(),
-      layerDeco: emptyLayer(),
-      layerInteractive: { type: "icon", value: "🌌" },
-      action: { type: "none", target: "" }
-    };
-  });
-
+  const [editingHex, setEditingHex] = useState<CustomHexagon | null>(null);
   const [activeInspectorTab, setActiveInspectorTab] = useState<'id' | 'l1' | 'l2' | 'l3'>('id');
-  const [uploadingLayer, setUploadingLayer] = useState<'layerBg' | 'layerDeco' | 'layerInteractive' | null>(null);
+  const [uploadingLayer, setUploadingLayer] = useState<string | null>(null);
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
   const [showGradientBuilder, setShowGradientBuilder] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
+
+  const updateHexInGlobalConfig = async (targetHex: CustomHexagon, autoSave = true) => {
+    let updatedConfig: PortalConfig | null = null;
+    setLocalConfig(prev => {
+      if (!prev) return null;
+      const currentMap = prev.map || [];
+      const existingIdx = currentMap.findIndex(h => h.row === targetHex.row && h.col === targetHex.col);
+
+      const newMap = [...currentMap];
+      if (existingIdx >= 0) {
+        newMap[existingIdx] = targetHex;
+      } else {
+        newMap.push(targetHex);
+      }
+
+      updatedConfig = {
+        ...prev,
+        map: newMap
+      };
+      return updatedConfig;
+    });
+
+    if (autoSave && updatedConfig) {
+      try {
+        await saveConfigToFirestore(updatedConfig);
+      } catch (err) {
+        console.warn('Could not auto-save hexagon to Firestore:', err);
+      }
+    }
+  };
 
   const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, layerKey: 'layerBg' | 'layerDeco' | 'layerInteractive') => {
     const file = e.target.files?.[0];
     if (!file || !editingHex) return;
     
     setUploadingLayer(layerKey);
-    setUploadStatusMsg('⚡ Comprimiendo imagen a WebP liviano...');
+    setUploadStatusMsg('⚡ Comprimiendo imagen a WebP...');
     try {
       const originalMB = (file.size / (1024 * 1024)).toFixed(2);
-      const compressedBlob = await compressImageWebP(file);
+      const compressedBlob = await compressImageWebP(file, 800, 800, 0.85);
       const compressedKB = (compressedBlob.size / 1024).toFixed(1);
 
       setUploadStatusMsg(`🚀 Subiendo a Firebase (${originalMB}MB ➔ ${compressedKB}KB WebP)...`);
 
-      const cleanName = file.name.replace(/\.[^/.]+$/, "") + ".webp";
+      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, '_') + ".webp";
       const fileRef = ref(storage, `map-assets/${Date.now()}_${cleanName}`);
       await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
       const url = await getDownloadURL(fileRef);
 
-      const updatedHex = {
+      const updatedHex: CustomHexagon = {
         ...editingHex,
         [layerKey]: { type: 'image', value: url }
       };
 
       setEditingHex(updatedHex);
-      updateHexInGlobalConfig(updatedHex);
+      await updateHexInGlobalConfig(updatedHex, true);
 
-      setUploadStatusMsg(`✨ ¡Imagen optimizada guardada! (${compressedKB} KB)`);
+      setUploadStatusMsg(`✨ ¡Imagen optimizada y guardada permanentemente en Firestore! (${compressedKB} KB)`);
+      setTimeout(() => setUploadStatusMsg(null), 5000);
     } catch (err) {
       console.error("Error subiendo archivo:", err);
       alert("Error al comprimir o subir la imagen.");
@@ -147,10 +120,10 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     }
   };
 
+  const emptyLayer = (): HexLayer => ({ type: 'none', value: '' });
+
   const previewCells = [...mapData];
-
   const candidateCoords = getCandidateHexes(mapData);
-
   candidateCoords.forEach(({ row: r, col: c }) => {
     previewCells.push({
       id: `preview-${r}-${c}`,
@@ -158,8 +131,8 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
       col: c,
       title: 'Añadir nuevo',
       glowColor: 'rgba(200,200,200,0.5)',
-      layerBg: emptyLayer(),
-      layerDeco: emptyLayer(),
+      layerBg: { type: 'none', value: '' },
+      layerDeco: { type: 'none', value: '' },
       layerInteractive: { type: 'icon', value: '➕' },
       action: { type: 'none', target: '' }
     });
@@ -175,7 +148,8 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   }
 
   const handlePreviewClick = (hex: CustomHexagon) => {
-    if (hex.id.startsWith('preview-')) {
+    const exists = mapData.some(h => h.row === hex.row && h.col === hex.col);
+    if (!exists) {
       const newHex: CustomHexagon = {
         id: `${hex.row},${hex.col}`,
         row: hex.row,
@@ -193,45 +167,27 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     }
   };
 
-  const updateHexInGlobalConfig = (targetHex: CustomHexagon) => {
-    setLocalConfig(prev => {
-      if (!prev) return null;
-      const currentMap = prev.map || [];
-      const existingIdx = currentMap.findIndex(h => h.row === targetHex.row && h.col === targetHex.col);
-
-      const newMap = [...currentMap];
-      if (existingIdx >= 0) {
-        newMap[existingIdx] = targetHex;
-      } else {
-        newMap.push(targetHex);
-      }
-
-      return {
-        ...prev,
-        map: newMap
-      };
-    });
-  };
-
-  const handleSaveHexagon = () => {
+  const handleSaveHexagon = async () => {
     if (!editingHex) return;
-    updateHexInGlobalConfig(editingHex);
-    alert(`✨ Hexágono (${editingHex.row}, ${editingHex.col}) guardado localmente. Presiona Ctrl + S o Guardar en Gerencia para aplicar a Firebase.`);
+    await updateHexInGlobalConfig(editingHex, true);
+    setUploadStatusMsg(`✨ Hexágono (${editingHex.row}, ${editingHex.col}) guardado permanentemente en Firestore.`);
+    setTimeout(() => setUploadStatusMsg(null), 5000);
   };
 
-  const handleDeleteHexagon = () => {
+  const handleDeleteHexagon = async () => {
     if (!editingHex) return;
     if (!window.confirm(`¿Estás seguro de eliminar el hexágono (${editingHex.row}, ${editingHex.col})?`)) return;
 
-    setLocalConfig(prev => {
-      if (!prev) return null;
-      return {
-        ...prev,
-        map: (prev.map || []).filter(h => !(h.row === editingHex.row && h.col === editingHex.col))
-      };
-    });
-
+    const newMap = (localConfig.map || []).filter(h => !(h.row === editingHex.row && h.col === editingHex.col));
+    const updatedConfig: PortalConfig = {
+      ...localConfig,
+      map: newMap
+    };
+    setLocalConfig(updatedConfig);
+    await saveConfigToFirestore(updatedConfig);
     setEditingHex(null);
+    setUploadStatusMsg('🗑️ Hexágono eliminado y sincronizado en Firestore.');
+    setTimeout(() => setUploadStatusMsg(null), 4000);
   };
 
   const handleResetMapToDefault = () => {

@@ -3,6 +3,8 @@ import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../../firebase';
 import type { PortalConfig, TechNode } from '../../types';
 import { generateDefaultTechTree } from '../../utils/techTreeUtils';
+import { usePortalConfig } from '../../context/PortalConfigContext';
+import { compressImageWebP } from '../../utils/imageUpload';
 
 interface AdminTabTechTreeProps {
   localConfig: PortalConfig;
@@ -10,6 +12,7 @@ interface AdminTabTechTreeProps {
 }
 
 export default function AdminTabTechTree({ localConfig, updateField }: AdminTabTechTreeProps) {
+  const { saveConfigToFirestore } = usePortalConfig();
   const [selectedColumn, setSelectedColumn] = useState<number>(1);
   const [uploadingNodeId, setUploadingNodeId] = useState<string | null>(null);
 
@@ -19,7 +22,7 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
   const currentColumnNodes = Object.values(techNodes).filter(n => n.col === selectedColumn);
   currentColumnNodes.sort((a, b) => a.indexInCol - b.indexInCol);
 
-  const handleNodeChange = (nodeId: string, field: keyof TechNode, value: unknown) => {
+  const handleNodeChange = (nodeId: string, field: keyof TechNode, value: unknown, autoSave = false) => {
     const updatedMap = { ...techNodes };
     if (updatedMap[nodeId]) {
       updatedMap[nodeId] = {
@@ -28,6 +31,15 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
       };
     }
     updateField('techTreeNodes' as keyof PortalConfig, '', updatedMap);
+
+    if (autoSave) {
+      saveConfigToFirestore({
+        ...localConfig,
+        techTreeNodes: updatedMap
+      }).catch(err => {
+        console.warn("Error auto-saving tech tree to Firestore:", err);
+      });
+    }
   };
 
   const handleImageUpload = async (nodeId: string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -36,10 +48,12 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
 
     setUploadingNodeId(nodeId);
     try {
-      const fileRef = ref(storage, `tech_tree_images/${nodeId}_${Date.now()}_${file.name}`);
-      await uploadBytes(fileRef, file);
+      const compressedBlob = await compressImageWebP(file, 600, 600, 0.85);
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
+      const fileRef = ref(storage, `tech_tree_images/${nodeId}_${Date.now()}_${cleanName}`);
+      await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
       const url = await getDownloadURL(fileRef);
-      handleNodeChange(nodeId, 'image', url);
+      handleNodeChange(nodeId, 'image', url, true);
     } catch (err) {
       console.error("Error subiendo imagen de tecnología a Firebase Storage:", err);
       alert("Error al subir la imagen a Firebase Storage.");
