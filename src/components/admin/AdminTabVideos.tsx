@@ -726,34 +726,49 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
 
                   <input 
                     type="text" 
-                    value={tipForm.imageUrl || ''} 
+                    value={tipForm.imageUrl?.startsWith('data:') ? '' : (tipForm.imageUrl || '')} 
                     onChange={(e) => setTipForm({ ...tipForm, imageUrl: e.target.value })}
-                    placeholder="https://ejemplo.com/mi-imagen.webp" 
+                    placeholder={tipForm.imageUrl?.startsWith('data:') ? 'Imagen local lista (o pega otra URL web)' : 'https://ejemplo.com/mi-imagen.webp'} 
                     className="premium-input"
                     style={{ flex: 1, minWidth: '220px' }}
                   />
                 </div>
 
                 {tipForm.imageUrl && (
-                  <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(0,0,0,0.4)', padding: '12px', borderRadius: '14px' }}>
-                    <img 
-                      src={tipForm.imageUrl} 
-                      alt="Preview" 
-                      style={{ width: '80px', height: '100px', objectFit: 'cover', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)' }} 
-                    />
-                    <div style={{ flex: 1 }}>
-                      <span style={{ display: 'block', color: '#38bdf8', fontWeight: 700, fontSize: '0.9rem' }}>
-                        ✓ Imagen seleccionada
-                      </span>
-                      <span style={{ display: 'block', color: '#94a3b8', fontSize: '0.78rem', wordBreak: 'break-all', marginTop: '2px' }}>
-                        {tipForm.imageUrl}
-                      </span>
+                  <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(0,0,0,0.4)', padding: '12px 16px', borderRadius: '14px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                    <div style={{ width: '64px', height: '84px', borderRadius: '10px', overflow: 'hidden', border: '1px solid rgba(56, 189, 248, 0.4)', flexShrink: 0, background: '#0b1120' }}>
+                      <img 
+                        src={tipForm.imageUrl} 
+                        alt="Preview" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }} 
+                      />
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span style={{ color: '#38bdf8', fontWeight: 800, fontSize: '0.92rem' }}>
+                          ✓ Imagen lista para el tema
+                        </span>
+                        {tipForm.imageUrl.startsWith('data:') ? (
+                          <span style={{ background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '8px', fontWeight: 700 }}>
+                            📦 WebP Integrado (~{Math.round(tipForm.imageUrl.length * 0.75 / 1024)} KB)
+                          </span>
+                        ) : (
+                          <span style={{ background: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', fontSize: '0.75rem', padding: '2px 8px', borderRadius: '8px', fontWeight: 700 }}>
+                            🌐 Enlace Web
+                          </span>
+                        )}
+                      </div>
+                      <p style={{ color: '#94a3b8', fontSize: '0.8rem', margin: '4px 0 0 0', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        {tipForm.imageUrl.startsWith('data:') 
+                          ? 'Archivo comprimido localmente. Haz clic en «Guardar Tema» para publicarlo.' 
+                          : tipForm.imageUrl}
+                      </p>
                     </div>
                     <button 
                       type="button" 
                       className="btn btn-secondary btn-sm"
                       onClick={() => setTipForm({ ...tipForm, imageUrl: '' })}
-                      style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                      style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)', flexShrink: 0 }}
                     >
                       🗑️ Quitar
                     </button>
