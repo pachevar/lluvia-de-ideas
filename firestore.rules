@@ -38,7 +38,9 @@ service cloud.firestore {
 
     // Colección de cartones de bingo
     match /bingo_cards/{cardId} {
-      allow read, create, update: if true; // Los jugadores anónimos registran su cartón
+      allow read: if true;
+      allow create: if request.resource.data.gameId is string;
+      allow update: if request.resource.data.gameId == resource.data.gameId;
       allow delete: if request.auth != null;
     }
 

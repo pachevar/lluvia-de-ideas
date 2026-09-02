@@ -426,6 +426,14 @@ export default function Gerencia() {
           )}
         </div>
       </main>
+
+      {/* Notificación Flotante Tipo Toast para Guardados y Respaldos */}
+      {saveStatus.message && (
+        <div className={`admin-floating-toast ${saveStatus.type}`}>
+          <span className="toast-icon">{saveStatus.type === 'success' ? '✨' : '⚠️'}</span>
+          <span className="toast-text">{saveStatus.message}</span>
+        </div>
+      )}
     </div>
   );
 }

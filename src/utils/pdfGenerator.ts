@@ -1,7 +1,15 @@
-import jsPDF from 'jspdf';
-import autoTable from 'jspdf-autotable';
 import logoEditorial from '../assets/logo editorial.png';
 import { CONTACT } from '../constants';
+
+const loadJsPDF = async () => {
+  const [jsPDFModule, autoTableModule] = await Promise.all([
+    import('jspdf'),
+    import('jspdf-autotable')
+  ]);
+  const jsPDF = jsPDFModule.default;
+  const autoTable = autoTableModule.default;
+  return { jsPDF, autoTable };
+};
 
 export interface PDFQuoteData {
   id?: string;
@@ -19,6 +27,7 @@ export interface PDFQuoteData {
 }
 
 export const generateCotizacionPDF = async (quote: PDFQuoteData) => {
+  const { jsPDF, autoTable } = await loadJsPDF();
   const doc = new jsPDF({ format: 'letter' });
   
   const loadImage = (src: string): Promise<HTMLImageElement> => {
@@ -225,6 +234,7 @@ export interface CharacterSheetData {
 }
 
 export const generateCharacterWorksheetPDF = async (char: CharacterSheetData) => {
+  const { jsPDF } = await loadJsPDF();
   const doc = new jsPDF({ format: 'letter', orientation: 'portrait' });
   const pageWidth = doc.internal.pageSize.getWidth();
 
@@ -397,6 +407,7 @@ export interface StorySheetData {
 }
 
 export const generateStoryWorksheetPDF = async (story: StorySheetData) => {
+  const { jsPDF } = await loadJsPDF();
   const doc = new jsPDF({ format: 'letter', orientation: 'portrait' });
   const pageWidth = doc.internal.pageSize.getWidth();
 

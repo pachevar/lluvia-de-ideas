@@ -534,6 +534,24 @@ export default function StoryMachine() {
   const [disruptActive, setDisruptActive] = useState<boolean>(false);
   const [disruptType, setDisruptType] = useState<'experimento' | 'villano' | 'anomalia'>('experimento');
 
+  // Modo Proyector / Pizarra Interactiva para Aulas
+  const [isProjectorMode, setIsProjectorMode] = useState<boolean>(false);
+
+  const toggleProjectorMode = () => {
+    soundEffects.playClick();
+    if (!isProjectorMode) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      setIsProjectorMode(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsProjectorMode(false);
+    }
+  };
+
   // Guardar estado en localStorage para sobrevivir refrescos F5 de página
   useEffect(() => {
     localStorage.setItem('sm_active_tab', activeTab);
@@ -1090,7 +1108,7 @@ export default function StoryMachine() {
   );
 
   return (
-    <div className="sm-container animate-fade-in">
+    <div className={`sm-container animate-fade-in ${isProjectorMode ? 'projector-mode' : ''}`}>
       
       {/* NAVEGACIÓN SUPERIOR DE MÓDULOS PRINCIPALES */}
       <nav className="sm-main-nav">
@@ -1111,6 +1129,13 @@ export default function StoryMachine() {
           onClick={() => setActiveTab('estructuras')}
         >
           📐 Arquitectura & Estructuras del Cuento
+        </button>
+        <button
+          className={`sm-nav-btn sm-projector-btn ${isProjectorMode ? 'active' : ''}`}
+          onClick={toggleProjectorMode}
+          title={isProjectorMode ? 'Salir de Modo Proyector' : 'Activar Modo Proyector / Pizarra Interactiva'}
+        >
+          {isProjectorMode ? '🖥️ Salir de Proyector' : '📺 Modo Proyector Aula'}
         </button>
       </nav>
 

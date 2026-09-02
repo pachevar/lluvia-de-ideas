@@ -179,8 +179,25 @@ export default function NumberSequences() {
     }
   };
 
+  // Modo Proyector para el Aula
+  const [isProjectorMode, setIsProjectorMode] = useState(false);
+  const toggleProjectorMode = () => {
+    soundEffects.playClick();
+    if (!isProjectorMode) {
+      if (document.documentElement.requestFullscreen) {
+        document.documentElement.requestFullscreen().catch(() => {});
+      }
+      setIsProjectorMode(true);
+    } else {
+      if (document.exitFullscreen) {
+        document.exitFullscreen().catch(() => {});
+      }
+      setIsProjectorMode(false);
+    }
+  };
+
   return (
-    <div className="seq-page-container animate-fade-in">
+    <div className={`seq-page-container animate-fade-in ${isProjectorMode ? 'projector-mode' : ''}`}>
       <div className="seq-content-wrapper">
         
         {/* ENCABEZADO PRINCIPAL DE LA SECCIÓN */}
@@ -207,6 +224,13 @@ export default function NumberSequences() {
             </button>
             <button className={`seq-tab-btn ${activeTab === 'triangular' ? 'active' : ''}`} onClick={() => { soundEffects.playClick(); setActiveTab('triangular'); }}>
               📐 Números Triangulares
+            </button>
+            <button
+              className={`seq-tab-btn seq-projector-btn ${isProjectorMode ? 'active' : ''}`}
+              onClick={toggleProjectorMode}
+              title={isProjectorMode ? 'Salir de Modo Proyector' : 'Activar Modo Proyector / Pizarra Interactiva'}
+            >
+              {isProjectorMode ? '🖥️ Salir Proyector' : '📺 Modo Proyector Aula'}
             </button>
             <button className={`seq-tab-btn ${activeTab === 'pascal' ? 'active' : ''}`} onClick={() => { soundEffects.playClick(); setActiveTab('pascal'); }}>
               🔺 Triángulo de Pascal

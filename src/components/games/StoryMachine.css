@@ -2348,5 +2348,61 @@
   line-height: 1.55;
 }
 
+/* ========================================================= */
+/* MODO PROYECTOR / PIZARRA INTERACTIVA EN EL AULA           */
+/* ========================================================= */
+.sm-projector-btn {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  color: #fbbf24 !important;
+  margin-left: auto;
+}
+
+.sm-projector-btn:hover {
+  background: rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+}
+
+.sm-projector-btn.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+}
+
+.sm-container.projector-mode {
+  max-width: 98vw;
+  padding: 1rem 2rem;
+}
+
+.sm-container.projector-mode .sm-title {
+  font-size: 2.8rem;
+}
+
+.sm-container.projector-mode .sm-subtitle {
+  font-size: 1.25rem;
+}
+
+.sm-container.projector-mode .reel-card {
+  min-height: 290px;
+}
+
+.sm-container.projector-mode .reel-emoji {
+  font-size: 5rem;
+}
+
+.sm-container.projector-mode .reel-title {
+  font-size: 1.4rem;
+}
+
+.sm-container.projector-mode .reel-desc {
+  font-size: 1.05rem;
+}
+
+.sm-container.projector-mode .sm-lever-btn {
+  font-size: 1.4rem;
+  padding: 16px 36px;
+}
+
 
 

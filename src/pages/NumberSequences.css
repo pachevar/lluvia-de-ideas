@@ -708,3 +708,46 @@
     gap: 6px;
   }
 }
+
+/* MODO PROYECTOR PARA EL AULA */
+.seq-projector-btn {
+  background: rgba(245, 158, 11, 0.15) !important;
+  border-color: rgba(245, 158, 11, 0.5) !important;
+  color: #fbbf24 !important;
+}
+
+.seq-projector-btn:hover {
+  background: rgba(245, 158, 11, 0.3) !important;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.4);
+}
+
+.seq-projector-btn.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #000000 !important;
+  font-weight: 900 !important;
+  box-shadow: 0 0 20px rgba(245, 158, 11, 0.6);
+}
+
+.seq-page-container.projector-mode {
+  max-width: 98vw;
+  padding: 1rem 2rem;
+}
+
+.seq-page-container.projector-mode .seq-title {
+  font-size: 2.8rem;
+}
+
+.seq-page-container.projector-mode .seq-subtitle {
+  font-size: 1.25rem;
+}
+
+.seq-page-container.projector-mode .fib-number-pill {
+  min-width: 90px;
+  height: 90px;
+  font-size: 1.5rem;
+}
+
+.seq-page-container.projector-mode .sieve-number-cell {
+  height: 52px;
+  font-size: 1.2rem;
+}

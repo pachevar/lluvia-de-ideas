@@ -15,7 +15,7 @@ interface HexagonCellProps {
   isEditing?: boolean;
 }
 
-export const HexagonCell: React.FC<HexagonCellProps> = ({
+const HexagonCellComponent: React.FC<HexagonCellProps> = ({
   data,
   hexWidth,
   hexHeight,
@@ -78,3 +78,5 @@ export const HexagonCell: React.FC<HexagonCellProps> = ({
     </div>
   );
 };
+
+export const HexagonCell = React.memo(HexagonCellComponent);
