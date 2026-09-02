@@ -2291,6 +2291,11 @@ export default function BingoHub() {
                       {/* 1. LA TÓMBOLA FÍSICA EN 3D: JAULA DORADA GIRATORIA CON BOLAS MULTICOLOR */}
                       <div className="tombola-rig-wrapper">
                         <div className="tombola-cage-assembly">
+                          {/* Rodamientos axiales cromados laterales */}
+                          <div className="cage-bearing-hub left" />
+                          <div className="cage-bearing-hub right" />
+
+                          {/* Jaula de Lotería Esférica */}
                           <div className={`cage-sphere ${isRolling ? 'spinning' : ''}`}>
                             <div className="mini-bouncing-balls">
                               <span className="mini-ball mini-ball-1" />
@@ -2302,17 +2307,13 @@ export default function BingoHub() {
                               <span className="mini-ball mini-ball-7" />
                             </div>
                           </div>
-                          <div className="cage-stand-axle" />
-                          <div className="cage-stand-legs" />
-                          <div className="cage-crank-handle">
-                            <span className="cage-crank-knob" />
-                          </div>
-                        </div>
 
-                        <div className="cage-chute-funnel">
-                          <span>🎰</span>
-                          <span>{isRolling ? 'MEZCLANDO...' : 'TÓMBOLA EN VIVO'}</span>
+                          {/* Horquilla curva de soporte y pedestal de gala */}
+                          <div className="cage-cradle-fork" />
+                          <div className="cage-pedestal-column" />
+                          <div className="cage-pedestal-base" />
                         </div>
+                        <div className="cage-floor-shadow" />
                       </div>
 
                       {/* 2. LA BOLA ESTRELLA 3D & 3. PODIO DE TRANSMISIÓN */}

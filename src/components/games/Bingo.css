@@ -365,18 +365,19 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 24px;
+  gap: 42px;
   width: 100%;
-  max-width: 980px;
+  max-width: 1020px;
   margin: 0 auto;
   z-index: 2;
   position: relative;
+  padding: 0 12px;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 960px) {
   .tombola-horizontal-stage-flex {
     flex-direction: column;
-    gap: 18px;
+    gap: 26px;
   }
 }
 
@@ -389,15 +390,50 @@
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
+  margin-right: 14px;
 }
 
 .tombola-cage-assembly {
   position: relative;
-  width: 165px;
-  height: 165px;
+  width: 170px;
+  height: 180px;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Flush Chrome Bearing Hubs (Left & Right Axle Mounts) */
+.cage-bearing-hub {
+  position: absolute;
+  top: 68px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, #ffffff 0%, #d4d4d8 35%, #71717a 70%, #27272a 100%);
+  border: 2px solid #fbbf24;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.6), 0 0 10px rgba(251, 191, 36, 0.4);
+  z-index: 5;
+}
+
+.cage-bearing-hub.left {
+  left: 6px;
+}
+
+.cage-bearing-hub.right {
+  right: 6px;
+}
+
+.cage-bearing-hub::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #f59e0b;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
 }
 
 /* Spherical Wireframe Cage */
@@ -485,72 +521,59 @@
 .cage-sphere.spinning .mini-ball-6 { animation: ballJumble3 0.26s infinite alternate ease-in-out; }
 .cage-sphere.spinning .mini-ball-7 { animation: ballJumble1 0.27s infinite alternate-reverse ease-in-out; }
 
-/* Metallic axle and sturdy tripod stand */
-.cage-stand-axle {
+/* Elegant U-Shaped Sculpted Cradle Fork */
+.cage-cradle-fork {
   position: absolute;
-  width: 156px;
-  height: 8px;
-  background: linear-gradient(180deg, #fef08a 0%, #b45309 60%, #78350f 100%);
+  top: 66px;
+  width: 154px;
+  height: 82px;
+  border-bottom: 7px solid #d97706;
+  border-left: 7px solid #f59e0b;
+  border-right: 7px solid #f59e0b;
+  border-radius: 0 0 80px 80px;
+  background: transparent;
+  box-shadow: 
+    0 6px 14px rgba(0, 0, 0, 0.6),
+    inset 0 -2px 4px rgba(255, 255, 255, 0.3);
+  z-index: 1;
+  pointer-events: none;
+}
+
+/* Tapered Central Pillar Column */
+.cage-pedestal-column {
+  position: absolute;
+  bottom: 0px;
+  width: 28px;
+  height: 34px;
+  background: linear-gradient(180deg, #fde047 0%, #d97706 45%, #78350f 100%);
   border-radius: 4px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.7), inset 1px 0 2px rgba(255, 255, 255, 0.5);
   z-index: 1;
 }
 
-.cage-stand-legs {
+/* Weighted Beveled Oval Baseplate */
+.cage-pedestal-base {
   position: absolute;
-  bottom: -18px;
-  width: 130px;
-  height: 38px;
-  border-bottom: 5px solid #b45309;
-  border-left: 5px solid #d97706;
-  border-right: 5px solid #d97706;
-  border-radius: 0 0 16px 16px;
-  box-shadow: 0 8px 14px rgba(0,0,0,0.5);
-  z-index: 0;
+  bottom: -6px;
+  width: 120px;
+  height: 16px;
+  background: linear-gradient(180deg, #fef08a 0%, #b45309 60%, #451a03 100%);
+  border-radius: 20px;
+  border: 1.5px solid rgba(254, 240, 138, 0.6);
+  box-shadow: 
+    0 6px 16px rgba(0, 0, 0, 0.8),
+    0 0 15px rgba(245, 158, 11, 0.3),
+    inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  z-index: 1;
 }
 
-/* Mechanical Turning Crank Handle */
-.cage-crank-handle {
-  position: absolute;
-  right: -14px;
-  top: 50%;
-  transform: translateY(-50%);
-  width: 22px;
-  height: 44px;
-  border-right: 5px solid #fde047;
-  border-top: 4px solid #d97706;
-  border-bottom: 4px solid #b45309;
-  border-radius: 0 12px 12px 0;
-  z-index: 3;
-}
-
-.cage-crank-knob {
-  position: absolute;
-  top: -6px;
-  right: -8px;
-  width: 13px;
-  height: 13px;
-  background: radial-gradient(circle at 35% 35%, #fff, #b45309);
+/* Contact Floor Shadow */
+.cage-floor-shadow {
+  width: 135px;
+  height: 14px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.7) 0%, transparent 75%);
   border-radius: 50%;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.7);
-}
-
-/* Acrylic Ejection Chute Tube */
-.cage-chute-funnel {
-  margin-top: 12px;
-  background: linear-gradient(180deg, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
-  border: 1.5px solid rgba(245, 158, 11, 0.5);
-  border-radius: 12px;
-  padding: 4px 12px;
-  font-size: 0.68rem;
-  font-weight: 900;
-  color: #fbbf24;
-  letter-spacing: 1px;
-  text-transform: uppercase;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+  margin-top: 6px;
 }
 
 /* ==========================================================
@@ -562,6 +585,7 @@
   flex-direction: column;
   align-items: center;
   flex-shrink: 0;
+  margin-right: 12px;
 }
 
 .hero-bingo-ball-3d {
