@@ -1,8 +1,6 @@
 import React, { useState, useRef } from 'react';
 import type { PortalConfig } from '../../types';
-import { compressImageWebP } from '../../utils/imageUpload';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../firebase';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 import { usePortalConfig } from '../../context/PortalConfigContext';
 import './AdminTabViajeDelHeroe.css';
 
@@ -50,22 +48,14 @@ export default function AdminTabViajeDelHeroe({
     try {
       setUploadingId(id);
 
-      // 1. Compresión client-side a WebP de alta fidelidad
-      const compressedBlob = await compressImageWebP(file, 1280, 720, 0.85);
-
-      // 2. Subida a Firebase Storage
-      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
       const folder = type === 'archetype' ? 'archetypes-assets' : 'journey-assets';
-      const fileRef = ref(storage, `${folder}/${Date.now()}_${cleanName}`);
+      const { url } = await uploadImageWithFallback(file, folder, 1280, 720, 0.78);
 
-      await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
-      const downloadURL = await getDownloadURL(fileRef);
-
-      // 3. Actualizar estado local y guardar permanentemente en Firestore
+      // Actualizar estado local y guardar permanentemente en Firestore
       if (type === 'archetype') {
         const updated = {
           ...archetypeImages,
-          [id]: downloadURL
+          [id]: url
         };
         const updatedConfig = localConfig ? { ...localConfig, archetypeImages: updated } : null;
         setLocalConfig(updatedConfig);
@@ -73,7 +63,7 @@ export default function AdminTabViajeDelHeroe({
       } else {
         const updated = {
           ...journeyImages,
-          [id]: downloadURL
+          [id]: url
         };
         const updatedConfig = localConfig ? { ...localConfig, journeyStageImages: updated } : null;
         setLocalConfig(updatedConfig);
@@ -82,8 +72,8 @@ export default function AdminTabViajeDelHeroe({
       setSaveSuccessMsg(true);
       setTimeout(() => setSaveSuccessMsg(false), 4000);
     } catch (err) {
-      console.error('Error al subir imagen:', err);
-      alert('Hubo un error al optimizar o subir la imagen a Firebase Storage.');
+      console.error('Error procesando imagen del viaje del héroe:', err);
+      alert('Error al procesar o guardar la imagen.');
     } finally {
       setUploadingId(null);
     }

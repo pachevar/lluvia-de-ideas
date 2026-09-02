@@ -50,10 +50,38 @@ export async function compressImageWebP(
   });
 }
 
-export async function uploadImageToStorage(file: File, folder = 'libros-assets'): Promise<string> {
-  const compressedBlob = await compressImageWebP(file);
-  const cleanName = file.name.replace(/\.[^/.]+$/, '') + '.webp';
+export async function blobToDataURL(blob: Blob): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = () => resolve(reader.result as string);
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+}
+
+export async function uploadImageWithFallback(
+  file: File,
+  folder = 'landing-assets',
+  maxWidth = 1280,
+  maxHeight = 720,
+  quality = 0.78
+): Promise<{ url: string; isBase64: boolean }> {
+  const compressedBlob = await compressImageWebP(file, maxWidth, maxHeight, quality);
+  const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
   const fileRef = ref(storage, `${folder}/${Date.now()}_${cleanName}`);
-  await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
-  return await getDownloadURL(fileRef);
+
+  try {
+    await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
+    const downloadUrl = await getDownloadURL(fileRef);
+    return { url: downloadUrl, isBase64: false };
+  } catch (storageErr: any) {
+    console.warn(`[ImageUpload] Firebase Storage no disponible o cuota excedida (${storageErr?.code || storageErr?.message}). Usando fallback Base64 WebP.`);
+    const dataUrl = await blobToDataURL(compressedBlob);
+    return { url: dataUrl, isBase64: true };
+  }
+}
+
+export async function uploadImageToStorage(file: File, folder = 'libros-assets'): Promise<string> {
+  const res = await uploadImageWithFallback(file, folder);
+  return res.url;
 }

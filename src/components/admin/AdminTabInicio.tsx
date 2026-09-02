@@ -1,15 +1,13 @@
 import { useState } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../firebase';
 import { usePortalConfig } from '../../context/PortalConfigContext';
-import { compressImageWebP } from '../../utils/imageUpload';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 import type { PortalConfig, LandingCardConfig, LandingSectionConfig } from '../../types';
 
 interface AdminTabInicioProps {
   localConfig: PortalConfig;
   setLocalConfig?: React.Dispatch<React.SetStateAction<PortalConfig | null>>;
   updateField: (section: string, field: string, value: unknown) => void;
-  updateStory: (index: number, field: string, value: string) => void;
+  updateStory?: (index: number, field: string, value: string) => void;
 }
 
 type SectionKey = 'sutz' | 'creatika' | 'tek100' | 'lab';
@@ -18,80 +16,25 @@ const SECTIONS_INFO: { key: SectionKey; label: string; icon: string }[] = [
   { key: 'sutz', label: 'Sutz Descubre', icon: '☁️' },
   { key: 'creatika', label: 'Creatika', icon: '🎨' },
   { key: 'tek100', label: '100tek', icon: '⚡' },
-  { key: 'lab', label: 'LAB', icon: '🧪' }
+  { key: 'lab', label: 'LAB Formativo', icon: '🧪' },
 ];
 
-export default function AdminTabInicio({ localConfig, updateField, setLocalConfig }: AdminTabInicioProps) {
+export default function AdminTabInicio({ localConfig, setLocalConfig, updateField }: AdminTabInicioProps) {
   const { saveConfigToFirestore } = usePortalConfig();
   const [activeSectionTab, setActiveSectionTab] = useState<SectionKey>('sutz');
-  const [uploadingSectionKey, setUploadingSectionKey] = useState<string | null>(null);
+  const [uploadingSectionKey, setUploadingSectionKey] = useState<SectionKey | null>(null);
   const [saveBanner, setSaveBanner] = useState<string | null>(null);
 
-  // Helper to safely get landingConfig with fallbacks
   const landingConfig = localConfig.landingConfig || {};
   const cards = landingConfig.cards || {};
   const sections = landingConfig.sections || {};
 
   const handleUpdateCard = (key: SectionKey, field: keyof LandingCardConfig, value: string) => {
-    if (setLocalConfig) {
-      setLocalConfig(prev => {
-        if (!prev) return null;
-        const prevLanding = prev.landingConfig || {};
-        const prevCards = prevLanding.cards || {};
-        return {
-          ...prev,
-          landingConfig: {
-            ...prevLanding,
-            cards: {
-              ...prevCards,
-              [key]: {
-                ...(prevCards[key] || {}),
-                [field]: value
-              }
-            }
-          }
-        };
-      });
-    } else {
-      updateField('landingConfig', 'cards', {
-        ...cards,
-        [key]: {
-          ...(cards[key] || {}),
-          [field]: value
-        }
-      });
-    }
+    updateField('landingConfig.cards', `${key}.${field}`, value);
   };
 
   const handleUpdateSection = (key: SectionKey, field: keyof LandingSectionConfig, value: unknown) => {
-    if (setLocalConfig) {
-      setLocalConfig(prev => {
-        if (!prev) return null;
-        const prevLanding = prev.landingConfig || {};
-        const prevSections = prevLanding.sections || {};
-        return {
-          ...prev,
-          landingConfig: {
-            ...prevLanding,
-            sections: {
-              ...prevSections,
-              [key]: {
-                ...(prevSections[key] || {}),
-                [field]: value
-              }
-            }
-          }
-        };
-      });
-    } else {
-      updateField('landingConfig', 'sections', {
-        ...sections,
-        [key]: {
-          ...(sections[key] || {}),
-          [field]: value
-        }
-      });
-    }
+    updateField('landingConfig.sections', `${key}.${field}`, value);
   };
 
   const handleUpdateBullet = (key: SectionKey, bulletIdx: number, value: string) => {
@@ -106,16 +49,9 @@ export default function AdminTabInicio({ localConfig, updateField, setLocalConfi
 
     setUploadingSectionKey(key);
     try {
-      // 1. Client-side WebP compression (lightweight & high quality)
-      const compressedBlob = await compressImageWebP(file, 1920, 1080, 0.85);
-      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
-      const fileRef = ref(storage, `landing-assets/${Date.now()}_${cleanName}`);
-      
-      // 2. Upload to Firebase Storage
-      await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
-      const downloadUrl = await getDownloadURL(fileRef);
+      // Compresión WebP client-side con respaldo automático si Firebase Storage tiene cuota llena (402)
+      const { url, isBase64 } = await uploadImageWithFallback(file, 'landing-assets', 1280, 720, 0.78);
 
-      // 3. Update local state and auto-save directly to Firestore
       const updatedConfig: PortalConfig = {
         ...localConfig,
         landingConfig: {
@@ -124,7 +60,7 @@ export default function AdminTabInicio({ localConfig, updateField, setLocalConfi
             ...sections,
             [key]: {
               ...(sections[key] || {}),
-              bgImage: downloadUrl
+              bgImage: url
             }
           }
         }
@@ -135,11 +71,15 @@ export default function AdminTabInicio({ localConfig, updateField, setLocalConfi
       }
       await saveConfigToFirestore(updatedConfig);
 
-      setSaveBanner(`✨ ¡Imagen de fondo para "${key.toUpperCase()}" subida y guardada permanentemente en Firestore!`);
+      setSaveBanner(
+        isBase64
+          ? `⚡ ¡Imagen de fondo para "${key.toUpperCase()}" optimizada (WebP integrado) y guardada permanentemente en Firestore!`
+          : `✨ ¡Imagen de fondo para "${key.toUpperCase()}" subida y guardada permanentemente en Firestore!`
+      );
       setTimeout(() => setSaveBanner(null), 5000);
     } catch (err) {
-      console.error('Error subiendo imagen de fondo:', err);
-      alert('Error al comprimir o subir la imagen.');
+      console.error('Error procesando imagen de fondo:', err);
+      alert('Error al procesar o guardar la imagen de fondo.');
     } finally {
       setUploadingSectionKey(null);
     }
@@ -147,6 +87,8 @@ export default function AdminTabInicio({ localConfig, updateField, setLocalConfi
 
   const handleRemoveImage = async (key: SectionKey) => {
     if (!window.confirm(`¿Deseas quitar la imagen de fondo de la sección ${key.toUpperCase()}?`)) return;
+    
+    handleUpdateSection(key, 'bgImage', '');
     const updatedConfig: PortalConfig = {
       ...localConfig,
       landingConfig: {
@@ -317,12 +259,12 @@ export default function AdminTabInicio({ localConfig, updateField, setLocalConfi
                   <input
                     type="text"
                     style={{ flex: 1 }}
-                    value={sectionData.bgImage || ''}
+                    value={sectionData.bgImage?.startsWith('data:') ? '' : (sectionData.bgImage || '')}
                     onChange={(e) => handleUpdateSection(key, 'bgImage', e.target.value)}
-                    placeholder="URL de la imagen o sube un archivo..."
+                    placeholder={sectionData.bgImage?.startsWith('data:') ? 'Imagen local cargada (o escribe una URL web)' : 'URL de la imagen o sube un archivo...'}
                   />
                   <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', margin: 0 }}>
-                    {uploadingSectionKey === key ? '⚡ Comprimiendo y subiendo...' : '📁 Subir Imagen'}
+                    {uploadingSectionKey === key ? '⚡ Comprimiendo y guardando...' : '📁 Subir Imagen'}
                     <input
                       type="file"
                       accept="image/*"
@@ -351,6 +293,7 @@ export default function AdminTabInicio({ localConfig, updateField, setLocalConfi
                     />
                     <span style={{ fontSize: '0.8rem', color: '#34d399', fontWeight: 600 }}>
                       ✓ Imagen activa y guardada en Firestore
+                      {sectionData.bgImage.startsWith('data:') && ' (WebP Integrado)'}
                     </span>
                   </div>
                 )}

@@ -1,9 +1,7 @@
 import { useState } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../firebase';
 import type { PortalConfig, CustomHexagon, HexLayer } from '../../types';
 import { DEFAULT_CONFIG, usePortalConfig } from '../../context/PortalConfigContext';
-import { compressImageWebP } from '../../utils/imageUpload';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 import { getCandidateHexes } from '../../utils/hexUtils';
 import { HexagonGrid } from '../map/HexagonGrid';
 import GradientBuilder from './GradientBuilder';
@@ -88,18 +86,9 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     if (!file || !editingHex) return;
     
     setUploadingLayer(layerKey);
-    setUploadStatusMsg('⚡ Comprimiendo imagen a WebP...');
+    setUploadStatusMsg('⚡ Comprimiendo y procesando imagen a WebP...');
     try {
-      const originalMB = (file.size / (1024 * 1024)).toFixed(2);
-      const compressedBlob = await compressImageWebP(file, 800, 800, 0.85);
-      const compressedKB = (compressedBlob.size / 1024).toFixed(1);
-
-      setUploadStatusMsg(`🚀 Subiendo a Firebase (${originalMB}MB ➔ ${compressedKB}KB WebP)...`);
-
-      const cleanName = file.name.replace(/\.[^/.]+$/, "").replace(/[^a-zA-Z0-9_-]/g, '_') + ".webp";
-      const fileRef = ref(storage, `map-assets/${Date.now()}_${cleanName}`);
-      await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
-      const url = await getDownloadURL(fileRef);
+      const { url, isBase64 } = await uploadImageWithFallback(file, 'map-assets', 800, 800, 0.78);
 
       const updatedHex: CustomHexagon = {
         ...editingHex,
@@ -109,11 +98,15 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
       setEditingHex(updatedHex);
       await updateHexInGlobalConfig(updatedHex, true);
 
-      setUploadStatusMsg(`✨ ¡Imagen optimizada y guardada permanentemente en Firestore! (${compressedKB} KB)`);
+      setUploadStatusMsg(
+        isBase64
+          ? `⚡ ¡Imagen optimizada (WebP integrado) y guardada permanentemente en Firestore!`
+          : `✨ ¡Imagen optimizada y guardada permanentemente en Firestore!`
+      );
       setTimeout(() => setUploadStatusMsg(null), 5000);
     } catch (err) {
       console.error("Error subiendo archivo:", err);
-      alert("Error al comprimir o subir la imagen.");
+      alert("Error al comprimir o procesar la imagen.");
       setUploadStatusMsg(null);
     } finally {
       setUploadingLayer(null);

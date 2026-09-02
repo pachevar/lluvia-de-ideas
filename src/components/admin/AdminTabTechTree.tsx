@@ -1,10 +1,8 @@
 import { useState } from 'react';
-import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
-import { storage } from '../../firebase';
 import type { PortalConfig, TechNode } from '../../types';
 import { generateDefaultTechTree } from '../../utils/techTreeUtils';
 import { usePortalConfig } from '../../context/PortalConfigContext';
-import { compressImageWebP } from '../../utils/imageUpload';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 
 interface AdminTabTechTreeProps {
   localConfig: PortalConfig;
@@ -48,15 +46,11 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
 
     setUploadingNodeId(nodeId);
     try {
-      const compressedBlob = await compressImageWebP(file, 600, 600, 0.85);
-      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
-      const fileRef = ref(storage, `tech_tree_images/${nodeId}_${Date.now()}_${cleanName}`);
-      await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
-      const url = await getDownloadURL(fileRef);
+      const { url } = await uploadImageWithFallback(file, 'tech_tree_images', 600, 600, 0.78);
       handleNodeChange(nodeId, 'image', url, true);
     } catch (err) {
-      console.error("Error subiendo imagen de tecnología a Firebase Storage:", err);
-      alert("Error al subir la imagen a Firebase Storage.");
+      console.error("Error subiendo imagen de tecnología:", err);
+      alert("Error al procesar la imagen de tecnología.");
     } finally {
       setUploadingNodeId(null);
     }
