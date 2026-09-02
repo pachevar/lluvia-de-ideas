@@ -7,6 +7,8 @@ interface AdminHeaderBarProps {
   saveStatus: { type: 'success' | 'error' | null; message: string };
   handleSaveConfig: () => void;
   onBackToPortal: () => void;
+  handleExportBackup?: () => void;
+  handleImportBackup?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function AdminHeaderBar({
@@ -14,7 +16,9 @@ export default function AdminHeaderBar({
   saving,
   saveStatus,
   handleSaveConfig,
-  onBackToPortal
+  onBackToPortal,
+  handleExportBackup,
+  handleImportBackup
 }: AdminHeaderBarProps) {
   // Find current tab details & category
   let currentCategoryTitle = 'Gerencia';
@@ -53,6 +57,35 @@ export default function AdminHeaderBar({
         )}
 
         <div className="admin-header-actions">
+          {handleExportBackup && (
+            <button 
+              className="btn btn-secondary btn-header-backup"
+              onClick={handleExportBackup}
+              title="Descargar copia de seguridad de textos, enlaces e imágenes en archivo JSON"
+            >
+              <span>📥</span>
+              <span className="btn-text-backup">Respaldar</span>
+            </button>
+          )}
+
+          {handleImportBackup && (
+            <label 
+              className="btn btn-secondary btn-header-backup"
+              style={{ cursor: 'pointer', margin: 0 }}
+              title="Restaurar respaldo previo desde archivo JSON"
+            >
+              <span>📤</span>
+              <span className="btn-text-backup">Restaurar</span>
+              <input
+                type="file"
+                accept=".json,application/json"
+                style={{ display: 'none' }}
+                onChange={handleImportBackup}
+                disabled={saving}
+              />
+            </label>
+          )}
+
           <button 
             className="btn btn-primary btn-save-quick"
             onClick={handleSaveConfig}

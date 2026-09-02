@@ -34,14 +34,37 @@ export default function Gerencia() {
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [saving, setSaving] = useState(false);
 
-  // Initialize local config copy only when initial load occurs
+  // Initialize local config copy and reactively synchronize external asset updates
   const isInitialLoad = useRef(true);
   useEffect(() => {
-    if (config && !configLoading && (isInitialLoad.current || !localConfig)) {
-      setLocalConfig(JSON.parse(JSON.stringify(config))); // Deep copy
-      isInitialLoad.current = false;
+    if (config && !configLoading) {
+      if (isInitialLoad.current || !localConfig) {
+        setLocalConfig(JSON.parse(JSON.stringify(config))); // Deep copy
+        isInitialLoad.current = false;
+      } else {
+        // Sincronización reactiva: absorbe automáticamente mapas, secciones y fotos actualizadas
+        // para que localConfig nunca sobrescriba con datos viejos en Firestore
+        setLocalConfig(prev => {
+          if (!prev) return JSON.parse(JSON.stringify(config));
+          return {
+            ...prev,
+            map: config.map || prev.map,
+            landingConfig: {
+              ...prev.landingConfig,
+              sections: {
+                ...(prev.landingConfig?.sections || {}),
+                ...(config.landingConfig?.sections || {})
+              },
+              promoVideos: config.landingConfig?.promoVideos || prev.landingConfig?.promoVideos
+            },
+            techTreeNodes: config.techTreeNodes || prev.techTreeNodes,
+            archetypeImages: { ...(prev.archetypeImages || {}), ...(config.archetypeImages || {}) },
+            journeyStageImages: { ...(prev.journeyStageImages || {}), ...(config.journeyStageImages || {}) }
+          };
+        });
+      }
     }
-  }, [config, configLoading, localConfig]);
+  }, [config, configLoading]);
 
   const handleLogout = async () => {
     try {
@@ -56,8 +79,24 @@ export default function Gerencia() {
     setSaving(true);
     setSaveStatus({ type: null, message: '' });
     try {
-      await saveConfigToFirestore(localConfig);
-      setSaveStatus({ type: 'success', message: '¡Configuración guardada exitosamente en Firestore!' });
+      // Blindaje de guardado: fusionar con la última versión de Firestore para no perder activos ni hexágonos
+      const safeConfig: PortalConfig = {
+        ...config,
+        ...localConfig,
+        map: (localConfig.map && localConfig.map.length > 0) ? localConfig.map : (config.map || []),
+        landingConfig: {
+          ...(config.landingConfig || {}),
+          ...(localConfig.landingConfig || {}),
+          sections: {
+            ...(config.landingConfig?.sections || {}),
+            ...(localConfig.landingConfig?.sections || {})
+          },
+          promoVideos: localConfig.landingConfig?.promoVideos || config.landingConfig?.promoVideos
+        }
+      };
+      await saveConfigToFirestore(safeConfig);
+      setLocalConfig(safeConfig);
+      setSaveStatus({ type: 'success', message: '¡Configuración guardada y blindada exitosamente en Firestore!' });
       setTimeout(() => setSaveStatus({ type: null, message: '' }), 5000);
     } catch (err) {
       console.error("Error saving config:", err);
@@ -65,7 +104,60 @@ export default function Gerencia() {
     } finally {
       setSaving(false);
     }
-  }, [localConfig, saveConfigToFirestore]);
+  }, [localConfig, config, saveConfigToFirestore]);
+
+  const handleExportBackup = () => {
+    try {
+      const dataToExport = localConfig || config;
+      const jsonStr = JSON.stringify(dataToExport, null, 2);
+      const blob = new Blob([jsonStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      const dateStr = new Date().toISOString().split('T')[0];
+      a.href = url;
+      a.download = `respaldo_portal_lluviadeideas_${dateStr}.json`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+      setSaveStatus({ type: 'success', message: '📥 Copia de seguridad JSON descargada con éxito.' });
+      setTimeout(() => setSaveStatus({ type: null, message: '' }), 4000);
+    } catch (err) {
+      console.error('Error exportando backup:', err);
+      alert('Error al generar la copia de seguridad.');
+    }
+  };
+
+  const handleImportBackup = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = async (event) => {
+      try {
+        const text = event.target?.result as string;
+        const parsed = JSON.parse(text) as PortalConfig;
+        if (!parsed || typeof parsed !== 'object') {
+          throw new Error('Archivo JSON inválido.');
+        }
+        if (!window.confirm('¿Deseas restaurar esta copia de seguridad? Se actualizarán todos los textos, imágenes y configuraciones en Firestore.')) {
+          return;
+        }
+        setSaving(true);
+        await saveConfigToFirestore(parsed);
+        setLocalConfig(parsed);
+        setSaveStatus({ type: 'success', message: '📤 ¡Copia de seguridad restaurada y guardada en Firestore!' });
+        setTimeout(() => setSaveStatus({ type: null, message: '' }), 5000);
+      } catch (err) {
+        console.error('Error importando backup:', err);
+        alert('El archivo no contiene un formato de configuración válido.');
+      } finally {
+        setSaving(false);
+        e.target.value = '';
+      }
+    };
+    reader.readAsText(file);
+  };
 
   const handleResetConfig = async () => {
     if (!window.confirm('¿Estás seguro de que deseas restaurar la configuración predeterminada de fábrica? Esto sobrescribirá los datos guardados.')) {
@@ -216,13 +308,15 @@ export default function Gerencia() {
       />
 
       <main className="admin-main-panel">
-        {/* Header Bar Modular con Breadcrumbs y Atajos */}
+        {/* Header Bar Modular con Breadcrumbs, Atajos y Respaldo */}
         <AdminHeaderBar 
           activeTab={activeAdminTab}
           saving={saving}
           saveStatus={saveStatus}
           handleSaveConfig={handleSaveConfig}
           onBackToPortal={onBackToPortal}
+          handleExportBackup={handleExportBackup}
+          handleImportBackup={handleImportBackup}
         />
 
         <div className="admin-tab-content">

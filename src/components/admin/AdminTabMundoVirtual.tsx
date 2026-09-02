@@ -52,27 +52,24 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const [showIconPicker, setShowIconPicker] = useState(false);
 
   const updateHexInGlobalConfig = async (targetHex: CustomHexagon, autoSave = true) => {
-    let updatedConfig: PortalConfig | null = null;
-    setLocalConfig(prev => {
-      if (!prev) return null;
-      const currentMap = prev.map || [];
-      const existingIdx = currentMap.findIndex(h => h.row === targetHex.row && h.col === targetHex.col);
+    const currentMap = localConfig?.map || [];
+    const existingIdx = currentMap.findIndex(h => h.row === targetHex.row && h.col === targetHex.col);
 
-      const newMap = [...currentMap];
-      if (existingIdx >= 0) {
-        newMap[existingIdx] = targetHex;
-      } else {
-        newMap.push(targetHex);
-      }
+    const newMap = [...currentMap];
+    if (existingIdx >= 0) {
+      newMap[existingIdx] = targetHex;
+    } else {
+      newMap.push(targetHex);
+    }
 
-      updatedConfig = {
-        ...prev,
-        map: newMap
-      };
-      return updatedConfig;
-    });
+    const updatedConfig: PortalConfig = {
+      ...localConfig,
+      map: newMap
+    };
 
-    if (autoSave && updatedConfig) {
+    setLocalConfig(updatedConfig);
+
+    if (autoSave) {
       try {
         await saveConfigToFirestore(updatedConfig);
       } catch (err) {

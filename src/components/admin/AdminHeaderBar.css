@@ -114,6 +114,32 @@
   font-size: 0.9rem;
 }
 
+.btn-header-backup {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 14px;
+  font-weight: 700;
+  font-size: 0.88rem;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  color: #e2e8f0;
+  transition: all 0.2s ease;
+}
+
+.btn-header-backup:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+}
+
+@media (max-width: 900px) {
+  .btn-text-backup {
+    display: none;
+  }
+}
+
 @media (max-width: 768px) {
   .admin-header-bar {
     flex-direction: column;
