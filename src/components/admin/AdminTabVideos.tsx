@@ -330,18 +330,53 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
           )}
         </div>
 
-        <div className="videos-subtabs">
+        <div className="videos-subtabs-wrapper" style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+          <div className="videos-subtabs">
+            <button
+              className={`videos-subtab-btn ${activeSubtab === 'main' ? 'active' : ''}`}
+              onClick={() => setActiveSubtab('main')}
+            >
+              📱 1. Video Promocional en Inicio
+            </button>
+            <button
+              className={`videos-subtab-btn ${activeSubtab === 'modal' ? 'active' : ''}`}
+              onClick={() => setActiveSubtab('modal')}
+            >
+              💡 2. Temas del Modal ({tipsList.length})
+            </button>
+          </div>
+
           <button
-            className={`videos-subtab-btn ${activeSubtab === 'main' ? 'active' : ''}`}
-            onClick={() => setActiveSubtab('main')}
+            className="btn btn-primary"
+            onClick={() => {
+              setActiveSubtab('modal');
+              setEditingTipIndex(null);
+              setTipForm({ tabLabel: '', icon: '🎬', title: '', youtubeUrl: '', description: '', bullets: [''] });
+              setTimeout(() => {
+                const formEl = document.getElementById('modal-tip-editor-form');
+                if (formEl) {
+                  formEl.scrollIntoView({ behavior: 'smooth' });
+                  formEl.classList.add('pulse-highlight');
+                  setTimeout(() => formEl.classList.remove('pulse-highlight'), 1200);
+                }
+              }, 50);
+            }}
+            title="Crear un nuevo tema de video para el modal de consejos"
+            style={{
+              padding: '10px 18px',
+              fontWeight: 800,
+              fontSize: '0.88rem',
+              borderRadius: '14px',
+              background: 'linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%)',
+              color: '#ffffff',
+              boxShadow: '0 4px 15px rgba(14, 165, 233, 0.4)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '6px'
+            }}
           >
-            📱 Video Shorts Inicio
-          </button>
-          <button
-            className={`videos-subtab-btn ${activeSubtab === 'modal' ? 'active' : ''}`}
-            onClick={() => setActiveSubtab('modal')}
-          >
-            💡 Modal Consejos (`PromoTips`)
+            <span>➕</span>
+            <span>Nuevo Tema para el Modal</span>
           </button>
         </div>
       </div>
@@ -475,11 +510,29 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
           </div>
 
           {/* Formulario de Creación / Edición Premium */}
-          <div className="premium-form-card">
-            <h4 className="premium-card-title">
-              <span>{editingTipIndex !== null ? '✏️' : '➕'}</span>
-              <span>{editingTipIndex !== null ? `Editando Tema #${editingTipIndex + 1}` : 'Agregar Nuevo Tema en Video'}</span>
-            </h4>
+          <div className="premium-form-card" id="modal-tip-editor-form">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(255, 255, 255, 0.08)' }}>
+              <h4 className="premium-card-title" style={{ border: 'none', padding: 0 }}>
+                <span>{editingTipIndex !== null ? '✏️' : '➕'}</span>
+                <span>{editingTipIndex !== null ? `Editando Tema #${editingTipIndex + 1}: «${tipForm.tabLabel || tipForm.title || ''}»` : 'Agregar Nuevo Tema al Modal'}</span>
+              </h4>
+              {editingTipIndex !== null ? (
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => {
+                    setEditingTipIndex(null);
+                    setTipForm({ tabLabel: '', icon: '🎬', title: '', youtubeUrl: '', description: '', bullets: [''] });
+                  }}
+                  style={{ fontSize: '0.85rem' }}
+                >
+                  ✕ Cancelar y Crear Nuevo Tema
+                </button>
+              ) : (
+                <span style={{ fontSize: '0.82rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8', padding: '4px 12px', borderRadius: '12px', fontWeight: 700 }}>
+                  🌟 Formulario de Nuevo Tema
+                </span>
+              )}
+            </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: '90px 1fr 1fr', gap: '1.25rem' }}>
               <div className="form-field-group">
@@ -614,9 +667,43 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
 
           {/* Lista de Tarjetas de Consejos Existentes */}
           <div className="tips-grid-list">
-            <h4 style={{ color: '#ffffff', margin: '0 0 10px 0', fontSize: '1.15rem', fontWeight: 800 }}>
-              Lista de Temas Configurados ({tipsList.length})
-            </h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '14px', margin: '0 0 16px 0', paddingBottom: '12px', borderBottom: '1px solid rgba(255,255,255,0.1)' }}>
+              <div>
+                <h4 style={{ color: '#ffffff', margin: 0, fontSize: '1.25rem', fontWeight: 800 }}>
+                  📋 Temas Configurados en el Modal ({tipsList.length})
+                </h4>
+                <p style={{ color: '#94a3b8', fontSize: '0.85rem', margin: '4px 0 0 0' }}>
+                  Cada tema aparece como una pestaña dentro de «Conoce más de nuestro potente ecosistema educativo».
+                </p>
+              </div>
+
+              <button 
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditingTipIndex(null);
+                  setTipForm({ tabLabel: '', icon: '🎬', title: '', youtubeUrl: '', description: '', bullets: [''] });
+                  const formEl = document.getElementById('modal-tip-editor-form');
+                  if (formEl) {
+                    formEl.scrollIntoView({ behavior: 'smooth' });
+                    formEl.classList.add('pulse-highlight');
+                    setTimeout(() => formEl.classList.remove('pulse-highlight'), 1200);
+                  }
+                }}
+                style={{
+                  fontWeight: 800,
+                  padding: '10px 22px',
+                  borderRadius: '12px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  background: 'linear-gradient(135deg, #0ea5e9, #2563eb)',
+                  boxShadow: '0 4px 14px rgba(14, 165, 233, 0.4)'
+                }}
+              >
+                <span>➕</span>
+                <span>Agregar Nuevo Tema al Modal</span>
+              </button>
+            </div>
 
             {tipsList.map((tip, idx) => (
               <div key={tip.id || idx} className={`tip-card-item ${tip.visible === false ? 'hidden-state' : ''}`}>
