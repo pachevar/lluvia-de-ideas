@@ -341,235 +341,581 @@
   gap: 20px;
 }
 
+/* ==========================================================================
+   TÓMBOLA 3D DE LUJO & PODIO DE TRANSMISIÓN DE BINGO
+   ========================================================================== */
+
 .tombola-cyber-stage {
   position: relative;
   width: 100%;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 6px 0 10px;
+  padding: 18px 12px 20px;
+  background: radial-gradient(circle at 50% 25%, rgba(30, 27, 75, 0.5) 0%, rgba(10, 5, 25, 0.9) 100%);
+  border-radius: 24px;
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 16px 45px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.15);
+  margin-bottom: 24px;
+  overflow: hidden;
 }
 
-/* Glowing background halo behind ball */
-.cyber-halo {
-  position: absolute;
-  width: 200px;
-  height: 200px;
-  background: radial-gradient(circle, rgba(168, 85, 247, 0.2) 0%, rgba(236, 72, 153, 0.05) 50%, transparent 70%);
-  border-radius: 50%;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 0;
-  pointer-events: none;
-  animation: breatheHalo 4s infinite ease-in-out;
-}
-
-/* The Hologram Tombola Frame representation */
-.hologram-tombola-frame {
-  position: relative;
-  width: 180px;
-  height: 180px;
-  border-radius: 50%;
-  border: 3px double rgba(0, 240, 255, 0.25);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.1), inset 0 0 30px rgba(168, 85, 247, 0.1);
-  z-index: 1;
-}
-
-.hologram-tombola-frame::before {
-  content: '';
-  position: absolute;
-  width: 108%;
-  height: 108%;
-  border: 1px dashed rgba(236, 72, 153, 0.4);
-  border-radius: 50%;
-  animation: rotateClockwise 25s infinite linear;
-}
-
-.hologram-tombola-frame::after {
-  content: '';
-  position: absolute;
-  width: 92%;
-  height: 92%;
-  border: 2px dashed rgba(0, 240, 255, 0.3);
-  border-radius: 50%;
-  animation: rotateCounterClockwise 15s infinite linear;
-}
-
-/* Futuristic gaming sphere for the drawn ball */
-.gamer-ball {
-  width: 125px;
-  height: 125px;
-  border-radius: 50%;
-  background: radial-gradient(circle at 35% 35%, #fff, var(--cyber-primary) 45%, var(--cyber-accent) 80%, #000 100%);
-  box-shadow: 
-    0 10px 25px rgba(0, 0, 0, 0.6), 
-    0 0 25px rgba(168, 85, 247, 0.6), 
-    inset 0 -8px 16px rgba(0, 0, 0, 0.8),
-    inset 0 8px 16px rgba(255, 255, 255, 0.6);
-  border: 4px solid #fff;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  z-index: 2;
-  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  animation: hoverBall 3s infinite ease-in-out;
-  cursor: pointer;
-  position: relative;
-}
-
-.gamer-ball.rolling {
-  animation: spinTombola 0.12s infinite linear, hoverBall 0.5s infinite ease-in-out;
-  border-color: var(--cyber-cyan);
-  background: radial-gradient(circle at 35% 35%, #fff, var(--cyber-cyan) 45%, var(--cyber-primary) 80%, #000 100%);
-  box-shadow: 
-    0 10px 25px rgba(0, 0, 0, 0.6), 
-    0 0 30px var(--cyber-cyan-glow), 
-    inset 0 -8px 16px rgba(0,0,0,0.8);
-}
-
-.gamer-ball-letter {
-  font-family: var(--font-gamer);
-  font-size: 1.15rem;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-  line-height: 1;
-  opacity: 0.9;
-}
-
-.gamer-ball-number {
-  font-family: var(--font-gamer);
-  font-size: 3.4rem;
-  font-weight: 900;
-  color: #fff;
-  text-shadow: 2px 3px 6px rgba(0,0,0,0.6), 0 0 10px rgba(255, 255, 255, 0.8);
-  line-height: 1;
-  margin-top: -3px;
-}
-
-.gamer-ball-label {
-  font-size: 0.65rem;
-  font-family: var(--font-gamer);
-  color: var(--cyber-cyan);
-  text-transform: uppercase;
-  font-weight: 700;
-  text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-}
-
-/* Horizontal Row Stage Flex Alignment */
+/* Master Stage Layout (Horizontal Flex: Cage + Hero Ball + Showcase Monoliths) */
 .tombola-horizontal-stage-flex {
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 24px;
   width: 100%;
-  max-width: 680px;
+  max-width: 980px;
   margin: 0 auto;
+  z-index: 2;
+  position: relative;
 }
 
-@media (max-width: 768px) {
+@media (max-width: 900px) {
   .tombola-horizontal-stage-flex {
     flex-direction: column;
-    gap: 14px;
+    gap: 18px;
   }
 }
 
-/* Dual Container High-Legibility Showcase for Drawn Ball */
-.number-display-showcase {
+/* ==========================================================
+   1. JAULA MECÁNICA DE LOTERÍA EN 3D (GOLDEN BRASS TUMBLER)
+   ========================================================== */
+.tombola-rig-wrapper {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.tombola-cage-assembly {
+  position: relative;
+  width: 165px;
+  height: 165px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 16px;
-  z-index: 5;
-  width: 100%;
-  flex: 1;
 }
 
-.letter-display-box {
-  flex: 0 0 115px;
-  height: 125px;
-  background: rgba(13, 6, 28, 0.95);
-  border: 2px solid var(--cyber-cyan, #00f0ff);
-  border-radius: 20px;
+/* Spherical Wireframe Cage */
+.cage-sphere {
+  position: relative;
+  width: 135px;
+  height: 135px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, rgba(255, 255, 255, 0.18) 0%, rgba(245, 158, 11, 0.08) 45%, rgba(0, 0, 0, 0.5) 100%);
+  border: 3px solid rgba(245, 158, 11, 0.7);
+  box-shadow: 
+    0 0 25px rgba(245, 158, 11, 0.3),
+    inset 0 0 20px rgba(245, 158, 11, 0.2),
+    inset 0 4px 10px rgba(255, 255, 255, 0.35);
+  overflow: hidden;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
+}
+
+.cage-sphere.spinning {
+  animation: spinCageSphere 0.55s linear infinite;
+  border-color: #fbbf24;
+  box-shadow: 0 0 35px rgba(251, 191, 36, 0.6), inset 0 0 25px rgba(251, 191, 36, 0.35);
+}
+
+/* Internal latitude & longitude wireframe bars */
+.cage-sphere::before {
+  content: '';
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: 
+    repeating-linear-gradient(0deg, transparent, transparent 15px, rgba(245, 158, 11, 0.45) 15px, rgba(245, 158, 11, 0.45) 17px),
+    repeating-linear-gradient(90deg, transparent, transparent 15px, rgba(245, 158, 11, 0.3) 15px, rgba(245, 158, 11, 0.3) 17px);
+  pointer-events: none;
+}
+
+.cage-sphere::after {
+  content: '';
+  position: absolute;
+  top: 6px;
+  left: 14px;
+  width: 45px;
+  height: 25px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.6), transparent);
+  transform: rotate(-35deg);
+  pointer-events: none;
+}
+
+/* Mini bouncing balls inside the tumbler cage */
+.mini-bouncing-balls {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.mini-ball {
+  position: absolute;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  box-shadow: inset -2px -2px 4px rgba(0,0,0,0.6), 0 2px 4px rgba(0,0,0,0.5);
+  border: 1px solid rgba(255, 255, 255, 0.5);
+}
+
+.mini-ball-1 { top: 60%; left: 35%; background: #0ea5e9; }
+.mini-ball-2 { top: 68%; left: 52%; background: #ec4899; }
+.mini-ball-3 { top: 72%; left: 24%; background: #a855f7; }
+.mini-ball-4 { top: 58%; left: 68%; background: #10b981; }
+.mini-ball-5 { top: 75%; left: 42%; background: #f59e0b; }
+.mini-ball-6 { top: 48%; left: 45%; background: #38bdf8; }
+.mini-ball-7 { top: 64%; left: 16%; background: #f43f5e; }
+
+.cage-sphere.spinning .mini-ball-1 { animation: ballJumble1 0.25s infinite alternate ease-in-out; }
+.cage-sphere.spinning .mini-ball-2 { animation: ballJumble2 0.28s infinite alternate ease-in-out; }
+.cage-sphere.spinning .mini-ball-3 { animation: ballJumble3 0.22s infinite alternate ease-in-out; }
+.cage-sphere.spinning .mini-ball-4 { animation: ballJumble1 0.3s infinite alternate-reverse ease-in-out; }
+.cage-sphere.spinning .mini-ball-5 { animation: ballJumble2 0.24s infinite alternate-reverse ease-in-out; }
+.cage-sphere.spinning .mini-ball-6 { animation: ballJumble3 0.26s infinite alternate ease-in-out; }
+.cage-sphere.spinning .mini-ball-7 { animation: ballJumble1 0.27s infinite alternate-reverse ease-in-out; }
+
+/* Metallic axle and sturdy tripod stand */
+.cage-stand-axle {
+  position: absolute;
+  width: 156px;
+  height: 8px;
+  background: linear-gradient(180deg, #fef08a 0%, #b45309 60%, #78350f 100%);
+  border-radius: 4px;
+  box-shadow: 0 3px 6px rgba(0,0,0,0.6);
+  z-index: 1;
+}
+
+.cage-stand-legs {
+  position: absolute;
+  bottom: -18px;
+  width: 130px;
+  height: 38px;
+  border-bottom: 5px solid #b45309;
+  border-left: 5px solid #d97706;
+  border-right: 5px solid #d97706;
+  border-radius: 0 0 16px 16px;
+  box-shadow: 0 8px 14px rgba(0,0,0,0.5);
+  z-index: 0;
+}
+
+/* Mechanical Turning Crank Handle */
+.cage-crank-handle {
+  position: absolute;
+  right: -14px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 22px;
+  height: 44px;
+  border-right: 5px solid #fde047;
+  border-top: 4px solid #d97706;
+  border-bottom: 4px solid #b45309;
+  border-radius: 0 12px 12px 0;
+  z-index: 3;
+}
+
+.cage-crank-knob {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  width: 13px;
+  height: 13px;
+  background: radial-gradient(circle at 35% 35%, #fff, #b45309);
+  border-radius: 50%;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.7);
+}
+
+/* Acrylic Ejection Chute Tube */
+.cage-chute-funnel {
+  margin-top: 12px;
+  background: linear-gradient(180deg, rgba(245, 158, 11, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1.5px solid rgba(245, 158, 11, 0.5);
+  border-radius: 12px;
+  padding: 4px 12px;
+  font-size: 0.68rem;
+  font-weight: 900;
+  color: #fbbf24;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+}
+
+/* ==========================================================
+   2. LA BOLA ESTRELLA 3D (3D CASINO HERO BALL)
+   ========================================================== */
+.hero-ball-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.hero-bingo-ball-3d {
+  width: 126px;
+  height: 126px;
+  border-radius: 50%;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  user-select: none;
+  transition: transform 0.35s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 
+    0 16px 32px rgba(0, 0, 0, 0.7),
+    0 0 32px var(--ball-glow, rgba(56, 189, 248, 0.45)),
+    inset 0 -12px 24px rgba(0, 0, 0, 0.75),
+    inset 0 10px 18px rgba(255, 255, 255, 0.65);
+  border: 3.5px solid rgba(255, 255, 255, 0.9);
+  animation: heroBallHover 3.5s ease-in-out infinite;
+}
+
+.hero-bingo-ball-3d:hover {
+  transform: scale(1.06) translateY(-4px);
+}
+
+.hero-bingo-ball-3d.rolling {
+  animation: heroBallRoll 0.14s linear infinite;
+  box-shadow: 0 0 45px rgba(0, 240, 255, 0.8), inset 0 0 25px rgba(255, 255, 255, 0.8);
+}
+
+/* Specular High-Gloss Reflection on Top-Left */
+.hero-bingo-ball-3d::before {
+  content: '';
+  position: absolute;
+  top: 10px;
+  left: 20px;
+  width: 44px;
+  height: 22px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.8) 0%, rgba(255, 255, 255, 0) 100%);
+  transform: rotate(-35deg);
+  pointer-events: none;
+}
+
+/* Inner Ivory White Circular Badge */
+.hero-ball-badge {
+  width: 76px;
+  height: 76px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 45% 45%, #ffffff 0%, #f1f5f9 70%, #e2e8f0 100%);
+  box-shadow: 
+    inset 0 3px 6px rgba(0, 0, 0, 0.35),
+    0 2px 6px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.35), inset 0 0 15px rgba(0, 240, 255, 0.15);
-  position: relative;
-  overflow: hidden;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  text-align: center;
+  z-index: 2;
+  border: 1.5px solid rgba(0, 0, 0, 0.1);
 }
 
-.letter-display-box .tag {
-  font-family: var(--font-gamer);
-  font-size: 0.68rem;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  text-transform: uppercase;
-  color: #cbd5e1;
-  margin-bottom: 2px;
-}
-
-.letter-display-box .value {
-  font-family: var(--font-gamer);
-  font-size: 3.8rem;
+.hero-ball-letter {
+  font-family: var(--font-gamer, 'Outfit', sans-serif);
+  font-size: 1.15rem;
   font-weight: 900;
   line-height: 1;
-  color: #ffffff;
-  text-shadow: 0 0 16px currentColor;
+  letter-spacing: 0.5px;
 }
 
-.number-display-box {
+.hero-ball-number {
+  font-family: var(--font-gamer, 'Outfit', sans-serif);
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #0f172a;
+  line-height: 0.95;
+  margin-top: 1px;
+}
+
+/* Pedestal Floor Shadow */
+.hero-ball-shadow {
+  width: 90px;
+  height: 16px;
+  background: radial-gradient(ellipse, rgba(0, 0, 0, 0.65) 0%, transparent 75%);
+  margin-top: 8px;
+  border-radius: 50%;
+}
+
+/* Patrocinador Integrado Flotante */
+.integrated-sponsor-pill {
+  position: absolute;
+  bottom: -45px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 190px;
+  background: rgba(15, 8, 32, 0.92);
+  border: 1px solid var(--cyber-cyan, #00f0ff);
+  border-radius: 10px;
+  padding: 4px 8px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  box-shadow: 0 4px 12px rgba(0, 240, 255, 0.25);
+  z-index: 10;
+}
+
+.integrated-sponsor-pill img {
+  width: 28px;
+  height: 28px;
+  background: white;
+  border-radius: 5px;
+  padding: 2px;
+  object-fit: contain;
+  flex-shrink: 0;
+}
+
+.integrated-sponsor-pill div {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  text-align: left;
+}
+
+.integrated-sponsor-pill small {
+  font-size: 0.55rem;
+  color: var(--cyber-cyan);
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+.integrated-sponsor-pill strong {
+  font-size: 0.68rem;
+  color: #fff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ==========================================================
+   3. PODIO DE TRANSMISIÓN DE ALTA LEGIBILIDAD (BROADCAST PODIUM)
+   ========================================================== */
+.showcase-monolith-podium {
   flex: 1;
-  height: 125px;
-  background: rgba(13, 6, 28, 0.95);
-  border: 2.5px solid var(--cyber-primary, #a855f7);
-  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: 320px;
+}
+
+/* Header bar with progress */
+.podium-header-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 6px 14px;
+  border-radius: 12px;
+}
+
+.podium-header-title {
+  font-size: 0.72rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.podium-ball-counter {
+  font-size: 0.76rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+}
+
+/* Dual Displays: Giant Letter + Giant Number */
+.podium-screens-row {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+}
+
+/* Letter Screen */
+.podium-letter-screen {
+  flex: 0 0 120px;
+  background: rgba(15, 23, 42, 0.94);
+  border-radius: 18px;
+  padding: 10px 8px;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 0 30px rgba(168, 85, 247, 0.4), inset 0 0 20px rgba(255, 255, 255, 0.05);
   position: relative;
   overflow: hidden;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  padding: 0 15px;
+  border: 2px solid;
 }
 
-.number-display-box .tag {
-  font-family: var(--font-gamer);
-  font-size: 0.68rem;
-  font-weight: 800;
+.podium-screen-tag {
+  font-size: 0.65rem;
+  font-weight: 900;
   letter-spacing: 1.5px;
   text-transform: uppercase;
-  color: var(--cyber-cyan, #00f0ff);
+  color: #94a3b8;
   margin-bottom: 2px;
 }
 
-.number-display-box .value {
-  font-family: var(--font-gamer);
+.podium-letter-value {
+  font-family: var(--font-gamer, 'Outfit', sans-serif);
   font-size: 4.8rem;
   font-weight: 900;
   line-height: 1;
-  color: #ffffff;
-  text-shadow: 0 0 20px rgba(255, 255, 255, 0.8), 0 4px 10px rgba(0,0,0,0.9);
+  text-shadow: 0 0 20px currentColor;
 }
 
-.number-display-box .sub-label {
-  font-size: 0.72rem;
-  color: #a855f7;
-  font-weight: bold;
-  letter-spacing: 1px;
+.podium-letter-sub {
+  font-size: 0.68rem;
+  font-weight: 800;
+  color: #cbd5e1;
+  background: rgba(255, 255, 255, 0.1);
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+/* Number Screen */
+.podium-number-screen {
+  flex: 1;
+  background: rgba(15, 23, 42, 0.94);
+  border-radius: 18px;
+  padding: 8px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  border: 2px solid;
+}
+
+.podium-number-value {
+  font-family: var(--font-gamer, 'Outfit', sans-serif);
+  font-size: 5.4rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+  text-shadow: 0 0 25px rgba(255, 255, 255, 0.7), 0 4px 10px rgba(0,0,0,0.8);
+}
+
+.podium-spelled-name {
+  font-size: 0.78rem;
+  font-weight: 900;
+  letter-spacing: 1.5px;
   text-transform: uppercase;
   margin-top: 2px;
+}
+
+/* ==========================================================
+   4. CARRIL DE LAS ÚLTIMAS BOLAS (RECENT BALLS CHUTE)
+   ========================================================== */
+.recent-balls-rail-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 6px 12px;
+  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.5);
+}
+
+.recent-balls-label {
+  font-size: 0.68rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  color: #94a3b8;
+  white-space: nowrap;
+}
+
+.recent-balls-chute {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 2px;
+}
+
+.mini-chute-ball {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6), inset 0 2px 4px rgba(255, 255, 255, 0.6);
+  border: 1.5px solid rgba(255, 255, 255, 0.75);
+  flex-shrink: 0;
+  transition: transform 0.2s;
+  cursor: default;
+}
+
+.mini-chute-ball:hover {
+  transform: scale(1.15) translateY(-2px);
+}
+
+.mini-chute-ball .m-letter {
+  font-size: 0.52rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+}
+
+.mini-chute-ball .m-num {
+  font-size: 0.8rem;
+  font-weight: 900;
+  line-height: 1;
+  color: #ffffff;
+}
+
+/* Animations */
+@keyframes spinCageSphere {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+@keyframes ballJumble1 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(25px, -35px) scale(1.15); }
+}
+
+@keyframes ballJumble2 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-25px, -35px) scale(0.9); }
+}
+
+@keyframes ballJumble3 {
+  0% { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(18px, -28px) scale(1.05); }
+}
+
+@keyframes heroBallHover {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-5px); }
+}
+
+@keyframes heroBallRoll {
+  0% { transform: rotate(0deg) scale(0.98); }
+  50% { transform: rotate(180deg) scale(1.02); }
+  100% { transform: rotate(360deg) scale(0.98); }
 }
 
 /* Sound and Config controls */

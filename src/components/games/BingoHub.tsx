@@ -57,6 +57,65 @@ const DEFAULT_SAMPLE_PRIZES: BingoPrize[] = [
   }
 ];
 
+const getBallMeta = (num: number) => {
+  let letter = 'B';
+  let range = '1 - 15';
+  let color = '#0ea5e9'; // Electric cyan/blue
+  let gradient = 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 50%, #0369a1 85%, #082f49 100%)';
+  let glow = 'rgba(14, 165, 233, 0.6)';
+  let darkText = '#0369a1';
+
+  if (num > 15 && num <= 30) {
+    letter = 'I';
+    range = '16 - 30';
+    color = '#ec4899'; // Hot pink / magenta
+    gradient = 'radial-gradient(circle at 35% 30%, #f472b6 0%, #db2777 50%, #be185d 85%, #831843 100%)';
+    glow = 'rgba(236, 72, 153, 0.6)';
+    darkText = '#be185d';
+  } else if (num > 30 && num <= 45) {
+    letter = 'N';
+    range = '31 - 45';
+    color = '#a855f7'; // Purple / violet
+    gradient = 'radial-gradient(circle at 35% 30%, #c084fc 0%, #9333ea 50%, #7e22ce 85%, #581c87 100%)';
+    glow = 'rgba(168, 85, 247, 0.6)';
+    darkText = '#7e22ce';
+  } else if (num > 45 && num <= 60) {
+    letter = 'G';
+    range = '46 - 60';
+    color = '#10b981'; // Emerald
+    gradient = 'radial-gradient(circle at 35% 30%, #34d399 0%, #059669 50%, #047857 85%, #064e3b 100%)';
+    glow = 'rgba(16, 185, 129, 0.6)';
+    darkText = '#047857';
+  } else if (num > 60 && num <= 75) {
+    letter = 'O';
+    range = '61 - 75';
+    color = '#f59e0b'; // Gold / amber
+    gradient = 'radial-gradient(circle at 35% 30%, #fde047 0%, #f59e0b 50%, #d97706 85%, #78350f 100%)';
+    glow = 'rgba(245, 158, 11, 0.6)';
+    darkText = '#d97706';
+  }
+
+  return { letter, range, color, gradient, glow, darkText };
+};
+
+const SPANISH_NUMBERS: Record<number, string> = {
+  1: 'UNO', 2: 'DOS', 3: 'TRES', 4: 'CUATRO', 5: 'CINCO',
+  6: 'SEIS', 7: 'SIETE', 8: 'OCHO', 9: 'NUEVE', 10: 'DIEZ',
+  11: 'ONCE', 12: 'DOCE', 13: 'TRECE', 14: 'CATORCE', 15: 'QUINCE',
+  16: 'DIECISÉIS', 17: 'DIECISIETE', 18: 'DIECIOCHO', 19: 'DIECINUEVE', 20: 'VEINTE',
+  21: 'VEINTIUNO', 22: 'VEINTIDÓS', 23: 'VEINTITRÉS', 24: 'VEINTICUATRO', 25: 'VEINTICINCO',
+  26: 'VEINTISÉIS', 27: 'VEINTISIETE', 28: 'VEINTIOCHO', 29: 'VEINTINUEVE', 30: 'TREINTA',
+  31: 'TREINTA Y UNO', 32: 'TREINTA Y DOS', 33: 'TREINTA Y TRES', 34: 'TREINTA Y CUATRO', 35: 'TREINTA Y CINCO',
+  36: 'TREINTA Y SEIS', 37: 'TREINTA Y SIETE', 38: 'TREINTA Y OCHO', 39: 'TREINTA Y NUEVE', 40: 'CUARENTA',
+  41: 'CUARENTA Y UNO', 42: 'CUARENTA Y DOS', 43: 'CUARENTA Y TRES', 44: 'CUARENTA Y CUATRO', 45: 'CUARENTA Y CINCO',
+  46: 'CUARENTA Y SEIS', 47: 'CUARENTA Y SIETE', 48: 'CUARENTA Y OCHO', 49: 'CUARENTA Y NUEVE', 50: 'CINCUENTA',
+  51: 'CINCUENTA Y UNO', 52: 'CINCUENTA Y DOS', 53: 'CINCUENTA Y TRES', 54: 'CINCUENTA Y CUATRO', 55: 'CINCUENTA Y CINCO',
+  56: 'CINCUENTA Y SEIS', 57: 'CINCUENTA Y SIETE', 58: 'CINCUENTA Y OCHO', 59: 'CINCUENTA Y NUEVE', 60: 'SESENTA',
+  61: 'SESENTA Y UNO', 62: 'SESENTA Y DOS', 63: 'SESENTA Y TRES', 64: 'SESENTA Y CUATRO', 65: 'SESENTA Y CINCO',
+  66: 'SESENTA Y SEIS', 67: 'SESENTA Y SIETE', 68: 'SESENTA Y OCHO', 69: 'SESENTA Y NUEVE', 70: 'SETENTA',
+  71: 'SETENTA Y UNO', 72: 'SETENTA Y DOS', 73: 'SETENTA Y TRES', 74: 'SETENTA Y CUATRO', 75: 'SETENTA Y CINCO'
+};
+
 export default function BingoHub() {
   const navigate = useNavigate();
   const [activeGame, setActiveGame] = useState<BingoGame | null>(null);
@@ -2226,155 +2285,212 @@ export default function BingoHub() {
                       </div>
                     )}
 
-                    {/* Alineación Horizontal de Esfera de Giro + Contenedores de Letra y Número */}
+                    {/* ESPECTACULAR ESCENARIO DE TÓMBOLA 3D Y PODIO DE TRANSMISIÓN */}
                     <div className="tombola-horizontal-stage-flex">
                       
-                      {/* Esfera Holográfica Animada para emoción de giro */}
-                      <div style={{ position: 'relative', flexShrink: 0 }}>
-                        <div className="cyber-halo" style={{ width: '130px', height: '130px' }}></div>
-                        <div className="hologram-tombola-frame" style={{ width: '125px', height: '125px', margin: 0 }}>
-                          <div className={`gamer-ball ${isRolling ? 'rolling' : ''}`} style={{ width: '85px', height: '85px' }}>
-                            {isRolling ? (
-                              <>
-                                <span className="gamer-ball-letter" style={{ fontSize: '0.8rem' }}>{rollingBall.split('-')[0]}</span>
-                                <span className="gamer-ball-number" style={{ fontSize: '1.8rem' }}>{rollingBall.split('-')[1] || '??'}</span>
-                              </>
-                            ) : activeGame.drawnNumbers.length > 0 ? (
-                              (() => {
-                                const last = activeGame.drawnNumbers[activeGame.drawnNumbers.length - 1];
-                                let letter = 'B';
-                                if (last > 15 && last <= 30) letter = 'I';
-                                if (last > 30 && last <= 45) letter = 'N';
-                                if (last > 45 && last <= 60) letter = 'G';
-                                if (last > 60 && last <= 75) letter = 'O';
-                                
-                                return (
-                                  <>
-                                    <span className="gamer-ball-letter" style={{ fontSize: '0.75rem' }}>{letter}</span>
-                                    <span className="gamer-ball-number" style={{ fontSize: '1.8rem' }}>{last}</span>
-                                  </>
-                                );
-                              })()
-                            ) : (
-                              <>
-                                <span className="gamer-ball-letter" style={{ color: 'var(--cyber-cyan)', fontSize: '0.75rem' }}>BINGO</span>
-                                <span className="gamer-ball-number" style={{ fontSize: '1.3rem', margin: '2px 0' }}>READY</span>
-                              </>
-                            )}
-                          </div>
-
-                          {/* Floating Sponsor Integrated Plate */}
-                          {activeSponsorIntegrated && !isRolling && (
-                            <div 
-                              className="animate-fade-in"
-                              style={{
-                                position: 'absolute',
-                                bottom: '-55px',
-                                left: '50%',
-                                transform: 'translateX(-50%)',
-                                width: '190px',
-                                background: 'rgba(15, 8, 32, 0.9)',
-                                border: `1px solid ${primaryColor}`,
-                                borderRadius: '10px',
-                                padding: '4px 8px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                boxShadow: `0 4px 12px ${primaryColor}44`,
-                                zIndex: 10,
-                                animation: 'floatGamer 3s ease-in-out infinite'
-                              }}
-                            >
-                              <div style={{ width: '28px', height: '28px', background: 'white', borderRadius: '5px', padding: '2px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                                <img src={activeSponsorIntegrated.logo} alt={activeSponsorIntegrated.name} style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} />
-                              </div>
-                              <div style={{ display: 'flex', flexDirection: 'column', minWidth: 0, textAlign: 'left' }}>
-                                <span style={{ fontSize: '0.55rem', color: 'var(--cyber-cyan)', fontWeight: 'bold', textTransform: 'uppercase' }}>PATROCINADOR</span>
-                                <strong style={{ fontSize: '0.68rem', color: '#fff', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeSponsorIntegrated.name}</strong>
-                              </div>
+                      {/* 1. LA TÓMBOLA FÍSICA EN 3D: JAULA DORADA GIRATORIA CON BOLAS MULTICOLOR */}
+                      <div className="tombola-rig-wrapper">
+                        <div className="tombola-cage-assembly">
+                          <div className={`cage-sphere ${isRolling ? 'spinning' : ''}`}>
+                            <div className="mini-bouncing-balls">
+                              <span className="mini-ball mini-ball-1" />
+                              <span className="mini-ball mini-ball-2" />
+                              <span className="mini-ball mini-ball-3" />
+                              <span className="mini-ball mini-ball-4" />
+                              <span className="mini-ball mini-ball-5" />
+                              <span className="mini-ball mini-ball-6" />
+                              <span className="mini-ball mini-ball-7" />
                             </div>
-                          )}
+                          </div>
+                          <div className="cage-stand-axle" />
+                          <div className="cage-stand-legs" />
+                          <div className="cage-crank-handle">
+                            <span className="cage-crank-knob" />
+                          </div>
+                        </div>
+
+                        <div className="cage-chute-funnel">
+                          <span>🎰</span>
+                          <span>{isRolling ? 'MEZCLANDO...' : 'TÓMBOLA EN VIVO'}</span>
                         </div>
                       </div>
 
-                      {/* CONTENEDORES DE MÁXIMA LEGIBILIDAD EN PANTALLA (LETRA + NÚMERO CANTADO) */}
+                      {/* 2. LA BOLA ESTRELLA 3D & 3. PODIO DE TRANSMISIÓN */}
                       {(() => {
+                        const lastBall = activeGame.drawnNumbers.length > 0
+                          ? activeGame.drawnNumbers[activeGame.drawnNumbers.length - 1]
+                          : null;
+                        
+                        let bLetter = 'B';
+                        let bNum: string | number = '75';
+                        let meta = getBallMeta(1);
+
                         if (isRolling) {
-                          const [rLetter, rNum] = rollingBall.split('-');
-                          return (
-                            <div className="number-display-showcase animate-pulse">
-                              <div className="letter-display-box" style={{ borderColor: '#00f0ff', boxShadow: '0 0 25px rgba(0,240,255,0.45)' }}>
-                                <span className="tag">LETRA</span>
-                                <span className="value" style={{ color: '#00f0ff' }}>{rLetter || 'B'}</span>
-                              </div>
-                              <div className="number-display-box" style={{ borderColor: '#00f0ff', boxShadow: '0 0 30px rgba(0,240,255,0.45)' }}>
-                                <span className="tag">GIRANDO TÓMBOLA...</span>
-                                <span className="value" style={{ color: '#00f0ff', fontSize: '4.2rem' }}>{rNum || '??'}</span>
-                                <span className="sub-label" style={{ color: '#00f0ff' }}>MEZCLANDO BOLA</span>
-                              </div>
-                            </div>
-                          );
+                          const [rL, rN] = rollingBall.split('-');
+                          bLetter = rL || 'B';
+                          bNum = rN || '??';
+                          meta = getBallMeta(Number(rN) || 1);
+                        } else if (lastBall !== null) {
+                          meta = getBallMeta(lastBall);
+                          bLetter = meta.letter;
+                          bNum = lastBall;
+                        } else {
+                          bLetter = 'B';
+                          bNum = 'READY';
                         }
 
-                        if (activeGame.drawnNumbers.length > 0) {
-                          const last = activeGame.drawnNumbers[activeGame.drawnNumbers.length - 1];
-                          let letter = 'B';
-                          let letterColor = '#00f0ff';
-                          if (last > 15 && last <= 30) { letter = 'I'; letterColor = '#ec4899'; }
-                          if (last > 30 && last <= 45) { letter = 'N'; letterColor = '#a855f7'; }
-                          if (last > 45 && last <= 60) { letter = 'G'; letterColor = '#22c55e'; }
-                          if (last > 60 && last <= 75) { letter = 'O'; letterColor = '#f59e0b'; }
-
-                          const map = cust?.numberToImageMap?.[last];
-
-                          return (
-                            <div className="number-display-showcase animate-zoom-in">
-                              <div className="letter-display-box" style={{ borderColor: letterColor, boxShadow: `0 0 30px ${letterColor}66` }}>
-                                <span className="tag">LETRA</span>
-                                <span className="value" style={{ color: letterColor }}>{letter}</span>
-                              </div>
-                              <div className="number-display-box" style={{ borderColor: letterColor, boxShadow: `0 0 35px ${letterColor}55` }}>
-                                <span className="tag">BOLA CANTADA</span>
-                                {map ? (
-                                  <span className="value" style={{ fontSize: '3.6rem', color: '#fff' }}>
-                                    {map.type === 'emoji' ? map.value : '🖼️'}
-                                  </span>
-                                ) : (
-                                  <span className="value">{last}</span>
-                                )}
-                                <span className="sub-label" style={{ color: letterColor }}>
-                                  {map ? map.label : `NÚMERO ${last}`}
-                                </span>
-                              </div>
-                            </div>
-                          );
-                        }
+                        const map = lastBall !== null ? cust?.numberToImageMap?.[lastBall] : null;
 
                         return (
-                          <div className="number-display-showcase">
-                            <div className="letter-display-box">
-                              <span className="tag">LETRA</span>
-                              <span className="value" style={{ color: 'var(--cyber-cyan)' }}>B</span>
+                          <>
+                            {/* 2. BOLA ESTRELLA 3D */}
+                            <div className="hero-ball-stage">
+                              <div 
+                                className={`hero-bingo-ball-3d ${isRolling ? 'rolling' : ''}`}
+                                style={{
+                                  background: meta.gradient,
+                                  boxShadow: `0 16px 32px rgba(0,0,0,0.7), 0 0 35px ${meta.glow}, inset 0 -12px 24px rgba(0,0,0,0.75), inset 0 10px 18px rgba(255,255,255,0.65)`
+                                }}
+                                title={lastBall !== null ? `Bola ${bLetter}-${bNum}` : 'Esperando primera bola'}
+                              >
+                                <div className="hero-ball-badge">
+                                  <span className="hero-ball-letter" style={{ color: meta.color }}>
+                                    {bLetter}
+                                  </span>
+                                  <span className="hero-ball-number" style={{ color: '#0f172a' }}>
+                                    {map ? (map.type === 'emoji' ? map.value : '⭐') : (isRolling ? bNum : (lastBall !== null ? bNum : '★'))}
+                                  </span>
+                                </div>
+                              </div>
+                              <div className="hero-ball-shadow" />
+
+                              {/* Patrocinador Integrado Flotante */}
+                              {activeSponsorIntegrated && !isRolling && (
+                                <div className="integrated-sponsor-pill animate-fade-in">
+                                  <img src={activeSponsorIntegrated.logo} alt={activeSponsorIntegrated.name} />
+                                  <div>
+                                    <small>PATROCINADO POR</small>
+                                    <strong>{activeSponsorIntegrated.name}</strong>
+                                  </div>
+                                </div>
+                              )}
                             </div>
-                            <div className="number-display-box">
-                              <span className="tag">ESTADO DEL JUEGO</span>
-                              <span className="value" style={{ fontSize: '2.5rem', color: '#a855f7' }}>READY</span>
-                              <span className="sub-label">ESPERANDO BOLA</span>
+
+                            {/* 3. PODIO DE TRANSMISIÓN DE ALTA LEGIBILIDAD */}
+                            <div className="showcase-monolith-podium">
+                              {/* Barra Superior con Contador de Ronda */}
+                              <div className="podium-header-bar">
+                                <span className="podium-header-title">
+                                  <span>📺</span>
+                                  {isRolling ? 'GIRANDO LA TÓMBOLA...' : (lastBall !== null ? 'ÚLTIMA BOLA EXTRAÍDA' : 'SALA DE JUEGO LISTA')}
+                                </span>
+                                <span className="podium-ball-counter" style={{ color: meta.color }}>
+                                  Bolas Cantadas: {activeGame.drawnNumbers.length} / 75
+                                </span>
+                              </div>
+
+                              {/* Pantallas Gemelas: LETRA y NÚMERO */}
+                              <div className="podium-screens-row">
+                                {/* Pantalla 1: LETRA GIGANTE */}
+                                <div 
+                                  className="podium-letter-screen" 
+                                  style={{ 
+                                    borderColor: meta.color,
+                                    boxShadow: `0 10px 25px rgba(0,0,0,0.5), 0 0 30px ${meta.glow}` 
+                                  }}
+                                >
+                                  <span className="podium-screen-tag">LETRA</span>
+                                  <span className="podium-letter-value" style={{ color: meta.color }}>
+                                    {bLetter}
+                                  </span>
+                                  <span className="podium-letter-sub">
+                                    Columna {meta.range}
+                                  </span>
+                                </div>
+
+                                {/* Pantalla 2: NÚMERO TITÁNICO */}
+                                <div 
+                                  className="podium-number-screen"
+                                  style={{ 
+                                    borderColor: meta.color,
+                                    boxShadow: `0 10px 25px rgba(0,0,0,0.5), 0 0 35px ${meta.glow}` 
+                                  }}
+                                >
+                                  <span className="podium-screen-tag">NÚMERO EXTRAÍDO</span>
+                                  {isRolling ? (
+                                    <span className="podium-number-value animate-pulse" style={{ color: '#38bdf8' }}>
+                                      {bNum}
+                                    </span>
+                                  ) : lastBall !== null ? (
+                                    map ? (
+                                      <span className="podium-number-value" style={{ fontSize: '4.2rem' }}>
+                                        {map.type === 'emoji' ? map.value : '🖼️'}
+                                      </span>
+                                    ) : (
+                                      <span className="podium-number-value animate-zoom-in">
+                                        {lastBall}
+                                      </span>
+                                    )
+                                  ) : (
+                                    <span className="podium-number-value" style={{ fontSize: '3rem', color: '#64748b' }}>
+                                      LISTO
+                                    </span>
+                                  )}
+
+                                  <span className="podium-spelled-name" style={{ color: meta.color }}>
+                                    {isRolling 
+                                      ? 'MEZCLANDO BOLAS...' 
+                                      : (lastBall !== null 
+                                          ? (map ? map.label : (SPANISH_NUMBERS[lastBall] || `NÚMERO ${lastBall}`)) 
+                                          : 'ESPERANDO PRIMERA BOLA')}
+                                  </span>
+                                </div>
+                              </div>
+
+                              {/* 4. CARRIL DE LAS ÚLTIMAS 5 BOLAS */}
+                              <div className="recent-balls-rail-wrapper">
+                                <span className="recent-balls-label">Últimas:</span>
+                                <div className="recent-balls-chute">
+                                  {activeGame.drawnNumbers.length > 1 ? (
+                                    activeGame.drawnNumbers
+                                      .slice(Math.max(0, activeGame.drawnNumbers.length - 6), activeGame.drawnNumbers.length - 1)
+                                      .reverse()
+                                      .map((num) => {
+                                        const m = getBallMeta(num);
+                                        return (
+                                          <div 
+                                            key={num} 
+                                            className="mini-chute-ball"
+                                            style={{ background: m.gradient }}
+                                            title={`Bola ${m.letter}-${num}`}
+                                          >
+                                            <span className="m-letter">{m.letter}</span>
+                                            <span className="m-num">{num}</span>
+                                          </div>
+                                        );
+                                      })
+                                  ) : (
+                                    <span style={{ fontSize: '0.72rem', color: '#64748b', fontStyle: 'italic' }}>
+                                      Las bolas anteriores aparecerán aquí
+                                    </span>
+                                  )}
+                                </div>
+                                <div style={{ marginLeft: 'auto' }}>
+                                  <button 
+                                    className="cyber-btn-circle" 
+                                    onClick={() => setIsMuted(!isMuted)} 
+                                    title={isMuted ? 'Activar Voz' : 'Silenciar Voz'}
+                                    style={{ width: '34px', height: '34px', fontSize: '0.9rem' }}
+                                  >
+                                    {isMuted ? '🔇' : '🔊'}
+                                  </button>
+                                </div>
+                              </div>
                             </div>
-                          </div>
+                          </>
                         );
                       })()}
 
-                    </div>
-
-                    <div className="tombola-controls">
-                      <button 
-                        className="cyber-btn-circle" 
-                        onClick={() => setIsMuted(!isMuted)} 
-                        title={isMuted ? 'Activar Voz' : 'Silenciar Voz'}
-                      >
-                        {isMuted ? '🔇' : '🔊'}
-                      </button>
                     </div>
                   </div>
 
