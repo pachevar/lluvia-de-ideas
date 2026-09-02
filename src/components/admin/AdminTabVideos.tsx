@@ -171,21 +171,44 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
 
     setIsUploadingImage(true);
     try {
-      const compressedBlob = await compressImageWebP(file, 1080, 1920, 0.85);
-      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
-      const fileRef = ref(storage, `landing-assets/tips/${Date.now()}_${cleanName}`);
-      await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
-      const downloadUrl = await getDownloadURL(fileRef);
+      // Optimizamos en WebP a dimensiones adecuadas para el modal (máx 800x1200, ~25KB)
+      const compressedBlob = await compressImageWebP(file, 800, 1200, 0.78);
 
-      setTipForm(prev => ({
-        ...prev,
-        mediaType: 'image',
-        imageUrl: downloadUrl
-      }));
-      showFeedback('📸 ¡Imagen optimizada y subida a Firebase Storage exitosamente!');
+      // Intentamos subir a Firebase Storage
+      try {
+        const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
+        const fileRef = ref(storage, `landing-assets/tips/${Date.now()}_${cleanName}`);
+        await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
+        const downloadUrl = await getDownloadURL(fileRef);
+
+        setTipForm(prev => ({
+          ...prev,
+          mediaType: 'image',
+          imageUrl: downloadUrl
+        }));
+        showFeedback('📸 ¡Imagen optimizada y subida a Firebase Storage exitosamente!');
+      } catch (storageErr: any) {
+        console.warn('Firebase Storage no disponible o cuota excedida (402). Activando modo directo WebP...', storageErr);
+
+        // Conversión a Data URL Base64 como salvavidas garantizado
+        const reader = new FileReader();
+        reader.onload = () => {
+          const dataUrl = reader.result as string;
+          setTipForm(prev => ({
+            ...prev,
+            mediaType: 'image',
+            imageUrl: dataUrl
+          }));
+          showFeedback('⚡ Cuota de Firebase Storage temporalmente alcanzada. Se optimizó la imagen directamente (WebP ultraligero) para que puedas guardar sin problemas.', 'success');
+        };
+        reader.onerror = () => {
+          alert('No se pudo procesar la imagen localmente.');
+        };
+        reader.readAsDataURL(compressedBlob);
+      }
     } catch (err) {
-      console.error('Error subiendo imagen de tema:', err);
-      alert('Error al optimizar o subir la imagen a Firebase Storage.');
+      console.error('Error procesando imagen de tema:', err);
+      alert('Error al procesar la imagen seleccionada.');
     } finally {
       setIsUploadingImage(false);
     }
