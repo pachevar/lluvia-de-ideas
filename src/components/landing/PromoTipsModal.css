@@ -286,6 +286,15 @@
   box-shadow: 0 6px 20px rgba(37, 99, 235, 0.6);
 }
 
+/* Selector Móvil Oculto en Escritorio */
+.promo-tips-mobile-nav {
+  display: none;
+}
+
+.promo-tips-mobile-footer-nav {
+  display: none;
+}
+
 /* ========================================================= */
 /* ADAPTACIÓN MÓVIL PREMIUM (Dispositivos ≤ 768px y ≤ 480px) */
 /* ========================================================= */
@@ -322,14 +331,139 @@
     font-size: 1rem;
   }
 
+  /* Ocultamos pestañas horizontales en móvil */
   .promo-tips-tabs {
-    padding: 10px 1rem;
-    gap: 6px;
+    display: none !important;
   }
 
-  .promo-tip-tab {
-    padding: 7px 14px;
-    font-size: 0.82rem;
+  /* Activamos selector táctil vertical en móvil */
+  .promo-tips-mobile-nav {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 10px 1rem;
+    background: rgba(15, 23, 42, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .mobile-nav-top-meta {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .mobile-nav-badge {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #38bdf8;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .mobile-nav-dots {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .nav-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.25);
+    border: none;
+    padding: 0;
+    cursor: pointer;
+    transition: all 0.25s ease;
+  }
+
+  .nav-dot.active {
+    width: 20px;
+    border-radius: 5px;
+    background: #38bdf8;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.7);
+  }
+
+  .mobile-nav-picker-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mobile-nav-btn {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #ffffff;
+    width: 42px;
+    height: 44px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.95rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    flex-shrink: 0;
+  }
+
+  .mobile-nav-btn:hover:not(:disabled) {
+    background: rgba(56, 189, 248, 0.25);
+    border-color: #38bdf8;
+    color: #38bdf8;
+  }
+
+  .mobile-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: not-allowed;
+  }
+
+  .mobile-dropdown-wrapper {
+    position: relative;
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: linear-gradient(135deg, rgba(30, 41, 59, 0.95), rgba(15, 23, 42, 0.98));
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    border-radius: 14px;
+    padding: 0 12px;
+    height: 44px;
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+  }
+
+  .mobile-dropdown-icon {
+    font-size: 1.2rem;
+    margin-right: 8px;
+    pointer-events: none;
+    flex-shrink: 0;
+  }
+
+  .promo-tips-mobile-select {
+    width: 100%;
+    background: transparent;
+    border: none;
+    color: #ffffff;
+    font-size: 0.9rem;
+    font-weight: 700;
+    padding-right: 20px;
+    cursor: pointer;
+    appearance: none;
+    -webkit-appearance: none;
+    outline: none;
+  }
+
+  .promo-tips-mobile-select option {
+    background: #0f172a;
+    color: #f8fafc;
+    padding: 8px 12px;
+    font-size: 0.9rem;
+  }
+
+  .mobile-dropdown-arrow {
+    position: absolute;
+    right: 12px;
+    color: #38bdf8;
+    font-size: 0.72rem;
+    pointer-events: none;
   }
 
   .promo-tips-body {
@@ -370,7 +504,41 @@
   }
 
   .promo-tips-footer {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
     padding: 0.85rem 1rem;
+  }
+
+  .promo-tips-mobile-footer-nav {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .btn-mobile-nav-foot {
+    background: rgba(255, 255, 255, 0.08);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: #f1f5f9;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s ease;
+  }
+
+  .btn-mobile-nav-foot:hover:not(:disabled) {
+    background: rgba(56, 189, 248, 0.2);
+    color: #38bdf8;
+    border-color: #38bdf8;
+  }
+
+  .btn-mobile-nav-foot:disabled {
+    opacity: 0.25;
+    cursor: not-allowed;
   }
 
   .promo-tips-understood-btn {

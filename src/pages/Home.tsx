@@ -280,7 +280,7 @@ export default function Home() {
                 <li key={idx}>🔹 {bullet}</li>
               ))}
             </ul>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 className="btn btn-primary"
                 onClick={() => handleNavigate('/sutz')}
@@ -291,7 +291,15 @@ export default function Home() {
               <button
                 className="btn btn-glass"
                 onClick={() => handleNavigate('/libros')}
-                style={{ padding: '12px 20px', borderRadius: '12px' }}
+                style={{ 
+                  padding: '12px 22px', 
+                  borderRadius: '12px',
+                  background: 'rgba(56, 189, 248, 0.12)',
+                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                  color: '#e0f2fe',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
+                }}
               >
                 📖 Cuentos del Popol Vuh
               </button>
@@ -355,7 +363,7 @@ export default function Home() {
                 <li key={idx}>🎨 {bullet}</li>
               ))}
             </ul>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 className="btn btn-primary"
                 onClick={() => handleNavigate('/creatika')}
@@ -366,14 +374,30 @@ export default function Home() {
               <button
                 className="btn btn-glass"
                 onClick={() => handleNavigate('/creatika/maquina-de-cuentos')}
-                style={{ padding: '12px 18px', borderRadius: '12px' }}
+                style={{ 
+                  padding: '12px 18px', 
+                  borderRadius: '12px',
+                  background: 'rgba(251, 113, 133, 0.12)',
+                  border: '1px solid rgba(251, 113, 133, 0.4)',
+                  color: '#ffe4e6',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
+                }}
               >
                 🎰 Máquina de Cuentos
               </button>
               <button
                 className="btn btn-glass"
                 onClick={() => handleNavigate('/creatika/teoria-del-color')}
-                style={{ padding: '12px 18px', borderRadius: '12px' }}
+                style={{ 
+                  padding: '12px 18px', 
+                  borderRadius: '12px',
+                  background: 'rgba(251, 113, 133, 0.12)',
+                  border: '1px solid rgba(251, 113, 133, 0.4)',
+                  color: '#ffe4e6',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
+                }}
               >
                 🎨 Teoría del Color
               </button>
@@ -383,7 +407,7 @@ export default function Home() {
       </section>
 
       {/* SECCIÓN DESCRIPTIVA 3: 100TEK */}
-      <section id="section-tek100" className="landing-feature-section feature-100tek">
+      <section id="section-tek100" className="landing-feature-section feature-100tek" style={{ background: '#060913' }}>
         <div className="feature-container">
           <div className="feature-card-left card-glass" onClick={() => handleNavigate('/100tek/sistema-solar')} style={{ cursor: 'pointer' }} title="Clic para explorar el Sistema Solar 3D">
             <div 
@@ -404,28 +428,28 @@ export default function Home() {
               <div className="section-box-content">
                 <div className="cloud-glow-effect">⚡</div>
                 <div className="sutz-badge-floating" style={{ borderColor: 'rgba(192, 132, 252, 0.4)' }}>
-                  <span style={{ color: '#c084fc' }}>Innovación STEM</span>
-                  <strong>Ciencia & Lógica</strong>
+                  <span style={{ color: '#c084fc' }}>Ciencia & Lógica</span>
+                  <strong>Pensamiento STEM</strong>
                 </div>
                 <div className="hex-map-preview">
                   <div className="hex-mini hex-1">🪐</div>
                   <div className="hex-mini hex-2">🔢</div>
-                  <div className="hex-mini hex-3">⚡</div>
-                  <div className="hex-mini hex-4">🔬</div>
+                  <div className="hex-mini hex-3">🧬</div>
+                  <div className="hex-mini hex-4">🔭</div>
                 </div>
               </div>
             </div>
           </div>
 
           <div className="feature-info-right">
-            <span className="feature-tag" style={{ color: '#c084fc' }}>{tek100Sec.badge || 'METODOLOGÍA STEAM / STEM'}</span>
+            <span className="feature-tag" style={{ color: '#c084fc' }}>{tek100Sec.badge || 'CIENCIA, LÓGICA & TECNOLOGÍA'}</span>
             <h2 className="feature-title">
-              <span className="gradient-text-purple" style={{ background: 'linear-gradient(90deg, #c084fc, #9333ea)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                {tek100Sec.title || '100tek'}
+              <span className="gradient-text-purple" style={{ background: 'linear-gradient(90deg, #c084fc, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+                {tek100Sec.title || '100TEK'}
               </span>
             </h2>
             <p className="feature-body">
-              {tek100Sec.body || 'Espacio para la metodología STEAM o STEM (Science, Technology, Engineering, Arts, Mathematics). Integra simulaciones astronómicas, secuencias lógicas y pensamiento computacional.'}
+              {tek100Sec.body || 'Entorno interactivo para la exploración de conceptos científicos, astronómicos y matemáticos. Herramientas diseñadas para fomentar el rigor deductivo y la curiosidad por el cosmos.'}
             </p>
             <ul className="feature-bullets">
               {(tek100Sec.bullets && tek100Sec.bullets.length > 0 ? tek100Sec.bullets : [
@@ -436,7 +460,7 @@ export default function Home() {
                 <li key={idx}>⚡ {bullet}</li>
               ))}
             </ul>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 className="btn btn-primary"
                 onClick={() => handleNavigate('/100tek/sistema-solar')}
@@ -447,7 +471,15 @@ export default function Home() {
               <button
                 className="btn btn-glass"
                 onClick={() => handleNavigate('/100tek/secuencias-numericas')}
-                style={{ padding: '12px 20px', borderRadius: '12px' }}
+                style={{ 
+                  padding: '12px 22px', 
+                  borderRadius: '12px',
+                  background: 'rgba(192, 132, 252, 0.12)',
+                  border: '1px solid rgba(192, 132, 252, 0.4)',
+                  color: '#f3e8ff',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
+                }}
               >
                 🔢 Secuencias Numéricas
               </button>
@@ -476,7 +508,7 @@ export default function Home() {
                 <li key={idx}>🧪 {bullet}</li>
               ))}
             </ul>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
               <button
                 className="btn btn-primary"
                 onClick={() => handleNavigate('/laboratorios')}
@@ -487,7 +519,15 @@ export default function Home() {
               <button
                 className="btn btn-glass"
                 onClick={() => handleNavigate('/juegos/bingo')}
-                style={{ padding: '12px 20px', borderRadius: '12px' }}
+                style={{ 
+                  padding: '12px 22px', 
+                  borderRadius: '12px',
+                  background: 'rgba(251, 146, 60, 0.12)',
+                  border: '1px solid rgba(251, 146, 60, 0.4)',
+                  color: '#ffedd5',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
+                }}
               >
                 🎲 Bingo Virtual para el Aula
               </button>
