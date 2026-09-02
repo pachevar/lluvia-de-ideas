@@ -56,7 +56,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
       id: 'welcome',
       tabLabel: 'Bienvenida al Ecosistema',
       icon: '🌟',
-      title: 'Conoce Nuestra Potente Herramienta',
+      title: 'Conoce Nuestro Potente Ecosistema Educativo',
       videoId: 'HMFybOP8gec',
       description: 'Nuestra plataforma unifica libros de texto, experiencias pedagógicas interactivas y recursos de aprendizaje adaptativo.',
       bullets: [
@@ -426,7 +426,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
                   type="text" 
                   value={tipForm.title || ''} 
                   onChange={(e) => setTipForm({ ...tipForm, title: e.target.value })}
-                  placeholder="Ej: Conoce Nuestra Potente Herramienta"
+                  placeholder="Ej: Conoce Nuestro Potente Ecosistema Educativo"
                   className="premium-input"
                 />
               </div>

@@ -119,7 +119,7 @@ export default function Home() {
             style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '8px' }}
             title="Haz clic para ver videos de guía y consejos"
           >
-            <span>✨ Conoce más de nuestra potente herramienta</span>
+            <span>✨ Conoce más de nuestro potente ecosistema educativo</span>
             <span style={{ background: 'rgba(255,255,255,0.2)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.8rem' }}>🎬 Ver Consejos ➔</span>
           </span>
           <h1 className="hero-main-title">
@@ -207,7 +207,7 @@ export default function Home() {
             title="Ver videos explicativos y consejos de la plataforma"
           >
             <span className="know-more-icon">✨</span>
-            <span>Conoce más de nuestra potente herramienta</span>
+            <span>Conoce más de nuestro potente ecosistema educativo</span>
             <span className="know-more-arrow">🎬 ➔</span>
           </button>
         </div>
