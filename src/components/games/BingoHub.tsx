@@ -398,6 +398,16 @@ export default function BingoHub() {
     return acc;
   }, []);
 
+  // Auto-validación forense instantánea cuando un cartón canta Bingo
+  useEffect(() => {
+    if (!activeGame || activeBingoShouts.length === 0) return;
+    activeBingoShouts.forEach(card => {
+      if (!validationResults[card.id]) {
+        validateCard(card.id);
+      }
+    });
+  }, [activeBingoShouts, activeGame?.drawnNumbers]);
+
   // Voice announcement for shouted Bingos
   useEffect(() => {
     if (isMuted) return;
@@ -405,6 +415,7 @@ export default function BingoHub() {
     activeBingoShouts.forEach(card => {
       if (!announcedShoutsRef.current.has(card.id)) {
         announcedShoutsRef.current.add(card.id);
+        soundEffects.playSpacePulse();
         
         // Announce via text-to-speech
         try {
@@ -646,6 +657,21 @@ export default function BingoHub() {
   // Host Controls
   const drawRandomBall = async () => {
     if (!activeGame) return;
+
+    // Pausa Automática: Si hay un grito de Bingo en verificación, bloquear extracción
+    const hasPendingClaim = Boolean(
+      (activeGame.activeClaim && activeGame.activeClaim.status === 'pending') || 
+      activeBingoShouts.length > 0
+    );
+    if (hasPendingClaim) {
+      await showAlert(
+        "La tómbola se encuentra en PAUSA AUTOMÁTICA porque hay una reclamación de Bingo en verificación en vivo. Revisa y confirma o descarta el grito en pantalla antes de sacar más bolas.", 
+        "Tómbola en Pausa", 
+        "⏸️"
+      );
+      return;
+    }
+
     const maxBalls = 75;
     if (activeGame.drawnNumbers.length >= maxBalls) {
       await showAlert("¡Ya se sacaron todas las bolas!", "Juego Completado", "🎱");
@@ -1100,43 +1126,141 @@ export default function BingoHub() {
             <div className="shout-modal-list" style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxHeight: '320px', overflowY: 'auto', paddingRight: '5px' }}>
               {activeBingoShouts.map(card => {
                 const validation = validationResults[card.id];
+
+                // Normalizar matriz del cartón para renderizado 5x5
+                let matrix5x5: (number | null)[][] = [];
+                if (Array.isArray(card.matrix)) {
+                  matrix5x5 = card.matrix;
+                } else if (card.matrix && typeof card.matrix === 'object') {
+                  const mRaw = card.matrix as any;
+                  matrix5x5 = [mRaw.r0 || [], mRaw.r1 || [], mRaw.r2 || [], mRaw.r3 || [], mRaw.r4 || []];
+                }
+
+                // Normalizar casillas marcadas
+                let marked5x5: boolean[][] = [];
+                const markedRaw = (card as any).markedSlots;
+                if (Array.isArray(markedRaw)) {
+                  marked5x5 = markedRaw;
+                } else if (markedRaw && typeof markedRaw === 'object') {
+                  marked5x5 = [markedRaw.r0 || [], markedRaw.r1 || [], markedRaw.r2 || [], markedRaw.r3 || [], markedRaw.r4 || []];
+                }
+
                 return (
-                  <div key={card.id} className="shout-modal-item" style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.5)', borderRadius: '12px', padding: '14px' }}>
+                  <div key={card.id} className="shout-modal-item" style={{ background: 'rgba(239, 68, 68, 0.15)', border: '1px solid rgba(239, 68, 68, 0.5)', borderRadius: '14px', padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <strong style={{ fontSize: '1.05rem', color: '#fff' }}>👤 {card.playerName}</strong>
-                      <code style={{ fontSize: '0.8rem', color: 'var(--cyber-cyan)', background: 'rgba(0,0,0,0.6)', padding: '3px 8px', borderRadius: '6px' }}>ID: {card.id}</code>
+                      <strong style={{ fontSize: '1.15rem', color: '#fff' }}>👤 {card.playerName}</strong>
+                      <code style={{ fontSize: '0.8rem', color: 'var(--cyber-cyan)', background: 'rgba(0,0,0,0.6)', padding: '4px 10px', borderRadius: '6px' }}>ID: {card.id}</code>
                     </div>
 
-                    {/* Mostrar resultado de validación si ya fue ejecutado */}
-                    {validation && (
-                      <div style={{ margin: '8px 0', padding: '8px 12px', borderRadius: '8px', fontSize: '0.8rem', background: 'rgba(0,0,0,0.7)', border: `1px solid ${validation.isWinner ? '#22c55e' : 'rgba(239,68,68,0.7)'}` }}>
-                        <p style={{ margin: 0, fontWeight: 'bold', color: validation.isWinner ? '#4ade80' : '#f87171' }}>
-                          {validation.isWinner ? '🏆 ¡GANADOR CONFIRMADO (CARTÓN VALIDADOR)! ' : `❌ CASILLAS FALTANTES/SIN MARCAR: ${validation.missing.join(', ')}`}
+                    {/* Mostrar veredicto de validación forense */}
+                    {validation ? (
+                      <div style={{ margin: '8px 0', padding: '10px 14px', borderRadius: '10px', fontSize: '0.86rem', background: 'rgba(0,0,0,0.7)', border: `1.5px solid ${validation.isWinner ? '#22c55e' : 'rgba(239,68,68,0.7)'}` }}>
+                        <p style={{ margin: 0, fontWeight: 900, color: validation.isWinner ? '#4ade80' : '#f87171' }}>
+                          {validation.isWinner ? '🏆 ¡GANADOR 100% VÁLIDO! Cumple con el patrón requerido.' : `❌ CANTO FALSO / INCOMPLETO: Le faltan las casillas [${validation.missing.join(', ')}]`}
                         </p>
+                      </div>
+                    ) : (
+                      <div style={{ margin: '8px 0', padding: '8px 12px', borderRadius: '8px', fontSize: '0.8rem', background: 'rgba(56, 189, 248, 0.15)', color: '#38bdf8' }}>
+                        🔍 Cotejando números cantados con el cartón en tiempo real...
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px' }}>
+                    {/* MINI CARTÓN FORENSE DE VALIDACIÓN IN SITU */}
+                    {matrix5x5.length === 5 && (
+                      <div style={{ marginTop: '10px', background: 'rgba(0,0,0,0.6)', padding: '10px', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', color: '#94a3b8', fontWeight: 'bold' }}>
+                            🔬 Cotejo Forense ({activeGame?.drawnNumbers?.length || 0} bolas cantadas)
+                          </span>
+                          <span style={{ fontSize: '0.68rem', color: '#38bdf8', fontWeight: 'bold' }}>
+                            Patrón: {activeGame?.winningPattern || 'full'}
+                          </span>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '4px', maxWidth: '230px', margin: '0 auto' }}>
+                          {matrix5x5.map((row, rIdx) =>
+                            row.map((val, cIdx) => {
+                              const isFree = rIdx === 2 && cIdx === 2;
+                              const isMarked = isFree || Boolean(marked5x5[rIdx]?.[cIdx]);
+                              const isDrawn = isFree || (val !== null && Boolean(activeGame?.drawnNumbers?.includes(val)));
+
+                              let cellBg = 'rgba(255, 255, 255, 0.05)';
+                              let cellBorder = '1px solid rgba(255,255,255,0.1)';
+                              let cellColor = '#94a3b8';
+
+                              if (isFree) {
+                                cellBg = 'rgba(245, 158, 11, 0.3)';
+                                cellBorder = '1px solid #f59e0b';
+                                cellColor = '#fbbf24';
+                              } else if (isMarked && isDrawn) {
+                                cellBg = 'rgba(34, 197, 94, 0.35)';
+                                cellBorder = '1.5px solid #22c55e';
+                                cellColor = '#4ade80';
+                              } else if (isMarked && !isDrawn) {
+                                cellBg = 'rgba(239, 68, 68, 0.4)';
+                                cellBorder = '1.5px solid #ef4444';
+                                cellColor = '#fca5a5';
+                              } else if (!isMarked && isDrawn) {
+                                cellBg = 'rgba(56, 189, 248, 0.15)';
+                                cellBorder = '1px dashed #38bdf8';
+                                cellColor = '#38bdf8';
+                              }
+
+                              return (
+                                <div
+                                  key={`${rIdx}-${cIdx}`}
+                                  style={{
+                                    aspectRatio: '1/1',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 'bold',
+                                    borderRadius: '5px',
+                                    background: cellBg,
+                                    border: cellBorder,
+                                    color: cellColor
+                                  }}
+                                  title={`Casilla: ${isFree ? 'Libre' : val} | Marcada: ${isMarked ? 'Sí' : 'No'} | Cantada: ${isDrawn ? 'Sí' : 'No'}`}
+                                >
+                                  {isFree ? '⭐' : val}
+                                </div>
+                              );
+                            })
+                          )}
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'center', gap: '10px', marginTop: '6px', fontSize: '0.66rem', color: '#94a3b8' }}>
+                          <span style={{ color: '#4ade80' }}>🟢 Acierto</span>
+                          <span style={{ color: '#f87171' }}>🔴 No cantada</span>
+                          <span style={{ color: '#38bdf8' }}>🔵 Sin marcar</span>
+                        </div>
+                      </div>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '12px' }}>
                       <button 
-                        className="cyber-badge cyber-badge-cyan"
-                        onClick={() => validateCard(card.id)}
-                        style={{ cursor: 'pointer', border: '1px solid var(--cyber-cyan)', padding: '7px 14px', fontSize: '0.78rem', fontWeight: 'bold' }}
-                      >
-                        🔍 Validar Cartón
-                      </button>
-                      <button 
-                        className="cyber-badge cyber-badge-green"
+                        className={`cyber-badge ${validation?.isWinner ? 'cyber-badge-green animate-pulse' : 'cyber-badge-green'}`}
                         onClick={() => confirmWinner(card)}
-                        style={{ cursor: 'pointer', border: '1px solid var(--cyber-green)', padding: '7px 14px', fontSize: '0.78rem', fontWeight: 'bold' }}
+                        style={{ 
+                          cursor: 'pointer', 
+                          border: validation?.isWinner ? '2px solid #22c55e' : '1px solid var(--cyber-green)', 
+                          background: validation?.isWinner ? 'linear-gradient(135deg, #10b981, #059669)' : undefined,
+                          color: '#fff',
+                          padding: '9px 18px', 
+                          fontSize: '0.84rem', 
+                          fontWeight: 900,
+                          boxShadow: validation?.isWinner ? '0 0 18px rgba(34, 197, 94, 0.6)' : undefined
+                        }}
                       >
-                        🏆 Confirmar Bingo
+                        🏆 Confirmar Ganador y Asignar Premio
                       </button>
                       <button 
                         className="cyber-badge"
-                        style={{ border: '1px solid #ef4444', background: 'rgba(239, 68, 68, 0.25)', color: '#ff6b6b', cursor: 'pointer', padding: '7px 14px', fontSize: '0.78rem', fontWeight: 'bold' }}
+                        style={{ border: '1.5px solid #ef4444', background: 'rgba(239, 68, 68, 0.25)', color: '#ff6b6b', cursor: 'pointer', padding: '9px 16px', fontSize: '0.82rem', fontWeight: 'bold' }}
                         onClick={() => rejectClaim(card)}
                       >
-                        ❌ Descartar Grito
+                        ❌ Descartar Canto y Reanudar
                       </button>
                     </div>
                   </div>
@@ -1637,27 +1761,52 @@ export default function BingoHub() {
                         <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', marginBottom: '6px' }}>
                           🎲 ACCIÓN PRINCIPAL DE JUEGO
                         </span>
-                        <button 
-                          className="cyber-btn-primary gamer-btn-host-draw animate-pulse" 
-                          onClick={drawRandomBall}
-                          style={{
-                            height: '46px',
-                            padding: '0 28px',
-                            fontSize: '0.92rem',
-                            fontWeight: 900,
-                            letterSpacing: '0.5px',
-                            background: 'linear-gradient(135deg, #00f0ff 0%, #3b82f6 100%)',
-                            border: 'none',
-                            borderRadius: '14px',
-                            boxShadow: '0 0 20px rgba(0, 240, 255, 0.5)',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            cursor: 'pointer'
-                          }}
-                        >
-                          <span style={{ fontSize: '1.3rem' }}>🔮</span> SACAR BOLA
-                        </button>
+                        {activeBingoShouts.length > 0 || (activeGame.activeClaim && activeGame.activeClaim.status === 'pending') ? (
+                          <button 
+                            className="cyber-btn-primary gamer-btn-host-draw paused animate-pulse" 
+                            onClick={drawRandomBall}
+                            style={{
+                              height: '46px',
+                              padding: '0 20px',
+                              fontSize: '0.84rem',
+                              fontWeight: 900,
+                              letterSpacing: '0.5px',
+                              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                              border: '1.5px solid #fca5a5',
+                              borderRadius: '14px',
+                              boxShadow: '0 0 25px rgba(239, 68, 68, 0.75)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              cursor: 'pointer',
+                              color: '#fff'
+                            }}
+                          >
+                            <span style={{ fontSize: '1.2rem' }}>⏸️</span> TÓMBOLA EN PAUSA (VERIFICANDO)
+                          </button>
+                        ) : (
+                          <button 
+                            className="cyber-btn-primary gamer-btn-host-draw animate-pulse" 
+                            onClick={drawRandomBall}
+                            style={{
+                              height: '46px',
+                              padding: '0 28px',
+                              fontSize: '0.92rem',
+                              fontWeight: 900,
+                              letterSpacing: '0.5px',
+                              background: 'linear-gradient(135deg, #00f0ff 0%, #3b82f6 100%)',
+                              border: 'none',
+                              borderRadius: '14px',
+                              boxShadow: '0 0 20px rgba(0, 240, 255, 0.5)',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '8px',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <span style={{ fontSize: '1.3rem' }}>🔮</span> SACAR BOLA
+                          </button>
+                        )}
                       </>
                     ) : (
                       <div style={{ textAlign: 'center', padding: '10px' }}>

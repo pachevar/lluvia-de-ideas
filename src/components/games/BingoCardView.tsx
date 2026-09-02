@@ -5,6 +5,7 @@ import { doc, onSnapshot } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { BingoCard, BingoGame, BingoPrize, Sponsor } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
+import { soundEffects } from '../../utils/soundEffects';
 import html2canvas from 'html2canvas';
 import './Bingo.css';
 
@@ -379,6 +380,9 @@ export default function BingoCardView() {
     // Play synthesized sound
     if (!isCurrentlyMarked) {
       playFeedbackSound(isDrawn);
+      if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+        try { navigator.vibrate(25); } catch {}
+      }
 
       // Trigger sponsor modal on player side for every 5 marked slots
       const newMarks = markedSlots.map(r => [...r]);
@@ -500,21 +504,7 @@ export default function BingoCardView() {
     }
 
     try {
-      const { setDoc, getDoc } = await import('firebase/firestore');
-      
-      // Verificación Concurrente: Solo un jugador a la vez puede cantar Bingo
-      if (gameData.id) {
-        const gameRef = doc(db, 'bingo_games', gameData.id);
-        const gameSnap = await getDoc(gameRef);
-        if (gameSnap.exists()) {
-          const gData = gameSnap.data();
-          const activeClaim = gData.activeClaim;
-          if (activeClaim && activeClaim.status === 'pending' && activeClaim.cardId !== cartonId) {
-            alert(`⚠️ ¡Atención! El jugador "${activeClaim.playerName || 'un participante'}" ya ha cantado Bingo y su cartón se encuentra en proceso de verificación con el Host. Espera a que el Host verifique ese cartón.`);
-            return;
-          }
-        }
-      }
+      const { runTransaction, serverTimestamp } = await import('firebase/firestore');
 
       // Convertir markedSlots (2D) a objeto seguro
       const markedObject = {
@@ -525,35 +515,64 @@ export default function BingoCardView() {
         r4: (markedSlots[4] || []).map(v => Boolean(v))
       };
 
+      const gameRef = doc(db, 'bingo_games', gameData.id);
       const cardRef = doc(db, 'bingo_cards', cartonId);
-      await setDoc(cardRef, {
-        shoutedBingo: true,
-        shoutedAt: Date.now(),
-        markedSlots: markedObject
-      }, { merge: true });
 
-      if (gameData?.id) {
-        try {
-          await setDoc(doc(db, 'bingo_games', gameData.id), {
-            lastBingoShoutAt: Date.now(),
-            activeClaim: {
-              cardId: cartonId,
-              playerName: cardData.playerName || 'Jugador',
-              phone: cardData.phone || '',
-              claimedAt: Date.now(),
-              status: 'pending'
-            }
-          }, { merge: true });
-        } catch (gErr) {
-          console.warn("Could not update game activeClaim", gErr);
+      // Transacción Atómica Serializada en Google Firestore:
+      // Si 20 personas cantan en el mismo milisegundo, solo la primera tiene éxito
+      // y bloquea inmediatamente el turno mientras las demás reciben aviso en tiempo real.
+      const result = await runTransaction(db, async (transaction) => {
+        const gameSnap = await transaction.get(gameRef);
+        if (!gameSnap.exists()) {
+          throw new Error("PARTIDA_NO_ENCONTRADA");
         }
+
+        const gData = gameSnap.data();
+        const activeClaim = gData.activeClaim;
+
+        // Si ya hay un reclamo pendiente de OTRO cartón:
+        if (activeClaim && activeClaim.status === 'pending' && activeClaim.cardId !== cartonId) {
+          return {
+            success: false,
+            claimedBy: activeClaim.playerName || 'Otro participante'
+          };
+        }
+
+        // Este jugador es el primero y único:
+        transaction.update(gameRef, {
+          lastBingoShoutAt: Date.now(),
+          activeClaim: {
+            cardId: cartonId,
+            playerName: cardData.playerName || 'Jugador',
+            phone: cardData.phone || '',
+            claimedAt: Date.now(),
+            serverClaimedAt: serverTimestamp(),
+            status: 'pending'
+          }
+        });
+
+        transaction.update(cardRef, {
+          shoutedBingo: true,
+          shoutedAt: Date.now(),
+          serverShoutedAt: serverTimestamp(),
+          markedSlots: markedObject
+        });
+
+        return { success: true };
+      });
+
+      if (!result.success) {
+        soundEffects.playMathChime(false);
+        alert(`⚠️ ¡Atención! El jugador "${result.claimedBy}" cantó Bingo fracciones de segundo antes que tú.\n\nSu cartón se encuentra en proceso de verificación con el Host en vivo. Si su cartón no resulta ganador, la partida continuará y podrás cantar.`);
+        return;
       }
 
+      soundEffects.playSuccessFanfare();
       triggerConfetti();
       setShowBingoModal(true);
     } catch (e) {
-      console.error("Error al registrar grito de Bingo en Firestore:", e);
-      alert("Error de conexión al cantar Bingo. Verifica tu conexión e inténtalo de nuevo.");
+      console.error("Error al registrar grito atómico de Bingo en Firestore:", e);
+      alert("Error de conexión al cantar Bingo. Verifica tu conexión a internet e inténtalo de nuevo.");
     }
   };
 
@@ -1284,12 +1303,60 @@ export default function BingoCardView() {
         </div>
 
         <div style={{ marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'center' }}>
+          {/* BANNER DE PARTIDA EN PAUSA SI HAY UN RECLAMO PENDIENTE */}
+          {gameData?.activeClaim && gameData.activeClaim.status === 'pending' && (
+            <div 
+              className="animate-pulse"
+              style={{
+                background: gameData.activeClaim.cardId === cartonId 
+                  ? 'rgba(34, 197, 94, 0.2)' 
+                  : 'rgba(239, 68, 68, 0.2)',
+                border: `1.5px solid ${gameData.activeClaim.cardId === cartonId ? '#22c55e' : '#ef4444'}`,
+                borderRadius: '14px',
+                padding: '12px 16px',
+                marginBottom: '6px',
+                textAlign: 'center'
+              }}
+            >
+              <strong style={{ display: 'block', color: gameData.activeClaim.cardId === cartonId ? '#4ade80' : '#fca5a5', fontSize: '1rem' }}>
+                {gameData.activeClaim.cardId === cartonId 
+                  ? '🎉 ¡Tu Bingo está siendo verificado por el Host en vivo!' 
+                  : `⏸️ Partida en Pausa: "${gameData.activeClaim.playerName || 'Un participante'}" cantó Bingo primero.`}
+              </strong>
+              <span style={{ fontSize: '0.8rem', color: '#cbd5e1', marginTop: '4px', display: 'block' }}>
+                {gameData.activeClaim.cardId === cartonId
+                  ? 'El organizador tiene tu cartón en pantalla para validarlo. Por favor no cierres esta ventana.'
+                  : 'El Host está verificando si el cartón es válido. Si se descarta, la partida continuará al instante.'}
+              </span>
+            </div>
+          )}
+
           <button
             className="btn btn-primary animate-pulse"
-            style={{ width: '100%', fontSize: '1.5rem', padding: '15px', borderRadius: '15px', background: primaryColor, boxShadow: `0 8px 25px rgba(${primaryColor.startsWith('#') ? '168, 85, 247' : '168,85,247'}, 0.3)` }}
+            disabled={Boolean(gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)}
+            style={{ 
+              width: '100%', 
+              fontSize: '1.4rem', 
+              padding: '15px', 
+              borderRadius: '15px', 
+              background: (gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
+                ? '#475569'
+                : primaryColor, 
+              boxShadow: `0 8px 25px rgba(${primaryColor.startsWith('#') ? '168, 85, 247' : '168,85,247'}, 0.3)`,
+              cursor: (gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
+                ? 'not-allowed'
+                : 'pointer',
+              opacity: (gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
+                ? 0.65
+                : 1
+            }}
             onClick={shoutBingo}
           >
-            📢 ¡CANTAR BINGO!
+            {gameData?.activeClaim && gameData.activeClaim.status === 'pending'
+              ? (gameData.activeClaim.cardId === cartonId 
+                  ? '⏳ TU BINGO ESTÁ EN REVISIÓN...' 
+                  : `⏳ EN REVISIÓN: ${gameData.activeClaim.playerName || 'OTRO JUGADOR'}...`)
+              : '📢 ¡CANTAR BINGO!'}
           </button>
 
           {/* Pattern Badge & Mini Guide (Moved here) */}

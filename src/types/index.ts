@@ -288,6 +288,15 @@ export interface BingoGame {
     prizeTitle: string;
     timestamp: number;
   };
+  lastBingoShoutAt?: number;
+  activeClaim?: {
+    cardId: string;
+    playerName: string;
+    phone?: string;
+    claimedAt: number;
+    serverClaimedAt?: any;
+    status: 'pending' | 'verified' | 'rejected';
+  } | null;
 }
 
 export interface BingoCard {
