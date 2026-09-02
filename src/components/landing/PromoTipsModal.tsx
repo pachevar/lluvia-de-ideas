@@ -115,15 +115,28 @@ export default function PromoTipsModal({ isOpen, onClose, tipsList }: PromoTipsM
           ))}
         </div>
 
-        {/* Cuerpo del Modal: Video + Explicación */}
+        {/* Cuerpo del Modal: Video / Imagen + Explicación */}
         <div className="promo-tips-body">
           <div className="promo-tips-video-box">
-            <iframe
-              src={embedUrl}
-              title={currentTopic.title}
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
-              allowFullScreen
-            ></iframe>
+            {currentTopic.mediaType === 'image' && currentTopic.imageUrl ? (
+              <div className="promo-tips-image-wrapper">
+                <img
+                  src={currentTopic.imageUrl}
+                  alt={currentTopic.title}
+                  className="promo-tips-image-media"
+                />
+                <div className="promo-tips-image-badge">
+                  <span>📸</span> Imagen Ilustrativa
+                </div>
+              </div>
+            ) : (
+              <iframe
+                src={embedUrl}
+                title={currentTopic.title}
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              ></iframe>
+            )}
           </div>
 
           <div className="promo-tips-info-box">

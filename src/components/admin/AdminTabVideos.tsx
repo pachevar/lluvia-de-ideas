@@ -1,4 +1,7 @@
 import { useState } from 'react';
+import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
+import { storage } from '../../firebase';
+import { compressImageWebP } from '../../utils/imageUpload';
 import type { PortalConfig, PromoVideoItem } from '../../types';
 import PromoTipsModal from '../landing/PromoTipsModal';
 import { usePortalConfig } from '../../context/PortalConfigContext';
@@ -35,6 +38,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
   const [activeSubtab, setActiveSubtab] = useState<'main' | 'modal'>('main');
   const [isTestModalOpen, setIsTestModalOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const [feedbackMsg, setFeedbackMsg] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
 
   // Form state for creating/editing a tip item
@@ -43,7 +47,10 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
     tabLabel: '',
     icon: '🎬',
     title: '',
+    mediaType: 'video',
+    videoId: '',
     youtubeUrl: '',
+    imageUrl: '',
     description: '',
     bullets: ['']
   });
@@ -158,6 +165,32 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
     setTipForm({ ...tipForm, bullets: currentBullets });
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploadingImage(true);
+    try {
+      const compressedBlob = await compressImageWebP(file, 1080, 1920, 0.85);
+      const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
+      const fileRef = ref(storage, `landing-assets/tips/${Date.now()}_${cleanName}`);
+      await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
+      const downloadUrl = await getDownloadURL(fileRef);
+
+      setTipForm(prev => ({
+        ...prev,
+        mediaType: 'image',
+        imageUrl: downloadUrl
+      }));
+      showFeedback('📸 ¡Imagen optimizada y subida a Firebase Storage exitosamente!');
+    } catch (err) {
+      console.error('Error subiendo imagen de tema:', err);
+      alert('Error al optimizar o subir la imagen a Firebase Storage.');
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
   // Handlers for modal tips list with instant Firestore persistence
   const handleSaveTip = async () => {
     if (!tipForm.title || !tipForm.tabLabel) {
@@ -165,14 +198,22 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
       return;
     }
 
-    const videoId = extractYouTubeId(tipForm.youtubeUrl || tipForm.videoId || '');
+    const isImage = tipForm.mediaType === 'image';
+    if (isImage && !tipForm.imageUrl) {
+      alert('Por favor sube un archivo de imagen o ingresa una URL de imagen para este tema.');
+      return;
+    }
+
+    const videoId = !isImage ? extractYouTubeId(tipForm.youtubeUrl || tipForm.videoId || '') : '';
     const newTip: PromoVideoItem = {
       id: tipForm.id || `tip-${Date.now()}`,
-      tabLabel: tipForm.tabLabel || 'Nuevo Video',
-      icon: tipForm.icon || '🎬',
+      tabLabel: tipForm.tabLabel || (isImage ? 'Nueva Imagen' : 'Nuevo Video'),
+      icon: tipForm.icon || (isImage ? '🖼️' : '🎬'),
       title: tipForm.title || '',
+      mediaType: isImage ? 'image' : 'video',
       videoId: videoId,
-      youtubeUrl: tipForm.youtubeUrl || `https://youtube.com/watch?v=${videoId}`,
+      youtubeUrl: !isImage ? (tipForm.youtubeUrl || `https://youtube.com/watch?v=${videoId}`) : '',
+      imageUrl: isImage ? (tipForm.imageUrl || '') : '',
       description: tipForm.description || '',
       bullets: (tipForm.bullets || []).filter(b => b.trim() !== ''),
       visible: tipForm.visible ?? true
@@ -203,7 +244,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
       await saveConfigToFirestore(updatedConfig);
       showFeedback(`✨ ¡Tema «${newTip.tabLabel}» guardado y sincronizado en Firestore!`);
       setEditingTipIndex(null);
-      setTipForm({ tabLabel: '', icon: '🎬', title: '', youtubeUrl: '', description: '', bullets: [''] });
+      setTipForm({ tabLabel: '', icon: '🎬', title: '', mediaType: 'video', videoId: '', youtubeUrl: '', imageUrl: '', description: '', bullets: [''] });
     } catch (err) {
       console.error('Error saving tip:', err);
       showFeedback('❌ Error al guardar el tema en Firestore.', 'error');
@@ -215,7 +256,18 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
   const handleEditTip = (index: number) => {
     const item = tipsList[index];
     setEditingTipIndex(index);
-    setTipForm({ ...item, bullets: item.bullets && item.bullets.length > 0 ? [...item.bullets] : [''] });
+    setTipForm({
+      ...item,
+      mediaType: item.mediaType || (item.imageUrl ? 'image' : 'video'),
+      imageUrl: item.imageUrl || '',
+      bullets: item.bullets && item.bullets.length > 0 ? [...item.bullets] : ['']
+    });
+    const formEl = document.getElementById('modal-tip-editor-form');
+    if (formEl) {
+      formEl.scrollIntoView({ behavior: 'smooth' });
+      formEl.classList.add('pulse-highlight');
+      setTimeout(() => formEl.classList.remove('pulse-highlight'), 1200);
+    }
   };
 
   const handleDeleteTip = async (index: number) => {
@@ -569,23 +621,141 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
               </div>
             </div>
 
+            {/* Selector de Tipo de Contenido: Video o Imagen */}
             <div className="form-field-group">
-              <label className="form-field-label">Enlace o ID de YouTube:</label>
-              <input 
-                type="text" 
-                value={tipForm.youtubeUrl || tipForm.videoId || ''} 
-                onChange={(e) => {
-                  const url = e.target.value;
-                  const id = extractYouTubeId(url);
-                  setTipForm({ ...tipForm, youtubeUrl: url, videoId: id });
-                }}
-                placeholder="Pega enlace de YouTube (Shorts o Video normal)..."
-                className="premium-input"
-              />
-              <div className="youtube-extracted-badge">
-                <span>✨</span> YouTube ID: <strong>{extractYouTubeId(tipForm.youtubeUrl || tipForm.videoId || '')}</strong>
+              <label className="form-field-label">
+                <span>Tipo de Contenido Multimedia:</span>
+                <span className="form-field-hint">¿Este tema mostrará un video de YouTube o una imagen ilustrativa?</span>
+              </label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <button
+                  type="button"
+                  className={`btn ${tipForm.mediaType !== 'image' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setTipForm({ ...tipForm, mediaType: 'video' })}
+                  style={{
+                    padding: '12px 18px',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    borderRadius: '14px',
+                    border: tipForm.mediaType !== 'image' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <span>🎬</span>
+                  <span>Video (YouTube / Shorts)</span>
+                </button>
+                <button
+                  type="button"
+                  className={`btn ${tipForm.mediaType === 'image' ? 'btn-primary' : 'btn-secondary'}`}
+                  onClick={() => setTipForm({ ...tipForm, mediaType: 'image' })}
+                  style={{
+                    padding: '12px 18px',
+                    fontWeight: 800,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    borderRadius: '14px',
+                    border: tipForm.mediaType === 'image' ? '2px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)'
+                  }}
+                >
+                  <span>🖼️</span>
+                  <span>Imagen Ilustrativa</span>
+                </button>
               </div>
             </div>
+
+            {/* Input según tipo de multimedia */}
+            {tipForm.mediaType === 'image' ? (
+              <div className="form-field-group" style={{ background: 'rgba(56, 189, 248, 0.05)', padding: '1.25rem', borderRadius: '16px', border: '1px solid rgba(56, 189, 248, 0.2)' }}>
+                <label className="form-field-label">
+                  <span>Subir o Asignar Imagen:</span>
+                  <span className="form-field-hint">Optimización automática WebP</span>
+                </label>
+
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap', marginTop: '6px' }}>
+                  <label 
+                    className="btn btn-primary" 
+                    style={{ 
+                      cursor: isUploadingImage ? 'not-allowed' : 'pointer', 
+                      opacity: isUploadingImage ? 0.7 : 1, 
+                      display: 'inline-flex', 
+                      alignItems: 'center', 
+                      gap: '8px',
+                      padding: '10px 20px',
+                      borderRadius: '12px'
+                    }}
+                  >
+                    <span>{isUploadingImage ? '⏳' : '📁'}</span>
+                    <span>{isUploadingImage ? 'Subiendo y optimizando...' : 'Subir Archivo de Imagen'}</span>
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      disabled={isUploadingImage}
+                      onChange={handleImageUpload} 
+                      style={{ display: 'none' }} 
+                    />
+                  </label>
+
+                  <span style={{ color: '#64748b', fontSize: '0.85rem' }}>o pega una URL directa:</span>
+
+                  <input 
+                    type="text" 
+                    value={tipForm.imageUrl || ''} 
+                    onChange={(e) => setTipForm({ ...tipForm, imageUrl: e.target.value })}
+                    placeholder="https://ejemplo.com/mi-imagen.webp" 
+                    className="premium-input"
+                    style={{ flex: 1, minWidth: '220px' }}
+                  />
+                </div>
+
+                {tipForm.imageUrl && (
+                  <div style={{ marginTop: '1rem', display: 'flex', alignItems: 'center', gap: '16px', background: 'rgba(0,0,0,0.4)', padding: '12px', borderRadius: '14px' }}>
+                    <img 
+                      src={tipForm.imageUrl} 
+                      alt="Preview" 
+                      style={{ width: '80px', height: '100px', objectFit: 'cover', borderRadius: '10px', border: '1px solid rgba(255,255,255,0.2)' }} 
+                    />
+                    <div style={{ flex: 1 }}>
+                      <span style={{ display: 'block', color: '#38bdf8', fontWeight: 700, fontSize: '0.9rem' }}>
+                        ✓ Imagen seleccionada
+                      </span>
+                      <span style={{ display: 'block', color: '#94a3b8', fontSize: '0.78rem', wordBreak: 'break-all', marginTop: '2px' }}>
+                        {tipForm.imageUrl}
+                      </span>
+                    </div>
+                    <button 
+                      type="button" 
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setTipForm({ ...tipForm, imageUrl: '' })}
+                      style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.4)' }}
+                    >
+                      🗑️ Quitar
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="form-field-group">
+                <label className="form-field-label">Enlace o ID de YouTube:</label>
+                <input 
+                  type="text" 
+                  value={tipForm.youtubeUrl || tipForm.videoId || ''} 
+                  onChange={(e) => {
+                    const url = e.target.value;
+                    const id = extractYouTubeId(url);
+                    setTipForm({ ...tipForm, youtubeUrl: url, videoId: id });
+                  }}
+                  placeholder="Pega enlace de YouTube (Shorts o Video normal)..."
+                  className="premium-input"
+                />
+                <div className="youtube-extracted-badge">
+                  <span>✨</span> YouTube ID: <strong>{extractYouTubeId(tipForm.youtubeUrl || tipForm.videoId || '')}</strong>
+                </div>
+              </div>
+            )}
 
             <div className="form-field-group">
               <label className="form-field-label">Descripción Informativa:</label>
@@ -656,7 +826,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
                   disabled={isSaving}
                   onClick={() => {
                     setEditingTipIndex(null);
-                    setTipForm({ tabLabel: '', icon: '🎬', title: '', youtubeUrl: '', description: '', bullets: [''] });
+                    setTipForm({ tabLabel: '', icon: '🎬', title: '', mediaType: 'video', videoId: '', youtubeUrl: '', imageUrl: '', description: '', bullets: [''] });
                   }}
                 >
                   Cancelar Edición
@@ -681,7 +851,7 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
                 className="btn btn-primary"
                 onClick={() => {
                   setEditingTipIndex(null);
-                  setTipForm({ tabLabel: '', icon: '🎬', title: '', youtubeUrl: '', description: '', bullets: [''] });
+                  setTipForm({ tabLabel: '', icon: '🎬', title: '', mediaType: 'video', videoId: '', youtubeUrl: '', imageUrl: '', description: '', bullets: [''] });
                   const formEl = document.getElementById('modal-tip-editor-form');
                   if (formEl) {
                     formEl.scrollIntoView({ behavior: 'smooth' });
@@ -716,7 +886,18 @@ export default function AdminTabVideos({ localConfig, setLocalConfig }: AdminTab
                     </h4>
                     <p>{tip.description || 'Sin descripción'}</p>
                     <div className="tip-card-bullets-preview">
-                      <span className="bullet-pill-mini">📹 ID: {tip.videoId}</span>
+                      {tip.mediaType === 'image' ? (
+                        <span className="bullet-pill-mini" style={{ background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', border: '1px solid rgba(168, 85, 247, 0.4)' }}>
+                          🖼️ Imagen Ilustrativa
+                        </span>
+                      ) : (
+                        <span className="bullet-pill-mini">📹 Video ID: {tip.videoId || 'HMFybOP8gec'}</span>
+                      )}
+                      {tip.mediaType === 'image' && tip.imageUrl && (
+                        <span className="bullet-pill-mini" style={{ color: '#38bdf8' }}>
+                          📸 Imagen cargada
+                        </span>
+                      )}
                       {(tip.bullets || []).map((b, bIdx) => (
                         <span key={bIdx} className="bullet-pill-mini">✨ {b}</span>
                       ))}

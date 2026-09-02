@@ -93,8 +93,10 @@ export interface PromoVideoItem {
   tabLabel: string;
   icon: string;
   title: string;
-  videoId: string;
+  mediaType?: 'video' | 'image';
+  videoId?: string;
   youtubeUrl?: string;
+  imageUrl?: string;
   description: string;
   bullets: string[];
   visible?: boolean;
