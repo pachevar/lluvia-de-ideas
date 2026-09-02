@@ -57,10 +57,10 @@ export default function AdminHeaderBar({
             className="btn btn-primary btn-save-quick"
             onClick={handleSaveConfig}
             disabled={saving}
-            title="Guardar cambios en Firestore (Ctrl + S)"
+            title="Guardar todas las configuraciones del portal en Firestore (Ctrl + S)"
           >
             <span>💾</span>
-            <span>{saving ? 'Guardando...' : 'Guardar Cambios'}</span>
+            <span>{saving ? 'Guardando...' : 'Guardar Todo'}</span>
             <kbd className="save-shortcut">Ctrl+S</kbd>
           </button>
 

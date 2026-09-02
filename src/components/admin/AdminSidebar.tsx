@@ -6,10 +6,8 @@ interface AdminSidebarProps {
   userEmail: string | null;
   activeAdminTab: AdminTabType;
   setActiveAdminTab: (tab: AdminTabType) => void;
-  handleSaveConfig: () => void;
   handleResetConfig: () => void;
   saving: boolean;
-  saveStatus: { type: 'success' | 'error' | null; message: string };
   onBackToPortal: () => void;
   handleLogout: () => void;
 }
@@ -18,10 +16,8 @@ export default function AdminSidebar({
   userEmail,
   activeAdminTab,
   setActiveAdminTab,
-  handleSaveConfig,
   handleResetConfig,
   saving,
-  saveStatus,
   onBackToPortal,
   handleLogout
 }: AdminSidebarProps) {
@@ -150,26 +146,13 @@ export default function AdminSidebar({
 
       {/* Acciones del Sidebar */}
       <div className="admin-actions-group">
-        {saveStatus.message && (
-          <div className={`save-status-toast ${saveStatus.type}`}>
-            {saveStatus.type === 'success' ? '✅' : '❌'} {saveStatus.message}
-          </div>
-        )}
-
-        <button 
-          className="btn btn-primary btn-large btn-admin-save" 
-          onClick={handleSaveConfig}
-          disabled={saving}
-        >
-          {saving ? 'Guardando...' : '💾 Guardar Cambios'}
-        </button>
-
         <button 
           className="btn btn-secondary btn-admin-reset" 
           onClick={handleResetConfig}
           disabled={saving}
+          title="Restaurar toda la configuración a los valores de fábrica"
         >
-          🔄 Restaurar por Defecto
+          🔄 Restaurar Valores por Defecto
         </button>
 
         <div className="divider-h"></div>

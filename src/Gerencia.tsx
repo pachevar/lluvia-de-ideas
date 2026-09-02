@@ -209,10 +209,8 @@ export default function Gerencia() {
         userEmail={user.email}
         activeAdminTab={activeAdminTab}
         setActiveAdminTab={setActiveAdminTab}
-        handleSaveConfig={handleSaveConfig}
         handleResetConfig={handleResetConfig}
         saving={saving}
-        saveStatus={saveStatus}
         onBackToPortal={onBackToPortal}
         handleLogout={handleLogout}
       />
