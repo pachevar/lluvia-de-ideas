@@ -2572,7 +2572,7 @@ export default function BingoHub() {
                               type="text" 
                               placeholder="CÓDIGO DE ACTIVACIÓN *" 
                               value={activationCode}
-                              onChange={(e) => setActivationCode(e.target.value.toUpperCase())}
+                              onChange={(e) => setActivationCode(e.target.value.toUpperCase().replace(/\s+/g, ''))}
                               required
                               className="cyber-input"
                               disabled={isRegistering}

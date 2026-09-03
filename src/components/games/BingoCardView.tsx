@@ -53,6 +53,42 @@ const DEFAULT_SAMPLE_PRIZES: BingoPrize[] = [
   }
 ];
 
+const getBallMeta = (num: number) => {
+  let letter = 'B';
+  let range = '1 - 15';
+  let color = '#0ea5e9'; // Electric cyan/blue
+  let gradient = 'radial-gradient(circle at 35% 30%, #38bdf8 0%, #0284c7 50%, #0369a1 85%, #082f49 100%)';
+  let glow = 'rgba(14, 165, 233, 0.6)';
+
+  if (num > 15 && num <= 30) {
+    letter = 'I';
+    range = '16 - 30';
+    color = '#ec4899'; // Hot pink / magenta
+    gradient = 'radial-gradient(circle at 35% 30%, #f472b6 0%, #db2777 50%, #be185d 85%, #831843 100%)';
+    glow = 'rgba(236, 72, 153, 0.6)';
+  } else if (num > 30 && num <= 45) {
+    letter = 'N';
+    range = '31 - 45';
+    color = '#a855f7'; // Purple / violet
+    gradient = 'radial-gradient(circle at 35% 30%, #c084fc 0%, #9333ea 50%, #7e22ce 85%, #581c87 100%)';
+    glow = 'rgba(168, 85, 247, 0.6)';
+  } else if (num > 45 && num <= 60) {
+    letter = 'G';
+    range = '46 - 60';
+    color = '#10b981'; // Emerald
+    gradient = 'radial-gradient(circle at 35% 30%, #34d399 0%, #059669 50%, #047857 85%, #064e3b 100%)';
+    glow = 'rgba(16, 185, 129, 0.6)';
+  } else if (num > 60 && num <= 75) {
+    letter = 'O';
+    range = '61 - 75';
+    color = '#f59e0b'; // Gold / amber
+    gradient = 'radial-gradient(circle at 35% 30%, #fde047 0%, #f59e0b 50%, #d97706 85%, #78350f 100%)';
+    glow = 'rgba(245, 158, 11, 0.6)';
+  }
+
+  return { letter, range, color, gradient, glow };
+};
+
 export default function BingoCardView() {
   const { cartonId } = useParams<{ cartonId: string }>();
   const navigate = useNavigate();
@@ -62,6 +98,11 @@ export default function BingoCardView() {
   const [error, setError] = useState('');
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+
+  // Mobile UX Enhancements: Drawer, Pocket Ball Alert & Waiting Test
+  const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
+  const [cardHasLastBall, setCardHasLastBall] = useState(false);
+  const [testFeedbackActive, setTestFeedbackActive] = useState(false);
 
   // Secondary Card Gamer Menu & Prizes Modal States
   const [isCardMenuOpen, setIsCardMenuOpen] = useState(false);
@@ -309,6 +350,16 @@ export default function BingoCardView() {
     };
   }, [cartonId]);
 
+  // Test interactivo de sonido y respuesta háptica en sala de espera
+  const testSoundAndHaptics = () => {
+    setTestFeedbackActive(true);
+    soundEffects.playMathChime(true);
+    if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+      try { navigator.vibrate([40, 60, 40]); } catch {}
+    }
+    setTimeout(() => setTestFeedbackActive(false), 2200);
+  };
+
   // Escuchar nuevas bolas para reproducir sonido de alerta y cantar la bola si voiceMode está activo
   useEffect(() => {
     if (!gameData || gameData.status !== 'playing') return;
@@ -316,8 +367,33 @@ export default function BingoCardView() {
     if (currentCount > prevDrawnCountRef.current) {
       const newBall = gameData.drawnNumbers[currentCount - 1];
       
-      // Reproducir sonido suave de notificación
-      playFeedbackSound(true);
+      // Verificar si la bola extraída está presente en el cartón del jugador
+      let isInCard = false;
+      if (cardData?.matrix) {
+        for (let r = 0; r < 5; r++) {
+          for (let c = 0; c < 5; c++) {
+            if (r === 2 && c === 2) continue; // omitir comodín
+            if (cardData.matrix[r][c] === newBall) {
+              isInCard = true;
+              break;
+            }
+          }
+          if (isInCard) break;
+        }
+      }
+
+      if (isInCard) {
+        // Alerta especial de acierto con fanfarria sutil y vibración de confirmación
+        soundEffects.playMathChime(true);
+        if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
+          try { navigator.vibrate([30, 40, 30]); } catch {}
+        }
+        setCardHasLastBall(true);
+        setTimeout(() => setCardHasLastBall(false), 4500);
+      } else {
+        // Sonido suave de notificación regular
+        playFeedbackSound(true);
+      }
 
       if (voiceMode) {
         speakBall(newBall);
@@ -325,7 +401,7 @@ export default function BingoCardView() {
     }
     prevDrawnCountRef.current = currentCount;
     // eslint-disable-next-line react-hooks/exhaustive-deps -- playFeedbackSound is a stable-by-convention closure; gameData tracked via drawnNumbers
-  }, [gameData?.drawnNumbers, voiceMode]);
+  }, [gameData?.drawnNumbers, voiceMode, cardData]);
 
   // Limpiar marcas y almacenamiento si la partida se reinicia o se inicia una nueva ronda
   const lastResetRef = useRef<number | null>(null);
@@ -377,11 +453,17 @@ export default function BingoCardView() {
     const isCurrentlyMarked = markedSlots[row][col];
     const isDrawn = gameData.drawnNumbers.includes(value);
 
-    // Play synthesized sound
+    // Play synthesized sound y respuesta háptica reforzada
     if (!isCurrentlyMarked) {
       playFeedbackSound(isDrawn);
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
-        try { navigator.vibrate(25); } catch {}
+        try { 
+          if (isDrawn) {
+            navigator.vibrate([25, 40, 25]); // doble pulso si acertó bola
+          } else {
+            navigator.vibrate(15); // clic táctil sutil
+          }
+        } catch {}
       }
 
       // Trigger sponsor modal on player side for every 5 marked slots
@@ -982,152 +1064,36 @@ export default function BingoCardView() {
         </div>
       )}
 
-      <div 
-        className={`bingo-personal-header card-glass ${cust?.cardTheme ? `card-theme-${cust.cardTheme}` : 'card-theme-classic'} status-${gameData?.status || 'waiting'}`} 
-        style={{ 
-          margin: '15px auto', 
-          maxWidth: '100%', 
-          position: 'sticky', 
-          top: '10px', 
-          zIndex: 10, 
-          borderRadius: '18px',
-          background: 'rgba(13, 6, 28, 0.95)',
-          border: `2px solid ${primaryColor}`,
-          boxShadow: `0 8px 30px rgba(0,0,0,0.6), 0 0 20px ${primaryColor}44`,
-          color: '#ffffff'
-        }}
-      >
-        <div className="header-flex-wrapper" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', padding: '16px 20px' }}>
-          <div style={{ minWidth: 0, flex: 1 }}>
-            <span className="player-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#cbd5e1', fontWeight: 'bold', display: 'block', marginBottom: '2px' }}>Jugador</span>
-            <h3 className="player-name-title" style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#ffffff', textShadow: '0 0 10px rgba(255,255,255,0.4), 0 2px 6px rgba(0,0,0,0.9)', letterSpacing: '0.5px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-              {cardData.playerName}
-            </h3>
-            <div className="badge-status-container" style={{ marginTop: '8px', display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <span 
-                className="badge" 
-                style={{ 
-                  display: 'inline-flex', 
-                  alignItems: 'center',
-                  gap: '6px',
-                  padding: '4px 10px',
-                  borderRadius: '8px',
-                  fontSize: '0.75rem',
-                  fontWeight: 'bold',
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.5px',
-                  boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                  background: gameData.status === 'playing' ? '#22c55e' : gameData.status === 'waiting' ? '#f59e0b' : '#ec4899',
-                  color: '#ffffff'
-                }}
-              >
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#fff', display: 'inline-block' }}></span>
-                {gameData.status === 'playing' ? 'En Juego' : gameData.status === 'waiting' ? 'Esperando...' : 'Finalizado'}
-              </span>
-
-              {gameData.status === 'playing' && (() => {
-                const missing = getProximityStatus();
-                if (missing === null) return null;
-                if (missing === 0) {
-                  return (
-                    <span className="badge animate-pulse" style={{ background: '#22c55e', color: '#fff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', boxShadow: '0 0 12px #22c55e' }}>
-                      🌟 ¡BINGO!
-                    </span>
-                  );
-                }
-                if (missing === 1) {
-                  return (
-                    <span className="badge animate-pulse" style={{ background: '#ef4444', color: '#fff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold', boxShadow: '0 0 12px #ef4444' }}>
-                      🔥 ¡A 1 BOLA DE GANAR!
-                    </span>
-                  );
-                }
-                if (missing === 2) {
-                  return (
-                    <span className="badge" style={{ background: '#f59e0b', color: '#fff', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                      ⚡ ¡A 2 BOLAS DE GANAR!
-                    </span>
-                  );
-                }
-                return (
-                  <span className="badge" style={{ background: 'rgba(255,255,255,0.15)', color: '#e2dbf0', padding: '4px 10px', borderRadius: '8px', fontSize: '0.75rem', fontWeight: 'bold' }}>
-                    🎯 Faltan {missing} bolas
-                  </span>
-                );
-              })()}
+      {/* 1. ENCABEZADO COMPACTO DE ALTA EFICIENCIA (SOLO 52px DE ALTO) */}
+      <div className="compact-player-bar">
+        <div className="player-meta-left">
+          <span className="player-avatar">👤</span>
+          <div className="player-texts">
+            <strong className="player-title">{cardData.playerName}</strong>
+            <div className="player-status-pill">
+              <span className={`status-dot ${gameData?.status || 'waiting'}`} />
+              <span>{gameData?.status === 'playing' ? 'En Juego' : gameData?.status === 'waiting' ? 'Sala de Espera' : 'Finalizado'}</span>
             </div>
-          </div>
-          
-          <div style={{ flexShrink: 0, textAlign: 'right', display: 'flex', flexDirection: 'column', alignItems: 'flex-end', justifyContent: 'center' }}>
-            <span className="id-label" style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.5px', opacity: 0.6, marginBottom: '4px', display: 'block' }}>ID CARTÓN</span>
-            <code 
-              className="card-id-code"
-              style={{ 
-                fontSize: '1.1rem', 
-                background: 'rgba(0,0,0,0.4)', 
-                color: '#00ffff',
-                textShadow: '0 0 8px rgba(0,255,255,0.6)',
-                border: '1px solid rgba(0,255,255,0.3)',
-                padding: '6px 12px', 
-                borderRadius: '8px',
-                fontFamily: 'monospace',
-                fontWeight: 'bold',
-                boxShadow: 'inset 0 0 10px rgba(0,0,0,0.5)',
-                display: 'inline-block'
-              }}
-            >
-              #{cartonId && cartonId.length > 8 ? `${cartonId.slice(0, 4)}...${cartonId.slice(-3)}` : cartonId}
-            </code>
           </div>
         </div>
 
-        {gameData.status === 'playing' && (
-          <div className="live-balls-ticker">
-            <strong className="live-balls-ticker-label">Últimas bolas:</strong>
-            {gameData.drawnNumbers.length === 0 ? (
-              <span className="live-balls-ticker-empty">Aún ninguna</span>
-            ) : (
-              gameData.drawnNumbers.slice(-4).map((num, i, arr) => {
-                const isLatest = i === arr.length - 1;
-                let letter = 'B';
-                if (num > 15 && num <= 30) letter = 'I';
-                if (num > 30 && num <= 45) letter = 'N';
-                if (num > 45 && num <= 60) letter = 'G';
-                if (num > 60 && num <= 75) letter = 'O';
-                
-                return (
-                  <span key={i} className={`live-ball-badge ${isLatest ? 'latest' : ''}`} style={{
-                    background: isLatest 
-                      ? `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)` 
-                      : 'rgba(255, 255, 255, 0.08)',
-                    border: isLatest 
-                      ? `1px solid ${accentColor}` 
-                      : '1px solid rgba(255, 255, 255, 0.15)',
-                    boxShadow: isLatest ? `0 0 10px ${primaryColor}44` : 'none'
-                  }}>
-                    <span className="live-ball-letter" style={{ color: isLatest ? '#fff' : primaryColor }}>{letter}</span>
-                    <span className="live-ball-number">{num}</span>
-                  </span>
-                );
-              })
-            )}
-          </div>
-        )}
+        <div className="player-meta-right">
+          <code className="compact-card-id">#{cartonId && cartonId.length > 8 ? `${cartonId.slice(0, 4)}...${cartonId.slice(-3)}` : cartonId}</code>
+          <button 
+            className="btn-settings-toggle"
+            onClick={() => setShowSettingsDrawer(!showSettingsDrawer)}
+            title="Ajustes de Sonido y Asistencia"
+          >
+            ⚙️
+          </button>
+        </div>
+      </div>
 
-        {/* Panel de Configuración Interno del Cabezal */}
-        <div className="header-settings-panel">
-          {/* Assist Mode integrated inside the header card */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-            paddingTop: '12px',
-            paddingBottom: '4px'
-          }}>
-            <span style={{ fontSize: '0.8rem', color: '#fff', opacity: 0.9, fontWeight: 'bold' }}>
-              🤖 Modo Asistido (Ayuda visual)
-            </span>
+      {/* DRAWER DESPLEGABLE DE AJUSTES (NO CONSUME ESPACIO FIJO) */}
+      {showSettingsDrawer && (
+        <div className="compact-settings-drawer animate-fade-in">
+          <div className="drawer-row">
+            <span>🤖 Modo Asistido (Ayuda visual)</span>
             <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0 }}>
               <input 
                 type="checkbox" 
@@ -1138,22 +1104,11 @@ export default function BingoCardView() {
                   playFeedbackSound(false, true);
                 }}
               />
-              <span className="cyber-slider"></span>
+              <span className="cyber-slider" />
             </label>
           </div>
-
-          {/* Voice Mode Switch */}
-          <div style={{
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            borderTop: '1px solid rgba(255, 255, 255, 0.12)',
-            paddingTop: '10px',
-            paddingBottom: '8px'
-          }}>
-            <span style={{ fontSize: '0.8rem', color: '#fff', opacity: 0.9, fontWeight: 'bold' }}>
-              🔊 Cantar bolas por voz
-            </span>
+          <div className="drawer-row">
+            <span>🔊 Cantar bolas por voz</span>
             <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0 }}>
               <input 
                 type="checkbox" 
@@ -1167,33 +1122,121 @@ export default function BingoCardView() {
                   }
                 }}
               />
-              <span className="cyber-slider"></span>
+              <span className="cyber-slider" />
             </label>
           </div>
         </div>
-      </div>
+      )}
 
-      {/* Proximity Banner */}
-      {gameData.status === 'playing' && (() => {
-        const missingCount = getProximityStatus();
-        if (missingCount !== null && missingCount > 0 && missingCount <= 3) {
-          return (
-            <div className="bingo-proximity-banner animate-pulse" style={{ margin: '10px auto', maxWidth: '100%' }}>
-              {missingCount === 1 
-                ? '🔮 ¡ESTÁS A UN SOLO NÚMERO DE GANAR BINGO!' 
-                : `⚡ ¡ESTÁS A ${missingCount} NÚMEROS DE GANAR BINGO!`}
+      {/* 2. SALA DE ESPERA INTERACTIVA (LOBBY ANTES DE ARRANCAR) */}
+      {gameData?.status === 'waiting' && (
+        <div className="waiting-lobby-card card-glass animate-fade-in">
+          <div className="lobby-badge">⏳ SALA DE ESPERA</div>
+          <h3 className="lobby-title">¡Cartón Listo para Jugar!</h3>
+          <p className="lobby-desc">
+            El anfitrión iniciará la tómbola en breve. Prepárate para cantar Bingo con este cartón.
+          </p>
+
+          <div className="lobby-grid-preview-box">
+            <span className="preview-label">🎯 Objetivo para ganar esta partida:</span>
+            <div className="pattern-pill">
+              <strong>
+                {gameData.winningPattern === 'full' && '🏆 Cartón Lleno (Todas las casillas)'}
+                {gameData.winningPattern === 'line' && '📏 Cualquier Línea Completa'}
+                {gameData.winningPattern === 'diagonal' && '❌ Diagonales en X'}
+                {gameData.winningPattern === 'four_corners' && '📐 Cuatro Esquinas'}
+              </strong>
             </div>
-          );
-        }
-        if (missingCount === 0) {
-          return (
-            <div className="bingo-proximity-banner winner-alert animate-bounce" style={{ margin: '10px auto', maxWidth: '100%' }}>
-              🎉 ¡TIENES BINGO COMPLETADO! ¡GRITA BINGO AHORA! 🎉
+          </div>
+
+          <button 
+            className={`btn-test-feedback ${testFeedbackActive ? 'active' : ''}`}
+            onClick={testSoundAndHaptics}
+          >
+            {testFeedbackActive ? '🔔 ¡Altavoces y Vibración Listos!' : '🔔 Probar Sonido y Vibración'}
+          </button>
+        </div>
+      )}
+
+      {/* 3. MINI TÓMBOLA MÓVIL 3D (POCKET HERO BALL & HISTORIAL) */}
+      {gameData?.status === 'playing' && (
+        <div className="mobile-pocket-tombola animate-fade-in">
+          {gameData.drawnNumbers && gameData.drawnNumbers.length > 0 ? (
+            (() => {
+              const latestBall = gameData.drawnNumbers[gameData.drawnNumbers.length - 1];
+              const meta = getBallMeta(latestBall);
+              return (
+                <div className="pocket-hero-ball-unit">
+                  <div 
+                    key={latestBall}
+                    className="pocket-hero-ball-3d animate-pop-in"
+                    style={{ 
+                      background: meta.gradient,
+                      boxShadow: `0 8px 18px rgba(0,0,0,0.6), 0 0 16px ${meta.glow}`
+                    }}
+                  >
+                    <div className="pocket-ball-badge">
+                      <span className="p-letter" style={{ color: meta.color }}>{meta.letter}</span>
+                      <span className="p-number">{latestBall}</span>
+                    </div>
+                  </div>
+                  <div className="pocket-ball-info">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span className="pocket-ball-tag">ÚLTIMA BOLA:</span>
+                      <strong style={{ color: meta.color, fontSize: '0.95rem' }}>
+                        {meta.letter}-{latestBall}
+                      </strong>
+                    </div>
+                    {cardHasLastBall && (
+                      <span className="pocket-in-card-alert animate-bounce">
+                        ✨ ¡ESTÁ EN TU CARTÓN!
+                      </span>
+                    )}
+                  </div>
+                </div>
+              );
+            })()
+          ) : (
+            <div className="pocket-hero-ball-unit">
+              <div className="pocket-hero-ball-3d" style={{ background: '#334155', border: '2px dashed #64748b' }}>
+                <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>🎲</span>
+              </div>
+              <div className="pocket-ball-info">
+                <span className="pocket-ball-tag">TÓMBOLA EN VIVO</span>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Esperando primera bola...</span>
+              </div>
             </div>
-          );
-        }
-        return null;
-      })()}
+          )}
+
+          {/* Carril de bolas anteriores */}
+          <div className="pocket-history-rail">
+            <span className="rail-label">Anteriores:</span>
+            <div className="rail-balls-row">
+              {gameData.drawnNumbers && gameData.drawnNumbers.length > 1 ? (
+                gameData.drawnNumbers
+                  .slice(Math.max(0, gameData.drawnNumbers.length - 5), gameData.drawnNumbers.length - 1)
+                  .reverse()
+                  .map((num) => {
+                    const m = getBallMeta(num);
+                    return (
+                      <div 
+                        key={num} 
+                        className="pocket-mini-ball"
+                        style={{ background: m.gradient }}
+                        title={`Bola ${m.letter}-${num}`}
+                      >
+                        <span className="m-l">{m.letter}</span>
+                        <span className="m-n">{num}</span>
+                      </div>
+                    );
+                  })
+              ) : (
+                <span style={{ fontSize: '0.72rem', color: '#64748b', padding: '0 4px' }}>--</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
 
 
@@ -1269,26 +1312,11 @@ export default function BingoCardView() {
                       <span style={{ fontSize: '1.3rem', fontWeight: 'bold' }}>{value}</span>
                     )}
 
-                    {/* Floating marker style (Stamp Overlay) */}
+                    {/* Sello de marcado en la esquina superior para preservar 100% la legibilidad del número */}
                     {isMarked && !isFree && (
                       <div 
-                        className="bingo-marker-stamp"
-                        style={{
-                          position: 'absolute',
-                          top: 0,
-                          left: 0,
-                          right: 0,
-                          bottom: 0,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '2.2rem',
-                          opacity: 0.45,
-                          pointerEvents: 'none',
-                          filter: 'drop-shadow(0px 2px 4px rgba(0,0,0,0.35))',
-                          zIndex: 2,
-                          animation: 'popInStamp 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards'
-                        }}
+                        className="bingo-marker-stamp-corner"
+                        title="Casilla Marcada"
                       >
                         {markerEmoji}
                       </div>
@@ -1444,6 +1472,44 @@ export default function BingoCardView() {
           </button>
         </div>
       </div>
+
+      {/* 🚀 DOCK INFERIOR FLOTANTE (ACCESO RÁPIDO CON EL PULGAR SIN SCROLL) */}
+      {gameData && (
+        <div className="mobile-action-floating-dock card-glass">
+          {gameData.status === 'playing' && (() => {
+            const missing = getProximityStatus();
+            if (missing === null) return null;
+            return (
+              <div 
+                className={`dock-proximity-chip ${missing === 0 ? 'winner animate-bounce' : missing === 1 ? 'critical animate-pulse' : ''}`}
+              >
+                {missing === 0 
+                  ? '🎉 ¡TIENES BINGO COMPLETADO! ¡CANTA BINGO YA!' 
+                  : missing === 1 
+                    ? '🔥 ¡ESTÁS A 1 SOLA BOLA DE GANAR!' 
+                    : `⚡ FALTAN ${missing} BOLAS PARA GANAR`}
+              </div>
+            );
+          })()}
+
+          <button
+            className={`btn-dock-shout ${getProximityStatus() === 0 ? 'shout-ready animate-pulse' : ''}`}
+            disabled={Boolean(gameData.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)}
+            onClick={shoutBingo}
+            style={{
+              background: (gameData.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
+                ? '#475569'
+                : (getProximityStatus() === 0 ? 'linear-gradient(135deg, #22c55e, #16a34a)' : primaryColor)
+            }}
+          >
+            {gameData.activeClaim && gameData.activeClaim.status === 'pending'
+              ? (gameData.activeClaim.cardId === cartonId 
+                  ? '⏳ TU BINGO ESTÁ EN REVISIÓN...' 
+                  : `⏳ EN REVISIÓN: ${gameData.activeClaim.playerName || 'OTRO JUGADOR'}...`)
+              : (getProximityStatus() === 0 ? '🏆 ¡CANTAR BINGO AHORA!' : '📢 ¡CANTAR BINGO!')}
+          </button>
+        </div>
+      )}
 
       {/* Confetti Animation Styles */}
       <style>{`
