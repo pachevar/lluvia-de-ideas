@@ -1,4 +1,4 @@
-import { type AdminTabType, ADMIN_NAV_CATEGORIES } from './adminNavConfig';
+import { type AdminTabType, ADMIN_NAV_CATEGORIES, getPillarForTab } from './adminNavConfig';
 import './AdminHeaderBar.css';
 
 interface AdminHeaderBarProps {
@@ -35,6 +35,8 @@ export default function AdminHeaderBar({
     }
   }
 
+  const activePillar = getPillarForTab(activeTab);
+
   return (
     <header className="admin-header-bar card-glass animate-fade-in">
       <div className="admin-header-left">
@@ -44,6 +46,27 @@ export default function AdminHeaderBar({
           <span className="breadcrumb-category">{currentCategoryTitle}</span>
           <span className="breadcrumb-sep">/</span>
           <span className="breadcrumb-current">{currentItemLabel}</span>
+          {activePillar && (
+            <span 
+              className="admin-header-pillar-badge"
+              style={{
+                backgroundColor: `${activePillar.color}22`,
+                color: activePillar.color,
+                border: `1px solid ${activePillar.color}55`,
+                borderRadius: '6px',
+                padding: '2px 8px',
+                fontSize: '0.72rem',
+                fontWeight: 800,
+                marginLeft: '8px',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+            >
+              <span>{activePillar.icon}</span>
+              <span>{activePillar.badge}</span>
+            </span>
+          )}
         </div>
         <h2 className="admin-header-title">{currentItemLabel}</h2>
         <p className="admin-header-subtitle">{currentItemDesc}</p>
@@ -98,11 +121,12 @@ export default function AdminHeaderBar({
           </button>
 
           <button 
-            className="btn btn-secondary btn-portal-preview"
+            className="btn btn-secondary btn-header-portal"
             onClick={onBackToPortal}
-            title="Ver portal en vivo"
+            title="Ir a la página principal pública"
           >
-            <span>🌐</span> Ver Portal
+            <span>🌐</span>
+            <span className="btn-text-portal">Ver Portal</span>
           </button>
         </div>
       </div>
