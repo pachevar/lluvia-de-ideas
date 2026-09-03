@@ -1,22 +1,23 @@
 /* src/components/admin/AdminSidebar.css */
 .admin-sidebar {
-  width: 310px;
+  width: 320px;
   flex-shrink: 0;
   display: flex;
   flex-direction: column;
-  padding: 1.5rem;
-  background: rgba(15, 23, 42, 0.85);
-  backdrop-filter: blur(20px);
+  padding: 1.5rem 1.25rem;
+  background: rgba(15, 23, 42, 0.88);
+  backdrop-filter: blur(22px);
   border-right: 1px solid rgba(255, 255, 255, 0.1);
   min-height: 100vh;
+  box-sizing: border-box;
 }
 
 .admin-brand-header {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin-bottom: 1.25rem;
-  padding-bottom: 1rem;
+  margin-bottom: 1.1rem;
+  padding-bottom: 0.9rem;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
 
@@ -26,17 +27,21 @@
   padding: 8px;
   border-radius: 14px;
   border: 1px solid rgba(56, 189, 248, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .admin-brand-text-box h3 {
-  font-size: 1.15rem;
+  font-size: 1.12rem;
   font-weight: 800;
   color: #ffffff;
   margin: 0;
+  letter-spacing: 0.2px;
 }
 
 .admin-user-email {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #94a3b8;
   display: block;
 }
@@ -44,7 +49,7 @@
 /* Buscador en Vivo */
 .admin-search-box {
   position: relative;
-  margin-bottom: 1.25rem;
+  margin-bottom: 1rem;
 }
 
 .search-icon {
@@ -58,19 +63,20 @@
 
 .admin-search-input {
   width: 100%;
-  padding: 10px 32px 10px 36px;
-  border-radius: 14px;
-  background: rgba(0, 0, 0, 0.3);
+  padding: 9px 32px 9px 36px;
+  border-radius: 12px;
+  background: rgba(0, 0, 0, 0.35);
   border: 1px solid rgba(255, 255, 255, 0.12);
   color: #ffffff;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   outline: none;
   transition: all 0.2s ease;
+  box-sizing: border-box;
 }
 
 .admin-search-input:focus {
   border-color: #38bdf8;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.55);
   box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
 }
 
@@ -86,20 +92,157 @@
   font-size: 0.85rem;
 }
 
+/* ==========================================================================
+   🌟 DOCK DE ACCESO RÁPIDO: LOS 4 PROYECTOS PILARES
+   ========================================================================== */
+.admin-pillars-quick-dock {
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.05) 0%, rgba(255, 255, 255, 0.02) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 10px;
+  margin-bottom: 1.1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.admin-pillars-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 4px;
+}
+
+.admin-pillars-label {
+  font-size: 0.7rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+}
+
+.admin-pillars-count {
+  font-size: 0.65rem;
+  background: rgba(56, 189, 248, 0.15);
+  color: #38bdf8;
+  padding: 2px 6px;
+  border-radius: 6px;
+  font-weight: 700;
+}
+
+.admin-pillars-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+.admin-pillar-pill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  background: rgba(0, 0, 0, 0.25);
+  color: #e2e8f0;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.admin-pillar-pill:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: var(--pillar-color, #38bdf8);
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+}
+
+.admin-pillar-pill.active {
+  background: var(--pillar-color, #38bdf8);
+  border-color: var(--pillar-color, #38bdf8);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+}
+
+.admin-pillar-pill .pillar-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.admin-pillar-pill .pillar-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Selector Móvil */
+.admin-mobile-nav {
+  display: none;
+  margin-bottom: 1.25rem;
+}
+
+.admin-mobile-nav-label {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  margin-bottom: 4px;
+  display: block;
+}
+
+.admin-nav-select-wrapper {
+  position: relative;
+}
+
+.admin-nav-select {
+  width: 100%;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: #1e293b;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  font-size: 0.9rem;
+  appearance: none;
+}
+
+.admin-nav-select-arrow {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  pointer-events: none;
+}
+
 /* Categorías y Acordeón */
 .admin-nav-menu {
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 10px;
   flex: 1;
   overflow-y: auto;
   padding-right: 4px;
+  scrollbar-width: thin;
 }
 
 .admin-sidebar-category {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 3px;
+  border-radius: 12px;
+  transition: all 0.2s;
+}
+
+.admin-sidebar-category.is-project-pillar {
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  padding: 4px;
+}
+
+.admin-sidebar-category.has-active-child {
+  border-color: rgba(56, 189, 248, 0.3);
+  background: rgba(56, 189, 248, 0.03);
 }
 
 .admin-sidebar-category-trigger {
@@ -110,25 +253,46 @@
   padding: 8px 10px;
   background: transparent;
   border: none;
-  color: #64748b;
-  font-size: 0.78rem;
+  color: #94a3b8;
+  font-size: 0.76rem;
   font-weight: 800;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   cursor: pointer;
   border-radius: 8px;
-  transition: color 0.2s ease;
+  transition: all 0.2s ease;
 }
 
 .admin-sidebar-category-trigger:hover {
-  color: #38bdf8;
+  color: #ffffff;
+}
+
+.cat-header-left {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.admin-project-tag-badge {
+  font-size: 0.62rem;
+  font-weight: 800;
+  padding: 2px 6px;
+  border-radius: 6px;
+  border: 1px solid;
+  letter-spacing: 0.5px;
+}
+
+.cat-arrow {
+  font-size: 0.85rem;
+  opacity: 0.7;
 }
 
 .admin-sidebar-category-items {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-left: 6px;
+  gap: 3px;
+  padding-left: 4px;
 }
 
 .admin-nav-tab {
@@ -136,12 +300,12 @@
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  padding: 10px 14px;
-  border-radius: 12px;
-  background: rgba(255, 255, 255, 0.03);
-  border: 1px solid rgba(255, 255, 255, 0.06);
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.02);
+  border: 1px solid rgba(255, 255, 255, 0.05);
   color: #cbd5e1;
-  font-size: 0.9rem;
+  font-size: 0.86rem;
   font-weight: 600;
   cursor: pointer;
   text-align: left;
@@ -156,11 +320,11 @@
 }
 
 .admin-nav-tab.active {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(37, 99, 235, 0.35) 100%);
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.22) 0%, rgba(37, 99, 235, 0.32) 100%);
   border-color: rgba(56, 189, 248, 0.5);
   color: #ffffff;
   font-weight: 700;
-  box-shadow: 0 4px 14px rgba(37, 99, 235, 0.25);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.2);
 }
 
 .active-dot {
@@ -169,17 +333,23 @@
 }
 
 .admin-actions-group {
-  margin-top: 1.5rem;
-  padding-top: 1.25rem;
+  margin-top: 1.25rem;
+  padding-top: 1.1rem;
   border-top: 1px solid rgba(255, 255, 255, 0.1);
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
 }
 
 @media (max-width: 900px) {
   .admin-sidebar {
     width: 100%;
     min-height: auto;
+  }
+  .admin-mobile-nav {
+    display: block;
+  }
+  .admin-nav-menu {
+    max-height: 400px;
   }
 }
