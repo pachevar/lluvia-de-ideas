@@ -3413,6 +3413,15 @@ export default function BingoHub() {
                 </div>
               )}
 
+              {activeGame?.customization?.accessConfig?.paymentInfo?.paymentInstructions && (
+                <div style={{ background: 'rgba(56, 189, 248, 0.08)', padding: '12px 16px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.25)' }}>
+                  <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 'bold', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>📝 Indicaciones de Pago</span>
+                  <p style={{ fontSize: '0.85rem', color: '#e2e8f0', margin: 0, whiteSpace: 'pre-line', lineHeight: '1.4' }}>
+                    {activeGame.customization.accessConfig.paymentInfo.paymentInstructions}
+                  </p>
+                </div>
+              )}
+
               {activeGame?.customization?.accessConfig?.paymentInfo?.whatsappNumber ? (
                 <a 
                   href={`https://wa.me/${activeGame.customization.accessConfig.paymentInfo.whatsappNumber.replace(/[^0-9]/g, '')}?text=${encodeURIComponent(`Hola, me gustaría comprar un cartón para el Bingo "${activeGame.title}". Mi nombre es ${playerName || '[Ingresa tu Nombre]'}.`)}`}
