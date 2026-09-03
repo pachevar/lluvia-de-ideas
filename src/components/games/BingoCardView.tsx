@@ -1161,77 +1161,84 @@ export default function BingoCardView() {
       {/* 3. MINI TÓMBOLA MÓVIL 3D (POCKET HERO BALL & HISTORIAL) */}
       {gameData?.status === 'playing' && (
         <div className="mobile-pocket-tombola animate-fade-in">
-          {gameData.drawnNumbers && gameData.drawnNumbers.length > 0 ? (
-            (() => {
-              const latestBall = gameData.drawnNumbers[gameData.drawnNumbers.length - 1];
-              const meta = getBallMeta(latestBall);
-              return (
-                <div className="pocket-hero-ball-unit">
-                  <div 
-                    key={latestBall}
-                    className="pocket-hero-ball-3d animate-pop-in"
-                    style={{ 
-                      background: meta.gradient,
-                      boxShadow: `0 8px 18px rgba(0,0,0,0.6), 0 0 16px ${meta.glow}`
-                    }}
-                  >
-                    <div className="pocket-ball-badge">
-                      <span className="p-letter" style={{ color: meta.color }}>{meta.letter}</span>
-                      <span className="p-number">{latestBall}</span>
+          {/* Fila 1: Bola Cantada Estrella Actual y Contador */}
+          <div className="pocket-hero-row">
+            {gameData.drawnNumbers && gameData.drawnNumbers.length > 0 ? (
+              (() => {
+                const latestBall = gameData.drawnNumbers[gameData.drawnNumbers.length - 1];
+                const meta = getBallMeta(latestBall);
+                return (
+                  <div className="pocket-hero-ball-unit">
+                    <div 
+                      key={latestBall}
+                      className="pocket-hero-ball-3d animate-pop-in"
+                      style={{ 
+                        background: meta.gradient,
+                        boxShadow: `0 8px 18px rgba(0,0,0,0.6), 0 0 16px ${meta.glow}`
+                      }}
+                    >
+                      <div className="pocket-ball-badge">
+                        <span className="p-letter" style={{ color: meta.color }}>{meta.letter}</span>
+                        <span className="p-number">{latestBall}</span>
+                      </div>
+                    </div>
+                    <div className="pocket-ball-info">
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span className="pocket-ball-tag">BOLA CANTADA:</span>
+                        <strong style={{ color: meta.color, fontSize: '1.05rem', fontWeight: 900 }}>
+                          {meta.letter}-{latestBall}
+                        </strong>
+                      </div>
+                      {cardHasLastBall ? (
+                        <span className="pocket-in-card-alert animate-bounce">
+                          ✨ ¡ESTÁ EN TU CARTÓN!
+                        </span>
+                      ) : (
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>
+                          Total: {gameData.drawnNumbers.length} de 75
+                        </span>
+                      )}
                     </div>
                   </div>
-                  <div className="pocket-ball-info">
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                      <span className="pocket-ball-tag">ÚLTIMA BOLA:</span>
-                      <strong style={{ color: meta.color, fontSize: '0.95rem' }}>
-                        {meta.letter}-{latestBall}
-                      </strong>
-                    </div>
-                    {cardHasLastBall && (
-                      <span className="pocket-in-card-alert animate-bounce">
-                        ✨ ¡ESTÁ EN TU CARTÓN!
-                      </span>
-                    )}
-                  </div>
+                );
+              })()
+            ) : (
+              <div className="pocket-hero-ball-unit">
+                <div className="pocket-hero-ball-3d" style={{ background: '#334155', border: '2px dashed #64748b' }}>
+                  <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>🎲</span>
                 </div>
-              );
-            })()
-          ) : (
-            <div className="pocket-hero-ball-unit">
-              <div className="pocket-hero-ball-3d" style={{ background: '#334155', border: '2px dashed #64748b' }}>
-                <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>🎲</span>
+                <div className="pocket-ball-info">
+                  <span className="pocket-ball-tag">TÓMBOLA EN VIVO</span>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Esperando primera bola...</span>
+                </div>
               </div>
-              <div className="pocket-ball-info">
-                <span className="pocket-ball-tag">TÓMBOLA EN VIVO</span>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Esperando primera bola...</span>
-              </div>
-            </div>
-          )}
+            )}
+          </div>
 
-          {/* Carril de bolas anteriores */}
+          {/* Fila 2: Carril Ancho Deslizable de Bolas Anteriores (Cero desborde) */}
           <div className="pocket-history-rail">
             <span className="rail-label">Anteriores:</span>
             <div className="rail-balls-row">
               {gameData.drawnNumbers && gameData.drawnNumbers.length > 1 ? (
                 gameData.drawnNumbers
-                  .slice(Math.max(0, gameData.drawnNumbers.length - 5), gameData.drawnNumbers.length - 1)
+                  .slice(Math.max(0, gameData.drawnNumbers.length - 11), gameData.drawnNumbers.length - 1)
                   .reverse()
                   .map((num) => {
                     const m = getBallMeta(num);
                     return (
                       <div 
                         key={num} 
-                        className="pocket-mini-ball"
-                        style={{ background: m.gradient }}
-                        title={`Bola ${m.letter}-${num}`}
+                        className="pocket-capsule-ball"
+                        style={{ background: m.gradient, borderColor: m.color }}
+                        title={`Bola anterior: ${m.letter}-${num}`}
                       >
-                        <span className="m-l">{m.letter}</span>
-                        <span className="m-n">{num}</span>
+                        <span className="m-pill-letter">{m.letter}</span>
+                        <span className="m-pill-num">{num}</span>
                       </div>
                     );
                   })
               ) : (
-                <span style={{ fontSize: '0.72rem', color: '#64748b', padding: '0 4px' }}>--</span>
+                <span style={{ fontSize: '0.75rem', color: '#64748b', padding: '0 6px' }}>Sin bolas previas</span>
               )}
             </div>
           </div>
