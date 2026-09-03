@@ -1125,6 +1125,60 @@ export default function BingoCardView() {
               <span className="cyber-slider" />
             </label>
           </div>
+
+          {/* 🎯 OBJETIVO PARA GANAR (DENTRO DEL MENÚ DE AJUSTES) */}
+          {gameData?.winningPattern && (
+            <div className="drawer-pattern-card">
+              <div className="drawer-pattern-header">
+                <div className="drawer-pattern-info">
+                  <span className="drawer-sublabel">OBJETIVO DE ESTA PARTIDA</span>
+                  <h4 className="drawer-pattern-name">
+                    {gameData.winningPattern === 'full' && '🏆 Cartón Lleno'}
+                    {gameData.winningPattern === 'line' && '📏 Cualquier Línea'}
+                    {gameData.winningPattern === 'diagonal' && '❌ Diagonales en X'}
+                    {gameData.winningPattern === 'four_corners' && '📐 Cuatro Esquinas'}
+                  </h4>
+                  <p className="drawer-pattern-desc">
+                    {gameData.winningPattern === 'full' && 'Completa las 24 casillas numeradas de tu cartón.'}
+                    {gameData.winningPattern === 'line' && 'Completa cualquier fila o columna de 5 números.'}
+                    {gameData.winningPattern === 'diagonal' && 'Completa cualquiera de las dos diagonales.'}
+                    {gameData.winningPattern === 'four_corners' && 'Completa las 4 esquinas externas.'}
+                  </p>
+                </div>
+                {/* 5x5 micro-grid mini diagram */}
+                <div className="drawer-micro-grid">
+                  {Array(5).fill(null).map((_, r) =>
+                    Array(5).fill(null).map((_, c) => {
+                      const isCenter = r === 2 && c === 2;
+                      let isHighlighted = false;
+                      if (gameData.winningPattern === 'full') isHighlighted = true;
+                      else if (gameData.winningPattern === 'four_corners') isHighlighted = (r === 0 || r === 4) && (c === 0 || c === 4);
+                      else if (gameData.winningPattern === 'diagonal') isHighlighted = r === c || r + c === 4;
+                      else if (gameData.winningPattern === 'line') isHighlighted = r === 2 || c === 2;
+
+                      return (
+                        <div
+                          key={`${r}-${c}`}
+                          className={`micro-cell ${isCenter ? 'center' : isHighlighted ? 'highlight' : ''}`}
+                        />
+                      );
+                    })
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* 🚪 RENUNCIAR AL CARTÓN / SALIR (DENTRO DEL MENÚ DE AJUSTES) */}
+          <button
+            className="drawer-btn-abandon"
+            onClick={() => {
+              setShowSettingsDrawer(false);
+              handleAbandonCard();
+            }}
+          >
+            <span>🚪</span> Renunciar al Cartón / Salir
+          </button>
         </div>
       )}
 
@@ -1337,7 +1391,7 @@ export default function BingoCardView() {
           </div>
         </div>
 
-        <div style={{ marginTop: '30px', display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'center' }}>
+        <div style={{ marginTop: '22px', display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'center' }}>
           {/* BANNER DE PARTIDA EN PAUSA SI HAY UN RECLAMO PENDIENTE */}
           {gameData?.activeClaim && gameData.activeClaim.status === 'pending' && (
             <div 
@@ -1366,124 +1420,8 @@ export default function BingoCardView() {
             </div>
           )}
 
-          <button
-            className="btn btn-primary animate-pulse"
-            disabled={Boolean(gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)}
-            style={{ 
-              width: '100%', 
-              fontSize: '1.4rem', 
-              padding: '15px', 
-              borderRadius: '15px', 
-              background: (gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
-                ? '#475569'
-                : primaryColor, 
-              boxShadow: `0 8px 25px rgba(${primaryColor.startsWith('#') ? '168, 85, 247' : '168,85,247'}, 0.3)`,
-              cursor: (gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
-                ? 'not-allowed'
-                : 'pointer',
-              opacity: (gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
-                ? 0.65
-                : 1
-            }}
-            onClick={shoutBingo}
-          >
-            {gameData?.activeClaim && gameData.activeClaim.status === 'pending'
-              ? (gameData.activeClaim.cardId === cartonId 
-                  ? '⏳ TU BINGO ESTÁ EN REVISIÓN...' 
-                  : `⏳ EN REVISIÓN: ${gameData.activeClaim.playerName || 'OTRO JUGADOR'}...`)
-              : '📢 ¡CANTAR BINGO!'}
-          </button>
-
-          {/* Pattern Badge & Mini Guide (Moved here) */}
-          {gameData?.winningPattern && (
-            <div 
-              className="card-glass animate-fade-in"
-              style={{
-                margin: '10px auto 0',
-                width: '100%',
-                padding: '12px 18px',
-                borderRadius: '16px',
-                border: `1px solid ${primaryColor}66`,
-                background: 'rgba(255, 255, 255, 0.05)',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                gap: '15px'
-              }}
-            >
-              <div style={{ flex: 1, textAlign: 'left' }}>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1px', opacity: 0.6, display: 'block', marginBottom: '2px', color: '#fff' }}>Objetivo para ganar</span>
-                <h4 style={{ margin: 0, fontSize: '1.05rem', fontWeight: 'bold', color: '#fff', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  {gameData.winningPattern === 'full' && '🏆 Cartón Lleno (Completar todo)'}
-                  {gameData.winningPattern === 'line' && '📏 Cualquier Línea (Horizontal/Vertical)'}
-                  {gameData.winningPattern === 'diagonal' && '❌ Diagonales (Líneas en X)'}
-                  {gameData.winningPattern === 'four_corners' && '📐 Cuatro Esquinas'}
-                </h4>
-                <span style={{ fontSize: '0.72rem', color: '#e2dbf0', opacity: 0.8, display: 'block', marginTop: '4px' }}>
-                  {gameData.winningPattern === 'full' && 'Debes marcar todas las casillas del cartón.'}
-                  {gameData.winningPattern === 'line' && 'Debes completar cualquier fila de 5 o columna de 5 números.'}
-                  {gameData.winningPattern === 'diagonal' && 'Debes completar cualquiera de las dos diagonales principales.'}
-                  {gameData.winningPattern === 'four_corners' && 'Debes completar las cuatro esquinas externas de tu cartón.'}
-                </span>
-              </div>
-
-              {/* 5x5 micro-grid mini diagram */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: 'repeat(5, 1fr)',
-                gap: '2px',
-                width: '50px',
-                height: '50px',
-                background: 'rgba(0,0,0,0.3)',
-                padding: '4px',
-                borderRadius: '6px',
-                border: `1px solid ${primaryColor}66`,
-                flexShrink: 0
-              }}>
-                {Array(5).fill(null).map((_, r) =>
-                  Array(5).fill(null).map((_, c) => {
-                    const isCenter = r === 2 && c === 2;
-                    let isHighlighted = false;
-                    if (gameData.winningPattern === 'full') isHighlighted = true;
-                    else if (gameData.winningPattern === 'four_corners') isHighlighted = (r === 0 || r === 4) && (c === 0 || c === 4);
-                    else if (gameData.winningPattern === 'diagonal') isHighlighted = r === c || r + c === 4;
-                    else if (gameData.winningPattern === 'line') isHighlighted = r === 2 || c === 2;
-
-                    return (
-                      <div
-                        key={`${r}-${c}`}
-                        style={{
-                          borderRadius: '1px',
-                          background: isCenter
-                            ? accentColor
-                            : isHighlighted
-                            ? primaryColor
-                            : 'rgba(255, 255, 255, 0.1)',
-                          opacity: isCenter ? 1 : isHighlighted ? 0.95 : 0.2,
-                          aspectRatio: '1/1'
-                        }}
-                      />
-                    );
-                  })
-                )}
-              </div>
-            </div>
-          )}
-          
-          <button
-            className="btn-abandon-card"
-            onClick={handleAbandonCard}
-            style={{ marginTop: '10px' }}
-          >
-            🚪 Renunciar al Cartón / Salir
-          </button>
-        </div>
-      </div>
-
-      {/* 🚀 DOCK INFERIOR FLOTANTE (ACCESO RÁPIDO CON EL PULGAR SIN SCROLL) */}
-      {gameData && (
-        <div className="mobile-action-floating-dock card-glass">
-          {gameData.status === 'playing' && (() => {
+          {/* Chip con el conteo de bolas para ganar (Proximity Chip) */}
+          {gameData?.status === 'playing' && (() => {
             const missing = getProximityStatus();
             if (missing === null) return null;
             return (
@@ -1499,24 +1437,25 @@ export default function BingoCardView() {
             );
           })()}
 
+          {/* Botón único y principal de Cantar Bingo */}
           <button
             className={`btn-dock-shout ${getProximityStatus() === 0 ? 'shout-ready animate-pulse' : ''}`}
-            disabled={Boolean(gameData.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)}
+            disabled={Boolean(gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)}
             onClick={shoutBingo}
             style={{
-              background: (gameData.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
+              background: (gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
                 ? '#475569'
                 : (getProximityStatus() === 0 ? 'linear-gradient(135deg, #22c55e, #16a34a)' : primaryColor)
             }}
           >
-            {gameData.activeClaim && gameData.activeClaim.status === 'pending'
+            {gameData?.activeClaim && gameData.activeClaim.status === 'pending'
               ? (gameData.activeClaim.cardId === cartonId 
                   ? '⏳ TU BINGO ESTÁ EN REVISIÓN...' 
                   : `⏳ EN REVISIÓN: ${gameData.activeClaim.playerName || 'OTRO JUGADOR'}...`)
               : (getProximityStatus() === 0 ? '🏆 ¡CANTAR BINGO AHORA!' : '📢 ¡CANTAR BINGO!')}
           </button>
         </div>
-      )}
+      </div>
 
       {/* Confetti Animation Styles */}
       <style>{`
