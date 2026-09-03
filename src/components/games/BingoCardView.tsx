@@ -103,6 +103,7 @@ export default function BingoCardView() {
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [cardHasLastBall, setCardHasLastBall] = useState(false);
   const [testFeedbackActive, setTestFeedbackActive] = useState(false);
+  const previousBallsRailRef = useRef<HTMLDivElement>(null);
 
   // Secondary Card Gamer Menu & Prizes Modal States
   const [isCardMenuOpen, setIsCardMenuOpen] = useState(false);
@@ -152,7 +153,6 @@ export default function BingoCardView() {
   const [showBingoModal, setShowBingoModal] = useState(false);
   const [showAbandonModal, setShowAbandonModal] = useState(false);
   const [activeSponsorModal, setActiveSponsorModal] = useState<Sponsor | null>(null);
-  const [isSponsorFlipped, setIsSponsorFlipped] = useState(false);
 
   // Voice announcement and confirmation states
   const [voiceMode, setVoiceMode] = useState(() => localStorage.getItem('bingo_voice_mode') === 'true');
@@ -433,12 +433,19 @@ export default function BingoCardView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- narrow deps track the reset source; whole gameData would retrigger on every sync
   }, [gameData?.status, gameData?.drawnNumbers?.length, gameData?.lastResetAt, cartonId]);
 
+  // Auto-reset previous balls rail scroll position to the newest past ball when a new number arrives
+  useEffect(() => {
+    if (previousBallsRailRef.current) {
+      previousBallsRailRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [gameData?.drawnNumbers?.length]);
+
+  // Auto-dismiss sponsor spotlight modal after 6 seconds
   useEffect(() => {
     if (activeSponsorModal) {
-      setIsSponsorFlipped(false);
       const timer = setTimeout(() => {
-        setIsSponsorFlipped(true);
-      }, 1500);
+        setActiveSponsorModal(null);
+      }, 6000);
       return () => clearTimeout(timer);
     }
   }, [activeSponsorModal]);
@@ -1272,7 +1279,7 @@ export default function BingoCardView() {
           {/* Fila 2: Carril Ancho Deslizable de Bolas Anteriores (Cero desborde) */}
           <div className="pocket-history-rail">
             <span className="rail-label">Anteriores:</span>
-            <div className="rail-balls-row">
+            <div className="rail-balls-row" ref={previousBallsRailRef}>
               {gameData.drawnNumbers && gameData.drawnNumbers.length > 1 ? (
                 gameData.drawnNumbers
                   .slice(Math.max(0, gameData.drawnNumbers.length - 11), gameData.drawnNumbers.length - 1)
@@ -1523,203 +1530,76 @@ export default function BingoCardView() {
         document.body
       )}
 
-      {/* ====== PLAYER SPONSOR BANNER MODAL CON EFECTO FLIP CARD ====== */}
+      {/* ====== PLAYER SPONSOR SPOTLIGHT SHOWCASE MODAL ====== */}
       {activeSponsorModal && createPortal(
         <div 
-          className="player-modal-overlay animate-fade-in" 
+          className="sponsor-spotlight-overlay" 
           onClick={() => setActiveSponsorModal(null)}
-          style={{
-            zIndex: 99999,
-            background: 'rgba(5, 2, 12, 0.92)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)'
-          }}
         >
           <div 
-            className="sponsor-flip-card"
+            className="sponsor-spotlight-card"
             onClick={(e) => e.stopPropagation()}
           >
-            <div 
-              className={`sponsor-flip-card-inner ${isSponsorFlipped ? 'flipped' : ''}`}
-              onClick={() => setIsSponsorFlipped(true)}
+            {/* Botón rápido cerrar X en la esquina */}
+            <button 
+              className="sponsor-btn-close-corner"
+              onClick={() => setActiveSponsorModal(null)}
+              title="Cerrar patrocinador"
             >
-              {/* CARA FRONTAL: Contenido del Patrocinador */}
-              <div 
-                className="sponsor-flip-card-front"
-                style={{
-                  background: backgroundColor || '#0f172a',
-                  border: `4px solid ${primaryColor}`,
-                  boxShadow: `0 0 65px ${primaryColor}55, inset 0 0 30px rgba(0,0,0,0.5)`,
-                  color: isLight ? '#1f2937' : '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '20px',
-                  borderRadius: '32px'
-                }}
-              >
-                {/* Sponsor Logo */}
-                <div style={{
-                  width: '100%',
-                  maxWidth: '280px',
-                  height: '150px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'white',
-                  borderRadius: '20px',
-                  padding: '14px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                  border: `2px solid ${accentColor}`,
-                  marginTop: '10px'
-                }}>
-                  <img 
-                    src={activeSponsorModal.logo} 
-                    alt={activeSponsorModal.name} 
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
-                  />
-                </div>
-                
-                <h3 style={{ 
-                  margin: 0, 
-                  fontSize: '2rem', 
-                  color: isLight ? 'var(--text-title)' : '#ffffff', 
-                  fontWeight: 800,
-                  textShadow: isLight ? 'none' : `0 2px 10px ${primaryColor}aa`
-                }}>
-                  {activeSponsorModal.name}
-                </h3>
-                
-                {activeSponsorModal.message && (
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '1.15rem', 
-                    color: isLight ? 'var(--text-main)' : '#f1f5f9', 
-                    fontStyle: 'italic', 
-                    lineHeight: '1.4',
-                    textAlign: 'center',
-                    textShadow: isLight ? 'none' : '0 2px 4px rgba(0,0,0,0.5)',
-                    maxWidth: '90%'
-                  }}>
-                    "{activeSponsorModal.message}"
-                  </p>
-                )}
-                
-                <button 
-                  type="button" 
-                  onClick={() => setActiveSponsorModal(null)}
-                  style={{
-                    padding: '12px 30px',
-                    borderRadius: '14px',
-                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`,
-                    color: '#ffffff',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                    boxShadow: `0 4px 15px ${primaryColor}55`,
-                    transition: 'all 0.2s',
-                    marginTop: '15px',
-                    width: '100%'
-                  }}
-                >
-                  Continuar Juego ➔
-                </button>
-              </div>
+              ✕
+            </button>
 
-              {/* CARA TRASERA: El Patrocinador */}
-              <div 
-                className="sponsor-flip-card-back"
-                style={{
-                  background: backgroundColor || '#0f172a',
-                  border: `4px solid ${primaryColor}`,
-                  boxShadow: `0 0 65px ${primaryColor}55, inset 0 0 30px rgba(0,0,0,0.5)`,
-                  color: isLight ? '#1f2937' : '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '20px',
-                  borderRadius: '32px'
-                }}
-              >
-                {/* Sponsor Logo */}
-                <div style={{
-                  width: '100%',
-                  maxWidth: '280px',
-                  height: '150px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'white',
-                  borderRadius: '20px',
-                  padding: '14px',
-                  boxShadow: '0 10px 25px rgba(0,0,0,0.3)',
-                  border: `2px solid ${accentColor}`,
-                  marginTop: '10px'
-                }}>
-                  <img 
-                    src={activeSponsorModal.logo} 
-                    alt={activeSponsorModal.name} 
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
-                  />
-                </div>
-                
-                <h3 style={{ 
-                  margin: 0, 
-                  fontSize: '2rem', 
-                  color: isLight ? 'var(--text-title)' : '#ffffff', 
-                  fontWeight: 800,
-                  textShadow: isLight ? 'none' : `0 2px 10px ${primaryColor}aa`
-                }}>
-                  {activeSponsorModal.name}
-                </h3>
-                
-                {activeSponsorModal.message && (
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '1.15rem', 
-                    color: isLight ? 'var(--text-main)' : '#f1f5f9', 
-                    fontStyle: 'italic', 
-                    lineHeight: '1.4',
-                    textAlign: 'center',
-                    textShadow: isLight ? 'none' : '0 2px 4px rgba(0,0,0,0.5)',
-                    maxWidth: '90%'
-                  }}>
-                    "{activeSponsorModal.message}"
-                  </p>
-                )}
-                
-                <button 
-                  type="button" 
-                  onClick={() => setActiveSponsorModal(null)}
-                  style={{
-                    padding: '12px 30px',
-                    borderRadius: '14px',
-                    background: `linear-gradient(135deg, ${primaryColor} 0%, ${accentColor} 100%)`,
-                    color: '#ffffff',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                    boxShadow: `0 4px 15px ${primaryColor}55`,
-                    transition: 'all 0.2s',
-                    marginTop: '15px',
-                    width: '100%'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.03)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
-                >
-                  Continuar Juego ➔
-                </button>
+            {/* Badge Superior */}
+            <div className="sponsor-badge-pill">
+              <span>✨</span> PATROCINADOR OFICIAL <span>✨</span>
+            </div>
+
+            {/* Pod del Logo */}
+            <div className="sponsor-logo-stage">
+              <img 
+                src={activeSponsorModal.logo} 
+                alt={activeSponsorModal.name} 
+              />
+            </div>
+
+            {/* Nombre del Patrocinador */}
+            <h3 className="sponsor-brand-title">
+              {activeSponsorModal.name}
+            </h3>
+
+            {/* Mensaje / Eslogan si existe */}
+            {activeSponsorModal.message && (
+              <div className="sponsor-quote-box">
+                <p className="sponsor-quote-text">
+                  "{activeSponsorModal.message}"
+                </p>
               </div>
+            )}
+
+            {/* Chip con la última bola cantada */}
+            {gameData?.drawnNumbers && gameData.drawnNumbers.length > 0 && (() => {
+              const last = gameData.drawnNumbers[gameData.drawnNumbers.length - 1];
+              const meta = getBallMeta(last);
+              return (
+                <div className="sponsor-game-chip">
+                  <span>Última bola cantada:</span>
+                  <strong style={{ color: meta.color, fontSize: '0.95rem' }}>{meta.letter}-{last}</strong>
+                </div>
+              );
+            })()}
+
+            {/* Botón de Continuar */}
+            <button 
+              type="button" 
+              className="sponsor-btn-continue"
+              onClick={() => setActiveSponsorModal(null)}
+            >
+              Continuar Partida ➔
+            </button>
+
+            {/* Barra de progreso de autocierre */}
+            <div className="sponsor-countdown-track">
+              <div className="sponsor-countdown-bar" />
             </div>
           </div>
         </div>,

@@ -202,12 +202,12 @@ export default function BingoHub() {
   // Sponsor & Prizes Visual States
   const [activeSponsorModal, setActiveSponsorModal] = useState<Sponsor | null>(null);
   const [activeSponsorIntegrated, setActiveSponsorIntegrated] = useState<Sponsor | null>(null);
-  const [isSponsorFlipped, setIsSponsorFlipped] = useState(false);
   const [showPrizesModal, setShowPrizesModal] = useState(false);
   const [prizesSort, setPrizesSort] = useState<'asc' | 'desc' | 'category'>('asc');
   const [selectedPrizeIndex, setSelectedPrizeIndex] = useState<number | null>(null);
   const [isImageZoomed, setIsImageZoomed] = useState(false);
   const sliderRef = useRef<HTMLDivElement>(null);
+  const hostRecentBallsRailRef = useRef<HTMLDivElement>(null);
 
   // Scrolling terminal logs
   const [systemLogs, setSystemLogs] = useState<{ time: string; text: string; type: string }[]>([]);
@@ -393,12 +393,19 @@ export default function BingoHub() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- fire-and-forget mount subscription; triggerTombolaRoll read via ref/closure
   }, []);
 
+  // Auto-reset host recent balls rail scroll position to the newest past ball when a new number arrives
+  useEffect(() => {
+    if (hostRecentBallsRailRef.current) {
+      hostRecentBallsRailRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+    }
+  }, [activeGame?.drawnNumbers?.length]);
+
+  // Auto-dismiss sponsor spotlight modal after 6 seconds
   useEffect(() => {
     if (activeSponsorModal) {
-      setIsSponsorFlipped(false);
       const timer = setTimeout(() => {
-        setIsSponsorFlipped(true);
-      }, 1500);
+        setActiveSponsorModal(null);
+      }, 6000);
       return () => clearTimeout(timer);
     }
   }, [activeSponsorModal]);
@@ -2451,7 +2458,7 @@ export default function BingoHub() {
                               {/* 4. CARRIL DE LAS ÚLTIMAS 5 BOLAS */}
                               <div className="recent-balls-rail-wrapper">
                                 <span className="recent-balls-label">Últimas:</span>
-                                <div className="recent-balls-chute">
+                                <div className="recent-balls-chute" ref={hostRecentBallsRailRef}>
                                   {activeGame.drawnNumbers.length > 1 ? (
                                     activeGame.drawnNumbers
                                       .slice(Math.max(0, activeGame.drawnNumbers.length - 6), activeGame.drawnNumbers.length - 1)
@@ -2901,283 +2908,76 @@ export default function BingoHub() {
         document.body
       )}
 
-      {/* Sponsor Modal Overlay con efecto Flip Card */}
+      {/* ====== HOST SPONSOR SPOTLIGHT SHOWCASE MODAL ====== */}
       {activeSponsorModal && createPortal(
         <div 
-          className="player-modal-overlay animate-fade-in" 
+          className="sponsor-spotlight-overlay" 
           onClick={() => setActiveSponsorModal(null)}
-          style={{
-            zIndex: 99999,
-            background: 'rgba(5, 2, 12, 0.92)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            backdropFilter: 'blur(12px)',
-            WebkitBackdropFilter: 'blur(12px)'
-          }}
         >
           <div 
-            className="sponsor-flip-card"
+            className="sponsor-spotlight-card"
             onClick={(e) => e.stopPropagation()}
           >
-            <div 
-              className={`sponsor-flip-card-inner ${isSponsorFlipped ? 'flipped' : ''}`}
-              onClick={() => setIsSponsorFlipped(true)}
+            {/* Botón rápido cerrar X en la esquina */}
+            <button 
+              className="sponsor-btn-close-corner"
+              onClick={() => setActiveSponsorModal(null)}
+              title="Cerrar patrocinador"
             >
-              {/* CARA FRONTAL: Contenido del Patrocinador */}
-              <div 
-                className="sponsor-flip-card-front"
-                style={{
-                  background: activeGame?.customization?.backgroundColor || '#0f172a',
-                  border: `4px solid ${activeGame?.customization?.primaryColor || '#a855f7'}`,
-                  boxShadow: `0 0 60px ${(activeGame?.customization?.primaryColor || '#a855f7')}66, inset 0 0 30px rgba(0,0,0,0.5)`,
-                  color: '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '22px',
-                  borderRadius: '32px',
-                  padding: '24px'
-                }}
-              >
-                {/* Sponsor Logo */}
-                <div style={{
-                  width: '100%',
-                  maxWidth: '560px',
-                  height: '240px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'white',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  boxShadow: '0 12px 30px rgba(0,0,0,0.5)',
-                  border: `2px solid ${activeGame?.customization?.accentColor || '#ec4899'}`,
-                  marginTop: '10px'
-                }}>
-                  <img 
-                    src={activeSponsorModal.logo} 
-                    alt={activeSponsorModal.name} 
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
-                  />
-                </div>
-                
-                <h3 style={{ 
-                  margin: 0, 
-                  fontSize: '2.4rem', 
-                  color: '#ffffff', 
-                  fontWeight: 900,
-                  textShadow: `0 2px 12px ${(activeGame?.customization?.primaryColor || '#a855f7')}aa`
-                }}>
-                  {activeSponsorModal.name}
-                </h3>
-                
-                {activeSponsorModal.message && (
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '1.25rem', 
-                    color: '#f1f5f9', 
-                    fontStyle: 'italic', 
-                    lineHeight: '1.4',
-                    textAlign: 'center',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.6)',
-                    maxWidth: '92%'
-                  }}>
-                    "{activeSponsorModal.message}"
-                  </p>
-                )}
-                
-                <div style={{
-                  borderTop: '1px solid rgba(255,255,255,0.15)',
-                  width: '100%',
-                  paddingTop: '15px',
-                  marginTop: '5px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <span style={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)', fontWeight: 'bold', letterSpacing: '1px' }}>ÚLTIMA BOLA CANTADA:</span>
-                  
-                  {(() => {
-                    const last = activeGame?.drawnNumbers[activeGame.drawnNumbers.length - 1];
-                    if (!last) return null;
-                    let letter = 'B';
-                    if (last > 15 && last <= 30) letter = 'I';
-                    if (last > 30 && last <= 45) letter = 'N';
-                    if (last > 45 && last <= 60) letter = 'G';
-                    if (last > 60 && last <= 75) letter = 'O';
-                    
-                    return (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '14px',
-                        background: 'rgba(255,255,255,0.06)',
-                        padding: '12px 28px',
-                        borderRadius: '50px',
-                        border: `1.5px solid ${(activeGame?.customization?.accentColor || '#ec4899')}88`,
-                        boxShadow: `0 0 18px ${(activeGame?.customization?.accentColor || '#ec4899')}33`
-                      }}>
-                        <span style={{ fontSize: '2.5rem', fontWeight: 900, color: activeGame?.customization?.accentColor || '#ec4899' }}>{letter}</span>
-                        <span style={{ fontSize: '2.5rem', fontWeight: 900, color: '#ffffff' }}>{last}</span>
-                      </div>
-                    );
-                  })()}
-                </div>
-                
-                <button 
-                  type="button" 
-                  onClick={() => setActiveSponsorModal(null)}
-                  style={{
-                    padding: '14px 36px',
-                    borderRadius: '16px',
-                    background: `linear-gradient(135deg, ${activeGame?.customization?.primaryColor || '#a855f7'} 0%, ${activeGame?.customization?.accentColor || '#ec4899'} 100%)`,
-                    color: '#ffffff',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '1.05rem',
-                    cursor: 'pointer',
-                    boxShadow: `0 4px 18px ${(activeGame?.customization?.primaryColor || '#a855f7')}55`,
-                    transition: 'all 0.2s',
-                    marginTop: '5px'
-                  }}
-                >
-                  Continuar Juego ➔
-                </button>
-              </div>
+              ✕
+            </button>
 
-              {/* CARA TRASERA: El Patrocinador */}
-              <div 
-                className="sponsor-flip-card-back"
-                style={{
-                  background: activeGame?.customization?.backgroundColor || '#0f172a',
-                  border: `4px solid ${activeGame?.customization?.primaryColor || '#a855f7'}`,
-                  boxShadow: `0 0 60px ${(activeGame?.customization?.primaryColor || '#a855f7')}66, inset 0 0 30px rgba(0,0,0,0.5)`,
-                  color: '#ffffff',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '22px',
-                  borderRadius: '32px',
-                  padding: '24px'
-                }}
-              >
-                {/* Sponsor Logo */}
-                <div style={{
-                  width: '100%',
-                  maxWidth: '560px',
-                  height: '240px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  background: 'white',
-                  borderRadius: '24px',
-                  padding: '20px',
-                  boxShadow: '0 12px 30px rgba(0,0,0,0.5)',
-                  border: `2px solid ${activeGame?.customization?.accentColor || '#ec4899'}`,
-                  marginTop: '10px'
-                }}>
-                  <img 
-                    src={activeSponsorModal.logo} 
-                    alt={activeSponsorModal.name} 
-                    style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }} 
-                  />
-                </div>
-                
-                <h3 style={{ 
-                  margin: 0, 
-                  fontSize: '2.4rem', 
-                  color: '#ffffff', 
-                  fontWeight: 900,
-                  textShadow: `0 2px 12px ${(activeGame?.customization?.primaryColor || '#a855f7')}aa`
-                }}>
-                  {activeSponsorModal.name}
-                </h3>
-                
-                {activeSponsorModal.message && (
-                  <p style={{ 
-                    margin: 0, 
-                    fontSize: '1.25rem', 
-                    color: '#f1f5f9', 
-                    fontStyle: 'italic', 
-                    lineHeight: '1.4',
-                    textAlign: 'center',
-                    textShadow: '0 2px 4px rgba(0,0,0,0.6)',
-                    maxWidth: '92%'
-                  }}>
-                    "{activeSponsorModal.message}"
-                  </p>
-                )}
-                
-                <div style={{
-                  borderTop: '1px solid rgba(255,255,255,0.15)',
-                  width: '100%',
-                  paddingTop: '15px',
-                  marginTop: '5px',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  alignItems: 'center',
-                  gap: '10px'
-                }}>
-                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.6)', fontWeight: 'bold', letterSpacing: '1px' }}>ÚLTIMA BOLA CANTADA:</span>
-                  
-                  {(() => {
-                    const last = activeGame?.drawnNumbers[activeGame.drawnNumbers.length - 1];
-                    if (!last) return null;
-                    let letter = 'B';
-                    if (last > 15 && last <= 30) letter = 'I';
-                    if (last > 30 && last <= 45) letter = 'N';
-                    if (last > 45 && last <= 60) letter = 'G';
-                    if (last > 60 && last <= 75) letter = 'O';
-                    
-                    return (
-                      <div style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '12px',
-                        background: 'rgba(255,255,255,0.06)',
-                        padding: '10px 24px',
-                        borderRadius: '50px',
-                        border: `1.5px solid ${(activeGame?.customization?.accentColor || '#ec4899')}88`,
-                        boxShadow: `0 0 15px ${(activeGame?.customization?.accentColor || '#ec4899')}33`
-                      }}>
-                        <span style={{ fontSize: '2.2rem', fontWeight: 900, color: activeGame?.customization?.accentColor || '#ec4899' }}>{letter}</span>
-                        <span style={{ fontSize: '2.2rem', fontWeight: 900, color: '#ffffff' }}>{last}</span>
-                      </div>
-                    );
-                  })()}
-                </div>
-                
-                <button 
-                  type="button" 
-                  onClick={() => setActiveSponsorModal(null)}
-                  style={{
-                    padding: '12px 30px',
-                    borderRadius: '14px',
-                    background: `linear-gradient(135deg, ${activeGame?.customization?.primaryColor || '#a855f7'} 0%, ${activeGame?.customization?.accentColor || '#ec4899'} 100%)`,
-                    color: '#ffffff',
-                    border: 'none',
-                    fontWeight: 'bold',
-                    fontSize: '1rem',
-                    cursor: 'pointer',
-                    boxShadow: `0 4px 15px ${(activeGame?.customization?.primaryColor || '#a855f7')}55`,
-                    transition: 'all 0.2s',
-                    marginTop: '5px'
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.transform = 'scale(1.04)'}
-                  onMouseLeave={e => e.currentTarget.style.transform = 'scale(1.0)'}
-                >
-                  Continuar Juego ➔
-                </button>
+            {/* Badge Superior */}
+            <div className="sponsor-badge-pill">
+              <span>✨</span> PATROCINADOR OFICIAL <span>✨</span>
+            </div>
+
+            {/* Pod del Logo */}
+            <div className="sponsor-logo-stage" style={{ maxWidth: '440px', height: '180px' }}>
+              <img 
+                src={activeSponsorModal.logo} 
+                alt={activeSponsorModal.name} 
+              />
+            </div>
+
+            {/* Nombre del Patrocinador */}
+            <h3 className="sponsor-brand-title" style={{ fontSize: '2.4rem' }}>
+              {activeSponsorModal.name}
+            </h3>
+
+            {/* Mensaje / Eslogan si existe */}
+            {activeSponsorModal.message && (
+              <div className="sponsor-quote-box" style={{ maxWidth: '500px' }}>
+                <p className="sponsor-quote-text" style={{ fontSize: '1.2rem' }}>
+                  "{activeSponsorModal.message}"
+                </p>
               </div>
+            )}
+
+            {/* Chip con la última bola cantada para mantener al público en contexto */}
+            {activeGame?.drawnNumbers && activeGame.drawnNumbers.length > 0 && (() => {
+              const last = activeGame.drawnNumbers[activeGame.drawnNumbers.length - 1];
+              const meta = getBallMeta(last);
+              return (
+                <div className="sponsor-game-chip">
+                  <span>Última bola cantada:</span>
+                  <strong style={{ color: meta.color, fontSize: '1.05rem' }}>{meta.letter}-{last}</strong>
+                </div>
+              );
+            })()}
+
+            {/* Botón de Continuar */}
+            <button 
+              type="button" 
+              className="sponsor-btn-continue"
+              onClick={() => setActiveSponsorModal(null)}
+            >
+              Continuar Partida ➔
+            </button>
+
+            {/* Barra de progreso de autocierre */}
+            <div className="sponsor-countdown-track">
+              <div className="sponsor-countdown-bar" />
             </div>
           </div>
         </div>,
