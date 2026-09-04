@@ -327,6 +327,149 @@ function calculatePhotonPhysics(wavelengthNm: number) {
   return { freqTHz, energyEV };
 }
 
+// Interfaces y Constantes de Física Orbital & Gravitación
+interface PhysicsPreset {
+  id: string;
+  name: string;
+  icon: string;
+  tag: string;
+  starMass: number;
+  planetVelocity: number;
+  orbitalDistance: number;
+  eccentricity: number;
+  isEinstein?: boolean;
+  desc: string;
+}
+
+const PHYSICS_PRESETS: PhysicsPreset[] = [
+  {
+    id: 'earth',
+    name: 'Órbita Terrestre',
+    icon: '🌍',
+    tag: 'Equilibrio Circular (1.0 UA)',
+    starMass: 1.0,
+    planetVelocity: 1.0,
+    orbitalDistance: 1.0,
+    eccentricity: 0.017,
+    desc: 'Órbita casi circular en equilibrio dinámico perfecto. La aceleración centrípeta solar equilibra la velocidad de 29.8 km/s.'
+  },
+  {
+    id: 'mercury_einstein',
+    name: 'Mercurio & Einstein',
+    icon: '☿',
+    tag: 'Precesión Relativista',
+    starMass: 1.0,
+    planetVelocity: 1.15,
+    orbitalDistance: 0.5,
+    eccentricity: 0.206,
+    isEinstein: true,
+    desc: 'Alta excentricidad y proximidad solar extrema. Permite observar el avance anómalo del perihelio explicado por la curvatura de Einstein.'
+  },
+  {
+    id: 'halley',
+    name: 'Cometa Halley',
+    icon: '☄️',
+    tag: '2ª Ley de Kepler Extrema',
+    starMass: 1.0,
+    planetVelocity: 1.35,
+    orbitalDistance: 1.4,
+    eccentricity: 0.65,
+    desc: 'Órbita fuertemente elíptica. Demuestra la 2ª Ley de Kepler: gran velocidad en el perihelio y viaje lento en el afelio.'
+  },
+  {
+    id: 'voyager_escape',
+    name: 'Escape Interestelar',
+    icon: '🚀',
+    tag: 'Velocidad de Escape (v > √2·vorb)',
+    starMass: 1.0,
+    planetVelocity: 1.55,
+    orbitalDistance: 1.1,
+    eccentricity: 0.3,
+    desc: 'La velocidad tangencial supera la velocidad de escape parabólica (v > 1.414 × vorb). La nave escapa hacia el espacio interestelar.'
+  },
+  {
+    id: 'collapse',
+    name: 'Colapso Gravitacional',
+    icon: '⚠️',
+    tag: 'Velocidad Sub-Orbital',
+    starMass: 1.8,
+    planetVelocity: 0.5,
+    orbitalDistance: 0.8,
+    eccentricity: 0.0,
+    desc: 'La velocidad tangencial no compensa la atracción gravitatoria. El planeta decae en espiral hasta colisionar con la estrella.'
+  }
+];
+
+interface GravitationalExperiment {
+  id: string;
+  name: string;
+  agency: string;
+  mission: string;
+  target: string;
+  focusLaw: string;
+  achievement: string;
+  description: string;
+  icon: string;
+}
+
+const GRAVITATIONAL_EXPERIMENTS: GravitationalExperiment[] = [
+  {
+    id: 'bepicolombo',
+    name: 'BepiColombo (Experimento MORE)',
+    agency: 'ESA / JAXA',
+    mission: 'Misión a Mercurio',
+    target: 'Campo gravitatorio y curvatura de Einstein',
+    focusLaw: 'Relatividad General & Precesión del Perihelio',
+    achievement: 'Mide el avance del perihelio de Mercurio con precisión sin precedentes mediante transpondedores de radio en banda Ka, confirmando las predicciones métricas de Einstein.',
+    description: 'Aprovecha la proximidad del pozo gravitatorio solar en Mercurio para contrastar la Relatividad General con teorías alternativas de gravedad escalar-tensorial.',
+    icon: '🛰️'
+  },
+  {
+    id: 'gravity_probe_b',
+    name: 'Gravity Probe B',
+    agency: 'NASA / Stanford University',
+    mission: 'Satélite Científico de Órbita Polar',
+    target: 'Deformación del Espacio-Tiempo Terrestre',
+    focusLaw: 'Efecto Geodésico & Frame-Dragging (Lense-Thirring)',
+    achievement: 'Confirmó que la masa de la Tierra deforma el espacio en 6,606 milisegundos de arco/año (efecto geodésico) y que la rotación arrastra la tela espacio-temporal en 39.2 milisegundos de arco/año.',
+    description: 'Utilizó los cuatro giroscopios esféricos de cuarzo más perfectos jamás fabricados por la humanidad, suspendidos en helio líquido criogénico a 1.8 Kelvin.',
+    icon: '🌐'
+  },
+  {
+    id: 'kepler_tess',
+    name: 'Telescopios Kepler & TESS',
+    agency: 'NASA',
+    mission: 'Cazadores de Exoplanetas',
+    target: 'Órbitas de 5,000+ Mundos Alienígenas',
+    focusLaw: '3ª Ley Armónica de Kepler (T² = a³)',
+    achievement: 'Permitieron calcular el radio exacto de las órbitas y la masa de estrellas lejanas midiendo el tiempo entre tránsitos sucesivos con la 3ª Ley de Kepler.',
+    description: 'Demostraron que las leyes de Kepler formuladas en el siglo XVII en Praga son universales y gobiernan los sistemas planetarios de toda la Vía Láctea.',
+    icon: '🔭'
+  },
+  {
+    id: 'voyager_slingshot',
+    name: 'Voyager 1 & 2 (Tirachinas Gravitatorio)',
+    agency: 'NASA / JPL',
+    mission: 'Gran Tour del Sistema Solar',
+    target: 'Asistencia Gravitatoria de Júpiter y Saturno',
+    focusLaw: 'Conservación del Momento Orbital & Velocidad de Escape',
+    achievement: 'Aprovecharon la energía orbital de Júpiter y Saturno para ganar hasta 15 km/s de impulso gratis, convirtiéndose en las naves más veloces y lejanas de la humanidad (24,000+ millones de km).',
+    description: 'Un ejemplo magistral de mecánica celeste: la nave roba una fracción infinitesimal del momento angular del planeta para acelerar hacia el medio interestelar sin motores.',
+    icon: '🚀'
+  },
+  {
+    id: 'lageos',
+    name: 'Satélites LAGEOS 1 & 2',
+    agency: 'NASA / ASI (Italia)',
+    mission: 'Geodinámica y Medición Láser',
+    target: 'Campo Gravitacional Terrestre Cuadrupolar',
+    focusLaw: 'Gravitación Newtoniana & Armónicos Esféricos (J₂)',
+    achievement: 'Mapearon las irregularidades gravitatorias del geoide terrestre y midieron por primera vez el arrastre gravitomagnético de la rotación terrestre con telémetros láser.',
+    description: 'Esferas de latón y aluminio de 60 cm cubiertas por 426 retroreflectores cúbicos de cuarzo que reflejan pulsos láser desde estaciones terrestres con precisión milimétrica.',
+    icon: '💎'
+  }
+];
+
 const CELESTIAL_DATA: Record<string, CelestialBody> = {
   sol: {
     id: 'sol',
@@ -720,11 +863,17 @@ export default function SolarSystem() {
   const [selectedInstrument, setSelectedInstrument] = useState<string>('jwst_nirspec');
   const [activeSpectroSection, setActiveSpectroSection] = useState<'analyzer' | 'instruments' | 'learning'>('analyzer');
 
-  // Pestaña 4: Física Orbital
+  // Pestaña 4: Física Orbital & Relatividad
   const [starMass, setStarMass] = useState<number>(1.0);
   const [planetVelocity, setPlanetVelocity] = useState<number>(1.0);
   const [orbitalDistance, setOrbitalDistance] = useState<number>(1.0);
+  const [orbitalEccentricity, setOrbitalEccentricity] = useState<number>(0.017);
   const [showPrecessionEinstein, setShowPrecessionEinstein] = useState<boolean>(false);
+  const [showKeplerSecondLaw, setShowKeplerSecondLaw] = useState<boolean>(false);
+  const [activePhysicsSection, setActivePhysicsSection] = useState<'simulator' | 'experiments' | 'learning'>('simulator');
+  const [selectedExperiment, setSelectedExperiment] = useState<string>('bepicolombo');
+  const [activePhysicsPreset, setActivePhysicsPreset] = useState<string>('earth');
+  const [precessionOffsetDeg, setPrecessionOffsetDeg] = useState<number>(0);
   const [physicsRadius, setPhysicsRadius] = useState<number>(180);
   const [physicsAngle, setPhysicsAngle] = useState<number>(0);
   const [physicsCollided, setPhysicsCollided] = useState<boolean>(false);
@@ -834,30 +983,41 @@ export default function SolarSystem() {
     setPhysicsEscaped(false);
     let currentR = 180 * orbitalDistance;
     setPhysicsRadius(currentR);
+    setPhysicsCollided(false);
+    setPhysicsEscaped(false);
 
     const animatePhysics = (time: number) => {
       if (physicsPrevTimeRef.current !== 0) {
-        const dt = (time - physicsPrevTimeRef.current) / 1000;
+        const dt = Math.min((time - physicsPrevTimeRef.current) / 1000, 0.1);
         const idealV = Math.sqrt(starMass / (orbitalDistance || 0.001));
         const actualV = planetVelocity * idealV;
         const balance = actualV / (idealV || 0.001);
 
-        if (balance < 0.8) {
-          currentR = Math.max(25, currentR - dt * 45 * (1.2 - balance));
+        if (balance < 0.65) {
+          currentR = Math.max(25, currentR - dt * 55 * (1.1 - balance));
           setPhysicsRadius(currentR);
           if (currentR <= 35) setPhysicsCollided(true);
-        } else if (balance > 1.25) {
-          currentR = Math.min(420, currentR + dt * 55 * (balance - 1.0));
+        } else if (balance > 1.45) {
+          currentR = Math.min(450, currentR + dt * 65 * (balance - 1.0));
           setPhysicsRadius(currentR);
-          if (currentR >= 400) setPhysicsEscaped(true);
+          if (currentR >= 420) setPhysicsEscaped(true);
         } else {
-          const targetR = 180 * orbitalDistance;
-          currentR = currentR + (targetR - currentR) * 0.05;
-          setPhysicsRadius(currentR);
+          setPhysicsCollided(false);
+          setPhysicsEscaped(false);
+          const baseR = 180 * orbitalDistance;
+          setPhysicsRadius(baseR);
         }
 
-        const angularSpeed = (actualV / (orbitalDistance || 0.1)) * 40;
+        // Variación de velocidad según la 2ª Ley de Kepler: mayor aceleración en el perihelio
+        const rad = (physicsAngle * Math.PI) / 180;
+        const keplerFactor = (1 + orbitalEccentricity * Math.cos(rad)) / Math.max(0.1, 1 - orbitalEccentricity * orbitalEccentricity);
+        const angularSpeed = (actualV / (orbitalDistance || 0.1)) * 38 * Math.min(3.5, keplerFactor);
+        
         setPhysicsAngle(prev => (prev + angularSpeed * dt * 1.5) % 360);
+
+        if (showPrecessionEinstein) {
+          setPrecessionOffsetDeg(prev => (prev + dt * 14) % 360);
+        }
       }
 
       physicsPrevTimeRef.current = time;
@@ -866,7 +1026,7 @@ export default function SolarSystem() {
 
     physicsAnimationRef.current = requestAnimationFrame(animatePhysics);
     return () => cancelAnimationFrame(physicsAnimationRef.current);
-  }, [activeTab, starMass, planetVelocity, orbitalDistance]);
+  }, [activeTab, starMass, planetVelocity, orbitalDistance, orbitalEccentricity, showPrecessionEinstein]);
 
   // Radios de Semi-Eje Mayor en SVG (Plano 900x900)
   const semiMajorAxes: Record<string, number> = {
@@ -3033,107 +3193,598 @@ export default function SolarSystem() {
         )}
 
         {/* =========================================================
-            PESTAÑA 4: FÍSICA ORBITAL (3ª LEY & EINSTEIN)
+            PESTAÑA 4: FÍSICA ORBITAL & RELATIVIDAD (KEPLER & EINSTEIN)
            ========================================================= */}
-        {activeTab === 'physics' && (
-          <div className="sim-dashboard animate-fade-in">
-            <div className="physics-lab-container">
-              <h2 className="section-title">🧪 Laboratorio de Física Orbital (Leyes de Kepler & Einstein)</h2>
-              
-              <div className="physics-controls-panel">
-                <div className="control-slider-box">
-                  <label>Masa de la Estrella: <strong>{starMass} M☉</strong></label>
-                  <input type="range" min="0.2" max="3.0" step="0.1" value={starMass} onChange={(e) => setStarMass(parseFloat(e.target.value))} />
+        {activeTab === 'physics' && (() => {
+          // Cálculos de Astrodinámica en Vivo
+          const baseOrbitalSpeedKmS = 29.78; // Velocidad orbital de la Tierra a 1.0 UA en km/s
+          const currentOrbitalSpeedKmS = (baseOrbitalSpeedKmS * Math.sqrt(starMass / (orbitalDistance || 0.001)) * planetVelocity).toFixed(1);
+          const escapeSpeedKmS = (parseFloat(currentOrbitalSpeedKmS) * Math.SQRT2).toFixed(1);
+          
+          // 3ª Ley de Kepler: T = sqrt(a^3 / M) en años terrestres
+          const orbitalPeriodYears = Math.sqrt(Math.pow(orbitalDistance, 3) / (starMass || 0.001));
+          const orbitalPeriodDays = (orbitalPeriodYears * 365.25).toFixed(1);
+          const keplerRatio = (Math.pow(orbitalPeriodYears, 2) / Math.pow(orbitalDistance, 3)).toFixed(3);
+
+          // Estado del Sistema Gravitacional
+          const isEscaping = parseFloat(currentOrbitalSpeedKmS) >= parseFloat(escapeSpeedKmS) * 0.98 || physicsEscaped;
+          const isCollapsing = physicsCollided || planetVelocity < 0.6;
+
+          // Parámetros de la Elipse en SVG (centro en 350, 250)
+          const semiMajorA = Math.min(260, Math.max(50, 160 * orbitalDistance));
+          const semiMinorB = semiMajorA * Math.sqrt(Math.max(0.05, 1 - orbitalEccentricity * orbitalEccentricity));
+          const focusOffsetC = semiMajorA * orbitalEccentricity; // Desplazamiento del foco del Sol respecto al centro de la elipse
+
+          // Posición del Planeta en la Órbita (con factor dinámico de colapso/escape si aplica)
+          const rad = (physicsAngle * Math.PI) / 180;
+          const collapseEscapeScale = Math.max(0.1, physicsRadius / (180 * (orbitalDistance || 1)));
+          const currentRadiusPx = ((semiMajorA * (1 - orbitalEccentricity * orbitalEccentricity)) / (1 + orbitalEccentricity * Math.cos(rad))) * collapseEscapeScale;
+          
+          // Ángulo con rotación de precesión einsteiniana si está activa
+          const effectiveAngleRad = rad + (showPrecessionEinstein ? (precessionOffsetDeg * Math.PI) / 180 : 0);
+          const planetPx = 350 + currentRadiusPx * Math.cos(effectiveAngleRad);
+          const planetPy = 250 + currentRadiusPx * Math.sin(effectiveAngleRad);
+
+          // Vectores Físicos:
+          // 1. Vector Fuerza Gravitatoria Fg (apunta exactamente hacia el foco del Sol en 350, 250)
+          const distToSun = Math.max(15, Math.hypot(350 - planetPx, 250 - planetPy));
+          const fgMagnitude = Math.min(65, Math.max(25, (starMass / (distToSun / 100)) * 14));
+          const fgUnitX = (350 - planetPx) / distToSun;
+          const fgUnitY = (250 - planetPy) / distToSun;
+          const fgEndX = planetPx + fgUnitX * fgMagnitude;
+          const fgEndY = planetPy + fgUnitY * fgMagnitude;
+
+          // 2. Vector Velocidad Tangencial Vt (perpendicular al radio vector de Kepler)
+          const vtMagnitude = Math.min(70, Math.max(20, parseFloat(currentOrbitalSpeedKmS) * 1.4));
+          const vtEndX = planetPx - Math.sin(effectiveAngleRad) * vtMagnitude;
+          const vtEndY = planetPy + Math.cos(effectiveAngleRad) * vtMagnitude;
+
+          // Puntos de Perihelio y Afelio
+          const perihelionDistAU = (orbitalDistance * (1 - orbitalEccentricity)).toFixed(2);
+          const aphelionDistAU = (orbitalDistance * (1 + orbitalEccentricity)).toFixed(2);
+
+          return (
+            <div className="sim-dashboard animate-fade-in">
+              <div className="physics-lab-container">
+                <div className="physics-title-block">
+                  <h2 className="section-title">🧪 Laboratorio de Física Orbital & Relatividad</h2>
+                  <p className="section-subtitle">
+                    Experimenta con las Leyes de Kepler, la gravedad newtoniana y la curvatura del espacio-tiempo de Einstein que gobiernan los planetas y satélites.
+                  </p>
                 </div>
 
-                <div className="control-slider-box">
-                  <label>Velocidad Tangencial: <strong>{planetVelocity}x</strong></label>
-                  <input type="range" min="0.2" max="2.5" step="0.1" value={planetVelocity} onChange={(e) => setPlanetVelocity(parseFloat(e.target.value))} />
+                {/* Subnavegación de Física Orbital */}
+                <div className="physics-subnav-bar">
+                  <button 
+                    className={`physics-subnav-btn ${activePhysicsSection === 'simulator' ? 'active' : ''}`}
+                    onClick={() => {
+                      setActivePhysicsSection('simulator');
+                      soundEffects.playClick();
+                    }}
+                  >
+                    🪐 Simulador Gravitacional
+                  </button>
+                  <button 
+                    className={`physics-subnav-btn ${activePhysicsSection === 'experiments' ? 'active' : ''}`}
+                    onClick={() => {
+                      setActivePhysicsSection('experiments');
+                      soundEffects.playClick();
+                    }}
+                  >
+                    🛰️ Misiones & Experimentos
+                  </button>
+                  <button 
+                    className={`physics-subnav-btn ${activePhysicsSection === 'learning' ? 'active' : ''}`}
+                    onClick={() => {
+                      setActivePhysicsSection('learning');
+                      soundEffects.playClick();
+                    }}
+                  >
+                    🎓 Guía Didáctica: Kepler a Einstein
+                  </button>
                 </div>
 
-                <div className="control-slider-box">
-                  <label>Distancia Orbital: <strong>{orbitalDistance} UA</strong></label>
-                  <input type="range" min="0.5" max="2.0" step="0.1" value={orbitalDistance} onChange={(e) => setOrbitalDistance(parseFloat(e.target.value))} />
-                </div>
+                {/* SECCIÓN 1: SIMULADOR GRAVITACIONAL INTERACTIVO */}
+                {activePhysicsSection === 'simulator' && (
+                  <div className="physics-main-panel animate-fade-in">
+                    {/* Presets de Escenarios Astronómicos Reales */}
+                    <div className="physics-presets-bar">
+                      <span className="presets-title">🎯 Escenarios Preconfigurados:</span>
+                      <div className="physics-presets-chips">
+                        {PHYSICS_PRESETS.map((p) => (
+                          <button
+                            key={p.id}
+                            className={`physics-preset-chip ${activePhysicsPreset === p.id ? 'active' : ''}`}
+                            onClick={() => {
+                              setActivePhysicsPreset(p.id);
+                              setStarMass(p.starMass);
+                              setPlanetVelocity(p.planetVelocity);
+                              setOrbitalDistance(p.orbitalDistance);
+                              setOrbitalEccentricity(p.eccentricity);
+                              setShowPrecessionEinstein(!!p.isEinstein);
+                              setPhysicsCollided(false);
+                              setPhysicsEscaped(false);
+                              soundEffects.playClick();
+                            }}
+                          >
+                            <span className="preset-icon">{p.icon}</span>
+                            <div>
+                              <strong>{p.name}</strong>
+                              <span className="preset-sub">{p.tag}</span>
+                            </div>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                <label className="toggle-chip einstein-toggle">
-                  <input type="checkbox" checked={showPrecessionEinstein} onChange={() => setShowPrecessionEinstein(!showPrecessionEinstein)} />
-                  🌌 Precesión Relativista de Einstein (Mercurio)
-                </label>
-              </div>
+                    <div className="physics-grid-layout">
+                      {/* Columna de Controles con Steppers para Móvil */}
+                      <div className="physics-controls-panel">
+                        {/* Control 1: Masa de la Estrella */}
+                        <div className="control-slider-box">
+                          <div className="slider-header-row">
+                            <label>☀️ Masa de la Estrella:</label>
+                            <span className="slider-tag-val">{starMass.toFixed(1)} M☉</span>
+                          </div>
+                          <div className="stepper-slider-wrapper">
+                            <button 
+                              className="stepper-btn" 
+                              onClick={() => setStarMass(prev => Math.max(0.2, parseFloat((prev - 0.1).toFixed(1))))}
+                            >
+                              -0.1
+                            </button>
+                            <input 
+                              type="range" min="0.2" max="3.0" step="0.1" 
+                              value={starMass} 
+                              onChange={(e) => setStarMass(parseFloat(e.target.value))} 
+                              className="physics-range-input"
+                            />
+                            <button 
+                              className="stepper-btn" 
+                              onClick={() => setStarMass(prev => Math.min(3.0, parseFloat((prev + 0.1).toFixed(1))))}
+                            >
+                              +0.1
+                            </button>
+                          </div>
+                          <span className="slider-hint">Afecta la aceleración gravitatoria: Fg = G·M·m / r²</span>
+                        </div>
 
-              {/* Demostración de la 3ª Ley de Kepler */}
-              <div className="kepler-third-law-card">
-                <h3>📊 Demostración de la 3ª Ley de Kepler ($T^2 = a^3$)</h3>
-                <p>El cuadrado del periodo orbital ($T^2$) es exactamente igual al cubo del semi-eje mayor ($a^3$):</p>
-                <div className="kepler-eq-box">
-                  <span>(T / 1 año)² = ({orbitalDistance})³ = <strong>{(Math.pow(orbitalDistance, 3)).toFixed(3)}</strong></span>
-                </div>
-              </div>
+                        {/* Control 2: Velocidad Tangencial */}
+                        <div className="control-slider-box">
+                          <div className="slider-header-row">
+                            <label>🚀 Velocidad Tangencial:</label>
+                            <span className="slider-tag-val">{planetVelocity.toFixed(2)}x</span>
+                          </div>
+                          <div className="stepper-slider-wrapper">
+                            <button 
+                              className="stepper-btn" 
+                              onClick={() => setPlanetVelocity(prev => Math.max(0.2, parseFloat((prev - 0.05).toFixed(2))))}
+                            >
+                              -0.05
+                            </button>
+                            <input 
+                              type="range" min="0.2" max="2.5" step="0.05" 
+                              value={planetVelocity} 
+                              onChange={(e) => setPlanetVelocity(parseFloat(e.target.value))} 
+                              className="physics-range-input"
+                            />
+                            <button 
+                              className="stepper-btn" 
+                              onClick={() => setPlanetVelocity(prev => Math.min(2.5, parseFloat((prev + 0.05).toFixed(2))))}
+                            >
+                              +0.05
+                            </button>
+                          </div>
+                          <span className="slider-hint">Equilibrio circular a 1.0x. Escape si supera √2 ≈ 1.41x</span>
+                        </div>
 
-              {/* Avisos de Física Orbital */}
-              {physicsCollided && (
-                <div style={{ background: 'rgba(239, 68, 68, 0.2)', border: '1px solid #ef4444', borderRadius: '12px', padding: '12px 16px', color: '#fca5a5', marginTop: '12px', fontWeight: 'bold' }}>
-                  🚨 Colapso Gravitacional: La velocidad del planeta no fue suficiente para vencer la atracción del Sol.
-                </div>
-              )}
-              {physicsEscaped && (
-                <div style={{ background: 'rgba(245, 158, 11, 0.2)', border: '1px solid #f59e0b', borderRadius: '12px', padding: '12px 16px', color: '#fde68a', marginTop: '12px', fontWeight: 'bold' }}>
-                  🚀 Escape Orbital: La velocidad superó la velocidad de escape. El planeta abandona la estrella hacia el espacio interestelar.
-                </div>
-              )}
+                        {/* Control 3: Distancia Orbital (Semi-eje mayor) */}
+                        <div className="control-slider-box">
+                          <div className="slider-header-row">
+                            <label>📏 Distancia Orbital (a):</label>
+                            <span className="slider-tag-val">{orbitalDistance.toFixed(2)} UA</span>
+                          </div>
+                          <div className="stepper-slider-wrapper">
+                            <button 
+                              className="stepper-btn" 
+                              onClick={() => setOrbitalDistance(prev => Math.max(0.4, parseFloat((prev - 0.1).toFixed(2))))}
+                            >
+                              -0.1
+                            </button>
+                            <input 
+                              type="range" min="0.4" max="2.2" step="0.05" 
+                              value={orbitalDistance} 
+                              onChange={(e) => setOrbitalDistance(parseFloat(e.target.value))} 
+                              className="physics-range-input"
+                            />
+                            <button 
+                              className="stepper-btn" 
+                              onClick={() => setOrbitalDistance(prev => Math.min(2.2, parseFloat((prev + 0.1).toFixed(2))))}
+                            >
+                              +0.1
+                            </button>
+                          </div>
+                          <span className="slider-hint">Perihelio: {perihelionDistAU} UA | Afelio: {aphelionDistAU} UA</span>
+                        </div>
 
-              {/* Canvas SVG de Física con Vectores */}
-              <div className="physics-svg-viewport">
-                <svg viewBox="0 0 700 500" className="physics-svg">
-                  <defs>
-                    <marker id="arrow-red" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
-                    </marker>
-                    <marker id="arrow-cyan" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
-                      <path d="M 0 0 L 10 5 L 0 10 z" fill="#38bdf8" />
-                    </marker>
-                  </defs>
+                        {/* Control 4: Excentricidad Elíptica */}
+                        <div className="control-slider-box">
+                          <div className="slider-header-row">
+                            <label>📐 Excentricidad Elíptica (e):</label>
+                            <span className="slider-tag-val">{orbitalEccentricity.toFixed(2)}</span>
+                          </div>
+                          <div className="stepper-slider-wrapper">
+                            <button 
+                              className="stepper-btn" 
+                              onClick={() => setOrbitalEccentricity(prev => Math.max(0.0, parseFloat((prev - 0.05).toFixed(2))))}
+                            >
+                              -0.05
+                            </button>
+                            <input 
+                              type="range" min="0.0" max="0.75" step="0.05" 
+                              value={orbitalEccentricity} 
+                              onChange={(e) => setOrbitalEccentricity(parseFloat(e.target.value))} 
+                              className="physics-range-input"
+                            />
+                            <button 
+                              className="stepper-btn" 
+                              onClick={() => setOrbitalEccentricity(prev => Math.min(0.75, parseFloat((prev + 0.05).toFixed(2))))}
+                            >
+                              +0.05
+                            </button>
+                          </div>
+                          <span className="slider-hint">1ª Ley de Kepler: e=0 es circular, e&gt;0 es elipse</span>
+                        </div>
 
-                  <circle cx="350" cy="250" r={30 * Math.sqrt(starMass)} fill="#FBE903" />
-                  {showPrecessionEinstein && (
-                    <ellipse cx="350" cy="250" rx={physicsRadius} ry={physicsRadius * 0.75} fill="none" stroke="#ef4444" strokeWidth="1.5" strokeDasharray="3 3" transform="rotate(25, 350, 250)" />
-                  )}
-                  <circle cx="350" cy="250" r={physicsRadius} fill="none" stroke="rgba(56, 189, 248, 0.4)" strokeWidth="2" />
+                        {/* Toggles de Einstein y 2ª Ley de Kepler */}
+                        <div className="physics-toggles-grid">
+                          <label className={`toggle-card ${showPrecessionEinstein ? 'active' : ''}`}>
+                            <input 
+                              type="checkbox" 
+                              checked={showPrecessionEinstein} 
+                              onChange={() => {
+                                setShowPrecessionEinstein(!showPrecessionEinstein);
+                                soundEffects.playClick();
+                              }} 
+                            />
+                            <div>
+                              <strong>🌌 Precesión de Einstein</strong>
+                              <span>Rotación del perihelio de Mercurio</span>
+                            </div>
+                          </label>
 
-                  {/* Renderizado del Planeta y sus Vectores (Fg y Vt) */}
-                  {(() => {
-                    const rad = (physicsAngle * Math.PI) / 180;
-                    const px = 350 + physicsRadius * Math.cos(rad);
-                    const py = 250 + physicsRadius * Math.sin(rad);
+                          <label className={`toggle-card ${showKeplerSecondLaw ? 'active' : ''}`}>
+                            <input 
+                              type="checkbox" 
+                              checked={showKeplerSecondLaw} 
+                              onChange={() => {
+                                setShowKeplerSecondLaw(!showKeplerSecondLaw);
+                                soundEffects.playClick();
+                              }} 
+                            />
+                            <div>
+                              <strong>📐 2ª Ley de Kepler (Áreas)</strong>
+                              <span>Áreas iguales en tiempos iguales</span>
+                            </div>
+                          </label>
+                        </div>
+                      </div>
 
-                    // Vector Fg (Gravedad hacia la estrella)
-                    const fgX = px + (350 - px) * 0.28;
-                    const fgY = py + (250 - py) * 0.28;
+                      {/* Columna Derecha: Canvas SVG de Física y Métricas */}
+                      <div className="physics-viewport-column">
+                        {/* Banner de Estado Dinámico de la Órbita */}
+                        <div className="physics-status-banner-card">
+                          {isCollapsing ? (
+                            <div className="status-indicator collapse animate-pulse">
+                              <span className="status-badge-icon">🚨</span>
+                              <div>
+                                <strong>Colapso Gravitacional Inminente</strong>
+                                <span>La velocidad tangencial no vence la atracción del Sol. El planeta cae en espiral.</span>
+                              </div>
+                            </div>
+                          ) : isEscaping ? (
+                            <div className="status-indicator escape animate-pulse">
+                              <span className="status-badge-icon">🚀</span>
+                              <div>
+                                <strong>Velocidad de Escape Superada</strong>
+                                <span>La velocidad tangencial superó los {escapeSpeedKmS} km/s. La órbita es hiperbólica.</span>
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="status-indicator stable">
+                              <span className="status-badge-icon">🪐</span>
+                              <div>
+                                <strong>Órbita Estable {orbitalEccentricity > 0.05 ? 'Elíptica' : 'Circular'}</strong>
+                                <span>Equilibrio gravitatorio newtoniano activo. Trayectoria periódica cerrada.</span>
+                              </div>
+                            </div>
+                          )}
+                        </div>
 
-                    // Vector Vt (Velocidad Tangencial perpendicular a la gravedad)
-                    const vtX = px - Math.sin(rad) * 45 * planetVelocity;
-                    const vtY = py + Math.cos(rad) * 45 * planetVelocity;
+                        {/* Viewport SVG Interactivo */}
+                        <div className="physics-svg-viewport-card">
+                          <svg viewBox="0 0 700 500" className="physics-svg-canvas">
+                            <defs>
+                              <radialGradient id="sol-physics-glow" cx="50%" cy="50%" r="50%">
+                                <stop offset="0%" stopColor="#fffbeb" />
+                                <stop offset="35%" stopColor="#fde047" />
+                                <stop offset="70%" stopColor="#f59e0b" />
+                                <stop offset="100%" stopColor="#b45309" stopOpacity="0" />
+                              </radialGradient>
+                              <marker id="arrow-fg" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#ef4444" />
+                              </marker>
+                              <marker id="arrow-vt" viewBox="0 0 10 10" refX="5" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                                <path d="M 0 0 L 10 5 L 0 10 z" fill="#06b6d4" />
+                              </marker>
+                            </defs>
 
-                    return (
-                      <g>
-                        {/* Vector Gravedad (Fuerza Centrípetas) */}
-                        <line x1={px} y1={py} x2={fgX} y2={fgY} stroke="#ef4444" strokeWidth="2.5" markerEnd="url(#arrow-red)" />
-                        <text x={fgX + (px > 350 ? 6 : -18)} y={fgY + (py > 250 ? 6 : -6)} fill="#ef4444" fontSize="12" fontWeight="bold">Fg</text>
+                            {/* Rejilla de Fondo Coordenada Espacial */}
+                            <circle cx="350" cy="250" r="100" fill="none" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                            <circle cx="350" cy="250" r="180" fill="none" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                            <circle cx="350" cy="250" r="240" fill="none" stroke="rgba(255,255,255,0.04)" strokeDasharray="3 3" />
+                            <line x1="350" y1="20" x2="350" y2="480" stroke="rgba(255,255,255,0.03)" />
+                            <line x1="20" y1="250" x2="680" y2="250" stroke="rgba(255,255,255,0.03)" />
 
-                        {/* Vector Velocidad Tangencial */}
-                        <line x1={px} y1={py} x2={vtX} y2={vtY} stroke="#38bdf8" strokeWidth="2.5" markerEnd="url(#arrow-cyan)" />
-                        <text x={vtX + (vtX > px ? 6 : -18)} y={vtY + (vtY > py ? 6 : -6)} fill="#38bdf8" fontSize="12" fontWeight="bold">Vt</text>
+                            {/* Sector de la 2ª Ley de Kepler (Área Barrida dA/dt) */}
+                            {showKeplerSecondLaw && (() => {
+                              const prevRad = effectiveAngleRad - 0.35;
+                              const prevR = (semiMajorA * (1 - orbitalEccentricity * orbitalEccentricity)) / (1 + orbitalEccentricity * Math.cos(prevRad - (showPrecessionEinstein ? (precessionOffsetDeg * Math.PI) / 180 : 0)));
+                              const prevPx = 350 + prevR * Math.cos(prevRad);
+                              const prevPy = 250 + prevR * Math.sin(prevRad);
+                              return (
+                                <path 
+                                  d={`M 350 250 L ${prevPx} ${prevPy} A ${currentRadiusPx} ${currentRadiusPx} 0 0 1 ${planetPx} ${planetPy} Z`} 
+                                  fill="rgba(56, 189, 248, 0.2)" 
+                                  stroke="#38bdf8" 
+                                  strokeWidth="1"
+                                />
+                              );
+                            })()}
 
-                        <circle cx={px} cy={py} r="10" fill="#38BDF8" />
-                      </g>
-                    );
-                  })()}
-                </svg>
+                            {/* Trazado de la Órbita Elíptica */}
+                            <ellipse 
+                              cx={350 - focusOffsetC} 
+                              cy="250" 
+                              rx={semiMajorA} 
+                              ry={semiMinorB} 
+                              fill="none" 
+                              stroke="rgba(56, 189, 248, 0.45)" 
+                              strokeWidth="2" 
+                              strokeDasharray={showPrecessionEinstein ? "4 4" : "none"}
+                              transform={showPrecessionEinstein ? `rotate(${precessionOffsetDeg}, 350, 250)` : undefined}
+                            />
+
+                            {/* Segundo Foco Vacío de Kepler */}
+                            {orbitalEccentricity > 0.15 && (
+                              <g transform={showPrecessionEinstein ? `rotate(${precessionOffsetDeg}, 350, 250)` : undefined}>
+                                <circle cx={350 - focusOffsetC * 2} cy="250" r="3" fill="#94a3b8" opacity="0.6" />
+                                <text x={350 - focusOffsetC * 2} y="240" fill="#94a3b8" fontSize="9" textAnchor="middle">Foco 2</text>
+                              </g>
+                            )}
+
+                            {/* El Sol Central (Foco 1 en 350, 250) */}
+                            <circle cx="350" cy="250" r={38 * Math.sqrt(starMass)} fill="url(#sol-physics-glow)" />
+                            <circle cx="350" cy="250" r={16 * Math.sqrt(starMass)} fill="#fbbf24" />
+                            <text x="350" y="254" fill="#78350f" fontSize="10" fontWeight="bold" textAnchor="middle">Sol</text>
+
+                            {/* Vectores Físicos Dinámicos */}
+                            {/* Vector Fg: Fuerza de Gravedad hacia el Sol */}
+                            <line 
+                              x1={planetPx} y1={planetPy} 
+                              x2={fgEndX} y2={fgEndY} 
+                              stroke="#ef4444" 
+                              strokeWidth="2.5" 
+                              markerEnd="url(#arrow-fg)" 
+                            />
+                            <text 
+                              x={fgEndX + (fgUnitX > 0 ? 6 : -18)} 
+                              y={fgEndY + (fgUnitY > 0 ? 6 : -6)} 
+                              fill="#ef4444" 
+                              fontSize="11" 
+                              fontWeight="bold"
+                            >
+                              Fg
+                            </text>
+
+                            {/* Vector Vt: Velocidad Tangencial */}
+                            <line 
+                              x1={planetPx} y1={planetPy} 
+                              x2={vtEndX} y2={vtEndY} 
+                              stroke="#06b6d4" 
+                              strokeWidth="2.5" 
+                              markerEnd="url(#arrow-vt)" 
+                            />
+                            <text 
+                              x={vtEndX + (vtEndX > planetPx ? 6 : -18)} 
+                              y={vtEndY + (vtEndY > planetPy ? 6 : -6)} 
+                              fill="#06b6d4" 
+                              fontSize="11" 
+                              fontWeight="bold"
+                            >
+                              Vt ({currentOrbitalSpeedKmS} km/s)
+                            </text>
+
+                            {/* Planeta en Movimiento */}
+                            <circle cx={planetPx} cy={planetPy} r="10" fill="#38bdf8" stroke="#ffffff" strokeWidth="1.5" />
+                            <circle cx={planetPx} cy={planetPy} r="14" fill="none" stroke="rgba(56, 189, 248, 0.4)" strokeWidth="1" />
+                          </svg>
+
+                          {/* Leyenda de Vectores */}
+                          <div className="physics-legend-strip">
+                            <span className="legend-chip">
+                              <span className="color-bar red"></span> <strong>Fg</strong>: Gravedad Centrípeta (Sol)
+                            </span>
+                            <span className="legend-chip">
+                              <span className="color-bar cyan"></span> <strong>Vt</strong>: Velocidad Tangencial Orbital
+                            </span>
+                            <span className="legend-chip">
+                              <span className="color-bar yellow"></span> <strong>Foco 1</strong>: Estrella Solar
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Tarjeta de Métricas de Astrodinámica en Tiempo Real */}
+                        <div className="astrodynamics-metrics-card">
+                          <div className="metric-cell">
+                            <span className="m-label">Velocidad Orbital</span>
+                            <strong className="m-val highlight-cyan">{currentOrbitalSpeedKmS} km/s</strong>
+                            <span className="m-sub">Tierra: 29.8 km/s</span>
+                          </div>
+                          <div className="metric-cell">
+                            <span className="m-label">Velocidad de Escape</span>
+                            <strong className="m-val highlight-amber">{escapeSpeedKmS} km/s</strong>
+                            <span className="m-sub">vesc = √2 · vorb</span>
+                          </div>
+                          <div className="metric-cell">
+                            <span className="m-label">Periodo Orbital (T)</span>
+                            <strong className="m-val highlight-purple">{orbitalPeriodYears.toFixed(2)} años</strong>
+                            <span className="m-sub">{orbitalPeriodDays} días</span>
+                          </div>
+                          <div className="metric-cell">
+                            <span className="m-label">3ª Ley Kepler (T²/a³)</span>
+                            <strong className="m-val highlight-green">{keplerRatio}</strong>
+                            <span className="m-sub">Constante de Kepler ≈ 1.0</span>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {/* SECCIÓN 2: CATÁLOGO DE MISIONES Y EXPERIMENTOS GRAVITACIONALES */}
+                {activePhysicsSection === 'experiments' && (() => {
+                  const currentExp = GRAVITATIONAL_EXPERIMENTS.find(e => e.id === selectedExperiment) || GRAVITATIONAL_EXPERIMENTS[0];
+                  return (
+                    <div className="physics-experiments-panel animate-fade-in">
+                      <div className="experiments-intro-card">
+                        <h3>🛰️ Experimentos Gravitacionales & Misiones de la Mecánica Celeste</h3>
+                        <p>
+                          Desde la confirmación de la curvatura einsteiniana en Mercurio hasta las maniobras de tirachinas gravitatorio interestelar de las sondas Voyager.
+                        </p>
+                      </div>
+
+                      {/* Selector de Experimentos */}
+                      <div className="experiments-selector-row">
+                        {GRAVITATIONAL_EXPERIMENTS.map((exp) => (
+                          <button
+                            key={exp.id}
+                            className={`experiment-tab-btn ${selectedExperiment === exp.id ? 'active' : ''}`}
+                            onClick={() => {
+                              setSelectedExperiment(exp.id);
+                              soundEffects.playClick();
+                            }}
+                          >
+                            <span className="exp-icon">{exp.icon}</span>
+                            <span className="exp-name">{exp.name.split(' ')[0]}</span>
+                          </button>
+                        ))}
+                      </div>
+
+                      {/* Ficha Detallada del Experimento */}
+                      <div className="experiment-detail-card">
+                        <div className="exp-card-header">
+                          <div>
+                            <span className="exp-agency-badge">{currentExp.agency}</span>
+                            <h4>{currentExp.name}</h4>
+                            <span className="exp-mission-sub">Misión: <strong>{currentExp.mission}</strong></span>
+                          </div>
+                          <span className="exp-big-icon">{currentExp.icon}</span>
+                        </div>
+
+                        <div className="exp-specs-grid">
+                          <div className="exp-spec-item">
+                            <span className="spec-label">Objetivo Gravitacional</span>
+                            <strong className="spec-val">{currentExp.target}</strong>
+                          </div>
+                          <div className="exp-spec-item">
+                            <span className="spec-label">Principio Físico</span>
+                            <strong className="spec-val">{currentExp.focusLaw}</strong>
+                          </div>
+                        </div>
+
+                        <div className="exp-discovery-highlight">
+                          <div className="discovery-tag">🏆 Mayor Logro Experimental:</div>
+                          <p>{currentExp.achievement}</p>
+                        </div>
+
+                        <p className="exp-full-desc">{currentExp.description}</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* SECCIÓN 3: GUÍA DIDÁCTICA Y REFERENCIAS */}
+                {activePhysicsSection === 'learning' && (
+                  <div className="physics-learning-panel animate-fade-in">
+                    <div className="learning-grid">
+                      {/* Tarjeta 1: El Cañón de Newton */}
+                      <div className="learning-card">
+                        <div className="card-top-icon">💣</div>
+                        <h4>El "Cañón de Newton" (¿Por qué orbitamos?)</h4>
+                        <p>
+                          Isaac Newton imaginó un cañón gigante sobre una montaña disparando balas horizontalmente. Con poca pólvora, la bala cae al suelo por la gravedad. Con suficiente pólvora (unos <strong>7.9 km/s</strong> para la Tierra), la superficie de la Tierra se curva hacia abajo al mismo ritmo que la bala cae.
+                        </p>
+                        <div className="card-callout">
+                          💡 <strong>Conclusión:</strong> Un planeta o satélite en órbita nunca deja de caer; simplemente cae continuamente esquivando el horizonte sin tocarlo jamás.
+                        </div>
+                      </div>
+
+                      {/* Tarjeta 2: Las 3 Leyes de Kepler */}
+                      <div className="learning-card">
+                        <div className="card-top-icon">📐</div>
+                        <h4>Las 3 Leyes Fundamentales de Kepler</h4>
+                        <ul className="kirchhoff-list">
+                          <li>
+                            <strong>1ª Ley (Órbitas Elípticas):</strong> Todos los planetas se desplazan en órbitas elípticas, con el Sol en uno de sus focos (no en el centro geométrico).
+                          </li>
+                          <li>
+                            <strong>2ª Ley (Ley de las Áreas):</strong> El radio vector une el Sol y el planeta barriendo áreas iguales en tiempos iguales. El planeta acelera en el <em>perihelio</em> y frena en el <em>afelio</em>.
+                          </li>
+                          <li>
+                            <strong>3ª Ley (Ley Armónica):</strong> El cuadrado del periodo orbital es proporcional al cubo del semi-eje mayor: <code>T² = a³</code> (en unidades solares y años terrestres).
+                          </li>
+                        </ul>
+                      </div>
+
+                      {/* Tarjeta 3: De Newton a Einstein */}
+                      <div className="learning-card">
+                        <div className="card-top-icon">🌌</div>
+                        <h4>De la Fuerza de Newton a la Curvatura de Einstein</h4>
+                        <p>
+                          Newton creía que la gravedad era una "fuerza invisible instantánea". En 1915, Albert Einstein demostró que el Sol no tira de los planetas: la masa del Sol deforma y curva el tejido del <strong>espacio-tiempo</strong> a su alrededor.
+                        </p>
+                        <div className="card-callout">
+                          ✨ <strong>El misterio de Mercurio:</strong> La órbita de Mercurio gira 43 segundos de arco por siglo más de lo que Newton predijo. Einstein demostró que esa diferencia exacta se debe a la curvatura geométrica relativista cerca del Sol.
+                        </div>
+                      </div>
+
+                      {/* Tarjeta 4: Velocidad de Escape y Tirachinas */}
+                      <div className="learning-card references">
+                        <div className="card-top-icon">🚀</div>
+                        <h4>Velocidad de Escape & Referencias Oficiales</h4>
+                        <p>
+                          Para que un cohete o sonda escape de la gravedad de un cuerpo celeste sin volver jamás, necesita alcanzar una velocidad un <strong>41.4% mayor</strong> que su velocidad orbital circular: <code>v_esc = √2 · v_orb</code>.
+                        </p>
+                        <div className="references-list">
+                          <div className="ref-item">
+                            <strong>NASA JPL Horizons:</strong> Efemérides y mecánica celeste de alta precisión del Jet Propulsion Laboratory.
+                          </div>
+                          <div className="ref-item">
+                            <strong>IAU Commission A1:</strong> Celestial Mechanics & Dynamical Astronomy (Unión Astronómica Internacional).
+                          </div>
+                          <div className="ref-item">
+                            <strong>Einstein Archives Online:</strong> Manuscritos originales sobre el avance del perihelio de Mercurio (1915).
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
       </div>
     </div>
