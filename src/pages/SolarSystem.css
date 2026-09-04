@@ -605,6 +605,113 @@
   transform: scale(1.4);
 }
 
+/* ==========================================================================
+   BARRA DE PRESETS DE ENFOQUE CÓSMICO
+   ========================================================================== */
+.camera-presets-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: rgba(0, 0, 0, 0.35);
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.presets-label {
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  margin-right: 2px;
+}
+
+.camera-preset-btn {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.camera-preset-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+}
+
+/* ==========================================================================
+   MINIMAPA RADAR CÓSMICO HUD
+   ========================================================================== */
+.cosmic-radar-hud {
+  position: absolute;
+  bottom: 16px;
+  right: 16px;
+  background: rgba(10, 3, 24, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 14px;
+  padding: 8px 10px 6px 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.55), 0 0 16px rgba(56, 189, 248, 0.15);
+  z-index: 20;
+  user-select: none;
+}
+
+.radar-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+.radar-dot-live {
+  color: #10b981;
+  font-size: 0.7rem;
+  animation: pulse 1.5s infinite;
+}
+
+.radar-title {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #94a3b8;
+}
+
+.radar-svg {
+  width: 110px;
+  height: 110px;
+  cursor: crosshair;
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.radar-svg:hover {
+  transform: scale(1.04);
+}
+
+.radar-hint {
+  font-size: 0.6rem;
+  color: #64748b;
+  letter-spacing: 0.2px;
+}
+
 .canvas-layers-panel {
   width: 100%;
   margin-top: 20px;
@@ -1244,6 +1351,60 @@
 @keyframes bounceIn {
   from { opacity: 0; transform: translate(-50%, -10px); }
   to { opacity: 1; transform: translate(-50%, 0); }
+}
+
+/* ==========================================================================
+   CURVA DE LUZ FOTOMÉTRICA (MÉTODO DE TRÁNSITOS)
+   ========================================================================== */
+.photometric-light-curve-card {
+  background: rgba(13, 5, 26, 0.85);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 18px;
+  padding: 22px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.light-curve-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.flux-badge-box {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 10px 18px;
+  border-radius: 14px;
+  border: 1px solid rgba(56, 189, 248, 0.2);
+  min-width: 150px;
+}
+
+.flux-numeric-val {
+  font-family: monospace, var(--font-title);
+  letter-spacing: 0.5px;
+}
+
+.light-curve-svg-box {
+  width: 100%;
+  overflow-x: auto;
+  background: rgba(4, 2, 10, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  border-radius: 14px;
+  padding: 14px 10px;
+}
+
+.light-curve-svg {
+  width: 100%;
+  min-width: 600px;
+  height: 130px;
+  display: block;
 }
 
 /* RESPONSIVIDAD MÓVIL Y ADAPTACIÓN TÁCTIL DE ALTA FIDELIDAD */

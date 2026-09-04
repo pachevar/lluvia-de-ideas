@@ -408,6 +408,13 @@ export default function SolarSystem() {
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isTracking, setIsTracking] = useState(false);
 
+  // Estados de Navegación Libre y Panning
+  const svgWrapperRef = useRef<HTMLDivElement>(null);
+  const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState<boolean>(false);
+  const dragStartRef = useRef<{ x: number; y: number; startPanX: number; startPanY: number }>({ x: 0, y: 0, startPanX: 0, startPanY: 0 });
+  const touchStartRef = useRef<{ x: number; y: number; dist: number }>({ x: 0, y: 0, dist: 0 });
+
   // Pestaña 2: Comparador de Escala e Inserción de Tránsito frente al Sol
   const [selectedScalePlanet, setSelectedScalePlanet] = useState<string>('tierra');
   const [scaleZoomLevel, setScaleZoomLevel] = useState<number>(1.0);
@@ -473,20 +480,31 @@ export default function SolarSystem() {
         const deltaTime = (time - previousTimeRef.current) / 1000;
         const step = deltaTime * 20 * speedMultiplier;
 
-        setAngles(prev => ({
-          mercurio: (prev.mercurio + orbitalSpeeds.mercurio * step) % 360,
-          venus: (prev.venus + orbitalSpeeds.venus * step) % 360,
-          tierra: (prev.tierra + orbitalSpeeds.tierra * step) % 360,
-          marte: (prev.marte + orbitalSpeeds.marte * step) % 360,
-          jupiter: (prev.jupiter + orbitalSpeeds.jupiter * step) % 360,
-          saturno: (prev.saturno + orbitalSpeeds.saturno * step) % 360,
-          urano: (prev.urano + orbitalSpeeds.urano * step) % 360,
-          neptuno: (prev.neptuno + orbitalSpeeds.neptuno * step) % 360,
-          luna: (prev.luna + 12.0 * step) % 360,
-          jwst: (prev.jwst + orbitalSpeeds.tierra * step) % 360,
-          parker: (prev.parker + orbitalSpeeds.parker * step) % 360,
-          voyager1: (prev.voyager1 + deltaTime * 0.4 * speedMultiplier) % 360
-        }));
+        setAngles(prev => {
+          // Aceleración kepleriana por excentricidad (2ª Ley de Kepler: mayor velocidad en perihelio)
+          const calcStep = (baseSpeed: number, bodyId: string) => {
+            const body = CELESTIAL_DATA[bodyId];
+            const e = useEllipticalOrbits && body ? body.eccentricity : 0;
+            const curRad = ((prev[bodyId] || 0) * Math.PI) / 180;
+            const keplerFactor = e > 0.04 ? Math.pow(1 + e * Math.cos(curRad), 1.6) : 1;
+            return baseSpeed * step * keplerFactor;
+          };
+
+          return {
+            mercurio: (prev.mercurio + calcStep(orbitalSpeeds.mercurio, 'mercurio')) % 360,
+            venus: (prev.venus + calcStep(orbitalSpeeds.venus, 'venus')) % 360,
+            tierra: (prev.tierra + calcStep(orbitalSpeeds.tierra, 'tierra')) % 360,
+            marte: (prev.marte + calcStep(orbitalSpeeds.marte, 'marte')) % 360,
+            jupiter: (prev.jupiter + calcStep(orbitalSpeeds.jupiter, 'jupiter')) % 360,
+            saturno: (prev.saturno + calcStep(orbitalSpeeds.saturno, 'saturno')) % 360,
+            urano: (prev.urano + calcStep(orbitalSpeeds.urano, 'urano')) % 360,
+            neptuno: (prev.neptuno + calcStep(orbitalSpeeds.neptuno, 'neptuno')) % 360,
+            luna: (prev.luna + 12.0 * step) % 360,
+            jwst: (prev.jwst + calcStep(orbitalSpeeds.tierra, 'tierra')) % 360,
+            parker: (prev.parker + calcStep(orbitalSpeeds.parker, 'parker')) % 360,
+            voyager1: (prev.voyager1 + deltaTime * 0.4 * speedMultiplier) % 360
+          };
+        });
       }
       previousTimeRef.current = time;
       requestRef.current = requestAnimationFrame(animate);
@@ -495,7 +513,7 @@ export default function SolarSystem() {
     requestRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(requestRef.current);
     // eslint-disable-next-line react-hooks/exhaustive-deps -- orbit speeds mutate during animation; keyed by control state
-  }, [isPlaying, speedMultiplier, activeTab]);
+  }, [isPlaying, speedMultiplier, activeTab, useEllipticalOrbits]);
 
   // Animación del Tránsito Solar en Pestaña de Escalas
   const transitAnimationRef = useRef<number>(0);
@@ -633,54 +651,154 @@ export default function SolarSystem() {
   const coordsParker = getParkerCoords();
   const coordsVoyager1 = getVoyager1Coords();
 
-  // Control de Zoom y Seguimiento
+  // Control de Cámara, Pan & Drag y Seguimiento Dinámico
   const handleSelectBody = (body: CelestialBody) => {
     soundEffects.playSpacePulse();
     setSelectedBody(body);
     if (body.id !== 'sol' && body.type !== 'cinturon') {
       setIsTracking(true);
-      if (body.type === 'sonda') setZoomLevel(2.0);
-      else if (body.id === 'jupiter' || body.id === 'saturno') setZoomLevel(2.0);
-      else setZoomLevel(3.2);
+      if (body.type === 'sonda') setZoomLevel(2.5);
+      else if (body.id === 'jupiter' || body.id === 'saturno') setZoomLevel(2.2);
+      else setZoomLevel(3.5);
     } else {
       setIsTracking(false);
+      setPanOffset({ x: 0, y: 0 });
       setZoomLevel(1.0);
     }
   };
 
-  const zoomIn = () => setZoomLevel(prev => Math.min(prev + 0.25, 4.0));
-  const zoomOut = () => setZoomLevel(prev => Math.max(prev - 0.25, 0.75));
+  const zoomIn = () => setZoomLevel(prev => Math.min(prev + 0.35, 8.0));
+  const zoomOut = () => setZoomLevel(prev => Math.max(prev - 0.35, 0.4));
   const resetZoom = () => {
     setZoomLevel(1.0);
+    setPanOffset({ x: 0, y: 0 });
     setIsTracking(false);
     setSelectedBody(CELESTIAL_DATA.sol);
   };
 
-  let tx = 450 - 450 * zoomLevel;
-  let ty = 450 - 450 * zoomLevel;
+  const setCameraPreset = (preset: 'sistema' | 'rocosos' | 'gigantes' | 'sol' | 'kuiper') => {
+    setIsTracking(false);
+    if (preset === 'sistema') {
+      setZoomLevel(0.65);
+      setPanOffset({ x: 0, y: 0 });
+      setSelectedBody(CELESTIAL_DATA.sol);
+    } else if (preset === 'rocosos') {
+      setZoomLevel(1.85);
+      setPanOffset({ x: 0, y: 0 });
+    } else if (preset === 'gigantes') {
+      setZoomLevel(0.95);
+      setPanOffset({ x: 0, y: 0 });
+    } else if (preset === 'sol') {
+      setZoomLevel(3.2);
+      setPanOffset({ x: 0, y: 0 });
+      setSelectedBody(CELESTIAL_DATA.sol);
+      setIsTracking(true);
+    } else if (preset === 'kuiper') {
+      setZoomLevel(0.42);
+      setPanOffset({ x: 0, y: 0 });
+    }
+  };
 
-  if (selectedBody.id !== 'sol' && selectedBody.type !== 'cinturon') {
-    let targetX: number;
-    let targetY: number;
+  // Manejadores de Arrastre Libre de Lienzo (Mouse y Touch)
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (e.button !== 0) return;
+    setIsDragging(true);
+    setIsTracking(false);
+    dragStartRef.current = {
+      x: e.clientX,
+      y: e.clientY,
+      startPanX: panOffset.x,
+      startPanY: panOffset.y
+    };
+  };
+
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isDragging) return;
+    const dx = e.clientX - dragStartRef.current.x;
+    const dy = e.clientY - dragStartRef.current.y;
+    setPanOffset({
+      x: Math.max(-1400, Math.min(1400, dragStartRef.current.startPanX + dx / zoomLevel)),
+      y: Math.max(-1400, Math.min(1400, dragStartRef.current.startPanY + dy / zoomLevel))
+    });
+  };
+
+  const handleMouseUp = () => {
+    setIsDragging(false);
+  };
+
+  const handleWheel = (e: React.WheelEvent) => {
+    const factor = e.deltaY < 0 ? 1.12 : 0.89;
+    setZoomLevel(prev => Math.min(8.0, Math.max(0.4, prev * factor)));
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      setIsDragging(true);
+      setIsTracking(false);
+      dragStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        startPanX: panOffset.x,
+        startPanY: panOffset.y
+      };
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      touchStartRef.current = { dist, x: 0, y: 0 };
+    }
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 1 && isDragging) {
+      const dx = e.touches[0].clientX - dragStartRef.current.x;
+      const dy = e.touches[0].clientY - dragStartRef.current.y;
+      setPanOffset({
+        x: Math.max(-1400, Math.min(1400, dragStartRef.current.startPanX + dx / zoomLevel)),
+        y: Math.max(-1400, Math.min(1400, dragStartRef.current.startPanY + dy / zoomLevel))
+      });
+    } else if (e.touches.length === 2) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      if (touchStartRef.current.dist > 0) {
+        const factor = dist / touchStartRef.current.dist;
+        setZoomLevel(prev => Math.min(8.0, Math.max(0.4, prev * factor)));
+      }
+      touchStartRef.current.dist = dist;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    setIsDragging(false);
+  };
+
+  // Centro de Cámara Dinámico
+  let camTargetX = 450;
+  let camTargetY = 450;
+  if (isTracking && selectedBody.id !== 'sol' && selectedBody.type !== 'cinturon') {
     if (selectedBody.id === 'jwst') {
-      targetX = coordsJWST.x;
-      targetY = coordsJWST.y;
+      camTargetX = coordsJWST.x;
+      camTargetY = coordsJWST.y;
     } else if (selectedBody.id === 'parker') {
-      targetX = coordsParker.x;
-      targetY = coordsParker.y;
+      camTargetX = coordsParker.x;
+      camTargetY = coordsParker.y;
     } else if (selectedBody.id === 'voyager1') {
-      targetX = coordsVoyager1.x;
-      targetY = coordsVoyager1.y;
+      camTargetX = coordsVoyager1.x;
+      camTargetY = coordsVoyager1.y;
     } else {
       const coords = getCoordinates(selectedBody.id);
-      targetX = coords.x;
-      targetY = coords.y;
+      camTargetX = coords.x;
+      camTargetY = coords.y;
     }
-    tx = 450 - targetX * zoomLevel;
-    ty = 450 - targetY * zoomLevel;
   }
 
-  const transformStyle = `translate(${tx}px, ${ty}px) scale(${zoomLevel})`;
+  const currentCenterX = isTracking ? camTargetX : 450 - panOffset.x;
+  const currentCenterY = isTracking ? camTargetY : 450 - panOffset.y;
+
+  const transformStyle = `translate(450px, 450px) scale(${zoomLevel}) translate(${-currentCenterX}px, ${-currentCenterY}px)`;
 
   // Cálculo de tiempo de viaje espacial
   const destData = CELESTIAL_DATA[travelDestination] || CELESTIAL_DATA.marte;
@@ -868,7 +986,7 @@ export default function SolarSystem() {
             {/* Lienzo del Simulador SVG Espacial */}
             <div className="sim-map-canvas">
               
-              {/* Controles de Simulación */}
+              {/* Controles de Simulación y Navegación Cósmica */}
               <div className="canvas-controls-bar">
                 <div className="control-btn-group">
                   <button 
@@ -883,12 +1001,24 @@ export default function SolarSystem() {
                 </div>
 
                 <div className="zoom-controls-cluster">
-                  <span className="zoom-label-title" style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Zoom: {zoomLevel.toFixed(2)}x</span>
+                  <span className="zoom-label-title" style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                    Zoom: {zoomLevel.toFixed(2)}x
+                  </span>
                   <div className="zoom-buttons-row" style={{ display: 'flex', gap: '4px' }}>
-                    <button className="spectrum-btn" onClick={zoomOut} title="Alejar">➖</button>
-                    <button className="spectrum-btn" onClick={zoomIn} title="Acercar">➕</button>
-                    <button className="spectrum-btn" onClick={resetZoom} title="Restablecer">🔄 Vista General</button>
+                    <button className="spectrum-btn" onClick={zoomOut} title="Alejar (o rueda del ratón)">➖</button>
+                    <button className="spectrum-btn" onClick={zoomIn} title="Acercar (o rueda del ratón)">➕</button>
+                    <button className="spectrum-btn" onClick={resetZoom} title="Restablecer posición y escala">🔄 Vista General</button>
                   </div>
+                </div>
+
+                {/* Presets de Enfoque Rápido */}
+                <div className="camera-presets-bar">
+                  <span className="presets-label">🔭 Enfoque Cósmico:</span>
+                  <button className="camera-preset-btn" onClick={() => setCameraPreset('sistema')} title="Ver todo el sistema solar hasta Kuiper">🌌 Todo el Sistema</button>
+                  <button className="camera-preset-btn" onClick={() => setCameraPreset('rocosos')} title="Mercurio, Venus, Tierra y Marte">🪨 Rocosos</button>
+                  <button className="camera-preset-btn" onClick={() => setCameraPreset('gigantes')} title="Júpiter, Saturno, Urano y Neptuno">🪐 Gigantes</button>
+                  <button className="camera-preset-btn" onClick={() => setCameraPreset('sol')} title="Corona, fotosfera y manchas solares">☀️ Sol & Corona</button>
+                  <button className="camera-preset-btn" onClick={() => setCameraPreset('kuiper')} title="Cinturón de Kuiper y sonda Voyager 1">🛰️ Interestelar</button>
                 </div>
 
                 <div className="toggles-controls-cluster">
@@ -898,7 +1028,7 @@ export default function SolarSystem() {
                   </label>
                   <label className="toggle-chip">
                     <input type="checkbox" checked={useEllipticalOrbits} onChange={() => setUseEllipticalOrbits(!useEllipticalOrbits)} />
-                    📐 Elipses (e)
+                    📐 Elipses de Kepler
                   </label>
                   <label className="toggle-chip">
                     <input type="checkbox" checked={showAsteroids} onChange={() => setShowAsteroids(!showAsteroids)} />
@@ -939,18 +1069,103 @@ export default function SolarSystem() {
                       onChange={() => setIsTracking(!isTracking)} 
                     />
                     <span className="switch-custom-slider"></span>
-                    <span className="tracking-text-label">🎥 Seguir órbita de {selectedBody.name}</span>
+                    <span className="tracking-text-label">🎥 Seguir órbita de {selectedBody.name} (Bloqueo de Cámara)</span>
                   </label>
                 </div>
               )}
 
-              <div className="svg-viewport-wrapper">
+              {/* Viewport Interactivo con Pan & Drag */}
+              <div 
+                ref={svgWrapperRef}
+                className="svg-viewport-wrapper"
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+                onWheel={handleWheel}
+                onTouchStart={handleTouchStart}
+                onTouchMove={handleTouchMove}
+                onTouchEnd={handleTouchEnd}
+                style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
+                title="Arrastra para moverte libremente por el espacio. Usa la rueda del ratón o botones para hacer zoom."
+              >
+                {/* HUD Minimapa Radar Cósmico */}
+                <div className="cosmic-radar-hud" onClick={(e) => e.stopPropagation()}>
+                  <div className="radar-title-row">
+                    <span className="radar-dot-live">●</span>
+                    <span className="radar-title">Radar Cósmico</span>
+                  </div>
+                  <svg 
+                    viewBox="0 0 120 120" 
+                    className="radar-svg"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const rect = e.currentTarget.getBoundingClientRect();
+                      const clickX = e.clientX - rect.left;
+                      const clickY = e.clientY - rect.top;
+                      const targetSvgX = (clickX / 120) * 900;
+                      const targetSvgY = (clickY / 120) * 900;
+                      setIsTracking(false);
+                      setPanOffset({
+                        x: 450 - targetSvgX,
+                        y: 450 - targetSvgY
+                      });
+                    }}
+                  >
+                    <circle cx="60" cy="60" r="56" fill="rgba(6, 2, 18, 0.9)" stroke="rgba(56, 189, 248, 0.3)" strokeWidth="1" />
+                    <circle cx="60" cy="60" r="42" fill="none" stroke="rgba(56, 189, 248, 0.15)" strokeWidth="0.8" strokeDasharray="2 2" />
+                    <circle cx="60" cy="60" r="24" fill="none" stroke="rgba(56, 189, 248, 0.15)" strokeWidth="0.8" strokeDasharray="2 2" />
+                    <line x1="60" y1="4" x2="60" y2="116" stroke="rgba(56, 189, 248, 0.12)" strokeWidth="0.6" />
+                    <line x1="4" y1="60" x2="116" y2="60" stroke="rgba(56, 189, 248, 0.12)" strokeWidth="0.6" />
+
+                    {/* Sol en Radar */}
+                    <circle cx="60" cy="60" r="4" fill="#fbbf24" filter="drop-shadow(0 0 4px #f59e0b)" />
+
+                    {/* Planetas en Radar */}
+                    {Object.keys(semiMajorAxes).map(pid => {
+                      const coords = getCoordinates(pid);
+                      const rx = (coords.x / 900) * 120;
+                      const ry = (coords.y / 900) * 120;
+                      const isSelected = selectedBody.id === pid;
+                      return (
+                        <circle 
+                          key={pid} 
+                          cx={rx} cy={ry} 
+                          r={isSelected ? 3.2 : 1.8} 
+                          fill={isSelected ? '#38bdf8' : '#e2e8f0'} 
+                        />
+                      );
+                    })}
+
+                    {/* Recuadro de Campo de Visión Actual */}
+                    {(() => {
+                      const boxW = Math.max(12, Math.min(110, (900 / zoomLevel / 900) * 120));
+                      const boxH = Math.max(12, Math.min(110, (900 / zoomLevel / 900) * 120));
+                      const boxX = (currentCenterX / 900) * 120 - boxW / 2;
+                      const boxY = (currentCenterY / 900) * 120 - boxH / 2;
+                      return (
+                        <rect 
+                          x={boxX} y={boxY} 
+                          width={boxW} height={boxH} 
+                          fill="rgba(56, 189, 248, 0.15)" 
+                          stroke="#38bdf8" 
+                          strokeWidth="1.2" 
+                          strokeDasharray="2 1"
+                          rx="2"
+                        />
+                      );
+                    })()}
+                  </svg>
+                  <span className="radar-hint">🖱️ Arrastra o pulsa radar</span>
+                </div>
+
                 <svg viewBox="0 0 900 900" className="solar-system-svg">
                   <defs>
                     <radialGradient id="grad-sol-visible" cx="50%" cy="50%" r="50%">
                       <stop offset="0%" stopColor="#FFFEE0" />
                       <stop offset="35%" stopColor="#FBE903" />
-                      <stop offset="100%" stopColor="#FE2712" />
+                      <stop offset="85%" stopColor="#FE2712" />
+                      <stop offset="100%" stopColor="#b91c1c" />
                     </radialGradient>
 
                     <radialGradient id="grad-sol-infra" cx="50%" cy="50%" r="50%">
@@ -965,17 +1180,43 @@ export default function SolarSystem() {
                       <stop offset="100%" stopColor="#312e81" />
                     </radialGradient>
                     
-                    <filter id="glow-solar" x="-30%" y="-30%" width="160%" height="160%">
-                      <feGaussianBlur stdDeviation="9" result="blur" />
+                    <filter id="glow-solar" x="-40%" y="-40%" width="180%" height="180%">
+                      <feGaussianBlur stdDeviation="12" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
+
+                    <linearGradient id="grad-jupiter-belts" x1="0%" y1="0%" x2="0%" y2="100%">
+                      <stop offset="0%" stopColor="#d97706" />
+                      <stop offset="20%" stopColor="#fef3c7" />
+                      <stop offset="35%" stopColor="#92400e" />
+                      <stop offset="50%" stopColor="#fbbf24" />
+                      <stop offset="65%" stopColor="#78350f" />
+                      <stop offset="80%" stopColor="#fde68a" />
+                      <stop offset="100%" stopColor="#b45309" />
+                    </linearGradient>
+
+                    <linearGradient id="grad-saturn-rings" x1="0%" y1="0%" x2="100%" y2="0%">
+                      <stop offset="0%" stopColor="rgba(217, 119, 6, 0.1)" />
+                      <stop offset="25%" stopColor="rgba(245, 158, 11, 0.7)" />
+                      <stop offset="52%" stopColor="rgba(10, 5, 20, 0.9)" /> {/* División de Cassini */}
+                      <stop offset="60%" stopColor="rgba(253, 230, 138, 0.75)" />
+                      <stop offset="90%" stopColor="rgba(217, 119, 6, 0.4)" />
+                      <stop offset="100%" stopColor="rgba(217, 119, 6, 0.05)" />
+                    </linearGradient>
+
+                    <radialGradient id="grad-earth-atmo" cx="50%" cy="50%" r="50%">
+                      <stop offset="0%" stopColor="#3b82f6" />
+                      <stop offset="70%" stopColor="#1d4ed8" />
+                      <stop offset="90%" stopColor="#0284c7" />
+                      <stop offset="100%" stopColor="#38bdf8" />
+                    </radialGradient>
                   </defs>
 
                   <g 
                     style={{ 
                       transform: transformStyle, 
-                      transformOrigin: '450px 450px',
-                      transition: isTracking ? 'none' : 'transform 0.45s cubic-bezier(0.16, 1, 0.3, 1)' 
+                      transformOrigin: '0 0',
+                      transition: isDragging ? 'none' : isTracking ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' 
                     }}
                   >
                     {/* Dibujo de Órbitas Elípticas Realistas de Kepler */}
@@ -996,30 +1237,30 @@ export default function SolarSystem() {
                     {/* Viento Solar y Capa de Magnetosfera */}
                     {showMagnetosphere && (
                       <g className="magnetosphere-layer">
-                        {/* Viento solar impulsado desde el Sol */}
+                        {/* Viento solar impulsado radialmente desde el Sol */}
                         {Array.from({ length: 16 }).map((_, idx) => {
                           const ang = (idx * 22.5 * Math.PI) / 180;
                           return (
                             <line 
                               key={idx} 
-                              x1={450 + 40 * Math.cos(ang)} 
-                              y1={450 + 40 * Math.sin(ang)} 
+                              x1={450 + 44 * Math.cos(ang)} 
+                              y1={450 + 44 * Math.sin(ang)} 
                               x2={450 + 440 * Math.cos(ang)} 
                               y2={450 + 440 * Math.sin(ang)} 
-                              stroke="rgba(251, 191, 36, 0.2)" 
+                              stroke="rgba(251, 191, 36, 0.25)" 
                               strokeWidth="1.5" 
                               strokeDasharray="4 8"
                             />
                           );
                         })}
                         {/* Dipolo Magnético de la Tierra */}
-                        <circle cx={coordsTierra.x} cy={coordsTierra.y} r="22" fill="none" stroke="#38bdf8" strokeWidth="2" strokeDasharray="3 3" opacity="0.85" />
-                        {/* Dipolo Magnético de Júpiter */}
-                        <circle cx={coordsJupiter.x} cy={coordsJupiter.y} r="38" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeDasharray="4 4" opacity="0.85" />
+                        <circle cx={coordsTierra.x} cy={coordsTierra.y} r="22" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="3 3" opacity="0.85" />
+                        {/* Dipolo Gigante de Júpiter */}
+                        <circle cx={coordsJupiter.x} cy={coordsJupiter.y} r="42" fill="none" stroke="#a855f7" strokeWidth="2.2" strokeDasharray="4 4" opacity="0.85" />
                       </g>
                     )}
 
-                    {/* Cinturón de Asteroides */}
+                    {/* Cinturón Principal de Asteroides */}
                     {showAsteroids && (
                       <g className="asteroid-belt-group" onClick={() => handleSelectBody(CELESTIAL_DATA.cinturon_asteroides)} style={{ cursor: 'pointer' }}>
                         <circle cx="450" cy="450" r="215" stroke="rgba(255,255,255,0.06)" strokeWidth="36" fill="none" />
@@ -1066,81 +1307,215 @@ export default function SolarSystem() {
                       </g>
                     )}
 
-                    {/* EL SOL */}
-                    <circle 
-                      cx="450" cy="450" r="34" 
-                      fill={spectrumMode === 'infrared' ? 'url(#grad-sol-infra)' : spectrumMode === 'ultraviolet' ? 'url(#grad-sol-uv)' : 'url(#grad-sol-visible)'} 
-                      filter="url(#glow-solar)" 
-                      onClick={() => handleSelectBody(CELESTIAL_DATA.sol)} 
-                      style={{ cursor: 'pointer' }} 
-                      className={`solar-body-sun ${selectedBody.id === 'sol' ? 'active' : ''}`} 
-                    />
+                    {/* =======================================================
+                        EL SOL CON MANCHAS SOLARES Y PROMINENCIAS
+                       ======================================================= */}
+                    <g onClick={() => handleSelectBody(CELESTIAL_DATA.sol)} style={{ cursor: 'pointer' }}>
+                      {/* Corona Solar y Prominencias Fulgurantes */}
+                      <circle cx="450" cy="450" r="42" fill="none" stroke="rgba(251, 191, 36, 0.2)" strokeWidth="4" filter="url(#glow-solar)" />
+                      <circle 
+                        cx="450" cy="450" r="35" 
+                        fill={spectrumMode === 'infrared' ? 'url(#grad-sol-infra)' : spectrumMode === 'ultraviolet' ? 'url(#grad-sol-uv)' : 'url(#grad-sol-visible)'} 
+                        filter="url(#glow-solar)" 
+                        className={`solar-body-sun ${selectedBody.id === 'sol' ? 'active' : ''}`} 
+                      />
+                      {/* Manchas Solares Reales (Ciclo 25) */}
+                      <circle cx="442" cy="445" r="2.2" fill="#78350f" opacity="0.8" />
+                      <circle cx="442" cy="445" r="1.1" fill="#180c04" />
+                      <circle cx="460" cy="454" r="2.8" fill="#78350f" opacity="0.8" />
+                      <circle cx="460" cy="454" r="1.4" fill="#180c04" />
+                    </g>
 
-                    {/* MERCURIO */}
+                    {/* =======================================================
+                        MERCURIO: Cráteres y excentricidad
+                       ======================================================= */}
                     {(() => {
                       const p = getCoordinates('mercurio');
                       return (
                         <g onClick={() => handleSelectBody(CELESTIAL_DATA.mercurio)} style={{ cursor: 'pointer' }}>
-                          <circle cx={p.x} cy={p.y} r="15" fill="transparent" />
-                          <circle cx={p.x} cy={p.y} r="5" fill="#A89EBC" className={`solar-body ${selectedBody.id === 'mercurio' ? 'active' : ''}`} />
+                          <circle cx={p.x} cy={p.y} r="16" fill="transparent" />
+                          <circle cx={p.x} cy={p.y} r="5.5" fill="#9ca3af" stroke="#4b5563" strokeWidth="0.8" className={`solar-body ${selectedBody.id === 'mercurio' ? 'active' : ''}`} />
+                          <circle cx={p.x - 1.2} cy={p.y - 1} r="1.2" fill="#6b7280" />
                         </g>
                       );
                     })()}
 
-                    {/* VENUS */}
+                    {/* =======================================================
+                        VENUS: Atmósfera densa super-rotatoria
+                       ======================================================= */}
                     {(() => {
                       const p = getCoordinates('venus');
                       return (
                         <g onClick={() => handleSelectBody(CELESTIAL_DATA.venus)} style={{ cursor: 'pointer' }}>
-                          <circle cx={p.x} cy={p.y} r="16" fill="transparent" />
-                          <circle cx={p.x} cy={p.y} r="7.5" fill="#E6A05E" className={`solar-body ${selectedBody.id === 'venus' ? 'active' : ''}`} />
+                          <circle cx={p.x} cy={p.y} r="18" fill="transparent" />
+                          <circle cx={p.x} cy={p.y} r="8" fill="#fde68a" stroke="#d97706" strokeWidth="1" className={`solar-body ${selectedBody.id === 'venus' ? 'active' : ''}`} />
+                          <circle cx={p.x} cy={p.y} r="8.8" fill="none" stroke="rgba(245, 158, 11, 0.4)" strokeWidth="1.2" />
                         </g>
                       );
                     })()}
 
-                    {/* TIERRA Y LUNA */}
-                    <g onClick={() => handleSelectBody(CELESTIAL_DATA.tierra)} style={{ cursor: 'pointer' }}>
-                      <circle cx={coordsTierra.x} cy={coordsTierra.y} r="18" fill="transparent" />
-                      <circle cx={coordsTierra.x} cy={coordsTierra.y} r="9" fill="#3B82F6" className={`solar-body ${selectedBody.id === 'tierra' ? 'active' : ''}`} />
-                    </g>
+                    {/* =======================================================
+                        LA TIERRA Y LA LUNA CON ATMÓSFERA RAYLEIGH
+                       ======================================================= */}
+                    {(() => {
+                      const lunaRad = (angles.luna * Math.PI) / 180;
+                      const lunaX = coordsTierra.x + 20 * Math.cos(lunaRad);
+                      const lunaY = coordsTierra.y + 20 * Math.sin(lunaRad);
 
-                    {/* MARTE */}
+                      return (
+                        <g style={{ cursor: 'pointer' }}>
+                          {/* Órbita de la Luna */}
+                          <circle cx={coordsTierra.x} cy={coordsTierra.y} r="20" fill="none" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="0.6" strokeDasharray="2 2" />
+                          
+                          {/* Planeta Tierra */}
+                          <g onClick={() => handleSelectBody(CELESTIAL_DATA.tierra)}>
+                            <circle cx={coordsTierra.x} cy={coordsTierra.y} r="20" fill="transparent" />
+                            {/* Halo atmosférico */}
+                            <circle cx={coordsTierra.x} cy={coordsTierra.y} r="10.8" fill="none" stroke="rgba(56, 189, 248, 0.45)" strokeWidth="1.2" />
+                            <circle cx={coordsTierra.x} cy={coordsTierra.y} r="9.2" fill="url(#grad-earth-atmo)" className={`solar-body ${selectedBody.id === 'tierra' ? 'active' : ''}`} />
+                            {/* Manchas de continentes */}
+                            <circle cx={coordsTierra.x - 2} cy={coordsTierra.y - 1} r="2.5" fill="#16a34a" opacity="0.75" />
+                            <circle cx={coordsTierra.x + 2.5} cy={coordsTierra.y + 2} r="2" fill="#15803d" opacity="0.75" />
+                          </g>
+
+                          {/* La Luna */}
+                          <g onClick={() => handleSelectBody(CELESTIAL_DATA.luna || CELESTIAL_DATA.tierra)}>
+                            <circle cx={lunaX} cy={lunaY} r="2.5" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.5" />
+                          </g>
+                        </g>
+                      );
+                    })()}
+
+                    {/* =======================================================
+                        MARTE: Casquetes polares y óxido de hierro
+                       ======================================================= */}
                     <g onClick={() => handleSelectBody(CELESTIAL_DATA.marte)} style={{ cursor: 'pointer' }}>
-                      <circle cx={coordsMarte.x} cy={coordsMarte.y} r="16" fill="transparent" />
-                      <circle cx={coordsMarte.x} cy={coordsMarte.y} r="7" fill="#EF4444" className={`solar-body ${selectedBody.id === 'marte' ? 'active' : ''}`} />
+                      <circle cx={coordsMarte.x} cy={coordsMarte.y} r="17" fill="transparent" />
+                      <circle cx={coordsMarte.x} cy={coordsMarte.y} r="7.2" fill="#ea580c" stroke="#9a3412" strokeWidth="0.9" className={`solar-body ${selectedBody.id === 'marte' ? 'active' : ''}`} />
+                      {/* Casquete polar ártico blanco */}
+                      <ellipse cx={coordsMarte.x} cy={coordsMarte.y - 5.5} rx="3" ry="1.2" fill="#ffffff" opacity="0.9" />
                     </g>
 
-                    {/* JÚPITER */}
-                    <g onClick={() => handleSelectBody(CELESTIAL_DATA.jupiter)} style={{ cursor: 'pointer' }}>
-                      <circle cx={coordsJupiter.x} cy={coordsJupiter.y} r="22" fill="transparent" />
-                      <circle cx={coordsJupiter.x} cy={coordsJupiter.y} r="18" fill="#D97706" className={`solar-body ${selectedBody.id === 'jupiter' ? 'active' : ''}`} />
-                    </g>
+                    {/* =======================================================
+                        JÚPITER: Bandas atmosféricas, Gran Mancha Roja y 4 lunas
+                       ======================================================= */}
+                    {(() => {
+                      const ioRad = ((angles.luna * 2.2) * Math.PI) / 180;
+                      const eurRad = ((angles.luna * 1.3) * Math.PI) / 180;
+                      const ganRad = ((angles.luna * 0.7) * Math.PI) / 180;
+                      const calRad = ((angles.luna * 0.35) * Math.PI) / 180;
 
-                    {/* SATURNO */}
-                    <g onClick={() => handleSelectBody(CELESTIAL_DATA.saturno)} style={{ cursor: 'pointer' }}>
-                      <ellipse cx={coordsSaturno.x} cy={coordsSaturno.y} rx="26" ry="7" fill="none" stroke="rgba(224, 185, 116, 0.4)" strokeWidth="6" transform={`rotate(-15, ${coordsSaturno.x}, ${coordsSaturno.y})`} />
-                      <circle cx={coordsSaturno.x} cy={coordsSaturno.y} r="14" fill="#E0B974" className={`solar-body ${selectedBody.id === 'saturno' ? 'active' : ''}`} />
-                    </g>
+                      return (
+                        <g style={{ cursor: 'pointer' }}>
+                          {/* Órbitas galileanas */}
+                          <circle cx={coordsJupiter.x} cy={coordsJupiter.y} r="28" fill="none" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.5" strokeDasharray="2 2" />
+                          <circle cx={coordsJupiter.x} cy={coordsJupiter.y} r="36" fill="none" stroke="rgba(255, 255, 255, 0.1)" strokeWidth="0.5" strokeDasharray="2 2" />
 
-                    {/* URANO (Rotación acostada de lado) */}
+                          {/* Cuerpo de Júpiter */}
+                          <g onClick={() => handleSelectBody(CELESTIAL_DATA.jupiter)}>
+                            <circle cx={coordsJupiter.x} cy={coordsJupiter.y} r="24" fill="transparent" />
+                            <circle cx={coordsJupiter.x} cy={coordsJupiter.y} r="18" fill="url(#grad-jupiter-belts)" stroke="#b45309" strokeWidth="1" className={`solar-body ${selectedBody.id === 'jupiter' ? 'active' : ''}`} />
+                            {/* Gran Mancha Roja */}
+                            <ellipse cx={coordsJupiter.x + 4} cy={coordsJupiter.y + 4} rx="4" ry="2.2" fill="#dc2626" />
+                          </g>
+
+                          {/* 4 Satélites Galileanos */}
+                          {/* Ío (volcánico) */}
+                          <circle cx={coordsJupiter.x + 28 * Math.cos(ioRad)} cy={coordsJupiter.y + 28 * Math.sin(ioRad)} r="1.8" fill="#facc15">
+                            <title>Ío</title>
+                          </circle>
+                          {/* Europa (hielo y océano) */}
+                          <circle cx={coordsJupiter.x + 36 * Math.cos(eurRad)} cy={coordsJupiter.y + 36 * Math.sin(eurRad)} r="1.7" fill="#bae6fd">
+                            <title>Europa</title>
+                          </circle>
+                          {/* Ganímedes (el más grande) */}
+                          <circle cx={coordsJupiter.x + 45 * Math.cos(ganRad)} cy={coordsJupiter.y + 45 * Math.sin(ganRad)} r="2.2" fill="#cbd5e1">
+                            <title>Ganímedes</title>
+                          </circle>
+                          {/* Calisto */}
+                          <circle cx={coordsJupiter.x + 54 * Math.cos(calRad)} cy={coordsJupiter.y + 54 * Math.sin(calRad)} r="2.0" fill="#94a3b8">
+                            <title>Calisto</title>
+                          </circle>
+                        </g>
+                      );
+                    })()}
+
+                    {/* =======================================================
+                        SATURNO: Anillos con División de Cassini y Titán
+                       ======================================================= */}
+                    {(() => {
+                      const titanRad = ((angles.luna * 0.45) * Math.PI) / 180;
+                      const titanX = coordsSaturno.x + 46 * Math.cos(titanRad);
+                      const titanY = coordsSaturno.y + 46 * Math.sin(titanRad);
+
+                      return (
+                        <g onClick={() => handleSelectBody(CELESTIAL_DATA.saturno)} style={{ cursor: 'pointer' }}>
+                          {/* Órbita de Titán */}
+                          <circle cx={coordsSaturno.x} cy={coordsSaturno.y} r="46" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.5" strokeDasharray="2 2" />
+                          
+                          {/* Anillos de Saturno con inclinación de 26.7° */}
+                          <g transform={`rotate(-22, ${coordsSaturno.x}, ${coordsSaturno.y})`}>
+                            {/* Anillo A exterior */}
+                            <ellipse cx={coordsSaturno.x} cy={coordsSaturno.y} rx="34" ry="9" fill="none" stroke="rgba(224, 185, 116, 0.45)" strokeWidth="3" />
+                            {/* División de Cassini (hueco oscuro) */}
+                            <ellipse cx={coordsSaturno.x} cy={coordsSaturno.y} rx="30.5" ry="8" fill="none" stroke="rgba(10, 5, 20, 0.85)" strokeWidth="1.2" />
+                            {/* Anillo B interior brillante */}
+                            <ellipse cx={coordsSaturno.x} cy={coordsSaturno.y} rx="27" ry="7" fill="none" stroke="rgba(253, 230, 138, 0.75)" strokeWidth="4.5" />
+                          </g>
+
+                          {/* Globo de Saturno */}
+                          <circle cx={coordsSaturno.x} cy={coordsSaturno.y} r="13.5" fill="#fde68a" stroke="#d97706" strokeWidth="0.9" className={`solar-body ${selectedBody.id === 'saturno' ? 'active' : ''}`} />
+                          
+                          {/* Titán */}
+                          <circle cx={titanX} cy={titanY} r="2.4" fill="#f97316">
+                            <title>Titán</title>
+                          </circle>
+                        </g>
+                      );
+                    })()}
+
+                    {/* =======================================================
+                        URANO: Inclinación extrema (97.8°) y anillos tenues
+                       ======================================================= */}
                     {(() => {
                       const p = getCoordinates('urano');
                       return (
                         <g onClick={() => handleSelectBody(CELESTIAL_DATA.urano)} style={{ cursor: 'pointer' }}>
-                          <circle cx={p.x} cy={p.y} r="18" fill="transparent" />
-                          <circle cx={p.x} cy={p.y} r="11" fill="#38BDF8" className={`solar-body ${selectedBody.id === 'urano' ? 'active' : ''}`} />
-                          <line x1={p.x - 16} y1={p.y} x2={p.x + 16} y2={p.y} stroke="rgba(255,255,255,0.6)" strokeWidth="1.5" />
+                          <circle cx={p.x} cy={p.y} r="20" fill="transparent" />
+                          {/* Anillos verticales tenues */}
+                          <ellipse cx={p.x} cy={p.y} rx="5" ry="18" fill="none" stroke="rgba(207, 250, 254, 0.35)" strokeWidth="1" transform={`rotate(12, ${p.x}, ${p.y})`} />
+                          <circle cx={p.x} cy={p.y} r="11" fill="#67e8f9" stroke="#0891b2" strokeWidth="1" className={`solar-body ${selectedBody.id === 'urano' ? 'active' : ''}`} />
+                          {/* Eje inclinado retrógrado */}
+                          <line x1={p.x - 14} y1={p.y - 2} x2={p.x + 14} y2={p.y + 2} stroke="rgba(255,255,255,0.7)" strokeWidth="1.2" strokeDasharray="2 2" />
                         </g>
                       );
                     })()}
 
-                    {/* NEPTUNO */}
-                    <g onClick={() => handleSelectBody(CELESTIAL_DATA.neptuno)} style={{ cursor: 'pointer' }}>
-                      <circle cx={coordsNeptuno.x} cy={coordsNeptuno.y} r="18" fill="transparent" />
-                      <circle cx={coordsNeptuno.x} cy={coordsNeptuno.y} r="10.5" fill="#1D4ED8" className={`solar-body ${selectedBody.id === 'neptuno' ? 'active' : ''}`} />
-                    </g>
+                    {/* =======================================================
+                        NEPTUNO: Gran Mancha Oscura y Tritón retrógrado
+                       ======================================================= */}
+                    {(() => {
+                      const tritonRad = ((-angles.luna * 0.6) * Math.PI) / 180;
+                      const tritonX = coordsNeptuno.x + 24 * Math.cos(tritonRad);
+                      const tritonY = coordsNeptuno.y + 24 * Math.sin(tritonRad);
 
-                    {/* Anillo de Selección Cibernético (Targeting Reticle) */}
+                      return (
+                        <g onClick={() => handleSelectBody(CELESTIAL_DATA.neptuno)} style={{ cursor: 'pointer' }}>
+                          {/* Órbita retrógrada de Tritón */}
+                          <circle cx={coordsNeptuno.x} cy={coordsNeptuno.y} r="24" fill="none" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="0.5" strokeDasharray="2 2" />
+                          <circle cx={coordsNeptuno.x} cy={coordsNeptuno.y} r="20" fill="transparent" />
+                          <circle cx={coordsNeptuno.x} cy={coordsNeptuno.y} r="10.5" fill="#2563eb" stroke="#1e3a8a" strokeWidth="1" className={`solar-body ${selectedBody.id === 'neptuno' ? 'active' : ''}`} />
+                          {/* Gran Mancha Oscura */}
+                          <ellipse cx={coordsNeptuno.x - 2} cy={coordsNeptuno.y + 2} rx="2.5" ry="1.4" fill="#0f172a" opacity="0.85" />
+                          {/* Tritón */}
+                          <circle cx={tritonX} cy={tritonY} r="1.9" fill="#e0e7ff">
+                            <title>Tritón</title>
+                          </circle>
+                        </g>
+                      );
+                    })()}
+
+                    {/* Anillo de Selección de Telemetría (Targeting Reticle) */}
                     {selectedBody.id !== 'sol' && selectedBody.type !== 'cinturon' && (() => {
                       let cx: number;
                       let cy: number;
@@ -1431,6 +1806,91 @@ export default function SolarSystem() {
                         <span className="m-label">Porcentaje del Disco Solar</span>
                         <span className="m-value">{pctSun}%</span>
                         <p className="m-desc">{bData.name} abarca solo el <strong>{pctSun}%</strong> del diámetro del Sol.</p>
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* CURVA DE LUZ FOTOMÉTRICA EN TIEMPO REAL (MÉTODO DE TRÁNSITOS) */}
+                {(() => {
+                  const bData = SCALE_BODIES_DATA[selectedScalePlanet] || SCALE_BODIES_DATA.tierra;
+                  const dipPercent = Math.pow(bData.diameterKm / 1392700, 2) * 100;
+                  const dipPpm = Math.round(dipPercent * 10000);
+                  const isPlanetInTransit = Math.abs(transitXOffset) < 240;
+                  let currentDrop = 0;
+                  if (isPlanetInTransit) {
+                    const ingressDist = Math.abs(Math.abs(transitXOffset) - 240);
+                    const ingressFactor = Math.min(1, ingressDist / 30);
+                    currentDrop = dipPercent * ingressFactor;
+                  }
+                  const currentFlux = (100 - currentDrop).toFixed(4);
+
+                  return (
+                    <div className="photometric-light-curve-card" style={{ marginTop: '20px' }}>
+                      <div className="light-curve-header">
+                        <div>
+                          <span className="transit-badge">📉 Astrofísica Observacional</span>
+                          <h3 style={{ margin: '6px 0 2px 0', fontSize: '1.1rem', color: '#38bdf8' }}>
+                            Curva de Luz Fotométrica (Detección por Tránsitos Kepler / TESS / JWST)
+                          </h3>
+                          <p style={{ margin: 0, fontSize: '0.84rem', color: '#94a3b8' }}>
+                            Cuando {bData.name} cruza el disco solar, bloquea una fracción minúscula de luz: 
+                            <strong style={{ color: '#f59e0b' }}> ΔF/F = (R_p / R_★)² = {dipPercent.toFixed(4)}% ({dipPpm.toLocaleString('es-GT')} ppm)</strong>.
+                          </p>
+                        </div>
+                        <div className="flux-badge-box">
+                          <span style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase' }}>Flujo Estelar en Vivo:</span>
+                          <span className="flux-numeric-val" style={{ fontSize: '1.3rem', fontWeight: 800, color: isPlanetInTransit ? '#ef4444' : '#10b981' }}>
+                            {currentFlux}%
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Gráfica SVG de Curva de Luz */}
+                      <div className="light-curve-svg-box">
+                        <svg viewBox="0 0 800 130" className="light-curve-svg">
+                          <defs>
+                            <linearGradient id="curve-fill-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                              <stop offset="0%" stopColor="#38bdf8" stopOpacity="0.25" />
+                              <stop offset="100%" stopColor="#38bdf8" stopOpacity="0" />
+                            </linearGradient>
+                          </defs>
+
+                          {/* Eje Y: 100% y fondo */}
+                          <line x1="60" y1="20" x2="780" y2="20" stroke="rgba(255,255,255,0.15)" strokeWidth="1" strokeDasharray="3 3" />
+                          <text x="50" y="24" fill="#94a3b8" fontSize="10" textAnchor="end">100.00%</text>
+
+                          {/* Eje Y: Caída mínima */}
+                          <line x1="60" y1="90" x2="780" y2="90" stroke="rgba(239, 68, 68, 0.2)" strokeWidth="1" strokeDasharray="3 3" />
+                          <text x="50" y="94" fill="#ef4444" fontSize="10" textAnchor="end">{(100 - dipPercent).toFixed(3)}%</text>
+
+                          {/* Curva u-shape fotométrica */}
+                          <path 
+                            d="M 60 20 L 260 20 C 290 20, 310 90, 340 90 L 500 90 C 530 90, 550 20, 580 20 L 780 20" 
+                            fill="none" 
+                            stroke="#38bdf8" 
+                            strokeWidth="2.5" 
+                          />
+                          <path 
+                            d="M 60 20 L 260 20 C 290 20, 310 90, 340 90 L 500 90 C 530 90, 550 20, 580 20 L 780 20 L 780 120 L 60 120 Z" 
+                            fill="url(#curve-fill-grad)" 
+                          />
+
+                          {/* Marcador de tiempo del tránsito actual */}
+                          {(() => {
+                            const markerX = 420 + (transitXOffset / 240) * 220;
+                            const markerY = isPlanetInTransit ? 90 : 20;
+                            return (
+                              <g>
+                                <line x1={markerX} y1="10" x2={markerX} y2="110" stroke="#f59e0b" strokeWidth="1.5" strokeDasharray="4 2" />
+                                <circle cx={markerX} cy={markerY} r="5" fill="#f59e0b" stroke="#ffffff" strokeWidth="1.5" />
+                                <text x={markerX} y="125" fill="#f59e0b" fontSize="9" fontWeight="bold" textAnchor="middle">
+                                  {isPlanetInTransit ? '¡Tránsito en Curso!' : 'Fuera del Disco'}
+                                </text>
+                              </g>
+                            );
+                          })()}
+                        </svg>
                       </div>
                     </div>
                   );
