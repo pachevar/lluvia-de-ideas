@@ -1103,8 +1103,10 @@ export default function SolarSystem() {
                       const rect = e.currentTarget.getBoundingClientRect();
                       const clickX = e.clientX - rect.left;
                       const clickY = e.clientY - rect.top;
-                      const targetSvgX = (clickX / 120) * 900;
-                      const targetSvgY = (clickY / 120) * 900;
+                      const w = rect.width || 120;
+                      const h = rect.height || 120;
+                      const targetSvgX = (clickX / w) * 900;
+                      const targetSvgY = (clickY / h) * 900;
                       setIsTracking(false);
                       setPanOffset({
                         x: 450 - targetSvgX,
