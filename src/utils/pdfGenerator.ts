@@ -326,12 +326,12 @@ export const generateCharacterWorksheetPDF = async (char: CharacterSheetData) =>
 
   renderField('Nombre del Personaje', char.name || 'Héroe Anónimo', '🏷️');
   renderField('Arquetipo y Rol', `${char.archetype || 'Arquetipo'} · ${char.occupation || 'Sin rol'}`, '🎭');
-  renderField('Deseo Externo (The Want)', char.want || 'Lo que persigue en el mundo ordinario', '🎯');
-  renderField('Necesidad Interna (The Need)', char.need || 'La verdad o lección moral que debe aprender', '💎');
-  renderField('Herida del Pasado (The Ghost/Wound)', char.wound || 'El dolor o trauma que lo marcó', '🥀');
-  renderField('Mayor Miedo (The Fear)', char.fear || 'Aquello a lo que más teme enfrentarse', '⚡');
+  renderField('Deseo Externo / Meta Consciente', char.want || 'Lo que persigue en el mundo ordinario', '🎯');
+  renderField('Necesidad Interna / Transformación', char.need || 'La verdad o lección moral que debe aprender', '💎');
+  renderField('Herida del Pasado / Fantasma Interior', char.wound || 'El dolor o trauma que lo marcó', '🥀');
+  renderField('Mayor Miedo / Vulnerabilidad Oculta', char.fear || 'Aquello a lo que más teme enfrentarse', '⚡');
   renderField('Virtud Luminosa', char.virtue || 'Su mayor fortaleza moral o habilidad', '✨');
-  renderField('Defecto Trágico (The Flaw)', char.flaw || 'Su debilidad o punto ciego', '⚠️');
+  renderField('Defecto Trágico / Punto Ciego', char.flaw || 'Su debilidad o punto ciego', '⚠️');
   renderField('Paradoja Central / Contradicción', char.contradiction || 'La paradoja interna que lo hace único y humano', '🔄');
 
   // Right Column: Drawing Box + Character Arc Notes

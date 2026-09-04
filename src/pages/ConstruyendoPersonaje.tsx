@@ -44,7 +44,7 @@ const ARCHETYPES: ArchetypeData[] = [
     classicExample: 'Odiseo (La Odisea), Hunahpú e Ixbalanqué (Popol Vuh)',
     modernExample: 'Katniss Everdeen (Los Juegos del Hambre), Miles Morales (Spider-Verse)',
     writingTip: 'Dale una creencia falsa sobre sí mismo o el mundo en el acto 1; su victoria dependerá de desmantelar esa mentira.',
-    crucibleTrial: 'Debe sacrificar su meta egoísta (The Want) en el abismo para salvar a su comunidad y abrazar su verdadero destino (The Need).',
+    crucibleTrial: 'Debe sacrificar su ambición egoísta en el abismo para salvar a su comunidad y abrazar su verdadera transformación espiritual.',
     relations: [
       { targetArchetype: 'El Mentor', relationRole: 'Pupilo y Heredero', sparkDescription: 'Acepta sus enseñanzas, pero debe romper con su tutela para forjar su propio camino.' },
       { targetArchetype: 'La Sombra', relationRole: 'Espejo Oscuro', sparkDescription: 'Enfrenta en el villano aquello en lo que él mismo se convertiría si cediera al rencor.' },
@@ -130,7 +130,7 @@ const ARCHETYPES: ArchetypeData[] = [
   },
   {
     id: 'embaucador',
-    name: 'El Camaleón / Embaucador (Trickster)',
+    name: 'El Camaleón / El Embaucador',
     roleSubtitle: 'Máscaras cambiantes, ambigüedad moral y sabiduría caótica',
     icon: '🎭',
     quote: '«Las reglas son solo sugerencias escritas por quienes temen reír.»',
@@ -138,7 +138,7 @@ const ARCHETYPES: ArchetypeData[] = [
     shadowWeakness: 'Egoísmo puro, nihilismo o traición por puro capricho personal.',
     classicExample: 'Loki (Mitología Nórdica), Jun Batz y Jun Chowén (Popol Vuh)',
     modernExample: 'Jack Sparrow (Piratas del Caribe), Tyrion Lannister (Juego de Tronos)',
-    writingTip: 'Usa al Trickster para obligar al héroe a pensar fuera de la caja y abandonar su rigidez mental.',
+    writingTip: 'Usa al Embaucador para obligar al héroe a pensar fuera de la caja y abandonar su rigidez mental.',
     crucibleTrial: 'Elegir por una sola vez dejar de bromear y asumir una causa noble cuando el chiste ya no basta para salvar vidas.',
     relations: [
       { targetArchetype: 'El Protagonista', relationRole: 'Espejo Cómico y Desafío', sparkDescription: 'Pincha el globo de su solemnidad y le enseña que a veces se gana perdiendo las formas.' },
@@ -268,7 +268,7 @@ const RANDOM_PRESETS = [
   },
   {
     name: 'Pek el Saltamontes',
-    archetype: 'El Camaleón / Embaucador (Trickster)',
+    archetype: 'El Camaleón / El Embaucador',
     occupation: 'Comerciante de Reliquias Falsas y Jugador de Pelota',
     want: 'Amasar suficiente oro para comprar su propia isla y no rendir cuentas a nadie',
     need: 'Descubrir que pertenecer a una causa compartida da más libertad que el aislamiento',
@@ -277,6 +277,300 @@ const RANDOM_PRESETS = [
     virtue: 'Improvisación mágica y desparpajo que desarma a los tiranos',
     flaw: 'Cleptomanía ocasional y tendencia a escapar al primer signo de peligro real',
     contradiction: 'Vende amuletos que no sirven para nada, pero regala secretos invaluables a los niños hambrientos'
+  }
+];
+
+export interface PillarConnection {
+  targetId: 'deseo' | 'herida' | 'mascara' | 'paradoja';
+  targetTitle: string;
+  dynamicLabel: string;
+  explanation: string;
+  practicalExample: string;
+}
+
+export interface PillarData {
+  id: 'deseo' | 'herida' | 'mascara' | 'paradoja';
+  number: string;
+  title: string;
+  subtitle: string;
+  icon: string;
+  themeColor: string;
+  glowColor: string;
+  triggerQuestion: string;
+  conceptA: {
+    badge: string;
+    name: string;
+    summary: string;
+  };
+  conceptB: {
+    badge: string;
+    name: string;
+    summary: string;
+  };
+  goldenLaw: string;
+  connections: PillarConnection[];
+  classicEcho: {
+    character: string;
+    story: string;
+    breakdown: string;
+  };
+}
+
+export const FOUR_PILLARS_DATA: PillarData[] = [
+  {
+    id: 'deseo',
+    number: '01',
+    title: 'El Deseo Consciente vs. La Necesidad Profunda',
+    subtitle: 'La Meta Externa Tangible frente a la Transformación Espiritual',
+    icon: '🎯',
+    themeColor: '#38bdf8',
+    glowColor: 'rgba(56, 189, 248, 0.35)',
+    triggerQuestion: '¿Qué cree querer para ser feliz y qué verdad se niega a admitir para estar en paz?',
+    conceptA: {
+      badge: 'Meta Externa',
+      name: 'El Deseo (La Obsesión Visible)',
+      summary: 'La conquista física o el trofeo del mundo ordinario: ganar el campeonato, vengar a su familia, acumular riquezas o ser coronado rey.'
+    },
+    conceptB: {
+      badge: 'Transformación Interior',
+      name: 'La Necesidad (El Despertar Espiritual)',
+      summary: 'La lección ética que el protagonista ignora o rechaza: aprender a perdonar, admitir su vulnerabilidad, soltar el rencor o amar sin condiciones.'
+    },
+    goldenLaw: 'El clímax de una gran historia se desata cuando el protagonista es obligado a sacrificar su Deseo Externo para abrazar su Verdadera Necesidad.',
+    connections: [
+      {
+        targetId: 'herida',
+        targetTitle: 'La Herida Original',
+        dynamicLabel: 'Origen de la Carencia',
+        explanation: 'El personaje persigue su Deseo con desesperación porque cree erróneamente que ese trofeo sanará la Herida del pasado.',
+        practicalExample: 'Si fue abandonado de niño (Herida), deseará conquistar un reino (Deseo) creyendo que el poder impedirá que lo vuelvan a desechar.'
+      },
+      {
+        targetId: 'mascara',
+        targetTitle: 'La Máscara Social',
+        dynamicLabel: 'Herramienta de Búsqueda',
+        explanation: 'Usa su Máscara pública como armadura cotidiana para perseguir el Deseo sin que nadie descubra su verdadera debilidad.',
+        practicalExample: 'El rebelde indiferente usa su pose desafiante para manipular alianzas y alcanzar su meta sin apegarse a nadie.'
+      },
+      {
+        targetId: 'paradoja',
+        targetTitle: 'La Paradoja Viva',
+        dynamicLabel: 'Punto de Fricción',
+        explanation: 'El choque frontal entre lo que quiere (Deseo) y lo que necesita (Necesidad) es la llama viva que produce sus contradicciones morales.',
+        practicalExample: 'Un justiciero implacable que busca la paz destruyendo todo a su paso hasta que debe perdonar a su mayor enemigo.'
+      }
+    ],
+    classicEcho: {
+      character: 'Odiseo',
+      story: 'La Odisea de Homero',
+      breakdown: 'Deseo: Llegar a Ítaca como un rey conquistador y arrogante. Necesidad: Desprenderse de la soberbia mortal y honrar a los dioses y a su tripulación.'
+    }
+  },
+  {
+    id: 'herida',
+    number: '02',
+    title: 'La Herida Original y la Falsa Creencia',
+    subtitle: 'El Fantasma del Pasado y el Escudo Psicológico Deformado',
+    icon: '🥀',
+    themeColor: '#a855f7',
+    glowColor: 'rgba(168, 85, 247, 0.35)',
+    triggerQuestion: '¿Qué suceso trágico partió su vida en dos y qué regla equivocada juró para sobrevivir?',
+    conceptA: {
+      badge: 'Trauma Fundacional',
+      name: 'El Fantasma del Pasado (La Herida)',
+      summary: 'El evento doloroso no resuelto: una traición desgarradora, una pérdida irreparable o una culpa del pasado que tiñe su mirada de desconfianza.'
+    },
+    conceptB: {
+      badge: 'Escudo Deformado',
+      name: 'La Falsa Creencia (La Mentira)',
+      summary: 'La conclusión torcida que adoptó para protegerse: «Nadie es leal», «El valor solo se mide por victorias» o «Si demuestras afecto, te destruyen».'
+    },
+    goldenLaw: 'El arco del personaje consiste en el desmantelamiento progresivo y doloroso de la Falsa Creencia hasta contemplar la verdad sin armadura.',
+    connections: [
+      {
+        targetId: 'deseo',
+        targetTitle: 'El Deseo Consciente',
+        dynamicLabel: 'Búsqueda de Alivio',
+        explanation: 'La Falsa Creencia le dicta al personaje qué meta externa debe perseguir para sentirse blindado contra su dolor.',
+        practicalExample: 'Cree que «el dinero es la única seguridad» (Mentira) porque vio morir a su familia en la miseria (Herida), desatando una codicia voraz.'
+      },
+      {
+        targetId: 'mascara',
+        targetTitle: 'La Máscara Social',
+        dynamicLabel: 'Mecanismo de Defensa',
+        explanation: 'Para que nadie toque la cicatriz de su Herida, el personaje fabrica una fachada protectora que aleja a los demás.',
+        practicalExample: 'Se muestra frío y sarcástico para intimidar a cualquiera antes de que puedan descubrir lo aterrado que está de ser lastimado.'
+      },
+      {
+        targetId: 'paradoja',
+        targetTitle: 'La Paradoja Viva',
+        dynamicLabel: 'Síntoma Visible',
+        explanation: 'La herida abierta es la causa directa de que sus virtudes luminosas se retuerzan en defectos trágicos.',
+        practicalExample: 'Su profundo instinto protector se convierte en celos asfixiantes y control obsesivo sobre quienes ama.'
+      }
+    ],
+    classicEcho: {
+      character: 'Katniss Everdeen',
+      story: 'Los Juegos del Hambre',
+      breakdown: 'Herida: La muerte de su padre y la hambruna infantil. Falsa Creencia: «Nadie en el Distrito 12 sobrevivirá si se permite confiar en los demás; la ternura es un lujo mortal».'
+    }
+  },
+  {
+    id: 'mascara',
+    number: '03',
+    title: 'El Miedo Inconfesable y la Máscara Social',
+    subtitle: 'La Fachada Protectora frente al Pavor Íntimo',
+    icon: '🛡️',
+    themeColor: '#f59e0b',
+    glowColor: 'rgba(245, 158, 11, 0.35)',
+    triggerQuestion: '¿Qué secreto le aterra revelar y qué personaje interpreta ante los demás?',
+    conceptA: {
+      badge: 'Pavor Íntimo',
+      name: 'El Miedo Inconfesable',
+      summary: 'El abismo emocional que no admitiría ni frente a su propio reflejo: el terror a la soledad, el pánico a ser considerado débil, o la culpa de sentirse indigno de ser amado.'
+    },
+    conceptB: {
+      badge: 'Fachada Pública',
+      name: 'La Máscara Social (El Personaje)',
+      summary: 'La pose deliberada con la que se desenvuelve: el guerrero invencible, el bufón burlón, el erudito solemne o el solitario autosuficiente.'
+    },
+    goldenLaw: 'Las escenas de mayor magnetismo narrativo ocurren cuando una crisis fractura la Máscara y deja al descubierto el Miedo Inconfesable.',
+    connections: [
+      {
+        targetId: 'herida',
+        targetTitle: 'La Herida Original',
+        dynamicLabel: 'Muralla Protectora',
+        explanation: 'La Máscara actúa como un foso con cocodrilos alrededor de la Herida: nadie puede ver el trauma si solo ve la pose.',
+        practicalExample: 'Finge ser un borracho olvidadizo para que nadie sospeche el remordimiento insoportable que corroe sus noches.'
+      },
+      {
+        targetId: 'deseo',
+        targetTitle: 'El Deseo Consciente',
+        dynamicLabel: 'Disfraz Operativo',
+        explanation: 'Utiliza su máscara para conseguir ventajas en el mundo exterior mientras persigue su meta tangible.',
+        practicalExample: 'El político encantador seduce a las masas con sonrisas calculadas para amasar el poder que calmará su inseguridad.'
+      },
+      {
+        targetId: 'paradoja',
+        targetTitle: 'La Paradoja Viva',
+        dynamicLabel: 'Grieta Dramática',
+        explanation: 'Cuando la Máscara no coincide con la verdadera esencia moral del personaje, estalla la contradicción humana.',
+        practicalExample: 'Alardea de no tener corazón y cobrar por cada favor, pero dona medicinas de contrabando a los huérfanos sin que nadie lo vea.'
+      }
+    ],
+    classicEcho: {
+      character: 'Haymitch Abernathy',
+      story: 'Trilogía del Capitolio',
+      breakdown: 'Miedo: Ver morir a más jóvenes bajo su tutela como mentor. Máscara: El borracho sarcástico e indiferente que aparenta no importarle nada ni nadie.'
+    }
+  },
+  {
+    id: 'paradoja',
+    number: '04',
+    title: 'La Paradoja Viva y la Virtud Distorsionada',
+    subtitle: 'La Contradicción Humana y el Peligro de los Extremos',
+    icon: '🔄',
+    themeColor: '#ec4899',
+    glowColor: 'rgba(236, 72, 153, 0.35)',
+    triggerQuestion: '¿Cuál es su contradicción irresistible y cuándo su mayor virtud se vuelve peligrosa?',
+    conceptA: {
+      badge: 'Luz Desbordada',
+      name: 'La Virtud Distorsionada',
+      summary: 'El talento o principio luminoso que, llevado al fanatismo o acorralado por el miedo, se vuelve dañino: la lealtad se vuelve ceguera cómplice; la valentía, temeridad imprudente.'
+    },
+    conceptB: {
+      badge: 'Tensión de Opuestos',
+      name: 'La Contradicción Humana',
+      summary: 'La coexistencia de dos impulsos aparentemente incompatibles que conviven en su pecho y lo convierten en un ser multidimensional que sorprende al lector.'
+    },
+    goldenLaw: 'Los personajes planos son exclusivamente buenos o malos; los seres inolvidables están construidos con paradojas éticas que desafían las etiquetas simples.',
+    connections: [
+      {
+        targetId: 'deseo',
+        targetTitle: 'El Deseo vs Necesidad',
+        dynamicLabel: 'Detonante del Cambio',
+        explanation: 'La paradoja obliga al personaje a dudar de su Deseo egoísta y lo empuja hacia su verdadera Necesidad transformadora.',
+        practicalExample: 'Su orgullo le exige ganar, pero su empatía oculta le impide rematar a su rival indefenso.'
+      },
+      {
+        targetId: 'herida',
+        targetTitle: 'La Herida Original',
+        dynamicLabel: 'Herida en Carne Viva',
+        explanation: 'La contradicción es la prueba viviente de que la herida ancestral sigue ardiendo bajo la piel.',
+        practicalExample: 'Odia la guerra porque destruyó su hogar, pero es el combatiente más despiadado del campo de batalla.'
+      },
+      {
+        targetId: 'mascara',
+        targetTitle: 'La Máscara Social',
+        dynamicLabel: 'Quiebre de la Pose',
+        explanation: 'La paradoja traiciona continuamente a la Máscara, revelando al ser compasivo o temeroso que se esconde detrás.',
+        practicalExample: 'El sicario implacable que no puede evitar adoptar a un gato callejero herido en un callejón lluvioso.'
+      }
+    ],
+    classicEcho: {
+      character: 'Hunahpú e Ixbalanqué',
+      story: 'Popol Vuh (Cosmogonía Maya)',
+      breakdown: 'Virtud distorsionada: Astucia y desconfianza sagrada. Paradoja: Se dejan arrojar y triturar en una hoguera de Xibalbá para renacer como maestros de la ilusión y el milagro.'
+    }
+  }
+];
+
+export const CAUSAL_CASE_STUDIES = [
+  {
+    id: 'katniss',
+    name: 'Katniss Everdeen',
+    archetypeTitle: 'La Protectora Desconfiada (Heroína)',
+    icon: '🏹',
+    color: '#38bdf8',
+    herida: 'Muerte de su padre en la explosión minera y el abandono catatónico de su madre.',
+    mentira: '«El afecto te vuelve vulnerable y dependiente; solo en el aislamiento se sobrevive».',
+    mascara: 'Frialdad cortante, silencio impenetrable y desdén hacia cualquier muestra de ternura.',
+    deseo: 'Mantener a salvo únicamente a su hermana Prim y regresar a su bosque en paz.',
+    necesidad: 'Asumir el liderazgo colectivo y convertirse en la esperanza que derribe la tiranía.',
+    paradoja: 'Desafía al imperio más letal del planeta por amor fraterno, pero es incapaz de pronunciar palabras cariñosas.',
+    climaxKey: 'Ofrece bayas venenosas junto a Peeta, prefiriendo morir antes que acatar las reglas del Capitolio.'
+  },
+  {
+    id: 'gemelos',
+    name: 'Hunahpú e Ixbalanqué',
+    archetypeTitle: 'Los Vindicadores Sagrados (Héroes Míticos)',
+    icon: '🌽',
+    color: '#22c55e',
+    herida: 'La decapitación y afrenta sufrida por su padre y tío en las canchas de Xibalbá.',
+    mentira: '«Frente a los señores de la muerte la bondad es suicidio; solo la astucia sin piedad restaura el honor».',
+    mascara: 'Jóvenes cazadores despreocupados con cerbatanas mágicas y adivinadores itinerantes.',
+    deseo: 'Recuperar la pelota sagrada y humillar en su propio juego a los señores del inframundo.',
+    necesidad: 'Completar el ciclo de purificación cósmica para permitir el florecimiento de los hombres de maíz.',
+    paradoja: 'Utilizan el engaño, la trampa y el disfraz para instaurar la verdad y el orden sagrado del cielo.',
+    climaxKey: 'Aceptan saltar voluntariamente al fuego de los señores de la muerte para renacer convertidos en el Sol y la Luna.'
+  },
+  {
+    id: 'haymitch',
+    name: 'Haymitch Abernathy',
+    archetypeTitle: 'El Mentor Desencantado',
+    icon: '🧙‍♂️',
+    color: '#a855f7',
+    herida: 'El asesinato de su familia por orden del Capitolio tras ganar sus propios juegos con un truco de ingenio.',
+    mentira: '«Cualquier tributo que guíes morirá de todos modos; encariñarse es cavar tu propia tumba».',
+    mascara: 'El alcohólico incoherente, burlón y grosero que nunca presta atención a las ceremonias.',
+    deseo: 'Emborracharse hasta el olvido para no escuchar los nombres de los caídos.',
+    necesidad: 'Volver a creer en una causa superior y arriesgar su vida para articular la rebelión tras bambalinas.',
+    paradoja: 'Insulta despiadadamente a sus pupilos mientras negocia patrocinios desesperados para enviarles medicina al campo de batalla.',
+    climaxKey: 'Entiende que Katniss y Peeta merecen vivir y coordina en las sombras la fuga hacia el Distrito 13.'
+  },
+  {
+    id: 'killmonger',
+    name: 'Erik Killmonger',
+    archetypeTitle: 'La Sombra con Causa Justa',
+    icon: '🌑',
+    color: '#f43f5e',
+    herida: 'El asesinato de su padre a manos de su propio tío rey y el abandono infantil en Oakland.',
+    mentira: '«El mundo solo entiende el lenguaje de la pólvora y las cadenas; para liberar a los oprimidos debes convertirte en un opresor más despiadado».',
+    mascara: 'Guerrero de operaciones encubiertas implacable, cínico y sin patria.',
+    deseo: 'Conquistar el trono de Wakanda e iniciar una guerra global armada.',
+    necesidad: 'Reconocer que el odio heredado destruye la misma libertad que pretende defender.',
+    paradoja: 'Llora la opresión de millones de inocentes mientras asesina a sangre fría a quienes se interponen en su camino.',
+    climaxKey: 'Prefiere ser arrojado al océano libre como sus ancestros antes que aceptar la jaula de un perdón misericordioso.'
   }
 ];
 
@@ -297,6 +591,19 @@ export default function ConstruyendoPersonaje() {
   // Psychology Interactive Comparator
   const [selectedVirtue, setSelectedVirtue] = useState('Valentía Indomable');
   const [selectedFlaw, setSelectedFlaw] = useState('Arrogancia Ciega');
+
+  // Estados interactivos para las 4 Fichas Psicológicas y el Telar Causal de Conceptos
+  const [selectedPillarId, setSelectedPillarId] = useState<'deseo' | 'herida' | 'mascara' | 'paradoja'>('deseo');
+  const [selectedCaseStudyId, setSelectedCaseStudyId] = useState<string>('katniss');
+  const [isCustomCausalMode, setIsCustomCausalMode] = useState<boolean>(false);
+  const [customCausalChain, setCustomCausalChain] = useState({
+    herida: 'Traición del maestro en quien más confiaba durante una batalla decisiva.',
+    mentira: '«Nadie es leal cuando arrecia la tormenta; solo en soledad se está a salvo».',
+    mascara: 'El guerrero cínico y distante que cobra oro por cada palabra y favor.',
+    deseo: 'Vengar a su linaje y derribar al consejo que lo traicionó.',
+    necesidad: 'Aprender a perdonar y aceptar la mano extendida de sus compañeros.',
+    paradoja: 'Salva vidas en secreto a mitad de la noche, pero de día proclama no creer en nadie.'
+  });
 
   // Local state for images fallback/cache
   const [localArchetypeImages, setLocalArchetypeImages] = useState<Record<string, string>>(() => {
@@ -550,12 +857,12 @@ export default function ConstruyendoPersonaje() {
 Nombre: ${charName}
 Arquetipo: ${charArchetype}
 Ocupación: ${charOccupation}
-Deseo Externo (Want): ${charWant}
-Necesidad Interna (Need): ${charNeed}
-Herida / Fantasma (Ghost): ${charWound}
-Mayor Miedo: ${charFear}
+Meta Consciente / Deseo Externo: ${charWant}
+Transformación / Necesidad Profunda: ${charNeed}
+Herida del Pasado / Fantasma Interior: ${charWound}
+Mayor Miedo / Vulnerabilidad Oculta: ${charFear}
 Virtud Luminosa: ${charVirtue}
-Defecto Trágico: ${charFlaw}
+Defecto Trágico / Punto Ciego: ${charFlaw}
 Paradoja Central: "${charContradiction}"
 Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
 
@@ -601,6 +908,14 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
     return JOURNEY_STAGES_DATA.find(s => s.id === activeJourneyStageId) || JOURNEY_STAGES_DATA[2];
   }, [activeJourneyStageId]);
 
+  const activePillar = useMemo(() => {
+    return FOUR_PILLARS_DATA.find(p => p.id === selectedPillarId) || FOUR_PILLARS_DATA[0];
+  }, [selectedPillarId]);
+
+  const activeCaseStudy = useMemo(() => {
+    return CAUSAL_CASE_STUDIES.find(c => c.id === selectedCaseStudyId) || CAUSAL_CASE_STUDIES[0];
+  }, [selectedCaseStudyId]);
+
   return (
     <div className="personaje-page-container">
       <LandingTopBar />
@@ -608,7 +923,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
       {/* Hero Section */}
       <section className="personaje-hero">
         <div className="personaje-badge-pill animate-pop-in">
-          <span>✨</span> CREATIKA • MASTERCLASS NARRATIVA
+          <span>✨</span> CREATIKA • CLASE MAGISTRAL NARRATIVA
         </div>
         <h1 className="personaje-hero-title">
           Construyendo el Personaje: <br />
@@ -655,101 +970,380 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
       </section>
 
       {/* =========================================================================
-          MÓDULO 1: PSICOLOGÍA PROFUNDA DEL PERSONAJE
+          MÓDULO 1: PSICOLOGÍA PROFUNDA DEL PERSONAJE (LAS 4 FICHAS DEL ALMA)
           ========================================================================= */}
       <section ref={sectionRefs.psicologia} className="personaje-section" id="psicologia">
         <div className="section-header-block">
           <span className="section-tag">Módulo 1</span>
           <h2 className="section-main-title">La Anatomía Interna: Los Cuatro Pilares del Alma</h2>
           <p className="section-description">
-            Un gran personaje no se define por su apariencia física ni sus poderes, sino por sus
-            <strong> contradicciones éticas</strong> y el conflicto irreconciliable entre lo que quiere y lo que realmente necesita.
+            Un gran personaje no se define por su vestimenta ni por sus poderes, sino por sus
+            <strong> contradicciones éticas</strong> y el encadenamiento causal entre su pasado, su máscara, su deseo y su necesidad espiritual.
           </p>
         </div>
 
-        <div className="pillars-grid">
-          {/* Pilar 1: Deseo vs Necesidad */}
-          <div className="narrative-card pillar-card">
-            <div className="pillar-header">
-              <span className="pillar-icon">🎯</span>
-              <div>
-                <h3 className="pillar-title">1. El Deseo vs. La Necesidad</h3>
-                <span className="pillar-sub">The Want vs. The Need</span>
+        {/* Las 4 Fichas Psicológicas Maestras */}
+        <div className="pillars-four-grid">
+          {FOUR_PILLARS_DATA.map((pillar) => {
+            const isSelected = selectedPillarId === pillar.id;
+            return (
+              <div 
+                key={pillar.id}
+                className={`narrative-card pillar-v2-card ${isSelected ? 'pillar-active' : ''}`}
+                style={{
+                  borderColor: isSelected ? pillar.themeColor : 'rgba(255, 255, 255, 0.1)',
+                  boxShadow: isSelected ? `0 0 30px ${pillar.glowColor}` : undefined
+                }}
+              >
+                {/* Header de la Ficha */}
+                <div className="pillar-v2-header">
+                  <span className="pillar-v2-number" style={{ color: pillar.themeColor }}>
+                    {pillar.number}
+                  </span>
+                  <div className="pillar-v2-icon-wrap" style={{ borderColor: pillar.themeColor }}>
+                    <span>{pillar.icon}</span>
+                  </div>
+                  <div className="pillar-v2-title-box">
+                    <h3 className="pillar-v2-title" style={{ color: isSelected ? pillar.themeColor : '#fff' }}>
+                      {pillar.title}
+                    </h3>
+                    <span className="pillar-v2-sub">{pillar.subtitle}</span>
+                  </div>
+                </div>
+
+                {/* Pregunta Clave */}
+                <div className="pillar-v2-question-box">
+                  <span className="question-icon">❓</span>
+                  <p className="question-text">«{pillar.triggerQuestion}»</p>
+                </div>
+
+                {/* Bloques Conceptuales en Contraste (A vs B) */}
+                <div className="pillar-v2-concepts-grid">
+                  <div className="concept-contrast-card concept-a">
+                    <div className="concept-tag" style={{ color: pillar.themeColor, borderColor: `${pillar.themeColor}55` }}>
+                      {pillar.conceptA.badge}
+                    </div>
+                    <h4 className="concept-name">{pillar.conceptA.name}</h4>
+                    <p className="concept-desc">{pillar.conceptA.summary}</p>
+                  </div>
+
+                  <div className="concept-contrast-card concept-b">
+                    <div className="concept-tag" style={{ color: '#a855f7', borderColor: 'rgba(168, 85, 247, 0.35)' }}>
+                      {pillar.conceptB.badge}
+                    </div>
+                    <h4 className="concept-name">{pillar.conceptB.name}</h4>
+                    <p className="concept-desc">{pillar.conceptB.summary}</p>
+                  </div>
+                </div>
+
+                {/* Regla de Oro Dramatúrgica */}
+                <div className="pillar-v2-golden-rule">
+                  <strong>💡 Ley Narrativa:</strong> {pillar.goldenLaw}
+                </div>
+
+                {/* Ejemplo Canónico */}
+                <div className="pillar-v2-canon-echo">
+                  <span className="canon-tag">📖 Ejemplo Magistral:</span>
+                  <strong>{pillar.classicEcho.character}</strong> <em>({pillar.classicEcho.story})</em>
+                  <p>{pillar.classicEcho.breakdown}</p>
+                </div>
+
+                {/* Botón de Interconexión Causal */}
+                <button 
+                  className={`pillar-explore-btn ${isSelected ? 'active' : ''}`}
+                  style={{
+                    background: isSelected ? `linear-gradient(135deg, ${pillar.themeColor}33, #0f172a)` : 'rgba(255, 255, 255, 0.05)',
+                    borderColor: isSelected ? pillar.themeColor : 'rgba(255, 255, 255, 0.15)',
+                    color: isSelected ? '#fff' : '#cbd5e1'
+                  }}
+                  onClick={() => {
+                    setSelectedPillarId(pillar.id);
+                    soundEffects.playClick();
+                  }}
+                >
+                  <span>⚡</span> {isSelected ? 'Pilar en Enfoque Activo' : 'Explorar Relación con los Otros 3 Pilares'}
+                </button>
               </div>
+            );
+          })}
+        </div>
+
+        {/* =========================================================================
+            EL TELAR CAUSAL: CONECTOR DINÁMICO DE CONCEPTOS E IDEAS
+            ========================================================================= */}
+        <div className="causal-loom-container card-glass animate-fade-in">
+          <div className="causal-loom-header">
+            <div className="causal-badge">
+              <span>🕸️</span> EL TELAR CAUSAL DE LA PSIQUE
             </div>
-            <div className="pillar-body">
-              <div className="contrast-box">
-                <strong className="contrast-want">Deseo (Externo):</strong>
-                <p>La meta tangible y consciente que persigue en el mundo físico (ganar el torneo, vengar a su maestro, obtener el tesoro).</p>
-              </div>
-              <div className="contrast-box">
-                <strong className="contrast-need">Necesidad (Interno):</strong>
-                <p>La verdad espiritual que el personaje ignora y que debe aprender para sanar su herida (perdonar, aceptar la vulnerabilidad, soltar el ego).</p>
-              </div>
-              <div className="pillar-key-takeaway">
-                <em>💡 Regla de Oro:</em> El clímax de la historia ocurre cuando el personaje debe elegir entre renunciar a su <strong>Deseo</strong> para satisfacer su <strong>Necesidad</strong>.
-              </div>
+            <h3 className="causal-title">
+              Cómo se Relacionan los Cuatro Pilares: <span style={{ color: activePillar.themeColor }}>{activePillar.title}</span>
+            </h3>
+            <p className="causal-subtitle">
+              Los conceptos psicológicos no existen aislados. Un trauma engendra una creencia, la creencia erige una máscara, la máscara persigue un deseo y el deseo choca contra la verdad en el clímax.
+            </p>
+          </div>
+
+          {/* Selector de Perspectiva de Pilar */}
+          <div className="causal-pillar-tabs" role="tablist">
+            {FOUR_PILLARS_DATA.map((p) => {
+              const isActive = selectedPillarId === p.id;
+              return (
+                <button
+                  key={p.id}
+                  className={`causal-tab-btn ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    setSelectedPillarId(p.id);
+                    soundEffects.playClick();
+                  }}
+                  style={{
+                    borderBottomColor: isActive ? p.themeColor : 'transparent',
+                    boxShadow: isActive ? `0 4px 15px ${p.glowColor}` : undefined
+                  }}
+                >
+                  <span>{p.icon}</span>
+                  <strong>{p.number}. {p.title.split(' vs.')[0].split(' y ')[0]}</strong>
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Diagrama de Flujo Causal de los 4 Conceptos */}
+          <div className="causal-flow-diagram">
+            <div className="flow-step">
+              <span className="flow-step-icon">🥀</span>
+              <span className="flow-step-num">01</span>
+              <strong className="flow-step-title">Herida del Pasado</strong>
+              <small className="flow-step-desc">El trauma original que rompe el equilibrio</small>
+            </div>
+            <div className="flow-arrow">➔</div>
+            <div className="flow-step">
+              <span className="flow-step-icon">🎭</span>
+              <span className="flow-step-num">02</span>
+              <strong className="flow-step-title">Falsa Creencia</strong>
+              <small className="flow-step-desc">La mentira adoptada para no sufrir</small>
+            </div>
+            <div className="flow-arrow">➔</div>
+            <div className="flow-step">
+              <span className="flow-step-icon">🛡️</span>
+              <span className="flow-step-num">03</span>
+              <strong className="flow-step-title">Máscara & Miedo</strong>
+              <small className="flow-step-desc">La fachada que oculta la fragilidad</small>
+            </div>
+            <div className="flow-arrow">➔</div>
+            <div className="flow-step">
+              <span className="flow-step-icon">🎯</span>
+              <span className="flow-step-num">04</span>
+              <strong className="flow-step-title">Deseo vs Necesidad</strong>
+              <small className="flow-step-desc">El choque moral definitivo en el abismo</small>
             </div>
           </div>
 
-          {/* Pilar 2: La Mentira */}
-          <div className="narrative-card pillar-card">
-            <div className="pillar-header">
-              <span className="pillar-icon">🥀</span>
-              <div>
-                <h3 className="pillar-title">2. La Mentira y la Herida</h3>
-                <span className="pillar-sub">The Lie & The Ghost (Wound)</span>
-              </div>
-            </div>
-            <div className="pillar-body">
-              <p>Todo personaje inicia su relato con un escudo psicológico deformado por un trauma del pasado (el «Fantasma» o Herida Original).</p>
-              <div className="mechanic-step">
-                <span className="step-badge">Paso A</span>
-                <div>
-                  <strong>La Herida (The Ghost):</strong> Un evento traumático no resuelto (un abandono infantil, un error fatal que costó una vida).
+          {/* Matriz de Conexiones Activas desde el Pilar Seleccionado */}
+          <div className="causal-connections-grid">
+            {activePillar.connections.map((conn, idx) => (
+              <div key={idx} className="causal-conn-card">
+                <div className="conn-card-header">
+                  <span className="conn-direction-tag">
+                    {activePillar.icon} ➔ {conn.targetTitle}
+                  </span>
+                  <span className="conn-dynamic-label">{conn.dynamicLabel}</span>
+                </div>
+                <p className="conn-explanation">{conn.explanation}</p>
+                <div className="conn-scene-box">
+                  <strong>🎬 En Escena:</strong>
+                  <span>{conn.practicalExample}</span>
                 </div>
               </div>
-              <div className="mechanic-step">
-                <span className="step-badge">Paso B</span>
-                <div>
-                  <strong>La Mentira que cree:</strong> «No puedo confiar en nadie porque todos te traicionan al final».
-                </div>
-              </div>
-              <div className="mechanic-step">
-                <span className="step-badge">Paso C</span>
-                <div>
-                  <strong>El Comportamiento Tóxico:</strong> Se aísla, agrede primero y sabotea a sus aliados para protegerse del dolor.
-                </div>
-              </div>
-            </div>
+            ))}
           </div>
 
-          {/* Pilar 3: La Paradoja de Personalidad */}
-          <div className="narrative-card pillar-card">
-            <div className="pillar-header">
-              <span className="pillar-icon">🔄</span>
-              <div>
-                <h3 className="pillar-title">3. La Paradoja de Personalidad</h3>
-                <span className="pillar-sub">The Flaw as a Distorted Virtue</span>
-              </div>
+          {/* Banco de Casos de Estudio Reales (Relaciones en Vivo) */}
+          <div className="causal-case-studies-block">
+            <div className="case-studies-header">
+              <span className="case-studies-badge">🎭 CASOS DE ESTUDIO MAGISTRALES</span>
+              <h4>Observa cómo se articulan los cuatro pilares en personajes célebres:</h4>
             </div>
-            <div className="pillar-body">
-              <p>Los personajes planos son o 100% santos o 100% monstruos. Los seres inolvidables contienen paradojas irresistibles.</p>
-              <div className="contrast-pill">
-                <strong>El Pacificador Violento:</strong> <span>Ama la paz tan ferozmente que recurre a la fuerza para imponerla.</span>
-              </div>
-              <div className="contrast-pill">
-                <strong>El Cínico Protector:</strong> <span>Dice no creer en nadie, pero es el primero en saltar al fuego para salvar a un extraño.</span>
-              </div>
-              <div className="contrast-pill">
-                <strong>El Sabio Cobarde:</strong> <span>Conoce la solución a todos los enigmas, pero tiembla ante la menor confrontación personal.</span>
-              </div>
+
+            <div className="case-studies-buttons-row">
+              {CAUSAL_CASE_STUDIES.map((cs) => {
+                const isThisActive = selectedCaseStudyId === cs.id && !isCustomCausalMode;
+                return (
+                  <button
+                    key={cs.id}
+                    className={`case-study-select-btn ${isThisActive ? 'active' : ''}`}
+                    onClick={() => {
+                      setSelectedCaseStudyId(cs.id);
+                      setIsCustomCausalMode(false);
+                      soundEffects.playClick();
+                    }}
+                    style={{
+                      borderColor: isThisActive ? cs.color : 'rgba(255,255,255,0.12)'
+                    }}
+                  >
+                    <span>{cs.icon}</span>
+                    <div>
+                      <strong>{cs.name}</strong>
+                      <small>{cs.archetypeTitle.split('(')[0]}</small>
+                    </div>
+                  </button>
+                );
+              })}
+
+              <button
+                className={`case-study-select-btn ${isCustomCausalMode ? 'active' : ''}`}
+                onClick={() => {
+                  setIsCustomCausalMode(true);
+                  soundEffects.playClick();
+                }}
+                style={{
+                  borderColor: isCustomCausalMode ? '#ec4899' : 'rgba(255,255,255,0.12)'
+                }}
+              >
+                <span>⚡</span>
+                <div>
+                  <strong>Modo Creador Libre</strong>
+                  <small>Forja tu propia cadena causal</small>
+                </div>
+              </button>
             </div>
+
+            {/* Ficha Desplegada del Caso Activo */}
+            {!isCustomCausalMode ? (
+              <div className="case-study-active-display" style={{ borderTopColor: activeCaseStudy.color }}>
+                <div className="case-display-top">
+                  <div className="case-display-identity">
+                    <span className="case-avatar">{activeCaseStudy.icon}</span>
+                    <div>
+                      <h4 className="case-name">{activeCaseStudy.name}</h4>
+                      <span className="case-role">{activeCaseStudy.archetypeTitle}</span>
+                    </div>
+                  </div>
+
+                  <button 
+                    className="case-inject-btn"
+                    onClick={() => {
+                      soundEffects.playSuccessFanfare();
+                      setCharName(activeCaseStudy.name);
+                      setCharArchetype(
+                        activeCaseStudy.archetypeTitle.includes('Heroína') || activeCaseStudy.archetypeTitle.includes('Héroes')
+                          ? 'El Héroe / Protagonista'
+                          : activeCaseStudy.archetypeTitle.includes('Mentor')
+                          ? 'El Mentor'
+                          : 'La Sombra / El Antagonista'
+                      );
+                      setCharWant(activeCaseStudy.deseo);
+                      setCharNeed(activeCaseStudy.necesidad);
+                      setCharWound(activeCaseStudy.herida);
+                      setCharFear(activeCaseStudy.mascara);
+                      setCharContradiction(activeCaseStudy.paradoja);
+                      scrollToSection('taller');
+                    }}
+                  >
+                    <span>⚡</span> Inyectar este Arco a la Forja de Personajes ➔
+                  </button>
+                </div>
+
+                <div className="case-chain-grid">
+                  <div className="chain-node-box">
+                    <span className="chain-node-tag" style={{ color: '#a855f7' }}>🥀 1. Herida Original</span>
+                    <p>{activeCaseStudy.herida}</p>
+                  </div>
+                  <div className="chain-node-box">
+                    <span className="chain-node-tag" style={{ color: '#ec4899' }}>🎭 2. Falsa Creencia</span>
+                    <p>{activeCaseStudy.mentira}</p>
+                  </div>
+                  <div className="chain-node-box">
+                    <span className="chain-node-tag" style={{ color: '#f59e0b' }}>🛡️ 3. Máscara & Miedo</span>
+                    <p>{activeCaseStudy.mascara}</p>
+                  </div>
+                  <div className="chain-node-box">
+                    <span className="chain-node-tag" style={{ color: '#38bdf8' }}>🎯 4. Deseo vs Necesidad</span>
+                    <p><strong>Deseo:</strong> {activeCaseStudy.deseo}<br /><strong>Necesidad:</strong> {activeCaseStudy.necesidad}</p>
+                  </div>
+                </div>
+
+                <div className="case-climax-banner">
+                  <strong>🔥 Paradoja en el Clímax:</strong> {activeCaseStudy.paradoja}
+                  <div style={{ marginTop: '6px', fontSize: '0.88rem', color: '#cbd5e1' }}>
+                    <em>Resolución:</em> {activeCaseStudy.climaxKey}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              /* Modo Creador Libre */
+              <div className="case-custom-editor-box">
+                <div className="case-display-top">
+                  <div>
+                    <h4 style={{ margin: 0, color: '#fff', fontSize: '1.2rem' }}>🧪 Forja Tu Propia Cadena Causal</h4>
+                    <p style={{ margin: '4px 0 0', color: '#94a3b8', fontSize: '0.85rem' }}>Escribe o modifica libremente cada eslabón y transfiérelo al taller literario:</p>
+                  </div>
+
+                  <button 
+                    className="case-inject-btn"
+                    onClick={() => {
+                      soundEffects.playSuccessFanfare();
+                      setCharName('Personaje Libre');
+                      setCharWant(customCausalChain.deseo);
+                      setCharNeed(customCausalChain.necesidad);
+                      setCharWound(customCausalChain.herida);
+                      setCharFear(customCausalChain.mascara);
+                      setCharContradiction(customCausalChain.paradoja);
+                      scrollToSection('taller');
+                    }}
+                  >
+                    <span>⚡</span> Transferir a la Forja ➔
+                  </button>
+                </div>
+
+                <div className="custom-chain-inputs-grid">
+                  <div className="custom-input-group">
+                    <label>🥀 1. Herida Original (El Trauma):</label>
+                    <textarea 
+                      className="forge-textarea"
+                      value={customCausalChain.herida}
+                      onChange={e => setCustomCausalChain(prev => ({ ...prev, herida: e.target.value }))}
+                    />
+                  </div>
+                  <div className="custom-input-group">
+                    <label>🎭 2. Falsa Creencia (La Mentira):</label>
+                    <textarea 
+                      className="forge-textarea"
+                      value={customCausalChain.mentira}
+                      onChange={e => setCustomCausalChain(prev => ({ ...prev, mentira: e.target.value }))}
+                    />
+                  </div>
+                  <div className="custom-input-group">
+                    <label>🛡️ 3. Máscara Social (La Fachada):</label>
+                    <textarea 
+                      className="forge-textarea"
+                      value={customCausalChain.mascara}
+                      onChange={e => setCustomCausalChain(prev => ({ ...prev, mascara: e.target.value }))}
+                    />
+                  </div>
+                  <div className="custom-input-group">
+                    <label>🎯 4. Deseo Externo vs Necesidad:</label>
+                    <textarea 
+                      className="forge-textarea"
+                      value={`Deseo: ${customCausalChain.deseo}\nNecesidad: ${customCausalChain.necesidad}`}
+                      onChange={e => {
+                        const lines = e.target.value.split('\n');
+                        setCustomCausalChain(prev => ({
+                          ...prev,
+                          deseo: lines[0]?.replace('Deseo:', '').trim() || prev.deseo,
+                          necesidad: lines[1]?.replace('Necesidad:', '').trim() || prev.necesidad
+                        }));
+                      }}
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
         {/* Simulador Interactivo: Mezclador de Paradoja Humana */}
-        <div className="interactive-paradox-box card-glass animate-fade-in">
+        <div className="interactive-paradox-box card-glass animate-fade-in" style={{ marginTop: '40px' }}>
           <div className="paradox-header">
             <span style={{ fontSize: '1.8rem' }}>🧪</span>
             <div>
@@ -1326,7 +1920,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
           <div className="subtext-lab-header">
             <span style={{ fontSize: '1.6rem' }}>💬</span>
             <div>
-              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.25rem' }}>Laboratorio de Subtexto: «Show, Don't Tell»</h3>
+              <h3 style={{ margin: 0, color: '#fff', fontSize: '1.25rem' }}>Laboratorio de Subtexto: «Muestra la Acción, No la Expliques»</h3>
               <p style={{ margin: '2px 0 0', color: '#94a3b8', fontSize: '0.88rem' }}>
                 Selecciona una escena para comparar el diálogo plano frente al diálogo con carga dramática:
               </p>
@@ -1440,7 +2034,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
               </div>
 
               <div className="forge-field-group">
-                <label>🎯 Deseo Central (The Want - Lo que cree necesitar)</label>
+                <label>🎯 Meta Inmediata / Deseo Externo (Lo que cree querer)</label>
                 <input 
                   type="text" 
                   className="forge-input" 
@@ -1450,7 +2044,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
               </div>
 
               <div className="forge-field-group">
-                <label>💎 Necesidad Profunda (The Need - La verdad que debe aprender)</label>
+                <label>💎 Transformación / Necesidad Espiritual (La verdad que debe aprender)</label>
                 <input 
                   type="text" 
                   className="forge-input" 
@@ -1460,7 +2054,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
               </div>
 
               <div className="forge-field-group">
-                <label>🥀 Herida del Pasado (Ghost / Wound)</label>
+                <label>🥀 Herida del Pasado (El Fantasma Interior)</label>
                 <textarea 
                   className="forge-textarea" 
                   value={charWound} 
@@ -1469,7 +2063,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
               </div>
 
               <div className="forge-field-group">
-                <label>⚡ Mayor Miedo (The Fear)</label>
+                <label>⚡ Mayor Miedo (Vulnerabilidad Oculta)</label>
                 <input 
                   type="text" 
                   className="forge-input" 
@@ -1540,15 +2134,15 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
 
               <div className="passport-grid">
                 <div className="passport-entry">
-                  <small>Deseo Externo (Want)</small>
+                  <small>Deseo Externo</small>
                   <span>{charWant || 'Sin definir'}</span>
                 </div>
                 <div className="passport-entry">
-                  <small>Necesidad Interna (Need)</small>
+                  <small>Necesidad Profunda</small>
                   <span>{charNeed || 'Sin definir'}</span>
                 </div>
                 <div className="passport-entry">
-                  <small>Herida / Fantasma (Ghost)</small>
+                  <small>Herida del Pasado</small>
                   <span>{charWound || 'Sin definir'}</span>
                 </div>
                 <div className="passport-entry">
