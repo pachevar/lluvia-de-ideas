@@ -22,6 +22,7 @@ import AdminTab100tek from './components/admin/AdminTab100tek';
 import AdminTabTienda from './components/admin/AdminTabTienda';
 import AdminTabTechTree from './components/admin/AdminTabTechTree';
 import AdminTabViajeDelHeroe from './components/admin/AdminTabViajeDelHeroe';
+import { saveArchetypeAsset } from './services/archetypeAssetsService';
 
 export default function Gerencia() {
   const { config, loading: configLoading, saveConfigToFirestore, resetConfigToFirestore } = usePortalConfig();
@@ -79,7 +80,32 @@ export default function Gerencia() {
     setSaving(true);
     setSaveStatus({ type: null, message: '' });
     try {
-      // Blindaje de guardado: fusionar con la última versión de Firestore para no perder activos ni hexágonos
+      // 1. Blindaje de assets multimedia: persistir arquetipos y etapas en su colección dedicada
+      if (localConfig.archetypeImages) {
+        Object.entries(localConfig.archetypeImages).forEach(([id, url]) => {
+          if (url) saveArchetypeAsset(id, url, 'archetype').catch(() => {});
+        });
+      }
+      if (localConfig.journeyStageImages) {
+        Object.entries(localConfig.journeyStageImages).forEach(([id, url]) => {
+          if (url) saveArchetypeAsset(id, url, 'journey').catch(() => {});
+        });
+      }
+
+      // 2. Para mantener config/portal ligero y muy por debajo del límite estricto de 1 MiB de Firestore,
+      // excluimos cadenas Base64 pesadas de config/portal ya que ahora se gestionan en archetype_assets
+      const sanitizeImagesMap = (mapObj: Record<string, string> | undefined) => {
+        if (!mapObj) return {};
+        const clean: Record<string, string> = {};
+        for (const [k, v] of Object.entries(mapObj)) {
+          if (v && !v.startsWith('data:')) {
+            clean[k] = v;
+          }
+        }
+        return clean;
+      };
+
+      // 3. Fusionar con la última versión para no perder configuración
       const safeConfig: PortalConfig = {
         ...config,
         ...localConfig,
@@ -93,11 +119,15 @@ export default function Gerencia() {
           },
           promoVideos: localConfig.landingConfig?.promoVideos || config.landingConfig?.promoVideos
         },
-        archetypeImages: localConfig.archetypeImages !== undefined ? localConfig.archetypeImages : (config.archetypeImages || {}),
-        journeyStageImages: localConfig.journeyStageImages !== undefined ? localConfig.journeyStageImages : (config.journeyStageImages || {})
+        archetypeImages: sanitizeImagesMap(localConfig.archetypeImages || config.archetypeImages),
+        journeyStageImages: sanitizeImagesMap(localConfig.journeyStageImages || config.journeyStageImages)
       };
       await saveConfigToFirestore(safeConfig);
-      setLocalConfig(safeConfig);
+      setLocalConfig({
+        ...safeConfig,
+        archetypeImages: localConfig.archetypeImages || config.archetypeImages || {},
+        journeyStageImages: localConfig.journeyStageImages || config.journeyStageImages || {}
+      });
       setSaveStatus({ type: 'success', message: '¡Configuración guardada y blindada exitosamente en Firestore!' });
       setTimeout(() => setSaveStatus({ type: null, message: '' }), 5000);
     } catch (err) {

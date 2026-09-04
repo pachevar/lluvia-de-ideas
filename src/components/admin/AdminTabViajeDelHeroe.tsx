@@ -1,7 +1,7 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import type { PortalConfig } from '../../types';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
-import { usePortalConfig } from '../../context/PortalConfigContext';
+import { saveArchetypeAsset, deleteArchetypeAsset } from '../../services/archetypeAssetsService';
 import './AdminTabViajeDelHeroe.css';
 
 interface AdminTabViajeDelHeroeProps {
@@ -29,13 +29,29 @@ export default function AdminTabViajeDelHeroe({
   localConfig,
   setLocalConfig
 }: AdminTabViajeDelHeroeProps) {
-  const { saveConfigToFirestore } = usePortalConfig();
   const [activeSubTab, setActiveSubTab] = useState<'arquetipos' | 'etapas'>('arquetipos');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [savingGlobal, setSavingGlobal] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
+
+  // Auto-migración silenciosa de imágenes previas a la colección dedicada
+  useEffect(() => {
+    if (!localConfig) return;
+    const archs = localConfig.archetypeImages || {};
+    Object.entries(archs).forEach(([id, url]) => {
+      if (url) {
+        saveArchetypeAsset(id, url, 'archetype').catch(() => {});
+      }
+    });
+    const stages = localConfig.journeyStageImages || {};
+    Object.entries(stages).forEach(([id, url]) => {
+      if (url) {
+        saveArchetypeAsset(id, url, 'journey').catch(() => {});
+      }
+    });
+  }, []);
 
   if (!localConfig) return null;
 
@@ -54,37 +70,30 @@ export default function AdminTabViajeDelHeroe({
       setUploadingId(id);
 
       const folder = type === 'archetype' ? 'archetypes-assets' : 'journey-assets';
-      const { url } = await uploadImageWithFallback(file, folder, 1280, 720, 0.82);
+      // Compresión optimizada para fichas (720x720, calidad 0.72) para mantener el peso en ~25-45KB
+      const { url } = await uploadImageWithFallback(file, folder, 720, 720, 0.72);
 
-      // Actualizar estado local y guardar permanentemente en Firestore de inmediato
+      // Guardar en su propio documento individual en Firestore (hasta 1 MiB libre por asset)
+      await saveArchetypeAsset(id, url, type);
+
+      // Actualizar estado local
       if (type === 'archetype') {
-        const updated = {
-          ...archetypeImages,
-          [id]: url
-        };
-        const updatedConfig = localConfig ? { ...localConfig, archetypeImages: updated } : null;
-        setLocalConfig(updatedConfig);
-        if (updatedConfig) {
-          await saveConfigToFirestore(updatedConfig);
-          try {
-            const localSaved = JSON.parse(localStorage.getItem('local_archetype_images') || '{}');
-            localSaved[id] = url;
-            localStorage.setItem('local_archetype_images', JSON.stringify(localSaved));
-          } catch {}
-        }
+        const updated = { ...archetypeImages, [id]: url };
+        setLocalConfig(prev => prev ? { ...prev, archetypeImages: updated } : null);
+        try {
+          const localSaved = JSON.parse(localStorage.getItem('local_archetype_images') || '{}');
+          localSaved[id] = url;
+          localStorage.setItem('local_archetype_images', JSON.stringify(localSaved));
+        } catch {}
       } else {
-        const updated = {
-          ...journeyImages,
-          [id]: url
-        };
-        const updatedConfig = localConfig ? { ...localConfig, journeyStageImages: updated } : null;
-        setLocalConfig(updatedConfig);
-        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
+        const updated = { ...journeyImages, [id]: url };
+        setLocalConfig(prev => prev ? { ...prev, journeyStageImages: updated } : null);
       }
-      triggerFeedback('✓ ¡Imagen subida y guardada permanentemente en la nube!');
-    } catch (err) {
+
+      triggerFeedback('✓ ¡Imagen guardada permanentemente en Firestore!');
+    } catch (err: any) {
       console.error('Error procesando imagen del viaje del héroe:', err);
-      alert('Error al procesar o guardar la imagen.');
+      alert(`Error al procesar o guardar la imagen: ${err?.message || 'Error desconocido'}`);
     } finally {
       setUploadingId(null);
     }
@@ -103,61 +112,67 @@ export default function AdminTabViajeDelHeroe({
   const handleSaveUrl = async (id: string, type: 'archetype' | 'journey') => {
     try {
       const currentUrl = type === 'archetype' ? archetypeImages[id] : journeyImages[id];
+      if (!currentUrl) return;
+
+      await saveArchetypeAsset(id, currentUrl, type);
+
       if (type === 'archetype') {
-        const updated = { ...archetypeImages, [id]: currentUrl || '' };
-        const updatedConfig = localConfig ? { ...localConfig, archetypeImages: updated } : null;
-        setLocalConfig(updatedConfig);
-        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
-      } else {
-        const updated = { ...journeyImages, [id]: currentUrl || '' };
-        const updatedConfig = localConfig ? { ...localConfig, journeyStageImages: updated } : null;
-        setLocalConfig(updatedConfig);
-        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
+        try {
+          const localSaved = JSON.parse(localStorage.getItem('local_archetype_images') || '{}');
+          localSaved[id] = currentUrl;
+          localStorage.setItem('local_archetype_images', JSON.stringify(localSaved));
+        } catch {}
       }
+
       triggerFeedback('✓ URL guardada y sincronizada en Firestore');
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error al guardar URL:', err);
-      alert('Error al guardar la URL en la base de datos.');
+      alert(`Error al guardar la URL en Firestore: ${err?.message || 'Error desconocido'}`);
     }
   };
 
   const handleRemove = async (id: string, type: 'archetype' | 'journey') => {
     try {
+      await deleteArchetypeAsset(id);
+
       if (type === 'archetype') {
         const updated = { ...archetypeImages };
         delete updated[id];
-        const updatedConfig = localConfig ? { ...localConfig, archetypeImages: updated } : null;
-        setLocalConfig(updatedConfig);
-        if (updatedConfig) {
-          await saveConfigToFirestore(updatedConfig);
-          try {
-            const localSaved = JSON.parse(localStorage.getItem('local_archetype_images') || '{}');
-            delete localSaved[id];
-            localStorage.setItem('local_archetype_images', JSON.stringify(localSaved));
-          } catch {}
-        }
+        setLocalConfig(prev => prev ? { ...prev, archetypeImages: updated } : null);
+        try {
+          const localSaved = JSON.parse(localStorage.getItem('local_archetype_images') || '{}');
+          delete localSaved[id];
+          localStorage.setItem('local_archetype_images', JSON.stringify(localSaved));
+        } catch {}
       } else {
         const updated = { ...journeyImages };
         delete updated[id];
-        const updatedConfig = localConfig ? { ...localConfig, journeyStageImages: updated } : null;
-        setLocalConfig(updatedConfig);
-        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
+        setLocalConfig(prev => prev ? { ...prev, journeyStageImages: updated } : null);
       }
-      triggerFeedback('✓ Imagen eliminada y cambios guardados en Firestore');
-    } catch (err) {
+      triggerFeedback('✓ Imagen eliminada de Firestore');
+    } catch (err: any) {
       console.error('Error al remover imagen:', err);
-      alert('Error al actualizar la base de datos.');
+      alert(`Error al eliminar de Firestore: ${err?.message || 'Error desconocido'}`);
     }
   };
 
   const handleSaveToDatabase = async () => {
     try {
       setSavingGlobal(true);
-      await saveConfigToFirestore(localConfig);
-      triggerFeedback('✓ ¡Configuración e imágenes guardadas permanentemente en Firestore!');
-    } catch (err) {
+      // Guardar todos los arquetipos y etapas en sus documentos dedicados
+      const promises: Promise<void>[] = [];
+      Object.entries(archetypeImages).forEach(([id, url]) => {
+        if (url) promises.push(saveArchetypeAsset(id, url, 'archetype'));
+      });
+      Object.entries(journeyImages).forEach(([id, url]) => {
+        if (url) promises.push(saveArchetypeAsset(id, url, 'journey'));
+      });
+      await Promise.all(promises);
+
+      triggerFeedback('✓ ¡Todos los arquetipos y etapas quedaron blindados en Firestore!');
+    } catch (err: any) {
       console.error('Error al guardar en Firestore:', err);
-      alert('Error al guardar en la base de datos de Firestore.');
+      alert(`Error al sincronizar con Firestore: ${err?.message || 'Error desconocido'}`);
     } finally {
       setSavingGlobal(false);
     }

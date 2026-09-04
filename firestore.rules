@@ -12,8 +12,15 @@ service cloud.firestore {
       );
     }
 
-    // Configuración general del portal
-    match /config/portal {
+    // Configuración general del portal y submódulos
+    match /config/{document=**} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    // Colección dedicada para imágenes y assets de arquetipos y viaje del héroe
+    // Cada arquetipo o etapa tiene su propio documento de hasta 1 MiB independiente
+    match /archetype_assets/{assetId} {
       allow read: if true;
       allow write: if isAdmin();
     }

@@ -4,6 +4,7 @@ import { db } from '../firebase';
 import type { PortalConfig, TiendaConfig } from '../types';
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
+import { subscribeArchetypeAssets } from '../services/archetypeAssetsService';
 
 interface PortalConfigContextProps {
   config: PortalConfig;
@@ -531,6 +532,25 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     });
 
     return () => unsubscribe();
+  }, []);
+
+  // Sincronización en tiempo real con la colección independiente 'archetype_assets'
+  // Garantiza que las imágenes de arquetipos y etapas nunca saturen el documento de 1MB de config/portal
+  useEffect(() => {
+    const unsubAssets = subscribeArchetypeAssets(({ archetypes, journey }) => {
+      setConfig((prev) => ({
+        ...prev,
+        archetypeImages: {
+          ...(prev.archetypeImages || {}),
+          ...archetypes
+        },
+        journeyStageImages: {
+          ...(prev.journeyStageImages || {}),
+          ...journey
+        }
+      }));
+    });
+    return () => unsubAssets();
   }, []);
 
   useEffect(() => {
