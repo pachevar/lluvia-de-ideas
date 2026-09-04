@@ -33,7 +33,7 @@ export default function AdminTabViajeDelHeroe({
   const [activeSubTab, setActiveSubTab] = useState<'arquetipos' | 'etapas'>('arquetipos');
   const [uploadingId, setUploadingId] = useState<string | null>(null);
   const [savingGlobal, setSavingGlobal] = useState(false);
-  const [saveSuccessMsg, setSaveSuccessMsg] = useState(false);
+  const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
@@ -42,6 +42,11 @@ export default function AdminTabViajeDelHeroe({
   const archetypeImages = localConfig.archetypeImages || {};
   const journeyImages = localConfig.journeyStageImages || {};
 
+  const triggerFeedback = (msg: string) => {
+    setSaveSuccessMsg(msg);
+    setTimeout(() => setSaveSuccessMsg(''), 4500);
+  };
+
   const handleFileUpload = async (id: string, file: File, type: 'archetype' | 'journey') => {
     if (!file) return;
 
@@ -49,9 +54,9 @@ export default function AdminTabViajeDelHeroe({
       setUploadingId(id);
 
       const folder = type === 'archetype' ? 'archetypes-assets' : 'journey-assets';
-      const { url } = await uploadImageWithFallback(file, folder, 1280, 720, 0.78);
+      const { url } = await uploadImageWithFallback(file, folder, 1280, 720, 0.82);
 
-      // Actualizar estado local y guardar permanentemente en Firestore
+      // Actualizar estado local y guardar permanentemente en Firestore de inmediato
       if (type === 'archetype') {
         const updated = {
           ...archetypeImages,
@@ -59,7 +64,14 @@ export default function AdminTabViajeDelHeroe({
         };
         const updatedConfig = localConfig ? { ...localConfig, archetypeImages: updated } : null;
         setLocalConfig(updatedConfig);
-        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
+        if (updatedConfig) {
+          await saveConfigToFirestore(updatedConfig);
+          try {
+            const localSaved = JSON.parse(localStorage.getItem('local_archetype_images') || '{}');
+            localSaved[id] = url;
+            localStorage.setItem('local_archetype_images', JSON.stringify(localSaved));
+          } catch {}
+        }
       } else {
         const updated = {
           ...journeyImages,
@@ -69,8 +81,7 @@ export default function AdminTabViajeDelHeroe({
         setLocalConfig(updatedConfig);
         if (updatedConfig) await saveConfigToFirestore(updatedConfig);
       }
-      setSaveSuccessMsg(true);
-      setTimeout(() => setSaveSuccessMsg(false), 4000);
+      triggerFeedback('✓ ¡Imagen subida y guardada permanentemente en la nube!');
     } catch (err) {
       console.error('Error procesando imagen del viaje del héroe:', err);
       alert('Error al procesar o guardar la imagen.');
@@ -89,15 +100,53 @@ export default function AdminTabViajeDelHeroe({
     }
   };
 
-  const handleRemove = (id: string, type: 'archetype' | 'journey') => {
-    if (type === 'archetype') {
-      const updated = { ...archetypeImages };
-      delete updated[id];
-      setLocalConfig(prev => prev ? { ...prev, archetypeImages: updated } : null);
-    } else {
-      const updated = { ...journeyImages };
-      delete updated[id];
-      setLocalConfig(prev => prev ? { ...prev, journeyStageImages: updated } : null);
+  const handleSaveUrl = async (id: string, type: 'archetype' | 'journey') => {
+    try {
+      const currentUrl = type === 'archetype' ? archetypeImages[id] : journeyImages[id];
+      if (type === 'archetype') {
+        const updated = { ...archetypeImages, [id]: currentUrl || '' };
+        const updatedConfig = localConfig ? { ...localConfig, archetypeImages: updated } : null;
+        setLocalConfig(updatedConfig);
+        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
+      } else {
+        const updated = { ...journeyImages, [id]: currentUrl || '' };
+        const updatedConfig = localConfig ? { ...localConfig, journeyStageImages: updated } : null;
+        setLocalConfig(updatedConfig);
+        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
+      }
+      triggerFeedback('✓ URL guardada y sincronizada en Firestore');
+    } catch (err) {
+      console.error('Error al guardar URL:', err);
+      alert('Error al guardar la URL en la base de datos.');
+    }
+  };
+
+  const handleRemove = async (id: string, type: 'archetype' | 'journey') => {
+    try {
+      if (type === 'archetype') {
+        const updated = { ...archetypeImages };
+        delete updated[id];
+        const updatedConfig = localConfig ? { ...localConfig, archetypeImages: updated } : null;
+        setLocalConfig(updatedConfig);
+        if (updatedConfig) {
+          await saveConfigToFirestore(updatedConfig);
+          try {
+            const localSaved = JSON.parse(localStorage.getItem('local_archetype_images') || '{}');
+            delete localSaved[id];
+            localStorage.setItem('local_archetype_images', JSON.stringify(localSaved));
+          } catch {}
+        }
+      } else {
+        const updated = { ...journeyImages };
+        delete updated[id];
+        const updatedConfig = localConfig ? { ...localConfig, journeyStageImages: updated } : null;
+        setLocalConfig(updatedConfig);
+        if (updatedConfig) await saveConfigToFirestore(updatedConfig);
+      }
+      triggerFeedback('✓ Imagen eliminada y cambios guardados en Firestore');
+    } catch (err) {
+      console.error('Error al remover imagen:', err);
+      alert('Error al actualizar la base de datos.');
     }
   };
 
@@ -105,8 +154,7 @@ export default function AdminTabViajeDelHeroe({
     try {
       setSavingGlobal(true);
       await saveConfigToFirestore(localConfig);
-      setSaveSuccessMsg(true);
-      setTimeout(() => setSaveSuccessMsg(false), 4000);
+      triggerFeedback('✓ ¡Configuración e imágenes guardadas permanentemente en Firestore!');
     } catch (err) {
       console.error('Error al guardar en Firestore:', err);
       alert('Error al guardar en la base de datos de Firestore.');
@@ -122,17 +170,30 @@ export default function AdminTabViajeDelHeroe({
         <div className="admin-viaje-header-text">
           <h3>🦸 El Viaje del Héroe & Arquetipos (Base de Datos Oficial)</h3>
           <p>
-            Gestiona y publica las imágenes oficiales para las fichas de personajes y etapas dramáticas. Al guardar, las imágenes quedan <strong>almacenadas permanentemente en Firestore y Firebase Storage</strong> y se transmiten en tiempo real a todos los estudiantes y visitantes.
+            Gestiona y publica las imágenes oficiales para las fichas de personajes y etapas dramáticas. Al subir una imagen o guardar una URL, queda <strong>almacenada permanentemente en Firestore y Firebase Storage</strong> y se transmite en tiempo real a la sección pública.
           </p>
         </div>
 
-        <button 
-          className="admin-viaje-save-btn"
-          onClick={handleSaveToDatabase}
-          disabled={savingGlobal}
-        >
-          <span>{savingGlobal ? '⏳ Guardando...' : '💾 Guardar en Base de Datos'}</span>
-        </button>
+        <div style={{ display: 'flex', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+          <a
+            href="/creatika/construyendo-personaje"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="admin-view-live-btn"
+            title="Abrir la sección de personajes en una nueva pestaña"
+          >
+            👁️ Ver Sección en Vivo ↗
+          </a>
+
+          <button 
+            className="admin-viaje-save-btn"
+            onClick={handleSaveToDatabase}
+            disabled={savingGlobal}
+            title="Guardar toda la configuración en la base de datos"
+          >
+            <span>{savingGlobal ? '⏳ Guardando...' : '💾 Guardar en Base de Datos'}</span>
+          </button>
+        </div>
       </div>
 
       {saveSuccessMsg && (
@@ -145,7 +206,7 @@ export default function AdminTabViajeDelHeroe({
           fontWeight: 700,
           textAlign: 'center'
         }}>
-          ✓ ¡Configuración e imágenes guardadas permanentemente en Firestore! Todos los usuarios las verán ahora en vivo.
+          {saveSuccessMsg}
         </div>
       )}
 
@@ -196,8 +257,9 @@ export default function AdminTabViajeDelHeroe({
                 {/* Body / Controls */}
                 <div className="admin-arch-body">
                   <div>
-                    <div className="admin-arch-title-row">
-                      <h4>{arch.name}</h4>
+                    <div className="admin-arch-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ margin: 0 }}>{arch.name}</h4>
+                      {currentImg && <span className="admin-saved-badge">✓ Guardado</span>}
                     </div>
                     <p className="admin-arch-subtitle">{arch.subtitle}</p>
                   </div>
@@ -209,14 +271,14 @@ export default function AdminTabViajeDelHeroe({
                       onClick={() => fileInputRefs.current[arch.id]?.click()}
                       disabled={isUploadingThis}
                     >
-                      <span>📷</span> {isUploadingThis ? 'Comprimiendo...' : (currentImg ? 'Cambiar Imagen' : 'Subir Imagen')}
+                      <span>📷</span> {isUploadingThis ? 'Comprimiendo y Subiendo...' : (currentImg ? 'Cambiar Imagen' : 'Subir Imagen')}
                     </button>
 
                     {currentImg && (
                       <button
                         className="admin-delete-img-btn"
                         onClick={() => handleRemove(arch.id, 'archetype')}
-                        title="Eliminar imagen"
+                        title="Eliminar imagen de la base de datos"
                       >
                         🗑️
                       </button>
@@ -234,16 +296,28 @@ export default function AdminTabViajeDelHeroe({
                     />
                   </div>
 
-                  {/* Campo de URL Directa */}
+                  {/* Campo de URL Directa con Botón Guardar */}
                   <div className="admin-url-input-group">
                     <label>Enlace Directo (URL):</label>
-                    <input
-                      type="url"
-                      className="admin-url-input"
-                      placeholder="https://ejemplo.com/heroe.webp"
-                      value={currentImg}
-                      onChange={(e) => handleUrlChange(arch.id, e.target.value, 'archetype')}
-                    />
+                    <div className="admin-url-input-row">
+                      <input
+                        type="url"
+                        className="admin-url-input"
+                        placeholder="https://ejemplo.com/heroe.webp"
+                        value={currentImg}
+                        onChange={(e) => handleUrlChange(arch.id, e.target.value, 'archetype')}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveUrl(arch.id, 'archetype')}
+                        onBlur={() => handleSaveUrl(arch.id, 'archetype')}
+                      />
+                      <button 
+                        type="button" 
+                        className="admin-url-save-btn" 
+                        onClick={() => handleSaveUrl(arch.id, 'archetype')}
+                        title="Guardar URL en la base de datos"
+                      >
+                        Guardar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -277,14 +351,15 @@ export default function AdminTabViajeDelHeroe({
                     </div>
                   )}
                   <div className="admin-arch-preview-overlay" />
-                  <span className="admin-arch-badge-tag">{stage.icon} {stage.name}</span>
+                  <span className="admin-arch-badge-tag">{stage.icon} {stage.name.split('.')[1] || stage.name}</span>
                 </div>
 
                 {/* Body / Controls */}
                 <div className="admin-arch-body">
                   <div>
-                    <div className="admin-arch-title-row">
-                      <h4>{stage.name}</h4>
+                    <div className="admin-arch-title-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <h4 style={{ margin: 0 }}>{stage.name}</h4>
+                      {currentImg && <span className="admin-saved-badge">✓ Guardado</span>}
                     </div>
                     <p className="admin-arch-subtitle">{stage.subtitle}</p>
                   </div>
@@ -296,14 +371,14 @@ export default function AdminTabViajeDelHeroe({
                       onClick={() => fileInputRefs.current[stage.id]?.click()}
                       disabled={isUploadingThis}
                     >
-                      <span>📷</span> {isUploadingThis ? 'Comprimiendo...' : (currentImg ? 'Cambiar Imagen' : 'Subir Imagen')}
+                      <span>📷</span> {isUploadingThis ? 'Comprimiendo y Subiendo...' : (currentImg ? 'Cambiar Imagen' : 'Subir Imagen')}
                     </button>
 
                     {currentImg && (
                       <button
                         className="admin-delete-img-btn"
                         onClick={() => handleRemove(stage.id, 'journey')}
-                        title="Eliminar imagen"
+                        title="Eliminar imagen de la base de datos"
                       >
                         🗑️
                       </button>
@@ -321,16 +396,28 @@ export default function AdminTabViajeDelHeroe({
                     />
                   </div>
 
-                  {/* Campo de URL Directa */}
+                  {/* Campo de URL Directa con Botón Guardar */}
                   <div className="admin-url-input-group">
                     <label>Enlace Directo (URL):</label>
-                    <input
-                      type="url"
-                      className="admin-url-input"
-                      placeholder="https://ejemplo.com/etapa.webp"
-                      value={currentImg}
-                      onChange={(e) => handleUrlChange(stage.id, e.target.value, 'journey')}
-                    />
+                    <div className="admin-url-input-row">
+                      <input
+                        type="url"
+                        className="admin-url-input"
+                        placeholder="https://ejemplo.com/etapa.webp"
+                        value={currentImg}
+                        onChange={(e) => handleUrlChange(stage.id, e.target.value, 'journey')}
+                        onKeyDown={(e) => e.key === 'Enter' && handleSaveUrl(stage.id, 'journey')}
+                        onBlur={() => handleSaveUrl(stage.id, 'journey')}
+                      />
+                      <button 
+                        type="button" 
+                        className="admin-url-save-btn" 
+                        onClick={() => handleSaveUrl(stage.id, 'journey')}
+                        title="Guardar URL en la base de datos"
+                      >
+                        Guardar
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>

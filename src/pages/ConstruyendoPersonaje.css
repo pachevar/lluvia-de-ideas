@@ -1135,6 +1135,573 @@
   color: #ffffff;
 }
 
+/* ==========================================================================
+   LABORATORIO DE PARADOJAS (MÓDULO 1)
+   ========================================================================== */
+.interactive-paradox-box {
+  margin-top: 32px;
+  padding: 26px 30px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 27, 75, 0.75) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.45);
+}
+
+.paradox-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.paradox-controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 22px;
+}
+
+.paradox-label {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+  letter-spacing: 0.5px;
+}
+
+.paradox-result-display {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 18px 22px;
+  position: relative;
+}
+
+.paradox-spark-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  margin-bottom: 8px;
+}
+
+.paradox-result-quote {
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #f8fafc;
+  margin: 0 0 12px;
+  font-style: italic;
+}
+
+.paradox-result-quote strong {
+  color: #38bdf8;
+  font-style: normal;
+}
+
+.paradox-hint {
+  font-size: 0.84rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  border-top: 1px dashed rgba(255, 255, 255, 0.1);
+  padding-top: 10px;
+}
+
+.paradox-hint span {
+  color: #a855f7;
+  font-weight: 700;
+}
+
+/* ==========================================================================
+   ARQUETIPOS ENHANCEMENTS: SUBTABS, RELACIONES Y NAVEGACIÓN (MÓDULO 2)
+   ========================================================================== */
+.arch-official-badge {
+  font-size: 0.9rem;
+  margin-left: auto;
+  filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.8));
+}
+
+.arch-nav-arrows {
+  display: flex;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.arch-arrow-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-size: 1.1rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.arch-arrow-btn:hover {
+  background: rgba(56, 189, 248, 0.3);
+  border-color: #38bdf8;
+  color: #fff;
+  transform: scale(1.08);
+}
+
+.arch-details-subtabs {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.arch-subtab-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.arch-subtab-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.arch-subtab-btn.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.3) 0%, rgba(168, 85, 247, 0.3) 100%);
+  border-color: #38bdf8;
+  color: #fff;
+  box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+}
+
+.arch-relations-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+}
+
+.arch-relation-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 16px;
+  transition: all 0.25s;
+}
+
+.arch-relation-card:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+}
+
+.rel-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.rel-tag {
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.rel-target {
+  font-size: 0.95rem;
+  color: #f8fafc;
+}
+
+.rel-desc {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  margin: 0;
+}
+
+.arch-trial-box {
+  background: linear-gradient(135deg, rgba(244, 63, 94, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1.5px solid rgba(244, 63, 94, 0.4);
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.4);
+}
+
+.trial-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  color: #f43f5e;
+  background: rgba(244, 63, 94, 0.2);
+  padding: 4px 10px;
+  border-radius: 6px;
+  margin-bottom: 10px;
+}
+
+.arch-trial-box h4 {
+  font-size: 1.25rem;
+  color: #fff;
+  margin: 0 0 12px;
+}
+
+.arch-trial-box p {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #e2e8f0;
+  margin: 0 0 16px;
+}
+
+.trial-takeaway {
+  font-size: 0.88rem;
+  color: #fca5a5;
+  border-top: 1px dashed rgba(244, 63, 94, 0.3);
+  padding-top: 12px;
+}
+
+.arch-lightbox-btn {
+  padding: 8px 16px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.arch-lightbox-btn:hover {
+  background: rgba(56, 189, 248, 0.3);
+  border-color: #38bdf8;
+}
+
+/* ==========================================================================
+   CURVA DE TENSIÓN DEL VIAJE DEL HÉROE (MÓDULO 3)
+   ========================================================================== */
+.journey-tension-visualizer {
+  padding: 22px 26px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.7) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  margin-bottom: 28px;
+}
+
+.tension-graph-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.tension-svg-wrap {
+  width: 100%;
+  overflow-x: auto;
+}
+
+.tension-svg {
+  width: 100%;
+  max-width: 800px;
+  height: auto;
+  display: block;
+  margin: 0 auto;
+}
+
+.journey-stage-detail-card {
+  padding: 26px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.95) 0%, rgba(30, 27, 75, 0.8) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  box-shadow: 0 10px 35px rgba(0, 0, 0, 0.5);
+  margin-bottom: 24px;
+}
+
+.stage-detail-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 4px 12px;
+  border-radius: 99px;
+  margin-bottom: 10px;
+  text-transform: uppercase;
+}
+
+.stage-detail-title {
+  font-size: 1.6rem;
+  color: #fff;
+  margin: 0 0 10px;
+}
+
+.stage-detail-summary {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #cbd5e1;
+  margin: 0 0 20px;
+}
+
+.stage-banner-img-wrap {
+  position: relative;
+  width: 100%;
+  height: 220px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 20px;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+.stage-banner-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.stage-banner-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(10, 15, 30, 0.8) 0%, transparent 60%);
+}
+
+.stage-detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+}
+
+.stage-detail-box {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+}
+
+.stage-detail-box p {
+  margin: 8px 0 0;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  line-height: 1.5;
+}
+
+.stage-roles-list {
+  list-style: none;
+  padding: 0;
+  margin: 8px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.stage-roles-list li {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.stage-roles-list strong {
+  color: #a855f7;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+}
+
+.journey-step-card.active-step {
+  border-color: #38bdf8;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.15) 0%, rgba(30, 41, 59, 0.9) 100%);
+  box-shadow: 0 0 25px rgba(56, 189, 248, 0.35);
+  transform: translateY(-4px);
+}
+
+/* ==========================================================================
+   LABORATORIO DE SUBTEXTO (MÓDULO 4)
+   ========================================================================== */
+.subtext-lab-container {
+  padding: 26px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(15, 23, 42, 0.9) 0%, rgba(20, 27, 45, 0.85) 100%);
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.subtext-lab-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 20px;
+}
+
+.subtext-scenarios-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 22px;
+  flex-wrap: wrap;
+}
+
+.subtext-scenario-btn {
+  padding: 8px 18px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #cbd5e1;
+  font-weight: 700;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.subtext-scenario-btn:hover {
+  background: rgba(255, 255, 255, 0.14);
+  color: #fff;
+}
+
+.subtext-scenario-btn.active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.35) 0%, rgba(56, 189, 248, 0.25) 100%);
+  border-color: #a855f7;
+  color: #fff;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.35);
+}
+
+.subtext-comparison-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  margin-bottom: 18px;
+}
+
+.subtext-card {
+  border-radius: 14px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.subtext-card.plain {
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.25);
+}
+
+.subtext-card.cinematic {
+  background: rgba(34, 197, 94, 0.08);
+  border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.subtext-tag {
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  padding: 3px 8px;
+  border-radius: 6px;
+  width: fit-content;
+  margin-bottom: 12px;
+}
+
+.subtext-tag.plain {
+  color: #f87171;
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.subtext-tag.cinematic {
+  color: #4ade80;
+  background: rgba(34, 197, 94, 0.15);
+}
+
+.subtext-quote {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: #f8fafc;
+  margin: 0 0 12px;
+  font-style: italic;
+  flex: 1;
+}
+
+.subtext-card small {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  border-top: 1px dashed rgba(255, 255, 255, 0.08);
+  padding-top: 8px;
+}
+
+.subtext-analysis-bar {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 14px 20px;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+  line-height: 1.5;
+}
+
+.subtext-analysis-bar strong {
+  color: #38bdf8;
+}
+
+/* ==========================================================================
+   PASAPORTE NARRATIVO VISUAL (MÓDULO 5)
+   ========================================================================== */
+.spark-btn {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(234, 179, 8, 0.15) 100%);
+  border-color: #f59e0b;
+  color: #fde047;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.3);
+}
+
+.spark-btn:hover {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.4) 0%, rgba(234, 179, 8, 0.3) 100%);
+  color: #ffffff;
+  box-shadow: 0 0 25px rgba(245, 158, 11, 0.5);
+}
+
+.passport-visual-banner {
+  position: relative;
+  width: 100%;
+  height: 140px;
+  border-radius: 14px;
+  overflow: hidden;
+  margin-bottom: 16px;
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+}
+
+.passport-visual-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.passport-visual-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(0deg, rgba(15, 23, 42, 0.9) 0%, transparent 60%);
+}
+
+.passport-visual-tag {
+  position: absolute;
+  bottom: 10px;
+  left: 14px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(10, 15, 30, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  padding: 3px 10px;
+  border-radius: 6px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
 /* Responsive Rules */
 @media (max-width: 900px) {
   .archetypes-explorer {
@@ -1151,6 +1718,18 @@
   .archetype-item-btn {
     min-width: 180px;
     flex-shrink: 0;
+  }
+
+  .paradox-controls-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .stage-detail-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .subtext-comparison-grid {
+    grid-template-columns: 1fr;
   }
 
   .contradictions-banner {
@@ -1188,3 +1767,4 @@
     grid-template-columns: 1fr;
   }
 }
+

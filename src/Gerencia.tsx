@@ -58,8 +58,8 @@ export default function Gerencia() {
               promoVideos: config.landingConfig?.promoVideos || prev.landingConfig?.promoVideos
             },
             techTreeNodes: config.techTreeNodes || prev.techTreeNodes,
-            archetypeImages: { ...(prev.archetypeImages || {}), ...(config.archetypeImages || {}) },
-            journeyStageImages: { ...(prev.journeyStageImages || {}), ...(config.journeyStageImages || {}) }
+            archetypeImages: config.archetypeImages || prev.archetypeImages || {},
+            journeyStageImages: config.journeyStageImages || prev.journeyStageImages || {}
           };
         });
       }
@@ -92,7 +92,9 @@ export default function Gerencia() {
             ...(localConfig.landingConfig?.sections || {})
           },
           promoVideos: localConfig.landingConfig?.promoVideos || config.landingConfig?.promoVideos
-        }
+        },
+        archetypeImages: localConfig.archetypeImages !== undefined ? localConfig.archetypeImages : (config.archetypeImages || {}),
+        journeyStageImages: localConfig.journeyStageImages !== undefined ? localConfig.journeyStageImages : (config.journeyStageImages || {})
       };
       await saveConfigToFirestore(safeConfig);
       setLocalConfig(safeConfig);
