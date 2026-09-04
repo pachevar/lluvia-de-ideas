@@ -326,7 +326,7 @@ export const DEFAULT_CONFIG: PortalConfig = {
       id: "-1,0",
       row: -1,
       col: 0,
-      title: "Bingo Virtual",
+      title: "Bingotenango",
       glowColor: "rgba(239, 68, 68, 0.85)",
       layerBg: { type: "none", value: "" },
       layerDeco: { type: "none", value: "" },

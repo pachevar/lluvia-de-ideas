@@ -529,7 +529,7 @@ export default function Home() {
                   boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
                 }}
               >
-                🎲 Bingo Virtual para el Aula
+                🎲 Bingotenango (Bingo Digital)
               </button>
             </div>
           </div>

@@ -55,7 +55,7 @@ const PRESETS = [
     markerEmoji: '⭐',
     soundTheme: 'classic' as const,
     headerHeight: 160,
-    title: 'Bingo Virtual',
+    title: 'Bingotenango',
     subtitle: 'Editorial Lluvia de Ideas'
   },
   {
@@ -185,8 +185,8 @@ export default function AdminBingoTab() {
   };
 
   // Game & Appearance States
-  const [gameTitle, setGameTitle] = useState('Gran Bingo Familiar');
-  const [customTitle, setCustomTitle] = useState('Bingo Virtual');
+  const [gameTitle, setGameTitle] = useState('Bingotenango');
+  const [customTitle, setCustomTitle] = useState('Bingotenango');
   const [customSubtitle, setCustomSubtitle] = useState('Editorial Lluvia de Ideas');
   const [headerImage, setHeaderImage] = useState<string>('');
   const [primaryColor, setPrimaryColor] = useState('#a855f7');
@@ -283,7 +283,7 @@ export default function AdminBingoTab() {
             setMarkerEmoji(gData.customization.markerEmoji || '⭐');
             setNumberToImageMap(gData.customization.numberToImageMap || {});
 
-            setCustomTitle(gData.customization.title || 'Bingo Virtual');
+            setCustomTitle(gData.customization.title || 'Bingotenango');
             setCustomSubtitle(gData.customization.subtitle || 'Editorial Lluvia de Ideas');
             const hh = gData.customization.headerHeight || 160;
             setHeaderHeight(hh);
@@ -399,7 +399,7 @@ export default function AdminBingoTab() {
   const getCustomizationObject = (): BingoCustomization => ({
     headerImage,
     headerHeight: Number(headerHeight) || 160,
-    title: customTitle.trim() || 'Bingo Virtual',
+    title: customTitle.trim() || 'Bingotenango',
     subtitle: customSubtitle.trim() || 'Editorial Lluvia de Ideas',
     primaryColor,
     accentColor,
@@ -481,7 +481,7 @@ export default function AdminBingoTab() {
     const confirm = await showConfirm(
       activeGame 
         ? "¿Estás seguro de que deseas finalizar la partida actual y crear una NUEVA sesión de Bingo? Los jugadores actuales deberán unirse a la nueva sesión."
-        : "¿Deseas crear e inicializar la partida de Bingo Virtual ahora?",
+        : "¿Deseas crear e inicializar la partida de Bingotenango ahora?",
       "Nueva Sesión de Bingo",
       "🚀",
       "SÍ, CREAR PARTIDA",
@@ -660,7 +660,7 @@ export default function AdminBingoTab() {
       setThemeName('classic');
       setCardTheme('classic');
       setMarkerEmoji('⭐');
-      setCustomTitle('Bingo Virtual');
+      setCustomTitle('Bingotenango');
       setCustomSubtitle('Editorial Lluvia de Ideas');
       setHeaderHeight(160);
       setSelectedHeightType('preset');
@@ -772,7 +772,7 @@ export default function AdminBingoTab() {
         generatedCodesList.map(c => `"${c.code}","${c.used ? 'USADO' : 'LIBRE'}","${c.usedByPlayer || ''}","${c.usedByCardId || ''}"`).join('\n');
       filename += '.csv';
     } else {
-      content = '--- CÓDIGOS DE ACTIVACIÓN BINGO VIRTUAL ---\n\n' +
+      content = '--- CÓDIGOS DE ACTIVACIÓN BINGOTENANGO ---\n\n' +
         'LIBRES:\n' + generatedCodesList.filter(c => !c.used).map(c => c.code).join('\n') + '\n\n' +
         'USADOS:\n' + generatedCodesList.filter(c => c.used).map(c => `${c.code} (${c.usedByPlayer || 'Jugador'})`).join('\n');
       filename += '.txt';
@@ -913,7 +913,13 @@ export default function AdminBingoTab() {
           1. LIVE CONTROL & STATUS HEADER
          ==================================================================== */}
       <div className="bingo-control-header">
-        <div className="bingo-monitor-info">
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+          <img 
+            src="/bingotenango-logo.svg" 
+            alt="Bingotenango" 
+            style={{ maxHeight: '44px', width: 'auto', filter: 'drop-shadow(0 0 10px rgba(88, 205, 238, 0.45))' }} 
+          />
+          <div className="bingo-monitor-info">
           {activeGame ? (
             <span className={`bingo-status-pill ${activeGame.status}`}>
               <span className="bingo-pulsing-dot" />
@@ -945,8 +951,9 @@ export default function AdminBingoTab() {
             </span>
           </div>
         </div>
+      </div>
 
-        <div className="bingo-header-actions">
+      <div className="bingo-header-actions">
           <a 
             href="/juegos/bingo" 
             target="_blank" 
@@ -1101,7 +1108,7 @@ export default function AdminBingoTab() {
                     className="bingo-input"
                     value={customTitle}
                     onChange={e => setCustomTitle(e.target.value)}
-                    placeholder="Ej: Bingo Virtual"
+                    placeholder="Ej: Bingotenango"
                   />
                 </div>
                 <div className="bingo-form-group">
@@ -1390,7 +1397,7 @@ export default function AdminBingoTab() {
                     </button>
                   )}
                   <h2 style={{ color: '#ffffff', margin: 0, zIndex: 2, fontSize: headerHeight < 120 ? '1.2rem' : '1.6rem', textShadow: '0 2px 4px rgba(0,0,0,0.6)' }}>
-                    {customTitle || 'Bingo Virtual'}
+                    {customTitle || 'Bingotenango'}
                   </h2>
                   <p style={{ color: 'rgba(255,255,255,0.9)', margin: '4px 0 0', zIndex: 2, fontSize: '0.85rem', textShadow: '0 1px 3px rgba(0,0,0,0.6)' }}>
                     {customSubtitle || 'Editorial Lluvia de Ideas'}

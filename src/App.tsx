@@ -167,7 +167,7 @@ function App() {
                 className={`sidebar-sublink ${isTabActive('/juegos/bingo') ? 'active' : ''}`}
                 onClick={() => navigateTo('/juegos/bingo')}
               >
-                🎲 Bingo Virtual
+                🎲 Bingotenango
               </button>
             </div>
           </div>

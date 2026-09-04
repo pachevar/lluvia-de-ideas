@@ -931,7 +931,7 @@ export default function BingoCardView() {
                   <span>🎮</span> Menú Cartón
                 </h3>
                 <span style={{ fontSize: '0.72rem', color: primaryColor, opacity: 0.9, marginTop: '2px', display: 'block' }}>
-                  {gameData?.title || 'Bingo Virtual'}
+                  {gameData?.title || 'Bingotenango'}
                 </span>
               </div>
               <button 
@@ -1044,9 +1044,16 @@ export default function BingoCardView() {
       ))}
 
       {/* Customizable Session Title */}
-      <div className="bingo-card-session-title" style={{ textAlign: 'center', margin: '20px 0 10px' }}>
+      <div className="bingo-card-session-title" style={{ textAlign: 'center', margin: '16px 0 10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+          <img 
+            src="/bingotenango-logo.svg" 
+            alt="Bingotenango" 
+            style={{ maxHeight: '72px', width: 'auto', filter: 'drop-shadow(0 0 15px rgba(88, 205, 238, 0.5))' }} 
+          />
+        </div>
         <h2 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-gamer)', color: '#fff', margin: 0 }}>
-          {cust?.title || 'Bingo Virtual'}
+          {cust?.title || 'Bingotenango'}
         </h2>
         {cust?.subtitle && (
           <p style={{ fontSize: '0.85rem', color: 'var(--cyber-cyan)', margin: '4px 0 0', opacity: 0.8 }}>
@@ -1624,7 +1631,7 @@ export default function BingoCardView() {
               <div className="ticket-header">
                 <span style={{ fontSize: '3rem' }}>🏆</span>
                 <h3 className="ticket-title">{gameData.title.toUpperCase()}</h3>
-                <p className="ticket-subtitle">{gameData.customization?.subtitle || 'Bingo Virtual Lluvia de Ideas'}</p>
+                <p className="ticket-subtitle">{gameData.customization?.subtitle || 'Bingotenango - Lluvia de Ideas'}</p>
               </div>
               
               <div className="ticket-divider"></div>

@@ -1372,12 +1372,18 @@ export default function BingoHub() {
         {/* If there is no active game session */}
         {!activeGame ? (
           <div className="arcade-empty-state">
-            <span style={{ fontSize: '4rem', filter: 'drop-shadow(0 0 10px rgba(168, 85, 247, 0.4))' }}>🎮</span>
-            <h3 style={{ fontFamily: 'var(--font-gamer)', color: '#fff', marginTop: '15px' }}>BINGO OFFLINE</h3>
-            <p style={{ fontSize: '0.85rem', color: 'var(--cyber-text)', opacity: 0.7, margin: '8px 0 20px' }}>
-              El servidor de Bingo está inactivo en este momento. Espera a que el administrador de Editorial Lluvia de Ideas inicie una nueva sesión de juego.
+            <div className="bingotenango-brand-badge" style={{ marginBottom: '14px' }}>
+              <img 
+                src="/bingotenango-logo.svg" 
+                alt="Bingotenango" 
+                style={{ maxHeight: '120px', width: 'auto', filter: 'drop-shadow(0 0 25px rgba(88, 205, 238, 0.55))' }} 
+              />
+            </div>
+            <h3 style={{ fontFamily: 'var(--font-gamer)', color: '#fff', marginTop: '5px' }}>BINGOTENANGO OFFLINE</h3>
+            <p style={{ fontSize: '0.88rem', color: 'var(--cyber-text)', opacity: 0.85, margin: '8px 0 20px', maxWidth: '520px' }}>
+              El servidor de Bingotenango está inactivo en este momento. Espera a que el anfitrión de Editorial Lluvia de Ideas inicie una nueva sesión de juego en directo.
             </p>
-            <div className="arcade-blink-text">Esperando señal de host...</div>
+            <div className="arcade-blink-text">Esperando señal de transmisión de Bingotenango...</div>
           </div>
         ) : (
           
@@ -1390,8 +1396,15 @@ export default function BingoHub() {
             <div className="cyber-panel dynamics-panel desktop-only">
               {/* Header de Sesión y Banner (Sobre y del mismo ancho que la columna del Host) */}
               <div className="bingo-gamer-header" style={{ marginBottom: '8px', padding: '0', textAlign: 'center' }}>
-                <h1 style={{ fontSize: '1.45rem', marginBottom: '2px', letterSpacing: '1px' }}>{cust?.title || 'Bingo Virtual'}</h1>
-                <p style={{ fontSize: '0.75rem', letterSpacing: '0.8px', margin: 0 }}>{cust?.subtitle || 'Editorial Lluvia de Ideas'}</p>
+                <div className="bingotenango-brand-badge" style={{ marginBottom: '6px' }}>
+                  <img 
+                    src="/bingotenango-logo.svg" 
+                    alt="Bingotenango" 
+                    style={{ maxHeight: '48px', width: 'auto', filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.45))' }} 
+                  />
+                </div>
+                <h1 style={{ fontSize: '1.45rem', marginBottom: '2px', letterSpacing: '1px' }}>{cust?.title || 'Bingotenango'}</h1>
+                <p style={{ fontSize: '0.75rem', letterSpacing: '0.8px', margin: 0 }}>{cust?.subtitle || 'Bingo Digital - Editorial Lluvia de Ideas'}</p>
               </div>
 
               {cust?.headerImage && (
@@ -1645,6 +1658,19 @@ export default function BingoHub() {
                CENTER COLUMN (WEB: TOMBOLA / MOBILE: REGISTER)
                ========================================== */}
             <div className="cyber-panel tombola-panel">
+              {/* LOGO OFICIAL BINGOTENANGO EN LA CABECERA DE LA TÓMBOLA */}
+              <div className="bingotenango-tombola-banner animate-fade-in">
+                <img 
+                  src="/bingotenango-logo.svg" 
+                  alt="Bingotenango Logo Oficial" 
+                  className="bingotenango-tombola-logo"
+                  title="Bingotenango - Bingo Digital Oficial"
+                />
+                <span className="bingotenango-tombola-tagline">
+                  BINGO DIGITAL EN VIVO
+                </span>
+              </div>
+
               <div className="cyber-panel-header" style={{ width: '100%' }}>
                 <span className="cyber-panel-title">
                   <span className="icon">🔮</span> 
@@ -2292,6 +2318,14 @@ export default function BingoHub() {
                       </div>
                     )}
 
+                    {/* INSIGNIA OFICIAL DE TRANSMISIÓN BINGOTENANGO */}
+                    <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '8px' }}>
+                      <div className="bingotenango-stage-badge animate-fade-in">
+                        <img src="/bingotenango-logo.svg" alt="Bingotenango" />
+                        <span>SALA OFICIAL BINGOTENANGO</span>
+                      </div>
+                    </div>
+
                     {/* ESPECTACULAR ESCENARIO DE TÓMBOLA 3D Y PODIO DE TRANSMISIÓN */}
                     <div className="tombola-horizontal-stage-flex">
                       
@@ -2537,6 +2571,13 @@ export default function BingoHub() {
                  MOBILE PORTION: GET BINGO CARD ("OBTENER EL CARTÓN")
                  ========================================== */}
               <div className="mobile-gamer-section mobile-only" style={{ width: '100%' }}>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
+                  <img 
+                    src="/bingotenango-logo.svg" 
+                    alt="Bingotenango" 
+                    style={{ maxHeight: '70px', width: 'auto', filter: 'drop-shadow(0 0 15px rgba(88, 205, 238, 0.45))' }} 
+                  />
+                </div>
                 
                 {/* Check if user already has a saved card in localStorage */}
                 {savedCardId ? (

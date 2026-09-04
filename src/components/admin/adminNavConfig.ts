@@ -265,10 +265,10 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
     items: [
       {
         id: 'bingo',
-        label: '🎲 Bingo Virtual Masivo',
+        label: '🎲 Bingotenango (Bingo Digital)',
         icon: '🎲',
         description: 'Control de tómbola 3D, cartones, códigos, patrocinadores y promotores',
-        keywords: ['bingo', 'juegos', 'cartones', 'bingo virtual', 'masivo', 'tombola', 'premios'],
+        keywords: ['bingotenango', 'bingo', 'juegos', 'cartones', 'bingo virtual', 'masivo', 'tombola', 'premios'],
         pillar: 'soporte',
         publicRoute: '/juegos/bingo',
         roleDescription: 'Dinámica interactiva y lúdica masiva'
