@@ -1967,6 +1967,14 @@
 }
 
 /* Centrado General de Contenedores para Versión Web Escritorio */
+.scale-comparer-container, 
+.spectroscopy-container, 
+.physics-lab-container {
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
 @media (min-width: 769px) {
   .sim-dashboard {
     display: flex;
@@ -2663,28 +2671,50 @@
   }
 
   /* ========================================================================
-     PESTAÑA 2: ESCALAS, TRÁNSITOS Y CURVA FOTOMÉTRICA
+     PESTAÑA 2: ESCALAS, TRÁNSITOS Y CURVA FOTOMÉTRICA (MÓVIL ANTI-DESBORDE)
      ======================================================================== */
+  .scale-comparer-container {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 0;
+    margin: 0;
+    box-sizing: border-box;
+    overflow-x: hidden;
+  }
+
   .solar-transit-module-card {
-    padding: 14px 10px;
+    padding: 12px 8px;
     border-radius: 16px;
     box-sizing: border-box;
     width: 100%;
     max-width: 100%;
+    min-width: 0;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .transit-header {
+    margin-bottom: 12px;
+    padding: 0 4px;
   }
 
   .transit-planet-selector-bar {
     display: flex;
+    flex-wrap: nowrap;
     overflow-x: auto;
     white-space: nowrap;
     justify-content: flex-start;
-    padding: 6px 2px;
+    padding: 6px 4px;
     gap: 6px;
     -webkit-overflow-scrolling: touch;
-    border-radius: 14px;
+    border-radius: 12px;
     scrollbar-width: none;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
+    margin-bottom: 12px;
   }
 
   .transit-planet-selector-bar::-webkit-scrollbar {
@@ -2693,23 +2723,31 @@
 
   .transit-planet-btn {
     flex-shrink: 0;
-    height: 36px;
-    padding: 6px 12px;
-    font-size: 0.76rem;
+    height: 34px;
+    padding: 5px 10px;
+    font-size: 0.74rem;
     touch-action: manipulation;
   }
 
   .transit-toolbar-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 8px;
+    margin-bottom: 12px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .transit-controls-group {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: 6px;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
   }
 
   .transit-zoom-group {
@@ -2717,96 +2755,178 @@
     align-items: center;
     justify-content: space-between;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     background: rgba(0, 0, 0, 0.35);
-    padding: 8px 10px;
-    border-radius: 12px;
+    padding: 6px 8px;
+    border-radius: 10px;
     box-sizing: border-box;
   }
 
   .transit-zoom-group .spectrum-btn {
-    min-width: 38px;
-    min-height: 34px;
-    padding: 4px 8px;
-    font-size: 0.75rem;
+    min-width: 34px;
+    min-height: 32px;
+    padding: 3px 6px;
+    font-size: 0.74rem;
   }
 
   .solar-transit-viewport-box {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     aspect-ratio: 900 / 620;
     height: auto;
-    border-radius: 14px;
+    border-radius: 12px;
     box-sizing: border-box;
+    overflow: hidden;
   }
 
   .solar-transit-svg {
     width: 100%;
     height: 100%;
+    display: block;
+  }
+
+  /* Métricas de Tránsito en Móvil: cuadrícula adaptable que nunca desborda */
+  .transit-metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin-top: 14px;
+  }
+
+  .metric-card {
+    min-width: 0;
+    padding: 10px 8px;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 12px;
+    text-align: center;
+  }
+
+  .m-icon {
+    font-size: 1.3rem;
+    margin-bottom: 2px;
+  }
+
+  .m-label {
+    font-size: 0.72rem;
+    word-break: break-word;
+  }
+
+  .m-value {
+    font-size: 1.1rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    margin-bottom: 4px;
+  }
+
+  .m-desc {
+    font-size: 0.76rem;
+    line-height: 1.35;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
   /* Curva de Luz Fotométrica Móvil */
   .photometric-light-curve-card {
-    padding: 14px 10px;
+    padding: 12px 8px;
     border-radius: 16px;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
+    overflow: hidden;
+    margin-top: 14px !important;
   }
 
   .light-curve-header {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 10px;
+    margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .light-curve-header h3 {
-    font-size: 0.98rem !important;
+    font-size: 0.92rem !important;
     word-break: break-word;
     overflow-wrap: break-word;
   }
 
   .light-curve-header p {
-    font-size: 0.78rem !important;
+    font-size: 0.75rem !important;
+    line-height: 1.35;
     word-break: break-word;
     overflow-wrap: break-word;
   }
 
   .flux-badge-box {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
-    padding: 8px 14px;
-    border-radius: 12px;
+    padding: 6px 12px;
+    border-radius: 10px;
     box-sizing: border-box;
-    min-width: 0;
   }
 
   .flux-numeric-val {
-    font-size: 1.15rem !important;
+    font-size: 1.05rem !important;
   }
 
   .light-curve-svg-box {
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     overflow-x: auto;
-    padding: 8px 4px;
+    padding: 6px 2px;
     box-sizing: border-box;
     -webkit-overflow-scrolling: touch;
+    border-radius: 10px;
   }
 
   .light-curve-svg {
-    min-width: 520px;
-    height: 110px;
+    min-width: 440px;
+    height: 105px;
+    display: block;
   }
 
   /* Escala Planetaria Relativa Lado a Lado */
   .real-size-scale-card {
-    padding: 14px 10px;
+    padding: 12px 8px;
     border-radius: 16px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
+    overflow: hidden;
+    margin-top: 14px !important;
+  }
+
+  .real-size-scale-card h3 {
+    font-size: 0.95rem;
+    word-break: break-word;
+  }
+
+  .real-size-scale-card p {
+    font-size: 0.76rem;
+    word-break: break-word;
+    margin-bottom: 10px;
   }
 
   .scale-svg-wrapper {
-    padding: 8px 4px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 6px 2px;
     border-radius: 10px;
     box-sizing: border-box;
     overflow-x: auto;
@@ -2814,85 +2934,145 @@
   }
 
   .scale-planets-svg {
-    min-width: 650px;
-    height: 140px;
+    min-width: 520px;
+    height: 125px;
+    display: block;
   }
 
-  /* Calculadora de Viaje Interplanetario */
+  /* Calculadora de Viaje Interplanetario Móvil */
   .travel-calculator-card {
-    padding: 14px 10px;
+    padding: 14px 8px;
     border-radius: 16px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
+    overflow: hidden;
+    margin-top: 14px;
   }
 
   .calc-inputs-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    margin-bottom: 12px;
   }
 
-  .calc-group label {
-    font-size: 0.8rem;
-  }
-
-  .calc-select {
-    padding: 10px 12px;
-    font-size: 0.82rem;
-  }
-
-  .calc-results-banner {
-    grid-template-columns: 1fr 1fr;
-    gap: 8px;
-  }
-
-  .result-stat-box {
-    padding: 10px 6px;
-    border-radius: 10px;
-  }
-
-  .res-label {
-    font-size: 0.68rem;
-  }
-
-  .res-val {
-    font-size: 0.95rem;
-    word-break: break-word;
-  }
-
-  /* Gráfica de trayectoria Hohmann */
-  .travel-chart-container {
-    padding: 12px 8px;
-    border-radius: 14px;
+  .calc-group {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
     box-sizing: border-box;
   }
 
-  .travel-chart-header h4 {
-    font-size: 0.95rem;
-  }
-
-  .travel-chart-subtitle {
+  .calc-group label {
     font-size: 0.78rem;
     word-break: break-word;
   }
 
+  .calc-select {
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding: 10px 8px;
+    font-size: 0.8rem;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    overflow: hidden;
+    border-radius: 10px;
+  }
+
+  .calc-results-banner {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    padding-top: 10px;
+  }
+
+  .result-stat-box {
+    min-width: 0;
+    padding: 8px 4px;
+    border-radius: 10px;
+    box-sizing: border-box;
+    overflow: hidden;
+  }
+
+  .res-label {
+    font-size: 0.65rem;
+    word-break: break-word;
+  }
+
+  .res-val {
+    font-size: 0.86rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    line-height: 1.25;
+  }
+
+  /* Gráfica de trayectoria Hohmann */
+  .travel-chart-container {
+    padding: 12px 6px;
+    border-radius: 14px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin-top: 14px;
+  }
+
+  .travel-chart-header h4 {
+    font-size: 0.9rem;
+    word-break: break-word;
+  }
+
+  .travel-chart-subtitle {
+    font-size: 0.74rem;
+    word-break: break-word;
+    overflow-wrap: break-word;
+  }
+
   .travel-svg-wrapper {
-    padding: 6px 0;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    padding: 4px 0;
+    box-sizing: border-box;
+    overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    border-radius: 10px;
   }
 
   .travel-trajectory-svg {
-    min-width: 580px;
-    height: 130px;
+    min-width: 500px;
+    height: 120px;
+    display: block;
   }
 
   /* Barras de distancia interplanetaria sin desbordes */
   .distance-bars-container {
-    margin-top: 14px;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
+    box-sizing: border-box;
+    overflow: hidden;
+    margin-top: 12px;
     gap: 6px;
   }
 
   .distance-bars-title {
-    font-size: 0.8rem;
+    font-size: 0.78rem;
     word-break: break-word;
+    margin-bottom: 8px;
   }
 
   .dist-bar-row {
@@ -2900,15 +3080,18 @@
     flex-wrap: wrap;
     align-items: center;
     gap: 4px;
-    padding: 8px 10px;
-    border-radius: 10px;
+    padding: 6px 8px;
+    border-radius: 8px;
     box-sizing: border-box;
+    width: 100%;
+    max-width: 100%;
+    min-width: 0;
   }
 
   .dist-name {
     order: 1;
     width: auto;
-    font-size: 0.78rem;
+    font-size: 0.75rem;
     font-weight: 700;
   }
 
@@ -2917,19 +3100,25 @@
     margin-left: auto;
     width: auto;
     text-align: right;
-    font-size: 0.76rem;
+    font-size: 0.72rem;
   }
 
   .dist-bar-track {
     order: 3;
     width: 100%;
+    max-width: 100%;
+    min-width: 0;
     flex: 1 1 100%;
     height: 18px;
     margin-top: 2px;
+    box-sizing: border-box;
   }
 
   .dist-val-inside {
-    font-size: 0.68rem;
+    font-size: 0.64rem;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   /* ========================================================================
@@ -3083,9 +3272,9 @@
   }
 
   .tab-btn {
-    font-size: 0.7rem;
-    padding: 6px 4px;
-    min-height: 44px;
+    font-size: 0.69rem;
+    padding: 5px 3px;
+    min-height: 42px;
   }
 
   .cosmic-radar-hud {
@@ -3099,16 +3288,40 @@
     height: 64px;
   }
 
+  .solar-transit-module-card,
+  .photometric-light-curve-card,
+  .real-size-scale-card,
+  .travel-calculator-card {
+    padding: 10px 6px !important;
+    border-radius: 14px;
+  }
+
   .calc-results-banner {
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
+    gap: 4px;
   }
 
   .result-stat-box {
-    padding: 8px 4px;
+    padding: 6px 3px;
   }
 
   .res-val {
-    font-size: 0.88rem;
+    font-size: 0.8rem;
+  }
+
+  .res-label {
+    font-size: 0.6rem;
+  }
+
+  .dist-name {
+    font-size: 0.72rem;
+  }
+
+  .dist-time-badge {
+    font-size: 0.7rem;
+  }
+
+  .dist-bar-row {
+    padding: 5px 6px;
   }
 }
