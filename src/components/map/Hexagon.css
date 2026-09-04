@@ -382,8 +382,8 @@
 
 .map-controls {
   position: absolute;
-  bottom: 30px;
-  right: 30px;
+  bottom: 95px;
+  right: 24px;
   z-index: 100;
   display: flex;
   flex-direction: column;
@@ -460,7 +460,7 @@
   }
 
   .map-controls {
-    bottom: 20px;
+    bottom: 84px;
     right: 14px;
     gap: 8px;
   }

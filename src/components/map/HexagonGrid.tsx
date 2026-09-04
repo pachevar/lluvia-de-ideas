@@ -12,7 +12,22 @@ interface HexagonGridProps {
   showLabels?: boolean;
   editingHexRow?: number | null;
   editingHexCol?: number | null;
+  onTransformReady?: (controls: { zoomIn: () => void; zoomOut: () => void; centerView: () => void }) => void;
 }
+
+interface TransformBridgeProps {
+  zoomIn: () => void;
+  zoomOut: () => void;
+  centerView: () => void;
+  onReady: (controls: { zoomIn: () => void; zoomOut: () => void; centerView: () => void }) => void;
+}
+
+const TransformBridge: React.FC<TransformBridgeProps> = ({ zoomIn, zoomOut, centerView, onReady }) => {
+  React.useEffect(() => {
+    onReady({ zoomIn, zoomOut, centerView });
+  }, [zoomIn, zoomOut, centerView, onReady]);
+  return null;
+};
 
 export const HexagonGrid: React.FC<HexagonGridProps> = ({
   cells,
@@ -21,7 +36,8 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   onHexClick,
   showLabels = false,
   editingHexRow = null,
-  editingHexCol = null
+  editingHexCol = null,
+  onTransformReady
 }) => {
   // Dynamic cell bounds calculation so hexes are ALWAYS perfectly centered
   const cols = cells.length > 0 ? cells.map(c => c.col) : [0];
@@ -72,6 +88,9 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
               }
             }}
           >
+            {onTransformReady && (
+              <TransformBridge zoomIn={zoomIn} zoomOut={zoomOut} centerView={centerView} onReady={onTransformReady} />
+            )}
             <div className="map-controls" style={{ zIndex: 1000 }}>
               <button onClick={() => zoomIn()} title="Acercar">+</button>
               <button onClick={() => zoomOut()} title="Alejar">-</button>
