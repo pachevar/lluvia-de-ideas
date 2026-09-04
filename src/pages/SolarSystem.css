@@ -427,21 +427,24 @@
 }
 
 /* Cluster de Zoom */
+/* Cluster de Zoom de Alto Impacto */
 .zoom-controls-cluster {
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: rgba(255, 255, 255, 0.04);
-  border: 1px solid rgba(255, 255, 255, 0.08);
-  padding: 4px 12px;
-  border-radius: 14px;
+  gap: 12px;
+  background: rgba(13, 6, 28, 0.7);
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  padding: 6px 14px;
+  border-radius: 16px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.08);
 }
 
 .zoom-label-title {
-  font-size: 0.75rem;
-  font-weight: 700;
+  font-size: 0.78rem;
+  font-weight: 800;
   text-transform: uppercase;
-  opacity: 0.5;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
 }
 
 .zoom-buttons-row {
@@ -450,46 +453,86 @@
   gap: 8px;
 }
 
-.btn-zoom-action {
-  background: rgba(255, 255, 255, 0.1);
-  border: none;
-  color: white;
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  cursor: pointer;
-  display: flex;
+/* Botones de Zoom Destacados para Desktop */
+.btn-zoom-desktop-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #1d4ed8 100%);
+  border: 1.5px solid #38bdf8;
+  color: #ffffff;
+  padding: 7px 16px;
+  border-radius: 12px;
+  font-family: var(--font-title);
+  font-size: 0.88rem;
+  font-weight: 800;
+  display: inline-flex;
   align-items: center;
-  justify-content: center;
-  font-size: 0.8rem;
-  transition: background 0.2s;
-}
-
-.btn-zoom-action:hover {
-  background: rgba(255, 255, 255, 0.25);
-}
-
-.zoom-value-text {
-  font-size: 0.8rem;
-  font-weight: 700;
-  min-width: 42px;
-  text-align: center;
-  color: #3B82F6;
-}
-
-.btn-zoom-reset {
-  background: rgba(59, 130, 246, 0.15);
-  border: 1px solid rgba(59, 130, 246, 0.3);
-  color: #60A5FA;
-  padding: 4px 10px;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  font-weight: 700;
+  gap: 6px;
   cursor: pointer;
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.4), 0 4px 12px rgba(0, 0, 0, 0.35);
+  transition: all 0.22s cubic-bezier(0.4, 0, 0.2, 1);
+  user-select: none;
 }
 
-.btn-zoom-reset:hover {
-  background: rgba(59, 130, 246, 0.3);
+.btn-zoom-desktop-primary:hover {
+  transform: translateY(-2px) scale(1.05);
+  background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+  border-color: #7dd3fc;
+  box-shadow: 0 0 24px rgba(56, 189, 248, 0.75), 0 6px 16px rgba(0, 0, 0, 0.5);
+  color: #ffffff;
+}
+
+.btn-zoom-desktop-primary:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.btn-zoom-in {
+  background: linear-gradient(135deg, #0369a1 0%, #0284c7 100%);
+}
+
+.btn-zoom-out {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1d4ed8 100%);
+}
+
+.btn-zoom-reset-highlight {
+  background: rgba(147, 51, 234, 0.18);
+  border: 1.5px solid rgba(168, 85, 247, 0.45);
+  color: #e9d5ff;
+  padding: 7px 13px;
+  border-radius: 12px;
+  font-family: var(--font-title);
+  font-size: 0.82rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 10px rgba(147, 51, 234, 0.2);
+}
+
+.btn-zoom-reset-highlight:hover {
+  background: rgba(147, 51, 234, 0.35);
+  border-color: #c084fc;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.5);
+}
+
+.zoom-symbol {
+  font-size: 0.95rem;
+  line-height: 1;
+}
+
+.zoom-text-label {
+  letter-spacing: 0.3px;
+}
+
+/* Controles Touch Flotantes (Ocultos en Desktop, activos en Móvil) */
+.mobile-touch-hud-controls {
+  display: none;
+}
+
+.mobile-toggle-layers-bar {
+  display: none;
 }
 
 /* Slider de velocidad */
@@ -2130,12 +2173,24 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
-  /* Contenedor Principal: blindaje contra desbordes horizontales */
+  /* Contenedor Principal: eliminación total del doble margen para expansión horizontal máxima */
   .solarsystem-container {
-    padding: 16px 8px;
+    padding: 8px 0px;
     max-width: 100vw;
     overflow-x: hidden;
     box-sizing: border-box;
+  }
+
+  .solarsystem-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 3px;
+    box-sizing: border-box;
+  }
+
+  .solarsystem-header {
+    margin-bottom: 15px;
+    padding: 0 8px;
   }
 
   .solarsystem-title {
@@ -2149,7 +2204,7 @@
   .solarsystem-subtitle {
     font-size: 0.84rem;
     padding: 0 6px;
-    margin-bottom: 16px;
+    margin-bottom: 14px;
     line-height: 1.4;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -2159,21 +2214,23 @@
   .solar-nav-tabs {
     display: grid;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 6px;
     width: 100%;
     box-sizing: border-box;
+    padding: 0 4px;
+    margin-top: 10px;
   }
 
   .tab-btn {
     width: 100%;
-    min-height: 48px;
+    min-height: 44px;
     height: auto;
-    padding: 8px 10px;
-    font-size: 0.76rem;
+    padding: 6px 8px;
+    font-size: 0.74rem;
     text-align: center;
     white-space: normal;
     line-height: 1.25;
-    border-radius: 14px;
+    border-radius: 12px;
     box-sizing: border-box;
     display: flex;
     align-items: center;
@@ -2182,7 +2239,7 @@
   }
 
   .section-title {
-    font-size: 1.28rem !important;
+    font-size: 1.25rem !important;
     margin: 10px 0 6px 0;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -2191,7 +2248,7 @@
   .section-subtitle {
     font-size: 0.82rem !important;
     padding: 0 4px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
     line-height: 1.35;
     word-break: break-word;
     overflow-wrap: break-word;
@@ -2200,90 +2257,60 @@
   /* Layout de la Simulación (Pestaña 1) */
   .sim-dashboard, .physics-simulation-grid {
     flex-direction: column;
-    gap: 16px;
+    gap: 12px;
     width: 100%;
     box-sizing: border-box;
   }
 
-  /* El mapa SVG interactivo se sitúa primero para manipulación táctil directa */
+  /* El mapa SVG interactivo se sitúa primero y aprovecha el 100% horizontal */
   .sim-map-canvas {
     order: -1;
     min-width: 0;
     width: 100%;
-    padding: 10px;
-    border-radius: 18px;
+    padding: 0;
+    background: transparent;
+    border: none;
+    box-shadow: none;
+    border-radius: 0;
     box-sizing: border-box;
   }
 
-  /* Barra de Controles del Canvas */
+  /* En móvil se ocultan los controles redundantes para ganar espacio vertical */
+  .desktop-only-controls {
+    display: none !important;
+  }
+
+  .zoom-controls-cluster {
+    display: none !important;
+  }
+
   .canvas-controls-bar {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
-    padding: 10px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .control-btn-group {
-    display: flex;
-    width: 100%;
     gap: 6px;
-  }
-
-  .btn-sim-control {
-    flex: 1;
-    text-align: center;
-    padding: 10px;
-    font-size: 0.8rem;
-    min-height: 42px;
-    touch-action: manipulation;
-  }
-
-  /* Cluster de Zoom */
-  .zoom-controls-cluster {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    padding: 0 4px;
+    margin-bottom: 6px;
     width: 100%;
-    background: rgba(255, 255, 255, 0.04);
-    padding: 6px 10px;
-    border-radius: 12px;
     box-sizing: border-box;
   }
 
-  .zoom-label-title {
-    font-size: 0.74rem;
-  }
-
-  .zoom-buttons-row {
-    display: flex;
-    gap: 4px;
-  }
-
-  .zoom-buttons-row .spectrum-btn {
-    min-width: 38px;
-    min-height: 38px;
-    padding: 6px 10px;
-    font-size: 0.78rem;
-    touch-action: manipulation;
-  }
-
-  /* Presets Cósmicos: Cinta deslizante horizontal suave sin saltos de línea */
+  /* Presets Cósmicos: Cinta táctil horizontal ultra-compacta */
   .camera-presets-bar {
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 5px;
     flex-wrap: nowrap;
     overflow-x: auto;
     white-space: nowrap;
-    padding: 8px 10px;
-    border-radius: 14px;
+    padding: 6px 8px;
+    border-radius: 12px;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: none;
     width: 100%;
     box-sizing: border-box;
-    background: rgba(0, 0, 0, 0.4);
+    background: rgba(13, 6, 28, 0.75);
+    border: 1px solid rgba(56, 189, 248, 0.2);
   }
 
   .camera-presets-bar::-webkit-scrollbar {
@@ -2292,20 +2319,48 @@
 
   .presets-label {
     flex-shrink: 0;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
+    font-weight: 800;
   }
 
   .camera-preset-btn {
     flex-shrink: 0;
-    padding: 6px 11px;
-    font-size: 0.75rem;
-    min-height: 34px;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    min-height: 30px;
+    border-radius: 8px;
     touch-action: manipulation;
   }
 
-  /* Alternadores de Capas (Toggles): cinta deslizante */
-  .toggles-controls-cluster {
+  /* Botón Táctil Móvil para Alternar Capas Secundarias y Ganar Espacio */
+  .mobile-toggle-layers-bar {
+    display: block;
+    width: 100%;
+  }
+
+  .btn-mobile-layers-toggle {
+    width: 100%;
     display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: #94a3b8;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .btn-mobile-layers-toggle:active {
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  /* Toggles y velocidad colapsados por defecto en móvil para que el mapa esté arriba */
+  .toggles-controls-cluster {
+    display: none;
     flex-direction: row;
     overflow-x: auto;
     white-space: nowrap;
@@ -2317,6 +2372,10 @@
     box-sizing: border-box;
   }
 
+  .toggles-controls-cluster.mobile-visible {
+    display: flex;
+  }
+
   .toggles-controls-cluster::-webkit-scrollbar {
     display: none;
   }
@@ -2324,22 +2383,27 @@
   .toggle-chip {
     flex-shrink: 0;
     font-size: 0.72rem;
-    padding: 6px 10px;
-    min-height: 34px;
+    padding: 5px 9px;
+    min-height: 32px;
     touch-action: manipulation;
   }
 
   /* Control de Velocidad */
   .sim-speed-slider {
-    display: flex;
+    display: none;
     align-items: center;
     gap: 8px;
     width: 100%;
     box-sizing: border-box;
+    padding: 4px 6px;
+  }
+
+  .sim-speed-slider.mobile-visible {
+    display: flex;
   }
 
   .sim-speed-slider label {
-    font-size: 0.75rem;
+    font-size: 0.74rem;
     white-space: nowrap;
   }
 
@@ -2350,30 +2414,78 @@
   }
 
   .speed-val-indicator {
-    font-size: 0.78rem;
-    min-width: 36px;
+    font-size: 0.76rem;
+    min-width: 32px;
   }
 
   .tracking-toast-banner {
     width: 100%;
     box-sizing: border-box;
-    padding: 8px 12px;
-    font-size: 0.78rem;
+    padding: 6px 10px;
+    font-size: 0.76rem;
+    margin-bottom: 6px;
   }
 
   .tracking-text-label {
-    font-size: 0.76rem;
+    font-size: 0.74rem;
     word-break: break-word;
   }
 
-  /* Viewport SVG del Sistema Solar */
+  /* Viewport SVG del Sistema Solar: expansión horizontal total */
   .svg-viewport-wrapper {
     width: 100%;
     aspect-ratio: 1 / 1;
-    max-height: 60vh;
-    border-radius: 16px;
+    max-height: 65vh;
+    border-radius: 14px;
+    border: 1px solid rgba(56, 189, 248, 0.3);
     position: relative;
     box-sizing: border-box;
+    margin: 0;
+    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.6);
+  }
+
+  /* Controles Touch Flotantes Directos sobre el Mapa SVG (Móvil) */
+  .mobile-touch-hud-controls {
+    display: flex;
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 25;
+    user-select: none;
+    pointer-events: auto;
+  }
+
+  .mobile-touch-btn {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: rgba(9, 3, 22, 0.88);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1.5px solid rgba(56, 189, 248, 0.5);
+    color: #ffffff;
+    font-size: 1.25rem;
+    font-weight: 800;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.65), 0 0 12px rgba(56, 189, 248, 0.25);
+    cursor: pointer;
+    touch-action: manipulation;
+    transition: transform 0.15s ease, background 0.15s ease;
+  }
+
+  .mobile-touch-btn:active {
+    transform: scale(0.9);
+    background: rgba(56, 189, 248, 0.35);
+    border-color: #38bdf8;
+  }
+
+  .touch-btn-play.paused {
+    border-color: #ef4444;
+    color: #f87171;
   }
 
   /* Minimapa Radar Cósmico HUD Compacto en Móvil */

@@ -412,6 +412,7 @@ export default function SolarSystem() {
   const svgWrapperRef = useRef<HTMLDivElement>(null);
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
+  const [showMobileLayerSettings, setShowMobileLayerSettings] = useState<boolean>(false);
   const dragStartRef = useRef<{ x: number; y: number; startPanX: number; startPanY: number }>({ x: 0, y: 0, startPanX: 0, startPanY: 0 });
   const touchStartRef = useRef<{ x: number; y: number; dist: number }>({ x: 0, y: 0, dist: 0 });
 
@@ -988,7 +989,7 @@ export default function SolarSystem() {
               
               {/* Controles de Simulación y Navegación Cósmica */}
               <div className="canvas-controls-bar">
-                <div className="control-btn-group">
+                <div className="control-btn-group desktop-only-controls">
                   <button 
                     className={`btn-sim-control ${isPlaying ? 'paused' : 'playing'}`}
                     onClick={() => setIsPlaying(!isPlaying)}
@@ -1000,35 +1001,57 @@ export default function SolarSystem() {
                   </button>
                 </div>
 
+                {/* Cluster de Zoom de Alto Impacto Visual (Destacado para Desktop) */}
                 <div className="zoom-controls-cluster">
-                  <span className="zoom-label-title" style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                  <span className="zoom-label-title">
                     Zoom: {zoomLevel.toFixed(2)}x
                   </span>
-                  <div className="zoom-buttons-row" style={{ display: 'flex', gap: '4px' }}>
-                    <button className="spectrum-btn" onClick={zoomOut} title="Alejar (o rueda del ratón)">➖</button>
-                    <button className="spectrum-btn" onClick={zoomIn} title="Acercar (o rueda del ratón)">➕</button>
-                    <button className="spectrum-btn" onClick={resetZoom} title="Restablecer posición y escala">🔄 Vista General</button>
+                  <div className="zoom-buttons-row">
+                    <button className="btn-zoom-desktop-primary btn-zoom-out" onClick={zoomOut} title="Alejar vista del Sistema Solar (o rueda del ratón)">
+                      <span className="zoom-symbol">➖</span>
+                      <span className="zoom-text-label">Alejar</span>
+                    </button>
+                    <button className="btn-zoom-desktop-primary btn-zoom-in" onClick={zoomIn} title="Acercar vista del Sistema Solar (o rueda del ratón)">
+                      <span className="zoom-symbol">➕</span>
+                      <span className="zoom-text-label">Acercar</span>
+                    </button>
+                    <button className="btn-zoom-reset-highlight" onClick={resetZoom} title="Restablecer posición y escala completa">
+                      <span className="zoom-symbol">🔄</span>
+                      <span className="zoom-text-label">General</span>
+                    </button>
                   </div>
                 </div>
 
-                {/* Presets de Enfoque Rápido */}
+                {/* Presets de Enfoque Rápido / Ubicación */}
                 <div className="camera-presets-bar">
-                  <span className="presets-label">🔭 Enfoque Cósmico:</span>
-                  <button className="camera-preset-btn" onClick={() => setCameraPreset('sistema')} title="Ver todo el sistema solar hasta Kuiper">🌌 Todo el Sistema</button>
+                  <span className="presets-label">🔭 Enfoque:</span>
+                  <button className="camera-preset-btn" onClick={() => setCameraPreset('sistema')} title="Ver todo el sistema solar hasta Kuiper">🌌 Todo</button>
                   <button className="camera-preset-btn" onClick={() => setCameraPreset('rocosos')} title="Mercurio, Venus, Tierra y Marte">🪨 Rocosos</button>
                   <button className="camera-preset-btn" onClick={() => setCameraPreset('gigantes')} title="Júpiter, Saturno, Urano y Neptuno">🪐 Gigantes</button>
-                  <button className="camera-preset-btn" onClick={() => setCameraPreset('sol')} title="Corona, fotosfera y manchas solares">☀️ Sol & Corona</button>
-                  <button className="camera-preset-btn" onClick={() => setCameraPreset('kuiper')} title="Cinturón de Kuiper y sonda Voyager 1">🛰️ Interestelar</button>
+                  <button className="camera-preset-btn" onClick={() => setCameraPreset('sol')} title="Corona, fotosfera y manchas solares">☀️ Sol</button>
+                  <button className="camera-preset-btn" onClick={() => setCameraPreset('kuiper')} title="Cinturón de Kuiper y sonda Voyager 1">🛰️ Sondas</button>
                 </div>
 
-                <div className="toggles-controls-cluster">
+                {/* Botón Táctil Móvil para Alternar Capas Secundarias */}
+                <div className="mobile-toggle-layers-bar">
+                  <button 
+                    className="btn-mobile-layers-toggle"
+                    onClick={() => setShowMobileLayerSettings(!showMobileLayerSettings)}
+                    title="Alternar opciones avanzadas y velocidad"
+                  >
+                    <span>⚙️ Filtros & Velocidad</span>
+                    <span className="chevron-icon">{showMobileLayerSettings ? '▲' : '▼'}</span>
+                  </button>
+                </div>
+
+                <div className={`toggles-controls-cluster ${showMobileLayerSettings ? 'mobile-visible' : ''}`}>
                   <label className="toggle-chip">
                     <input type="checkbox" checked={showOrbits} onChange={() => setShowOrbits(!showOrbits)} />
-                    💫 Trazar Órbitas
+                    💫 Órbitas
                   </label>
                   <label className="toggle-chip">
                     <input type="checkbox" checked={useEllipticalOrbits} onChange={() => setUseEllipticalOrbits(!useEllipticalOrbits)} />
-                    📐 Elipses de Kepler
+                    📐 Elipses Kepler
                   </label>
                   <label className="toggle-chip">
                     <input type="checkbox" checked={showAsteroids} onChange={() => setShowAsteroids(!showAsteroids)} />
@@ -1048,7 +1071,7 @@ export default function SolarSystem() {
                   </label>
                 </div>
 
-                <div className="sim-speed-slider">
+                <div className={`sim-speed-slider ${showMobileLayerSettings ? 'mobile-visible' : ''}`}>
                   <label>Velocidad</label>
                   <input 
                     type="range" min="0.2" max="3" step="0.1"
@@ -1069,7 +1092,7 @@ export default function SolarSystem() {
                       onChange={() => setIsTracking(!isTracking)} 
                     />
                     <span className="switch-custom-slider"></span>
-                    <span className="tracking-text-label">🎥 Seguir órbita de {selectedBody.name} (Bloqueo de Cámara)</span>
+                    <span className="tracking-text-label">🎥 Seguir órbita de {selectedBody.name}</span>
                   </label>
                 </div>
               )}
@@ -1089,6 +1112,20 @@ export default function SolarSystem() {
                 style={{ cursor: isDragging ? 'grabbing' : 'grab' }}
                 title="Arrastra para moverte libremente por el espacio. Usa la rueda del ratón o botones para hacer zoom."
               >
+                {/* Controles Touch Flotantes de Acceso Rápido sobre el Mapa (Móvil) */}
+                <div className="mobile-touch-hud-controls" onClick={(e) => e.stopPropagation()}>
+                  <button className="mobile-touch-btn touch-btn-zoom-in" onClick={zoomIn} title="Acercar">+</button>
+                  <button className="mobile-touch-btn touch-btn-zoom-out" onClick={zoomOut} title="Alejar">-</button>
+                  <button className="mobile-touch-btn touch-btn-recenter" onClick={resetZoom} title="Centrar y reajustar">🎯</button>
+                  <button 
+                    className={`mobile-touch-btn touch-btn-play ${isPlaying ? 'paused' : ''}`} 
+                    onClick={() => setIsPlaying(!isPlaying)} 
+                    title={isPlaying ? 'Pausa' : 'Iniciar'}
+                  >
+                    {isPlaying ? '⏸' : '▶'}
+                  </button>
+                </div>
+
                 {/* HUD Minimapa Radar Cósmico */}
                 <div className="cosmic-radar-hud" onClick={(e) => e.stopPropagation()}>
                   <div className="radar-title-row">
