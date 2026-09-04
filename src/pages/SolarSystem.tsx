@@ -40,6 +40,293 @@ interface CelestialBody {
   jwstInsights?: string;
 }
 
+// Interfaces y Constantes de Espectroscopía Científica
+interface SpectroInstrument {
+  id: string;
+  name: string;
+  agency: string;
+  mission: string;
+  range: string;
+  rangeNm: string;
+  type: string;
+  keyTarget: string;
+  discovery: string;
+  description: string;
+  icon: string;
+}
+
+const SPECTRO_INSTRUMENTS: SpectroInstrument[] = [
+  {
+    id: 'jwst_nirspec',
+    name: 'NIRSpec (Near-Infrared Spectrograph)',
+    agency: 'NASA / ESA / CSA',
+    mission: 'Telescopio Espacial James Webb (JWST)',
+    range: '0.6 a 5.3 µm (600 a 5,300 nm)',
+    rangeNm: 'Infrarrojo Cercano (NIR)',
+    type: 'Espectrógrafo multiobjeto con matriz de 250,000 micro-obturadores criogénicos',
+    keyTarget: 'Exoplanetas habitables, atmósferas de lunas heladas y galaxias primordiales',
+    discovery: 'Detección inequívoca de dióxido de carbono (CO₂), vapor de agua y dióxido de azufre fotoquímico en exoplanetas, así como perfiles de metano en Titán.',
+    description: 'Capaz de captar simultáneamente hasta 100 espectros astronómicos con una sensibilidad cuántica sin precedentes, atravesando densos velos de polvo estelar.',
+    icon: '🔭'
+  },
+  {
+    id: 'hst_stis',
+    name: 'STIS (Space Telescope Imaging Spectrograph)',
+    agency: 'NASA / ESA',
+    mission: 'Telescopio Espacial Hubble (HST)',
+    range: '115 a 1,000 nm',
+    rangeNm: 'Ultravioleta, Luz Visible e Infrarrojo Cercano',
+    type: 'Espectrógrafo de campo amplio y rendija de alta resolución espacial',
+    keyTarget: 'Atmósferas del Sistema Solar, vientos estelares y discos protoplanetarios',
+    discovery: 'Primera detección histórica de la atmósfera de un exoplaneta (sodio en HD 209458b) y cartografía de las impresionantes auroras UV de Júpiter y Saturno.',
+    description: 'Instrumento versátil que descompone fotones desde el ultravioleta del vacío hasta el borde infrarrojo mediante redes de difracción holográficas.',
+    icon: '🛰️'
+  },
+  {
+    id: 'mro_crism',
+    name: 'CRISM (Compact Reconnaissance Imaging Spectrometer)',
+    agency: 'NASA / JPL / JHUAPL',
+    mission: 'Mars Reconnaissance Orbiter (MRO)',
+    range: '362 a 3,920 nm (544 canales)',
+    rangeNm: 'Visible e Infrarrojo Corto (VNIR)',
+    type: 'Espectrómetro hiperespectral de barrido orbital en Marte',
+    keyTarget: 'Mineralogía superficial y delgada atmósfera marciana',
+    discovery: 'Descubrió depósitos masivos de arcillas (filosilicatos) y carbonatos que probaron que Marte albergó lagos y ríos de agua líquida no ácida en su pasado.',
+    description: 'Analiza píxel a píxel las firmas de absorción del ion hidroxilo (OH) y del CO₂ para guiar el descenso de los rovers Curiosity y Perseverance.',
+    icon: '🔴'
+  },
+  {
+    id: 'cassini_vims',
+    name: 'VIMS (Visual and Infrared Mapping Spectrometer)',
+    agency: 'NASA / ESA / ASI',
+    mission: 'Misión Cassini-Huygens (Saturno)',
+    range: '350 a 5,100 nm (352 canales)',
+    rangeNm: 'Espectro Visible e Infrarrojo Térmico',
+    type: 'Mapeador espectral de reflectancia para mundos helados',
+    keyTarget: 'Saturno, sus anillos de hielo y las lunas Titán y Encélado',
+    discovery: 'Penetró la densa y anaranjada niebla de Titán descubriendo mares de metano y etano líquido, y confirmó compuestos orgánicos en los géiseres de Encélado.',
+    description: 'Aprovechó las ventanas de transparencia espectral del metano para ver a través de la atmósfera más densa de luna alguna del Sistema Solar.',
+    icon: '🪐'
+  },
+  {
+    id: 'vlt_espresso',
+    name: 'ESPRESSO (Echelle SPectrograph for Rocky Exoplanets)',
+    agency: 'ESO (Observatorio Europeo Austral)',
+    mission: 'VLT (Very Large Telescope, Cerro Paranal - Chile)',
+    range: '380 a 788 nm',
+    rangeNm: 'Óptico Visible de Ultra-Alta Resolución',
+    type: 'Espectrógrafo Échelle criogénico ultra-estabilizado en vacío',
+    keyTarget: 'Espectroscopía de transmisión de atmósferas y búsqueda de biofirmas',
+    discovery: 'Precisión de velocidad radial de 10 cm/s; descubrió lluvia de hierro líquido en el exoplaneta WASP-76b y mide composiciones atómicas con fidelidad récord.',
+    description: 'Alimentado por los cuatro telescopios gigantes de 8.2 metros del VLT chileno, analiza la sutil disminución de luz durante tránsitos planetarios.',
+    icon: '🏔️'
+  },
+  {
+    id: 'venus_spicav',
+    name: 'SPICAV / SOIR',
+    agency: 'ESA (Agencia Espacial Europea)',
+    mission: 'Venus Express',
+    range: '118 a 320 nm (UV) y 700 a 4,300 nm (IR)',
+    rangeNm: 'Ultravioleta e Infrarrojo de Ocultación Solar',
+    type: 'Espectrómetro AOTF acusto-óptico de ocultación estelar',
+    keyTarget: 'Atmósfera supercrítica y nubes corrosivas de Venus',
+    discovery: 'Registró fluctuaciones drásticas de dióxido de azufre (SO₂) que sugieren vulcanismo activo reciente y caracterizó la capa fría de ozono en Venus.',
+    description: 'Mide la atenuación de los rayos solares conforme atraviesan distintas altitudes de las nubes de ácido sulfúrico venusianas al ocultarse tras el planeta.',
+    icon: '🌋'
+  }
+];
+
+interface AbsorptionBand {
+  wavelengthNm: number;
+  gas: string;
+  formula: string;
+  transition: string;
+  significance: string;
+  bodies: string[];
+  tolerance: number;
+  isBioSignature?: boolean;
+}
+
+const ABSORPTION_BANDS: AbsorptionBand[] = [
+  {
+    wavelengthNm: 434,
+    gas: 'Hidrógeno Atómico (H-γ)',
+    formula: 'H',
+    transition: 'Transición cuántica de Balmer n=5 → n=2',
+    significance: 'Línea característica en coronas estelares y capas altas de planetas gigantes gaseosos.',
+    bodies: ['jupiter', 'urano', 'saturno', 'neptuno', 'sol'],
+    tolerance: 15
+  },
+  {
+    wavelengthNm: 486,
+    gas: 'Hidrógeno Atómico (H-β)',
+    formula: 'H',
+    transition: 'Transición de Balmer n=4 → n=2',
+    significance: 'Referencia espectral estándar para determinar temperatura y gravedad atmosférica superficial.',
+    bodies: ['jupiter', 'urano', 'saturno', 'neptuno', 'sol'],
+    tolerance: 15
+  },
+  {
+    wavelengthNm: 589,
+    gas: 'Sodio Neutro (Doblete D Fraunhofer)',
+    formula: 'Na',
+    transition: 'Transición electrónica de valencia 3p → 3s',
+    significance: 'Líneas brillantes observadas en la tenue exósfera de Mercurio, colas cometarias y la luna volcánica Ío.',
+    bodies: ['mercurio', 'sol'],
+    tolerance: 15
+  },
+  {
+    wavelengthNm: 600,
+    gas: 'Ozono (Banda de Chappuis)',
+    formula: 'O₃',
+    transition: 'Fotodisociación molecular de baja energía en luz visible',
+    significance: 'Capa protectora contra radiación UV. En astrobiología es un indicador secundario de fotosíntesis y vida.',
+    bodies: ['tierra', 'venus'],
+    tolerance: 25,
+    isBioSignature: true
+  },
+  {
+    wavelengthNm: 656,
+    gas: 'Hidrógeno Alfa (H-α)',
+    formula: 'H',
+    transition: 'Transición de Balmer n=3 → n=2',
+    significance: 'La huella atómica más abundante del cosmos. Da el característico color rojo a las prominencias solares y auroras.',
+    bodies: ['jupiter', 'urano', 'saturno', 'neptuno', 'sol'],
+    tolerance: 15
+  },
+  {
+    wavelengthNm: 687,
+    gas: 'Oxígeno Molecular (Banda B de Fraunhofer)',
+    formula: 'O₂',
+    transition: 'Transición electrónica spin-prohibida',
+    significance: 'Absorción creada por el abundante oxígeno gaseoso liberado por plantas y fitoplancton marino en la Tierra.',
+    bodies: ['tierra'],
+    tolerance: 16,
+    isBioSignature: true
+  },
+  {
+    wavelengthNm: 720,
+    gas: 'Vapor de Agua (H₂O)',
+    formula: 'H₂O',
+    transition: 'Sobretono vibracional de estiramiento simétrico',
+    significance: 'Indicador directo de ciclo hídrico activo y formación nubosa en planetas rocosos.',
+    bodies: ['tierra', 'marte'],
+    tolerance: 18,
+    isBioSignature: true
+  },
+  {
+    wavelengthNm: 760,
+    gas: 'Oxígeno Molecular (Banda A de Fraunhofer)',
+    formula: 'O₂',
+    transition: 'Transición rotacional-vibracional b¹Σg⁺ ← X³Σg⁻',
+    significance: '¡La biofirma espectral más nítida de la Tierra! Una absorción intensa que delata fotosíntesis global.',
+    bodies: ['tierra'],
+    tolerance: 20,
+    isBioSignature: true
+  },
+  {
+    wavelengthNm: 889,
+    gas: 'Metano (CH₄)',
+    formula: 'CH₄',
+    transition: 'Banda vibracional de combinación fundamental ν₁ + ν₄',
+    significance: 'Absorbe intensamente el espectro rojo/NIR; le otorga a Urano y Neptuno su tono azul y marca el ciclo de Titán.',
+    bodies: ['urano', 'neptuno', 'jupiter', 'saturno'],
+    tolerance: 25,
+    isBioSignature: true
+  },
+  {
+    wavelengthNm: 940,
+    gas: 'Vapor de Agua (Banda mayor de vapor)',
+    formula: 'H₂O',
+    transition: 'Flexión y estiramiento asimétrico (ν₁ + ν₃)',
+    significance: 'Una de las huellas más profundas del infrarrojo cercano; su búsqueda es el objetivo número uno de JWST.',
+    bodies: ['tierra', 'marte'],
+    tolerance: 24,
+    isBioSignature: true
+  },
+  {
+    wavelengthNm: 1050,
+    gas: 'Dióxido de Carbono (CO₂)',
+    formula: 'CO₂',
+    transition: 'Combinación armónica infrarroja (ν₁ + 3ν₂)',
+    significance: 'Gas de efecto invernadero primordial; explica el calor sofocante de Venus y la delgada atmósfera de Marte.',
+    bodies: ['venus', 'marte', 'tierra'],
+    tolerance: 30
+  }
+];
+
+const SPECTRO_PRESETS = [
+  { nm: 434, label: '434 nm', tag: 'H-γ', color: '#6366f1' },
+  { nm: 589, label: '589 nm', tag: 'Na (Sodio)', color: '#eab308' },
+  { nm: 600, label: '600 nm', tag: 'O₃ (Ozono)', color: '#f97316' },
+  { nm: 656, label: '656 nm', tag: 'H-α (Balmer)', color: '#ef4444' },
+  { nm: 760, label: '760 nm', tag: 'O₂ (Biofirma)', color: '#a855f7' },
+  { nm: 889, label: '889 nm', tag: 'CH₄ (Metano)', color: '#06b6d4' },
+  { nm: 940, label: '940 nm', tag: 'H₂O (Vapor)', color: '#38bdf8' },
+  { nm: 1050, label: '1050 nm', tag: 'CO₂ (Venus/Marte)', color: '#ec4899' },
+];
+
+function wavelengthToColor(wavelength: number): { hex: string; name: string; isVisible: boolean } {
+  if (wavelength < 380) return { hex: '#7c3aed', name: 'Ultravioleta Cercano (UV)', isVisible: false };
+  if (wavelength > 750) return { hex: '#be123c', name: 'Infrarrojo Cercano (NIR)', isVisible: false };
+
+  let r = 0, g = 0, b = 0;
+  if (wavelength >= 380 && wavelength < 440) {
+    r = -(wavelength - 440) / (440 - 380);
+    g = 0;
+    b = 1;
+  } else if (wavelength >= 440 && wavelength < 490) {
+    r = 0;
+    g = (wavelength - 440) / (490 - 440);
+    b = 1;
+  } else if (wavelength >= 490 && wavelength < 510) {
+    r = 0;
+    g = 1;
+    b = -(wavelength - 510) / (510 - 490);
+  } else if (wavelength >= 510 && wavelength < 580) {
+    r = (wavelength - 510) / (580 - 510);
+    g = 1;
+    b = 0;
+  } else if (wavelength >= 580 && wavelength < 645) {
+    r = 1;
+    g = -(wavelength - 645) / (645 - 580);
+    b = 0;
+  } else if (wavelength >= 645 && wavelength <= 750) {
+    r = 1;
+    g = 0;
+    b = 0;
+  }
+
+  let factor = 1.0;
+  if (wavelength >= 380 && wavelength < 420) {
+    factor = 0.3 + 0.7 * (wavelength - 380) / (420 - 380);
+  } else if (wavelength >= 700 && wavelength <= 750) {
+    factor = 0.3 + 0.7 * (750 - wavelength) / (750 - 700);
+  }
+
+  const red = Math.round(r * factor * 255);
+  const green = Math.round(g * factor * 255);
+  const blue = Math.round(b * factor * 255);
+  const hex = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`;
+
+  let name = 'Luz Visible';
+  if (wavelength < 440) name = 'Violeta';
+  else if (wavelength < 490) name = 'Azul';
+  else if (wavelength < 510) name = 'Cian';
+  else if (wavelength < 570) name = 'Verde';
+  else if (wavelength < 590) name = 'Amarillo';
+  else if (wavelength < 625) name = 'Naranja';
+  else name = 'Rojo';
+
+  return { hex, name, isVisible: true };
+}
+
+function calculatePhotonPhysics(wavelengthNm: number) {
+  const freqTHz = (299792.458 / wavelengthNm).toFixed(1);
+  const energyEV = (1239.84193 / wavelengthNm).toFixed(2);
+  return { freqTHz, energyEV };
+}
+
 const CELESTIAL_DATA: Record<string, CelestialBody> = {
   sol: {
     id: 'sol',
@@ -430,6 +717,8 @@ export default function SolarSystem() {
   // Pestaña 3: Espectroscopía
   const [selectedSpectroBody, setSelectedSpectroBody] = useState<string>('tierra');
   const [activeWavelength, setActiveWavelength] = useState<number>(550); // nm
+  const [selectedInstrument, setSelectedInstrument] = useState<string>('jwst_nirspec');
+  const [activeSpectroSection, setActiveSpectroSection] = useState<'analyzer' | 'instruments' | 'learning'>('analyzer');
 
   // Pestaña 4: Física Orbital
   const [starMass, setStarMass] = useState<number>(1.0);
@@ -2328,67 +2617,417 @@ export default function SolarSystem() {
         {activeTab === 'spectroscopy' && (
           <div className="sim-dashboard animate-fade-in">
             <div className="spectroscopy-container">
-              <h2 className="section-title">🔬 Laboratorio de Espectroscopía y Composición Química</h2>
-              <p className="section-subtitle">
-                La espectroscopía permite a los astrónomos analizar la huella digital espectral de la luz que atraviesa las atmósferas planetarias.
-              </p>
-
-              <div className="spectro-selector-row">
-                {['tierra', 'venus', 'marte', 'jupiter', 'urano'].map((id) => {
-                  const item = CELESTIAL_DATA[id];
-                  return (
-                    <button 
-                      key={id}
-                      className={`spectro-planet-chip ${selectedSpectroBody === id ? 'active' : ''}`}
-                      onClick={() => setSelectedSpectroBody(id)}
-                    >
-                      {item.name}
-                    </button>
-                  );
-                })}
+              <div className="spectro-title-block">
+                <h2 className="section-title">🔬 Laboratorio de Espectroscopía & Química Planetaria</h2>
+                <p className="section-subtitle">
+                  La espectroscopía analiza el "código de barras" de la luz electromagnética que atraviesa las atmósferas de los mundos para descifrar sus gases y buscar biofirmas.
+                </p>
               </div>
 
-              {(() => {
-                const body = CELESTIAL_DATA[selectedSpectroBody];
+              {/* Pestañas Secundarias de Espectroscopía */}
+              <div className="spectro-subnav-bar">
+                <button 
+                  className={`spectro-subnav-btn ${activeSpectroSection === 'analyzer' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveSpectroSection('analyzer');
+                    soundEffects.playClick();
+                  }}
+                >
+                  🌈 Analizador Espectral en Vivo
+                </button>
+                <button 
+                  className={`spectro-subnav-btn ${activeSpectroSection === 'instruments' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveSpectroSection('instruments');
+                    soundEffects.playClick();
+                  }}
+                >
+                  🛰️ Instrumentos Espaciales
+                </button>
+                <button 
+                  className={`spectro-subnav-btn ${activeSpectroSection === 'learning' ? 'active' : ''}`}
+                  onClick={() => {
+                    setActiveSpectroSection('learning');
+                    soundEffects.playClick();
+                  }}
+                >
+                  🎓 Guía Didáctica & Referencias
+                </button>
+              </div>
+
+              {/* SECCIÓN 1: ANALIZADOR ESPECTRAL INTERACTIVO */}
+              {activeSpectroSection === 'analyzer' && (() => {
+                const body = CELESTIAL_DATA[selectedSpectroBody] || CELESTIAL_DATA['tierra'];
+                const photonInfo = wavelengthToColor(activeWavelength);
+                const photonPhysics = calculatePhotonPhysics(activeWavelength);
+                const spectrumPercent = Math.max(0, Math.min(100, ((activeWavelength - 380) / (1100 - 380)) * 100));
+
+                // Buscar si la longitud de onda coincide con una banda de absorción del cuerpo celeste actual
+                const detectedAbsorption = ABSORPTION_BANDS.find(band => 
+                  band.bodies.includes(selectedSpectroBody) && 
+                  Math.abs(band.wavelengthNm - activeWavelength) <= band.tolerance
+                );
+
                 return (
-                  <div className="spectro-details-card">
-                    <div className="spectro-header">
-                      <h3>🧪 Espectro de Absorción de {body.name}</h3>
-                      <span className="spectro-type-badge">{body.type.replace('_', ' ')}</span>
-                    </div>
-
-                    <div className="spectro-wavelength-slider">
-                      <label>Longitud de Onda Analizada: <strong>{activeWavelength} nm</strong></label>
-                      <input 
-                        type="range" min="380" max="1100" step="5"
-                        value={activeWavelength}
-                        onChange={(e) => setActiveWavelength(parseInt(e.target.value))}
-                        className="wavelength-range"
-                      />
-                    </div>
-
-                    <div className="spectro-graph-display">
-                      <div className="spectrum-gradient-bar"></div>
-                      <div className="absorption-lines-overlay">
-                        {body.atmosphere?.map((gas, i) => (
-                          <div 
-                            key={i} 
-                            className="spectral-dip-line" 
-                            style={{ left: `${20 + i * 22}%`, borderColor: gas.color }}
-                            title={`Línea de absorción: ${gas.gas}`}
-                          >
-                            <span className="dip-label">{gas.gas} ({gas.percent}%)</span>
-                          </div>
-                        ))}
+                  <div className="spectro-main-panel">
+                    {/* Selector de Planetas con Atmósfera */}
+                    <div className="spectro-planet-bar-wrapper">
+                      <div className="spectro-selector-row">
+                        {['tierra', 'marte', 'venus', 'jupiter', 'saturno', 'urano', 'neptuno', 'sol'].map((id) => {
+                          const item = CELESTIAL_DATA[id];
+                          if (!item) return null;
+                          return (
+                            <button 
+                              key={id}
+                              className={`spectro-planet-chip ${selectedSpectroBody === id ? 'active' : ''}`}
+                              onClick={() => {
+                                setSelectedSpectroBody(id);
+                                soundEffects.playClick();
+                              }}
+                            >
+                              {item.name}
+                            </button>
+                          );
+                        })}
                       </div>
                     </div>
 
-                    <p className="spectro-explanation">
-                      Las bandas oscuras corresponden a las frecuencias de luz electromagnética absorbidas por las moléculas de {body.name}, permitiendo confirmar la presencia de gases a billones de kilómetros.
-                    </p>
+                    <div className="spectro-details-card">
+                      {/* Cabecera del Astro */}
+                      <div className="spectro-header">
+                        <div className="spectro-header-info">
+                          <h3>🧪 Espectro de Transmisión de {body.name}</h3>
+                          <span className="spectro-type-badge">{body.type.replace('_', ' ')}</span>
+                        </div>
+                        <div className="spectro-gases-pill-list">
+                          {body.atmosphere?.map((gas, i) => (
+                            <span key={i} className="gas-summary-tag" style={{ borderColor: gas.color }}>
+                              <span className="gas-dot" style={{ backgroundColor: gas.color }}></span>
+                              {gas.gas}: <strong>{gas.percent}%</strong>
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Control Interactivo de Longitud de Onda */}
+                      <div className="spectro-wavelength-slider-card">
+                        <div className="wavelength-slider-header">
+                          <div className="wl-label-group">
+                            <span className="wl-title">Longitud de Onda Analizada:</span>
+                            <span className="wl-val-badge" style={{ backgroundColor: photonInfo.hex, color: photonInfo.isVisible && activeWavelength > 520 && activeWavelength < 620 ? '#000' : '#fff' }}>
+                              {activeWavelength} nm
+                            </span>
+                          </div>
+                          <div className="wl-steppers">
+                            <button 
+                              className="wl-step-btn" 
+                              onClick={() => setActiveWavelength(prev => Math.max(380, prev - 5))}
+                              title="Disminuir 5 nm"
+                            >
+                              -5 nm
+                            </button>
+                            <button 
+                              className="wl-step-btn" 
+                              onClick={() => setActiveWavelength(prev => Math.min(1100, prev + 5))}
+                              title="Aumentar 5 nm"
+                            >
+                              +5 nm
+                            </button>
+                          </div>
+                        </div>
+
+                        {/* Slider de Nanómetros */}
+                        <div className="range-slider-touch-box">
+                          <input 
+                            type="range" 
+                            min="380" 
+                            max="1100" 
+                            step="5"
+                            value={activeWavelength}
+                            onChange={(e) => setActiveWavelength(parseInt(e.target.value))}
+                            className="wavelength-range"
+                            style={{
+                              accentColor: photonInfo.hex
+                            }}
+                          />
+                        </div>
+
+                        {/* Escala Guía */}
+                        <div className="wavelength-ticks">
+                          <span>380 nm (UV/Violeta)</span>
+                          <span>550 nm (Verde Óptico)</span>
+                          <span>750 nm (Límite Rojo)</span>
+                          <span>1100 nm (Infrarrojo Cercano)</span>
+                        </div>
+
+                        {/* Métricas Cuánticas y Físicas del Fotón */}
+                        <div className="photon-physics-grid">
+                          <div className="photon-metric-item">
+                            <span className="metric-icon" style={{ color: photonInfo.hex }}>●</span>
+                            <div>
+                              <span className="metric-label">Región Espectral</span>
+                              <strong className="metric-val">{photonInfo.name}</strong>
+                            </div>
+                          </div>
+                          <div className="photon-metric-item">
+                            <span className="metric-icon">⚡</span>
+                            <div>
+                              <span className="metric-label">Energía del Fotón</span>
+                              <strong className="metric-val">{photonPhysics.energyEV} eV</strong>
+                            </div>
+                          </div>
+                          <div className="photon-metric-item">
+                            <span className="metric-icon">📡</span>
+                            <div>
+                              <span className="metric-label">Frecuencia Óptica</span>
+                              <strong className="metric-val">{photonPhysics.freqTHz} THz</strong>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Presets de Bandas Famosas */}
+                        <div className="spectro-presets-box">
+                          <span className="presets-caption">🎯 Bandas Clave de la Astrofísica:</span>
+                          <div className="presets-chips-row">
+                            {SPECTRO_PRESETS.map((p) => (
+                              <button
+                                key={p.nm}
+                                className={`preset-chip ${activeWavelength === p.nm ? 'active' : ''}`}
+                                onClick={() => {
+                                  setActiveWavelength(p.nm);
+                                  soundEffects.playClick();
+                                }}
+                              >
+                                <span className="preset-color-dot" style={{ backgroundColor: p.color }}></span>
+                                <strong>{p.label}</strong> {p.tag}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Display Gráfico del Espectro con Cursor Dinámico */}
+                      <div className="spectro-graph-display-container">
+                        <div className="spectrum-axis-labels">
+                          <span>Ultravioleta</span>
+                          <span>Luz Visible Humana (380 - 750 nm)</span>
+                          <span>Infrarrojo Cercano (NIR)</span>
+                        </div>
+
+                        <div className="spectro-graph-display">
+                          {/* Barra continua de gradiente espectral */}
+                          <div className="spectrum-gradient-bar"></div>
+
+                          {/* Líneas de Absorción Teóricas de este Planeta */}
+                          <div className="absorption-lines-overlay">
+                            {ABSORPTION_BANDS.filter(b => b.bodies.includes(selectedSpectroBody)).map((b, i) => {
+                              const pos = ((b.wavelengthNm - 380) / (1100 - 380)) * 100;
+                              return (
+                                <div 
+                                  key={i} 
+                                  className="spectral-dip-line" 
+                                  style={{ left: `${pos}%` }}
+                                  title={`${b.gas} a ${b.wavelengthNm} nm`}
+                                >
+                                  <span className="dip-label">{b.formula} {b.wavelengthNm}nm</span>
+                                </div>
+                              );
+                            })}
+                          </div>
+
+                          {/* Cursor Dinámico de la Longitud de Onda Analizada */}
+                          <div 
+                            className="spectro-active-cursor" 
+                            style={{ 
+                              left: `${spectrumPercent}%`,
+                              borderColor: photonInfo.hex,
+                              boxShadow: `0 0 12px ${photonInfo.hex}`
+                            }}
+                          >
+                            <div className="cursor-pin" style={{ backgroundColor: photonInfo.hex }}>
+                              <span>{activeWavelength}nm</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* DIAGNÓSTICO EN TIEMPO REAL: ¿HAY ABSORCIÓN O TRANSPARENCIA? */}
+                      <div className="spectro-live-diagnosis-box">
+                        {detectedAbsorption ? (
+                          <div className="diagnosis-card absorbed animate-fade-in">
+                            <div className="diag-header">
+                              <span className="diag-badge-alert">🚨 Absorción Molecular Detectada</span>
+                              {detectedAbsorption.isBioSignature && (
+                                <span className="diag-badge-bio">✨ Biofirma Astrobiológica</span>
+                              )}
+                            </div>
+                            <h4>
+                              Línea Espectral de <strong>{detectedAbsorption.gas}</strong> ({detectedAbsorption.formula}) a {detectedAbsorption.wavelengthNm} nm
+                            </h4>
+                            <p className="diag-desc">
+                              <strong>Mecanismo Físico:</strong> {detectedAbsorption.transition}. La luz solar en esta frecuencia es capturada por los niveles cuánticos de la molécula, reduciendo los fotones transmitidos hacia nuestros telescopios.
+                            </p>
+                            <p className="diag-significance">
+                              💡 <strong>Importancia Planetaria:</strong> {detectedAbsorption.significance}
+                            </p>
+                          </div>
+                        ) : (
+                          <div className="diagnosis-card transparent animate-fade-in">
+                            <div className="diag-header">
+                              <span className="diag-badge-window">☀️ Ventana Atmosférica Transparente</span>
+                            </div>
+                            <h4>Transmisión Óptica Despejada a {activeWavelength} nm</h4>
+                            <p className="diag-desc">
+                              Las moléculas principales de la atmósfera de {body.name} no presentan bandas de absorción resonantes a {activeWavelength} nm. La luz de esta longitud de onda atraviesa casi libremente hasta las capas profundas o la superficie del planeta.
+                            </p>
+                            <p className="diag-significance">
+                              💡 <strong>Uso Astronómico:</strong> Los telescopios espaciales emplean estas "ventanas de transparencia" para observar la superficie rocosa o medir la radiación térmica emitida por el planeta.
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
                 );
               })()}
+
+              {/* SECCIÓN 2: CATÁLOGO DE INSTRUMENTOS ESPACIALES */}
+              {activeSpectroSection === 'instruments' && (() => {
+                const currentInst = SPECTRO_INSTRUMENTS.find(inst => inst.id === selectedInstrument) || SPECTRO_INSTRUMENTS[0];
+                return (
+                  <div className="spectro-instruments-panel animate-fade-in">
+                    <div className="instruments-intro-card">
+                      <h3>🛰️ Observatorios y Espectrógrafos de Vanguardia</h3>
+                      <p>
+                        Para descomponer la luz de planetas a millones o billones de kilómetros se requieren detectores criogénicos de ultra-precisión montados en sondas espaciales y gigantescos telescopios terrestres.
+                      </p>
+                    </div>
+
+                    {/* Selector de Instrumentos */}
+                    <div className="instruments-selector-row">
+                      {SPECTRO_INSTRUMENTS.map((inst) => (
+                        <button
+                          key={inst.id}
+                          className={`instrument-tab-btn ${selectedInstrument === inst.id ? 'active' : ''}`}
+                          onClick={() => {
+                            setSelectedInstrument(inst.id);
+                            soundEffects.playClick();
+                          }}
+                        >
+                          <span className="inst-icon">{inst.icon}</span>
+                          <span className="inst-tab-name">{inst.name.split(' ')[0]}</span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {/* Ficha Detallada del Instrumento */}
+                    <div className="instrument-detail-card">
+                      <div className="inst-card-header">
+                        <div>
+                          <span className="inst-agency-badge">{currentInst.agency}</span>
+                          <h4>{currentInst.name}</h4>
+                          <span className="inst-mission-sub">Misión: <strong>{currentInst.mission}</strong></span>
+                        </div>
+                        <span className="inst-big-icon">{currentInst.icon}</span>
+                      </div>
+
+                      <div className="inst-specs-grid">
+                        <div className="inst-spec-item">
+                          <span className="spec-label">Rango Espectral</span>
+                          <strong className="spec-val">{currentInst.range}</strong>
+                          <span className="spec-sub">{currentInst.rangeNm}</span>
+                        </div>
+                        <div className="inst-spec-item">
+                          <span className="spec-label">Tipo de Detector</span>
+                          <strong className="spec-val">{currentInst.type}</strong>
+                        </div>
+                        <div className="inst-spec-item">
+                          <span className="spec-label">Objetivo Principal</span>
+                          <strong className="spec-val">{currentInst.keyTarget}</strong>
+                        </div>
+                      </div>
+
+                      <div className="inst-discovery-highlight">
+                        <div className="discovery-tag">🏆 Mayor Logro Científico:</div>
+                        <p>{currentInst.discovery}</p>
+                      </div>
+
+                      <p className="inst-full-desc">{currentInst.description}</p>
+                    </div>
+                  </div>
+                );
+              })()}
+
+              {/* SECCIÓN 3: GUÍA DIDÁCTICA Y REFERENCIAS */}
+              {activeSpectroSection === 'learning' && (
+                <div className="spectro-learning-panel animate-fade-in">
+                  <div className="learning-grid">
+                    {/* Tarjeta 1: ¿Qué es la espectroscopía? */}
+                    <div className="learning-card">
+                      <div className="card-top-icon">🌈</div>
+                      <h4>El "Código de Barras" de la Luz</h4>
+                      <p>
+                        Cada átomo y molécula en el universo posee una estructura única de electrones en niveles cuánticos de energía. Cuando un fotón con la energía exacta choca contra un electrón, este es absorbido y salta a un nivel superior.
+                      </p>
+                      <div className="card-callout">
+                        💡 Por eso, al descomponer la luz de un planeta con un prisma o red de difracción, faltan ciertos colores específicos: esas líneas oscuras son la firma química inconfundible de los gases que habitan su atmósfera.
+                      </div>
+                    </div>
+
+                    {/* Tarjeta 2: Leyes de Kirchhoff */}
+                    <div className="learning-card">
+                      <div className="card-top-icon">📐</div>
+                      <h4>Las 3 Leyes de Kirchhoff</h4>
+                      <ul className="kirchhoff-list">
+                        <li>
+                          <strong>1. Espectro Continuo:</strong> Un cuerpo denso y caliente (como el filamento de una bombilla o el interior del Sol) emite luz en todas las longitudes de onda continuas.
+                        </li>
+                        <li>
+                          <strong>2. Espectro de Emisión:</strong> Un gas caliente y difuso (como una nebulosa) emite luz solo en longitudes de onda discretas y brillantes.
+                        </li>
+                        <li>
+                          <strong>3. Espectro de Absorción:</strong> Cuando la luz continua atraviesa un gas frío (la atmósfera de un planeta), el gas absorbe colores específicos creando líneas oscuras.
+                        </li>
+                      </ul>
+                    </div>
+
+                    {/* Tarjeta 3: Biofirmas */}
+                    <div className="learning-card">
+                      <div className="card-top-icon">🌱</div>
+                      <h4>¿Cómo Buscamos Vida con Espectroscopía?</h4>
+                      <p>
+                        En astrobiología buscamos <strong>Biofirmas</strong>: gases que en condiciones puramente geológicas se destruirían rápidamente, pero que se mantienen en equilibrio debido a la actividad biológica continua.
+                      </p>
+                      <div className="card-callout">
+                        ✨ En la Tierra, el <strong>Oxígeno (O₂)</strong> y el <strong>Metano (CH₄)</strong> reaccionan entre sí para formar CO₂ y agua. Que existan ambos simultáneamente en nuestra atmósfera a la vez es una prueba rotunda de vida fotosintética y microbiana activa.
+                      </div>
+                    </div>
+
+                    {/* Tarjeta 4: Referencias Científicas */}
+                    <div className="learning-card references">
+                      <div className="card-top-icon">📚</div>
+                      <h4>Bases de Datos & Referencias Científicas</h4>
+                      <p>
+                        Los datos espectrales de este simulador están basados en investigaciones de astrofísica observacional y bases de datos espectrales internacionales:
+                      </p>
+                      <div className="references-list">
+                        <div className="ref-item">
+                          <strong>HITRAN Database:</strong> Harvard-Smithsonian Center for Astrophysics (High-resolution Transmission Molecular Absorption).
+                        </div>
+                        <div className="ref-item">
+                          <strong>NASA Planetary Data System (PDS):</strong> Archivos espectrométricos de las misiones Voyager, Cassini, MRO y JWST.
+                        </div>
+                        <div className="ref-item">
+                          <strong>ESA Planetary Science Archive (PSA):</strong> Misiones Mars Express, Venus Express y BepiColombo.
+                        </div>
+                        <div className="ref-item">
+                          <strong>ESO Science Archive:</strong> Datos de espectroscopía de alta resolución del espectrógrafo ESPRESSO en Paranal.
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         )}
