@@ -159,8 +159,18 @@ export default function BingoCardView() {
   const [winnerDismissed, setWinnerDismissed] = useState(false);
   const prevDrawnCountRef = useRef(0);
 
-  // Reloj Regresivo en Tiempo Real para la Próxima Ronda
-  const [timeLeft, setTimeLeft] = useState<{ totalSeconds: number; minutes: string; seconds: string; formattedTime: string; isStarted: boolean } | null>(null);
+  // Reloj Regresivo en Tiempo Real para la Próxima Ronda (soporta Días, Horas, Minutos, Segundos)
+  const [timeLeft, setTimeLeft] = useState<{ 
+    totalSeconds: number; 
+    days: string;
+    hours: string;
+    minutes: string; 
+    seconds: string; 
+    formattedDate: string;
+    isStarted: boolean;
+    hasDays: boolean;
+    hasHours: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!gameData?.nextRoundTime || gameData.status !== 'waiting') {
@@ -172,18 +182,29 @@ export default function BingoCardView() {
       const target = gameData.nextRoundTime!;
       const diffMs = target - Date.now();
       const totalSec = Math.max(0, Math.floor(diffMs / 1000));
-      const m = Math.floor(totalSec / 60);
-      const s = totalSec % 60;
+      
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const seconds = totalSec % 60;
       
       const targetDate = new Date(target);
-      const formattedTime = targetDate.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+      const isToday = new Date().toDateString() === targetDate.toDateString();
+      const timeStr = targetDate.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+      const formattedDate = isToday 
+        ? `Hoy a las ${timeStr}`
+        : `${targetDate.toLocaleDateString('es-GT', { weekday: 'short', day: 'numeric', month: 'short' })}, ${timeStr}`;
 
       setTimeLeft({
         totalSeconds: totalSec,
-        minutes: String(m).padStart(2, '0'),
-        seconds: String(s).padStart(2, '0'),
-        formattedTime,
-        isStarted: totalSec <= 0
+        days: String(days),
+        hours: String(hours).padStart(2, '0'),
+        minutes: String(minutes).padStart(2, '0'),
+        seconds: String(seconds).padStart(2, '0'),
+        formattedDate,
+        isStarted: totalSec <= 0,
+        hasDays: days > 0,
+        hasHours: hours > 0 || days > 0
       });
     };
 
@@ -1260,9 +1281,9 @@ export default function BingoCardView() {
                   <span className="countdown-tag">
                     {timeLeft.isStarted ? '⚡ ¡RONDA A PUNTO DE INICIAR!' : '⏱️ PRÓXIMA RONDA EN:'}
                   </span>
-                  {timeLeft.formattedTime && !timeLeft.isStarted && (
+                  {timeLeft.formattedDate && !timeLeft.isStarted && (
                     <span className="countdown-scheduled-time">
-                      Inicio estimado: <strong>{timeLeft.formattedTime}</strong>
+                      Fecha programada: <strong>{timeLeft.formattedDate}</strong>
                     </span>
                   )}
                 </div>
@@ -1274,6 +1295,24 @@ export default function BingoCardView() {
                   </div>
                 ) : (
                   <div className="countdown-digits-strip">
+                    {timeLeft.hasDays && (
+                      <>
+                        <div className="time-digit-card">
+                          <span className="digit-val">{timeLeft.days}</span>
+                          <span className="digit-unit">DÍAS</span>
+                        </div>
+                        <span className="time-digit-colon">:</span>
+                      </>
+                    )}
+                    {timeLeft.hasHours && (
+                      <>
+                        <div className="time-digit-card">
+                          <span className="digit-val">{timeLeft.hours}</span>
+                          <span className="digit-unit">HRS</span>
+                        </div>
+                        <span className="time-digit-colon">:</span>
+                      </>
+                    )}
                     <div className="time-digit-card">
                       <span className="digit-val">{timeLeft.minutes}</span>
                       <span className="digit-unit">MIN</span>

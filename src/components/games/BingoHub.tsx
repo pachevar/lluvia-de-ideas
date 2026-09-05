@@ -452,9 +452,20 @@ export default function BingoHub() {
     return () => unsubscribeCards();
   }, [activeGame?.id]);
 
-  // Gestión del Reloj Regresivo de Próxima Ronda para el Host
+  // Gestión del Reloj Regresivo de Próxima Ronda para el Host (soporta Minutos o Fecha y Hora Específica)
   const [customCountdownMinutes, setCustomCountdownMinutes] = useState<string>('5');
-  const [hostTimeLeft, setHostTimeLeft] = useState<{ totalSeconds: number; minutes: string; seconds: string; formattedTime: string; isStarted: boolean } | null>(null);
+  const [customSpecificDateTime, setCustomSpecificDateTime] = useState<string>('');
+  const [hostTimeLeft, setHostTimeLeft] = useState<{ 
+    totalSeconds: number; 
+    days: string;
+    hours: string;
+    minutes: string; 
+    seconds: string; 
+    formattedDate: string; 
+    isStarted: boolean;
+    hasDays: boolean;
+    hasHours: boolean;
+  } | null>(null);
 
   useEffect(() => {
     if (!activeGame?.nextRoundTime) {
@@ -466,18 +477,29 @@ export default function BingoHub() {
       const target = activeGame.nextRoundTime!;
       const diffMs = target - Date.now();
       const totalSec = Math.max(0, Math.floor(diffMs / 1000));
-      const m = Math.floor(totalSec / 60);
-      const s = totalSec % 60;
+      
+      const days = Math.floor(totalSec / 86400);
+      const hours = Math.floor((totalSec % 86400) / 3600);
+      const minutes = Math.floor((totalSec % 3600) / 60);
+      const seconds = totalSec % 60;
       
       const targetDate = new Date(target);
-      const formattedTime = targetDate.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+      const isToday = new Date().toDateString() === targetDate.toDateString();
+      const timeStr = targetDate.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+      const formattedDate = isToday 
+        ? `Hoy a las ${timeStr}`
+        : `${targetDate.toLocaleDateString('es-GT', { weekday: 'short', day: 'numeric', month: 'short' })}, ${timeStr}`;
 
       setHostTimeLeft({
         totalSeconds: totalSec,
-        minutes: String(m).padStart(2, '0'),
-        seconds: String(s).padStart(2, '0'),
-        formattedTime,
-        isStarted: totalSec <= 0
+        days: String(days),
+        hours: String(hours).padStart(2, '0'),
+        minutes: String(minutes).padStart(2, '0'),
+        seconds: String(seconds).padStart(2, '0'),
+        formattedDate,
+        isStarted: totalSec <= 0,
+        hasDays: days > 0,
+        hasHours: hours > 0 || days > 0
       });
     };
 
@@ -497,6 +519,28 @@ export default function BingoHub() {
       addLog(`HOST: Reloj de próxima ronda fijado para dentro de ${minutes} minutos (${new Date(targetTime).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}).`, 'system');
     } catch (err) {
       console.error("Error al fijar reloj de próxima ronda:", err);
+    }
+  };
+
+  const handleSetSpecificDateTime = async (dateTimeStr: string) => {
+    if (!activeGame || !dateTimeStr) return;
+    try {
+      const targetTime = new Date(dateTimeStr).getTime();
+      if (isNaN(targetTime)) {
+        alert("Por favor selecciona una fecha y hora válida.");
+        return;
+      }
+      if (targetTime <= Date.now()) {
+        alert("La fecha y hora programada debe ser en el futuro.");
+        return;
+      }
+      await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+        nextRoundTime: targetTime
+      });
+      soundEffects.playSpacePulse();
+      addLog(`HOST: Próxima ronda programada para el ${new Date(targetTime).toLocaleString('es-GT')}.`, 'system');
+    } catch (err) {
+      console.error("Error al programar fecha y hora de próxima ronda:", err);
     }
   };
 
@@ -2087,7 +2131,7 @@ export default function BingoHub() {
                         </div>
 
                         {hostTimeLeft && (
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                             <div style={{
                               display: 'flex',
                               alignItems: 'baseline',
@@ -2107,9 +2151,17 @@ export default function BingoHub() {
                                 color: hostTimeLeft.isStarted ? '#ef4444' : '#00f0ff',
                                 letterSpacing: '1px'
                               }}>
-                                {hostTimeLeft.isStarted ? '00:00' : `${hostTimeLeft.minutes}:${hostTimeLeft.seconds}`}
+                                {hostTimeLeft.isStarted 
+                                  ? '00:00' 
+                                  : `${hostTimeLeft.hasDays ? `${hostTimeLeft.days}d ` : ''}${hostTimeLeft.hasHours ? `${hostTimeLeft.hours}:` : ''}${hostTimeLeft.minutes}:${hostTimeLeft.seconds}`}
                               </span>
                             </div>
+
+                            {hostTimeLeft.formattedDate && !hostTimeLeft.isStarted && (
+                              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                                ({hostTimeLeft.formattedDate})
+                              </span>
+                            )}
 
                             <button
                               onClick={() => handleAddCountdownMinutes(1)}
@@ -2165,10 +2217,10 @@ export default function BingoHub() {
                         )}
                       </div>
 
-                      {/* Botones de Preajuste Rápido de 1 Toque */}
-                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                      {/* FILA 1: Botones de Preajuste Rápido de Minutos */}
+                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
                         <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 'bold', marginRight: '4px' }}>
-                          Fijar Cuenta Regresiva:
+                          Minutos Rápidos:
                         </span>
                         
                         <button
@@ -2261,7 +2313,7 @@ export default function BingoHub() {
                           <input
                             type="number"
                             min="1"
-                            max="120"
+                            max="720"
                             value={customCountdownMinutes}
                             onChange={(e) => setCustomCountdownMinutes(e.target.value)}
                             style={{
@@ -2293,6 +2345,117 @@ export default function BingoHub() {
                             }}
                           >
                             Fijar
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* FILA 2: PROGRAMACIÓN POR FECHA Y HORA ESPECÍFICA */}
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '8px',
+                        paddingTop: '10px',
+                        borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                      }}>
+                        <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 'bold' }}>
+                          📅 Fecha y Hora Específica:
+                        </span>
+
+                        <input 
+                          type="datetime-local"
+                          value={customSpecificDateTime}
+                          onChange={(e) => setCustomSpecificDateTime(e.target.value)}
+                          style={{
+                            padding: '6px 10px',
+                            borderRadius: '10px',
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            border: '1px solid rgba(56, 189, 248, 0.4)',
+                            color: '#ffffff',
+                            fontSize: '0.78rem',
+                            outline: 'none',
+                            fontFamily: 'inherit'
+                          }}
+                        />
+
+                        <button
+                          onClick={() => {
+                            if (!customSpecificDateTime) {
+                              alert("Por favor selecciona una fecha y hora en el calendario.");
+                              return;
+                            }
+                            handleSetSpecificDateTime(customSpecificDateTime);
+                          }}
+                          style={{
+                            padding: '6px 14px',
+                            borderRadius: '10px',
+                            background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            color: '#fff',
+                            fontSize: '0.78rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.4)'
+                          }}
+                        >
+                          📅 Programar Ronda
+                        </button>
+
+                        {/* Atajos Rápidos de Fecha */}
+                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginLeft: 'auto' }}>
+                          <button
+                            onClick={() => handleSetCountdown(60)}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              color: '#94a3b8',
+                              fontSize: '0.7rem',
+                              cursor: 'pointer'
+                            }}
+                            title="Fijar dentro de 1 hora"
+                          >
+                            +1 Hora
+                          </button>
+
+                          <button
+                            onClick={() => handleSetCountdown(120)}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              color: '#94a3b8',
+                              fontSize: '0.7rem',
+                              cursor: 'pointer'
+                            }}
+                            title="Fijar dentro de 2 horas"
+                          >
+                            +2 Horas
+                          </button>
+
+                          <button
+                            onClick={() => {
+                              // Mañana a la misma hora
+                              const tomorrow = new Date();
+                              tomorrow.setDate(tomorrow.getDate() + 1);
+                              tomorrow.setSeconds(0);
+                              tomorrow.setMilliseconds(0);
+                              handleSetSpecificDateTime(tomorrow.toISOString());
+                            }}
+                            style={{
+                              padding: '4px 8px',
+                              borderRadius: '8px',
+                              background: 'rgba(255, 255, 255, 0.05)',
+                              border: '1px solid rgba(255, 255, 255, 0.15)',
+                              color: '#94a3b8',
+                              fontSize: '0.7rem',
+                              cursor: 'pointer'
+                            }}
+                            title="Fijar para mañana a esta hora"
+                          >
+                            Mañana
                           </button>
                         </div>
                       </div>
