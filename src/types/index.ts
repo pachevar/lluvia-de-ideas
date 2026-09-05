@@ -324,6 +324,23 @@ export interface BingoPromoter {
   active: boolean;
 }
 
+export interface BingoAccessToken {
+  id: string; // ID del token (ej. tkn_1725555_abc123)
+  orderId: string;
+  playerName: string;
+  playerWhatsapp: string;
+  tierId: string;
+  tierName: string;
+  prizeLevel: string;
+  quantity: number;
+  gameId: string; // Vinculado a la ronda en curso
+  sessionResetAt: number; // Marca temporal de apertura de ronda para vigencia
+  status: 'active' | 'used' | 'expired';
+  usedByDevice?: string | null;
+  firstUsedAt?: number | null;
+  createdAt: number;
+}
+
 export interface CotizacionItem {
   description: string;
   quantity: number;

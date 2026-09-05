@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
-import type { BingoGame, BingoCard, BingoPrize, Sponsor, BingoPromoter } from '../../types';
+import type { BingoGame, BingoCard, BingoPrize, Sponsor, BingoPromoter, BingoAccessToken } from '../../types';
 import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardCollision } from '../../utils/bingoGenerator';
 import type { MarkedSlots } from '../../utils/bingoGenerator';
 import { soundEffects } from '../../utils/soundEffects';
@@ -136,6 +136,11 @@ export default function BingoHub() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [codeValidationStatus, setCodeValidationStatus] = useState<'idle' | 'checking' | 'valid' | 'used' | 'invalid'>('idle');
   const [codeValidationMsg, setCodeValidationMsg] = useState('');
+
+  // Access Token States (Pase de Acceso Único de Sesión)
+  const [accessTokenData, setAccessTokenData] = useState<BingoAccessToken | null>(null);
+  const [tokenError, setTokenError] = useState<string | null>(null);
+  const [tokenSuccessMsg, setTokenSuccessMsg] = useState<string | null>(null);
 
   // Local Storage state to remember current card
   const [savedCardId, setSavedCardId] = useState<string | null>(null);
@@ -303,6 +308,75 @@ export default function BingoHub() {
       addLog(`ENLACE: Código de activación detectado en la URL: ${urlCode.trim().toUpperCase()}`);
     }
   }, []);
+
+  // 1.5 Auto-detect and validate access token from URL (?access=TOKEN o ?a=TOKEN)
+  useEffect(() => {
+    if (!activeGame?.id) return;
+    const urlParams = new URLSearchParams(window.location.search);
+    const accessId = urlParams.get('access') || urlParams.get('a');
+    if (!accessId) return;
+
+    const validateAccessToken = async () => {
+      try {
+        setTokenError(null);
+        const tokenRef = doc(db, 'bingo_access_tokens', accessId.trim());
+        const snap = await getDoc(tokenRef);
+        if (!snap.exists()) {
+          setTokenError('❌ El pase de acceso no existe o no es válido.');
+          return;
+        }
+
+        const tData = snap.data() as BingoAccessToken;
+
+        // Validar si coincide con la ronda activa
+        if (tData.gameId !== activeGame.id) {
+          setTokenError('⚠️ Este pase de acceso pertenecía a una ronda anterior que ya finalizó. Ha perdido su vigencia.');
+          return;
+        }
+
+        // Validar si la ronda fue reiniciada posteriormente por el Host
+        if (activeGame.lastResetAt && tData.sessionResetAt && tData.sessionResetAt < activeGame.lastResetAt) {
+          setTokenError('⚠️ Esta ronda fue reiniciada por el organizador. El enlace ha caducado automáticamente.');
+          return;
+        }
+
+        // Validar un solo uso por dispositivo
+        let currentDeviceId = localStorage.getItem('bingo_device_id');
+        if (!currentDeviceId) {
+          currentDeviceId = 'dev_' + Math.random().toString(36).substring(2, 10) + Date.now().toString(36);
+          localStorage.setItem('bingo_device_id', currentDeviceId);
+        }
+
+        if (tData.usedByDevice && tData.usedByDevice !== currentDeviceId) {
+          setTokenError('⚠️ Este pase ya fue activado desde otro dispositivo. Por seguridad los enlaces son de un solo uso e intransferibles.');
+          return;
+        }
+
+        // Registrar uso por este dispositivo si aún no está asignado
+        if (!tData.usedByDevice) {
+          await updateDoc(tokenRef, {
+            usedByDevice: currentDeviceId,
+            firstUsedAt: Date.now(),
+            status: 'used'
+          });
+        }
+
+        setAccessTokenData(tData);
+        setPlayerName(tData.playerName || '');
+        if (tData.playerWhatsapp) {
+          setPlayerPhone(tData.playerWhatsapp);
+        }
+        setTokenSuccessMsg(`¡Pase Verificado! ${tData.playerName} — ${tData.quantity} ${tData.quantity === 1 ? 'Cartón' : 'Cartones'} (${tData.tierName || 'Bingo'})`);
+        addLog(`ACCESO: Pase de juego verificado para "${tData.playerName}".`);
+
+      } catch (err) {
+        console.error("Error validando access token:", err);
+        setTokenError('Error al comprobar la vigencia de tu pase de juego.');
+      }
+    };
+
+    validateAccessToken();
+  }, [activeGame?.id, activeGame?.lastResetAt]);
 
   // 2. Debounced Live Code Validation
   useEffect(() => {
@@ -1111,6 +1185,11 @@ export default function BingoHub() {
     try {
       const deletePromises = registeredCards.map(card => deleteDoc(doc(db, 'bingo_cards', card.id)));
       await Promise.all(deletePromises);
+      await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+        lastResetAt: Date.now(),
+        activeClaim: null,
+        latestWinner: null
+      });
       
       addLog(`HOST: Se han limpiado todos los jugadores inscritos de la sesión.`, "warning");
       await showAlert("¡Todos los jugadores inscritos han sido eliminados de la sesión! 🧹", "Sesión Limpia", "🧹");
@@ -1130,8 +1209,8 @@ export default function BingoHub() {
     try {
       const accessCfg = activeGame.customization?.accessConfig;
 
-      // 1. Validar el código si el modo es privado
-      if (accessCfg?.mode === 'code') {
+      // 1. Validar el código si el modo es privado y NO se cuenta con un Pase Único verificado
+      if (accessCfg?.mode === 'code' && !accessTokenData) {
         const codeInput = activationCode.trim().toUpperCase();
         if (!codeInput) {
           setRegError('El código de activación es obligatorio.');
@@ -1212,12 +1291,16 @@ export default function BingoHub() {
         }
       }
 
-      // Guardar el cartón incluyendo teléfono y código de promotor
+      // Guardar el cartón incluyendo teléfono, promotor y datos del pase de acceso si existe
       await setDoc(doc(db, 'bingo_cards', shortId), {
         gameId: activeGame.id,
         playerName: playerName.trim(),
         phone: playerPhone.trim() || null,
         promoterCode: playerPromoterCode.trim().toUpperCase() || null,
+        tierId: accessTokenData?.tierId || null,
+        tierName: accessTokenData?.tierName || null,
+        prizeLevel: accessTokenData?.prizeLevel || null,
+        tokenId: accessTokenData?.id || null,
         matrix: {
           r0: matrix[0],
           r1: matrix[1],
@@ -1229,14 +1312,18 @@ export default function BingoHub() {
         createdAt: Date.now()
       });
 
-      // 3. Canjear el código marcándolo como usado en Firestore
-      if (accessCfg?.mode === 'code') {
+      // 3. Canjear el código marcándolo como usado en Firestore si aplica
+      if (accessCfg?.mode === 'code' && !accessTokenData) {
         const codeInput = activationCode.trim().toUpperCase();
         await updateDoc(doc(db, 'bingo_codes', codeInput), {
           used: true,
           usedByCardId: shortId,
           usedByPlayer: playerName.trim(),
           usedAt: Date.now()
+        });
+      } else if (accessTokenData) {
+        await updateDoc(doc(db, 'bingo_access_tokens', accessTokenData.id), {
+          usedByCardId: shortId
         });
       }
 
@@ -3145,7 +3232,42 @@ export default function BingoHub() {
                     </p>
                     
                     <form onSubmit={handleRegister} style={{ padding: '0 4px' }}>
-                      {activeGame?.customization?.accessConfig?.mode === 'code' && (
+                      {/* Banner de Validación de Pase Único */}
+                      {tokenError && (
+                        <div style={{
+                          background: 'rgba(239, 68, 68, 0.2)',
+                          border: '1.5px solid #ef4444',
+                          borderRadius: '12px',
+                          padding: '12px 16px',
+                          marginBottom: '16px',
+                          color: '#fca5a5',
+                          fontSize: '0.84rem',
+                          lineHeight: 1.4,
+                          textAlign: 'center',
+                          fontWeight: 'bold'
+                        }}>
+                          {tokenError}
+                        </div>
+                      )}
+
+                      {tokenSuccessMsg && (
+                        <div style={{
+                          background: 'rgba(16, 185, 129, 0.2)',
+                          border: '1.5px solid #10b981',
+                          borderRadius: '12px',
+                          padding: '12px 16px',
+                          marginBottom: '16px',
+                          color: '#34d399',
+                          fontSize: '0.84rem',
+                          lineHeight: 1.4,
+                          textAlign: 'center',
+                          fontWeight: 'bold'
+                        }}>
+                          🎉 {tokenSuccessMsg}
+                        </div>
+                      )}
+
+                      {!accessTokenData && activeGame?.customization?.accessConfig?.mode === 'code' && (
                         <div style={{ marginBottom: '16px' }}>
                           <div className="cyber-input-wrapper">
                             <input 

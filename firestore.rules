@@ -83,6 +83,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Colección de tokens de acceso único y de un solo uso para jugadores
+    match /bingo_access_tokens/{tokenId} {
+      allow create, read, update: if true; // Creación y canje público al validar orden
+      allow delete: if isAdmin();
+    }
+
     // Configuración general de Bingo (pasarelas de pago, etc.)
     match /bingo_settings/{settingId} {
       allow read: if true; // Lectura pública de links y configuraciones
