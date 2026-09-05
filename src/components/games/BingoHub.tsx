@@ -213,6 +213,45 @@ export default function BingoHub() {
     return () => unsubSched();
   }, []);
 
+  // Auto-sincronización bidireccional: si el juego activo tiene cuenta regresiva fijada y no está en bingo_scheduled_games, registrarlo automáticamente
+  useEffect(() => {
+    if (!activeGame?.id || !activeGame.nextRoundTime) return;
+    if (activeGame.nextRoundTime <= Date.now()) return;
+
+    const syncCountdownToSchedule = async () => {
+      try {
+        const targetId = activeGame.scheduledGameId || `sched_${activeGame.id}`;
+        const exists = scheduledGamesList.some(
+          g => g.id === targetId || Math.abs(g.scheduledAt - (activeGame.nextRoundTime || 0)) < 60000
+        );
+
+        if (!exists && activeGame.nextRoundTime) {
+          const autoScheduled: BingoScheduledGame = {
+            id: targetId,
+            title: activeGame.title || 'Gran Ronda Oficial de Bingo',
+            scheduledAt: activeGame.nextRoundTime,
+            gameType: 'multi',
+            tierName: 'Ronda Multicategoría (Todas las opciones)',
+            prizeHighlight: activeGame.currentPrizeTitle || 'Premios Oficiales de la Ronda',
+            status: activeGame.status === 'playing' ? 'live' : 'scheduled',
+            createdAt: Date.now()
+          };
+
+          await setDoc(doc(db, 'bingo_scheduled_games', targetId), autoScheduled, { merge: true });
+          if (!activeGame.scheduledGameId) {
+            await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+              scheduledGameId: targetId
+            });
+          }
+        }
+      } catch (err) {
+        console.warn("Auto-sync scheduled game error:", err);
+      }
+    };
+
+    syncCountdownToSchedule();
+  }, [activeGame?.id, activeGame?.nextRoundTime, activeGame?.title, activeGame?.scheduledGameId, scheduledGamesList]);
+
   // Escuchar tokens de acceso y órdenes para el Host
   useEffect(() => {
     const qTokens = query(collection(db, 'bingo_access_tokens'));
@@ -670,9 +709,23 @@ export default function BingoHub() {
     if (!activeGame) return;
     try {
       const targetTime = Date.now() + minutes * 60 * 1000;
+      const schedId = activeGame.scheduledGameId || `sched_${activeGame.id}`;
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
-        nextRoundTime: targetTime
+        nextRoundTime: targetTime,
+        scheduledGameId: schedId
       });
+      // Sincronizar en bingo_scheduled_games
+      await setDoc(doc(db, 'bingo_scheduled_games', schedId), {
+        id: schedId,
+        title: activeGame.title || 'Ronda de Bingo',
+        scheduledAt: targetTime,
+        gameType: 'multi',
+        tierName: 'Ronda Multicategoría (Todas las opciones)',
+        prizeHighlight: activeGame.currentPrizeTitle || 'Premios Oficiales de la Ronda',
+        status: 'scheduled',
+        createdAt: Date.now()
+      }, { merge: true });
+
       soundEffects.playSpacePulse();
       addLog(`HOST: Reloj de próxima ronda fijado para dentro de ${minutes} minutos (${new Date(targetTime).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}).`, 'system');
     } catch (err) {
@@ -692,9 +745,23 @@ export default function BingoHub() {
         alert("La fecha y hora programada debe ser en el futuro.");
         return;
       }
+      const schedId = activeGame.scheduledGameId || `sched_${activeGame.id}`;
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
-        nextRoundTime: targetTime
+        nextRoundTime: targetTime,
+        scheduledGameId: schedId
       });
+      // Sincronizar en bingo_scheduled_games
+      await setDoc(doc(db, 'bingo_scheduled_games', schedId), {
+        id: schedId,
+        title: activeGame.title || 'Ronda de Bingo Programada',
+        scheduledAt: targetTime,
+        gameType: 'multi',
+        tierName: 'Ronda Multicategoría (Todas las opciones)',
+        prizeHighlight: activeGame.currentPrizeTitle || 'Premios Oficiales de la Ronda',
+        status: 'scheduled',
+        createdAt: Date.now()
+      }, { merge: true });
+
       soundEffects.playSpacePulse();
       addLog(`HOST: Próxima ronda programada para el ${new Date(targetTime).toLocaleString('es-GT')}.`, 'system');
     } catch (err) {
@@ -706,9 +773,15 @@ export default function BingoHub() {
     if (!activeGame || !activeGame.nextRoundTime) return;
     try {
       const newTarget = Math.max(Date.now(), activeGame.nextRoundTime) + extraMinutes * 60 * 1000;
+      const schedId = activeGame.scheduledGameId || `sched_${activeGame.id}`;
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
         nextRoundTime: newTarget
       });
+      try {
+        await updateDoc(doc(db, 'bingo_scheduled_games', schedId), {
+          scheduledAt: newTarget
+        });
+      } catch {}
       soundEffects.playSpacePulse();
       addLog(`HOST: Se extendió el reloj de próxima ronda en +${extraMinutes} minutos.`, 'system');
     } catch (err) {
@@ -719,9 +792,15 @@ export default function BingoHub() {
   const handleCancelCountdown = async () => {
     if (!activeGame) return;
     try {
+      const schedId = activeGame.scheduledGameId;
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
         nextRoundTime: null
       });
+      if (schedId) {
+        try {
+          await deleteDoc(doc(db, 'bingo_scheduled_games', schedId));
+        } catch {}
+      }
       soundEffects.playSpacePulse();
       addLog(`HOST: Reloj de próxima ronda cancelado.`, 'warning');
     } catch (err) {
@@ -3451,9 +3530,10 @@ export default function BingoHub() {
                         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
                           {scheduledGamesList.map((game) => {
                             const isSelected = selectedScheduledGame?.id === game.id;
-                            const isLive = game.status === 'live';
-                            const gameTokens = allAccessTokens.filter(t => t.scheduledGameId === game.id);
-                            const gameOrders = allBingoOrders.filter(o => o.scheduledGameId === game.id);
+                            const isLive = game.status === 'live' || (activeGame?.nextRoundTime && Math.abs(game.scheduledAt - activeGame.nextRoundTime) < 60000);
+                            const isMatchActive = (activeGame?.scheduledGameId === game.id) || (game.id.includes(activeGame?.id || ''));
+                            const gameTokens = allAccessTokens.filter(t => t.scheduledGameId === game.id || (!t.scheduledGameId && isMatchActive));
+                            const gameOrders = allBingoOrders.filter(o => o.scheduledGameId === game.id || (!o.scheduledGameId && isMatchActive));
                             const totalCartones = gameTokens.reduce((sum, t) => sum + (t.quantity || 1), 0);
                             const totalRecaudado = gameOrders.filter(o => o.status === 'paid').reduce((sum, o) => sum + (o.amount || 0), 0);
 
@@ -3639,8 +3719,9 @@ export default function BingoHub() {
 
                     {/* SECCIÓN DETALLADA: JUGADORES DEL JUEGO SELECCIONADO */}
                     {selectedScheduledGame && (() => {
-                      const currentTokens = allAccessTokens.filter(t => t.scheduledGameId === selectedScheduledGame.id);
-                      const currentOrders = allBingoOrders.filter(o => o.scheduledGameId === selectedScheduledGame.id);
+                      const isMatchActive = (activeGame?.scheduledGameId === selectedScheduledGame.id) || (selectedScheduledGame.id.includes(activeGame?.id || ''));
+                      const currentTokens = allAccessTokens.filter(t => t.scheduledGameId === selectedScheduledGame.id || (!t.scheduledGameId && isMatchActive));
+                      const currentOrders = allBingoOrders.filter(o => o.scheduledGameId === selectedScheduledGame.id || (!o.scheduledGameId && isMatchActive));
 
                       const filteredTokens = currentTokens.filter(t => {
                         const order = currentOrders.find(o => o.id === t.orderId);
