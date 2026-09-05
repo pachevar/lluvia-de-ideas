@@ -74,13 +74,14 @@ function App() {
     );
   }
 
-  const isBingoCardView = currentPath.includes('/juegos/bingo');
+  const isBoletosView = currentPath.includes('/boletos');
+  const isBingoCardView = currentPath.includes('/juegos/bingo') || currentPath.includes('/bingo');
 
   return (
-    <div className="app-container">
+    <div className={`app-container ${isBoletosView ? 'boletos-view-full' : ''}`}>
       {/* Tirador del Menú Lateral (Gamer HUD Trigger) */}
       <button 
-        className={`gamer-sidebar-trigger ${isSidebarOpen ? 'open' : ''} ${isBingoCardView ? 'hide-on-mobile-card' : ''}`}
+        className={`gamer-sidebar-trigger ${isSidebarOpen ? 'open' : ''} ${isBingoCardView || isBoletosView ? 'hide-on-mobile-card' : ''}`}
         onClick={() => setIsSidebarOpen(!isSidebarOpen)}
         aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
       >
@@ -90,7 +91,7 @@ function App() {
       </button>
 
       {/* Menú Lateral Vertical (Gamer Sidebar) */}
-      <aside className={`gamer-sidebar ${isSidebarOpen ? 'open' : ''} ${isBingoCardView ? 'hide-on-mobile-card' : ''}`}>
+      <aside className={`gamer-sidebar ${isSidebarOpen ? 'open' : ''} ${isBingoCardView || isBoletosView ? 'hide-on-mobile-card' : ''}`}>
         <div className="sidebar-header" onClick={() => navigateTo('/')} style={{ cursor: 'pointer' }}>
           <img src={logoEditorial} className="sidebar-logo" alt="Lluvia de Ideas" />
           <div className="sidebar-brand-text">

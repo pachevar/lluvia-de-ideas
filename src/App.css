@@ -12,6 +12,29 @@
   transition: padding-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
+/* Modo Full-Width para Tienda Oficial de Boletos (elimina contenedor negro restrictivo) */
+.app-container.boletos-view-full {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  padding-left: 0 !important;
+  gap: 0 !important;
+  background: transparent !important;
+}
+
+.app-container.boletos-view-full .main-content {
+  width: 100% !important;
+  max-width: 100% !important;
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.app-container.boletos-view-full .app-footer {
+  margin: 0 !important;
+  border-radius: 0 !important;
+}
+
 /* Cabecera Superior Compacta */
 .app-header-compact {
   display: flex;

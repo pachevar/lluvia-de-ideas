@@ -4,19 +4,21 @@
 
 .bingo-boletos-page {
   min-height: 100vh;
-  background: radial-gradient(circle at 50% 10%, rgba(13, 8, 30, 0.95) 0%, rgba(5, 3, 15, 0.98) 100%),
-              radial-gradient(circle at 10% 40%, rgba(0, 240, 255, 0.08) 0%, transparent 40%),
-              radial-gradient(circle at 90% 60%, rgba(245, 158, 11, 0.08) 0%, transparent 40%);
+  background: transparent;
   color: #f8fafc;
-  padding: 40px 20px 80px;
+  padding: 32px 16px 80px;
   font-family: var(--font-main, 'Inter', sans-serif);
   position: relative;
   overflow-x: hidden;
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .bingo-boletos-container {
-  max-width: 1100px;
+  max-width: 1240px;
+  width: 100%;
   margin: 0 auto;
+  box-sizing: border-box;
 }
 
 /* CABECERA Y LOGO */
@@ -712,20 +714,22 @@
    ========================================================================== */
 
 @media (max-width: 768px) {
-  /* 1. Eliminar contenedor de fondo restrictivo para aprovechar todo el ancho */
+  /* 1. Eliminación total del contenedor negro de fondo para aprovechar el 100% del ancho horizontal */
   .bingo-boletos-page {
-    padding: 12px 4px 60px;
-    background: radial-gradient(circle at 50% 5%, rgba(13, 8, 30, 0.98) 0%, rgba(5, 3, 15, 1) 100%);
-    width: 100%;
-    box-sizing: border-box;
+    padding: 10px 4px 50px !important;
+    background: transparent !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
   }
 
   .bingo-boletos-container {
-    width: 100%;
-    max-width: 100%;
-    padding: 0 4px;
-    margin: 0;
-    box-sizing: border-box;
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    box-sizing: border-box !important;
   }
 
   .boletos-header {
@@ -773,7 +777,9 @@
     grid-template-columns: 1fr;
     gap: 8px;
     margin-bottom: 24px;
-    padding: 0 2px;
+    padding: 0;
+    width: 100%;
+    box-sizing: border-box;
   }
 
   .trust-step-card {
@@ -799,7 +805,7 @@
   .boletos-grid-title {
     font-size: 1.15rem;
     margin-bottom: 8px;
-    padding: 0 6px;
+    padding: 0 4px;
   }
 
   /* 2. CUADRÍCULA DE PAQUETES: 1 SOLA COLUMNA EXPANDIDA AL MÁXIMO ANCHO */
@@ -809,7 +815,7 @@
     margin-bottom: 24px;
     width: 100%;
     box-sizing: border-box;
-    padding: 0 2px;
+    padding: 0;
   }
 
   .package-card {
