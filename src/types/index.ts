@@ -320,6 +320,13 @@ export interface BingoCard {
   tierId?: string | null;
   tierName?: string | null;
   prizeLevel?: string | null;
+  paymentStatus?: 'paid' | 'pending';
+  paymentMethod?: 'efectivo' | 'online' | 'cortesia';
+  paidAmount?: number;
+  paidAt?: number;
+  linkSent?: boolean;
+  linkSentAt?: number | null;
+  linkSentCount?: number;
 }
 
 export interface BingoPromoter {
@@ -348,6 +355,9 @@ export interface BingoAccessToken {
   firstUsedAt?: number | null;
   linkSent?: boolean; // Check de si el enlace ya fue enviado al cliente
   linkSentAt?: number | null; // Fecha y hora en que se envió el enlace
+  linkSentCount?: number; // Cantidad de veces que se ha despachado el enlace
+  paymentMethod?: string;
+  paidAmount?: number;
   createdAt: number;
 }
 
