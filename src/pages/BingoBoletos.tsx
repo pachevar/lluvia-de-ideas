@@ -249,9 +249,12 @@ const BingoBoletos: React.FC = () => {
             method: "POST",
             headers: {
               "Content-Type": "application/json",
+              "Accept-Language": "es-GT,es;q=0.9",
               "X-SECRET-KEY": apiKey
             },
             body: JSON.stringify({
+              locale: "es",
+              language: "es",
               items: [
                 {
                   name: `Bingotenango: ${quantity}x ${activeTier.name} [${purchaseMode === 'personal' ? 'Uso Personal' : 'Links para Amigos'}]`,
@@ -279,7 +282,15 @@ const BingoBoletos: React.FC = () => {
           if (recurrenteRes.ok) {
             const checkoutData = await recurrenteRes.json();
             if (checkoutData?.checkout_url) {
-              window.location.href = checkoutData.checkout_url;
+              try {
+                const checkoutUrlObj = new URL(checkoutData.checkout_url);
+                checkoutUrlObj.searchParams.set('locale', 'es');
+                checkoutUrlObj.searchParams.set('lang', 'es');
+                window.location.href = checkoutUrlObj.toString();
+              } catch {
+                const sep = checkoutData.checkout_url.includes('?') ? '&' : '?';
+                window.location.href = `${checkoutData.checkout_url}${sep}locale=es&lang=es`;
+              }
               return;
             }
           }
@@ -291,13 +302,26 @@ const BingoBoletos: React.FC = () => {
       // 3. Fallback a Link fijo de Recurrente o pantalla guiada
       const configuredLink = recurrenteLinks[activeTier.id] || recurrenteLinks[activeTier.id.replace('tier-', 'pkg-')];
       if (configuredLink && configuredLink.startsWith('http')) {
-        const separator = configuredLink.includes('?') ? '&' : '?';
-        const returnUrl = encodeURIComponent(`${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
-        let finalUrl = `${configuredLink}${separator}customer_name=${encodeURIComponent(playerName)}&customer_phone=${encodeURIComponent(cleanPhone)}&redirect_url=${returnUrl}`;
-        if (playerEmail.trim()) {
-          finalUrl += `&customer_email=${encodeURIComponent(playerEmail.trim())}`;
+        try {
+          const linkObj = new URL(configuredLink);
+          linkObj.searchParams.set('locale', 'es');
+          linkObj.searchParams.set('lang', 'es');
+          linkObj.searchParams.set('customer_name', playerName.trim());
+          linkObj.searchParams.set('customer_phone', cleanPhone);
+          if (playerEmail.trim()) {
+            linkObj.searchParams.set('customer_email', playerEmail.trim());
+          }
+          linkObj.searchParams.set('redirect_url', `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
+          window.location.href = linkObj.toString();
+        } catch {
+          const separator = configuredLink.includes('?') ? '&' : '?';
+          const returnUrl = encodeURIComponent(`${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
+          let finalUrl = `${configuredLink}${separator}locale=es&lang=es&customer_name=${encodeURIComponent(playerName)}&customer_phone=${encodeURIComponent(cleanPhone)}&redirect_url=${returnUrl}`;
+          if (playerEmail.trim()) {
+            finalUrl += `&customer_email=${encodeURIComponent(playerEmail.trim())}`;
+          }
+          window.location.href = finalUrl;
         }
-        window.location.href = finalUrl;
         return;
       } else {
         navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tier=${activeTier.id}&qty=${quantity}&name=${encodeURIComponent(playerName)}&phone=${cleanPhone}&mode=${purchaseMode}&testMode=true`);

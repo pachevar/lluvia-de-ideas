@@ -2961,11 +2961,14 @@ export default function AdminBingoTab() {
           {/* Guía de Configuración Rápida */}
           <div className="admin-card" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', marginBottom: '24px' }}>
             <h4 style={{ margin: '0 0 10px 0', color: '#166534', fontSize: '0.95rem' }}>
-              💡 ¿Cómo obtener los Links de Pago en Recurrente?
+              💡 ¿Cómo obtener los Links de Pago y asegurar el idioma en Español en Recurrente?
             </h4>
             <ol style={{ margin: 0, paddingLeft: '20px', fontSize: '0.82rem', color: '#15803d', lineHeight: '1.6' }}>
               <li>Inicia sesión en tu cuenta de <a href="https://app.recurrente.com" target="_blank" rel="noopener noreferrer" style={{ color: '#166534', fontWeight: 'bold' }}>app.recurrente.com</a>.</li>
-              <li>Ve a la sección <strong>"Cobros / Links de Pago"</strong> y crea los 4 productos con los precios correspondientes: <strong>Q10, Q25, Q50 y Q100</strong>.</li>
+              <li>
+                <strong>Configuración de Idioma:</strong> Ve a tu <em>Perfil / Ajustes de Cuenta</em> en la esquina inferior izquierda y confirma que el idioma de tu cuenta esté seleccionado en <strong>Español</strong>.
+              </li>
+              <li>Ve a la sección <strong>"Cobros / Links de Pago"</strong> y crea los 4 productos con los precios correspondientes: <strong>Q10, Q25, Q50 y Q100</strong> (con títulos en español: <em>Cartón Bronce</em>, <em>Cartón Plata</em>, etc.).</li>
               <li>En cada producto, en el campo <strong>"URL de redirección al pagar con éxito"</strong>, coloca exactamente:  
                 <code style={{ background: '#dcfce7', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px', fontWeight: 'bold' }}>
                   {window.location.origin}/juegos/bingo/boletos/confirmacion
@@ -2973,6 +2976,9 @@ export default function AdminBingoTab() {
               </li>
               <li>Copia el enlace que te genera Recurrente para cada uno y pégalo en las casillas de abajo.</li>
             </ol>
+            <div style={{ marginTop: '12px', padding: '8px 12px', background: 'rgba(34, 197, 94, 0.15)', borderRadius: '8px', fontSize: '0.78rem', color: '#166534' }}>
+              🌐 <strong>Optimización Automática:</strong> El sistema inyecta automáticamente los parámetros <code>locale=es</code> y cabeceras en español en el checkout dinámico y en los enlaces de pago para garantizar la interfaz en español a los compradores.
+            </div>
           </div>
 
           {/* Formulario de Links de Recurrente */}
