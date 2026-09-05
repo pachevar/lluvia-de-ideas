@@ -455,6 +455,35 @@ export default function BingoHub() {
   // Gestión del Reloj Regresivo de Próxima Ronda para el Host (soporta Minutos o Fecha y Hora Específica)
   const [customCountdownMinutes, setCustomCountdownMinutes] = useState<string>('5');
   const [customSpecificDateTime, setCustomSpecificDateTime] = useState<string>('');
+  const dateTimeInputRef = useRef<HTMLInputElement>(null);
+
+  const getSuggestedDateTime = () => {
+    const d = new Date(Date.now() + 60 * 60 * 1000);
+    d.setMinutes(Math.ceil(d.getMinutes() / 5) * 5);
+    d.setSeconds(0);
+    d.setMilliseconds(0);
+    const pad = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+  };
+
+  const openDateTimePicker = () => {
+    if (!customSpecificDateTime) {
+      setCustomSpecificDateTime(getSuggestedDateTime());
+    }
+    setTimeout(() => {
+      if (dateTimeInputRef.current) {
+        try {
+          if (typeof (dateTimeInputRef.current as any).showPicker === 'function') {
+            (dateTimeInputRef.current as any).showPicker();
+          } else {
+            dateTimeInputRef.current.focus();
+          }
+        } catch (_) {
+          dateTimeInputRef.current.focus();
+        }
+      }
+    }, 50);
+  };
   const [hostTimeLeft, setHostTimeLeft] = useState<{ 
     totalSeconds: number; 
     days: string;
@@ -2108,60 +2137,112 @@ export default function BingoHub() {
                       </span>
                     </div>
 
-                    {/* CONTROLADOR DE RELOJ REGRESIVO DE PRÓXIMA RONDA */}
+                    {/* CONTROLADOR DE RELOJ REGRESIVO DE PRÓXIMA RONDA - DISEÑO UNIFICADO */}
                     <div className="host-round-timer-controller animate-fade-in" style={{
-                      background: 'linear-gradient(135deg, rgba(30, 20, 50, 0.9) 0%, rgba(15, 10, 30, 0.95) 100%)',
-                      border: '1.5px solid rgba(0, 240, 255, 0.35)',
+                      background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.95) 0%, rgba(10, 8, 22, 0.98) 100%)',
+                      border: '1.5px solid rgba(0, 240, 255, 0.4)',
                       borderRadius: '16px',
-                      padding: '16px 18px',
+                      padding: '16px 20px',
                       marginBottom: '20px',
-                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(0, 240, 255, 0.08)'
+                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(0, 240, 255, 0.06)'
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '1.35rem' }}>⏱️</span>
+                      {/* Cabecera del Panel con Estado y Temporizador Activo */}
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        flexWrap: 'wrap',
+                        gap: '12px',
+                        paddingBottom: '14px',
+                        borderBottom: '1px solid rgba(255, 255, 255, 0.08)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <div style={{
+                            width: '38px',
+                            height: '38px',
+                            borderRadius: '10px',
+                            background: 'rgba(0, 240, 255, 0.15)',
+                            border: '1px solid rgba(0, 240, 255, 0.45)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            fontSize: '1.25rem',
+                            boxShadow: '0 0 12px rgba(0, 240, 255, 0.25)'
+                          }}>
+                            ⏱️
+                          </div>
                           <div>
-                            <strong style={{ fontSize: '0.95rem', color: '#fff', letterSpacing: '0.5px' }}>
-                              RELOJ REGRESIVO DE PRÓXIMA RONDA
-                            </strong>
-                            <p style={{ margin: 0, fontSize: '0.72rem', color: '#94a3b8' }}>
-                              Sincronizado en vivo con la sala de espera de todos los jugadores
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                              <strong style={{ fontSize: '0.98rem', color: '#fff', letterSpacing: '0.5px' }}>
+                                PROGRAMAR PRÓXIMA RONDA
+                              </strong>
+                              {hostTimeLeft ? (
+                                <span style={{
+                                  fontSize: '0.65rem',
+                                  padding: '3px 8px',
+                                  borderRadius: '6px',
+                                  background: hostTimeLeft.isStarted ? 'rgba(239, 68, 68, 0.25)' : 'rgba(34, 197, 94, 0.2)',
+                                  color: hostTimeLeft.isStarted ? '#fca5a5' : '#4ade80',
+                                  border: `1px solid ${hostTimeLeft.isStarted ? '#ef4444' : '#22c55e'}`,
+                                  fontWeight: 'bold',
+                                  textTransform: 'uppercase'
+                                }}>
+                                  {hostTimeLeft.isStarted ? '● Hora Cumplida' : '● Reloj Sincronizado en Vivo'}
+                                </span>
+                              ) : (
+                                <span style={{
+                                  fontSize: '0.65rem',
+                                  padding: '3px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(148, 163, 184, 0.15)',
+                                  color: '#94a3b8',
+                                  border: '1px solid rgba(148, 163, 184, 0.3)'
+                                }}>
+                                  ○ Sin programar
+                                </span>
+                              )}
+                            </div>
+                            <p style={{ margin: 0, fontSize: '0.73rem', color: '#94a3b8' }}>
+                              Visible en tiempo real en la sala de espera de todos los jugadores
                             </p>
                           </div>
                         </div>
 
+                        {/* Monitor Activo con Botones de Ajuste Rápido */}
                         {hostTimeLeft && (
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                             <div style={{
                               display: 'flex',
                               alignItems: 'baseline',
-                              gap: '4px',
-                              background: hostTimeLeft.isStarted ? 'rgba(239, 68, 68, 0.25)' : 'rgba(0, 240, 255, 0.15)',
-                              border: hostTimeLeft.isStarted ? '1px solid #ef4444' : '1px solid rgba(0, 240, 255, 0.5)',
-                              padding: '4px 12px',
-                              borderRadius: '12px'
+                              gap: '6px',
+                              background: hostTimeLeft.isStarted 
+                                ? 'rgba(239, 68, 68, 0.2)' 
+                                : 'linear-gradient(135deg, rgba(0, 240, 255, 0.18) 0%, rgba(59, 130, 246, 0.2) 100%)',
+                              border: hostTimeLeft.isStarted ? '1px solid #ef4444' : '1px solid rgba(0, 240, 255, 0.55)',
+                              padding: '5px 14px',
+                              borderRadius: '12px',
+                              boxShadow: hostTimeLeft.isStarted ? '0 0 15px rgba(239, 68, 68, 0.3)' : '0 0 15px rgba(0, 240, 255, 0.25)'
                             }}>
                               <span style={{ fontSize: '0.68rem', color: hostTimeLeft.isStarted ? '#fca5a5' : '#38bdf8', fontWeight: 'bold' }}>
                                 {hostTimeLeft.isStarted ? '¡HORA CUMPLIDA!' : 'RESTANTE:'}
                               </span>
                               <span style={{
-                                fontSize: '1.25rem',
+                                fontSize: '1.3rem',
                                 fontFamily: 'var(--font-gamer)',
                                 fontWeight: 900,
                                 color: hostTimeLeft.isStarted ? '#ef4444' : '#00f0ff',
-                                letterSpacing: '1px'
+                                letterSpacing: '1.2px'
                               }}>
                                 {hostTimeLeft.isStarted 
                                   ? '00:00' 
                                   : `${hostTimeLeft.hasDays ? `${hostTimeLeft.days}d ` : ''}${hostTimeLeft.hasHours ? `${hostTimeLeft.hours}:` : ''}${hostTimeLeft.minutes}:${hostTimeLeft.seconds}`}
                               </span>
+                              {hostTimeLeft.formattedDate && !hostTimeLeft.isStarted && (
+                                <span style={{ fontSize: '0.72rem', color: '#cbd5e1', marginLeft: '4px', borderLeft: '1px solid rgba(255, 255, 255, 0.2)', paddingLeft: '8px' }}>
+                                  ({hostTimeLeft.formattedDate})
+                                </span>
+                              )}
                             </div>
-
-                            {hostTimeLeft.formattedDate && !hostTimeLeft.isStarted && (
-                              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
-                                ({hostTimeLeft.formattedDate})
-                              </span>
-                            )}
 
                             <button
                               onClick={() => handleAddCountdownMinutes(1)}
@@ -2211,252 +2292,238 @@ export default function BingoHub() {
                               }}
                               title="Cancelar cuenta regresiva"
                             >
-                              ✕ Pausar
+                              ✕ Quitar
                             </button>
                           </div>
                         )}
                       </div>
 
-                      {/* FILA 1: Botones de Preajuste Rápido de Minutos */}
-                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                        <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 'bold', marginRight: '4px' }}>
-                          Minutos Rápidos:
-                        </span>
-                        
-                        <button
-                          onClick={() => handleSetCountdown(2)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '10px',
-                            background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(59, 130, 246, 0.25) 100%)',
-                            border: '1px solid rgba(0, 240, 255, 0.4)',
-                            color: '#e2e8f0',
-                            fontSize: '0.78rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          ⚡ 2 Min
-                        </button>
-
-                        <button
-                          onClick={() => handleSetCountdown(5)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '10px',
-                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.25) 100%)',
-                            border: '1px solid rgba(16, 185, 129, 0.5)',
-                            color: '#34d399',
-                            fontSize: '0.78rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          🟢 5 Min
-                        </button>
-
-                        <button
-                          onClick={() => handleSetCountdown(10)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '10px',
-                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.25) 100%)',
-                            border: '1px solid rgba(245, 158, 11, 0.5)',
-                            color: '#fbbf24',
-                            fontSize: '0.78rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          🟡 10 Min
-                        </button>
-
-                        <button
-                          onClick={() => handleSetCountdown(15)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '10px',
-                            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(126, 34, 206, 0.25) 100%)',
-                            border: '1px solid rgba(168, 85, 247, 0.5)',
-                            color: '#c084fc',
-                            fontSize: '0.78rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          🟣 15 Min
-                        </button>
-
-                        <button
-                          onClick={() => handleSetCountdown(30)}
-                          style={{
-                            padding: '6px 12px',
-                            borderRadius: '10px',
-                            background: 'rgba(255, 255, 255, 0.08)',
-                            border: '1px solid rgba(255, 255, 255, 0.2)',
-                            color: '#cbd5e1',
-                            fontSize: '0.78rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            transition: 'all 0.15s ease'
-                          }}
-                        >
-                          🕒 30 Min
-                        </button>
-
-                        {/* Input numérico personalizado */}
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
-                          <input
-                            type="number"
-                            min="1"
-                            max="720"
-                            value={customCountdownMinutes}
-                            onChange={(e) => setCustomCountdownMinutes(e.target.value)}
-                            style={{
-                              width: '55px',
-                              padding: '5px 8px',
-                              borderRadius: '8px',
-                              background: 'rgba(0, 0, 0, 0.5)',
-                              border: '1px solid rgba(255, 255, 255, 0.2)',
-                              color: '#fff',
-                              fontSize: '0.78rem',
-                              textAlign: 'center'
-                            }}
-                          />
-                          <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>min</span>
-                          <button
-                            onClick={() => {
-                              const m = parseInt(customCountdownMinutes, 10);
-                              if (!isNaN(m) && m > 0) handleSetCountdown(m);
-                            }}
-                            style={{
-                              padding: '5px 10px',
-                              borderRadius: '8px',
-                              background: '#2563eb',
-                              border: 'none',
-                              color: '#fff',
-                              fontSize: '0.75rem',
-                              fontWeight: 'bold',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Fijar
-                          </button>
-                        </div>
-                      </div>
-
-                      {/* FILA 2: PROGRAMACIÓN POR FECHA Y HORA ESPECÍFICA */}
+                      {/* FILA UNIFICADA DE ACCIONES: Minutos Rápidos + Fecha & Calendario */}
                       <div style={{
                         display: 'flex',
                         alignItems: 'center',
+                        justifyContent: 'space-between',
                         flexWrap: 'wrap',
-                        gap: '8px',
-                        paddingTop: '10px',
-                        borderTop: '1px solid rgba(255, 255, 255, 0.08)'
+                        gap: '14px',
+                        marginTop: '12px',
+                        background: 'rgba(0, 0, 0, 0.4)',
+                        padding: '12px 14px',
+                        borderRadius: '12px',
+                        border: '1px solid rgba(255, 255, 255, 0.06)'
                       }}>
-                        <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 'bold' }}>
-                          📅 Fecha y Hora Específica:
-                        </span>
+                        {/* SECCIÓN A: Minutos Rápidos */}
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '6px' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px', marginRight: '4px' }}>
+                            ⚡ Minutos:
+                          </span>
 
-                        <input 
-                          type="datetime-local"
-                          value={customSpecificDateTime}
-                          onChange={(e) => setCustomSpecificDateTime(e.target.value)}
-                          style={{
-                            padding: '6px 10px',
-                            borderRadius: '10px',
-                            background: 'rgba(0, 0, 0, 0.6)',
-                            border: '1px solid rgba(56, 189, 248, 0.4)',
-                            color: '#ffffff',
-                            fontSize: '0.78rem',
-                            outline: 'none',
-                            fontFamily: 'inherit'
-                          }}
-                        />
+                          {[
+                            { label: '2m', mins: 2, bg: 'rgba(0, 240, 255, 0.15)', border: 'rgba(0, 240, 255, 0.4)', color: '#38bdf8' },
+                            { label: '5m', mins: 5, bg: 'rgba(16, 185, 129, 0.15)', border: 'rgba(16, 185, 129, 0.4)', color: '#34d399' },
+                            { label: '10m', mins: 10, bg: 'rgba(245, 158, 11, 0.15)', border: 'rgba(245, 158, 11, 0.4)', color: '#fbbf24' },
+                            { label: '15m', mins: 15, bg: 'rgba(168, 85, 247, 0.15)', border: 'rgba(168, 85, 247, 0.4)', color: '#c084fc' },
+                            { label: '30m', mins: 30, bg: 'rgba(255, 255, 255, 0.08)', border: 'rgba(255, 255, 255, 0.2)', color: '#cbd5e1' }
+                          ].map((chip) => (
+                            <button
+                              key={chip.label}
+                              onClick={() => handleSetCountdown(chip.mins)}
+                              style={{
+                                padding: '5px 10px',
+                                borderRadius: '8px',
+                                background: chip.bg,
+                                border: `1px solid ${chip.border}`,
+                                color: chip.color,
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                              title={`Fijar ronda en ${chip.mins} minutos`}
+                            >
+                              {chip.label}
+                            </button>
+                          ))}
 
-                        <button
-                          onClick={() => {
-                            if (!customSpecificDateTime) {
-                              alert("Por favor selecciona una fecha y hora en el calendario.");
-                              return;
-                            }
-                            handleSetSpecificDateTime(customSpecificDateTime);
-                          }}
-                          style={{
-                            padding: '6px 14px',
-                            borderRadius: '10px',
-                            background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                            border: '1px solid rgba(255, 255, 255, 0.3)',
-                            color: '#fff',
-                            fontSize: '0.78rem',
-                            fontWeight: 'bold',
-                            cursor: 'pointer',
-                            boxShadow: '0 2px 8px rgba(37, 99, 235, 0.4)'
-                          }}
-                        >
-                          📅 Programar Ronda
-                        </button>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '3px', marginLeft: '6px' }}>
+                            <input
+                              type="number"
+                              min="1"
+                              max="720"
+                              value={customCountdownMinutes}
+                              onChange={(e) => setCustomCountdownMinutes(e.target.value)}
+                              placeholder="min"
+                              style={{
+                                width: '50px',
+                                padding: '4px 6px',
+                                borderRadius: '6px',
+                                background: 'rgba(0, 0, 0, 0.6)',
+                                border: '1px solid rgba(255, 255, 255, 0.2)',
+                                color: '#fff',
+                                fontSize: '0.75rem',
+                                textAlign: 'center'
+                              }}
+                            />
+                            <button
+                              onClick={() => {
+                                const m = parseInt(customCountdownMinutes, 10);
+                                if (!isNaN(m) && m > 0) handleSetCountdown(m);
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: '#2563eb',
+                                border: 'none',
+                                color: '#fff',
+                                fontSize: '0.72rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              OK
+                            </button>
+                          </div>
+                        </div>
 
-                        {/* Atajos Rápidos de Fecha */}
-                        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', marginLeft: 'auto' }}>
-                          <button
-                            onClick={() => handleSetCountdown(60)}
+                        {/* SEPARADOR VERTICAL */}
+                        <div style={{ width: '1px', height: '28px', background: 'rgba(255, 255, 255, 0.12)' }} />
+
+                        {/* SECCIÓN B: Fecha y Hora Específica con Selector y Atajos */}
+                        <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            📅 Fecha y Hora:
+                          </span>
+
+                          {/* Input de Fecha y Hora con Gatillo de Calendario */}
+                          <div 
+                            onClick={openDateTimePicker}
                             style={{
-                              padding: '4px 8px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              background: 'rgba(0, 0, 0, 0.6)',
+                              border: '1px solid rgba(56, 189, 248, 0.45)',
                               borderRadius: '8px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              color: '#94a3b8',
-                              fontSize: '0.7rem',
+                              padding: '2px 6px',
                               cursor: 'pointer'
                             }}
-                            title="Fijar dentro de 1 hora"
+                            title="Haz clic para abrir el calendario y seleccionar fecha/hora"
                           >
-                            +1 Hora
-                          </button>
-
-                          <button
-                            onClick={() => handleSetCountdown(120)}
-                            style={{
-                              padding: '4px 8px',
-                              borderRadius: '8px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              color: '#94a3b8',
-                              fontSize: '0.7rem',
-                              cursor: 'pointer'
-                            }}
-                            title="Fijar dentro de 2 horas"
-                          >
-                            +2 Horas
-                          </button>
+                            <button
+                              type="button"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDateTimePicker();
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                fontSize: '1rem',
+                                cursor: 'pointer',
+                                padding: '2px 4px',
+                                display: 'flex',
+                                alignItems: 'center'
+                              }}
+                              title="Abrir calendario"
+                            >
+                              📅
+                            </button>
+                            <input 
+                              ref={dateTimeInputRef}
+                              type="datetime-local"
+                              className="host-datetime-input"
+                              value={customSpecificDateTime}
+                              onChange={(e) => setCustomSpecificDateTime(e.target.value)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                openDateTimePicker();
+                              }}
+                              style={{
+                                background: 'transparent',
+                                border: 'none',
+                                color: '#ffffff',
+                                fontSize: '0.78rem',
+                                outline: 'none',
+                                fontFamily: 'inherit',
+                                padding: '3px 4px'
+                              }}
+                            />
+                          </div>
 
                           <button
                             onClick={() => {
-                              // Mañana a la misma hora
-                              const tomorrow = new Date();
-                              tomorrow.setDate(tomorrow.getDate() + 1);
-                              tomorrow.setSeconds(0);
-                              tomorrow.setMilliseconds(0);
-                              handleSetSpecificDateTime(tomorrow.toISOString());
+                              const targetVal = customSpecificDateTime || getSuggestedDateTime();
+                              handleSetSpecificDateTime(targetVal);
                             }}
                             style={{
-                              padding: '4px 8px',
+                              padding: '5px 12px',
                               borderRadius: '8px',
-                              background: 'rgba(255, 255, 255, 0.05)',
-                              border: '1px solid rgba(255, 255, 255, 0.15)',
-                              color: '#94a3b8',
-                              fontSize: '0.7rem',
-                              cursor: 'pointer'
+                              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                              border: '1px solid rgba(255, 255, 255, 0.25)',
+                              color: '#fff',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              boxShadow: '0 2px 8px rgba(37, 99, 235, 0.35)'
                             }}
-                            title="Fijar para mañana a esta hora"
                           >
-                            Mañana
+                            Programar
                           </button>
+
+                          {/* Atajos Rápidos de Fecha */}
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            <button
+                              onClick={() => handleSetCountdown(60)}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: '#94a3b8',
+                                fontSize: '0.7rem',
+                                cursor: 'pointer'
+                              }}
+                              title="Programar para dentro de 1 hora"
+                            >
+                              +1h
+                            </button>
+
+                            <button
+                              onClick={() => handleSetCountdown(120)}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: '#94a3b8',
+                                fontSize: '0.7rem',
+                                cursor: 'pointer'
+                              }}
+                              title="Programar para dentro de 2 horas"
+                            >
+                              +2h
+                            </button>
+
+                            <button
+                              onClick={() => {
+                                const tomorrow = new Date();
+                                tomorrow.setDate(tomorrow.getDate() + 1);
+                                tomorrow.setSeconds(0);
+                                tomorrow.setMilliseconds(0);
+                                handleSetSpecificDateTime(tomorrow.toISOString());
+                              }}
+                              style={{
+                                padding: '4px 8px',
+                                borderRadius: '6px',
+                                background: 'rgba(255, 255, 255, 0.05)',
+                                border: '1px solid rgba(255, 255, 255, 0.15)',
+                                color: '#94a3b8',
+                                fontSize: '0.7rem',
+                                cursor: 'pointer'
+                              }}
+                              title="Programar para mañana a esta misma hora"
+                            >
+                              Mañana
+                            </button>
+                          </div>
                         </div>
                       </div>
                     </div>

@@ -4650,5 +4650,23 @@ div .bingo-cell.marked-drawn-assist {
   }
 }
 
+/* Selector Nativo de Fecha y Hora del Temporizador */
+.host-datetime-input {
+  color-scheme: dark !important;
+  cursor: pointer !important;
+}
 
+.host-datetime-input::-webkit-calendar-picker-indicator {
+  cursor: pointer !important;
+  filter: invert(0.8) sepia(100%) saturate(500%) hue-rotate(150deg) brightness(1.2);
+  opacity: 0.95;
+  padding: 4px;
+  border-radius: 6px;
+  transition: transform 0.2s ease, opacity 0.2s ease;
+}
 
+.host-datetime-input::-webkit-calendar-picker-indicator:hover {
+  opacity: 1;
+  transform: scale(1.2);
+  filter: invert(1) drop-shadow(0 0 4px #00f0ff);
+}
