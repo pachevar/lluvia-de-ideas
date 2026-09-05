@@ -452,6 +452,81 @@ export default function BingoHub() {
     return () => unsubscribeCards();
   }, [activeGame?.id]);
 
+  // Gestión del Reloj Regresivo de Próxima Ronda para el Host
+  const [customCountdownMinutes, setCustomCountdownMinutes] = useState<string>('5');
+  const [hostTimeLeft, setHostTimeLeft] = useState<{ totalSeconds: number; minutes: string; seconds: string; formattedTime: string; isStarted: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!activeGame?.nextRoundTime) {
+      setHostTimeLeft(null);
+      return;
+    }
+
+    const updateTimer = () => {
+      const target = activeGame.nextRoundTime!;
+      const diffMs = target - Date.now();
+      const totalSec = Math.max(0, Math.floor(diffMs / 1000));
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      
+      const targetDate = new Date(target);
+      const formattedTime = targetDate.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+
+      setHostTimeLeft({
+        totalSeconds: totalSec,
+        minutes: String(m).padStart(2, '0'),
+        seconds: String(s).padStart(2, '0'),
+        formattedTime,
+        isStarted: totalSec <= 0
+      });
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [activeGame?.nextRoundTime]);
+
+  const handleSetCountdown = async (minutes: number) => {
+    if (!activeGame) return;
+    try {
+      const targetTime = Date.now() + minutes * 60 * 1000;
+      await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+        nextRoundTime: targetTime
+      });
+      soundEffects.playSpacePulse();
+      addLog(`HOST: Reloj de próxima ronda fijado para dentro de ${minutes} minutos (${new Date(targetTime).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })}).`, 'system');
+    } catch (err) {
+      console.error("Error al fijar reloj de próxima ronda:", err);
+    }
+  };
+
+  const handleAddCountdownMinutes = async (extraMinutes: number) => {
+    if (!activeGame || !activeGame.nextRoundTime) return;
+    try {
+      const newTarget = Math.max(Date.now(), activeGame.nextRoundTime) + extraMinutes * 60 * 1000;
+      await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+        nextRoundTime: newTarget
+      });
+      soundEffects.playSpacePulse();
+      addLog(`HOST: Se extendió el reloj de próxima ronda en +${extraMinutes} minutos.`, 'system');
+    } catch (err) {
+      console.error("Error al extender reloj de próxima ronda:", err);
+    }
+  };
+
+  const handleCancelCountdown = async () => {
+    if (!activeGame) return;
+    try {
+      await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+        nextRoundTime: null
+      });
+      soundEffects.playSpacePulse();
+      addLog(`HOST: Reloj de próxima ronda cancelado.`, 'warning');
+    } catch (err) {
+      console.error("Error al cancelar reloj de próxima ronda:", err);
+    }
+  };
+
   // Combined list of active bingo shouts from all Firestore sources (deduplicated)
   const activeBingoShouts = [
     ...shoutedCards,
@@ -1989,6 +2064,240 @@ export default function BingoHub() {
                       </span>
                     </div>
 
+                    {/* CONTROLADOR DE RELOJ REGRESIVO DE PRÓXIMA RONDA */}
+                    <div className="host-round-timer-controller animate-fade-in" style={{
+                      background: 'linear-gradient(135deg, rgba(30, 20, 50, 0.9) 0%, rgba(15, 10, 30, 0.95) 100%)',
+                      border: '1.5px solid rgba(0, 240, 255, 0.35)',
+                      borderRadius: '16px',
+                      padding: '16px 18px',
+                      marginBottom: '20px',
+                      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.4), inset 0 0 15px rgba(0, 240, 255, 0.08)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1.35rem' }}>⏱️</span>
+                          <div>
+                            <strong style={{ fontSize: '0.95rem', color: '#fff', letterSpacing: '0.5px' }}>
+                              RELOJ REGRESIVO DE PRÓXIMA RONDA
+                            </strong>
+                            <p style={{ margin: 0, fontSize: '0.72rem', color: '#94a3b8' }}>
+                              Sincronizado en vivo con la sala de espera de todos los jugadores
+                            </p>
+                          </div>
+                        </div>
+
+                        {hostTimeLeft && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <div style={{
+                              display: 'flex',
+                              alignItems: 'baseline',
+                              gap: '4px',
+                              background: hostTimeLeft.isStarted ? 'rgba(239, 68, 68, 0.25)' : 'rgba(0, 240, 255, 0.15)',
+                              border: hostTimeLeft.isStarted ? '1px solid #ef4444' : '1px solid rgba(0, 240, 255, 0.5)',
+                              padding: '4px 12px',
+                              borderRadius: '12px'
+                            }}>
+                              <span style={{ fontSize: '0.68rem', color: hostTimeLeft.isStarted ? '#fca5a5' : '#38bdf8', fontWeight: 'bold' }}>
+                                {hostTimeLeft.isStarted ? '¡HORA CUMPLIDA!' : 'RESTANTE:'}
+                              </span>
+                              <span style={{
+                                fontSize: '1.25rem',
+                                fontFamily: 'var(--font-gamer)',
+                                fontWeight: 900,
+                                color: hostTimeLeft.isStarted ? '#ef4444' : '#00f0ff',
+                                letterSpacing: '1px'
+                              }}>
+                                {hostTimeLeft.isStarted ? '00:00' : `${hostTimeLeft.minutes}:${hostTimeLeft.seconds}`}
+                              </span>
+                            </div>
+
+                            <button
+                              onClick={() => handleAddCountdownMinutes(1)}
+                              style={{
+                                padding: '6px 10px',
+                                background: 'rgba(56, 189, 248, 0.2)',
+                                border: '1px solid rgba(56, 189, 248, 0.4)',
+                                borderRadius: '8px',
+                                color: '#38bdf8',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                              }}
+                              title="Extender 1 minuto más"
+                            >
+                              +1m
+                            </button>
+
+                            <button
+                              onClick={() => handleAddCountdownMinutes(5)}
+                              style={{
+                                padding: '6px 10px',
+                                background: 'rgba(56, 189, 248, 0.2)',
+                                border: '1px solid rgba(56, 189, 248, 0.4)',
+                                borderRadius: '8px',
+                                color: '#38bdf8',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                              }}
+                              title="Extender 5 minutos más"
+                            >
+                              +5m
+                            </button>
+
+                            <button
+                              onClick={handleCancelCountdown}
+                              style={{
+                                padding: '6px 12px',
+                                background: 'rgba(239, 68, 68, 0.2)',
+                                border: '1px solid rgba(239, 68, 68, 0.4)',
+                                borderRadius: '8px',
+                                color: '#f87171',
+                                fontSize: '0.75rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                              }}
+                              title="Cancelar cuenta regresiva"
+                            >
+                              ✕ Pausar
+                            </button>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Botones de Preajuste Rápido de 1 Toque */}
+                      <div style={{ display: 'flex', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                        <span style={{ fontSize: '0.72rem', color: '#cbd5e1', fontWeight: 'bold', marginRight: '4px' }}>
+                          Fijar Cuenta Regresiva:
+                        </span>
+                        
+                        <button
+                          onClick={() => handleSetCountdown(2)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '10px',
+                            background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.2) 0%, rgba(59, 130, 246, 0.25) 100%)',
+                            border: '1px solid rgba(0, 240, 255, 0.4)',
+                            color: '#e2e8f0',
+                            fontSize: '0.78rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          ⚡ 2 Min
+                        </button>
+
+                        <button
+                          onClick={() => handleSetCountdown(5)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '10px',
+                            background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.25) 100%)',
+                            border: '1px solid rgba(16, 185, 129, 0.5)',
+                            color: '#34d399',
+                            fontSize: '0.78rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          🟢 5 Min
+                        </button>
+
+                        <button
+                          onClick={() => handleSetCountdown(10)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '10px',
+                            background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.25) 100%)',
+                            border: '1px solid rgba(245, 158, 11, 0.5)',
+                            color: '#fbbf24',
+                            fontSize: '0.78rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          🟡 10 Min
+                        </button>
+
+                        <button
+                          onClick={() => handleSetCountdown(15)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '10px',
+                            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.2) 0%, rgba(126, 34, 206, 0.25) 100%)',
+                            border: '1px solid rgba(168, 85, 247, 0.5)',
+                            color: '#c084fc',
+                            fontSize: '0.78rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          🟣 15 Min
+                        </button>
+
+                        <button
+                          onClick={() => handleSetCountdown(30)}
+                          style={{
+                            padding: '6px 12px',
+                            borderRadius: '10px',
+                            background: 'rgba(255, 255, 255, 0.08)',
+                            border: '1px solid rgba(255, 255, 255, 0.2)',
+                            color: '#cbd5e1',
+                            fontSize: '0.78rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          🕒 30 Min
+                        </button>
+
+                        {/* Input numérico personalizado */}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: 'auto' }}>
+                          <input
+                            type="number"
+                            min="1"
+                            max="120"
+                            value={customCountdownMinutes}
+                            onChange={(e) => setCustomCountdownMinutes(e.target.value)}
+                            style={{
+                              width: '55px',
+                              padding: '5px 8px',
+                              borderRadius: '8px',
+                              background: 'rgba(0, 0, 0, 0.5)',
+                              border: '1px solid rgba(255, 255, 255, 0.2)',
+                              color: '#fff',
+                              fontSize: '0.78rem',
+                              textAlign: 'center'
+                            }}
+                          />
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>min</span>
+                          <button
+                            onClick={() => {
+                              const m = parseInt(customCountdownMinutes, 10);
+                              if (!isNaN(m) && m > 0) handleSetCountdown(m);
+                            }}
+                            style={{
+                              padding: '5px 10px',
+                              borderRadius: '8px',
+                              background: '#2563eb',
+                              border: 'none',
+                              color: '#fff',
+                              fontSize: '0.75rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Fijar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
                     {/* Tarjetas de Métricas Estadísticas */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
                       
@@ -2571,13 +2880,6 @@ export default function BingoHub() {
                  MOBILE PORTION: GET BINGO CARD ("OBTENER EL CARTÓN")
                  ========================================== */}
               <div className="mobile-gamer-section mobile-only" style={{ width: '100%' }}>
-                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '14px' }}>
-                  <img 
-                    src="/bingotenango-logo.svg" 
-                    alt="Bingotenango" 
-                    style={{ maxHeight: '70px', width: 'auto', filter: 'drop-shadow(0 0 15px rgba(88, 205, 238, 0.45))' }} 
-                  />
-                </div>
                 
                 {/* Check if user already has a saved card in localStorage */}
                 {savedCardId ? (

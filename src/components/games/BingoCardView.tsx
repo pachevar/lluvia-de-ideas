@@ -159,6 +159,39 @@ export default function BingoCardView() {
   const [winnerDismissed, setWinnerDismissed] = useState(false);
   const prevDrawnCountRef = useRef(0);
 
+  // Reloj Regresivo en Tiempo Real para la Próxima Ronda
+  const [timeLeft, setTimeLeft] = useState<{ totalSeconds: number; minutes: string; seconds: string; formattedTime: string; isStarted: boolean } | null>(null);
+
+  useEffect(() => {
+    if (!gameData?.nextRoundTime || gameData.status !== 'waiting') {
+      setTimeLeft(null);
+      return;
+    }
+
+    const updateTimer = () => {
+      const target = gameData.nextRoundTime!;
+      const diffMs = target - Date.now();
+      const totalSec = Math.max(0, Math.floor(diffMs / 1000));
+      const m = Math.floor(totalSec / 60);
+      const s = totalSec % 60;
+      
+      const targetDate = new Date(target);
+      const formattedTime = targetDate.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+
+      setTimeLeft({
+        totalSeconds: totalSec,
+        minutes: String(m).padStart(2, '0'),
+        seconds: String(s).padStart(2, '0'),
+        formattedTime,
+        isStarted: totalSec <= 0
+      });
+    };
+
+    updateTimer();
+    const interval = setInterval(updateTimer, 1000);
+    return () => clearInterval(interval);
+  }, [gameData?.nextRoundTime, gameData?.status]);
+
 
 
   const initAudio = () => {
@@ -1043,35 +1076,38 @@ export default function BingoCardView() {
         />
       ))}
 
-      {/* Customizable Session Title */}
-      <div className="bingo-card-session-title" style={{ textAlign: 'center', margin: '16px 0 10px' }}>
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px' }}>
+      {/* Customizable Session Title - Compacto y sin duplicación */}
+      <div className="bingo-card-session-title compact-session-header" style={{ textAlign: 'center', margin: '8px 0 6px' }}>
+        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '4px' }}>
           <img 
             src="/bingotenango-logo.svg" 
             alt="Bingotenango" 
-            style={{ maxHeight: '72px', width: 'auto', filter: 'drop-shadow(0 0 15px rgba(88, 205, 238, 0.5))' }} 
+            style={{ maxHeight: '46px', width: 'auto', filter: 'drop-shadow(0 0 12px rgba(88, 205, 238, 0.45))' }} 
           />
         </div>
-        <h2 style={{ fontSize: '1.4rem', fontFamily: 'var(--font-gamer)', color: '#fff', margin: 0 }}>
-          {cust?.title || 'Bingotenango'}
-        </h2>
+        {/* Solo mostrar título secundario si es distinto a 'Bingotenango' para evitar duplicados */}
+        {cust?.title && cust.title.trim().toLowerCase() !== 'bingotenango' && (
+          <h2 style={{ fontSize: '1.15rem', fontFamily: 'var(--font-gamer)', color: '#fff', margin: '2px 0 0' }}>
+            {cust.title}
+          </h2>
+        )}
         {cust?.subtitle && (
-          <p style={{ fontSize: '0.85rem', color: 'var(--cyber-cyan)', margin: '4px 0 0', opacity: 0.8 }}>
+          <p style={{ fontSize: '0.78rem', color: 'var(--cyber-cyan)', margin: '2px 0 0', opacity: 0.85 }}>
             {cust.subtitle}
           </p>
         )}
       </div>
 
-      {/* Banner */}
+      {/* Banner Compacto */}
       {cust?.headerImage && (
         <div 
           className="bingo-card-banner" 
           style={{ 
             maxWidth: '100%', 
-            margin: '10px auto', 
-            height: cust.headerHeight ? `${cust.headerHeight}px` : '160px', 
+            margin: '6px auto', 
+            height: cust.headerHeight ? `${Math.min(cust.headerHeight, 90)}px` : '75px', 
             overflow: 'hidden', 
-            borderRadius: '12px' 
+            borderRadius: '10px' 
           }}
         >
           <img src={cust.headerImage} alt="Bingo Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
@@ -1196,33 +1232,80 @@ export default function BingoCardView() {
         </div>
       )}
 
-      {/* 2. SALA DE ESPERA INTERACTIVA (LOBBY ANTES DE ARRANCAR) */}
+      {/* 2. SALA DE ESPERA COMPACTA INTERACTIVA CON RELOJ REGRESIVO */}
       {gameData?.status === 'waiting' && (
-        <div className="waiting-lobby-card card-glass animate-fade-in">
-          <div className="lobby-badge">⏳ SALA DE ESPERA</div>
-          <h3 className="lobby-title">¡Cartón Listo para Jugar!</h3>
-          <p className="lobby-desc">
-            El anfitrión iniciará la tómbola en breve. Prepárate para cantar Bingo con este cartón.
-          </p>
-
-          <div className="lobby-grid-preview-box">
-            <span className="preview-label">🎯 Objetivo para ganar esta partida:</span>
-            <div className="pattern-pill">
-              <strong>
-                {gameData.winningPattern === 'full' && '🏆 Cartón Lleno (Todas las casillas)'}
-                {gameData.winningPattern === 'line' && '📏 Cualquier Línea Completa'}
+        <div className="waiting-lobby-card-compact card-glass animate-fade-in">
+          {/* Fila Superior: Badge + Objetivo Compacto */}
+          <div className="lobby-compact-header">
+            <div className="lobby-compact-status">
+              <span className="lobby-pulse-dot" />
+              <span className="lobby-badge-text">SALA DE ESPERA</span>
+            </div>
+            <div className="lobby-compact-pattern" title="Objetivo para ganar esta partida">
+              <span className="pattern-icon">🎯</span>
+              <strong className="pattern-text">
+                {gameData.winningPattern === 'full' && '🏆 Cartón Lleno'}
+                {gameData.winningPattern === 'line' && '📏 Cualquier Línea'}
                 {gameData.winningPattern === 'diagonal' && '❌ Diagonales en X'}
-                {gameData.winningPattern === 'four_corners' && '📐 Cuatro Esquinas'}
+                {gameData.winningPattern === 'four_corners' && '📐 4 Esquinas'}
               </strong>
             </div>
           </div>
 
-          <button 
-            className={`btn-test-feedback ${testFeedbackActive ? 'active' : ''}`}
-            onClick={testSoundAndHaptics}
-          >
-            {testFeedbackActive ? '🔔 ¡Altavoces y Vibración Listos!' : '🔔 Probar Sonido y Vibración'}
-          </button>
+          {/* Bloque Central: Reloj Regresivo / Estado de Próxima Ronda */}
+          <div className="lobby-countdown-module">
+            {timeLeft ? (
+              <div className={`countdown-box ${timeLeft.isStarted ? 'imminent animate-pulse' : timeLeft.totalSeconds <= 60 ? 'urgent animate-pulse' : ''}`}>
+                <div className="countdown-label-row">
+                  <span className="countdown-tag">
+                    {timeLeft.isStarted ? '⚡ ¡RONDA A PUNTO DE INICIAR!' : '⏱️ PRÓXIMA RONDA EN:'}
+                  </span>
+                  {timeLeft.formattedTime && !timeLeft.isStarted && (
+                    <span className="countdown-scheduled-time">
+                      Inicio estimado: <strong>{timeLeft.formattedTime}</strong>
+                    </span>
+                  )}
+                </div>
+
+                {timeLeft.isStarted ? (
+                  <div className="countdown-imminent-alert">
+                    <span className="alert-spinner">🔮</span>
+                    <span>El anfitrión está preparando la tómbola para cantar bolas...</span>
+                  </div>
+                ) : (
+                  <div className="countdown-digits-strip">
+                    <div className="time-digit-card">
+                      <span className="digit-val">{timeLeft.minutes}</span>
+                      <span className="digit-unit">MIN</span>
+                    </div>
+                    <span className="time-digit-colon">:</span>
+                    <div className="time-digit-card">
+                      <span className="digit-val">{timeLeft.seconds}</span>
+                      <span className="digit-unit">SEG</span>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="countdown-waiting-host">
+                <span className="waiting-clock-icon">⏳</span>
+                <div className="waiting-host-text">
+                  <strong>Esperando inicio de la partida...</strong>
+                  <span>El anfitrión activará la tómbola en breve</span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Fila Inferior: Botón Compacto de Sonido/Vibración */}
+          <div className="lobby-compact-footer">
+            <button 
+              className={`btn-test-feedback-compact ${testFeedbackActive ? 'active' : ''}`}
+              onClick={testSoundAndHaptics}
+            >
+              {testFeedbackActive ? '🔔 ¡Altavoces y Vibración Listos!' : '🔔 Probar Sonido y Vibración'}
+            </button>
+          </div>
         </div>
       )}
 

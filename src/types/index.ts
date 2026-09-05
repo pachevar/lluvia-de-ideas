@@ -297,6 +297,7 @@ export interface BingoGame {
     serverClaimedAt?: any;
     status: 'pending' | 'verified' | 'rejected';
   } | null;
+  nextRoundTime?: number | null; // Timestamp en milisegundos para el reloj regresivo de la próxima ronda
 }
 
 export interface BingoCard {
