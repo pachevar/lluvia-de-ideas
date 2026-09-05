@@ -68,6 +68,7 @@ const BingoBoletos: React.FC = () => {
   // Sincronización de la próxima ronda y links de pago de Recurrente
   const [activeGame, setActiveGame] = useState<BingoGame | null>(null);
   const [recurrenteLinks, setRecurrenteLinks] = useState<{ [pkgId: string]: string }>({});
+  const [recurrenteSecretKey, setRecurrenteSecretKey] = useState<string>('');
   const [countdownText, setCountdownText] = useState<string | null>(null);
 
   // Cargar juego activo
@@ -83,7 +84,7 @@ const BingoBoletos: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Cargar links de Recurrente de configuración en Firestore
+  // Cargar links de Recurrente y credencial de configuración en Firestore
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -93,6 +94,9 @@ const BingoBoletos: React.FC = () => {
           const data = snap.data();
           if (data.recurrente_links) {
             setRecurrenteLinks(data.recurrente_links);
+          }
+          if (data.recurrente_secret_key) {
+            setRecurrenteSecretKey(data.recurrente_secret_key);
           }
         }
       } catch (err) {
@@ -173,19 +177,61 @@ const BingoBoletos: React.FC = () => {
 
       const orderId = orderRef.id;
 
-      // 2. Comprobar si existe link de Recurrente configurado por el administrador
-      const configuredLink = recurrenteLinks[selectedPackage.id];
+      // 2. Crear sesión de Checkout dinámico en vivo en Recurrente
+      const apiKey = recurrenteSecretKey || (import.meta as any).env?.VITE_RECURRENTE_SECRET_KEY || '';
 
+      if (apiKey) {
+        try {
+          const recurrenteRes = await fetch("https://app.recurrente.com/api/checkouts", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "X-SECRET-KEY": apiKey
+            },
+            body: JSON.stringify({
+              items: [
+                {
+                  name: `Bingotenango: ${selectedPackage.name} (${selectedPackage.cartonesCount} Cartones)`,
+                  amount_in_cents: selectedPackage.priceQ * 100,
+                  currency: "GTQ",
+                  quantity: 1
+                }
+              ],
+              success_url: `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`,
+              cancel_url: `${window.location.origin}/juegos/bingo/boletos`,
+              metadata: {
+                orderId: orderId,
+                playerName: playerName.trim(),
+                playerWhatsapp: cleanPhone,
+                packageId: selectedPackage.id,
+                cartones: selectedPackage.cartonesCount,
+                priceQ: selectedPackage.priceQ
+              }
+            })
+          });
+
+          if (recurrenteRes.ok) {
+            const checkoutData = await recurrenteRes.json();
+            if (checkoutData?.checkout_url) {
+              // Redirigir a la pantalla de pago segura de Recurrente
+              window.location.href = checkoutData.checkout_url;
+              return;
+            }
+          }
+        } catch (apiErr) {
+          console.warn("Fallo directo de API Checkout Recurrente, usando fallback:", apiErr);
+        }
+      }
+
+      // 3. Fallback: Si hay link de producto configurado en Gerencia
+      const configuredLink = recurrenteLinks[selectedPackage.id];
       if (configuredLink && configuredLink.startsWith('http')) {
-        // Redirigir a la pasarela segura de Recurrente
-        // Pasamos metadata mediante parámetros para la redirección de vuelta
         const separator = configuredLink.includes('?') ? '&' : '?';
         const returnUrl = encodeURIComponent(`${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
         const finalUrl = `${configuredLink}${separator}customer_name=${encodeURIComponent(playerName)}&customer_phone=${encodeURIComponent(cleanPhone)}&redirect_url=${returnUrl}`;
         window.location.href = finalUrl;
       } else {
-        // Si aún no han pegado el link de recurrente en gerencia,
-        // simulamos el flujo completo de prueba o pago guiado
+        // Modo guiado / simulado si no hubiera conexión externa
         navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&pkg=${selectedPackage.id}&name=${encodeURIComponent(playerName)}&phone=${cleanPhone}&testMode=true`);
       }
     } catch (err) {

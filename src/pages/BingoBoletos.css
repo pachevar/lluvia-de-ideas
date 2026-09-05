@@ -476,6 +476,213 @@
   line-height: 1.45;
 }
 
+/* ==========================================================================
+   OPTIMIZACIONES ESPECÍFICAS PARA MÓVILES (UX TÁCTIL)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .bingo-boletos-page {
+    padding: 20px 12px 70px;
+  }
+
+  .boletos-header {
+    margin-bottom: 25px;
+  }
+
+  .boletos-logo-badge {
+    padding: 6px 16px;
+    gap: 8px;
+  }
+
+  .boletos-logo-img {
+    height: 34px;
+  }
+
+  .boletos-hero-title {
+    font-size: 1.75rem;
+    line-height: 1.2;
+    margin-bottom: 8px;
+  }
+
+  .boletos-hero-subtitle {
+    font-size: 0.88rem;
+    margin-bottom: 15px;
+  }
+
+  .boletos-countdown-banner {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: center;
+    padding: 8px 14px;
+    gap: 8px;
+  }
+
+  .boletos-countdown-digits {
+    font-size: 1.15rem;
+  }
+
+  .boletos-trust-steps {
+    grid-template-columns: 1fr;
+    gap: 10px;
+    margin-bottom: 28px;
+  }
+
+  .trust-step-card {
+    padding: 12px 14px;
+    gap: 10px;
+  }
+
+  .trust-step-number {
+    width: 28px;
+    height: 28px;
+    font-size: 0.8rem;
+  }
+
+  .trust-step-text h4 {
+    font-size: 0.85rem;
+  }
+
+  .trust-step-text p {
+    font-size: 0.74rem;
+  }
+
+  .boletos-grid-title {
+    font-size: 1.2rem;
+    margin-bottom: 16px;
+  }
+
+  .boletos-packages-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 30px;
+  }
+
+  .package-card {
+    padding: 18px 12px;
+    border-radius: 16px;
+  }
+
+  .package-icon {
+    font-size: 2.2rem;
+    margin-bottom: 8px;
+  }
+
+  .package-name {
+    font-size: 1rem;
+    margin-bottom: 4px;
+  }
+
+  .package-cartones {
+    font-size: 0.75rem;
+    margin-bottom: 10px;
+  }
+
+  .package-amount {
+    font-size: 1.9rem;
+  }
+
+  .package-benefit {
+    font-size: 0.7rem;
+    min-height: 28px;
+    margin-bottom: 12px;
+  }
+
+  .package-select-btn {
+    padding: 8px 10px;
+    font-size: 0.75rem;
+    border-radius: 10px;
+  }
+
+  .checkout-section {
+    padding: 20px 16px;
+    border-radius: 18px;
+    margin-bottom: 30px;
+  }
+
+  .checkout-form-title {
+    font-size: 1.1rem;
+  }
+
+  .form-input {
+    font-size: 16px !important; /* Previene auto-zoom molesto en Safari iOS */
+    padding: 12px 12px;
+  }
+
+  .btn-pay-recurrente {
+    padding: 14px;
+    font-size: 0.95rem;
+  }
+
+  .security-badges-bar {
+    gap: 10px;
+    padding: 12px;
+  }
+
+  .security-badge-item {
+    font-size: 0.68rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .boletos-packages-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .package-card {
+    display: grid;
+    grid-template-columns: auto 1fr auto;
+    align-items: center;
+    text-align: left;
+    gap: 12px;
+    padding: 14px 16px;
+  }
+
+  .package-icon {
+    font-size: 2.2rem;
+    margin-bottom: 0;
+    grid-row: span 2;
+  }
+
+  .package-name {
+    margin: 0;
+    font-size: 1.05rem;
+  }
+
+  .package-cartones {
+    margin: 0;
+    font-size: 0.78rem;
+  }
+
+  .package-price-wrap {
+    margin-bottom: 0;
+    grid-row: span 2;
+    text-align: right;
+  }
+
+  .package-amount {
+    font-size: 1.8rem;
+  }
+
+  .package-benefit, .package-select-btn {
+    display: none;
+  }
+
+  .package-card.selected::after {
+    content: "✓ SELECCIONADO";
+    position: absolute;
+    bottom: -9px;
+    right: 14px;
+    background: #00f0ff;
+    color: #000;
+    font-size: 0.65rem;
+    font-weight: 900;
+    padding: 2px 8px;
+    border-radius: 999px;
+    letter-spacing: 0.5px;
+  }
+}
+
 /* ANIMACIONES */
 @keyframes fadeInDown {
   from {
