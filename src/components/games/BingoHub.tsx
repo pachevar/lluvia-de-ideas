@@ -186,6 +186,15 @@ export default function BingoHub() {
   const [newSchedulePrize, setNewSchedulePrize] = useState('');
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
 
+  // Formulario para Editar Ficha de Juego Programado
+  const [editingScheduleGame, setEditingScheduleGame] = useState<BingoScheduledGame | null>(null);
+  const [editScheduleTitle, setEditScheduleTitle] = useState('');
+  const [editScheduleDateTime, setEditScheduleDateTime] = useState('');
+  const [editScheduleTier, setEditScheduleTier] = useState<'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
+  const [editSchedulePrice, setEditSchedulePrice] = useState<number>(25);
+  const [editSchedulePrize, setEditSchedulePrize] = useState('');
+  const [isSavingEditSchedule, setIsSavingEditSchedule] = useState(false);
+
   // Filtros de la lista de jugadores de la partida programada
   const [scheduledPlayersFilter, setScheduledPlayersFilter] = useState<'all' | 'paid' | 'pending' | 'link_pending' | 'link_sent'>('all');
 
@@ -1467,6 +1476,82 @@ export default function BingoHub() {
     } catch (err) {
       console.error(err);
       await showAlert("Error al eliminar la partida.", "Error", "❌");
+    }
+  };
+
+  const handleOpenEditSchedule = (game: BingoScheduledGame) => {
+    const d = new Date(game.scheduledAt);
+    const pad = (n: number) => n.toString().padStart(2, '0');
+    const formattedDate = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+
+    setEditingScheduleGame(game);
+    setEditScheduleTitle(game.title);
+    setEditScheduleDateTime(formattedDate);
+    setEditScheduleTier(game.gameType || 'tier-25');
+    setEditSchedulePrice(game.cardPriceQ || (game.gameType === 'tier-10' ? 10 : game.gameType === 'tier-50' ? 50 : game.gameType === 'tier-100' ? 100 : 25));
+    setEditSchedulePrize(game.prizeHighlight || '');
+  };
+
+  const handleSaveEditSchedule = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingScheduleGame) return;
+
+    if (!editScheduleTitle.trim() || !editScheduleDateTime) {
+      await showAlert("Por favor completa el título y la fecha/hora de la partida.", "Atención", "⚠️");
+      return;
+    }
+
+    const scheduledTimestamp = new Date(editScheduleDateTime).getTime();
+    if (isNaN(scheduledTimestamp)) {
+      await showAlert("Fecha u hora no válida.", "Error", "❌");
+      return;
+    }
+
+    setIsSavingEditSchedule(true);
+    try {
+      const tierMap: Record<string, string> = {
+        'tier-10': `Cartón Bronce (Q${editSchedulePrice})`,
+        'tier-25': `Cartón Plata (Q${editSchedulePrice})`,
+        'tier-50': `Cartón Oro (Q${editSchedulePrice})`,
+        'tier-100': `Cartón Diamante VIP (Q${editSchedulePrice})`,
+        'multi': `Ronda Multicategoría (Q${editSchedulePrice})`
+      };
+
+      const updatedFields = {
+        title: editScheduleTitle.trim(),
+        scheduledAt: scheduledTimestamp,
+        gameType: editScheduleTier,
+        tierName: tierMap[editScheduleTier] || 'Cartón Estándar',
+        cardPriceQ: Number(editSchedulePrice) || 25,
+        prizeHighlight: editSchedulePrize.trim() || null
+      };
+
+      await updateDoc(doc(db, 'bingo_scheduled_games', editingScheduleGame.id), updatedFields);
+
+      // Si la partida editada está activa en la Tómbola, actualizar también activeGame
+      if (activeGame && (activeGame.scheduledGameId === editingScheduleGame.id || activeGame.id === editingScheduleGame.id)) {
+        await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+          title: editScheduleTitle.trim(),
+          nextRoundTime: scheduledTimestamp,
+          currentPrizeTitle: editSchedulePrize.trim() || activeGame.currentPrizeTitle || '',
+          cardPriceQ: Number(editSchedulePrice) || 25,
+          gameType: editScheduleTier
+        });
+      }
+
+      // Si está seleccionada en la vista detallada, actualizar selectedScheduledGame
+      if (selectedScheduledGame?.id === editingScheduleGame.id) {
+        setSelectedScheduledGame(prev => prev ? ({ ...prev, ...updatedFields } as BingoScheduledGame) : null);
+      }
+
+      addLog(`HOST: Ficha de partida "${editScheduleTitle.trim()}" (Q${editSchedulePrice}/cartón) actualizada.`);
+      await showAlert("¡Ficha de partida actualizada con éxito! Los cambios se reflejarán de inmediato en la tienda y la tómbola.", "Ficha Guardada", "✅");
+      setEditingScheduleGame(null);
+    } catch (err) {
+      console.error("Error al actualizar partida programada:", err);
+      await showAlert("Ocurrió un error al guardar los cambios.", "Error", "❌");
+    } finally {
+      setIsSavingEditSchedule(false);
     }
   };
 
@@ -3916,6 +4001,211 @@ export default function BingoHub() {
                       </form>
                     )}
 
+                    {/* MODAL / FORMULARIO DESPLEGABLE PARA EDITAR FICHA DE PARTIDA */}
+                    {editingScheduleGame && (
+                      <form
+                        onSubmit={handleSaveEditSchedule}
+                        className="animate-fade-in"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.98) 0%, rgba(13, 10, 30, 0.98) 100%)',
+                          border: '2px solid #38bdf8',
+                          borderRadius: '16px',
+                          padding: '22px',
+                          marginBottom: '24px',
+                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.8), 0 0 25px rgba(56, 189, 248, 0.25)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '10px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span style={{ fontSize: '1.2rem' }}>✏️</span>
+                            <strong style={{ color: '#38bdf8', fontSize: '1rem', letterSpacing: '0.5px', fontFamily: 'var(--font-gamer)' }}>
+                              EDITAR FICHA DE PARTIDA PROGRAMADA
+                            </strong>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => setEditingScheduleGame(null)}
+                            style={{
+                              background: 'none',
+                              border: 'none',
+                              color: '#94a3b8',
+                              fontSize: '1.2rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                          {/* Título */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              📌 Nombre o Título de la Partida *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={editScheduleTitle}
+                              onChange={(e) => setEditScheduleTitle(e.target.value)}
+                              placeholder="Ej. Gran Bingo de Gala / Noche de Premios"
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(0,0,0,0.6)',
+                                border: '1.5px solid rgba(56, 189, 248, 0.4)',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontSize: '0.88rem',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+
+                          {/* Fecha y Hora */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              📅 Fecha y Horario Programado *
+                            </label>
+                            <input
+                              type="datetime-local"
+                              required
+                              value={editScheduleDateTime}
+                              onChange={(e) => setEditScheduleDateTime(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(0,0,0,0.6)',
+                                border: '1.5px solid rgba(56, 189, 248, 0.4)',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontSize: '0.88rem',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+
+                          {/* Categoría de Juego */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              🎟️ Categoría de Cartón
+                            </label>
+                            <select
+                              value={editScheduleTier}
+                              onChange={(e) => {
+                                const newTier = e.target.value as any;
+                                setEditScheduleTier(newTier);
+                                const defaultPrice = newTier === 'tier-10' ? 10 : newTier === 'tier-50' ? 50 : newTier === 'tier-100' ? 100 : 25;
+                                setEditSchedulePrice(defaultPrice);
+                              }}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(10, 5, 20, 0.95)',
+                                border: '1.5px solid rgba(56, 189, 248, 0.4)',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontSize: '0.88rem',
+                                outline: 'none'
+                              }}
+                            >
+                              <option value="tier-10">🥉 Cartón Bronce (Sugerido Q10)</option>
+                              <option value="tier-25">🥈 Cartón Plata (Sugerido Q25)</option>
+                              <option value="tier-50">🥇 Cartón Oro (Sugerido Q50)</option>
+                              <option value="tier-100">💎 Cartón Diamante VIP (Sugerido Q100)</option>
+                              <option value="multi">🌈 Ronda Multicategoría</option>
+                            </select>
+                          </div>
+
+                          {/* Costo / Precio Oficial en Quetzales */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#fbbf24', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              💵 Costo Oficial del Cartón (Q) *
+                            </label>
+                            <input
+                              type="number"
+                              min={1}
+                              max={1000}
+                              required
+                              value={editSchedulePrice}
+                              onChange={(e) => setEditSchedulePrice(Number(e.target.value))}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(0,0,0,0.6)',
+                                border: '1.5px solid #fbbf24',
+                                borderRadius: '10px',
+                                color: '#fbbf24',
+                                fontSize: '1.1rem',
+                                fontWeight: 'bold',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+
+                          {/* Premio Principal Destacado */}
+                          <div style={{ gridColumn: '1 / -1' }}>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              🏆 Premio Principal Destacado
+                            </label>
+                            <input
+                              type="text"
+                              value={editSchedulePrize}
+                              onChange={(e) => setEditSchedulePrize(e.target.value)}
+                              placeholder="Ej. Smart TV 55 Pulgadas 4K + Q1,000 en efectivo"
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(0,0,0,0.6)',
+                                border: '1.5px solid rgba(56, 189, 248, 0.4)',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontSize: '0.88rem',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setEditingScheduleGame(null)}
+                            style={{
+                              padding: '9px 18px',
+                              borderRadius: '10px',
+                              background: 'rgba(255,255,255,0.06)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              color: '#94a3b8',
+                              fontWeight: 'bold',
+                              fontSize: '0.82rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={isSavingEditSchedule}
+                            style={{
+                              padding: '9px 24px',
+                              borderRadius: '10px',
+                              background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                              border: '1px solid rgba(56, 189, 248, 0.5)',
+                              color: '#ffffff',
+                              fontWeight: 'bold',
+                              fontSize: '0.85rem',
+                              cursor: isSavingEditSchedule ? 'wait' : 'pointer',
+                              boxShadow: '0 4px 15px rgba(2, 132, 199, 0.4)'
+                            }}
+                          >
+                            {isSavingEditSchedule ? 'Guardando Cambios...' : '💾 Guardar Cambios de la Partida'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
                     {/* CUADRÍCULA DE PARTIDAS PROGRAMADAS */}
                     <div style={{ marginBottom: '28px' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
@@ -4125,6 +4415,27 @@ export default function BingoHub() {
 
                                   <button
                                     type="button"
+                                    onClick={() => handleOpenEditSchedule(game)}
+                                    style={{
+                                      padding: '7px 12px',
+                                      borderRadius: '8px',
+                                      background: 'rgba(56, 189, 248, 0.15)',
+                                      border: '1px solid rgba(56, 189, 248, 0.4)',
+                                      color: '#38bdf8',
+                                      fontSize: '0.78rem',
+                                      fontWeight: 'bold',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    title="Editar horario, nombre, costo y premios de la partida"
+                                  >
+                                    ✏️ Editar
+                                  </button>
+
+                                  <button
+                                    type="button"
                                     onClick={() => handleDeleteScheduledGame(game.id, game.title)}
                                     style={{
                                       padding: '7px 10px',
@@ -4189,22 +4500,45 @@ export default function BingoHub() {
                               </span>
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => setSelectedScheduledGame(null)}
-                              style={{
-                                background: 'rgba(255,255,255,0.08)',
-                                border: '1px solid rgba(255,255,255,0.2)',
-                                color: '#cbd5e1',
-                                padding: '6px 14px',
-                                borderRadius: '8px',
-                                fontSize: '0.78rem',
-                                fontWeight: 'bold',
-                                cursor: 'pointer'
-                              }}
-                            >
-                              ✕ Cerrar Detalle
-                            </button>
+                            <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                              <button
+                                type="button"
+                                onClick={() => handleOpenEditSchedule(selectedScheduledGame)}
+                                style={{
+                                  background: 'rgba(56, 189, 248, 0.15)',
+                                  border: '1px solid rgba(56, 189, 248, 0.4)',
+                                  color: '#38bdf8',
+                                  padding: '6px 14px',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '6px'
+                                }}
+                                title="Modificar horario, título, costo de cartón y premios de este bingo"
+                              >
+                                ✏️ Editar Ficha
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={() => setSelectedScheduledGame(null)}
+                                style={{
+                                  background: 'rgba(255,255,255,0.08)',
+                                  border: '1px solid rgba(255,255,255,0.2)',
+                                  color: '#cbd5e1',
+                                  padding: '6px 14px',
+                                  borderRadius: '8px',
+                                  fontSize: '0.78rem',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                ✕ Cerrar Detalle
+                              </button>
+                            </div>
                           </div>
 
                           {/* Resumen de Métricas de Entrega */}
