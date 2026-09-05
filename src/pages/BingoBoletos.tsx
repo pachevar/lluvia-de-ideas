@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { collection, query, limit, onSnapshot, doc, getDoc, addDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { BingoGame } from '../types';
+import type { BingoGame, BingoScheduledGame } from '../types';
 import './BingoBoletos.css';
 
 interface CardTier {
@@ -72,6 +72,8 @@ const BingoBoletos: React.FC = () => {
 
   // Sincronización de la próxima ronda y links de pago de Recurrente
   const [activeGame, setActiveGame] = useState<BingoGame | null>(null);
+  const [scheduledGames, setScheduledGames] = useState<BingoScheduledGame[]>([]);
+  const [selectedScheduledGame, setSelectedScheduledGame] = useState<BingoScheduledGame | null>(null);
   const [recurrenteLinks, setRecurrenteLinks] = useState<{ [pkgId: string]: string }>({});
   const [recurrenteSecretKey, setRecurrenteSecretKey] = useState<string>('');
   const [countdownText, setCountdownText] = useState<string | null>(null);
@@ -87,6 +89,23 @@ const BingoBoletos: React.FC = () => {
     });
 
     return () => unsubscribe();
+  }, []);
+
+  // Cargar partidas programadas en vivo
+  useEffect(() => {
+    const qSched = query(collection(db, 'bingo_scheduled_games'));
+    const unsubscribeSched = onSnapshot(qSched, (snap) => {
+      const list = snap.docs
+        .map(d => ({ id: d.id, ...d.data() } as BingoScheduledGame))
+        .filter(g => g.status === 'scheduled' || g.status === 'live');
+      list.sort((a, b) => a.scheduledAt - b.scheduledAt);
+      setScheduledGames(list);
+      if (list.length > 0) {
+        setSelectedScheduledGame(prev => prev || list[0]);
+      }
+    });
+
+    return () => unsubscribeSched();
   }, []);
 
   // Cargar links de Recurrente y credencial de configuración en Firestore
@@ -183,6 +202,10 @@ const BingoBoletos: React.FC = () => {
         cartonesCount: quantity, // Compatibilidad
         packageName: `${selectedTier.name} (${quantity} ${quantity === 1 ? 'Cartón' : 'Cartones'})`,
         gameId: activeGame?.id || 'default_game',
+        scheduledGameId: selectedScheduledGame?.id || null,
+        scheduledGameTitle: selectedScheduledGame?.title || null,
+        linkSent: false,
+        linkSentAt: null,
         gateway: 'recurrente_guatemala',
         status: 'pending',
         createdAt: Date.now()
@@ -322,6 +345,61 @@ const BingoBoletos: React.FC = () => {
             </div>
           </div>
         </div>
+
+        {/* SELECTOR DE PARTIDA PROGRAMADA SI EXISTEN */}
+        {scheduledGames.length > 0 && (
+          <div style={{
+            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.7) 100%)',
+            border: '1.5px solid rgba(0, 240, 255, 0.4)',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            marginBottom: '28px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
+            gap: '12px'
+          }}>
+            <div>
+              <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+                📅 INSCRIBIÉNDOSE EN PARTIDA PROGRAMADA
+              </span>
+              <h4 style={{ margin: '2px 0 0 0', color: '#fff', fontSize: '1.05rem', fontFamily: 'var(--font-gamer)' }}>
+                {selectedScheduledGame?.title || 'Ronda de Bingotenango'}
+              </h4>
+              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#cbd5e1' }}>
+                {selectedScheduledGame ? new Date(selectedScheduledGame.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' }) : ''}
+              </p>
+            </div>
+
+            {scheduledGames.length > 1 && (
+              <select
+                value={selectedScheduledGame?.id || ''}
+                onChange={(e) => {
+                  const found = scheduledGames.find(g => g.id === e.target.value);
+                  if (found) setSelectedScheduledGame(found);
+                }}
+                style={{
+                  background: 'rgba(0, 0, 0, 0.6)',
+                  border: '1px solid rgba(0, 240, 255, 0.5)',
+                  color: '#00f0ff',
+                  padding: '8px 12px',
+                  borderRadius: '10px',
+                  fontSize: '0.82rem',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  outline: 'none'
+                }}
+              >
+                {scheduledGames.map(g => (
+                  <option key={g.id} value={g.id}>
+                    📅 {g.title} ({new Date(g.scheduledAt).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })})
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+        )}
 
         {/* 1. SELECTOR DE TIPO DE CARTÓN / PREMIO */}
         <h2 className="boletos-grid-title">

@@ -89,6 +89,12 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // Colección de juegos y partidas programadas de Bingo
+    match /bingo_scheduled_games/{gameId} {
+      allow read: if true; // Lectura pública para sincronizar horarios y compras
+      allow write: if true; // Creación y actualización por organizadores y tómbola
+    }
+
     // Configuración general de Bingo (pasarelas de pago, etc.)
     match /bingo_settings/{settingId} {
       allow read: if true; // Lectura pública de links y configuraciones

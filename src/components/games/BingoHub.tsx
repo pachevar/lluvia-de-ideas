@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
-import type { BingoGame, BingoCard, BingoPrize, Sponsor, BingoPromoter, BingoAccessToken } from '../../types';
+import type { BingoGame, BingoCard, BingoPrize, Sponsor, BingoPromoter, BingoAccessToken, BingoScheduledGame } from '../../types';
 import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardCollision } from '../../utils/bingoGenerator';
 import type { MarkedSlots } from '../../utils/bingoGenerator';
 import { soundEffects } from '../../utils/soundEffects';
@@ -171,6 +171,24 @@ export default function BingoHub() {
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [instructionsTab, setInstructionsTab] = useState<'form' | 'promoter' | 'become' | 'rules'>('form');
 
+  // SUB-PESTAÑA EN MÓDULO REGISTRO (Sesión Activa vs Juegos Programados)
+  const [waitingSubTab, setWaitingSubTab] = useState<'session_directory' | 'scheduled_games'>('session_directory');
+  const [scheduledGamesList, setScheduledGamesList] = useState<BingoScheduledGame[]>([]);
+  const [selectedScheduledGame, setSelectedScheduledGame] = useState<BingoScheduledGame | null>(null);
+  const [allAccessTokens, setAllAccessTokens] = useState<BingoAccessToken[]>([]);
+  const [allBingoOrders, setAllBingoOrders] = useState<any[]>([]);
+
+  // Formulario para Crear Juego Programado
+  const [showCreateScheduleModal, setShowCreateScheduleModal] = useState(false);
+  const [newScheduleTitle, setNewScheduleTitle] = useState('');
+  const [newScheduleDateTime, setNewScheduleDateTime] = useState('');
+  const [newScheduleTier, setNewScheduleTier] = useState<'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
+  const [newSchedulePrize, setNewSchedulePrize] = useState('');
+  const [isSavingSchedule, setIsSavingSchedule] = useState(false);
+
+  // Filtros de la lista de jugadores de la partida programada
+  const [scheduledPlayersFilter, setScheduledPlayersFilter] = useState<'all' | 'paid' | 'pending' | 'link_pending' | 'link_sent'>('all');
+
   useEffect(() => {
     const qPromos = query(collection(db, 'bingo_promoters'));
     const unsubPromos = onSnapshot(qPromos, (snap) => {
@@ -180,6 +198,43 @@ export default function BingoHub() {
       console.warn("Could not load promoters list", err);
     });
     return () => unsubPromos();
+  }, []);
+
+  // Escuchar partidas programadas en Firestore
+  useEffect(() => {
+    const qSched = query(collection(db, 'bingo_scheduled_games'));
+    const unsubSched = onSnapshot(qSched, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as BingoScheduledGame));
+      list.sort((a, b) => a.scheduledAt - b.scheduledAt);
+      setScheduledGamesList(list);
+    }, (err) => {
+      console.warn("Could not load scheduled games", err);
+    });
+    return () => unsubSched();
+  }, []);
+
+  // Escuchar tokens de acceso y órdenes para el Host
+  useEffect(() => {
+    const qTokens = query(collection(db, 'bingo_access_tokens'));
+    const unsubTokens = onSnapshot(qTokens, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as BingoAccessToken));
+      setAllAccessTokens(list);
+    }, (err) => {
+      console.warn("Could not load access tokens", err);
+    });
+
+    const qOrders = query(collection(db, 'bingo_orders'));
+    const unsubOrders = onSnapshot(qOrders, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+      setAllBingoOrders(list);
+    }, (err) => {
+      console.warn("Could not load bingo orders", err);
+    });
+
+    return () => {
+      unsubTokens();
+      unsubOrders();
+    };
   }, []);
 
   const toggleRevealId = (id: string) => {
@@ -1199,6 +1254,165 @@ export default function BingoHub() {
     }
   };
 
+  // MANEJADORES DE JUEGOS PROGRAMADOS
+  const handleCreateScheduledGame = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newScheduleTitle.trim() || !newScheduleDateTime) {
+      await showAlert("Por favor completa el título y la fecha/hora de la partida.", "Atención", "⚠️");
+      return;
+    }
+
+    const scheduledTimestamp = new Date(newScheduleDateTime).getTime();
+    if (isNaN(scheduledTimestamp)) {
+      await showAlert("Fecha u hora no válida.", "Error", "❌");
+      return;
+    }
+
+    setIsSavingSchedule(true);
+    try {
+      const schedId = 'sched_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
+      const tierMap: Record<string, string> = {
+        'tier-10': 'Cartón Bronce (Q10)',
+        'tier-25': 'Cartón Plata (Q25)',
+        'tier-50': 'Cartón Oro (Q50)',
+        'tier-100': 'Cartón Diamante VIP (Q100)',
+        'multi': 'Ronda Multicategoría (Todas las opciones)'
+      };
+
+      const newGame: BingoScheduledGame = {
+        id: schedId,
+        title: newScheduleTitle.trim(),
+        scheduledAt: scheduledTimestamp,
+        gameType: newScheduleTier,
+        tierName: tierMap[newScheduleTier] || 'Cartón Estándar',
+        prizeHighlight: newSchedulePrize.trim() || undefined,
+        status: 'scheduled',
+        createdAt: Date.now()
+      };
+
+      await setDoc(doc(db, 'bingo_scheduled_games', schedId), newGame);
+      addLog(`HOST: Partida programada creada: "${newScheduleTitle.trim()}".`);
+      await showAlert("¡Partida programada con éxito! Ya puedes verla en la lista y admitir jugadores.", "Juego Programado", "📅");
+      
+      setNewScheduleTitle('');
+      setNewScheduleDateTime('');
+      setNewSchedulePrize('');
+      setShowCreateScheduleModal(false);
+      setSelectedScheduledGame(newGame);
+    } catch (err) {
+      console.error(err);
+      await showAlert("Error al programar la partida.", "Error", "❌");
+    } finally {
+      setIsSavingSchedule(false);
+    }
+  };
+
+  const handleActivateScheduledGame = async (game: BingoScheduledGame) => {
+    if (!activeGame) return;
+    const confirm = await showConfirm(
+      `¿Deseas ACTIVAR la partida "${game.title}" en la Tómbola ahora?\n\nEsto sincronizará el temporizador de la sala de espera y actualizará el título y premios activos en vivo.`,
+      "Activar Partida en Vivo",
+      "🚀",
+      "SÍ, ACTIVAR AHORA",
+      "CANCELAR"
+    );
+    if (!confirm) return;
+
+    try {
+      await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+        title: game.title,
+        nextRoundTime: game.scheduledAt,
+        currentPrizeTitle: game.prizeHighlight || activeGame.currentPrizeTitle || '',
+        scheduledGameId: game.id,
+        status: 'waiting'
+      });
+
+      await updateDoc(doc(db, 'bingo_scheduled_games', game.id), {
+        status: 'live'
+      });
+
+      addLog(`HOST: Partida programada "${game.title}" activada en vivo en la Tómbola.`);
+      await showAlert(`¡La partida "${game.title}" está activa en la Tómbola y el reloj regresivo fue sincronizado! 🚀`, "Partida Activa", "🚀");
+    } catch (err) {
+      console.error(err);
+      await showAlert("Error al activar la partida.", "Error", "❌");
+    }
+  };
+
+  const handleDeleteScheduledGame = async (gameId: string, gameTitle: string) => {
+    const confirm = await showConfirm(
+      `¿Seguro que deseas eliminar la partida programada "${gameTitle}"?`,
+      "Eliminar Partida",
+      "🗑️",
+      "ELIMINAR",
+      "CANCELAR"
+    );
+    if (!confirm) return;
+
+    try {
+      await deleteDoc(doc(db, 'bingo_scheduled_games', gameId));
+      if (selectedScheduledGame?.id === gameId) {
+        setSelectedScheduledGame(null);
+      }
+      addLog(`HOST: Partida programada "${gameTitle}" eliminada.`);
+    } catch (err) {
+      console.error(err);
+      await showAlert("Error al eliminar la partida.", "Error", "❌");
+    }
+  };
+
+  const handleToggleLinkSent = async (token: BingoAccessToken) => {
+    try {
+      const newVal = !token.linkSent;
+      await updateDoc(doc(db, 'bingo_access_tokens', token.id), {
+        linkSent: newVal,
+        linkSentAt: newVal ? Date.now() : null
+      });
+      if (token.orderId) {
+        try {
+          await updateDoc(doc(db, 'bingo_orders', token.orderId), {
+            linkSent: newVal,
+            linkSentAt: newVal ? Date.now() : null
+          });
+        } catch {}
+      }
+    } catch (err) {
+      console.error("Error toggling linkSent:", err);
+    }
+  };
+
+  const handleSendWhatsAppPass = async (token: BingoAccessToken) => {
+    const cleanPhone = (token.playerWhatsapp || '').replace(/\D/g, '');
+    if (cleanPhone.length < 8) {
+      await showAlert("Este jugador no tiene un número de WhatsApp válido registrado.", "Sin WhatsApp", "⚠️");
+      return;
+    }
+
+    const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
+    const text = encodeURIComponent(
+      `¡Hola ${token.playerName}! 🎟️ Te compartimos tu Pase Único oficial para Bingotenango:\n\n` +
+      `🏆 Categoría: ${token.tierName || 'Cartón Oficial'} (${token.prizeLevel || 'En vivo'})\n` +
+      `🎟️ Total Cartones: ${token.quantity}\n\n` +
+      `🔑 ENLACE EXCLUSIVO DE ACCESO:\n${playUrl}\n\n` +
+      `⚠️ Este enlace es de un solo uso para tu dispositivo. Al iniciar la partida podrás jugar directamente. ¡Mucha suerte!`
+    );
+
+    window.open(`https://wa.me/502${cleanPhone}?text=${text}`, '_blank');
+
+    try {
+      await updateDoc(doc(db, 'bingo_access_tokens', token.id), {
+        linkSent: true,
+        linkSentAt: Date.now()
+      });
+      if (token.orderId) {
+        await updateDoc(doc(db, 'bingo_orders', token.orderId), {
+          linkSent: true,
+          linkSentAt: Date.now()
+        });
+      }
+    } catch {}
+  };
+
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!activeGame || !playerName.trim()) return;
@@ -2212,7 +2426,7 @@ export default function BingoHub() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '18px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px' }}>
                       <div>
                         <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '1.2px', color: 'var(--cyber-cyan)', fontWeight: 'bold', display: 'block', marginBottom: '2px' }}>
-                          📌 DIRECTORIO DE SESIÓN DE JUEGO
+                          📌 PANEL DE CONTROL Y REGISTRO
                         </span>
                         <h3 style={{ margin: 0, fontSize: '1.45rem', fontFamily: 'var(--font-gamer)', color: '#ffffff', letterSpacing: '0.5px' }}>
                           {activeGame.title}
@@ -2224,6 +2438,61 @@ export default function BingoHub() {
                       </span>
                     </div>
 
+                    {/* SELECTOR DE SUB-PESTAÑAS: Sesión Activa vs Juegos Programados */}
+                    <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '14px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={() => setWaitingSubTab('session_directory')}
+                        style={{
+                          padding: '10px 20px',
+                          borderRadius: '12px',
+                          background: waitingSubTab === 'session_directory' ? 'linear-gradient(135deg, rgba(0, 240, 255, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%)' : 'rgba(255,255,255,0.04)',
+                          border: waitingSubTab === 'session_directory' ? '1.5px solid #00f0ff' : '1px solid rgba(255,255,255,0.1)',
+                          color: waitingSubTab === 'session_directory' ? '#00f0ff' : '#94a3b8',
+                          fontWeight: 'bold',
+                          fontSize: '0.88rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: waitingSubTab === 'session_directory' ? '0 0 16px rgba(0,240,255,0.2)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        👥 Jugadores en Sesión Activa ({registeredCards.length})
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setWaitingSubTab('scheduled_games')}
+                        style={{
+                          padding: '10px 20px',
+                          borderRadius: '12px',
+                          background: waitingSubTab === 'scheduled_games' ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.3) 0%, rgba(236, 72, 153, 0.3) 100%)' : 'rgba(255,255,255,0.04)',
+                          border: waitingSubTab === 'scheduled_games' ? '1.5px solid #a855f7' : '1px solid rgba(255,255,255,0.1)',
+                          color: waitingSubTab === 'scheduled_games' ? '#f472b6' : '#94a3b8',
+                          fontWeight: 'bold',
+                          fontSize: '0.88rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: waitingSubTab === 'scheduled_games' ? '0 0 16px rgba(168,85,247,0.25)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        📅 Juegos Programados ({scheduledGamesList.length})
+                        {scheduledGamesList.filter(g => g.status === 'scheduled').length > 0 && (
+                          <span style={{ background: '#a855f7', color: '#fff', fontSize: '0.72rem', padding: '2px 8px', borderRadius: '10px', fontWeight: 'bold' }}>
+                            {scheduledGamesList.filter(g => g.status === 'scheduled').length}
+                          </span>
+                        )}
+                      </button>
+                    </div>
+
+                    {/* VISTA 1: DIRECTORIO DE SESIÓN ACTIVA */}
+                    {waitingSubTab === 'session_directory' && (
+                      <div className="animate-fade-in">
                     {/* CONTROLADOR DE RELOJ REGRESIVO DE PRÓXIMA RONDA - DISEÑO UNIFICADO */}
                     <div className="host-round-timer-controller animate-fade-in" style={{
                       background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.95) 0%, rgba(10, 8, 22, 0.98) 100%)',
@@ -2922,6 +3191,774 @@ export default function BingoHub() {
                         </tbody>
                       </table>
                     </div>
+
+                  </div>
+                )}
+
+                {/* VISTA 2: JUEGOS PROGRAMADOS Y CONTROL DE JUGADORES */}
+                {waitingSubTab === 'scheduled_games' && (
+                  <div className="scheduled-games-dashboard animate-fade-in">
+                    
+                    {/* BARRA SUPERIOR DE ACCIONES */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '16px',
+                      background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.95) 0%, rgba(10, 8, 22, 0.98) 100%)',
+                      border: '1.5px solid rgba(168, 85, 247, 0.4)',
+                      borderRadius: '16px',
+                      padding: '16px 20px',
+                      marginBottom: '24px',
+                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(168, 85, 247, 0.08)'
+                    }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1.2rem' }}>📅</span>
+                          <h4 style={{ margin: 0, fontSize: '1.1rem', color: '#ffffff', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
+                            PANEL DE JUEGOS Y RONDAS PROGRAMADAS
+                          </h4>
+                        </div>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#94a3b8' }}>
+                          Programa partidas con fecha y hora, asigna premios y gestiona a los jugadores con pagos confirmados y enlaces de acceso.
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowCreateScheduleModal(prev => !prev)}
+                        style={{
+                          background: showCreateScheduleModal ? 'rgba(239, 68, 68, 0.2)' : 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                          border: showCreateScheduleModal ? '1px solid #ef4444' : 'none',
+                          color: '#ffffff',
+                          fontWeight: 'bold',
+                          padding: '10px 20px',
+                          borderRadius: '12px',
+                          fontSize: '0.85rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: showCreateScheduleModal ? 'none' : '0 4px 18px rgba(168, 85, 247, 0.4)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {showCreateScheduleModal ? '✕ Cancelar' : '➕ Programar Nuevo Juego'}
+                      </button>
+                    </div>
+
+                    {/* MODAL / FORMULARIO DESPLEGABLE PARA PROGRAMAR JUEGO */}
+                    {showCreateScheduleModal && (
+                      <form
+                        onSubmit={handleCreateScheduledGame}
+                        className="animate-fade-in"
+                        style={{
+                          background: 'linear-gradient(135deg, rgba(26, 16, 48, 0.95) 0%, rgba(15, 10, 30, 0.98) 100%)',
+                          border: '1.5px solid #a855f7',
+                          borderRadius: '16px',
+                          padding: '20px',
+                          marginBottom: '24px',
+                          boxShadow: '0 8px 32px rgba(168, 85, 247, 0.25)'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
+                          <span style={{ fontSize: '1.1rem' }}>✨</span>
+                          <strong style={{ color: '#f472b6', fontSize: '0.95rem', letterSpacing: '0.5px' }}>
+                            CONFIGURAR NUEVA PARTIDA PROGRAMADA
+                          </strong>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginBottom: '16px' }}>
+                          {/* Título */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              📌 Nombre o Título de la Partida *
+                            </label>
+                            <input
+                              type="text"
+                              required
+                              value={newScheduleTitle}
+                              onChange={(e) => setNewScheduleTitle(e.target.value)}
+                              placeholder="Ej. Gran Bingo de Gala / Noche de Premios"
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(0,0,0,0.5)',
+                                border: '1px solid rgba(168, 85, 247, 0.4)',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontSize: '0.85rem',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+
+                          {/* Fecha y Hora */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              📅 Fecha y Hora Programada *
+                            </label>
+                            <input
+                              type="datetime-local"
+                              required
+                              value={newScheduleDateTime}
+                              onChange={(e) => setNewScheduleDateTime(e.target.value)}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(0,0,0,0.5)',
+                                border: '1px solid rgba(168, 85, 247, 0.4)',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontSize: '0.85rem',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+
+                          {/* Tipo de Juego / Categoría de Cartón */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              🎟️ Tipo de Juego / Precio
+                            </label>
+                            <select
+                              value={newScheduleTier}
+                              onChange={(e) => setNewScheduleTier(e.target.value as any)}
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(10, 5, 20, 0.9)',
+                                border: '1px solid rgba(168, 85, 247, 0.4)',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontSize: '0.85rem',
+                                outline: 'none'
+                              }}
+                            >
+                              <option value="tier-10">🥉 Cartón Bronce — Q10 (Ronda Rápida)</option>
+                              <option value="tier-25">🥈 Cartón Plata — Q25 (Ronda Estándar)</option>
+                              <option value="tier-50">🥇 Cartón Oro — Q50 (Premios Especiales)</option>
+                              <option value="tier-100">💎 Cartón Diamante VIP — Q100 (Premio Mayor)</option>
+                              <option value="multi">🌈 Ronda Multicategoría (Abierto a todos)</option>
+                            </select>
+                          </div>
+
+                          {/* Premio Destacado */}
+                          <div>
+                            <label style={{ display: 'block', fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 'bold', marginBottom: '6px', textTransform: 'uppercase' }}>
+                              🏆 Premio Principal Destacado
+                            </label>
+                            <input
+                              type="text"
+                              value={newSchedulePrize}
+                              onChange={(e) => setNewSchedulePrize(e.target.value)}
+                              placeholder="Ej. Smart TV 55 Pulgadas 4K + Q1,000"
+                              style={{
+                                width: '100%',
+                                padding: '10px 14px',
+                                background: 'rgba(0,0,0,0.5)',
+                                border: '1px solid rgba(168, 85, 247, 0.4)',
+                                borderRadius: '10px',
+                                color: '#fff',
+                                fontSize: '0.85rem',
+                                outline: 'none'
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                          <button
+                            type="button"
+                            onClick={() => setShowCreateScheduleModal(false)}
+                            style={{
+                              padding: '8px 18px',
+                              borderRadius: '10px',
+                              background: 'rgba(255,255,255,0.06)',
+                              border: '1px solid rgba(255,255,255,0.15)',
+                              color: '#94a3b8',
+                              fontWeight: 'bold',
+                              fontSize: '0.82rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Cancelar
+                          </button>
+                          <button
+                            type="submit"
+                            disabled={isSavingSchedule}
+                            style={{
+                              padding: '8px 22px',
+                              borderRadius: '10px',
+                              background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                              border: 'none',
+                              color: '#ffffff',
+                              fontWeight: 'bold',
+                              fontSize: '0.85rem',
+                              cursor: isSavingSchedule ? 'wait' : 'pointer',
+                              boxShadow: '0 4px 15px rgba(168, 85, 247, 0.4)'
+                            }}
+                          >
+                            {isSavingSchedule ? 'Guardando...' : '💾 Guardar y Programar Juego'}
+                          </button>
+                        </div>
+                      </form>
+                    )}
+
+                    {/* CUADRÍCULA DE PARTIDAS PROGRAMADAS */}
+                    <div style={{ marginBottom: '28px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
+                        <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '1.2px', color: '#94a3b8', fontWeight: 'bold' }}>
+                          PARTIDAS EN CALENDARIO ({scheduledGamesList.length})
+                        </span>
+                      </div>
+
+                      {scheduledGamesList.length === 0 ? (
+                        <div style={{
+                          background: 'rgba(0, 0, 0, 0.3)',
+                          border: '1px dashed rgba(168, 85, 247, 0.3)',
+                          borderRadius: '16px',
+                          padding: '40px 20px',
+                          textAlign: 'center',
+                          color: '#94a3b8'
+                        }}>
+                          <span style={{ fontSize: '2.5rem', display: 'block', marginBottom: '10px' }}>🗓️</span>
+                          <strong style={{ display: 'block', fontSize: '1.05rem', color: '#e2e8f0', marginBottom: '6px' }}>
+                            No hay juegos programados actualmente
+                          </strong>
+                          <p style={{ margin: '0 auto 16px auto', maxWidth: '420px', fontSize: '0.82rem' }}>
+                            Haz clic en "➕ Programar Nuevo Juego" para crear una partida con fecha, horario y boletos disponibles en la pasarela.
+                          </p>
+                          <button
+                            type="button"
+                            onClick={() => setShowCreateScheduleModal(true)}
+                            style={{
+                              background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
+                              border: 'none',
+                              color: '#fff',
+                              padding: '8px 18px',
+                              borderRadius: '10px',
+                              fontWeight: 'bold',
+                              fontSize: '0.85rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Programar Primer Juego
+                          </button>
+                        </div>
+                      ) : (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+                          {scheduledGamesList.map((game) => {
+                            const isSelected = selectedScheduledGame?.id === game.id;
+                            const isLive = game.status === 'live';
+                            const gameTokens = allAccessTokens.filter(t => t.scheduledGameId === game.id);
+                            const gameOrders = allBingoOrders.filter(o => o.scheduledGameId === game.id);
+                            const totalCartones = gameTokens.reduce((sum, t) => sum + (t.quantity || 1), 0);
+                            const totalRecaudado = gameOrders.filter(o => o.status === 'paid').reduce((sum, o) => sum + (o.amount || 0), 0);
+
+                            const schedDate = new Date(game.scheduledAt);
+                            const dateFormatted = schedDate.toLocaleDateString('es-GT', { weekday: 'short', day: 'numeric', month: 'short' });
+                            const timeFormatted = schedDate.toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' });
+
+                            return (
+                              <div
+                                key={game.id}
+                                style={{
+                                  background: isSelected 
+                                    ? 'linear-gradient(135deg, rgba(30, 20, 55, 0.95) 0%, rgba(20, 10, 40, 0.98) 100%)'
+                                    : 'rgba(18, 12, 35, 0.75)',
+                                  border: isSelected 
+                                    ? '2px solid #a855f7' 
+                                    : isLive 
+                                      ? '1.5px solid #22c55e'
+                                      : '1px solid rgba(168, 85, 247, 0.25)',
+                                  borderRadius: '16px',
+                                  padding: '16px',
+                                  boxShadow: isSelected 
+                                    ? '0 0 25px rgba(168, 85, 247, 0.35)' 
+                                    : '0 4px 20px rgba(0, 0, 0, 0.4)',
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  justifyContent: 'space-between',
+                                  position: 'relative',
+                                  overflow: 'hidden',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                {/* Badge de Estado Superior */}
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '12px' }}>
+                                  <div>
+                                    {isLive ? (
+                                      <span style={{
+                                        background: 'rgba(34, 197, 94, 0.2)',
+                                        border: '1px solid #22c55e',
+                                        color: '#4ade80',
+                                        fontSize: '0.68rem',
+                                        fontWeight: 'bold',
+                                        padding: '3px 8px',
+                                        borderRadius: '6px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px'
+                                      }}>
+                                        ● EN VIVO EN TÓMBOLA
+                                      </span>
+                                    ) : (
+                                      <span style={{
+                                        background: 'rgba(168, 85, 247, 0.15)',
+                                        border: '1px solid rgba(168, 85, 247, 0.4)',
+                                        color: '#c084fc',
+                                        fontSize: '0.68rem',
+                                        fontWeight: 'bold',
+                                        padding: '3px 8px',
+                                        borderRadius: '6px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px'
+                                      }}>
+                                        📅 PROGRAMADO
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  <span style={{ fontSize: '0.72rem', color: '#94a3b8', fontWeight: 'bold' }}>
+                                    {game.tierName}
+                                  </span>
+                                </div>
+
+                                {/* Título y Detalles */}
+                                <div style={{ marginBottom: '14px' }}>
+                                  <h5 style={{ margin: '0 0 6px 0', fontSize: '1.15rem', color: '#ffffff', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
+                                    {game.title}
+                                  </h5>
+                                  
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#38bdf8', fontSize: '0.82rem', fontWeight: 'bold', marginBottom: '4px' }}>
+                                    <span>⏰</span>
+                                    <span>{dateFormatted}, {timeFormatted}</span>
+                                  </div>
+
+                                  {game.prizeHighlight && (
+                                    <div style={{ fontSize: '0.76rem', color: '#fef08a', background: 'rgba(234, 179, 8, 0.12)', border: '1px solid rgba(234, 179, 8, 0.25)', padding: '4px 8px', borderRadius: '6px', marginTop: '6px' }}>
+                                      🏆 {game.prizeHighlight}
+                                    </div>
+                                  )}
+                                </div>
+
+                                {/* Métricas Rápidas del Juego */}
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(3, 1fr)',
+                                  gap: '6px',
+                                  background: 'rgba(0,0,0,0.35)',
+                                  borderRadius: '10px',
+                                  padding: '8px 10px',
+                                  marginBottom: '14px',
+                                  textAlign: 'center'
+                                }}>
+                                  <div>
+                                    <span style={{ fontSize: '0.62rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>Jugadores</span>
+                                    <strong style={{ fontSize: '0.95rem', color: '#fff' }}>{gameTokens.length}</strong>
+                                  </div>
+                                  <div>
+                                    <span style={{ fontSize: '0.62rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>Cartones</span>
+                                    <strong style={{ fontSize: '0.95rem', color: '#38bdf8' }}>{totalCartones}</strong>
+                                  </div>
+                                  <div>
+                                    <span style={{ fontSize: '0.62rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>Recaudado</span>
+                                    <strong style={{ fontSize: '0.95rem', color: '#4ade80' }}>Q{totalRecaudado}</strong>
+                                  </div>
+                                </div>
+
+                                {/* Botones de Control */}
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setSelectedScheduledGame(isSelected ? null : game)}
+                                    style={{
+                                      flex: 1,
+                                      padding: '7px 12px',
+                                      borderRadius: '8px',
+                                      background: isSelected ? 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)' : 'rgba(168, 85, 247, 0.2)',
+                                      border: '1px solid #a855f7',
+                                      color: '#ffffff',
+                                      fontSize: '0.78rem',
+                                      fontWeight: 'bold',
+                                      cursor: 'pointer',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      gap: '6px'
+                                    }}
+                                  >
+                                    👥 {isSelected ? 'Cerrar Jugadores' : `Ver Jugadores (${gameTokens.length})`}
+                                  </button>
+
+                                  {!isLive && (
+                                    <button
+                                      type="button"
+                                      onClick={() => handleActivateScheduledGame(game)}
+                                      style={{
+                                        padding: '7px 12px',
+                                        borderRadius: '8px',
+                                        background: 'rgba(34, 197, 94, 0.15)',
+                                        border: '1px solid rgba(34, 197, 94, 0.4)',
+                                        color: '#4ade80',
+                                        fontSize: '0.78rem',
+                                        fontWeight: 'bold',
+                                        cursor: 'pointer'
+                                      }}
+                                      title="Activar esta partida en vivo en la Tómbola ahora"
+                                    >
+                                      🚀 Activar
+                                    </button>
+                                  )}
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteScheduledGame(game.id, game.title)}
+                                    style={{
+                                      padding: '7px 10px',
+                                      borderRadius: '8px',
+                                      background: 'rgba(239, 68, 68, 0.12)',
+                                      border: '1px solid rgba(239, 68, 68, 0.35)',
+                                      color: '#ef4444',
+                                      fontSize: '0.78rem',
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Eliminar partida programada"
+                                  >
+                                    🗑️
+                                  </button>
+                                </div>
+
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* SECCIÓN DETALLADA: JUGADORES DEL JUEGO SELECCIONADO */}
+                    {selectedScheduledGame && (() => {
+                      const currentTokens = allAccessTokens.filter(t => t.scheduledGameId === selectedScheduledGame.id);
+                      const currentOrders = allBingoOrders.filter(o => o.scheduledGameId === selectedScheduledGame.id);
+
+                      const filteredTokens = currentTokens.filter(t => {
+                        const order = currentOrders.find(o => o.id === t.orderId);
+                        const isPaid = order ? order.status === 'paid' : true;
+                        if (scheduledPlayersFilter === 'paid') return isPaid;
+                        if (scheduledPlayersFilter === 'pending') return !isPaid;
+                        if (scheduledPlayersFilter === 'link_sent') return !!t.linkSent;
+                        if (scheduledPlayersFilter === 'link_pending') return !t.linkSent;
+                        return true;
+                      });
+
+                      const totalSent = currentTokens.filter(t => t.linkSent).length;
+                      const totalOpened = currentTokens.filter(t => t.firstUsedAt).length;
+
+                      return (
+                        <div className="animate-fade-in" style={{
+                          background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.95) 0%, rgba(10, 8, 22, 0.98) 100%)',
+                          border: '1.5px solid #a855f7',
+                          borderRadius: '16px',
+                          padding: '20px',
+                          boxShadow: '0 8px 32px rgba(0, 0, 0, 0.6), 0 0 20px rgba(168, 85, 247, 0.15)'
+                        }}>
+                          {/* Cabecera del Detalle de Jugadores */}
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '14px' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '1.2rem' }}>👥</span>
+                                <h4 style={{ margin: 0, fontSize: '1.25rem', color: '#fff', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
+                                  JUGADORES INSCRITOS: {selectedScheduledGame.title}
+                                </h4>
+                              </div>
+                              <span style={{ fontSize: '0.78rem', color: '#c084fc', display: 'block', marginTop: '2px' }}>
+                                {selectedScheduledGame.tierName} — {new Date(selectedScheduledGame.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' })}
+                              </span>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setSelectedScheduledGame(null)}
+                              style={{
+                                background: 'rgba(255,255,255,0.08)',
+                                border: '1px solid rgba(255,255,255,0.2)',
+                                color: '#cbd5e1',
+                                padding: '6px 14px',
+                                borderRadius: '8px',
+                                fontSize: '0.78rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer'
+                              }}
+                            >
+                              ✕ Cerrar Detalle
+                            </button>
+                          </div>
+
+                          {/* Resumen de Métricas de Entrega */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '10px', marginBottom: '16px' }}>
+                            <div style={{ background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.68rem', color: '#cbd5e1', textTransform: 'uppercase', display: 'block' }}>Inscritos</span>
+                              <strong style={{ fontSize: '1.3rem', color: '#fff', fontFamily: 'var(--font-gamer)' }}>{currentTokens.length}</strong>
+                            </div>
+                            <div style={{ background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.68rem', color: '#cbd5e1', textTransform: 'uppercase', display: 'block' }}>Pagados</span>
+                              <strong style={{ fontSize: '1.3rem', color: '#4ade80', fontFamily: 'var(--font-gamer)' }}>
+                                {currentOrders.filter(o => o.status === 'paid').length}
+                              </strong>
+                            </div>
+                            <div style={{ background: 'rgba(56, 189, 248, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.68rem', color: '#cbd5e1', textTransform: 'uppercase', display: 'block' }}>Links Enviados</span>
+                              <strong style={{ fontSize: '1.3rem', color: '#38bdf8', fontFamily: 'var(--font-gamer)' }}>{totalSent} / {currentTokens.length}</strong>
+                            </div>
+                            <div style={{ background: 'rgba(234, 179, 8, 0.12)', border: '1px solid rgba(234, 179, 8, 0.3)', borderRadius: '12px', padding: '10px', textAlign: 'center' }}>
+                              <span style={{ fontSize: '0.68rem', color: '#cbd5e1', textTransform: 'uppercase', display: 'block' }}>Abiertos / Usados</span>
+                              <strong style={{ fontSize: '1.3rem', color: '#fbbf24', fontFamily: 'var(--font-gamer)' }}>{totalOpened}</strong>
+                            </div>
+                          </div>
+
+                          {/* Filtros de Jugadores */}
+                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                            {[
+                              { key: 'all', label: `Todos (${currentTokens.length})` },
+                              { key: 'paid', label: `🟢 Pagados (${currentOrders.filter(o => o.status === 'paid').length})` },
+                              { key: 'pending', label: `🟡 Pendientes (${currentOrders.filter(o => o.status === 'pending').length})` },
+                              { key: 'link_pending', label: `📲 Link Pendiente (${currentTokens.filter(t => !t.linkSent).length})` },
+                              { key: 'link_sent', label: `✅ Link Enviado (${totalSent})` }
+                            ].map(f => (
+                              <button
+                                key={f.key}
+                                type="button"
+                                onClick={() => setScheduledPlayersFilter(f.key as any)}
+                                style={{
+                                  padding: '5px 12px',
+                                  borderRadius: '8px',
+                                  background: scheduledPlayersFilter === f.key ? 'rgba(168, 85, 247, 0.3)' : 'rgba(255,255,255,0.05)',
+                                  border: scheduledPlayersFilter === f.key ? '1px solid #a855f7' : '1px solid rgba(255,255,255,0.1)',
+                                  color: scheduledPlayersFilter === f.key ? '#f472b6' : '#94a3b8',
+                                  fontSize: '0.75rem',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer'
+                                }}
+                              >
+                                {f.label}
+                              </button>
+                            ))}
+                          </div>
+
+                          {/* Tabla de Jugadores Inscritos */}
+                          <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                              <thead>
+                                <tr style={{ background: 'rgba(0,0,0,0.4)', borderBottom: '1px solid rgba(255,255,255,0.1)', color: '#94a3b8' }}>
+                                  <th style={{ padding: '10px 14px' }}>JUGADOR / WHATSAPP</th>
+                                  <th style={{ padding: '10px 14px' }}>CARTONES</th>
+                                  <th style={{ padding: '10px 14px' }}>ESTADO PAGO</th>
+                                  <th style={{ padding: '10px 14px' }}>ENLACE DE JUEGO</th>
+                                  <th style={{ padding: '10px 14px', textAlign: 'center' }}>CHECK ENVÍO</th>
+                                  <th style={{ padding: '10px 14px', textAlign: 'right' }}>ACCIONES</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {filteredTokens.length === 0 ? (
+                                  <tr>
+                                    <td colSpan={6} style={{ textAlign: 'center', padding: '24px', color: '#94a3b8' }}>
+                                      No hay jugadores en esta vista con los filtros seleccionados.
+                                    </td>
+                                  </tr>
+                                ) : (
+                                  filteredTokens.map((token) => {
+                                    const order = currentOrders.find(o => o.id === token.orderId);
+                                    const isPaid = order ? order.status === 'paid' : true;
+                                    const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
+
+                                    return (
+                                      <tr key={token.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
+                                        {/* Jugador */}
+                                        <td style={{ padding: '10px 14px' }}>
+                                          <strong style={{ color: '#fff', display: 'block', fontSize: '0.88rem' }}>{token.playerName}</strong>
+                                          {token.playerWhatsapp ? (
+                                            <a
+                                              href={`https://wa.me/502${token.playerWhatsapp.replace(/\D/g, '')}`}
+                                              target="_blank"
+                                              rel="noreferrer"
+                                              style={{ color: '#4ade80', fontSize: '0.74rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                            >
+                                              <span>📱</span> +502 {token.playerWhatsapp}
+                                            </a>
+                                          ) : (
+                                            <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Sin teléfono</span>
+                                          )}
+                                        </td>
+
+                                        {/* Cartones */}
+                                        <td style={{ padding: '10px 14px' }}>
+                                          <span style={{
+                                            background: 'rgba(56, 189, 248, 0.15)',
+                                            border: '1px solid rgba(56, 189, 248, 0.3)',
+                                            color: '#38bdf8',
+                                            padding: '3px 8px',
+                                            borderRadius: '6px',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.75rem'
+                                          }}>
+                                            🎟️ {token.quantity} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
+                                          </span>
+                                        </td>
+
+                                        {/* Estado Pago */}
+                                        <td style={{ padding: '10px 14px' }}>
+                                          {isPaid ? (
+                                            <span style={{
+                                              background: 'rgba(34, 197, 94, 0.15)',
+                                              border: '1px solid rgba(34, 197, 94, 0.4)',
+                                              color: '#4ade80',
+                                              padding: '3px 8px',
+                                              borderRadius: '6px',
+                                              fontWeight: 'bold',
+                                              fontSize: '0.72rem'
+                                            }}>
+                                              🟢 PAGADO {order?.amount ? `(Q${order.amount})` : ''}
+                                            </span>
+                                          ) : (
+                                            <span style={{
+                                              background: 'rgba(245, 158, 11, 0.15)',
+                                              border: '1px solid rgba(245, 158, 11, 0.4)',
+                                              color: '#fbbf24',
+                                              padding: '3px 8px',
+                                              borderRadius: '6px',
+                                              fontWeight: 'bold',
+                                              fontSize: '0.72rem'
+                                            }}>
+                                              🟡 PENDIENTE
+                                            </span>
+                                          )}
+                                        </td>
+
+                                        {/* Enlace Único */}
+                                        <td style={{ padding: '10px 14px' }}>
+                                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <code style={{
+                                              background: 'rgba(0,0,0,0.5)',
+                                              border: '1px solid rgba(255,255,255,0.1)',
+                                              padding: '3px 6px',
+                                              borderRadius: '6px',
+                                              fontSize: '0.7rem',
+                                              color: '#e2e8f0',
+                                              maxWidth: '120px',
+                                              overflow: 'hidden',
+                                              textOverflow: 'ellipsis',
+                                              whiteSpace: 'nowrap'
+                                            }}>
+                                              ?access={token.id}
+                                            </code>
+                                            <button
+                                              type="button"
+                                              onClick={() => {
+                                                navigator.clipboard.writeText(playUrl);
+                                                alert("¡Enlace copiado al portapapeles!");
+                                              }}
+                                              style={{
+                                                background: 'rgba(255,255,255,0.06)',
+                                                border: '1px solid rgba(255,255,255,0.15)',
+                                                color: '#cbd5e1',
+                                                borderRadius: '6px',
+                                                padding: '3px 7px',
+                                                fontSize: '0.7rem',
+                                                cursor: 'pointer'
+                                              }}
+                                              title="Copiar enlace directo de juego"
+                                            >
+                                              📋
+                                            </button>
+                                          </div>
+
+                                          {/* Estado de Recepción / Apertura */}
+                                          <div style={{ marginTop: '4px' }}>
+                                            {token.firstUsedAt ? (
+                                              <span style={{ color: '#4ade80', fontSize: '0.68rem', fontWeight: 'bold' }}>
+                                                ● Abierto por jugador ({new Date(token.firstUsedAt).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })})
+                                              </span>
+                                            ) : token.linkSent ? (
+                                              <span style={{ color: '#fbbf24', fontSize: '0.68rem' }}>
+                                                ● Enviado (esperando ingreso)
+                                              </span>
+                                            ) : (
+                                              <span style={{ color: '#94a3b8', fontSize: '0.68rem' }}>
+                                                ○ Sin enviar aún
+                                              </span>
+                                            )}
+                                          </div>
+                                        </td>
+
+                                        {/* Checkbox Interactivo de Enlace Enviado */}
+                                        <td style={{ padding: '10px 14px', textAlign: 'center' }}>
+                                          <label style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            cursor: 'pointer',
+                                            background: token.linkSent ? 'rgba(34, 197, 94, 0.15)' : 'rgba(255,255,255,0.05)',
+                                            border: token.linkSent ? '1px solid rgba(34, 197, 94, 0.4)' : '1px solid rgba(255,255,255,0.15)',
+                                            padding: '4px 10px',
+                                            borderRadius: '8px',
+                                            userSelect: 'none'
+                                          }}>
+                                            <input
+                                              type="checkbox"
+                                              checked={!!token.linkSent}
+                                              onChange={() => handleToggleLinkSent(token)}
+                                              style={{ cursor: 'pointer', accentColor: '#22c55e' }}
+                                            />
+                                            <span style={{
+                                              fontSize: '0.72rem',
+                                              fontWeight: 'bold',
+                                              color: token.linkSent ? '#4ade80' : '#94a3b8'
+                                            }}>
+                                              {token.linkSent ? 'Enviado' : 'Pendiente'}
+                                            </span>
+                                          </label>
+                                        </td>
+
+                                        {/* Acciones */}
+                                        <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleSendWhatsAppPass(token)}
+                                            style={{
+                                              background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
+                                              border: 'none',
+                                              color: '#fff',
+                                              borderRadius: '8px',
+                                              padding: '5px 12px',
+                                              fontSize: '0.75rem',
+                                              fontWeight: 'bold',
+                                              cursor: 'pointer',
+                                              display: 'inline-flex',
+                                              alignItems: 'center',
+                                              gap: '6px',
+                                              boxShadow: '0 2px 10px rgba(34, 197, 94, 0.3)'
+                                            }}
+                                            title="Enviar enlace único y mensaje por WhatsApp"
+                                          >
+                                            📲 Enviar WhatsApp
+                                          </button>
+                                        </td>
+
+                                      </tr>
+                                    );
+                                  })
+                                )}
+                              </tbody>
+                            </table>
+                          </div>
+
+                        </div>
+                      );
+                    })()}
+
+                  </div>
+                )}
 
                   </div>
                 </div>

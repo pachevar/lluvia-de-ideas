@@ -106,9 +106,12 @@ const BingoBoletosConfirmacion: React.FC = () => {
               prizeLevel: currentOrder.prizeLevel || 'Premios Intermedios',
               quantity: currentOrder.quantity || 1,
               gameId: activeGameId,
+              scheduledGameId: currentOrder.scheduledGameId || null,
               sessionResetAt: sessionResetAt,
               status: 'active',
               usedByDevice: null,
+              linkSent: false,
+              linkSentAt: null,
               createdAt: Date.now()
             };
             await setDoc(doc(db, 'bingo_access_tokens', newTokenId), tokenObj);

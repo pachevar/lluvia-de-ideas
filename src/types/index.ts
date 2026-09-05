@@ -334,11 +334,27 @@ export interface BingoAccessToken {
   prizeLevel: string;
   quantity: number;
   gameId: string; // Vinculado a la ronda en curso
+  scheduledGameId?: string; // Vinculado al juego programado
   sessionResetAt: number; // Marca temporal de apertura de ronda para vigencia
   status: 'active' | 'used' | 'expired';
   usedByDevice?: string | null;
   firstUsedAt?: number | null;
+  linkSent?: boolean; // Check de si el enlace ya fue enviado al cliente
+  linkSentAt?: number | null; // Fecha y hora en que se envió el enlace
   createdAt: number;
+}
+
+export interface BingoScheduledGame {
+  id: string;
+  title: string;
+  scheduledAt: number; // Timestamp milisegundos de fecha y hora programada
+  gameType: 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi';
+  tierName: string;
+  prizeHighlight?: string;
+  status: 'scheduled' | 'live' | 'finished' | 'cancelled';
+  createdAt: number;
+  createdBy?: string;
+  notes?: string;
 }
 
 export interface CotizacionItem {
