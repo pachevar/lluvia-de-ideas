@@ -1365,8 +1365,16 @@ export default function BingoHub() {
         'tier-25': 'Cartón Plata (Q25)',
         'tier-50': 'Cartón Oro (Q50)',
         'tier-100': 'Cartón Diamante VIP (Q100)',
-        'multi': 'Ronda Multicategoría (Todas las opciones)'
+        'multi': 'Ronda Multicategoría (Q25)'
       };
+      const priceMap: Record<string, number> = {
+        'tier-10': 10,
+        'tier-25': 25,
+        'tier-50': 50,
+        'tier-100': 100,
+        'multi': 25
+      };
+      const cardPrice = priceMap[newScheduleTier] || 25;
 
       const newGame: BingoScheduledGame = {
         id: schedId,
@@ -1374,13 +1382,14 @@ export default function BingoHub() {
         scheduledAt: scheduledTimestamp,
         gameType: newScheduleTier,
         tierName: tierMap[newScheduleTier] || 'Cartón Estándar',
+        cardPriceQ: cardPrice,
         prizeHighlight: newSchedulePrize.trim() || undefined,
         status: 'scheduled',
         createdAt: Date.now()
       };
 
       await setDoc(doc(db, 'bingo_scheduled_games', schedId), newGame);
-      addLog(`HOST: Partida programada creada: "${newScheduleTitle.trim()}".`);
+      addLog(`HOST: Partida programada creada: "${newScheduleTitle.trim()}" con valor de Q${cardPrice}.`);
       await showAlert("¡Partida programada con éxito! Ya puedes verla en la lista y admitir jugadores.", "Juego Programado", "📅");
       
       setNewScheduleTitle('');
@@ -1399,7 +1408,7 @@ export default function BingoHub() {
   const handleActivateScheduledGame = async (game: BingoScheduledGame) => {
     if (!activeGame) return;
     const confirm = await showConfirm(
-      `¿Deseas ACTIVAR la partida "${game.title}" en la Tómbola ahora?\n\nEsto sincronizará el temporizador de la sala de espera y actualizará el título y premios activos en vivo.`,
+      `¿Deseas ACTIVAR la partida "${game.title}" en la Tómbola ahora?\n\nEsto sincronizará el temporizador de la sala de espera y actualizará el título, valor del cartón (Q${game.cardPriceQ || 25}) y premios activos en vivo.`,
       "Activar Partida en Vivo",
       "🚀",
       "SÍ, ACTIVAR AHORA",
@@ -1408,11 +1417,22 @@ export default function BingoHub() {
     if (!confirm) return;
 
     try {
+      const priceMap: Record<string, number> = {
+        'tier-10': 10,
+        'tier-25': 25,
+        'tier-50': 50,
+        'tier-100': 100,
+        'multi': 25
+      };
+      const cardPrice = game.cardPriceQ || priceMap[game.gameType] || 25;
+
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
         title: game.title,
         nextRoundTime: game.scheduledAt,
         currentPrizeTitle: game.prizeHighlight || activeGame.currentPrizeTitle || '',
         scheduledGameId: game.id,
+        cardPriceQ: cardPrice,
+        gameType: game.gameType,
         status: 'waiting'
       });
 
@@ -1420,8 +1440,8 @@ export default function BingoHub() {
         status: 'live'
       });
 
-      addLog(`HOST: Partida programada "${game.title}" activada en vivo en la Tómbola.`);
-      await showAlert(`¡La partida "${game.title}" está activa en la Tómbola y el reloj regresivo fue sincronizado! 🚀`, "Partida Activa", "🚀");
+      addLog(`HOST: Partida programada "${game.title}" (Q${cardPrice}/cartón) activada en vivo en la Tómbola.`);
+      await showAlert(`¡La partida "${game.title}" (Q${cardPrice}/cartón) está activa en la Tómbola y el reloj regresivo fue sincronizado! 🚀`, "Partida Activa", "🚀");
     } catch (err) {
       console.error(err);
       await showAlert("Error al activar la partida.", "Error", "❌");

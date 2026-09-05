@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { collection, query, limit, onSnapshot, doc, getDoc, addDoc } from 'firebase/firestore';
+import { collection, addDoc, getDoc, doc, onSnapshot, query, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { BingoGame, BingoScheduledGame } from '../types';
 import './BingoBoletos.css';
@@ -10,59 +10,65 @@ interface CardTier {
   name: string;
   unitPriceQ: number;
   prizeLevel: string;
-  badge?: string;
-  badgeClass?: string;
+  badge: string;
+  badgeClass: string;
   description: string;
   prizeHighlight: string;
   icon: string;
 }
 
-const CARD_TIERS: CardTier[] = [
-  {
+const CARD_TIERS_MAP: Record<string, CardTier> = {
+  'tier-10': {
     id: 'tier-10',
     name: 'Cartón Bronce',
     unitPriceQ: 10,
     prizeLevel: 'Premios Estándar',
-    description: '1 Cartón oficial para jugar en la ronda de premios básicos y canastas sorpresa.',
-    prizeHighlight: 'Canastas de productos, vales escolares y sorpresas.',
+    badge: 'ACCESIBLE',
+    badgeClass: 'bronce',
+    description: 'Cartón oficial para participar por premios estándar de la ronda.',
+    prizeHighlight: 'Efectivo, canastas de libros y combos escolares.',
     icon: '🥉'
   },
-  {
+  'tier-25': {
     id: 'tier-25',
     name: 'Cartón Plata',
     unitPriceQ: 25,
     prizeLevel: 'Premios Intermedios',
     badge: 'MÁS JUGADO',
     badgeClass: 'popular',
-    description: '1 Cartón oficial para competir por premios medianos en efectivo y electrodomésticos.',
-    prizeHighlight: 'Premios en efectivo, electrodomésticos y kits tecnológicos.',
+    description: 'Cartón oficial para disputar los premios medianos y línea de la sala.',
+    prizeHighlight: 'Premios medianos en efectivo, tablets y electrodomésticos.',
     icon: '🥈'
   },
-  {
+  'tier-50': {
     id: 'tier-50',
     name: 'Cartón Oro',
     unitPriceQ: 50,
     prizeLevel: 'Grandes Premios',
-    description: '1 Cartón oficial para disputar grandes premios de alto valor y tecnología.',
-    prizeHighlight: 'Smart TVs, tablets, smartphones y premios en efectivo.',
+    badge: 'DESTACADO',
+    badgeClass: 'oro',
+    description: 'Cartón oficial para participar por los grandes premios estelares.',
+    prizeHighlight: 'Premios mayores en efectivo, smartphones y tecnología.',
     icon: '🥇'
   },
-  {
+  'tier-100': {
     id: 'tier-100',
     name: 'Cartón Diamante VIP',
     unitPriceQ: 100,
     prizeLevel: 'Premio Mayor / Pozo VIP',
     badge: 'POZO MAYOR',
     badgeClass: 'vip',
-    description: '1 Cartón oficial para participar por el gran pozo acumulado de la noche.',
+    description: 'Cartón oficial para disputar el gran pozo acumulado de la noche.',
     prizeHighlight: 'Gran Pozo Acumulado en efectivo y premios de alta gama.',
     icon: '💎'
   }
-];
+};
 
 const BingoBoletos: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedTier, setSelectedTier] = useState<CardTier>(CARD_TIERS[1]); // Por defecto Q25
+
+  // Modo de compra guiado: 'personal' (para mí, 1 a 3 cartones) o 'gift' (repartir a contactos, 1 a 10 links)
+  const [purchaseMode, setPurchaseMode] = useState<'personal' | 'gift'>('personal');
   const [quantity, setQuantity] = useState<number>(1);
   const [playerName, setPlayerName] = useState('');
   const [playerWhatsapp, setPlayerWhatsapp] = useState('');
@@ -70,7 +76,7 @@ const BingoBoletos: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  // Sincronización de la próxima ronda y links de pago de Recurrente
+  // Sincronización del juego activo y partidas programadas en Firestore
   const [activeGame, setActiveGame] = useState<BingoGame | null>(null);
   const [scheduledGames, setScheduledGames] = useState<BingoScheduledGame[]>([]);
   const [selectedScheduledGame, setSelectedScheduledGame] = useState<BingoScheduledGame | null>(null);
@@ -91,7 +97,7 @@ const BingoBoletos: React.FC = () => {
     return () => unsubscribe();
   }, []);
 
-  // Cargar partidas programadas en vivo
+  // Cargar partidas programadas
   useEffect(() => {
     const qSched = query(collection(db, 'bingo_scheduled_games'));
     const unsubscribeSched = onSnapshot(qSched, (snap) => {
@@ -108,7 +114,7 @@ const BingoBoletos: React.FC = () => {
     return () => unsubscribeSched();
   }, []);
 
-  // Cargar links de Recurrente y credencial de configuración en Firestore
+  // Cargar credenciales de Recurrente
   useEffect(() => {
     const loadSettings = async () => {
       try {
@@ -124,83 +130,101 @@ const BingoBoletos: React.FC = () => {
           }
         }
       } catch (err) {
-        console.warn("No se pudieron cargar links personalizados de Recurrente:", err);
+        console.warn("No se pudieron cargar configuraciones de pasarela:", err);
       }
     };
     loadSettings();
   }, []);
 
-  // Temporizador en vivo si hay ronda programada
+  // Temporizador en vivo
   useEffect(() => {
-    if (!activeGame?.nextRoundTime) {
+    const targetTimestamp = selectedScheduledGame?.scheduledAt || activeGame?.nextRoundTime;
+    if (!targetTimestamp) {
       setCountdownText(null);
       return;
     }
 
     const updateTimer = () => {
-      const diff = activeGame.nextRoundTime! - Date.now();
+      const diff = targetTimestamp - Date.now();
       if (diff <= 0) {
-        setCountdownText("¡Ronda a punto de iniciar!");
-        return;
-      }
-
-      const totalSec = Math.floor(diff / 1000);
-      const days = Math.floor(totalSec / 86400);
-      const hours = Math.floor((totalSec % 86400) / 3600);
-      const minutes = Math.floor((totalSec % 3600) / 60);
-      const seconds = totalSec % 60;
-
-      const pad = (n: number) => String(n).padStart(2, '0');
-      if (days > 0) {
-        setCountdownText(`${days}d ${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
-      } else if (hours > 0) {
-        setCountdownText(`${pad(hours)}:${pad(minutes)}:${pad(seconds)}`);
+        setCountdownText('¡EN VIVO AHORA!');
       } else {
-        setCountdownText(`${pad(minutes)}:${pad(seconds)}`);
+        const hours = Math.floor(diff / (1000 * 60 * 60));
+        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
+        setCountdownText(
+          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
+        );
       }
     };
 
     updateTimer();
     const interval = setInterval(updateTimer, 1000);
     return () => clearInterval(interval);
-  }, [activeGame?.nextRoundTime]);
+  }, [selectedScheduledGame, activeGame]);
 
-  // Manejador del Checkout de Recurrente
-  // Manejador del Checkout de Recurrente
+  // Determinar el tier y precio oficial fijado para esta partida (ocultando los otros)
+  const currentPriceQ = selectedScheduledGame?.cardPriceQ || activeGame?.cardPriceQ || 25;
+  const currentTierId = selectedScheduledGame?.gameType || activeGame?.gameType || (currentPriceQ === 10 ? 'tier-10' : currentPriceQ === 50 ? 'tier-50' : currentPriceQ === 100 ? 'tier-100' : 'tier-25');
+  const activeTier: CardTier = CARD_TIERS_MAP[currentTierId] || {
+    id: currentTierId,
+    name: `Cartón Oficial Bingotenango`,
+    unitPriceQ: currentPriceQ,
+    prizeLevel: selectedScheduledGame?.prizeHighlight || 'Premios Oficiales de la Ronda',
+    badge: 'PARTIDA ACTIVA',
+    badgeClass: 'popular',
+    description: 'Cartón oficial para participar en la partida programada.',
+    prizeHighlight: selectedScheduledGame?.prizeHighlight || 'Premios en vivo.',
+    icon: '🎟️'
+  };
+
+  // Ajustar cantidad al alternar entre modos
+  const handleModeChange = (mode: 'personal' | 'gift') => {
+    setPurchaseMode(mode);
+    if (mode === 'personal' && quantity > 3) {
+      setQuantity(3);
+    }
+  };
+
+  const totalPriceQ = currentPriceQ * quantity;
+
+  // Procesar pago
   const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
 
     if (!playerName.trim()) {
-      setErrorMessage('Por favor ingresa tu nombre completo para emitir tus cartones.');
+      setErrorMessage('Por favor ingresa tu nombre completo.');
       return;
     }
 
     const cleanPhone = playerWhatsapp.replace(/\D/g, '');
     if (cleanPhone.length < 8) {
-      setErrorMessage('Por favor ingresa un número de WhatsApp válido (mínimo 8 dígitos) para enviarte tu enlace de juego.');
+      setErrorMessage('Por favor ingresa un número de WhatsApp válido (mínimo 8 dígitos) para recibir tus enlaces.');
       return;
     }
 
-    const totalPriceQ = selectedTier.unitPriceQ * quantity;
     setIsProcessing(true);
-
     let orderId = 'ord_' + Date.now();
+
     try {
-      // 1. Guardar la orden pendiente en Firestore
+      // 1. Guardar la orden en Firestore
       const orderRef = await addDoc(collection(db, 'bingo_orders'), {
         playerName: playerName.trim(),
         playerWhatsapp: cleanPhone,
         playerEmail: playerEmail.trim() || null,
-        tierId: selectedTier.id,
-        tierName: selectedTier.name,
-        prizeLevel: selectedTier.prizeLevel,
-        unitPriceQ: selectedTier.unitPriceQ,
+        tierId: activeTier.id,
+        tierName: activeTier.name,
+        prizeLevel: activeTier.prizeLevel,
+        unitPriceQ: currentPriceQ,
         quantity: quantity,
-        priceQ: totalPriceQ, // Compatibilidad
+        priceQ: totalPriceQ,
         totalPriceQ: totalPriceQ,
-        cartonesCount: quantity, // Compatibilidad
-        packageName: `${selectedTier.name} (${quantity} ${quantity === 1 ? 'Cartón' : 'Cartones'})`,
+        cartonesCount: quantity,
+        purchaseMode: purchaseMode, // 'personal' o 'gift'
+        packageName: purchaseMode === 'personal' 
+          ? `${activeTier.name} (${quantity} ${quantity === 1 ? 'Cartón Personal' : 'Cartones Personales'})`
+          : `${activeTier.name} (${quantity} ${quantity === 1 ? 'Link para Contacto' : 'Links para Contactos'})`,
         gameId: activeGame?.id || 'default_game',
         scheduledGameId: selectedScheduledGame?.id || null,
         scheduledGameTitle: selectedScheduledGame?.title || null,
@@ -212,11 +236,11 @@ const BingoBoletos: React.FC = () => {
       });
       orderId = orderRef.id;
     } catch (fsErr) {
-      console.warn("Aviso al guardar orden en Firestore (continuando con checkout):", fsErr);
+      console.warn("Aviso al guardar orden:", fsErr);
     }
 
     try {
-      // 2. Crear sesión de Checkout dinámico en vivo en Recurrente
+      // 2. Checkout dinámico con Recurrente
       const apiKey = recurrenteSecretKey || (import.meta as any).env?.VITE_RECURRENTE_SECRET_KEY || '';
 
       if (apiKey) {
@@ -230,7 +254,7 @@ const BingoBoletos: React.FC = () => {
             body: JSON.stringify({
               items: [
                 {
-                  name: `Bingotenango: ${quantity}x ${selectedTier.name} (${selectedTier.prizeLevel})`,
+                  name: `Bingotenango: ${quantity}x ${activeTier.name} [${purchaseMode === 'personal' ? 'Uso Personal' : 'Links para Amigos'}]`,
                   amount_in_cents: totalPriceQ * 100,
                   currency: "GTQ",
                   quantity: 1
@@ -242,10 +266,11 @@ const BingoBoletos: React.FC = () => {
                 orderId: orderId,
                 playerName: playerName.trim(),
                 playerWhatsapp: cleanPhone,
-                tierId: selectedTier.id,
-                tierName: selectedTier.name,
-                unitPriceQ: selectedTier.unitPriceQ,
+                tierId: activeTier.id,
+                tierName: activeTier.name,
+                unitPriceQ: currentPriceQ,
                 quantity: quantity,
+                purchaseMode: purchaseMode,
                 priceQ: totalPriceQ
               }
             })
@@ -254,18 +279,17 @@ const BingoBoletos: React.FC = () => {
           if (recurrenteRes.ok) {
             const checkoutData = await recurrenteRes.json();
             if (checkoutData?.checkout_url) {
-              // Redirigir a la pantalla de pago segura de Recurrente
               window.location.href = checkoutData.checkout_url;
               return;
             }
           }
         } catch (apiErr) {
-          console.warn("Fallo directo de API Checkout Recurrente, usando fallback:", apiErr);
+          console.warn("Fallo en API Checkout Recurrente, usando fallback:", apiErr);
         }
       }
 
-      // 3. Redirección a Link Oficial de Recurrente configurado en Gerencia
-      const configuredLink = recurrenteLinks[selectedTier.id] || recurrenteLinks[selectedTier.id.replace('tier-', 'pkg-')];
+      // 3. Fallback a Link fijo de Recurrente o pantalla guiada
+      const configuredLink = recurrenteLinks[activeTier.id] || recurrenteLinks[activeTier.id.replace('tier-', 'pkg-')];
       if (configuredLink && configuredLink.startsWith('http')) {
         const separator = configuredLink.includes('?') ? '&' : '?';
         const returnUrl = encodeURIComponent(`${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
@@ -276,8 +300,7 @@ const BingoBoletos: React.FC = () => {
         window.location.href = finalUrl;
         return;
       } else {
-        // Modo guiado / simulado si no hubiera conexión externa
-        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tier=${selectedTier.id}&qty=${quantity}&name=${encodeURIComponent(playerName)}&phone=${cleanPhone}&testMode=true`);
+        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tier=${activeTier.id}&qty=${quantity}&name=${encodeURIComponent(playerName)}&phone=${cleanPhone}&mode=${purchaseMode}&testMode=true`);
       }
     } catch (err) {
       console.error("Error al iniciar orden:", err);
@@ -286,34 +309,31 @@ const BingoBoletos: React.FC = () => {
     }
   };
 
-  const totalPriceQ = selectedTier.unitPriceQ * quantity;
-
   return (
     <div className="bingo-boletos-page">
       <div className="bingo-boletos-container">
         
-        {/* CABECERA */}
+        {/* CABECERA MINIMALISTA */}
         <header className="boletos-header">
           <div className="boletos-logo-badge">
             <img src="/bingotenango-logo.svg" alt="Bingotenango" className="boletos-logo-img" />
-            <span style={{ fontFamily: 'var(--font-gamer)', color: '#38bdf8', fontSize: '0.85rem', fontWeight: 900, letterSpacing: '1px' }}>
-              TIENDA OFICIAL DE BOLETOS
+            <span className="boletos-badge-text">
+              BINGOTENANGO EN VIVO
             </span>
           </div>
 
           <h1 className="boletos-hero-title">
-            Adquiere tus Cartones y Juega en Vivo
+            Compra Fácil de Boletos
           </h1>
 
           <p className="boletos-hero-subtitle">
-            Compra segura con <strong>Recurrente Guatemala</strong>. Aceptamos tarjetas de débito/crédito Visa, Mastercard y transferencias bancarias locales.
+            Entrada directa para la próxima transmisión en vivo. Pagos 100% seguros con tarjetas o transferencia bancaria local.
           </p>
 
-          {/* Temporizador si hay próxima ronda programada */}
           {countdownText && (
             <div className="boletos-countdown-banner">
-              <span style={{ fontSize: '1.2rem' }}>⏱️</span>
-              <span style={{ fontSize: '0.85rem', color: '#cbd5e1', fontWeight: 'bold' }}>
+              <span>⏱️</span>
+              <span style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 'bold' }}>
                 PRÓXIMA RONDA EN:
               </span>
               <span className="boletos-countdown-digits">
@@ -323,349 +343,280 @@ const BingoBoletos: React.FC = () => {
           )}
         </header>
 
-        {/* PASOS DE CONFIANZA Y CLARIDAD */}
-        <div className="boletos-trust-steps">
-          <div className="trust-step-card">
-            <div className="trust-step-number">1</div>
-            <div className="trust-step-text">
-              <h4>Elige el Tipo de Premio</h4>
-              <p>Selecciona por qué categoría de premios quieres jugar (Q10, Q25, Q50 o Q100 por cartón).</p>
-            </div>
-          </div>
-
-          <div className="trust-step-card">
-            <div className="trust-step-number">2</div>
-            <div className="trust-step-text">
-              <h4>Define la Cantidad</h4>
-              <p>Elige cuántos cartones quieres de ese tipo (1, 2, 3, 5, etc.) para tener más oportunidades.</p>
-            </div>
-          </div>
-
-          <div className="trust-step-card">
-            <div className="trust-step-number">3</div>
-            <div className="trust-step-text">
-              <h4>Paga Seguro en Recurrente</h4>
-              <p>Checkout bancario 100% cifrado con entrega inmediata de tus cartones para la sala en vivo.</p>
-            </div>
-          </div>
-        </div>
-
-        {/* SELECTOR DE PARTIDA PROGRAMADA SI EXISTEN */}
-        {scheduledGames.length > 0 && (
-          <div className="scheduled-game-selection-banner">
+        {/* 1. TARJETA HERO DEL JUEGO CON SU PRECIO OFICIAL FIJADO (OCULTA OTRAS OPCIONES) */}
+        <div className="active-game-highlight-card">
+          <div className="active-game-header-row">
             <div>
-              <span className="scheduled-banner-tag">
-                📅 INSCRIBIÉNDOSE EN PARTIDA PROGRAMADA
+              <span className="game-badge-chip">
+                PARTIDA SELECCIONADA
               </span>
-              <h4 className="scheduled-banner-title">
-                {selectedScheduledGame?.title || 'Ronda de Bingotenango'}
-              </h4>
-              <p className="scheduled-banner-date">
-                {selectedScheduledGame ? new Date(selectedScheduledGame.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' }) : ''}
+              <h2 className="game-title-text">
+                {selectedScheduledGame?.title || activeGame?.title || 'Gran Ronda Oficial de Bingotenango'}
+              </h2>
+              <p className="game-date-text">
+                📅 {selectedScheduledGame ? new Date(selectedScheduledGame.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' }) : 'Transmisión interactiva en vivo'}
               </p>
             </div>
 
-            {scheduledGames.length > 1 && (
+            <div className="game-price-pill">
+              <span className="pill-currency">Q</span>
+              <span className="pill-amount">{currentPriceQ}</span>
+              <span className="pill-unit">/ cartón</span>
+            </div>
+          </div>
+
+          {/* Selector de partida alternativa solo si hay varias programadas */}
+          {scheduledGames.length > 1 && (
+            <div className="game-switch-selector">
+              <label>Cambiar partida programada:</label>
               <select
                 value={selectedScheduledGame?.id || ''}
                 onChange={(e) => {
                   const found = scheduledGames.find(g => g.id === e.target.value);
                   if (found) setSelectedScheduledGame(found);
                 }}
-                className="scheduled-banner-select"
               >
                 {scheduledGames.map(g => (
                   <option key={g.id} value={g.id}>
-                    📅 {g.title} ({new Date(g.scheduledAt).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })})
+                    {g.title} • {new Date(g.scheduledAt).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' })} (Q{g.cardPriceQ || 25})
                   </option>
                 ))}
               </select>
-            )}
+            </div>
+          )}
+
+          {/* Premio destacado */}
+          <div className="game-prize-strip">
+            <span className="prize-icon">🏆</span>
+            <div className="prize-info">
+              <strong>Premios de esta ronda:</strong>
+              <span>{selectedScheduledGame?.prizeHighlight || activeGame?.currentPrizeTitle || 'Premios en efectivo, combos y sorpresas en vivo.'}</span>
+            </div>
           </div>
-        )}
-
-        {/* 1. SELECTOR DE TIPO DE CARTÓN / PREMIO */}
-        <h2 className="boletos-grid-title">
-          1. ELIGE EL TIPO DE PREMIO / CARTÓN A JUGAR
-        </h2>
-        <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.88rem', margin: '-14px auto 26px', maxWidth: '620px' }}>
-          Cada opción representa <strong>1 cartón oficial</strong> según el nivel de premios que se disputa en la ronda.
-        </p>
-
-        <div className="boletos-packages-grid">
-          {CARD_TIERS.map((tier) => {
-            const isSelected = selectedTier.id === tier.id;
-            return (
-              <div 
-                key={tier.id}
-                className={`package-card ${isSelected ? 'selected' : ''}`}
-                onClick={() => setSelectedTier(tier)}
-              >
-                {tier.badge && (
-                  <span className={`package-badge ${tier.badgeClass}`}>
-                    {tier.badge}
-                  </span>
-                )}
-
-                <div className="package-icon">{tier.icon}</div>
-                <h3 className="package-name">{tier.name}</h3>
-                
-                <div className="package-cartones">
-                  🏆 {tier.prizeLevel}
-                </div>
-
-                <div className="package-price-wrap">
-                  <span className="package-currency">Q</span>
-                  <span className="package-amount">{tier.unitPriceQ}</span>
-                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: '4px', fontWeight: 'bold' }}>/ cartón</span>
-                </div>
-
-                <p className="package-benefit">{tier.description}</p>
-
-                <div className="package-prizes-box">
-                  <strong className="package-prizes-label">🎁 Premios en juego:</strong>
-                  <span className="package-prizes-text">{tier.prizeHighlight}</span>
-                </div>
-
-                <button type="button" className="package-select-btn">
-                  {isSelected ? '✓ Seleccionado' : 'Elegir Tipo'}
-                </button>
-              </div>
-            );
-          })}
         </div>
 
-        {/* 2. SELECTOR DE CANTIDAD DE CARTONES */}
-        <div className="quantity-control-card">
-          <div className="quantity-info-side">
-            <h3>2. ¿CUÁNTOS CARTONES DESEAS JUGAR?</h3>
-            <p>
-              Tipo seleccionado: <strong style={{ color: '#fff' }}>{selectedTier.name} ({selectedTier.prizeLevel})</strong> a <strong style={{ color: '#00f0ff' }}>Q{selectedTier.unitPriceQ}.00 c/u</strong>.
-            </p>
-          </div>
+        {/* 2. SELECTOR GUIADO DE MODO DE COMPRA */}
+        <div className="purchase-mode-section">
+          <h3 className="section-title-guided">
+            1. ¿CÓMO DESEAS PARTICIPAR?
+          </h3>
+          <p className="section-subtitle-guided">
+            Elige si jugarás tú mismo en la sala o si regalarás enlaces a tus contactos.
+          </p>
 
-          <div className="quantity-action-side">
-            <div className="quantity-stepper">
-              <button 
-                type="button" 
-                className="stepper-btn" 
-                onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                disabled={quantity <= 1}
-                aria-label="Restar cartón"
-              >
-                −
-              </button>
-              <div className="stepper-value-wrap">
-                <span className="stepper-value">{quantity}</span>
-                <span className="stepper-unit">{quantity === 1 ? 'Cartón' : 'Cartones'}</span>
+          <div className="purchase-mode-grid">
+            {/* OPCIÓN A: PARA MÍ */}
+            <div 
+              className={`mode-card ${purchaseMode === 'personal' ? 'active' : ''}`}
+              onClick={() => handleModeChange('personal')}
+            >
+              <div className="mode-card-radio">
+                <span className={`radio-dot ${purchaseMode === 'personal' ? 'selected' : ''}`} />
               </div>
-              <button 
-                type="button" 
-                className="stepper-btn" 
-                onClick={() => setQuantity(prev => Math.min(50, prev + 1))}
-                disabled={quantity >= 50}
-                aria-label="Sumar cartón"
-              >
-                +
-              </button>
+              <div className="mode-card-icon">👤</div>
+              <div className="mode-card-body">
+                <h4>Para mí (Jugar en vivo)</h4>
+                <p>Jugarás tú mismo desde este celular o computadora. Recibirás tu pase con tus cartones listos.</p>
+                <span className="mode-limit-badge">De 1 a 3 cartones</span>
+              </div>
             </div>
 
-            <div className="quick-quantity-chips">
-              {[1, 2, 3, 5, 10].map((num) => (
+            {/* OPCIÓN B: PARA REPARTIR */}
+            <div 
+              className={`mode-card ${purchaseMode === 'gift' ? 'active' : ''}`}
+              onClick={() => handleModeChange('gift')}
+            >
+              <div className="mode-card-radio">
+                <span className={`radio-dot ${purchaseMode === 'gift' ? 'selected' : ''}`} />
+              </div>
+              <div className="mode-card-icon">🎁</div>
+              <div className="mode-card-body">
+                <h4>Para repartir a contactos</h4>
+                <p>Comprarás links independientes para enviar a tus amigos o familiares por WhatsApp.</p>
+                <span className="mode-limit-badge gift-badge">De 1 a 10 links</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* 3. SELECCIÓN DE CANTIDAD GUIADA SEGÚN EL MODO */}
+        <div className="quantity-guided-card">
+          <div className="quantity-header">
+            <div>
+              <h3 className="quantity-title">
+                {purchaseMode === 'personal' ? '2. ¿CUÁNTOS CARTONES JUGARÁS?' : '2. ¿CUÁNTOS LINKS PARA CONTACTOS NECESITAS?'}
+              </h3>
+              <p className="quantity-help-text">
+                {purchaseMode === 'personal' 
+                  ? '💡 Recomendación: de 1 a 3 cartones es ideal para marcar cómodo sin perder números en vivo.'
+                  : '💡 Cada link es 100% independiente para que un contacto diferente ingrese a su propio juego.'
+                }
+              </p>
+            </div>
+            
+            <div className="quantity-summary-badge">
+              Total: <strong>Q{totalPriceQ}.00</strong>
+            </div>
+          </div>
+
+          {/* MODO PERSONAL: SELECTOR DE 1 A 3 CARTONES CON BOTONES GRANDES */}
+          {purchaseMode === 'personal' ? (
+            <div className="personal-stepper-grid">
+              {[1, 2, 3].map((qty) => (
                 <button
-                  key={num}
+                  key={qty}
                   type="button"
-                  className={`quick-chip-btn ${quantity === num ? 'active' : ''}`}
-                  onClick={() => setQuantity(num)}
+                  className={`personal-qty-btn ${quantity === qty ? 'active' : ''}`}
+                  onClick={() => setQuantity(qty)}
                 >
-                  {num} {num === 1 ? 'cartón' : 'cartones'}
+                  <span className="qty-number">{qty}</span>
+                  <span className="qty-label">{qty === 1 ? 'Cartón' : 'Cartones'}</span>
+                  <span className="qty-price">Q{qty * currentPriceQ}.00</span>
                 </button>
               ))}
             </div>
-
-            <div className="quantity-live-total">
-              Subtotal: Q{totalPriceQ}.00
-            </div>
-          </div>
-        </div>
-
-        {/* 3. FORMULARIO Y CHECKOUT */}
-        <div className="checkout-section">
-          <div className="checkout-grid">
-            
-            {/* LADO IZQUIERDO: FORMULARIO */}
-            <div>
-              <h3 className="checkout-form-title">
-                3. DATOS DE ENTREGA DEL JUGADOR
-              </h3>
-              <p className="checkout-form-subtitle">
-                A estos datos vincularemos tus {quantity} {quantity === 1 ? 'cartón' : 'cartones'} y te enviaremos el enlace oficial de la sala de juego.
-              </p>
-
-              <form onSubmit={handleProceedToPayment}>
-                <div className="form-group">
-                  <label htmlFor="playerName">Nombre y Apellido *</label>
-                  <input 
-                    id="playerName"
-                    type="text" 
-                    className="form-input" 
-                    placeholder="Ej. Carlos Mendoza" 
-                    value={playerName}
-                    onChange={(e) => setPlayerName(e.target.value)}
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="playerWhatsapp">WhatsApp (Guatemala o Internacional) *</label>
-                  <input 
-                    id="playerWhatsapp"
-                    type="tel" 
-                    className="form-input" 
-                    placeholder="Ej. 55554444" 
-                    value={playerWhatsapp}
-                    onChange={(e) => setPlayerWhatsapp(e.target.value)}
-                    required
-                  />
-                  <small style={{ color: '#94a3b8', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
-                    📲 Aquí recibirás la confirmación y el botón directo para entrar a la partida con tus cartones.
-                  </small>
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="playerEmail">Correo Electrónico (Opcional)</label>
-                  <input 
-                    id="playerEmail"
-                    type="email" 
-                    className="form-input" 
-                    placeholder="correo@ejemplo.com" 
-                    value={playerEmail}
-                    onChange={(e) => setPlayerEmail(e.target.value)}
-                  />
-                </div>
-
-                {errorMessage && (
-                  <div style={{
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    border: '1px solid #ef4444',
-                    borderRadius: '10px',
-                    padding: '10px 14px',
-                    color: '#fca5a5',
-                    fontSize: '0.82rem',
-                    marginBottom: '16px'
-                  }}>
-                    ⚠️ {errorMessage}
-                  </div>
-                )}
-              </form>
-            </div>
-
-            {/* LADO DERECHO: RESUMEN Y BOTÓN DE RECURRENTE */}
-            <div className="order-summary-box">
-              <div>
-                <h4 style={{ margin: '0 0 16px 0', fontSize: '1rem', color: '#38bdf8', letterSpacing: '0.5px' }}>
-                  RESUMEN DE TU COMPRA
-                </h4>
-
-                <div className="summary-row">
-                  <span>Tipo de Cartón / Ronda:</span>
-                  <strong style={{ color: '#fff' }}>{selectedTier.name}</strong>
-                </div>
-
-                <div className="summary-row">
-                  <span>Categoría de Premio:</span>
-                  <strong style={{ color: '#cbd5e1' }}>{selectedTier.prizeLevel}</strong>
-                </div>
-
-                <div className="summary-row">
-                  <span>Precio Unitario:</span>
-                  <span style={{ color: '#94a3b8' }}>Q {selectedTier.unitPriceQ}.00 c/u</span>
-                </div>
-
-                <div className="summary-row">
-                  <span>Cantidad Seleccionada:</span>
-                  <strong style={{ color: '#00f0ff' }}>{quantity} {quantity === 1 ? 'Cartón' : 'Cartones'}</strong>
-                </div>
-
-                <div className="summary-row">
-                  <span>Pasarela de Pago:</span>
-                  <strong style={{ color: '#10b981' }}>Recurrente (Guatemala)</strong>
-                </div>
-
-                <div className="summary-row total">
-                  <span>Total a Pagar:</span>
-                  <span className="summary-total-price">Q {totalPriceQ}.00</span>
-                </div>
-              </div>
-
-              <div>
+          ) : (
+            /* MODO REPARTIR: SELECTOR DE 1 A 10 LINKS */
+            <div className="gift-stepper-wrap">
+              <div className="stepper-controls-row">
                 <button 
                   type="button" 
-                  className="btn-pay-recurrente"
-                  onClick={handleProceedToPayment}
-                  disabled={isProcessing}
+                  className="stepper-action-btn"
+                  onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                  disabled={quantity <= 1}
                 >
-                  {isProcessing ? 'Conectando con Recurrente...' : `🔒 Pagar Q${totalPriceQ}.00 (${quantity} ${quantity === 1 ? 'Cartón' : 'Cartones'})`}
+                  −
                 </button>
-
-                <p style={{ textAlign: 'center', fontSize: '0.72rem', color: '#94a3b8', margin: '10px 0 0 0' }}>
-                  🛡️ Serás dirigido al checkout bancario seguro de Recurrente. Al confirmar, volverás automáticamente con tus cartones activos.
-                </p>
-
-                {/* SELLOS DE CONFIANZA */}
-                <div className="security-badges-bar">
-                  <div className="security-badge-item">
-                    <span>🔒</span> SSL 256-bit
-                  </div>
-                  <div className="security-badge-item">
-                    <span>💳</span> Visa / Mastercard
-                  </div>
-                  <div className="security-badge-item">
-                    <span>🇬🇹</span> Recurrente GT
-                  </div>
-                  <div className="security-badge-item">
-                    <span>⚡</span> Entrega Inmediata
-                  </div>
+                <div className="stepper-display">
+                  <span className="stepper-val">{quantity}</span>
+                  <span className="stepper-lbl">{quantity === 1 ? 'Link de Regalo' : 'Links para Contactos'}</span>
                 </div>
+                <button 
+                  type="button" 
+                  className="stepper-action-btn"
+                  onClick={() => setQuantity(prev => Math.min(10, prev + 1))}
+                  disabled={quantity >= 10}
+                >
+                  +
+                </button>
               </div>
 
+              <div className="gift-quick-chips">
+                {[1, 2, 3, 5, 10].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    className={`gift-chip ${quantity === num ? 'active' : ''}`}
+                    onClick={() => setQuantity(num)}
+                  >
+                    {num} {num === 1 ? 'link' : 'links'}
+                  </button>
+                ))}
+              </div>
             </div>
-
-          </div>
+          )}
         </div>
 
-        {/* PREGUNTAS FRECUENTES (FAQ) */}
-        <section className="faq-section">
-          <h3 className="faq-title">PREGUNTAS FRECUENTES</h3>
-          
-          <div className="faq-item">
-            <div className="faq-question">¿Cómo recibo mis cartones después de pagar?</div>
-            <div className="faq-answer">
-              Al completar tu pago en Recurrente, la pasarela te redirige automáticamente a nuestra pantalla de entrega con tu enlace directo a la sala y tus cartones cargados. Además, te enviamos el link por WhatsApp para que lo tengas siempre disponible.
-            </div>
-          </div>
+        {/* 4. FORMULARIO MINIMALISTA Y CHECKOUT */}
+        <div className="checkout-guided-section">
+          <h3 className="section-title-guided">
+            3. DATOS DE ENTREGA Y PAGO SEGURO
+          </h3>
+          <p className="section-subtitle-guided">
+            {purchaseMode === 'personal' 
+              ? 'Ingresa tu nombre y WhatsApp para generar tu pase de juego en vivo.' 
+              : 'A este WhatsApp te enviaremos la lista completa de links para compartir con tus contactos.'}
+          </p>
 
-          <div className="faq-item">
-            <div className="faq-question">¿Qué métodos de pago acepta Recurrente en Guatemala?</div>
-            <div className="faq-answer">
-              Acepta tarjetas de crédito y débito Visa y Mastercard de todos los bancos de Guatemala (BANRURAL, Banco Industrial, BAC, G&T Continental, etc.) y transferencias en línea.
+          {errorMessage && (
+            <div className="checkout-error-banner">
+              ⚠️ {errorMessage}
             </div>
-          </div>
+          )}
 
-          <div className="faq-item">
-            <div className="faq-question">¿Puedo comprar varios cartones para la misma ronda?</div>
-            <div className="faq-answer">
-              ¡Totalmente! Seleccionas la categoría de premio que deseas jugar (Bronce Q10, Plata Q25, Oro Q50 o Diamante Q100) y con los botones [+] y [-] o los accesos directos (1, 2, 3, 5, 10) defines cuántos cartones quieres. Cada cartón contará con su propia combinación numérica única.
+          <form onSubmit={handleProceedToPayment} className="checkout-guided-form">
+            <div className="form-group-guided">
+              <label htmlFor="playerName">Tu Nombre y Apellido *</label>
+              <input 
+                id="playerName"
+                type="text" 
+                className="guided-input" 
+                placeholder="Ej. Carlos Mendoza" 
+                value={playerName}
+                onChange={(e) => setPlayerName(e.target.value)}
+                required
+              />
             </div>
-          </div>
 
-          <div className="faq-item">
-            <div className="faq-question">¿Qué pasa si se cierra mi navegador durante el juego?</div>
-            <div className="faq-answer">
-              No te preocupes. Tu cartón está guardado en la nube en tiempo real. Simplemente vuelves a abrir tu link de WhatsApp y tus casillas marcadas seguirán exactamente igual.
+            <div className="form-group-guided">
+              <label htmlFor="playerWhatsapp">WhatsApp para Entrega (Guatemala o Internacional) *</label>
+              <input 
+                id="playerWhatsapp"
+                type="tel" 
+                className="guided-input" 
+                placeholder="Ej. 502 5555 1234" 
+                value={playerWhatsapp}
+                onChange={(e) => setPlayerWhatsapp(e.target.value)}
+                required
+              />
             </div>
-          </div>
-        </section>
+
+            <div className="form-group-guided">
+              <label htmlFor="playerEmail">Correo Electrónico (Opcional, para comprobante bancario)</label>
+              <input 
+                id="playerEmail"
+                type="email" 
+                className="guided-input" 
+                placeholder="correo@ejemplo.com" 
+                value={playerEmail}
+                onChange={(e) => setPlayerEmail(e.target.value)}
+              />
+            </div>
+
+            {/* RESUMEN FINAL Y BOTÓN DE ACCIÓN */}
+            <div className="checkout-summary-bar">
+              <div className="summary-left">
+                <span className="summary-qty-desc">
+                  {purchaseMode === 'personal' ? `${quantity}x Cartón Personal` : `${quantity}x Links para Contactos`}
+                </span>
+                <span className="summary-total-amount">
+                  Total: Q{totalPriceQ}.00
+                </span>
+              </div>
+
+              <button 
+                type="submit" 
+                className="btn-guided-pay"
+                disabled={isProcessing}
+              >
+                {isProcessing ? 'Conectando Pasarela...' : `💳 Pagar Q${totalPriceQ}.00 con Recurrente`}
+              </button>
+            </div>
+
+            <div className="guided-trust-bar">
+              <span>🔒 Pago Cifrado por Recurrente</span>
+              <span>•</span>
+              <span>⚡ Entrega Inmediata de Enlaces</span>
+              <span>•</span>
+              <span>🇬🇹 Válido en toda Guatemala</span>
+            </div>
+          </form>
+        </div>
+
+        {/* AYUDA POR WHATSAPP O PAGO EN EFECTIVO */}
+        <div className="cash-help-banner">
+          <p>
+            ¿Prefieres pagar en <strong>Efectivo</strong> o necesitas ayuda directa?
+          </p>
+          <a 
+            href={`https://wa.me/50242250165?text=${encodeURIComponent(`¡Hola! Deseo comprar ${quantity} boletos para Bingotenango (Total: Q${totalPriceQ}.00). ¿Me apoyan con las opciones de pago?`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="btn-cash-help"
+          >
+            💬 Coordinar por WhatsApp
+          </a>
+        </div>
 
       </div>
     </div>
