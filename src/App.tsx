@@ -28,6 +28,8 @@ const NotFound = React.lazy(() => import('./pages/NotFound'));
 const NuestrosLibros = React.lazy(() => import('./pages/NuestrosLibros'));
 const Neurociencia = React.lazy(() => import('./pages/Neurociencia'));
 const ConstruyendoPersonaje = React.lazy(() => import('./pages/ConstruyendoPersonaje'));
+const BingoBoletos = React.lazy(() => import('./pages/BingoBoletos'));
+const BingoBoletosConfirmacion = React.lazy(() => import('./pages/BingoBoletosConfirmacion'));
 
 function App() {
   const navigate = useNavigate();
@@ -270,6 +272,10 @@ function App() {
             <Route path="/codigo-estudiante" element={<CodigoEstudiante />} />
             <Route path="/juegos/maquina-de-cuentos" element={<StoryMachine />} />
             <Route path="/juegos/bingo" element={<BingoHub />} />
+            <Route path="/juegos/bingo/boletos" element={<BingoBoletos />} />
+            <Route path="/bingo/boletos" element={<BingoBoletos />} />
+            <Route path="/juegos/bingo/boletos/confirmacion" element={<BingoBoletosConfirmacion />} />
+            <Route path="/bingo/boletos/confirmacion" element={<BingoBoletosConfirmacion />} />
             <Route path="/juegos/bingo/carton/:cartonId" element={<BingoCardView />} />
             <Route path="/universo-de-juracan" element={<Juracan />} />
             <Route path="/laboratorios" element={<Laboratorios />} />

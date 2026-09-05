@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  collection, doc, addDoc, updateDoc, setDoc, deleteDoc, 
+  collection, doc, getDoc, addDoc, updateDoc, setDoc, deleteDoc, 
   writeBatch, onSnapshot, query, limit, where 
 } from 'firebase/firestore';
 import { db } from '../../firebase';
@@ -129,8 +129,22 @@ export default function AdminBingoTab() {
   const [loading, setLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
 
-  // Tab Navigation: 6 cohesive modules
-  const [activeTab, setActiveTab] = useState<'partida' | 'diseno' | 'figuras' | 'acceso' | 'premios_marcas' | 'promotores'>('partida');
+  // Tab Navigation: 7 cohesive modules
+  const [activeTab, setActiveTab] = useState<'partida' | 'diseno' | 'figuras' | 'acceso' | 'premios_marcas' | 'promotores' | 'pasarela'>('partida');
+
+  // Configuración de Pasarela Recurrente (Boletos)
+  const [recurrenteLinks, setRecurrenteLinks] = useState<{
+    'pkg-10': string;
+    'pkg-25': string;
+    'pkg-50': string;
+    'pkg-100': string;
+  }>({
+    'pkg-10': '',
+    'pkg-25': '',
+    'pkg-50': '',
+    'pkg-100': ''
+  });
+  const [isSavingGateways, setIsSavingGateways] = useState(false);
 
   // Custom Alert / Confirm Dialog State
   const [dialogConfig, setDialogConfig] = useState<{
@@ -366,6 +380,40 @@ export default function AdminBingoTab() {
       unsubCards();
     };
   }, []);
+
+  // 4. Cargar configuración de Links de Recurrente (Boletos)
+  useEffect(() => {
+    const loadGatewaySettings = async () => {
+      try {
+        const snap = await getDoc(doc(db, 'bingo_settings', 'payment_gateways'));
+        if (snap.exists()) {
+          const d = snap.data();
+          if (d.recurrente_links) {
+            setRecurrenteLinks(prev => ({ ...prev, ...d.recurrente_links }));
+          }
+        }
+      } catch (err) {
+        console.error("Error al cargar settings de pasarela:", err);
+      }
+    };
+    loadGatewaySettings();
+  }, []);
+
+  const handleSaveRecurrenteLinks = async () => {
+    setIsSavingGateways(true);
+    try {
+      await setDoc(doc(db, 'bingo_settings', 'payment_gateways'), {
+        recurrente_links: recurrenteLinks,
+        updatedAt: Date.now()
+      }, { merge: true });
+      showAlert("Los links de pago de Recurrente se guardaron correctamente para la tienda de boletos.", "Configuración Guardada", "💾");
+    } catch (err) {
+      console.error("Error al guardar links de Recurrente:", err);
+      showAlert("No se pudieron guardar los links de pago. Revisa tu conexión.", "Error", "❌");
+    } finally {
+      setIsSavingGateways(false);
+    }
+  };
 
   // --------------------------------------------------------------------------
   // Compresión automática de imágenes antes de almacenar en Firestore (Evita >1MB)
@@ -1066,6 +1114,15 @@ export default function AdminBingoTab() {
         >
           👥 Promotores de Venta
           <span className="bingo-badge-chip">{promotersList.length}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setActiveTab('pasarela')}
+          className={`bingo-tab-btn ${activeTab === 'pasarela' ? 'active' : ''}`}
+          style={{ background: activeTab === 'pasarela' ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.25) 100%)' : '' }}
+        >
+          💳 Pasarela Recurrente (Boletos)
         </button>
       </div>
 
@@ -2843,6 +2900,158 @@ export default function AdminBingoTab() {
                 </tbody>
               </table>
             </div>
+          </div>
+
+        </div>
+      )}
+
+      {/* ====================================================================
+          MÓDULO 7: PASARELA DE PAGO RECURRENTE (TIENDA DE BOLETOS)
+         ==================================================================== */}
+      {activeTab === 'pasarela' && (
+        <div className="bingo-tab-content animate-fade-in">
+          
+          {/* Header de la Pasarela */}
+          <div className="admin-card" style={{ borderLeft: '4px solid #10b981', marginBottom: '24px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px' }}>
+              <div>
+                <h3 style={{ margin: '0 0 6px 0', fontSize: '1.25rem', color: '#0f172a', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>🇬🇹</span> Pasarela de Pago Recurrente (Guatemala)
+                </h3>
+                <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+                  Configuración oficial para la venta en línea de boletos de Bingotenango con tarjetas de crédito/débito y transferencias bancarias.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <a
+                  href="/juegos/bingo/boletos"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.82rem' }}
+                >
+                  🌐 Ver Tienda de Boletos
+                </a>
+                <button
+                  type="button"
+                  onClick={() => {
+                    navigator.clipboard.writeText(`${window.location.origin}/juegos/bingo/boletos`);
+                    showAlert("Enlace de la tienda copiado al portapapeles: " + `${window.location.origin}/juegos/bingo/boletos`, "Enlace Copiado", "📋");
+                  }}
+                  className="btn btn-primary"
+                  style={{ background: '#10b981', borderColor: '#10b981', fontSize: '0.82rem' }}
+                >
+                  📋 Copiar Enlace Público
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Guía de Configuración Rápida */}
+          <div className="admin-card" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', marginBottom: '24px' }}>
+            <h4 style={{ margin: '0 0 10px 0', color: '#166534', fontSize: '0.95rem' }}>
+              💡 ¿Cómo obtener los Links de Pago en Recurrente?
+            </h4>
+            <ol style={{ margin: 0, paddingLeft: '20px', fontSize: '0.82rem', color: '#15803d', lineHeight: '1.6' }}>
+              <li>Inicia sesión en tu cuenta de <a href="https://app.recurrente.com" target="_blank" rel="noopener noreferrer" style={{ color: '#166534', fontWeight: 'bold' }}>app.recurrente.com</a>.</li>
+              <li>Ve a la sección <strong>"Cobros / Links de Pago"</strong> y crea los 4 productos con los precios correspondientes: <strong>Q10, Q25, Q50 y Q100</strong>.</li>
+              <li>En cada producto, en el campo <strong>"URL de redirección al pagar con éxito"</strong>, coloca exactamente:  
+                <code style={{ background: '#dcfce7', padding: '2px 6px', borderRadius: '4px', marginLeft: '6px', fontWeight: 'bold' }}>
+                  {window.location.origin}/juegos/bingo/boletos/confirmacion
+                </code>
+              </li>
+              <li>Copia el enlace que te genera Recurrente para cada uno y pégalo en las casillas de abajo.</li>
+            </ol>
+          </div>
+
+          {/* Formulario de Links de Recurrente */}
+          <div className="admin-card" style={{ marginBottom: '24px' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', color: '#1e293b' }}>
+              Enlaces de Cobro de Recurrente por Paquete
+            </h4>
+
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
+              
+              {/* Paquete Q10 */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>🎟️ Boleto Individual</strong>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 10.00</span>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>1 Cartón oficial de juego</p>
+                <input
+                  type="url"
+                  className="form-control"
+                  placeholder="https://app.recurrente.com/s/tu-link-q10"
+                  value={recurrenteLinks['pkg-10'] || ''}
+                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'pkg-10': e.target.value }))}
+                  style={{ fontSize: '0.82rem' }}
+                />
+              </div>
+
+              {/* Paquete Q25 */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>🔥 Combo Trío (Popular)</strong>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 25.00</span>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>3 Cartones oficiales de juego</p>
+                <input
+                  type="url"
+                  className="form-control"
+                  placeholder="https://app.recurrente.com/s/tu-link-q25"
+                  value={recurrenteLinks['pkg-25'] || ''}
+                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'pkg-25': e.target.value }))}
+                  style={{ fontSize: '0.82rem' }}
+                />
+              </div>
+
+              {/* Paquete Q50 */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>👨‍👩‍👧‍👦 Combo Familiar</strong>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 50.00</span>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>7 Cartones oficiales de juego</p>
+                <input
+                  type="url"
+                  className="form-control"
+                  placeholder="https://app.recurrente.com/s/tu-link-q50"
+                  value={recurrenteLinks['pkg-50'] || ''}
+                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'pkg-50': e.target.value }))}
+                  style={{ fontSize: '0.82rem' }}
+                />
+              </div>
+
+              {/* Paquete Q100 */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>👑 Pase VIP Gamer</strong>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 100.00</span>
+                </div>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>15 Cartones oficiales de juego</p>
+                <input
+                  type="url"
+                  className="form-control"
+                  placeholder="https://app.recurrente.com/s/tu-link-q100"
+                  value={recurrenteLinks['pkg-100'] || ''}
+                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'pkg-100': e.target.value }))}
+                  style={{ fontSize: '0.82rem' }}
+                />
+              </div>
+
+            </div>
+
+            <button
+              type="button"
+              onClick={handleSaveRecurrenteLinks}
+              disabled={isSavingGateways}
+              className="btn btn-primary"
+              style={{ padding: '12px 24px', background: '#10b981', borderColor: '#10b981', fontSize: '0.95rem', fontWeight: 'bold' }}
+            >
+              {isSavingGateways ? 'Guardando...' : '💾 Guardar Links de Cobro de Recurrente'}
+            </button>
           </div>
 
         </div>

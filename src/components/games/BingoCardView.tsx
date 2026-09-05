@@ -1336,14 +1336,38 @@ export default function BingoCardView() {
             )}
           </div>
 
-          {/* Fila Inferior: Botón Compacto de Sonido/Vibración */}
-          <div className="lobby-compact-footer">
+          {/* Fila Inferior: Botón Compacto de Sonido/Vibración y Comprar Boletos */}
+          <div className="lobby-compact-footer" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
             <button 
               className={`btn-test-feedback-compact ${testFeedbackActive ? 'active' : ''}`}
               onClick={testSoundAndHaptics}
             >
-              {testFeedbackActive ? '🔔 ¡Altavoces y Vibración Listos!' : '🔔 Probar Sonido y Vibración'}
+              {testFeedbackActive ? '🔔 ¡Altavoces Listos!' : '🔔 Probar Sonido'}
             </button>
+
+            <a 
+              href="/juegos/bingo/boletos"
+              target="_blank"
+              rel="noopener noreferrer"
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '6px 12px',
+                borderRadius: '999px',
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.25) 0%, rgba(217, 119, 6, 0.35) 100%)',
+                border: '1px solid rgba(245, 158, 11, 0.6)',
+                color: '#fbbf24',
+                fontSize: '0.75rem',
+                fontWeight: 'bold',
+                textDecoration: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 2px 8px rgba(245, 158, 11, 0.25)'
+              }}
+              title="Adquirir más cartones para esta ronda o invitar a un amigo"
+            >
+              🎟️ Comprar Boletos
+            </a>
           </div>
         </div>
       )}
