@@ -364,6 +364,27 @@ const BingoBoletosConfirmacion: React.FC = () => {
                       >
                         💬 WhatsApp
                       </a>
+
+                      <a
+                        href={`https://t.me/share/url?url=${encodeURIComponent(item.url)}&text=${encodeURIComponent('¡Hola! 🎟️ Te comparto tu pase para jugar hoy en Bingotenango. Ábrelo en tu celular para ingresar a la sala en vivo!')}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: 'rgba(34, 158, 217, 0.2)',
+                          border: '1px solid rgba(34, 158, 217, 0.5)',
+                          color: '#38bdf8',
+                          borderRadius: '8px',
+                          padding: '6px 12px',
+                          fontSize: '0.76rem',
+                          fontWeight: 'bold',
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '4px'
+                        }}
+                      >
+                        ✈️ Telegram
+                      </a>
                     </div>
                   </div>
                 ))}
@@ -469,39 +490,68 @@ const BingoBoletosConfirmacion: React.FC = () => {
             </>
           )}
 
-          {/* BOTÓN SECUNDARIO PARA ENVIAR AL WHATSAPP DEL COMPRADOR */}
-          {orderData?.playerWhatsapp && (
-            <a
-              href={`https://wa.me/502${orderData.playerWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
-                `¡Hola ${orderData?.playerName || 'Jugador'}! 🎟️ Comprobante de boletos de Bingotenango:\n\n` +
-                `Tipo: ${isGiftMode ? `${orderData?.quantity} Links para Contactos` : `${orderData?.quantity} Cartón(es) Personal`}\n` +
-                `Total: Q${orderData?.totalPriceQ || 25}.00\n\n` +
-                (accessToken ? `Enlace de acceso: ${window.location.origin}/juegos/bingo?access=${accessToken.id}\n\n` : '') +
-                `¡Buena suerte en la partida en vivo!`
-              )}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                gap: '8px',
-                width: '100%',
-                boxSizing: 'border-box',
-                padding: '12px 20px',
-                borderRadius: '12px',
-                background: 'rgba(37, 211, 102, 0.15)',
-                border: '1px solid rgba(37, 211, 102, 0.4)',
-                color: '#25d366',
-                fontSize: '0.88rem',
-                fontWeight: 700,
-                textDecoration: 'none',
-                cursor: 'pointer'
-              }}
-            >
-              <span>📲</span> Guardar Comprobante en mi WhatsApp
-            </a>
-          )}
+              {/* BOTÓN SECUNDARIO PARA RECIBIR EN TELEGRAM AUTOMÁTICO */}
+              {accessToken && (
+                <a
+                  href={`https://t.me/Bingotenangobot?start=${accessToken.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    background: 'rgba(34, 158, 217, 0.18)',
+                    border: '1px solid rgba(34, 158, 217, 0.5)',
+                    color: '#38bdf8',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    cursor: 'pointer',
+                    marginBottom: '10px'
+                  }}
+                >
+                  <span>✈️</span> Recibir mi Pase en Telegram (@Bingotenangobot)
+                </a>
+              )}
+
+              {/* BOTÓN SECUNDARIO PARA ENVIAR AL WHATSAPP DEL COMPRADOR */}
+              {orderData?.playerWhatsapp && (
+                <a
+                  href={`https://wa.me/502${orderData.playerWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
+                    `¡Hola ${orderData?.playerName || 'Jugador'}! 🎟️ Comprobante de boletos de Bingotenango:\n\n` +
+                    `Tipo: ${isGiftMode ? `${orderData?.quantity} Links para Contactos` : `${orderData?.quantity} Cartón(es) Personal`}\n` +
+                    `Total: Q${orderData?.totalPriceQ || 25}.00\n\n` +
+                    (accessToken ? `Enlace de acceso: ${window.location.origin}/juegos/bingo?access=${accessToken.id}\n\n` : '') +
+                    `¡Buena suerte en la partida en vivo!`
+                  )}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '8px',
+                    width: '100%',
+                    boxSizing: 'border-box',
+                    padding: '12px 20px',
+                    borderRadius: '12px',
+                    background: 'rgba(37, 211, 102, 0.15)',
+                    border: '1px solid rgba(37, 211, 102, 0.4)',
+                    color: '#25d366',
+                    fontSize: '0.88rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    cursor: 'pointer'
+                  }}
+                >
+                  <span>📲</span> Guardar Comprobante en mi WhatsApp
+                </a>
+              )}
 
         </div>
 

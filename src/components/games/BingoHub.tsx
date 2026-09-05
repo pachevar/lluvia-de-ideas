@@ -4829,6 +4829,28 @@ export default function BingoHub() {
                                             >
                                               {token.linkSent ? '✅ Link Enviado 📲' : '📲 Enviar WhatsApp'}
                                             </button>
+
+                                            <a
+                                              href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/juegos/bingo?access=${token.id}`)}&text=${encodeURIComponent(`¡Hola ${token.playerName}! 🎟️ Aquí está tu pase oficial para jugar en vivo en Bingotenango:`)}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              style={{
+                                                background: 'rgba(34, 158, 217, 0.2)',
+                                                border: '1px solid rgba(34, 158, 217, 0.5)',
+                                                color: '#38bdf8',
+                                                borderRadius: '8px',
+                                                padding: '5px 10px',
+                                                fontSize: '0.75rem',
+                                                fontWeight: 'bold',
+                                                textDecoration: 'none',
+                                                display: 'inline-flex',
+                                                alignItems: 'center',
+                                                gap: '4px'
+                                              }}
+                                              title="Compartir pase por Telegram"
+                                            >
+                                              ✈️ Telegram
+                                            </a>
                                           </div>
                                         </td>
 
