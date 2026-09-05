@@ -10,6 +10,8 @@ const BingoBoletosConfirmacion: React.FC = () => {
   const orderId = searchParams.get('orderId');
   const isSuccess = searchParams.get('status') === 'success' || searchParams.get('testMode') === 'true';
   const pkgId = searchParams.get('pkg');
+  const tierId = searchParams.get('tier');
+  const qtyParam = parseInt(searchParams.get('qty') || '1', 10);
   const playerNameParam = searchParams.get('name');
   const phoneParam = searchParams.get('phone');
 
@@ -37,12 +39,23 @@ const BingoBoletosConfirmacion: React.FC = () => {
             });
           }
         } else if (playerNameParam) {
+          const targetTier = tierId || pkgId;
+          const unitPrice = targetTier === 'tier-10' || targetTier === 'pkg-10' ? 10 : targetTier === 'tier-50' || targetTier === 'pkg-50' ? 50 : targetTier === 'tier-100' || targetTier === 'pkg-100' ? 100 : 25;
+          const tierName = targetTier === 'tier-10' || targetTier === 'pkg-10' ? 'Cartón Bronce' : targetTier === 'tier-50' || targetTier === 'pkg-50' ? 'Cartón Oro' : targetTier === 'tier-100' || targetTier === 'pkg-100' ? 'Cartón Diamante VIP' : 'Cartón Plata';
+          const prizeLevel = targetTier === 'tier-10' ? 'Premios Estándar' : targetTier === 'tier-50' ? 'Grandes Premios' : targetTier === 'tier-100' ? 'Premio Mayor / Pozo VIP' : 'Premios Intermedios';
+          const totalQ = unitPrice * qtyParam;
+
           setOrderData({
             playerName: decodeURIComponent(playerNameParam),
             playerWhatsapp: phoneParam,
-            packageName: pkgId === 'pkg-10' ? 'Boleto Individual' : pkgId === 'pkg-50' ? 'Combo Familiar' : pkgId === 'pkg-100' ? 'Pase VIP' : 'Combo Trío',
-            priceQ: pkgId === 'pkg-10' ? 10 : pkgId === 'pkg-50' ? 50 : pkgId === 'pkg-100' ? 100 : 25,
-            cartonesCount: pkgId === 'pkg-10' ? 1 : pkgId === 'pkg-50' ? 7 : pkgId === 'pkg-100' ? 15 : 3
+            tierName: tierName,
+            prizeLevel: prizeLevel,
+            packageName: `${tierName} (${qtyParam} ${qtyParam === 1 ? 'Cartón' : 'Cartones'})`,
+            unitPriceQ: unitPrice,
+            quantity: qtyParam,
+            priceQ: totalQ,
+            totalPriceQ: totalQ,
+            cartonesCount: qtyParam
           });
         }
       } catch (err) {
@@ -53,7 +66,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
     };
 
     fetchOrder();
-  }, [orderId, isSuccess, pkgId, playerNameParam, phoneParam]);
+  }, [orderId, isSuccess, pkgId, tierId, qtyParam, playerNameParam, phoneParam]);
 
   if (loading) {
     return (
@@ -137,16 +150,22 @@ const BingoBoletosConfirmacion: React.FC = () => {
             textAlign: 'left'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.85rem', color: '#94a3b8' }}>
-              <span>Paquete Adquirido:</span>
-              <strong style={{ color: '#fff' }}>{orderData?.packageName || 'Boletos Bingotenango'}</strong>
+              <span>Tipo de Cartón / Ronda:</span>
+              <strong style={{ color: '#fff' }}>{orderData?.tierName || orderData?.packageName || 'Cartón Bingotenango'}</strong>
             </div>
+            {orderData?.prizeLevel && (
+              <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.85rem', color: '#94a3b8' }}>
+                <span>Nivel de Premio:</span>
+                <strong style={{ color: '#cbd5e1' }}>{orderData.prizeLevel}</strong>
+              </div>
+            )}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.85rem', color: '#94a3b8' }}>
               <span>Total de Cartones:</span>
-              <strong style={{ color: '#38bdf8' }}>{orderData?.cartonesCount || 1} Cartones</strong>
+              <strong style={{ color: '#38bdf8' }}>{orderData?.quantity || orderData?.cartonesCount || 1} {((orderData?.quantity || orderData?.cartonesCount || 1) === 1) ? 'Cartón' : 'Cartones'}</strong>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.85rem', color: '#94a3b8' }}>
-              <span>Monto Pagado:</span>
-              <strong style={{ color: '#fbbf24' }}>Q {orderData?.priceQ || 25}.00</strong>
+              <span>Monto Total Pagado:</span>
+              <strong style={{ color: '#fbbf24' }}>Q {orderData?.totalPriceQ || orderData?.priceQ || 25}.00</strong>
             </div>
             {orderId && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.78rem', color: '#64748b' }}>

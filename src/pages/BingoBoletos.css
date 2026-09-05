@@ -279,6 +279,146 @@
   box-shadow: 0 4px 15px rgba(37, 99, 235, 0.4);
 }
 
+/* ==========================================================================
+   SELECTOR DE CANTIDAD DE CARTONES
+   ========================================================================== */
+.quantity-control-card {
+  background: linear-gradient(135deg, rgba(26, 20, 48, 0.9) 0%, rgba(15, 12, 30, 0.95) 100%);
+  border: 1.5px solid rgba(0, 240, 255, 0.35);
+  border-radius: 20px;
+  padding: 20px 24px;
+  margin-bottom: 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(0, 240, 255, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 20px;
+}
+
+.quantity-info-side h3 {
+  font-family: var(--font-gamer, sans-serif);
+  font-size: 1.25rem;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+  letter-spacing: 0.5px;
+}
+
+.quantity-info-side p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.quantity-action-side {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 14px;
+}
+
+.quantity-stepper {
+  display: inline-flex;
+  align-items: center;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1.5px solid rgba(0, 240, 255, 0.4);
+  border-radius: 14px;
+  padding: 4px;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.15);
+}
+
+.stepper-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  font-size: 1.3rem;
+  font-weight: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.stepper-btn:hover:not(:disabled) {
+  background: #0284c7;
+  border-color: #38bdf8;
+  color: #fff;
+  transform: scale(1.05);
+}
+
+.stepper-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.stepper-value-wrap {
+  min-width: 65px;
+  text-align: center;
+  padding: 0 8px;
+}
+
+.stepper-value {
+  font-family: var(--font-gamer, monospace);
+  font-size: 1.65rem;
+  font-weight: 900;
+  color: #00f0ff;
+  line-height: 1;
+  display: block;
+}
+
+.stepper-unit {
+  font-size: 0.65rem;
+  color: #cbd5e1;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  font-weight: 700;
+}
+
+.quick-quantity-chips {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.quick-chip-btn {
+  padding: 6px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  font-size: 0.78rem;
+  font-weight: bold;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.quick-chip-btn:hover {
+  background: rgba(0, 240, 255, 0.15);
+  border-color: rgba(0, 240, 255, 0.4);
+  color: #38bdf8;
+}
+
+.quick-chip-btn.active {
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25) 0%, rgba(59, 130, 246, 0.3) 100%);
+  border-color: #00f0ff;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3);
+}
+
+.quantity-live-total {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  padding: 6px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: #fbbf24;
+  font-weight: bold;
+}
+
 /* FORMULARIO DE CHECKOUT / RECURRENTE */
 .checkout-section {
   background: linear-gradient(135deg, rgba(22, 16, 42, 0.95) 0%, rgba(12, 9, 25, 0.98) 100%);

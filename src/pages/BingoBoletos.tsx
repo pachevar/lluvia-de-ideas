@@ -5,60 +5,65 @@ import { db } from '../firebase';
 import type { BingoGame } from '../types';
 import './BingoBoletos.css';
 
-interface TicketPackage {
+interface CardTier {
   id: string;
   name: string;
-  priceQ: number;
-  cartonesCount: number;
+  unitPriceQ: number;
+  prizeLevel: string;
   badge?: string;
   badgeClass?: string;
-  benefit: string;
+  description: string;
+  prizeHighlight: string;
   icon: string;
-  defaultRecurrenteUrl?: string;
 }
 
-const PACKAGES: TicketPackage[] = [
+const CARD_TIERS: CardTier[] = [
   {
-    id: 'pkg-10',
-    name: 'Boleto Individual',
-    priceQ: 10,
-    cartonesCount: 1,
-    benefit: '1 Cartón para participar en la ronda activa de Bingotenango.',
-    icon: '🎟️'
+    id: 'tier-10',
+    name: 'Cartón Bronce',
+    unitPriceQ: 10,
+    prizeLevel: 'Premios Estándar',
+    description: '1 Cartón oficial para jugar en la ronda de premios básicos y canastas sorpresa.',
+    prizeHighlight: 'Canastas de productos, vales escolares y sorpresas.',
+    icon: '🥉'
   },
   {
-    id: 'pkg-25',
-    name: 'Combo Trío',
-    priceQ: 25,
-    cartonesCount: 3,
-    badge: 'MÁS POPULAR',
+    id: 'tier-25',
+    name: 'Cartón Plata',
+    unitPriceQ: 25,
+    prizeLevel: 'Premios Intermedios',
+    badge: 'MÁS JUGADO',
     badgeClass: 'popular',
-    benefit: '3 Cartones con triple oportunidad de cantar Bingo (Ahorras Q5).',
-    icon: '🔥'
+    description: '1 Cartón oficial para competir por premios medianos en efectivo y electrodomésticos.',
+    prizeHighlight: 'Premios en efectivo, electrodomésticos y kits tecnológicos.',
+    icon: '🥈'
   },
   {
-    id: 'pkg-50',
-    name: 'Combo Familiar',
-    priceQ: 50,
-    cartonesCount: 7,
-    benefit: '7 Cartones ideales para jugar en familia o con amigos (Ahorras Q20).',
-    icon: '👨‍👩‍👧‍👦'
+    id: 'tier-50',
+    name: 'Cartón Oro',
+    unitPriceQ: 50,
+    prizeLevel: 'Grandes Premios',
+    description: '1 Cartón oficial para disputar grandes premios de alto valor y tecnología.',
+    prizeHighlight: 'Smart TVs, tablets, smartphones y premios en efectivo.',
+    icon: '🥇'
   },
   {
-    id: 'pkg-100',
-    name: 'Pase VIP Gamer',
-    priceQ: 100,
-    cartonesCount: 15,
-    badge: 'MEJOR VALOR',
+    id: 'tier-100',
+    name: 'Cartón Diamante VIP',
+    unitPriceQ: 100,
+    prizeLevel: 'Premio Mayor / Pozo VIP',
+    badge: 'POZO MAYOR',
     badgeClass: 'vip',
-    benefit: '15 Cartones para maximizar probabilidades de ganar los premios mayores (Ahorras Q50).',
-    icon: '👑'
+    description: '1 Cartón oficial para participar por el gran pozo acumulado de la noche.',
+    prizeHighlight: 'Gran Pozo Acumulado en efectivo y premios de alta gama.',
+    icon: '💎'
   }
 ];
 
 const BingoBoletos: React.FC = () => {
   const navigate = useNavigate();
-  const [selectedPackage, setSelectedPackage] = useState<TicketPackage>(PACKAGES[1]); // Por defecto Q25
+  const [selectedTier, setSelectedTier] = useState<CardTier>(CARD_TIERS[1]); // Por defecto Q25
+  const [quantity, setQuantity] = useState<number>(1);
   const [playerName, setPlayerName] = useState('');
   const [playerWhatsapp, setPlayerWhatsapp] = useState('');
   const [playerEmail, setPlayerEmail] = useState('');
@@ -142,6 +147,7 @@ const BingoBoletos: React.FC = () => {
   }, [activeGame?.nextRoundTime]);
 
   // Manejador del Checkout de Recurrente
+  // Manejador del Checkout de Recurrente
   const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
@@ -157,6 +163,7 @@ const BingoBoletos: React.FC = () => {
       return;
     }
 
+    const totalPriceQ = selectedTier.unitPriceQ * quantity;
     setIsProcessing(true);
 
     let orderId = 'ord_' + Date.now();
@@ -166,10 +173,15 @@ const BingoBoletos: React.FC = () => {
         playerName: playerName.trim(),
         playerWhatsapp: cleanPhone,
         playerEmail: playerEmail.trim() || null,
-        packageId: selectedPackage.id,
-        packageName: selectedPackage.name,
-        priceQ: selectedPackage.priceQ,
-        cartonesCount: selectedPackage.cartonesCount,
+        tierId: selectedTier.id,
+        tierName: selectedTier.name,
+        prizeLevel: selectedTier.prizeLevel,
+        unitPriceQ: selectedTier.unitPriceQ,
+        quantity: quantity,
+        priceQ: totalPriceQ, // Compatibilidad
+        totalPriceQ: totalPriceQ,
+        cartonesCount: quantity, // Compatibilidad
+        packageName: `${selectedTier.name} (${quantity} ${quantity === 1 ? 'Cartón' : 'Cartones'})`,
         gameId: activeGame?.id || 'default_game',
         gateway: 'recurrente_guatemala',
         status: 'pending',
@@ -195,8 +207,8 @@ const BingoBoletos: React.FC = () => {
             body: JSON.stringify({
               items: [
                 {
-                  name: `Bingotenango: ${selectedPackage.name} (${selectedPackage.cartonesCount} Cartones)`,
-                  amount_in_cents: selectedPackage.priceQ * 100,
+                  name: `Bingotenango: ${quantity}x ${selectedTier.name} (${selectedTier.prizeLevel})`,
+                  amount_in_cents: totalPriceQ * 100,
                   currency: "GTQ",
                   quantity: 1
                 }
@@ -207,9 +219,11 @@ const BingoBoletos: React.FC = () => {
                 orderId: orderId,
                 playerName: playerName.trim(),
                 playerWhatsapp: cleanPhone,
-                packageId: selectedPackage.id,
-                cartones: selectedPackage.cartonesCount,
-                priceQ: selectedPackage.priceQ
+                tierId: selectedTier.id,
+                tierName: selectedTier.name,
+                unitPriceQ: selectedTier.unitPriceQ,
+                quantity: quantity,
+                priceQ: totalPriceQ
               }
             })
           });
@@ -228,7 +242,7 @@ const BingoBoletos: React.FC = () => {
       }
 
       // 3. Fallback: Si hay link de producto configurado en Gerencia
-      const configuredLink = recurrenteLinks[selectedPackage.id];
+      const configuredLink = recurrenteLinks[selectedTier.id];
       if (configuredLink && configuredLink.startsWith('http')) {
         const separator = configuredLink.includes('?') ? '&' : '?';
         const returnUrl = encodeURIComponent(`${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
@@ -236,7 +250,7 @@ const BingoBoletos: React.FC = () => {
         window.location.href = finalUrl;
       } else {
         // Modo guiado / simulado si no hubiera conexión externa
-        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&pkg=${selectedPackage.id}&name=${encodeURIComponent(playerName)}&phone=${cleanPhone}&testMode=true`);
+        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tier=${selectedTier.id}&qty=${quantity}&name=${encodeURIComponent(playerName)}&phone=${cleanPhone}&testMode=true`);
       }
     } catch (err) {
       console.error("Error al iniciar orden:", err);
@@ -244,6 +258,8 @@ const BingoBoletos: React.FC = () => {
       setIsProcessing(false);
     }
   };
+
+  const totalPriceQ = selectedTier.unitPriceQ * quantity;
 
   return (
     <div className="bingo-boletos-page">
@@ -285,81 +301,153 @@ const BingoBoletos: React.FC = () => {
           <div className="trust-step-card">
             <div className="trust-step-number">1</div>
             <div className="trust-step-text">
-              <h4>Elige tu Paquete</h4>
-              <p>Selecciona la cantidad de cartones con los que deseas jugar (Q10, Q25, Q50 o Q100).</p>
+              <h4>Elige el Tipo de Premio</h4>
+              <p>Selecciona por qué categoría de premios quieres jugar (Q10, Q25, Q50 o Q100 por cartón).</p>
             </div>
           </div>
 
           <div className="trust-step-card">
             <div className="trust-step-number">2</div>
             <div className="trust-step-text">
-              <h4>Paga Seguro en Recurrente</h4>
-              <p>Procesamiento bancario 100% cifrado con tarjeta de débito, crédito o transferencia.</p>
+              <h4>Define la Cantidad</h4>
+              <p>Elige cuántos cartones quieres de ese tipo (1, 2, 3, 5, etc.) para tener más oportunidades.</p>
             </div>
           </div>
 
           <div className="trust-step-card">
             <div className="trust-step-number">3</div>
             <div className="trust-step-text">
-              <h4>Recibe tu Link de Juego</h4>
-              <p>Al confirmar el pago, la pantalla te genera tu link único y tus cartones para cantar Bingo en vivo.</p>
+              <h4>Paga Seguro en Recurrente</h4>
+              <p>Checkout bancario 100% cifrado con entrega inmediata de tus cartones para la sala en vivo.</p>
             </div>
           </div>
         </div>
 
-        {/* SELECTOR DE PAQUETES */}
+        {/* 1. SELECTOR DE TIPO DE CARTÓN / PREMIO */}
         <h2 className="boletos-grid-title">
-          1. SELECCIONA TU PAQUETE DE CARTONES
+          1. ELIGE EL TIPO DE PREMIO / CARTÓN A JUGAR
         </h2>
+        <p style={{ textAlign: 'center', color: '#94a3b8', fontSize: '0.88rem', margin: '-14px auto 26px', maxWidth: '620px' }}>
+          Cada opción representa <strong>1 cartón oficial</strong> según el nivel de premios que se disputa en la ronda.
+        </p>
 
         <div className="boletos-packages-grid">
-          {PACKAGES.map((pkg) => {
-            const isSelected = selectedPackage.id === pkg.id;
+          {CARD_TIERS.map((tier) => {
+            const isSelected = selectedTier.id === tier.id;
             return (
               <div 
-                key={pkg.id}
+                key={tier.id}
                 className={`package-card ${isSelected ? 'selected' : ''}`}
-                onClick={() => setSelectedPackage(pkg)}
+                onClick={() => setSelectedTier(tier)}
               >
-                {pkg.badge && (
-                  <span className={`package-badge ${pkg.badgeClass}`}>
-                    {pkg.badge}
+                {tier.badge && (
+                  <span className={`package-badge ${tier.badgeClass}`}>
+                    {tier.badge}
                   </span>
                 )}
 
-                <div className="package-icon">{pkg.icon}</div>
-                <h3 className="package-name">{pkg.name}</h3>
+                <div className="package-icon">{tier.icon}</div>
+                <h3 className="package-name">{tier.name}</h3>
                 
                 <div className="package-cartones">
-                  🎟️ {pkg.cartonesCount} {pkg.cartonesCount === 1 ? 'Cartón Oficial' : 'Cartones Oficiales'}
+                  🏆 {tier.prizeLevel}
                 </div>
 
                 <div className="package-price-wrap">
                   <span className="package-currency">Q</span>
-                  <span className="package-amount">{pkg.priceQ}</span>
+                  <span className="package-amount">{tier.unitPriceQ}</span>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', marginLeft: '4px', fontWeight: 'bold' }}>/ cartón</span>
                 </div>
 
-                <p className="package-benefit">{pkg.benefit}</p>
+                <p className="package-benefit">{tier.description}</p>
+
+                <div style={{
+                  margin: '12px 0 16px',
+                  padding: '10px 12px',
+                  borderRadius: '10px',
+                  background: 'rgba(255, 255, 255, 0.04)',
+                  border: '1px dashed rgba(255, 255, 255, 0.15)',
+                  fontSize: '0.76rem',
+                  color: '#e2e8f0',
+                  textAlign: 'left'
+                }}>
+                  <strong style={{ color: '#38bdf8', display: 'block', marginBottom: '3px' }}>🎁 Premios en juego:</strong>
+                  {tier.prizeHighlight}
+                </div>
 
                 <button type="button" className="package-select-btn">
-                  {isSelected ? '✓ Seleccionado' : 'Elegir Paquete'}
+                  {isSelected ? '✓ Seleccionado' : 'Elegir Tipo'}
                 </button>
               </div>
             );
           })}
         </div>
 
-        {/* FORMULARIO Y CHECKOUT */}
+        {/* 2. SELECTOR DE CANTIDAD DE CARTONES */}
+        <div className="quantity-control-card">
+          <div className="quantity-info-side">
+            <h3>2. ¿CUÁNTOS CARTONES DESEAS JUGAR?</h3>
+            <p>
+              Tipo seleccionado: <strong style={{ color: '#fff' }}>{selectedTier.name} ({selectedTier.prizeLevel})</strong> a <strong style={{ color: '#00f0ff' }}>Q{selectedTier.unitPriceQ}.00 c/u</strong>.
+            </p>
+          </div>
+
+          <div className="quantity-action-side">
+            <div className="quantity-stepper">
+              <button 
+                type="button" 
+                className="stepper-btn" 
+                onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
+                disabled={quantity <= 1}
+                aria-label="Restar cartón"
+              >
+                −
+              </button>
+              <div className="stepper-value-wrap">
+                <span className="stepper-value">{quantity}</span>
+                <span className="stepper-unit">{quantity === 1 ? 'Cartón' : 'Cartones'}</span>
+              </div>
+              <button 
+                type="button" 
+                className="stepper-btn" 
+                onClick={() => setQuantity(prev => Math.min(50, prev + 1))}
+                disabled={quantity >= 50}
+                aria-label="Sumar cartón"
+              >
+                +
+              </button>
+            </div>
+
+            <div className="quick-quantity-chips">
+              {[1, 2, 3, 5, 10].map((num) => (
+                <button
+                  key={num}
+                  type="button"
+                  className={`quick-chip-btn ${quantity === num ? 'active' : ''}`}
+                  onClick={() => setQuantity(num)}
+                >
+                  {num} {num === 1 ? 'cartón' : 'cartones'}
+                </button>
+              ))}
+            </div>
+
+            <div className="quantity-live-total">
+              Subtotal: Q{totalPriceQ}.00
+            </div>
+          </div>
+        </div>
+
+        {/* 3. FORMULARIO Y CHECKOUT */}
         <div className="checkout-section">
           <div className="checkout-grid">
             
             {/* LADO IZQUIERDO: FORMULARIO */}
             <div>
               <h3 className="checkout-form-title">
-                2. DATOS DE ENTREGA DEL JUGADOR
+                3. DATOS DE ENTREGA DEL JUGADOR
               </h3>
               <p className="checkout-form-subtitle">
-                A estos datos te vincularemos tus cartones y te enviaremos el enlace oficial de la sala de juego.
+                A estos datos vincularemos tus {quantity} {quantity === 1 ? 'cartón' : 'cartones'} y te enviaremos el enlace oficial de la sala de juego.
               </p>
 
               <form onSubmit={handleProceedToPayment}>
@@ -388,7 +476,7 @@ const BingoBoletos: React.FC = () => {
                     required
                   />
                   <small style={{ color: '#94a3b8', fontSize: '0.72rem', display: 'block', marginTop: '4px' }}>
-                    📲 Aquí recibirás la confirmación y el botón directo para entrar a la partida.
+                    📲 Aquí recibirás la confirmación y el botón directo para entrar a la partida con tus cartones.
                   </small>
                 </div>
 
@@ -428,13 +516,23 @@ const BingoBoletos: React.FC = () => {
                 </h4>
 
                 <div className="summary-row">
-                  <span>Paquete Seleccionado:</span>
-                  <strong style={{ color: '#fff' }}>{selectedPackage.name}</strong>
+                  <span>Tipo de Cartón / Ronda:</span>
+                  <strong style={{ color: '#fff' }}>{selectedTier.name}</strong>
                 </div>
 
                 <div className="summary-row">
-                  <span>Cartones Incluidos:</span>
-                  <strong style={{ color: '#38bdf8' }}>{selectedPackage.cartonesCount} Cartones</strong>
+                  <span>Categoría de Premio:</span>
+                  <strong style={{ color: '#cbd5e1' }}>{selectedTier.prizeLevel}</strong>
+                </div>
+
+                <div className="summary-row">
+                  <span>Precio Unitario:</span>
+                  <span style={{ color: '#94a3b8' }}>Q {selectedTier.unitPriceQ}.00 c/u</span>
+                </div>
+
+                <div className="summary-row">
+                  <span>Cantidad Seleccionada:</span>
+                  <strong style={{ color: '#00f0ff' }}>{quantity} {quantity === 1 ? 'Cartón' : 'Cartones'}</strong>
                 </div>
 
                 <div className="summary-row">
@@ -444,7 +542,7 @@ const BingoBoletos: React.FC = () => {
 
                 <div className="summary-row total">
                   <span>Total a Pagar:</span>
-                  <span className="summary-total-price">Q {selectedPackage.priceQ}.00</span>
+                  <span className="summary-total-price">Q {totalPriceQ}.00</span>
                 </div>
               </div>
 
@@ -455,11 +553,11 @@ const BingoBoletos: React.FC = () => {
                   onClick={handleProceedToPayment}
                   disabled={isProcessing}
                 >
-                  {isProcessing ? 'Conectando con Recurrente...' : `🔒 Pagar Q${selectedPackage.priceQ}.00 de Forma Segura`}
+                  {isProcessing ? 'Conectando con Recurrente...' : `🔒 Pagar Q${totalPriceQ}.00 (${quantity} ${quantity === 1 ? 'Cartón' : 'Cartones'})`}
                 </button>
 
                 <p style={{ textAlign: 'center', fontSize: '0.72rem', color: '#94a3b8', margin: '10px 0 0 0' }}>
-                  🛡️ Serás dirigido al checkout bancario seguro de Recurrente. Al confirmar, volverás automáticamente con tu link de juego activo.
+                  🛡️ Serás dirigido al checkout bancario seguro de Recurrente. Al confirmar, volverás automáticamente con tus cartones activos.
                 </p>
 
                 {/* SELLOS DE CONFIANZA */}
@@ -489,9 +587,9 @@ const BingoBoletos: React.FC = () => {
           <h3 className="faq-title">PREGUNTAS FRECUENTES</h3>
           
           <div className="faq-item">
-            <div className="faq-question">¿Cómo recibo mi cartón después de pagar?</div>
+            <div className="faq-question">¿Cómo recibo mis cartones después de pagar?</div>
             <div className="faq-answer">
-              Al completar tu pago en Recurrente, la pasarela te redirige automáticamente a nuestra pantalla de entrega con tu enlace directo. Además, te enviamos el link por WhatsApp para que nunca lo pierdas.
+              Al completar tu pago en Recurrente, la pasarela te redirige automáticamente a nuestra pantalla de entrega con tu enlace directo a la sala y tus cartones cargados. Además, te enviamos el link por WhatsApp para que lo tengas siempre disponible.
             </div>
           </div>
 
@@ -503,9 +601,9 @@ const BingoBoletos: React.FC = () => {
           </div>
 
           <div className="faq-item">
-            <div className="faq-question">¿Puedo comprar cartones para mi familia o amigos?</div>
+            <div className="faq-question">¿Puedo comprar varios cartones para la misma ronda?</div>
             <div className="faq-answer">
-              ¡Sí! Puedes elegir el Combo Familiar (7 cartones) o Pase VIP (15 cartones). Cada cartón tiene su propio link independiente para que puedas compartirlo con quien desees.
+              ¡Totalmente! Seleccionas la categoría de premio que deseas jugar (Bronce Q10, Plata Q25, Oro Q50 o Diamante Q100) y con los botones [+] y [-] o los accesos directos (1, 2, 3, 5, 10) defines cuántos cartones quieres. Cada cartón contará con su propia combinación numérica única.
             </div>
           </div>
 
