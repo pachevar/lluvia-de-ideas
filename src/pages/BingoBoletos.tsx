@@ -159,6 +159,7 @@ const BingoBoletos: React.FC = () => {
 
     setIsProcessing(true);
 
+    let orderId = 'ord_' + Date.now();
     try {
       // 1. Guardar la orden pendiente en Firestore
       const orderRef = await addDoc(collection(db, 'bingo_orders'), {
@@ -174,9 +175,12 @@ const BingoBoletos: React.FC = () => {
         status: 'pending',
         createdAt: Date.now()
       });
+      orderId = orderRef.id;
+    } catch (fsErr) {
+      console.warn("Aviso al guardar orden en Firestore (continuando con checkout):", fsErr);
+    }
 
-      const orderId = orderRef.id;
-
+    try {
       // 2. Crear sesión de Checkout dinámico en vivo en Recurrente
       const apiKey = recurrenteSecretKey || (import.meta as any).env?.VITE_RECURRENTE_SECRET_KEY || '';
 

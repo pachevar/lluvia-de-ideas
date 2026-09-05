@@ -76,6 +76,19 @@ service cloud.firestore {
       allow write: if request.auth != null;
     }
 
+    // Colección de órdenes y compras de boletos de Bingo (Recurrente)
+    match /bingo_orders/{orderId} {
+      allow create: if true; // Cualquier jugador público puede iniciar la orden de compra
+      allow read, update: if true; // Lectura y actualización de estado tras retorno de pasarela
+      allow delete: if isAdmin();
+    }
+
+    // Configuración general de Bingo (pasarelas de pago, etc.)
+    match /bingo_settings/{settingId} {
+      allow read: if true; // Lectura pública de links y configuraciones
+      allow write: if isAdmin(); // Solo gerencia puede modificar
+    }
+
     // Colección de usuarios del portal (estudiantes, docentes, administradores)
     match /users/{userId} {
       allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
