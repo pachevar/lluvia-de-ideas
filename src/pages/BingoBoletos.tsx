@@ -352,26 +352,15 @@ const BingoBoletos: React.FC = () => {
 
         {/* SELECTOR DE PARTIDA PROGRAMADA SI EXISTEN */}
         {scheduledGames.length > 0 && (
-          <div style={{
-            background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.7) 100%)',
-            border: '1.5px solid rgba(0, 240, 255, 0.4)',
-            borderRadius: '16px',
-            padding: '16px 20px',
-            marginBottom: '28px',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            flexWrap: 'wrap',
-            gap: '12px'
-          }}>
+          <div className="scheduled-game-selection-banner">
             <div>
-              <span style={{ fontSize: '0.72rem', color: '#38bdf8', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px' }}>
+              <span className="scheduled-banner-tag">
                 📅 INSCRIBIÉNDOSE EN PARTIDA PROGRAMADA
               </span>
-              <h4 style={{ margin: '2px 0 0 0', color: '#fff', fontSize: '1.05rem', fontFamily: 'var(--font-gamer)' }}>
+              <h4 className="scheduled-banner-title">
                 {selectedScheduledGame?.title || 'Ronda de Bingotenango'}
               </h4>
-              <p style={{ margin: '2px 0 0 0', fontSize: '0.78rem', color: '#cbd5e1' }}>
+              <p className="scheduled-banner-date">
                 {selectedScheduledGame ? new Date(selectedScheduledGame.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' }) : ''}
               </p>
             </div>
@@ -383,17 +372,7 @@ const BingoBoletos: React.FC = () => {
                   const found = scheduledGames.find(g => g.id === e.target.value);
                   if (found) setSelectedScheduledGame(found);
                 }}
-                style={{
-                  background: 'rgba(0, 0, 0, 0.6)',
-                  border: '1px solid rgba(0, 240, 255, 0.5)',
-                  color: '#00f0ff',
-                  padding: '8px 12px',
-                  borderRadius: '10px',
-                  fontSize: '0.82rem',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                  outline: 'none'
-                }}
+                className="scheduled-banner-select"
               >
                 {scheduledGames.map(g => (
                   <option key={g.id} value={g.id}>
@@ -443,18 +422,9 @@ const BingoBoletos: React.FC = () => {
 
                 <p className="package-benefit">{tier.description}</p>
 
-                <div style={{
-                  margin: '12px 0 16px',
-                  padding: '10px 12px',
-                  borderRadius: '10px',
-                  background: 'rgba(255, 255, 255, 0.04)',
-                  border: '1px dashed rgba(255, 255, 255, 0.15)',
-                  fontSize: '0.76rem',
-                  color: '#e2e8f0',
-                  textAlign: 'left'
-                }}>
-                  <strong style={{ color: '#38bdf8', display: 'block', marginBottom: '3px' }}>🎁 Premios en juego:</strong>
-                  {tier.prizeHighlight}
+                <div className="package-prizes-box">
+                  <strong className="package-prizes-label">🎁 Premios en juego:</strong>
+                  <span className="package-prizes-text">{tier.prizeHighlight}</span>
                 </div>
 
                 <button type="button" className="package-select-btn">

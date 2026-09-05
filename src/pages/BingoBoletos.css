@@ -87,6 +87,55 @@
   letter-spacing: 2px;
 }
 
+/* BANNER DE PARTIDA PROGRAMADA */
+.scheduled-game-selection-banner {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.7) 100%);
+  border: 1.5px solid rgba(0, 240, 255, 0.4);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.scheduled-banner-tag {
+  font-size: 0.72rem;
+  color: #38bdf8;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.scheduled-banner-title {
+  margin: 2px 0 0 0;
+  color: #fff;
+  font-size: 1.05rem;
+  font-family: var(--font-gamer);
+}
+
+.scheduled-banner-date {
+  margin: 2px 0 0 0;
+  fontSize: 0.78rem;
+  color: #cbd5e1;
+}
+
+.scheduled-banner-select {
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(0, 240, 255, 0.5);
+  color: #00f0ff;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.82rem;
+  font-weight: bold;
+  cursor: pointer;
+  outline: none;
+}
+
 /* PASOS DE CONFIANZA (COMO FUNCIONA) */
 .boletos-trust-steps {
   display: grid;
@@ -252,11 +301,49 @@
 }
 
 .package-benefit {
-  font-size: 0.76rem;
+  font-size: 0.78rem;
   color: #94a3b8;
-  margin-bottom: 20px;
-  min-height: 34px;
-  line-height: 1.35;
+  margin-bottom: 12px;
+  line-height: 1.4;
+}
+
+.package-prizes-box {
+  width: 100%;
+  box-sizing: border-box;
+  margin: 10px 0 16px;
+  padding: 12px 14px;
+  border-radius: 12px;
+  background: rgba(0, 240, 255, 0.04);
+  border: 1px dashed rgba(0, 240, 255, 0.3);
+  text-align: left;
+  overflow: hidden;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  transition: all 0.2s ease;
+}
+
+.package-card.selected .package-prizes-box {
+  background: rgba(0, 240, 255, 0.08);
+  border-color: rgba(0, 240, 255, 0.55);
+}
+
+.package-prizes-label {
+  color: #38bdf8;
+  display: block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  margin-bottom: 4px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+}
+
+.package-prizes-text {
+  color: #f1f5f9;
+  font-size: 0.78rem;
+  line-height: 1.45;
+  display: block;
+  word-break: break-word;
+  overflow-wrap: break-word;
 }
 
 .package-select-btn {
@@ -620,41 +707,62 @@
    OPTIMIZACIONES ESPECÍFICAS PARA MÓVILES (UX TÁCTIL)
    ========================================================================== */
 
+/* ==========================================================================
+   OPTIMIZACIONES ULTRA-FLUIDAS PARA MÓVILES (EXPANSIÓN A LO ANCHO & SIN DESBORDES)
+   ========================================================================== */
+
 @media (max-width: 768px) {
+  /* 1. Eliminar contenedor de fondo restrictivo para aprovechar todo el ancho */
   .bingo-boletos-page {
-    padding: 20px 12px 70px;
+    padding: 12px 4px 60px;
+    background: radial-gradient(circle at 50% 5%, rgba(13, 8, 30, 0.98) 0%, rgba(5, 3, 15, 1) 100%);
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .bingo-boletos-container {
+    width: 100%;
+    max-width: 100%;
+    padding: 0 4px;
+    margin: 0;
+    box-sizing: border-box;
   }
 
   .boletos-header {
-    margin-bottom: 25px;
+    margin-bottom: 20px;
+    padding: 0 8px;
   }
 
   .boletos-logo-badge {
-    padding: 6px 16px;
+    padding: 6px 14px;
     gap: 8px;
+    margin-bottom: 12px;
   }
 
   .boletos-logo-img {
-    height: 34px;
+    height: 32px;
   }
 
   .boletos-hero-title {
-    font-size: 1.75rem;
+    font-size: 1.65rem;
     line-height: 1.2;
-    margin-bottom: 8px;
+    margin-bottom: 6px;
   }
 
   .boletos-hero-subtitle {
-    font-size: 0.88rem;
-    margin-bottom: 15px;
+    font-size: 0.82rem;
+    margin-bottom: 14px;
+    padding: 0 6px;
   }
 
   .boletos-countdown-banner {
     width: 100%;
     box-sizing: border-box;
     justify-content: center;
-    padding: 8px 14px;
+    padding: 10px 14px;
     gap: 8px;
+    border-radius: 14px;
+    margin-bottom: 20px;
   }
 
   .boletos-countdown-digits {
@@ -663,163 +771,287 @@
 
   .boletos-trust-steps {
     grid-template-columns: 1fr;
-    gap: 10px;
-    margin-bottom: 28px;
+    gap: 8px;
+    margin-bottom: 24px;
+    padding: 0 2px;
   }
 
   .trust-step-card {
-    padding: 12px 14px;
+    padding: 10px 12px;
     gap: 10px;
+    border-radius: 12px;
   }
 
   .trust-step-number {
-    width: 28px;
-    height: 28px;
-    font-size: 0.8rem;
+    width: 26px;
+    height: 26px;
+    font-size: 0.78rem;
   }
 
   .trust-step-text h4 {
-    font-size: 0.85rem;
+    font-size: 0.82rem;
   }
 
   .trust-step-text p {
-    font-size: 0.74rem;
+    font-size: 0.72rem;
   }
 
   .boletos-grid-title {
-    font-size: 1.2rem;
-    margin-bottom: 16px;
+    font-size: 1.15rem;
+    margin-bottom: 8px;
+    padding: 0 6px;
   }
 
+  /* 2. CUADRÍCULA DE PAQUETES: 1 SOLA COLUMNA EXPANDIDA AL MÁXIMO ANCHO */
   .boletos-packages-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 12px;
-    margin-bottom: 30px;
+    grid-template-columns: 1fr;
+    gap: 14px;
+    margin-bottom: 24px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 0 2px;
   }
 
   .package-card {
-    padding: 18px 12px;
-    border-radius: 16px;
+    width: 100%;
+    box-sizing: border-box;
+    padding: 18px 16px;
+    border-radius: 18px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    text-align: left;
+    gap: 0;
   }
 
-  .package-icon {
+  .package-card .package-icon {
     font-size: 2.2rem;
-    margin-bottom: 8px;
-  }
-
-  .package-name {
-    font-size: 1rem;
     margin-bottom: 4px;
+    align-self: flex-start;
   }
 
-  .package-cartones {
-    font-size: 0.75rem;
+  .package-card .package-name {
+    font-size: 1.15rem;
+    margin: 0 0 2px 0;
+  }
+
+  .package-card .package-cartones {
+    font-size: 0.82rem;
+    margin-bottom: 8px;
+    color: #38bdf8;
+  }
+
+  .package-card .package-price-wrap {
+    display: flex;
+    align-items: baseline;
+    justify-content: flex-start;
+    gap: 4px;
+    margin: 4px 0 10px 0;
+  }
+
+  .package-card .package-currency {
+    font-size: 1rem;
+  }
+
+  .package-card .package-amount {
+    font-size: 2rem;
+  }
+
+  .package-card .package-benefit {
+    font-size: 0.76rem;
+    line-height: 1.4;
     margin-bottom: 10px;
+    color: #94a3b8;
+    min-height: auto;
   }
 
-  .package-amount {
-    font-size: 1.9rem;
+  /* CUADRO CON EL TIPO DE PREMIO: CONTENIDO AL 100% SIN DESBORDES */
+  .package-prizes-box {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 8px 0 14px 0 !important;
+    padding: 10px 12px !important;
+    border-radius: 12px;
+    background: rgba(0, 240, 255, 0.05);
+    border: 1px dashed rgba(0, 240, 255, 0.35);
+    overflow: hidden;
+    word-break: break-word;
+    overflow-wrap: break-word;
   }
 
-  .package-benefit {
-    font-size: 0.7rem;
-    min-height: 28px;
-    margin-bottom: 12px;
+  .package-prizes-label {
+    font-size: 0.72rem;
+    margin-bottom: 3px;
+  }
+
+  .package-prizes-text {
+    font-size: 0.76rem;
+    line-height: 1.4;
   }
 
   .package-select-btn {
-    padding: 8px 10px;
-    font-size: 0.75rem;
-    border-radius: 10px;
+    width: 100%;
+    padding: 12px;
+    font-size: 0.85rem;
+    border-radius: 12px;
+    font-weight: 800;
   }
 
-  .checkout-section {
-    padding: 20px 16px;
+  /* 3. SELECTOR DE CANTIDAD EXPANDIDO */
+  .quantity-control-card {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 16px 14px;
     border-radius: 18px;
-    margin-bottom: 30px;
+    margin-bottom: 24px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+  }
+
+  .quantity-info-side h3 {
+    font-size: 1.05rem;
+    margin-bottom: 4px;
+  }
+
+  .quantity-info-side p {
+    font-size: 0.78rem;
+    line-height: 1.35;
+  }
+
+  .quantity-action-side {
+    width: 100%;
+    box-sizing: border-box;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .quantity-stepper {
+    width: 100%;
+    box-sizing: border-box;
+    justify-content: space-between;
+    padding: 6px;
+    border-radius: 14px;
+  }
+
+  .stepper-btn {
+    width: 44px;
+    height: 44px;
+    font-size: 1.4rem;
+  }
+
+  .stepper-value {
+    font-size: 1.8rem;
+  }
+
+  .quick-quantity-chips {
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 6px;
+  }
+
+  .quick-chip-btn {
+    width: 100%;
+    padding: 8px 4px;
+    font-size: 0.72rem;
+    text-align: center;
+    border-radius: 8px;
+  }
+
+  .quantity-live-total {
+    width: 100%;
+    box-sizing: border-box;
+    text-align: center;
+    font-size: 0.95rem;
+    padding: 8px 12px;
+  }
+
+  /* 4. SECCIÓN DE CHECKOUT AL ANCHO COMPLETO */
+  .checkout-section {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 18px 14px;
+    border-radius: 18px;
+    margin-bottom: 24px;
+  }
+
+  .checkout-grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
   }
 
   .checkout-form-title {
     font-size: 1.1rem;
+    margin-bottom: 6px;
+  }
+
+  .checkout-form-subtitle {
+    font-size: 0.76rem;
+    margin-bottom: 16px;
+  }
+
+  .form-group label {
+    font-size: 0.75rem;
+    margin-bottom: 4px;
   }
 
   .form-input {
-    font-size: 16px !important; /* Previene auto-zoom molesto en Safari iOS */
-    padding: 12px 12px;
+    font-size: 16px !important;
+    padding: 12px 14px;
+    border-radius: 12px;
+  }
+
+  .order-summary-box {
+    padding: 14px 12px;
+    border-radius: 14px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .summary-row {
+    font-size: 0.82rem;
+    padding: 8px 0;
+  }
+
+  .summary-total-price {
+    font-size: 1.45rem;
   }
 
   .btn-pay-recurrente {
-    padding: 14px;
+    width: 100%;
+    padding: 15px 12px;
     font-size: 0.95rem;
+    border-radius: 14px;
+    margin-top: 16px;
   }
 
   .security-badges-bar {
-    gap: 10px;
-    padding: 12px;
+    gap: 8px;
+    padding: 10px 8px;
+    font-size: 0.68rem;
   }
 
   .security-badge-item {
     font-size: 0.68rem;
   }
-}
 
-@media (max-width: 480px) {
-  .boletos-packages-grid {
-    grid-template-columns: 1fr;
-    gap: 12px;
+  .faq-section {
+    padding: 0 4px;
   }
 
-  .package-card {
-    display: grid;
-    grid-template-columns: auto 1fr auto;
-    align-items: center;
-    text-align: left;
-    gap: 12px;
-    padding: 14px 16px;
+  .faq-item {
+    padding: 12px 14px;
   }
 
-  .package-icon {
-    font-size: 2.2rem;
-    margin-bottom: 0;
-    grid-row: span 2;
+  .faq-question {
+    font-size: 0.84rem;
   }
 
-  .package-name {
-    margin: 0;
-    font-size: 1.05rem;
-  }
-
-  .package-cartones {
-    margin: 0;
-    font-size: 0.78rem;
-  }
-
-  .package-price-wrap {
-    margin-bottom: 0;
-    grid-row: span 2;
-    text-align: right;
-  }
-
-  .package-amount {
-    font-size: 1.8rem;
-  }
-
-  .package-benefit, .package-select-btn {
-    display: none;
-  }
-
-  .package-card.selected::after {
-    content: "✓ SELECCIONADO";
-    position: absolute;
-    bottom: -9px;
-    right: 14px;
-    background: #00f0ff;
-    color: #000;
-    font-size: 0.65rem;
-    font-weight: 900;
-    padding: 2px 8px;
-    border-radius: 999px;
-    letter-spacing: 0.5px;
+  .faq-answer {
+    font-size: 0.76rem;
   }
 }
 
