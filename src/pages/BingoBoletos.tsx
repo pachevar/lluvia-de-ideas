@@ -264,13 +264,17 @@ const BingoBoletos: React.FC = () => {
         }
       }
 
-      // 3. Fallback: Si hay link de producto configurado en Gerencia
-      const configuredLink = recurrenteLinks[selectedTier.id];
+      // 3. Redirección a Link Oficial de Recurrente configurado en Gerencia
+      const configuredLink = recurrenteLinks[selectedTier.id] || recurrenteLinks[selectedTier.id.replace('tier-', 'pkg-')];
       if (configuredLink && configuredLink.startsWith('http')) {
         const separator = configuredLink.includes('?') ? '&' : '?';
         const returnUrl = encodeURIComponent(`${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
-        const finalUrl = `${configuredLink}${separator}customer_name=${encodeURIComponent(playerName)}&customer_phone=${encodeURIComponent(cleanPhone)}&redirect_url=${returnUrl}`;
+        let finalUrl = `${configuredLink}${separator}customer_name=${encodeURIComponent(playerName)}&customer_phone=${encodeURIComponent(cleanPhone)}&redirect_url=${returnUrl}`;
+        if (playerEmail.trim()) {
+          finalUrl += `&customer_email=${encodeURIComponent(playerEmail.trim())}`;
+        }
         window.location.href = finalUrl;
+        return;
       } else {
         // Modo guiado / simulado si no hubiera conexión externa
         navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tier=${selectedTier.id}&qty=${quantity}&name=${encodeURIComponent(playerName)}&phone=${cleanPhone}&testMode=true`);

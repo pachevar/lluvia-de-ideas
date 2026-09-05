@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { doc, onSnapshot } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { BingoCard, BingoGame, BingoPrize, Sponsor } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
@@ -98,6 +98,7 @@ export default function BingoCardView() {
   const [error, setError] = useState('');
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [playerSiblings, setPlayerSiblings] = useState<Array<{ id: string; cardNumber?: number }>>([]);
 
   // Mobile UX Enhancements: Drawer, Pocket Ball Alert & Waiting Test
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
@@ -348,6 +349,29 @@ export default function BingoCardView() {
             }
             return cData;
           });
+
+          // Cargar cartones hermanos si el jugador cuenta con un paquete múltiple
+          if (cData.tokenId) {
+            getDocs(query(collection(db, 'bingo_cards'), where('tokenId', '==', cData.tokenId))).then((snap) => {
+              if (snap.size > 1) {
+                const siblings = snap.docs.map(d => ({
+                  id: d.id,
+                  cardNumber: d.data().cardNumber || 1
+                })).sort((a, b) => (a.cardNumber || 0) - (b.cardNumber || 0));
+                setPlayerSiblings(siblings);
+              }
+            }).catch(() => {});
+          } else {
+            try {
+              const localIds = localStorage.getItem('my_bingo_card_ids');
+              if (localIds) {
+                const parsed = JSON.parse(localIds);
+                if (Array.isArray(parsed) && parsed.length > 1) {
+                  setPlayerSiblings(parsed.map((id: string, idx: number) => ({ id, cardNumber: idx + 1 })));
+                }
+              }
+            } catch {}
+          }
 
           // Inicializar las marcas desde localStorage si están vacías
           setMarkedSlots(prev => {
@@ -1132,6 +1156,55 @@ export default function BingoCardView() {
           }}
         >
           <img src={cust.headerImage} alt="Bingo Banner" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+        </div>
+      )}
+
+      {/* BARRA DE SELECCIÓN MULTI-CARTÓN DEL JUGADOR */}
+      {playerSiblings.length > 1 && (
+        <div style={{
+          display: 'flex',
+          gap: '8px',
+          justifyContent: 'center',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          background: 'rgba(13, 6, 28, 0.9)',
+          border: '1px solid rgba(0, 240, 255, 0.3)',
+          borderRadius: '12px',
+          padding: '6px 12px',
+          margin: '0 auto 8px',
+          maxWidth: '560px',
+          boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
+        }}>
+          <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.8px', fontWeight: 'bold' }}>
+            Tus Cartones ({playerSiblings.length}):
+          </span>
+          <div style={{ display: 'flex', gap: '6px', overflowX: 'auto', padding: '2px 0' }}>
+            {playerSiblings.map((sib, idx) => {
+              const isCurrent = sib.id === cartonId;
+              return (
+                <button
+                  key={sib.id}
+                  type="button"
+                  onClick={() => navigate(`/juegos/bingo/carton/${sib.id}`)}
+                  style={{
+                    padding: '4px 12px',
+                    borderRadius: '8px',
+                    background: isCurrent ? 'linear-gradient(135deg, #00f0ff 0%, #38bdf8 100%)' : 'rgba(255,255,255,0.06)',
+                    border: isCurrent ? '1.5px solid #00f0ff' : '1px solid rgba(255,255,255,0.12)',
+                    color: isCurrent ? '#000' : '#cbd5e1',
+                    fontWeight: 'bold',
+                    fontSize: '0.75rem',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    boxShadow: isCurrent ? '0 0 10px rgba(0,240,255,0.4)' : 'none',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  🎟️ Cartón {sib.cardNumber || (idx + 1)} {isCurrent ? '●' : ''}
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 

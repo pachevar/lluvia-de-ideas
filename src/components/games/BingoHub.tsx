@@ -1531,100 +1531,107 @@ export default function BingoHub() {
         return;
       }
 
-      let matrix = generateBingoMatrix();
-      let hash = hashBingoMatrix(matrix);
-      let isCardAcceptable = false;
-      let attempts = 0;
-
       const ac = activeGame?.customization?.accessConfig;
       const maxOverlapThreshold = ac?.maxOverlapThreshold || (ac?.massiveMode ? 10 : 8);
 
-      while (!isCardAcceptable && attempts < 500) {
-        attempts++;
-        const hasCollision = registeredCards.some(otherCard => {
-          // Método A: Registro de Huella Única (Hash idéntico)
-          if (otherCard.hash && otherCard.hash === hash) return true;
+      // Generar la cantidad de cartones correspondiente al pase (1 por defecto o N según el pase adquirido)
+      const quantityToGenerate = accessTokenData?.quantity && accessTokenData.quantity > 1 ? accessTokenData.quantity : 1;
+      const generatedCardIds: string[] = [];
 
-          if (!otherCard.matrix) return false;
-          let otherMatrix: (number | null)[][];
-          if (Array.isArray(otherCard.matrix)) {
-            otherMatrix = otherCard.matrix;
-          } else if ((otherCard.matrix as unknown as StoredCardMatrix)?.r0) {
-            const rawM = otherCard.matrix as unknown as StoredCardMatrix;
-            otherMatrix = [
-              rawM.r0,
-              rawM.r1,
-              rawM.r2,
-              rawM.r3,
-              rawM.r4
-            ];
+      for (let i = 0; i < quantityToGenerate; i++) {
+        let currentMatrix = generateBingoMatrix();
+        let currentHash = hashBingoMatrix(currentMatrix);
+        let acceptable = false;
+        let attemptsCount = 0;
+
+        while (!acceptable && attemptsCount < 500) {
+          attemptsCount++;
+          const collision = registeredCards.some(otherCard => {
+            if (otherCard.hash && otherCard.hash === currentHash) return true;
+            if (!otherCard.matrix) return false;
+            let otherMatrix: (number | null)[][];
+            if (Array.isArray(otherCard.matrix)) {
+              otherMatrix = otherCard.matrix;
+            } else if ((otherCard.matrix as unknown as StoredCardMatrix)?.r0) {
+              const rawM = otherCard.matrix as unknown as StoredCardMatrix;
+              otherMatrix = [rawM.r0, rawM.r1, rawM.r2, rawM.r3, rawM.r4];
+            } else {
+              return false;
+            }
+            return checkCardCollision(currentMatrix, otherMatrix, maxOverlapThreshold);
+          });
+
+          if (!collision) {
+            acceptable = true;
           } else {
-            return false;
+            currentMatrix = generateBingoMatrix();
+            currentHash = hashBingoMatrix(currentMatrix);
           }
-          return checkCardCollision(matrix, otherMatrix, maxOverlapThreshold);
+        }
+
+        // Generar ID único de 7 dígitos para cada cartón
+        let currentShortId = '';
+        let unique = false;
+        while (!unique) {
+          currentShortId = Math.floor(1000000 + Math.random() * 9000000).toString();
+          const cardRef = doc(db, 'bingo_cards', currentShortId);
+          const cardSnap = await getDoc(cardRef);
+          if (!cardSnap.exists() && !generatedCardIds.includes(currentShortId)) {
+            unique = true;
+          }
+        }
+
+        generatedCardIds.push(currentShortId);
+
+        // Guardar el cartón incluyendo número de cartón del total si es paquete múltiple
+        await setDoc(doc(db, 'bingo_cards', currentShortId), {
+          gameId: activeGame.id,
+          playerName: playerName.trim(),
+          phone: playerPhone.trim() || null,
+          promoterCode: playerPromoterCode.trim().toUpperCase() || null,
+          tierId: accessTokenData?.tierId || null,
+          tierName: accessTokenData?.tierName || null,
+          prizeLevel: accessTokenData?.prizeLevel || null,
+          tokenId: accessTokenData?.id || null,
+          cardNumber: i + 1,
+          totalCards: quantityToGenerate,
+          matrix: {
+            r0: currentMatrix[0],
+            r1: currentMatrix[1],
+            r2: currentMatrix[2],
+            r3: currentMatrix[3],
+            r4: currentMatrix[4]
+          },
+          hash: currentHash,
+          createdAt: Date.now()
         });
-
-        if (!hasCollision) {
-          isCardAcceptable = true;
-        } else {
-          matrix = generateBingoMatrix();
-          hash = hashBingoMatrix(matrix);
-        }
       }
 
-      // Generate unique 7-digit ID
-      let shortId = '';
-      let isIdUnique = false;
-      while (!isIdUnique) {
-        shortId = Math.floor(1000000 + Math.random() * 9000000).toString();
-        const cardRef = doc(db, 'bingo_cards', shortId);
-        const cardSnap = await getDoc(cardRef);
-        if (!cardSnap.exists()) {
-          isIdUnique = true;
-        }
-      }
-
-      // Guardar el cartón incluyendo teléfono, promotor y datos del pase de acceso si existe
-      await setDoc(doc(db, 'bingo_cards', shortId), {
-        gameId: activeGame.id,
-        playerName: playerName.trim(),
-        phone: playerPhone.trim() || null,
-        promoterCode: playerPromoterCode.trim().toUpperCase() || null,
-        tierId: accessTokenData?.tierId || null,
-        tierName: accessTokenData?.tierName || null,
-        prizeLevel: accessTokenData?.prizeLevel || null,
-        tokenId: accessTokenData?.id || null,
-        matrix: {
-          r0: matrix[0],
-          r1: matrix[1],
-          r2: matrix[2],
-          r3: matrix[3],
-          r4: matrix[4]
-        },
-        hash: hash,
-        createdAt: Date.now()
-      });
+      const primaryCardId = generatedCardIds[0];
 
       // 3. Canjear el código marcándolo como usado en Firestore si aplica
       if (accessCfg?.mode === 'code' && !accessTokenData) {
         const codeInput = activationCode.trim().toUpperCase();
         await updateDoc(doc(db, 'bingo_codes', codeInput), {
           used: true,
-          usedByCardId: shortId,
+          usedByCardId: primaryCardId,
           usedByPlayer: playerName.trim(),
           usedAt: Date.now()
         });
       } else if (accessTokenData) {
         await updateDoc(doc(db, 'bingo_access_tokens', accessTokenData.id), {
-          usedByCardId: shortId
+          usedByCardId: primaryCardId,
+          cardIds: generatedCardIds,
+          status: 'used'
         });
       }
 
-      // Save generated card in localStorage so the player can recover it
-      localStorage.setItem('my_bingo_card_id', shortId);
-      setSavedCardId(shortId);
+      // Guardar todos los IDs generados en localStorage para navegación fluida
+      localStorage.setItem('my_bingo_card_ids', JSON.stringify(generatedCardIds));
+      localStorage.setItem('my_bingo_card_id', primaryCardId);
+      setSavedCardId(primaryCardId);
 
-      navigate(`/juegos/bingo/carton/${shortId}`);
+      navigate(`/juegos/bingo/carton/${primaryCardId}`);
 
     } catch (err) {
       console.error(err);

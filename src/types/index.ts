@@ -314,6 +314,12 @@ export interface BingoCard {
   phone?: string;
   location?: string;
   promoterCode?: string;
+  tokenId?: string | null;
+  cardNumber?: number;
+  totalCards?: number;
+  tierId?: string | null;
+  tierName?: string | null;
+  prizeLevel?: string | null;
 }
 
 export interface BingoPromoter {

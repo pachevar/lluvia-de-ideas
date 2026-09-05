@@ -133,16 +133,11 @@ export default function AdminBingoTab() {
   const [activeTab, setActiveTab] = useState<'partida' | 'diseno' | 'figuras' | 'acceso' | 'premios_marcas' | 'promotores' | 'pasarela'>('partida');
 
   // Configuración de Pasarela Recurrente (Boletos)
-  const [recurrenteLinks, setRecurrenteLinks] = useState<{
-    'pkg-10': string;
-    'pkg-25': string;
-    'pkg-50': string;
-    'pkg-100': string;
-  }>({
-    'pkg-10': '',
-    'pkg-25': '',
-    'pkg-50': '',
-    'pkg-100': ''
+  const [recurrenteLinks, setRecurrenteLinks] = useState<Record<string, string>>({
+    'tier-10': '',
+    'tier-25': '',
+    'tier-50': '',
+    'tier-100': ''
   });
   const [isSavingGateways, setIsSavingGateways] = useState(false);
 
@@ -389,7 +384,13 @@ export default function AdminBingoTab() {
         if (snap.exists()) {
           const d = snap.data();
           if (d.recurrente_links) {
-            setRecurrenteLinks(prev => ({ ...prev, ...d.recurrente_links }));
+            const r = d.recurrente_links;
+            setRecurrenteLinks({
+              'tier-10': r['tier-10'] || r['pkg-10'] || '',
+              'tier-25': r['tier-25'] || r['pkg-25'] || '',
+              'tier-50': r['tier-50'] || r['pkg-50'] || '',
+              'tier-100': r['tier-100'] || r['pkg-100'] || ''
+            });
           }
         }
       } catch (err) {
@@ -402,8 +403,17 @@ export default function AdminBingoTab() {
   const handleSaveRecurrenteLinks = async () => {
     setIsSavingGateways(true);
     try {
+      // Guardar con claves modernas y claves de compatibilidad
+      const payloadLinks = {
+        ...recurrenteLinks,
+        'pkg-10': recurrenteLinks['tier-10'] || '',
+        'pkg-25': recurrenteLinks['tier-25'] || '',
+        'pkg-50': recurrenteLinks['tier-50'] || '',
+        'pkg-100': recurrenteLinks['tier-100'] || ''
+      };
+
       await setDoc(doc(db, 'bingo_settings', 'payment_gateways'), {
-        recurrente_links: recurrenteLinks,
+        recurrente_links: payloadLinks,
         updatedAt: Date.now()
       }, { merge: true });
       showAlert("Los links de pago de Recurrente se guardaron correctamente para la tienda de boletos.", "Configuración Guardada", "💾");
@@ -2968,75 +2978,75 @@ export default function AdminBingoTab() {
           {/* Formulario de Links de Recurrente */}
           <div className="admin-card" style={{ marginBottom: '24px' }}>
             <h4 style={{ margin: '0 0 16px 0', fontSize: '1.05rem', color: '#1e293b' }}>
-              Enlaces de Cobro de Recurrente por Paquete
+              Enlaces de Cobro de Recurrente por Tipo de Cartón / Premio
             </h4>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '24px' }}>
               
-              {/* Paquete Q10 */}
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+              {/* Cartón Bronce Q10 */}
+              <div style={{ background: '#f8fafc', border: '1.5px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>🎟️ Boleto Individual</strong>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 10.00</span>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>🥉 Cartón Bronce</strong>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 10.00 c/u</span>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>1 Cartón oficial de juego</p>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>Ronda Rápida / Premios Estándar</p>
                 <input
                   type="url"
                   className="form-control"
-                  placeholder="https://app.recurrente.com/s/tu-link-q10"
-                  value={recurrenteLinks['pkg-10'] || ''}
-                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'pkg-10': e.target.value }))}
+                  placeholder="https://app.recurrente.com/s/tu-link-bronce-q10"
+                  value={recurrenteLinks['tier-10'] || ''}
+                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'tier-10': e.target.value }))}
                   style={{ fontSize: '0.82rem' }}
                 />
               </div>
 
-              {/* Paquete Q25 */}
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+              {/* Cartón Plata Q25 */}
+              <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: '12px', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>🔥 Combo Trío (Popular)</strong>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 25.00</span>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>🥈 Cartón Plata (Popular)</strong>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#38bdf8', background: 'rgba(56, 189, 248, 0.12)', padding: '2px 8px', borderRadius: '6px' }}>Q 25.00 c/u</span>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>3 Cartones oficiales de juego</p>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>Ronda Estándar / Premios Intermedios</p>
                 <input
                   type="url"
                   className="form-control"
-                  placeholder="https://app.recurrente.com/s/tu-link-q25"
-                  value={recurrenteLinks['pkg-25'] || ''}
-                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'pkg-25': e.target.value }))}
+                  placeholder="https://app.recurrente.com/s/tu-link-plata-q25"
+                  value={recurrenteLinks['tier-25'] || ''}
+                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'tier-25': e.target.value }))}
                   style={{ fontSize: '0.82rem' }}
                 />
               </div>
 
-              {/* Paquete Q50 */}
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+              {/* Cartón Oro Q50 */}
+              <div style={{ background: '#f8fafc', border: '1.5px solid #fef08a', borderRadius: '12px', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>👨‍👩‍👧‍👦 Combo Familiar</strong>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 50.00</span>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>🥇 Cartón Oro (Destacado)</strong>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#d97706', background: 'rgba(245, 158, 11, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>Q 50.00 c/u</span>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>7 Cartones oficiales de juego</p>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>Grandes Premios / Tecnología</p>
                 <input
                   type="url"
                   className="form-control"
-                  placeholder="https://app.recurrente.com/s/tu-link-q50"
-                  value={recurrenteLinks['pkg-50'] || ''}
-                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'pkg-50': e.target.value }))}
+                  placeholder="https://app.recurrente.com/s/tu-link-oro-q50"
+                  value={recurrenteLinks['tier-50'] || ''}
+                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'tier-50': e.target.value }))}
                   style={{ fontSize: '0.82rem' }}
                 />
               </div>
 
-              {/* Paquete Q100 */}
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '16px' }}>
+              {/* Cartón Diamante VIP Q100 */}
+              <div style={{ background: '#f8fafc', border: '1.5px solid #c084fc', borderRadius: '12px', padding: '16px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>👑 Pase VIP Gamer</strong>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f59e0b', background: '#fef3c7', padding: '2px 8px', borderRadius: '6px' }}>Q 100.00</span>
+                  <strong style={{ fontSize: '0.95rem', color: '#0f172a' }}>💎 Cartón Diamante VIP</strong>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#9333ea', background: 'rgba(168, 85, 247, 0.15)', padding: '2px 8px', borderRadius: '6px' }}>Q 100.00 c/u</span>
                 </div>
-                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>15 Cartones oficiales de juego</p>
+                <p style={{ fontSize: '0.75rem', color: '#64748b', margin: '0 0 10px 0' }}>Premio Mayor / Gran Pozo VIP</p>
                 <input
                   type="url"
                   className="form-control"
-                  placeholder="https://app.recurrente.com/s/tu-link-q100"
-                  value={recurrenteLinks['pkg-100'] || ''}
-                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'pkg-100': e.target.value }))}
+                  placeholder="https://app.recurrente.com/s/tu-link-diamante-q100"
+                  value={recurrenteLinks['tier-100'] || ''}
+                  onChange={(e) => setRecurrenteLinks(prev => ({ ...prev, 'tier-100': e.target.value }))}
                   style={{ fontSize: '0.82rem' }}
                 />
               </div>
