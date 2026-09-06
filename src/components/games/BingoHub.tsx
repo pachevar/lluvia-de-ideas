@@ -175,7 +175,7 @@ export default function BingoHub() {
 
   // Instructions Modal state
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
-  const [instructionsTab, setInstructionsTab] = useState<'form' | 'promoter' | 'become' | 'rules'>('form');
+  const [instructionsTab, setInstructionsTab] = useState<'boletos' | 'canales' | 'jugar' | 'ganar'>('boletos');
 
   // SUB-PESTAÑA EN MÓDULO REGISTRO (Sesión Activa vs Juegos Programados)
   const [waitingSubTab, setWaitingSubTab] = useState<'session_directory' | 'scheduled_games'>('session_directory');
@@ -5740,144 +5740,247 @@ export default function BingoHub() {
             <div className="bingo-instructions-nav">
               <button 
                 type="button"
-                className={`bingo-instructions-tab-btn ${instructionsTab === 'form' ? 'active' : ''}`}
-                onClick={() => setInstructionsTab('form')}
+                className={`bingo-instructions-tab-btn ${instructionsTab === 'boletos' ? 'active' : ''}`}
+                onClick={() => setInstructionsTab('boletos')}
               >
-                📝 Llenar Formulario
+                🎟️ 1. Comprar Boletos
               </button>
               <button 
                 type="button"
-                className={`bingo-instructions-tab-btn ${instructionsTab === 'promoter' ? 'active' : ''}`}
-                onClick={() => setInstructionsTab('promoter')}
+                className={`bingo-instructions-tab-btn ${instructionsTab === 'canales' ? 'active' : ''}`}
+                onClick={() => setInstructionsTab('canales')}
               >
-                📢 Cód. Promotor
+                📲 2. Recibir Cartones
               </button>
               <button 
                 type="button"
-                className={`bingo-instructions-tab-btn ${instructionsTab === 'become' ? 'active' : ''}`}
-                onClick={() => setInstructionsTab('become')}
+                className={`bingo-instructions-tab-btn ${instructionsTab === 'jugar' ? 'active' : ''}`}
+                onClick={() => setInstructionsTab('jugar')}
               >
-                💼 ¡Ser Promotor!
+                🎮 3. Jugar en Vivo
               </button>
               <button 
                 type="button"
-                className={`bingo-instructions-tab-btn ${instructionsTab === 'rules' ? 'active' : ''}`}
-                onClick={() => setInstructionsTab('rules')}
+                className={`bingo-instructions-tab-btn ${instructionsTab === 'ganar' ? 'active' : ''}`}
+                onClick={() => setInstructionsTab('ganar')}
               >
-                🏆 Reglas del Juego
+                🏆 4. Cantar Bingo
               </button>
             </div>
 
             {/* Cuerpo del Modal según Pestaña Selección */}
             <div className="bingo-instructions-body">
-              {instructionsTab === 'form' && (
+              {instructionsTab === 'boletos' && (
                 <div>
-                  <h4 style={{ color: '#00f0ff', marginBottom: '10px', marginTop: 0 }}>📝 ¿Cómo llenar el formulario para generar tu cartón?</h4>
-                  <ol style={{ paddingLeft: '20px', display: 'flex', flexDirection: 'column', gap: '10px', color: '#cbd5e1', margin: 0 }}>
-                    <li><strong>Nickname / Nombre (*):</strong> Ingresa tu apodo de juego. Se mostrará públicamente cuando la tómbola anuncie que has cantado Bingo.</li>
-                    <li><strong>Teléfono (*):</strong> Tu número obligatorio para comprobar e identificarte en caso de ser el ganador de la partida.</li>
-                    <li><strong>Código de Promotor (*):</strong> Código obligatorio asignado por tu vendedor autorizado al adquirir o cancelar tu cartón.</li>
-                    <li>Presiona <strong>"GENERAR MI CARTÓN 🎲"</strong> para recibir tu matriz 5x5 encriptada en tiempo real.</li>
+                  <h4 style={{ color: '#38bdf8', marginBottom: '10px', marginTop: 0, fontSize: '1.05rem' }}>
+                    🎟️ ¿Cómo adquirir tus Boletos de Bingotenango?
+                  </h4>
+                  <p style={{ color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '14px', lineHeight: '1.5' }}>
+                    Puedes adquirir tus boletos oficiales para las partidas en vivo de forma 100% segura y en Quetzales (GTQ):
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                    <div style={{ background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '12px', padding: '12px 14px' }}>
+                      <strong style={{ color: '#38bdf8', fontSize: '0.88rem', display: 'block', marginBottom: '4px' }}>
+                        💳 1. Tienda en Línea (Pago Cifrado con Recurrente)
+                      </strong>
+                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.4', display: 'block' }}>
+                        Paga al instante con cualquier tarjeta de crédito o débito válida en Guatemala. La entrega de tus cartones es inmediata al validar la compra.
+                      </span>
+                    </div>
+
+                    <div style={{ background: 'rgba(34, 197, 94, 0.12)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '12px', padding: '12px 14px' }}>
+                      <strong style={{ color: '#4ade80', fontSize: '0.88rem', display: 'block', marginBottom: '4px' }}>
+                        💵 2. Taquilla Oficial (Efectivo o Transferencia)
+                      </strong>
+                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.4', display: 'block' }}>
+                        ¿Prefieres pagar en efectivo o transferencia bancaria en Guatemala? Puedes coordinar directamente con el anfitrión de taquilla por WhatsApp para registrar tu pase.
+                      </span>
+                    </div>
+
+                    <div style={{ background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '12px', padding: '12px 14px' }}>
+                      <strong style={{ color: '#c084fc', fontSize: '0.88rem', display: 'block', marginBottom: '4px' }}>
+                        👥 3. Modalidad Personal o Para Contactos
+                      </strong>
+                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.4', display: 'block' }}>
+                        • <strong>Para mí:</strong> Tus cartones (1 a 3) se cargarán juntos en tu pantalla.<br />
+                        • <strong>Para contactos:</strong> Recibes enlaces independientes para repartir individualmente a tus familiares o amigos.
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setShowInstructionsModal(false);
+                        navigate('/juegos/bingo/boletos');
+                      }}
+                      style={{
+                        flex: 1,
+                        minWidth: '180px',
+                        padding: '12px',
+                        borderRadius: '12px',
+                        background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        fontWeight: 'bold',
+                        fontSize: '0.84rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(2, 132, 199, 0.4)'
+                      }}
+                    >
+                      🛒 Ir a la Tienda de Boletos
+                    </button>
+                    <a
+                      href={`https://wa.me/${CONTACT.whatsappPhone}?text=¡Hola!%20Deseo%20información%20para%20comprar%20boletos%20de%20Bingotenango`}
+                      target="_blank"
+                      rel="noreferrer"
+                      style={{
+                        padding: '12px 18px',
+                        borderRadius: '12px',
+                        background: 'rgba(37, 211, 102, 0.2)',
+                        border: '1px solid rgba(37, 211, 102, 0.4)',
+                        color: '#25d366',
+                        fontWeight: 'bold',
+                        fontSize: '0.84rem',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px'
+                      }}
+                    >
+                      💬 Taquilla WhatsApp
+                    </a>
+                  </div>
+                </div>
+              )}
+
+              {instructionsTab === 'canales' && (
+                <div>
+                  <h4 style={{ color: '#a855f7', marginBottom: '10px', marginTop: 0, fontSize: '1.05rem' }}>
+                    📲 Entrega Multicanal Instantánea de Cartones
+                  </h4>
+                  <p style={{ color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '14px', lineHeight: '1.5' }}>
+                    No dependes de un solo canal. Recibe tus cartones donde te sea más fácil y cómodo:
+                  </p>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '16px' }}>
+                    <div style={{ background: 'rgba(34, 158, 217, 0.12)', border: '1px solid rgba(34, 158, 217, 0.35)', borderRadius: '12px', padding: '12px 14px' }}>
+                      <strong style={{ color: '#38bdf8', fontSize: '0.88rem', display: 'block', marginBottom: '4px' }}>
+                        ✈️ 1. Bot Oficial de Telegram (@Bingotenangobot)
+                      </strong>
+                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.4', display: 'block' }}>
+                        Al confirmar tu compra, pulsa <strong>"ABRIR EN TELEGRAM"</strong> y toca <strong>"INICIAR"</strong>. Recibirás tu cartón digital de inmediato.<br />
+                        <em>✨ Clientes Frecuentes:</em> Si ya interactuaste con el bot, tus compras futuras se te enviarán <strong>100% en automático a tu chat de Telegram</strong>.
+                      </span>
+                    </div>
+
+                    <div style={{ background: 'rgba(245, 158, 11, 0.12)', border: '1px solid rgba(245, 158, 11, 0.35)', borderRadius: '12px', padding: '12px 14px' }}>
+                      <strong style={{ color: '#fbbf24', fontSize: '0.88rem', display: 'block', marginBottom: '4px' }}>
+                        🔔 2. Notificaciones en Pantalla (Web Push)
+                      </strong>
+                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.4', display: 'block' }}>
+                        ¿No usas Telegram? Activa las notificaciones en el botón <strong>"Activar Alertas"</strong> en esta sala. Tu navegador te avisará con sonido cuando la tómbola comience a rodar.
+                      </span>
+                    </div>
+
+                    <div style={{ background: 'rgba(37, 211, 102, 0.12)', border: '1px solid rgba(37, 211, 102, 0.35)', borderRadius: '12px', padding: '12px 14px' }}>
+                      <strong style={{ color: '#25d366', fontSize: '0.88rem', display: 'block', marginBottom: '4px' }}>
+                        💬 3. WhatsApp y Enlace Web Directo
+                      </strong>
+                      <span style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.4', display: 'block' }}>
+                        Puedes guardar tu comprobante en WhatsApp con 1 toque o abrir tu enlace en cualquier celular (Chrome, Safari, Edge) sin descargar nada obligatorio.
+                      </span>
+                    </div>
+                  </div>
+
+                  <a
+                    href="https://t.me/Bingotenangobot"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '12px',
+                      borderRadius: '12px',
+                      background: 'linear-gradient(135deg, #0284c7 0%, #0088cc 100%)',
+                      color: '#fff',
+                      fontWeight: 'bold',
+                      fontSize: '0.84rem',
+                      textDecoration: 'none',
+                      boxShadow: '0 4px 15px rgba(0, 136, 204, 0.4)'
+                    }}
+                  >
+                    <span>✈️</span> Probar @Bingotenangobot en Telegram
+                  </a>
+                </div>
+              )}
+
+              {instructionsTab === 'jugar' && (
+                <div>
+                  <h4 style={{ color: '#10b981', marginBottom: '10px', marginTop: 0, fontSize: '1.05rem' }}>
+                    🎮 ¿Cómo Jugar en Vivo en Bingotenango?
+                  </h4>
+                  <ol style={{ paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '10px', color: '#cbd5e1', margin: '0 0 16px 0', fontSize: '0.84rem', lineHeight: '1.45' }}>
+                    <li><strong>Ingresa a la Sala:</strong> Abre tu enlace o pase de sesión. Si compraste varios cartones personales, podrás alternar entre ellos o verlos en pantalla.</li>
+                    <li><strong>Tómbola 3D en Directo:</strong> El Host girará la tómbola y extraerá bolas numeradas del 1 al 75. Cada bola se mostrará en el podio gigante con su letra (<strong>B-I-N-G-O</strong>) y voz oficial en español.</li>
+                    <li><strong>Marcación Táctil:</strong> Toca la casilla correspondiente en tu cartón digital para marcar tu ficha. La casilla central <strong>⭐</strong> es libre para todos.</li>
+                    <li><strong>Semáforo Inteligente de Ayuda:</strong>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '6px', fontSize: '0.78rem' }}>
+                        <span style={{ color: '#4ade80' }}>🟢 Verde: Casilla marcada y bola extraída oficialmente.</span>
+                        <span style={{ color: '#f87171' }}>🔴 Rojo Parpadeante: Advertencia de número aún no salido.</span>
+                        <span style={{ color: '#38bdf8' }}>🔵 Azul: Número cantado que tienes en tu cartón y aún no marcas.</span>
+                      </div>
+                    </li>
                   </ol>
                 </div>
               )}
 
-              {instructionsTab === 'promoter' && (
+              {instructionsTab === 'ganar' && (
                 <div>
-                  <h4 style={{ color: '#ec4899', marginBottom: '10px', marginTop: 0 }}>📢 ¿Qué es el Código de Promotor?</h4>
-                  <p style={{ color: '#cbd5e1', marginBottom: '12px' }}>
-                    El <strong>Código de Promotor</strong> es un identificador asignado a los asesores y vendedores oficiales.
+                  <h4 style={{ color: '#fbbf24', marginBottom: '10px', marginTop: 0, fontSize: '1.05rem' }}>
+                    🏆 Formas de Ganar y Cómo Cantar ¡BINGO!
+                  </h4>
+                  <p style={{ color: '#cbd5e1', fontSize: '0.84rem', marginBottom: '12px' }}>
+                    El anfitrión anunciará al inicio de la ronda qué patrón se está jugando:
                   </p>
-                  <div style={{ background: 'rgba(236, 72, 153, 0.1)', border: '1px solid rgba(236, 72, 153, 0.3)', padding: '14px', borderRadius: '14px', color: '#fbcfe8', marginBottom: '12px' }}>
-                    <strong>💡 ¿Cómo lo obtengo?</strong>
-                    <p style={{ margin: '6px 0 0 0', fontSize: '0.82rem' }}>
-                      Tu promotor de ventas te facilitará su código una vez hayas cancelado o apartado tu cartón de Bingo para la partida.
-                    </p>
-                  </div>
-                  <p style={{ color: '#cbd5e1', fontSize: '0.85rem', marginBottom: '10px' }}>
-                    Si quieres más información ponte en contacto con nosotros.
-                  </p>
-                  <a 
-                    href={`https://wa.me/${CONTACT.whatsappPhone}?text=Hola,%20quisiera%20más%20información%20sobre%20el%20código%20de%20promotor%20del%20Bingo`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '14px',
-                      background: 'linear-gradient(135deg, #22c55e 0%, #16a34a 100%)',
-                      color: '#fff',
-                      fontWeight: 'bold',
-                      textDecoration: 'none',
-                      fontSize: '0.85rem',
-                      boxShadow: '0 4px 15px rgba(34, 197, 94, 0.4)'
-                    }}
-                  >
-                    💬 Contactar por WhatsApp
-                  </a>
-                </div>
-              )}
 
-              {instructionsTab === 'become' && (
-                <div>
-                  <h4 style={{ color: '#a855f7', marginBottom: '10px', marginTop: 0 }}>💼 ¡Gana dinero siendo Promotor de Bingo!</h4>
-                  <p style={{ color: '#cbd5e1', marginBottom: '12px' }}>
-                    Súmate a nuestro equipo de promotores oficiales y recibe una <strong>recompensa económica</strong> por cada jugador inscrito y por cada partida realizada según el valor del cartón.
-                  </p>
-                  
-                  <div style={{ background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.35)', padding: '14px', borderRadius: '16px', marginBottom: '16px' }}>
-                    <h5 style={{ color: '#e9d5ff', margin: '0 0 8px 0', fontSize: '0.9rem' }}>💎 Ventajas de ser Promotor:</h5>
-                    <ul style={{ paddingLeft: '18px', margin: 0, fontSize: '0.82rem', color: '#cbd5e1', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                      <li>Comisión directa por cada cartón reservado o vendido con tu código.</li>
-                      <li>Incentivos adicionales por volumen de participantes registrados en cada ronda.</li>
-                      <li>Panel de control en tiempo real para rastrear a todos tus afiliados.</li>
-                    </ul>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '14px' }}>
+                    <div style={{ background: 'rgba(251, 191, 36, 0.1)', border: '1px solid rgba(251, 191, 36, 0.3)', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
+                      <strong style={{ color: '#fbbf24', fontSize: '0.82rem', display: 'block' }}>Cartón Lleno</strong>
+                      <span style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>Las 24 casillas</span>
+                    </div>
+                    <div style={{ background: 'rgba(56, 189, 248, 0.1)', border: '1px solid rgba(56, 189, 248, 0.3)', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
+                      <strong style={{ color: '#38bdf8', fontSize: '0.82rem', display: 'block' }}>Línea</strong>
+                      <span style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>Horizontal o vertical</span>
+                    </div>
+                    <div style={{ background: 'rgba(168, 85, 247, 0.1)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
+                      <strong style={{ color: '#c084fc', fontSize: '0.82rem', display: 'block' }}>4 Esquinas</strong>
+                      <span style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>Las 4 puntas</span>
+                    </div>
+                    <div style={{ background: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '10px', padding: '8px 10px', textAlign: 'center' }}>
+                      <strong style={{ color: '#4ade80', fontSize: '0.82rem', display: 'block' }}>Diagonales (X)</strong>
+                      <span style={{ fontSize: '0.72rem', color: '#cbd5e1' }}>Extremo a extremo</span>
+                    </div>
                   </div>
 
-                  <a
-                    href={`https://wa.me/${CONTACT.whatsappPhone}?text=Hola,%20me%20interesa%20ser%20Promotor%20oficial%20del%20Bingo`}
-                    target="_blank"
-                    rel="noreferrer"
-                    style={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      gap: '8px',
-                      width: '100%',
-                      padding: '12px',
-                      borderRadius: '14px',
-                      border: 'none',
-                      background: 'linear-gradient(135deg, #a855f7 0%, #ec4899 100%)',
-                      color: '#fff',
-                      fontWeight: 'bold',
-                      textDecoration: 'none',
-                      fontSize: '0.85rem',
-                      boxShadow: '0 4px 15px rgba(168, 85, 247, 0.4)'
-                    }}
-                  >
-                    💬 Solicitar mi Código de Promotor
-                  </a>
-                </div>
-              )}
+                  <div style={{ background: 'linear-gradient(135deg, rgba(234, 179, 8, 0.15) 0%, rgba(30, 27, 75, 0.5) 100%)', border: '1.5px solid rgba(234, 179, 8, 0.45)', borderRadius: '14px', padding: '14px', marginBottom: '14px' }}>
+                    <strong style={{ color: '#fbbf24', fontSize: '0.9rem', display: 'block', marginBottom: '4px' }}>
+                      ⚡ El Botón ¡BINGO!
+                    </strong>
+                    <span style={{ fontSize: '0.8rem', color: '#cbd5e1', lineHeight: '1.4', display: 'block' }}>
+                      En cuanto completes el patrón requerido, presiona el botón dorado <strong>¡BINGO!</strong>. El sistema pausará la tómbola y enviará tu cartón al Host para su validación digital en tiempo real.
+                    </span>
+                  </div>
 
-              {instructionsTab === 'rules' && (
-                <div>
-                  <h4 style={{ color: '#eab308', marginBottom: '10px', marginTop: 0 }}>🏆 Reglas del Juego y Formas de Ganar</h4>
-                  <p style={{ color: '#cbd5e1', marginBottom: '10px' }}>
-                    En la partida se cantarán números del 1 al 75. Puedes marcar tus casillas tocando sobre cada número:
-                  </p>
-                  <ul style={{ paddingLeft: '18px', display: 'flex', flexDirection: 'column', gap: '8px', color: '#cbd5e1', margin: 0 }}>
-                    <li><strong>Cartón Lleno:</strong> Debes completar las 24 casillas numeradas de tu cartón.</li>
-                    <li><strong>Cuatro Esquinas:</strong> Debes marcar los 4 números de las esquinas del cartón.</li>
-                    <li><strong>Diagonales (X):</strong> Completa cualquiera de las líneas diagonales de extremo a extremo.</li>
-                    <li><strong>Línea:</strong> Completa cualquier fila horizontal o columna vertical entera.</li>
-                    <li><strong>🔴 Ayuda Visual:</strong> Si marcas una casilla que aún no ha salido en la tómbola, su borde parpadeará en <span style={{ color: '#ef4444', fontWeight: 'bold' }}>rojo</span> como advertencia.</li>
-                    <li><strong>¡Cantar Bingo!:</strong> Al presionar <strong>¡BINGO!</strong>, se notificará al instante al Host de la Tómbola para validar tu cartón.</li>
-                  </ul>
+                  <div style={{ background: 'rgba(255, 255, 255, 0.04)', borderRadius: '12px', padding: '10px 14px', border: '1px solid rgba(255, 255, 255, 0.1)', fontSize: '0.78rem', color: '#94a3b8' }}>
+                    ℹ️ <em>Al confirmarse tu victoria, el anfitrión anunciará tu nickname en la transmisión y te contactará directamente a tu teléfono registrado para la entrega del premio.</em>
+                  </div>
                 </div>
               )}
             </div>
