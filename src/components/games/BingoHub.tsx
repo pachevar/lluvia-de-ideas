@@ -14,7 +14,6 @@ import {
   requestNotificationPermission,
   triggerBrowserNotification
 } from '../../utils/webNotificationUtils';
-import { recordPlayerPurchase } from '../../services/bingoPlayerService';
 import './Bingo.css';
 
 type StoredCardMatrix = {
@@ -134,16 +133,6 @@ export default function BingoHub() {
   
   const [isRegistering, setIsRegistering] = useState(false);
   const [regError, setRegError] = useState('');
-
-  // Nuevos Estados para Formulario de Registro con Pago Directo
-  const [buyerName, setBuyerName] = useState('');
-  const [buyerPhone, setBuyerPhone] = useState('');
-  const [buyerEmail, setBuyerEmail] = useState('');
-  const [buyerQuantity, setBuyerQuantity] = useState<number>(1);
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
-  const [paymentError, setPaymentError] = useState('');
-  const [recurrenteSecretKey, setRecurrenteSecretKey] = useState<string>('');
-  const [recurrenteLinks, setRecurrenteLinks] = useState<{ [pkgId: string]: string }>({});
 
   // Access Token States (Pase de Acceso Único de Sesión)
   const [accessTokenData, setAccessTokenData] = useState<BingoAccessToken | null>(null);
@@ -494,10 +483,6 @@ export default function BingoHub() {
         }
 
         setAccessTokenData(tData);
-        setBuyerName(tData.playerName || '');
-        if (tData.playerWhatsapp) {
-          setBuyerPhone(tData.playerWhatsapp);
-        }
         setTokenSuccessMsg(`¡Pase Verificado! ${tData.playerName} — ${tData.quantity} ${tData.quantity === 1 ? 'Cartón' : 'Cartones'} (${tData.tierName || 'Bingo'})`);
         addLog(`ACCESO: Pase de juego verificado para "${tData.playerName}".`);
 
@@ -509,28 +494,6 @@ export default function BingoHub() {
 
     validateAccessToken();
   }, [activeGame?.id, activeGame?.lastResetAt]);
-
-  // Cargar credenciales y configuración de pasarela de pagos
-  useEffect(() => {
-    const loadPaymentSettings = async () => {
-      try {
-        const settingsRef = doc(db, 'bingo_settings', 'payment_gateways');
-        const snap = await getDoc(settingsRef);
-        if (snap.exists()) {
-          const data = snap.data();
-          if (data.recurrente_links) {
-            setRecurrenteLinks(data.recurrente_links);
-          }
-          if (data.recurrente_secret_key) {
-            setRecurrenteSecretKey(data.recurrente_secret_key);
-          }
-        }
-      } catch (err) {
-        console.warn("No se pudieron cargar configuraciones de pasarela:", err);
-      }
-    };
-    loadPaymentSettings();
-  }, []);
 
   useEffect(() => {
     // Check if the current user is logged in (admin)
@@ -1982,164 +1945,14 @@ export default function BingoHub() {
     }
   };
 
-  // Procesar registro y pago directo desde el Lobby sustituyendo el antiguo generador
-  const handleProceedLobbyPayment = async (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    setPaymentError('');
-
-    if (!buyerName.trim()) {
-      setPaymentError('Por favor ingresa tu nombre completo para tu registro de juego.');
-      return;
-    }
-
-    const cleanPhone = buyerPhone.replace(/\D/g, '');
-    if (cleanPhone.length < 8) {
-      setPaymentError('Por favor ingresa un número de WhatsApp válido (mínimo 8 dígitos).');
-      return;
-    }
-
-    setIsProcessingPayment(true);
-    const orderId = 'ord_' + Date.now();
-    const unitPriceQ = 25;
-    const totalPriceQ = unitPriceQ * buyerQuantity;
-
-    try {
-      // 1. Guardar la orden en Firestore
-      await addDoc(collection(db, 'bingo_orders'), {
-        playerName: buyerName.trim(),
-        playerWhatsapp: cleanPhone,
-        playerEmail: buyerEmail.trim() || null,
-        tierId: 'tier-25',
-        tierName: 'Cartón Oficial Bingotenango',
-        prizeLevel: 'Premios en vivo',
-        unitPriceQ: unitPriceQ,
-        quantity: buyerQuantity,
-        priceQ: totalPriceQ,
-        totalPriceQ: totalPriceQ,
-        cartonesCount: buyerQuantity,
-        purchaseMode: 'personal',
-        packageName: `Cartón Oficial (${buyerQuantity} ${buyerQuantity === 1 ? 'Cartón Personal' : 'Cartones Personales'})`,
-        gameId: activeGame?.id || 'default_game',
-        scheduledGameId: scheduledGamesList[0]?.id || null,
-        scheduledGameTitle: scheduledGamesList[0]?.title || null,
-        linkSent: false,
-        linkSentAt: null,
-        gateway: 'recurrente_guatemala',
-        status: 'pending',
-        createdAt: Date.now()
-      });
-
-      // 2. Registrar al jugador en la Cartera de Clientes / CRM
-      await recordPlayerPurchase({
-        phone: cleanPhone,
-        name: buyerName.trim(),
-        email: buyerEmail.trim() || '',
-        spentQ: totalPriceQ
-      });
-
-      // 3. Checkout dinámico con Recurrente
-      const apiKey = recurrenteSecretKey || (import.meta as any).env?.VITE_RECURRENTE_SECRET_KEY || '';
-      if (apiKey) {
-        try {
-          const recurrenteRes = await fetch("https://app.recurrente.com/api/checkouts", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Accept-Language": "es-GT,es;q=0.9",
-              "X-SECRET-KEY": apiKey
-            },
-            body: JSON.stringify({
-              locale: "es",
-              language: "es",
-              items: [
-                {
-                  name: `Bingotenango: ${buyerQuantity}x Cartón Oficial [Uso Personal]`,
-                  amount_in_cents: totalPriceQ * 100,
-                  currency: "GTQ",
-                  quantity: 1
-                }
-              ],
-              success_url: `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`,
-              cancel_url: `${window.location.origin}/juegos/bingo`,
-              metadata: {
-                orderId: orderId,
-                playerName: buyerName.trim(),
-                playerWhatsapp: cleanPhone,
-                tierId: 'tier-25',
-                tierName: 'Cartón Oficial',
-                unitPriceQ: unitPriceQ,
-                quantity: buyerQuantity,
-                purchaseMode: 'personal',
-                priceQ: totalPriceQ
-              }
-            })
-          });
-
-          if (recurrenteRes.ok) {
-            const checkoutData = await recurrenteRes.json();
-            if (checkoutData?.checkout_url) {
-              const sep = checkoutData.checkout_url.includes('?') ? '&' : '?';
-              window.location.href = `${checkoutData.checkout_url}${sep}locale=es&lang=es`;
-              return;
-            }
-          }
-        } catch (apiErr) {
-          console.warn("Fallo en API Checkout Recurrente, usando fallback:", apiErr);
-        }
-      }
-
-      // Fallback a enlace directo configurado si existiera
-      const staticLink = recurrenteLinks?.[`pkg-${buyerQuantity}`] || recurrenteLinks?.[`tier-25-${buyerQuantity}`];
-      if (staticLink) {
-        window.location.href = staticLink;
-        return;
-      }
-
-      // Redirigir a confirmación / boletos
-      navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
-    } catch (err) {
-      console.error("Error procesando pago desde el lobby:", err);
-      setPaymentError('Hubo un inconveniente al conectar con la pasarela. Por favor intenta de nuevo.');
-    } finally {
-      setIsProcessingPayment(false);
-    }
-  };
-
-  // Solicitar compra y registro por WhatsApp (Efectivo / Transferencia)
-  const handleWhatsAppPayment = async () => {
-    if (!buyerName.trim()) {
-      setPaymentError('Por favor ingresa tu nombre antes de contactar a taquilla.');
-      return;
-    }
-    const cleanPhone = buyerPhone.replace(/\D/g, '') || '';
-    const totalPriceQ = 25 * buyerQuantity;
-    try {
-      await recordPlayerPurchase({
-        phone: cleanPhone || '50200000000',
-        name: buyerName.trim(),
-        email: buyerEmail.trim() || '',
-        spentQ: 0
-      });
-    } catch (e) {
-      console.warn("Registro preventivo falló:", e);
-    }
-    const msg = `¡Hola Bingotenango! 🎟️ Deseo registrarme y comprar ${buyerQuantity} cartón(es) (Total: Q${totalPriceQ}.00) para el juego en vivo.\n\n` +
-      `👤 Nombre: ${buyerName.trim()}\n` +
-      `📞 WhatsApp: ${cleanPhone || 'Mismo número'}\n` +
-      `¿Me pueden brindar las opciones de pago en efectivo o transferencia?`;
-    window.open(`https://wa.me/50242250165?text=${encodeURIComponent(msg)}`, '_blank');
-  };
-
   const handleDiscardCard = () => {
     setShowDiscardModal(true);
   };
 
   const confirmDiscardCard = () => {
     localStorage.removeItem('my_bingo_card_id');
+    localStorage.removeItem('my_bingo_card_ids');
     setSavedCardId(null);
-    setBuyerName('');
-    setBuyerPhone('');
-    setBuyerEmail('');
     addLog("JUGADOR: Cartón anterior descartado del dispositivo.");
     setShowDiscardModal(false);
   };
@@ -5313,7 +5126,7 @@ export default function BingoHub() {
               {/* ==========================================
                  LOBBY DEL JUGADOR: NOTIFICACIONES PUSH, PARTIDAS EN ESPERA Y ACCESO
                  ========================================== */}
-              <div className="mobile-gamer-section lobby-player-section" style={{ width: '100%' }}>
+              <div className="mobile-gamer-section lobby-player-section mobile-only" style={{ width: '100%' }}>
                 
                 {/* 1. NOTIFICACIONES WEB PUSH EN LA SALA DE JUEGO */}
                 {isNotificationSupported() && lobbyPushPermission !== 'unsupported' && (
@@ -5661,201 +5474,7 @@ export default function BingoHub() {
                       {isRegistering ? 'GENERANDO TUS CARTONES...' : '🎮 ACTIVAR CARTÓN Y JUGAR'}
                     </button>
                   </div>
-                ) : (
-                  /* Caso 3: Usuario sin cartón ni pase -> Formulario de Pago y Registro Directo (Sustituto Oficial) */
-                  <div className="gamer-register-card" style={{ maxWidth: '640px', margin: '0 auto' }}>
-                    <span className="gamer-register-icon">🎟️</span>
-                    <h3 style={{ fontSize: '1.2rem', letterSpacing: '1px', textTransform: 'uppercase' }}>
-                      COMPRAR BOLETOS Y REGISTRO
-                    </h3>
-                    <p style={{ fontSize: '0.86rem', color: '#94a3b8', margin: '6px 0 16px', lineHeight: 1.4 }}>
-                      Ingresa tus datos para registrarte en la sala y adquiere tus cartones. Al confirmar tu pago obtendrás acceso directo a la partida.
-                    </p>
-
-                    {paymentError && (
-                      <div style={{
-                        background: 'rgba(239, 68, 68, 0.15)',
-                        border: '1px solid #ef4444',
-                        borderRadius: '10px',
-                        padding: '10px 14px',
-                        marginBottom: '14px',
-                        color: '#fca5a5',
-                        fontSize: '0.84rem',
-                        fontWeight: 'bold',
-                        textAlign: 'left'
-                      }}>
-                        ⚠️ {paymentError}
-                      </div>
-                    )}
-
-                    {/* Selector de cantidad de cartones */}
-                    <div style={{ marginBottom: '16px', textAlign: 'left' }}>
-                      <label style={{ fontSize: '0.78rem', color: '#a855f7', fontWeight: 'bold', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
-                        Cantidad de cartones personales:
-                      </label>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                        {[1, 2, 3].map(qty => (
-                          <button
-                            key={qty}
-                            type="button"
-                            onClick={() => setBuyerQuantity(qty)}
-                            style={{
-                              background: buyerQuantity === qty ? 'linear-gradient(135deg, rgba(168, 85, 247, 0.35), rgba(59, 130, 246, 0.35))' : 'rgba(0, 0, 0, 0.3)',
-                              border: buyerQuantity === qty ? '2px solid #c084fc' : '1px solid rgba(255, 255, 255, 0.1)',
-                              borderRadius: '12px',
-                              padding: '10px 6px',
-                              color: '#fff',
-                              cursor: 'pointer',
-                              textAlign: 'center',
-                              boxShadow: buyerQuantity === qty ? '0 0 15px rgba(168, 85, 247, 0.4)' : 'none'
-                            }}
-                          >
-                            <div style={{ fontSize: '0.95rem', fontWeight: 'bold' }}>{qty} {qty === 1 ? 'Cartón' : 'Cartones'}</div>
-                            <div style={{ fontSize: '0.82rem', color: buyerQuantity === qty ? '#38bdf8' : '#94a3b8', marginTop: '2px' }}>
-                              Q{qty * 25}.00
-                            </div>
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-
-                    {/* Formulario de Registro Oficial */}
-                    <form onSubmit={handleProceedLobbyPayment} style={{ textAlign: 'left' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginBottom: '16px' }}>
-                        <div className="cyber-input-wrapper" style={{ margin: 0 }}>
-                          <input 
-                            type="text" 
-                            placeholder="TU NOMBRE Y APELLIDO *" 
-                            value={buyerName}
-                            onChange={(e) => setBuyerName(e.target.value)}
-                            required
-                            className="cyber-input"
-                            disabled={isProcessingPayment}
-                            style={{ fontSize: '0.88rem', padding: '12px 14px 12px 38px' }}
-                          />
-                          <span className="cyber-input-icon" style={{ fontSize: '1rem', left: '12px' }}>👤</span>
-                        </div>
-
-                        <div className="cyber-input-wrapper" style={{ margin: 0 }}>
-                          <input 
-                            type="tel" 
-                            placeholder="WHATSAPP DE CONTACTO (Ej. 502 5555 1234) *" 
-                            value={buyerPhone}
-                            onChange={(e) => setBuyerPhone(e.target.value)}
-                            required
-                            className="cyber-input"
-                            disabled={isProcessingPayment}
-                            style={{ fontSize: '0.88rem', padding: '12px 14px 12px 38px' }}
-                          />
-                          <span className="cyber-input-icon" style={{ fontSize: '1rem', left: '12px' }}>📞</span>
-                        </div>
-
-                        <div className="cyber-input-wrapper" style={{ margin: 0 }}>
-                          <input 
-                            type="email" 
-                            placeholder="CORREO ELECTRÓNICO (OPCIONAL)" 
-                            value={buyerEmail}
-                            onChange={(e) => setBuyerEmail(e.target.value)}
-                            className="cyber-input"
-                            disabled={isProcessingPayment}
-                            style={{ fontSize: '0.88rem', padding: '12px 14px 12px 38px' }}
-                          />
-                          <span className="cyber-input-icon" style={{ fontSize: '1rem', left: '12px' }}>✉️</span>
-                        </div>
-                      </div>
-
-                      {/* Resumen Total y Botón de Pago Principal */}
-                      <div style={{
-                        background: 'rgba(168, 85, 247, 0.12)',
-                        border: '1px solid rgba(168, 85, 247, 0.35)',
-                        borderRadius: '14px',
-                        padding: '12px 16px',
-                        marginBottom: '14px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'space-between',
-                        flexWrap: 'wrap',
-                        gap: '10px'
-                      }}>
-                        <div>
-                          <span style={{ fontSize: '0.72rem', color: '#cbd5e1', display: 'block', textTransform: 'uppercase' }}>
-                            Total ({buyerQuantity} {buyerQuantity === 1 ? 'Cartón' : 'Cartones'}):
-                          </span>
-                          <strong style={{ fontSize: '1.25rem', color: '#38bdf8', fontFamily: 'var(--font-gamer)' }}>
-                            Q{buyerQuantity * 25}.00
-                          </strong>
-                        </div>
-
-                        <button
-                          type="submit"
-                          className="cyber-btn-primary"
-                          disabled={isProcessingPayment}
-                          style={{
-                            padding: '12px 18px',
-                            fontSize: '0.9rem',
-                            fontWeight: 'bold',
-                            borderRadius: '12px',
-                            cursor: 'pointer',
-                            flex: '1 1 200px'
-                          }}
-                        >
-                          {isProcessingPayment ? 'CONECTANDO PASARELA...' : `💳 PAGAR CON TARJETA Q${buyerQuantity * 25}.00`}
-                        </button>
-                      </div>
-                    </form>
-
-                    {/* Medios de Pago Alternativos */}
-                    <div style={{
-                      display: 'grid',
-                      gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
-                      gap: '10px',
-                      marginTop: '6px'
-                    }}>
-                      <button
-                        type="button"
-                        onClick={handleWhatsAppPayment}
-                        style={{
-                          background: 'rgba(37, 211, 102, 0.15)',
-                          border: '1px solid rgba(37, 211, 102, 0.4)',
-                          borderRadius: '12px',
-                          padding: '10px 14px',
-                          color: '#25d366',
-                          fontSize: '0.82rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        💬 Pago en Efectivo (WhatsApp)
-                      </button>
-
-                      <a
-                        href="https://t.me/Bingotenangobot?start=lobby"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          background: 'rgba(34, 158, 217, 0.15)',
-                          border: '1px solid rgba(34, 158, 217, 0.4)',
-                          borderRadius: '12px',
-                          padding: '10px 14px',
-                          color: '#38bdf8',
-                          fontSize: '0.82rem',
-                          fontWeight: 'bold',
-                          textDecoration: 'none',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        🤖 Bot de Telegram (@Bingotenangobot)
-                      </a>
-                    </div>
-                  </div>
-                )}
+                ) : null}
               </div>
             </div>
 
