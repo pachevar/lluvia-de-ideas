@@ -597,6 +597,29 @@ const BingoBoletos: React.FC = () => {
               />
             </div>
 
+            {/* AVISO DE ENTREGA INSTANTÁNEA POR TELEGRAM O WHATSAPP */}
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(30, 27, 75, 0.4) 100%)',
+              border: '1.5px solid rgba(56, 189, 248, 0.35)',
+              borderRadius: '14px',
+              padding: '12px 16px',
+              marginBottom: '18px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '12px',
+              textAlign: 'left'
+            }}>
+              <span style={{ fontSize: '1.6rem', flexShrink: 0 }}>🤖</span>
+              <div style={{ flex: 1 }}>
+                <strong style={{ fontSize: '0.86rem', color: '#38bdf8', display: 'block', marginBottom: '2px', fontFamily: 'var(--font-gamer)' }}>
+                  Entrega Instantánea en Telegram o WhatsApp
+                </strong>
+                <span style={{ fontSize: '0.78rem', color: '#cbd5e1', lineHeight: 1.35, display: 'block' }}>
+                  Al completar tu pago, podrás recibir tus cartones automáticamente en <strong>Telegram (@Bingotenangobot)</strong> con 1 solo toque o abrirlos directo en tu navegador.
+                </span>
+              </div>
+            </div>
+
             {/* RESUMEN FINAL Y BOTÓN DE ACCIÓN */}
             <div className="checkout-summary-bar">
               <div className="summary-left">

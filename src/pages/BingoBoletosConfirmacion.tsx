@@ -29,6 +29,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
   const [accessToken, setAccessToken] = useState<BingoAccessToken | null>(null);
   const [giftLinks, setGiftLinks] = useState<GiftLinkItem[]>([]);
   const [copiedMainLink, setCopiedMainLink] = useState(false);
+  const [showTelegramGuide, setShowTelegramGuide] = useState(false);
 
   useEffect(() => {
     const fetchOrderAndToken = async () => {
@@ -490,33 +491,159 @@ const BingoBoletosConfirmacion: React.FC = () => {
             </>
           )}
 
-              {/* BOTÓN SECUNDARIO PARA RECIBIR EN TELEGRAM AUTOMÁTICO */}
+              {/* TARJETA GUIADA DE ENTREGA AUTOMÁTICA POR TELEGRAM */}
               {accessToken && (
-                <a
-                  href={`https://t.me/Bingotenangobot?start=${accessToken.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    gap: '8px',
-                    width: '100%',
-                    boxSizing: 'border-box',
-                    padding: '12px 20px',
-                    borderRadius: '12px',
-                    background: 'rgba(34, 158, 217, 0.18)',
-                    border: '1px solid rgba(34, 158, 217, 0.5)',
-                    color: '#38bdf8',
-                    fontSize: '0.88rem',
-                    fontWeight: 700,
-                    textDecoration: 'none',
-                    cursor: 'pointer',
-                    marginBottom: '10px'
-                  }}
-                >
-                  <span>✈️</span> Recibir mi Pase en Telegram (@Bingotenangobot)
-                </a>
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(34, 158, 217, 0.15) 0%, rgba(15, 23, 42, 0.7) 100%)',
+                  border: '1.5px solid rgba(34, 158, 217, 0.45)',
+                  borderRadius: '16px',
+                  padding: '18px',
+                  marginBottom: '16px',
+                  textAlign: 'center',
+                  boxShadow: '0 8px 25px rgba(2, 132, 199, 0.2)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '1.3rem' }}>🤖</span>
+                    <strong style={{ fontSize: '1.05rem', color: '#38bdf8', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
+                      ENTREGA INSTANTÁNEA EN TELEGRAM
+                    </strong>
+                  </div>
+
+                  <p style={{ margin: '0 0 14px 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                    Recibe tu cartón oficial directo en tu teléfono de forma 100% automática.
+                  </p>
+
+                  {/* BOTÓN PRINCIPAL TELEGRAM */}
+                  <a
+                    href={`https://t.me/Bingotenangobot?start=${accessToken.id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      width: '100%',
+                      boxSizing: 'border-box',
+                      padding: '14px 20px',
+                      borderRadius: '14px',
+                      background: 'linear-gradient(135deg, #0284c7 0%, #0088cc 100%)',
+                      border: '1px solid rgba(56, 189, 248, 0.6)',
+                      color: '#ffffff',
+                      fontSize: '1rem',
+                      fontWeight: 900,
+                      fontFamily: 'var(--font-gamer)',
+                      textDecoration: 'none',
+                      letterSpacing: '0.5px',
+                      cursor: 'pointer',
+                      boxShadow: '0 6px 20px rgba(0, 136, 204, 0.45)',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '10px'
+                    }}
+                  >
+                    <span>✈️</span> ABRIR EN TELEGRAM Y RECIBIR MI CARTÓN
+                  </a>
+
+                  {/* INDICADOR DIDÁCTICO */}
+                  <span style={{ display: 'block', fontSize: '0.76rem', color: '#93c5fd', marginBottom: '12px' }}>
+                    👆 <em>Al abrirse el chat en Telegram, solo toca <strong>"INICIAR"</strong> (Start) abajo y listo.</em>
+                  </span>
+
+                  {/* BOTÓN PARA ABRIR LA GUÍA DE INSTALACIÓN */}
+                  <button
+                    type="button"
+                    onClick={() => setShowTelegramGuide(prev => !prev)}
+                    style={{
+                      background: 'rgba(255, 255, 255, 0.06)',
+                      border: '1px dashed rgba(56, 189, 248, 0.4)',
+                      borderRadius: '10px',
+                      padding: '8px 14px',
+                      color: '#38bdf8',
+                      fontSize: '0.78rem',
+                      fontWeight: 600,
+                      cursor: 'pointer',
+                      width: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>{showTelegramGuide ? '▲' : '▼'}</span>
+                    <span>¿No tienes Telegram instalado? Toca aquí para ver cómo instalarlo gratis</span>
+                  </button>
+
+                  {/* GUÍA PASO A PASO DESPLEGABLE */}
+                  {showTelegramGuide && (
+                    <div style={{
+                      marginTop: '12px',
+                      padding: '14px',
+                      background: 'rgba(15, 23, 42, 0.75)',
+                      borderRadius: '12px',
+                      border: '1px solid rgba(255, 255, 255, 0.1)',
+                      textAlign: 'left'
+                    }}>
+                      <strong style={{ fontSize: '0.82rem', color: '#ffffff', display: 'block', marginBottom: '8px' }}>
+                        📲 Descarga Telegram en 30 segundos (100% Gratis):
+                      </strong>
+
+                      {/* Botones de Descarga en Play Store y App Store */}
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '12px' }}>
+                        <a
+                          href="https://play.google.com/store/apps/details?id=org.telegram.messenger"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            background: 'rgba(34, 197, 94, 0.15)',
+                            border: '1px solid rgba(34, 197, 94, 0.4)',
+                            color: '#4ade80',
+                            fontSize: '0.74rem',
+                            fontWeight: 'bold',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <span>📱</span> Google Play
+                        </a>
+
+                        <a
+                          href="https://apps.apple.com/app/telegram-messenger/id686449807"
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '6px',
+                            padding: '8px 10px',
+                            borderRadius: '8px',
+                            background: 'rgba(255, 255, 255, 0.12)',
+                            border: '1px solid rgba(255, 255, 255, 0.3)',
+                            color: '#ffffff',
+                            fontSize: '0.74rem',
+                            fontWeight: 'bold',
+                            textDecoration: 'none'
+                          }}
+                        >
+                          <span>🍏</span> App Store
+                        </a>
+                      </div>
+
+                      {/* Pasos numerados */}
+                      <ol style={{ margin: 0, paddingLeft: '18px', fontSize: '0.76rem', color: '#cbd5e1', lineHeight: '1.6' }}>
+                        <li>Descarga e instala la app de Telegram en tu celular.</li>
+                        <li>Regresa a esta pantalla y toca el botón azul: <strong>"ABRIR EN TELEGRAM"</strong>.</li>
+                        <li>En el chat de <strong>@Bingotenangobot</strong>, presiona <strong>"INICIAR"</strong> abajo. ¡Tus cartones aparecerán al instante! 🎉</li>
+                      </ol>
+                    </div>
+                  )}
+
+                </div>
               )}
 
               {/* BOTÓN SECUNDARIO PARA ENVIAR AL WHATSAPP DEL COMPRADOR */}
