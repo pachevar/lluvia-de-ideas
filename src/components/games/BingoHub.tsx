@@ -122,6 +122,89 @@ const SPANISH_NUMBERS: Record<number, string> = {
   71: 'SETENTA Y UNO', 72: 'SETENTA Y DOS', 73: 'SETENTA Y TRES', 74: 'SETENTA Y CUATRO', 75: 'SETENTA Y CINCO'
 };
 
+// Componente para reloj regresivo principal de partidas en espera
+function GameCountdownBadge({ scheduledAt }: { scheduledAt: number }) {
+  const [timeLeft, setTimeLeft] = useState(() => Math.max(0, Math.floor((scheduledAt - Date.now()) / 1000)));
+
+  useEffect(() => {
+    const update = () => setTimeLeft(Math.max(0, Math.floor((scheduledAt - Date.now()) / 1000)));
+    update();
+    const interval = setInterval(update, 1000);
+    return () => clearInterval(interval);
+  }, [scheduledAt]);
+
+  if (timeLeft <= 0) {
+    return <span style={{ color: '#4ade80', fontWeight: 'bold', fontSize: '1.2rem', fontFamily: 'var(--font-gamer)' }}>🟢 ¡EN HORA DE INICIO!</span>;
+  }
+
+  const days = Math.floor(timeLeft / 86400);
+  const hours = Math.floor((timeLeft % 86400) / 3600);
+  const minutes = Math.floor((timeLeft % 3600) / 60);
+  const seconds = timeLeft % 60;
+
+  return (
+    <div style={{
+      fontSize: '2rem',
+      fontFamily: 'var(--font-gamer)',
+      fontWeight: 900,
+      color: '#00f0ff',
+      letterSpacing: '2px',
+      textShadow: '0 0 15px rgba(0, 240, 255, 0.6)'
+    }}>
+      {days > 0 ? `${days}d ` : ''}
+      {hours > 0 || days > 0 ? `${String(hours).padStart(2, '0')}:` : ''}
+      {String(minutes).padStart(2, '0')}:{String(seconds).padStart(2, '0')}
+    </div>
+  );
+}
+
+// Mini badge de cuenta regresiva en vivo para cada fila de partida en espera
+function GameMiniCountdown({ scheduledAt }: { scheduledAt: number }) {
+  const [diff, setDiff] = useState(() => Math.max(0, Math.floor((scheduledAt - Date.now()) / 1000)));
+
+  useEffect(() => {
+    const update = () => setDiff(Math.max(0, Math.floor((scheduledAt - Date.now()) / 1000)));
+    update();
+    const t = setInterval(update, 1000);
+    return () => clearInterval(t);
+  }, [scheduledAt]);
+
+  if (diff <= 0) {
+    return (
+      <span style={{
+        color: '#4ade80',
+        fontWeight: 'bold',
+        background: 'rgba(34, 197, 94, 0.15)',
+        border: '1px solid rgba(34, 197, 94, 0.4)',
+        padding: '2px 8px',
+        borderRadius: '6px',
+        fontSize: '0.72rem'
+      }}>
+        ● En Vivo / Iniciando
+      </span>
+    );
+  }
+
+  const h = Math.floor(diff / 3600);
+  const m = Math.floor((diff % 3600) / 60);
+  const s = diff % 60;
+
+  return (
+    <span style={{
+      color: '#38bdf8',
+      fontWeight: 'bold',
+      background: 'rgba(56, 189, 248, 0.15)',
+      border: '1px solid rgba(56, 189, 248, 0.3)',
+      padding: '2px 8px',
+      borderRadius: '6px',
+      fontSize: '0.72rem',
+      fontFamily: 'var(--font-gamer)'
+    }}>
+      ⏳ {h > 0 ? `${h}h ` : ''}{String(m).padStart(2, '0')}m {String(s).padStart(2, '0')}s
+    </span>
+  );
+}
+
 export default function BingoHub() {
   const navigate = useNavigate();
   const [activeGame, setActiveGame] = useState<BingoGame | null>(null);
@@ -2240,7 +2323,7 @@ export default function BingoHub() {
                   />
                 </div>
                 <h1 style={{ fontSize: '1.45rem', marginBottom: '2px', letterSpacing: '1px' }}>{cust?.title || 'Bingotenango'}</h1>
-                <p style={{ fontSize: '0.75rem', letterSpacing: '0.8px', margin: 0 }}>{cust?.subtitle || 'Bingo Digital - Editorial Lluvia de Ideas'}</p>
+                <p style={{ fontSize: '0.75rem', letterSpacing: '0.8px', margin: 0 }}>{cust?.subtitle || 'Bingotenango Digital en Vivo'}</p>
               </div>
 
               {cust?.headerImage && (
@@ -2578,7 +2661,11 @@ export default function BingoHub() {
                   <span className="icon">🔮</span> 
                   {activeGame.status === 'playing' ? 'Transmisión Tómbola' : 'Obtención de Cartón'}
                 </span>
-                <span className="cyber-badge cyber-badge-magenta">{activeGame.status.toUpperCase()}</span>
+                {activeGame.status === 'playing' && (
+                  <span className="cyber-badge cyber-badge-green" style={{ animation: 'pulse 1.5s infinite' }}>
+                    🟢 EN VIVO
+                  </span>
+                )}
               </div>
 
               {/* BANNER DE ALERTA DE BINGO EN VIVO DENTRO DE LA TÓMBOLA */}
@@ -5128,7 +5215,7 @@ export default function BingoHub() {
                  ========================================== */}
               <div className="mobile-gamer-section lobby-player-section mobile-only" style={{ width: '100%' }}>
                 
-                {/* 1. NOTIFICACIONES WEB PUSH EN LA SALA DE JUEGO */}
+                {/* 1. NOTIFICACIONES WEB PUSH EN LA SALA DE JUEGO (CENTRADAS) */}
                 {isNotificationSupported() && lobbyPushPermission !== 'unsupported' && (
                   <div style={{
                     background: lobbyPushPermission === 'granted'
@@ -5136,61 +5223,64 @@ export default function BingoHub() {
                       : 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
                     border: `1.5px solid ${lobbyPushPermission === 'granted' ? 'rgba(16, 185, 129, 0.45)' : 'rgba(245, 158, 11, 0.5)'}`,
                     borderRadius: '16px',
-                    padding: '12px 16px',
-                    marginBottom: '14px',
-                    textAlign: 'left',
+                    padding: '14px 18px',
+                    marginBottom: '16px',
+                    textAlign: 'center',
                     display: 'flex',
+                    flexDirection: 'column',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '10px',
+                    justifyContent: 'center',
+                    gap: '12px',
                     boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)'
                   }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '220px' }}>
-                      <span style={{ fontSize: '1.4rem' }}>{lobbyPushPermission === 'granted' ? '🔔' : '📣'}</span>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '1.6rem' }}>{lobbyPushPermission === 'granted' ? '🔔' : '📣'}</span>
                       <div>
                         <strong style={{
-                          fontSize: '0.86rem',
+                          fontSize: '0.9rem',
                           color: lobbyPushPermission === 'granted' ? '#34d399' : '#fbbf24',
                           display: 'block',
-                          fontFamily: 'var(--font-gamer)'
+                          fontFamily: 'var(--font-gamer)',
+                          letterSpacing: '0.5px'
                         }}>
                           {lobbyPushPermission === 'granted' ? 'ALERTAS EN PANTALLA ACTIVAS' : 'ACTIVAR ALERTAS DE LA SALA'}
                         </strong>
-                        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', lineHeight: 1.3, display: 'block' }}>
+                        <span style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.3, display: 'block', maxWidth: '380px', margin: '4px auto 0' }}>
                           {lobbyPushPermission === 'granted'
-                            ? 'Te avisaremos cuando comience la partida y se canten bolas en vivo.'
+                            ? 'Te avisaremos en pantalla cuando comience la partida y se canten bolas en vivo.'
                             : '¿Deseas que te avisemos en tu pantalla cuando empiece el bingo y se canten bolas?'}
                         </span>
                       </div>
                     </div>
 
                     {lobbyPushPermission !== 'granted' && (
-                      <button
-                        type="button"
-                        onClick={handleEnableLobbyPush}
-                        disabled={lobbyPushActivating}
-                        style={{
-                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                          border: 'none',
-                          borderRadius: '10px',
-                          padding: '8px 16px',
-                          color: '#ffffff',
-                          fontSize: '0.78rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer',
-                          boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)',
-                          transition: 'all 0.2s ease',
-                          whiteSpace: 'nowrap'
-                        }}
-                      >
-                        {lobbyPushActivating ? 'Activando...' : '🔔 Activar Alertas'}
-                      </button>
+                      <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                        <button
+                          type="button"
+                          onClick={handleEnableLobbyPush}
+                          disabled={lobbyPushActivating}
+                          style={{
+                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                            border: 'none',
+                            borderRadius: '12px',
+                            padding: '10px 24px',
+                            color: '#ffffff',
+                            fontSize: '0.85rem',
+                            fontWeight: 'bold',
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 18px rgba(245, 158, 11, 0.45)',
+                            transition: 'all 0.2s ease',
+                            whiteSpace: 'nowrap'
+                          }}
+                        >
+                          {lobbyPushActivating ? 'Activando...' : '🔔 Activar Alertas'}
+                        </button>
+                      </div>
                     )}
                   </div>
                 )}
 
-                {/* 2. CARTELERA DE PARTIDAS EN ESPERA CON COMPRA DIRECTA DE TICKETS */}
+                {/* 2. CARTELERA DE PARTIDAS EN ESPERA CON RELOJ REGRESIVO Y BOTONES CENTRADOS */}
                 {(() => {
                   const waitingGames = scheduledGamesList.filter(g => 
                     g.status === 'scheduled' || 
@@ -5201,14 +5291,14 @@ export default function BingoHub() {
 
                   return (
                     <div style={{
-                      background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.9) 0%, rgba(10, 8, 22, 0.98) 100%)',
+                      background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.95) 0%, rgba(10, 8, 22, 0.98) 100%)',
                       border: '1.5px solid rgba(168, 85, 247, 0.45)',
-                      borderRadius: '16px',
-                      padding: '14px',
+                      borderRadius: '18px',
+                      padding: '16px',
                       marginBottom: '16px',
                       boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{ fontSize: '1.2rem' }}>📅</span>
                           <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#f3e8ff', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
@@ -5220,54 +5310,125 @@ export default function BingoHub() {
                         </span>
                       </div>
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                      {/* RELOJ REGRESIVO EN VIVO DENTRO DE PARTIDAS EN ESPERA */}
+                      {hostTimeLeft ? (
+                        <div style={{
+                          background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.12) 0%, rgba(168, 85, 247, 0.18) 100%)',
+                          border: '1.5px solid rgba(0, 240, 255, 0.4)',
+                          borderRadius: '14px',
+                          padding: '12px 16px',
+                          marginBottom: '14px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          textAlign: 'center',
+                          boxShadow: '0 0 20px rgba(0, 240, 255, 0.15)'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                            <span style={{ fontSize: '1rem' }}>⏱️</span>
+                            <span style={{ fontSize: '0.72rem', color: hostTimeLeft.isStarted ? '#fca5a5' : '#38bdf8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                              {hostTimeLeft.isStarted ? '¡LA RONDA ESTÁ POR INICIAR!' : 'INICIO DE LA PRÓXIMA RONDA:'}
+                            </span>
+                          </div>
+                          <div style={{
+                            fontSize: '2.2rem',
+                            fontFamily: 'var(--font-gamer)',
+                            fontWeight: 900,
+                            color: hostTimeLeft.isStarted ? '#ef4444' : '#00f0ff',
+                            letterSpacing: '2px',
+                            textShadow: '0 0 15px rgba(0, 240, 255, 0.6)'
+                          }}>
+                            {hostTimeLeft.isStarted 
+                              ? '00:00' 
+                              : `${hostTimeLeft.hasDays ? `${hostTimeLeft.days}d ` : ''}${hostTimeLeft.hasHours ? `${hostTimeLeft.hours}:` : ''}${hostTimeLeft.minutes}:${hostTimeLeft.seconds}`}
+                          </div>
+                          {hostTimeLeft.formattedDate && !hostTimeLeft.isStarted && (
+                            <span style={{ fontSize: '0.72rem', color: '#cbd5e1', marginTop: '2px' }}>
+                              📅 {hostTimeLeft.formattedDate}
+                            </span>
+                          )}
+                        </div>
+                      ) : (
+                        waitingGames[0]?.scheduledAt && (
+                          <div style={{
+                            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(59, 130, 246, 0.15) 100%)',
+                            border: '1.5px solid rgba(168, 85, 247, 0.35)',
+                            borderRadius: '14px',
+                            padding: '12px 16px',
+                            marginBottom: '14px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            textAlign: 'center',
+                            boxShadow: '0 0 20px rgba(168, 85, 247, 0.15)'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
+                              <span style={{ fontSize: '1rem' }}>⏱️</span>
+                              <span style={{ fontSize: '0.72rem', color: '#c084fc', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                                PRÓXIMO BINGO EN VIVO:
+                              </span>
+                            </div>
+                            <GameCountdownBadge scheduledAt={waitingGames[0].scheduledAt} />
+                            <span style={{ fontSize: '0.72rem', color: '#cbd5e1', marginTop: '2px' }}>
+                              📅 {new Date(waitingGames[0].scheduledAt).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' })}
+                            </span>
+                          </div>
+                        )
+                      )}
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         {waitingGames.slice(0, 4).map(game => (
                           <div key={game.id} style={{
                             background: 'rgba(255, 255, 255, 0.04)',
                             border: '1px solid rgba(168, 85, 247, 0.25)',
-                            borderRadius: '12px',
-                            padding: '10px 12px',
+                            borderRadius: '14px',
+                            padding: '12px 14px',
                             display: 'flex',
-                            justifyContent: 'space-between',
-                            alignItems: 'center',
-                            flexWrap: 'wrap',
+                            flexDirection: 'column',
                             gap: '10px'
                           }}>
-                            <div style={{ textAlign: 'left', flex: 1, minWidth: '180px' }}>
-                              <strong style={{ display: 'block', fontSize: '0.88rem', color: '#ffffff', marginBottom: '2px' }}>
+                            <div style={{ textAlign: 'center' }}>
+                              <strong style={{ display: 'block', fontSize: '0.92rem', color: '#ffffff', marginBottom: '4px' }}>
                                 {game.title}
                               </strong>
-                              <div style={{ display: 'flex', gap: '10px', fontSize: '0.74rem', color: '#94a3b8', flexWrap: 'wrap' }}>
+                              <div style={{ display: 'flex', gap: '8px', fontSize: '0.74rem', color: '#94a3b8', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
                                 <span>⏰ {new Date(game.scheduledAt).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' })}</span>
                                 <span style={{ color: '#38bdf8' }}>🏷️ {game.tierName || 'Cartón Oficial'}</span>
                                 <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>Q{game.cardPriceQ || 25}.00</span>
+                                <GameMiniCountdown scheduledAt={game.scheduledAt} />
                               </div>
                               {game.prizeHighlight && (
-                                <span style={{ display: 'block', fontSize: '0.72rem', color: '#34d399', marginTop: '3px' }}>
+                                <span style={{ display: 'block', fontSize: '0.74rem', color: '#34d399', marginTop: '4px', fontWeight: 'bold' }}>
                                   🏆 {game.prizeHighlight}
                                 </span>
                               )}
                             </div>
 
-                            <button
-                              type="button"
-                              onClick={() => navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=${game.gameType || 'tier-25'}`)}
-                              style={{
-                                background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                                border: '1px solid rgba(56, 189, 248, 0.5)',
-                                color: '#ffffff',
-                                padding: '8px 16px',
-                                borderRadius: '10px',
-                                fontSize: '0.78rem',
-                                fontWeight: 800,
-                                fontFamily: 'var(--font-gamer)',
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 15px rgba(37, 99, 235, 0.4)',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              🎟️ Comprar Ticket
-                            </button>
+                            {/* BOTÓN CENTRADO PARA MEJORA ESTÉTICA */}
+                            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                              <button
+                                type="button"
+                                onClick={() => navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=${game.gameType || 'tier-25'}`)}
+                                style={{
+                                  background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                                  border: '1px solid rgba(56, 189, 248, 0.5)',
+                                  color: '#ffffff',
+                                  padding: '10px 24px',
+                                  borderRadius: '12px',
+                                  fontSize: '0.85rem',
+                                  fontWeight: 800,
+                                  fontFamily: 'var(--font-gamer)',
+                                  cursor: 'pointer',
+                                  boxShadow: '0 4px 15px rgba(37, 99, 235, 0.4)',
+                                  whiteSpace: 'nowrap',
+                                  minWidth: '200px'
+                                }}
+                              >
+                                🎟️ Comprar Ticket
+                              </button>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -5275,29 +5436,31 @@ export default function BingoHub() {
                   );
                 })()}
 
-                {/* 3. PASO 1: COMPARTIR ENLACE DE LA SALA SI NO TIENEN EL QR AL ALCANCE */}
+                {/* 3. COMPARTIR ENLACE DE LA SALA CON BOTONES CENTRADOS */}
                 <div style={{
                   background: 'rgba(0, 0, 0, 0.35)',
                   border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '14px',
-                  padding: '10px 14px',
+                  borderRadius: '16px',
+                  padding: '14px',
                   marginBottom: '16px',
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'space-between',
-                  flexWrap: 'wrap',
-                  gap: '8px'
+                  justifyContent: 'center',
+                  textAlign: 'center',
+                  gap: '10px'
                 }}>
-                  <div style={{ textAlign: 'left' }}>
-                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>
+                  <div>
+                    <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>
                       ¿El código QR no está a tu alcance?
                     </span>
-                    <strong style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
+                    <strong style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
                       Comparte el enlace de la sala con tus amigos:
                     </strong>
                   </div>
 
-                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  {/* BOTONES CENTRADOS */}
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
                     <button
                       type="button"
                       onClick={() => handleCopyShareLink()}
@@ -5305,9 +5468,9 @@ export default function BingoHub() {
                         background: copiedShareLink ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
                         border: `1px solid ${copiedShareLink ? '#10b981' : 'rgba(255, 255, 255, 0.2)'}`,
                         color: copiedShareLink ? '#34d399' : '#e2e8f0',
-                        borderRadius: '8px',
-                        padding: '5px 10px',
-                        fontSize: '0.72rem',
+                        borderRadius: '10px',
+                        padding: '7px 14px',
+                        fontSize: '0.78rem',
                         fontWeight: 'bold',
                         cursor: 'pointer'
                       }}
@@ -5327,14 +5490,14 @@ export default function BingoHub() {
                         background: 'rgba(37, 211, 102, 0.2)',
                         border: '1px solid rgba(37, 211, 102, 0.4)',
                         color: '#25d366',
-                        borderRadius: '8px',
-                        padding: '5px 10px',
-                        fontSize: '0.72rem',
+                        borderRadius: '10px',
+                        padding: '7px 14px',
+                        fontSize: '0.78rem',
                         fontWeight: 'bold',
                         textDecoration: 'none',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '6px'
                       }}
                     >
                       💬 WhatsApp
@@ -5348,14 +5511,14 @@ export default function BingoHub() {
                         background: 'rgba(34, 158, 217, 0.2)',
                         border: '1px solid rgba(34, 158, 217, 0.4)',
                         color: '#38bdf8',
-                        borderRadius: '8px',
-                        padding: '5px 10px',
-                        fontSize: '0.72rem',
+                        borderRadius: '10px',
+                        padding: '7px 14px',
+                        fontSize: '0.78rem',
                         fontWeight: 'bold',
                         textDecoration: 'none',
                         display: 'inline-flex',
                         alignItems: 'center',
-                        gap: '4px'
+                        gap: '6px'
                       }}
                     >
                       ✈️ Telegram
@@ -5396,30 +5559,32 @@ export default function BingoHub() {
                   </div>
                 )}
 
-                {/* Check if user already has a saved card in localStorage */}
+                {/* Check if user already has a saved card in localStorage (BOTONES CENTRADOS) */}
                 {savedCardId ? (
-                  <div className="gamer-register-card">
+                  <div className="gamer-register-card" style={{ textAlign: 'center' }}>
                     <span className="gamer-register-icon">🎮</span>
                     <h3>CARTÓN ACTIVO DETECTADO</h3>
                     <p style={{ margin: '10px 0 20px' }}>
                       Hemos detectado una sesión de juego anterior en este dispositivo. Puedes regresar de inmediato a tu cartón.
                     </p>
 
-                    <button 
-                      className="cyber-btn-primary animate-pulse" 
-                      onClick={() => navigate(`/juegos/bingo/carton/${savedCardId}`)}
-                      style={{ marginBottom: '15px' }}
-                    >
-                      🎮 ENTRAR A MI CARTÓN
-                    </button>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', maxWidth: '320px', margin: '0 auto' }}>
+                      <button 
+                        className="cyber-btn-primary animate-pulse" 
+                        onClick={() => navigate(`/juegos/bingo/carton/${savedCardId}`)}
+                        style={{ width: '100%', padding: '12px 20px' }}
+                      >
+                        🎮 ENTRAR A MI CARTÓN
+                      </button>
 
-                    <button 
-                      className="cyber-badge cyber-badge-magenta"
-                      onClick={handleDiscardCard}
-                      style={{ border: 'none', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer', padding: '6px 12px', fontSize: '0.75rem', width: '100%' }}
-                    >
-                      🗑️ DESCARTAR Y GENERAR NUEVO CARTÓN
-                    </button>
+                      <button 
+                        className="cyber-badge cyber-badge-magenta"
+                        onClick={handleDiscardCard}
+                        style={{ border: 'none', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer', padding: '8px 16px', fontSize: '0.75rem', width: '100%' }}
+                      >
+                        🗑️ DESCARTAR Y GENERAR NUEVO CARTÓN
+                      </button>
+                    </div>
                   </div>
                 ) : accessTokenData ? (
                   /* Caso 2: El usuario cuenta con un Pase de Acceso verificado (Compra confirmada o link de amigo) */
@@ -5527,7 +5692,7 @@ export default function BingoHub() {
                 <span style={{ fontSize: '1.4rem' }}>📘</span>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.05rem', color: '#fff', fontWeight: 'bold' }}>Guía e Instrucciones de Bingo</h3>
-                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)' }}>Editorial Lluvia de Ideas</span>
+                  <span style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)' }}>Bingotenango Oficial</span>
                 </div>
               </div>
               <button 

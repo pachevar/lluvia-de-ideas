@@ -304,10 +304,12 @@ function App() {
         </Suspense>
       </main>
 
-      {/* Footer */}
-      <footer className="app-footer card-glass">
-        <p>© 2026 Editorial Lluvia de Ideas. Todos los derechos reservados.</p>
-      </footer>
+      {/* Footer (oculto en el lobby y salas de bingo para experiencia gamer limpia) */}
+      {!currentPath.includes('/bingo') && currentPath !== '/juegos' && (
+        <footer className="app-footer card-glass">
+          <p>© 2026 Editorial Lluvia de Ideas. Todos los derechos reservados.</p>
+        </footer>
+      )}
 
       {/* Floating Action Buttons */}
       <div className="floating-action-buttons">
