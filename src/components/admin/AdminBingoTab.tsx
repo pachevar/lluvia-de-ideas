@@ -2,25 +2,16 @@ import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   collection, doc, getDoc, addDoc, updateDoc, setDoc, deleteDoc, 
-  writeBatch, onSnapshot, query, limit, where 
+  onSnapshot, query, limit, where 
 } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { 
   BingoGame, BingoCustomization, BingoPrize, BingoPromoter, 
-  Sponsor, BingoCard 
+  Sponsor, BingoCard, BingoAccessToken 
 } from '../../types';
 import { compressImageWebP, blobToDataURL } from '../../utils/imageUpload';
 import './AdminBingoTab.css';
 
-interface GeneratedCode {
-  id: string;
-  code?: string;
-  used?: boolean;
-  usedByPlayer?: string;
-  usedByCardId?: string;
-  gameId?: string;
-  createdAt?: number;
-}
 
 const PRESETS_MAP = [
   { label: "Ceiba Sagrada", value: "🌳", type: "emoji" as const },
@@ -236,18 +227,19 @@ export default function AdminBingoTab() {
   const [fieldLocationEnabled, setFieldLocationEnabled] = useState(false);
   const [fieldLocationRequired, setFieldLocationRequired] = useState(false);
 
-  // Payment Info States
-  const [sinpeNumber, setSinpeNumber] = useState('');
-  const [bankAccount, setBankAccount] = useState('');
-  const [whatsappNumber, setWhatsappNumber] = useState('');
+  // Estados Modernos de Taquilla y Cobros (Guatemala)
+  const [cardPriceQ, setCardPriceQ] = useState<number>(25);
+  const [bankName, setBankName] = useState('Banco Industrial');
+  const [bankAccountType, setBankAccountType] = useState('Monetaria');
+  const [bankAccountNumber, setBankAccountNumber] = useState('');
+  const [bankAccountOwner, setBankAccountOwner] = useState('Lluvia de Ideas Editorial');
+  const [whatsappTaquilla, setWhatsappTaquilla] = useState('36135616');
   const [paymentInstructions, setPaymentInstructions] = useState('');
 
-  // Codes Manager States
-  const [generateCount, setGenerateCount] = useState(20);
-  const [generatedCodesList, setGeneratedCodesList] = useState<GeneratedCode[]>([]);
-  const [isGenerating, setIsGenerating] = useState(false);
-  const [codeStatusFilter, setCodeStatusFilter] = useState<'all' | 'free' | 'used'>('all');
-  const [codeSearchQuery, setCodeSearchQuery] = useState('');
+  // Monitor de Pases de Acceso (bingo_access_tokens)
+  const [accessTokensList, setAccessTokensList] = useState<BingoAccessToken[]>([]);
+  const [tokenStatusFilter, setTokenStatusFilter] = useState<'all' | 'paid' | 'pending'>('all');
+  const [tokenSearchQuery, setTokenSearchQuery] = useState('');
 
   // Prizes Gallery States
   const [prizesList, setPrizesList] = useState<BingoPrize[]>([]);
@@ -311,14 +303,17 @@ export default function AdminBingoTab() {
             const ac = gData.customization.accessConfig;
             setAccessMode(ac?.mode || 'free');
             setMassiveMode(ac?.massiveMode || false);
-            setFieldPhoneEnabled(ac?.formFields?.phone?.enabled || false);
-            setFieldPhoneRequired(ac?.formFields?.phone?.required || false);
+            setFieldPhoneEnabled(ac?.formFields?.phone?.enabled ?? true);
+            setFieldPhoneRequired(ac?.formFields?.phone?.required ?? true);
             setFieldLocationEnabled(ac?.formFields?.location?.enabled || false);
             setFieldLocationRequired(ac?.formFields?.location?.required || false);
 
-            setSinpeNumber(ac?.paymentInfo?.sinpeNumber || '');
-            setBankAccount(ac?.paymentInfo?.bankAccount || '');
-            setWhatsappNumber(ac?.paymentInfo?.whatsappNumber || '');
+            setCardPriceQ(gData.cardPriceQ || 25);
+            setBankName(ac?.paymentInfo?.bankName || 'Banco Industrial');
+            setBankAccountType(ac?.paymentInfo?.bankAccountType || 'Monetaria');
+            setBankAccountNumber(ac?.paymentInfo?.bankAccountNumber || ac?.paymentInfo?.bankAccount || '');
+            setBankAccountOwner(ac?.paymentInfo?.bankAccountOwner || 'Lluvia de Ideas Editorial');
+            setWhatsappTaquilla(ac?.paymentInfo?.whatsappNumber || '36135616');
             setPaymentInstructions(ac?.paymentInfo?.paymentInstructions || '');
           }
         } else {
@@ -337,23 +332,16 @@ export default function AdminBingoTab() {
     return () => unsubscribe();
   }, []);
 
-  // 2. Escuchar en tiempo real los códigos de activación de la partida
+  // 2. Escuchar en tiempo real los pases de acceso (bingo_access_tokens)
   useEffect(() => {
-    if (!activeGame) {
-      setGeneratedCodesList([]);
-      return;
-    }
-    const q = query(
-      collection(db, 'bingo_codes'),
-      where('gameId', '==', activeGame.id)
-    );
+    const q = query(collection(db, 'bingo_access_tokens'));
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const codes = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as GeneratedCode));
-      codes.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-      setGeneratedCodesList(codes);
+      const tokens = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as BingoAccessToken));
+      tokens.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+      setAccessTokensList(tokens);
     });
     return () => unsubscribe();
-  }, [activeGame?.id]);
+  }, []);
 
   // 3. Escuchar promotores y cartones registrados
   useEffect(() => {
@@ -484,9 +472,12 @@ export default function AdminBingoTab() {
         location: { enabled: fieldLocationEnabled, required: fieldLocationRequired }
       },
       paymentInfo: {
-        sinpeNumber: sinpeNumber.trim(),
-        bankAccount: bankAccount.trim(),
-        whatsappNumber: whatsappNumber.trim(),
+        bankName: bankName.trim(),
+        bankAccountType: bankAccountType.trim(),
+        bankAccountNumber: bankAccountNumber.trim(),
+        bankAccountOwner: bankAccountOwner.trim(),
+        bankAccount: bankAccountNumber.trim(),
+        whatsappNumber: whatsappTaquilla.trim(),
         paymentInstructions: paymentInstructions.trim()
       }
     }
@@ -499,6 +490,7 @@ export default function AdminBingoTab() {
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
         title: gameTitle.trim() || 'Gran Bingo Familiar',
         winningPattern: winningPattern,
+        cardPriceQ: Number(cardPriceQ) || 25,
         customization: getCustomizationObject()
       });
       await showAlert("¡Toda la configuración del Bingo y la Tómbola ha sido guardada con éxito! 🎉", "Guardado Exitoso", "💾");
@@ -559,6 +551,7 @@ export default function AdminBingoTab() {
         winningPattern: winningPattern,
         createdAt: Date.now(),
         active: true,
+        cardPriceQ: Number(cardPriceQ) || 25,
         customization: getCustomizationObject()
       });
       await showAlert("¡Bingo creado! La tómbola y la configuración ya están disponibles en tiempo real.", "Partida Creada", "🚀");
@@ -735,136 +728,111 @@ export default function AdminBingoTab() {
   };
 
   // --------------------------------------------------------------------------
-  // Lógica de Códigos de Activación
   // --------------------------------------------------------------------------
-  const generateCodes = async () => {
-    if (!activeGame) {
-      await showAlert("No hay una partida activa para asociar códigos.", "Error", "❌");
-      return;
-    }
-    if (generateCount < 1 || generateCount > 200) {
-      await showAlert("La cantidad de códigos por lote debe ser entre 1 y 200.", "Error", "❌");
-      return;
-    }
-    setIsGenerating(true);
-    try {
-      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // Sin O, 0, I, 1 para evitar confusiones
-      const batch = writeBatch(db);
+  // Lógica de Taquilla, Pases de Acceso y Cobros en Quetzales
+  // --------------------------------------------------------------------------
+  const handleConfirmCashToken = async (token: BingoAccessToken) => {
+    const isPaid = token.paymentMethod === 'efectivo' || !!token.paidAmount;
+    const priceAmount = (token.unitPriceQ || cardPriceQ || 10) * (token.quantity || 1);
 
-      for (let i = 0; i < generateCount; i++) {
-        let code = '';
-        for (let j = 0; j < 6; j++) {
-          code += chars.charAt(Math.floor(Math.random() * chars.length));
-        }
-        const codeRef = doc(db, 'bingo_codes', code);
-        batch.set(codeRef, {
-          code,
-          gameId: activeGame.id,
-          used: false,
-          usedByCardId: null,
-          usedByPlayer: null,
-          usedAt: null,
-          createdAt: Date.now()
+    if (isPaid) {
+      await showAlert(`Este pase ya figura con cobro confirmado (Q${token.paidAmount || priceAmount}.00).`, "Cobro Ya Registrado", "ℹ️");
+      return;
+    }
+
+    const confirm = await showConfirm(
+      `¿Deseas confirmar el cobro en efectivo de Q${priceAmount}.00 para el jugador "${token.playerName || 'Jugador'}" (${token.quantity} cartón${token.quantity > 1 ? 'es' : ''})?`,
+      "Confirmar Cobro en Efectivo",
+      "💵",
+      "SÍ, CONFIRMAR COBRO",
+      "CANCELAR"
+    );
+    if (!confirm) return;
+
+    try {
+      await updateDoc(doc(db, 'bingo_access_tokens', token.id), {
+        paymentMethod: 'efectivo',
+        paidAmount: priceAmount,
+        status: 'active'
+      });
+      if (token.orderId) {
+        await updateDoc(doc(db, 'bingo_orders', token.orderId), {
+          status: 'paid',
+          paymentMethod: 'efectivo',
+          paidAt: Date.now()
         });
       }
-
-      await batch.commit();
-      await showAlert(`¡Se han generado ${generateCount} códigos únicos de activación! 🎉`, "Lote Creado", "🎟️");
+      await showAlert(`¡Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}! El pase está listo para despachar. 🚀`, "Cobro Exitoso", "✅");
     } catch (err) {
-      console.error(err);
-      await showAlert("Error al generar los códigos.", "Error", "❌");
-    } finally {
-      setIsGenerating(false);
+      console.error("Error al confirmar cobro:", err);
+      await showAlert("No se pudo confirmar el cobro en la base de datos.", "Error", "❌");
     }
   };
 
-  const deleteCode = async (codeId: string) => {
-    const confirm = await showConfirm("¿Deseas eliminar este código de activación? Quedará invalidado de inmediato.", "Eliminar Código", "🗑️");
-    if (!confirm) return;
-    try {
-      await deleteDoc(doc(db, 'bingo_codes', codeId));
-    } catch (err) {
-      console.error(err);
-    }
-  };
-
-  const clearAllCodes = async () => {
-    if (generatedCodesList.length === 0) return;
-    const confirm = await showConfirm("¿Deseas eliminar TODOS los códigos de activación de esta partida? Esta acción no se puede deshacer.", "Limpiar Todos los Códigos", "⚠️");
-    if (!confirm) return;
-
-    setIsGenerating(true);
-    try {
-      const batch = writeBatch(db);
-      generatedCodesList.forEach(c => batch.delete(doc(db, 'bingo_codes', c.id)));
-      await batch.commit();
-      await showAlert("Todos los códigos han sido eliminados.", "Códigos Eliminados", "🧹");
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setIsGenerating(false);
-    }
-  };
-
-  const copyAvailableCodes = () => {
-    const available = generatedCodesList.filter(c => !c.used).map(c => c.code);
-    if (available.length === 0) {
-      showAlert("No hay códigos libres para copiar.", "Copiar Códigos", "📢");
-      return;
-    }
-    navigator.clipboard.writeText(available.join('\n'));
-    showAlert(`¡${available.length} códigos libres copiados al portapapeles! 📋`, "Copiado", "📋");
-  };
-
-  const exportCodesToFile = (format: 'txt' | 'csv') => {
-    if (generatedCodesList.length === 0) {
-      showAlert("No hay códigos para exportar.", "Exportar Códigos", "📢");
+  const handleSendWhatsAppToken = async (token: BingoAccessToken) => {
+    const isPaid = token.paymentMethod === 'efectivo' || !!token.paidAmount;
+    if (!isPaid) {
+      const confirmCash = await showConfirm(
+        `El jugador "${token.playerName}" figura con cobro PENDIENTE.\n\nPara enviarle su enlace de juego por WhatsApp, primero debes confirmar el cobro realizado.\n\n¿Deseas confirmar el cobro en efectivo ahora?`,
+        "Cobro Pendiente",
+        "💵",
+        "REGISTRAR COBRO Y ENVIAR",
+        "CANCELAR"
+      );
+      if (confirmCash) {
+        await handleConfirmCashToken(token);
+      }
       return;
     }
 
-    let content = '';
-    let filename = `Codigos_Bingo_${activeGame?.title.replace(/\s+/g, '_') || 'Sesion'}`;
-
-    if (format === 'csv') {
-      content = 'Código,Estado,Jugador,ID_Carton\n' + 
-        generatedCodesList.map(c => `"${c.code}","${c.used ? 'USADO' : 'LIBRE'}","${c.usedByPlayer || ''}","${c.usedByCardId || ''}"`).join('\n');
-      filename += '.csv';
-    } else {
-      content = '--- CÓDIGOS DE ACTIVACIÓN BINGOTENANGO ---\n\n' +
-        'LIBRES:\n' + generatedCodesList.filter(c => !c.used).map(c => c.code).join('\n') + '\n\n' +
-        'USADOS:\n' + generatedCodesList.filter(c => c.used).map(c => `${c.code} (${c.usedByPlayer || 'Jugador'})`).join('\n');
-      filename += '.txt';
+    const cleanPhone = (token.playerWhatsapp || '').replace(/\D/g, '');
+    if (cleanPhone.length < 8) {
+      await showAlert("Este pase no tiene un número de WhatsApp válido registrado.", "Sin Teléfono", "⚠️");
+      return;
     }
 
-    const blob = new Blob([content], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = filename;
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    URL.revokeObjectURL(url);
+    const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
+    const text = encodeURIComponent(
+      `¡Hola ${token.playerName}! 🎟️ Te compartimos tu Pase Único oficial para Bingotenango:\n\n` +
+      `🏆 Partida: ${activeGame?.title || 'Gran Bingo Familiar'}\n` +
+      `🎟️ Total Cartones: ${token.quantity} Cartón(es)\n` +
+      `💵 Estado: Cobro Confirmado (Q${token.paidAmount || (token.unitPriceQ || 10) * token.quantity}.00)\n\n` +
+      `🔑 ENLACE EXCLUSIVO PARA JUGAR:\n${playUrl}\n\n` +
+      `⚠️ Este enlace es de un solo uso para tu dispositivo. Ábrelo al iniciar la partida para ingresar directamente a la sala. ¡Muchos éxitos!`
+    );
+
+    window.open(`https://wa.me/502${cleanPhone}?text=${text}`, '_blank');
+
+    try {
+      await updateDoc(doc(db, 'bingo_access_tokens', token.id), {
+        linkSent: true,
+        linkSentAt: Date.now(),
+        linkSentCount: (token.linkSentCount || 0) + 1
+      });
+    } catch {}
   };
 
-  const copyDirectLinkCode = (code: string) => {
-    const directUrl = `${window.location.origin}/juegos/bingo?code=${code}`;
-    navigator.clipboard.writeText(directUrl);
-    showAlert(`¡Enlace directo con código ${code} copiado! 🔗\n\nPuedes enviarlo por WhatsApp para que el participante ingrese directo.`, "Enlace Copiado", "🔗");
+  const handleCopyTokenLink = (tokenId: string) => {
+    const playUrl = `${window.location.origin}/juegos/bingo?access=${tokenId}`;
+    navigator.clipboard.writeText(playUrl);
+    showAlert(`¡Enlace exclusivo del pase copiado al portapapeles! 📋\n\n${playUrl}`, "Enlace Copiado", "🔗");
   };
 
-  // Filtrado de códigos por estado y búsqueda
-  const filteredCodesList = useMemo(() => {
-    return generatedCodesList.filter(c => {
-      if (codeStatusFilter === 'free' && c.used) return false;
-      if (codeStatusFilter === 'used' && !c.used) return false;
-      if (codeSearchQuery.trim()) {
-        const q = codeSearchQuery.toLowerCase();
-        return (c.code || '').toLowerCase().includes(q) || (c.usedByPlayer || '').toLowerCase().includes(q);
+  // Filtrado de pases de acceso
+  const filteredTokensList = useMemo(() => {
+    return accessTokensList.filter(t => {
+      const isPaid = t.paymentMethod === 'efectivo' || !!t.paidAmount;
+      if (tokenStatusFilter === 'paid' && !isPaid) return false;
+      if (tokenStatusFilter === 'pending' && isPaid) return false;
+      if (tokenSearchQuery.trim()) {
+        const q = tokenSearchQuery.toLowerCase();
+        return (t.playerName || '').toLowerCase().includes(q) ||
+          (t.playerWhatsapp || '').includes(q) ||
+          t.id.toLowerCase().includes(q);
       }
       return true;
     });
-  }, [generatedCodesList, codeStatusFilter, codeSearchQuery]);
+  }, [accessTokensList, tokenStatusFilter, tokenSearchQuery]);
 
   // --------------------------------------------------------------------------
   // Lógica de Promotores de Venta
@@ -1104,8 +1072,8 @@ export default function AdminBingoTab() {
           onClick={() => setActiveTab('acceso')}
           className={`bingo-tab-btn ${activeTab === 'acceso' ? 'active' : ''}`}
         >
-          🎟️ Acceso, Pagos & Códigos
-          <span className="bingo-badge-chip">{generatedCodesList.filter(c => !c.used).length} Libres</span>
+          🎟️ Taquilla, Pases & Cobros
+          <span className="bingo-badge-chip">{accessTokensList.length} Pases</span>
         </button>
 
         <button
@@ -1909,25 +1877,46 @@ export default function AdminBingoTab() {
       )}
 
       {/* ------------------------------------------------------------------
-          PESTAÑA 4: ACCESO, PAGOS & CÓDIGOS
+          PESTAÑA 4: TAQUILLA, PASES & COBROS (GUATEMALA)
          ------------------------------------------------------------------ */}
       {activeTab === 'acceso' && (
         <div className="bingo-section-pane">
-          <div className="bingo-grid-2">
+          
+          {/* Fila Superior: Reglas de Entrada + Datos Bancarios de Guatemala */}
+          <div className="bingo-grid-2" style={{ marginBottom: '24px' }}>
             
-            {/* Modo de Acceso y Datos de Registro */}
+            {/* Tarjeta 1: Modo de Acceso & Precio Oficial del Cartón */}
             <div className="bingo-card">
               <div className="bingo-card-header">
-                <h3 className="bingo-card-title"><span>🔒</span> Modo de Entrada al Juego</h3>
+                <h3 className="bingo-card-title"><span>🔒</span> Acceso & Precio Oficial de Taquilla</h3>
               </div>
               <p className="bingo-card-subtitle">
-                Configura si la participación es abierta a todo público o exclusiva para poseedores de código.
+                Define el costo en Quetzales para esta partida y las reglas de entrada a la sala de juego.
               </p>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+              {/* Selector de Modo de Acceso */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '16px' }}>
                 <label style={{
-                  padding: '14px',
-                  borderRadius: '14px',
+                  padding: '12px',
+                  borderRadius: '12px',
+                  border: `2px solid ${accessMode === 'code' ? '#10b981' : '#e2e8f0'}`,
+                  background: accessMode === 'code' ? 'rgba(16, 185, 129, 0.08)' : '#ffffff',
+                  cursor: 'pointer'
+                }}>
+                  <input
+                    type="radio"
+                    name="accessMode"
+                    checked={accessMode === 'code'}
+                    onChange={() => setAccessMode('code')}
+                    style={{ accentColor: '#10b981' }}
+                  />
+                  <strong style={{ display: 'block', fontSize: '0.86rem', marginTop: '4px', color: '#0f172a' }}>🎟️ Pase Oficial Requerido</strong>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Solo ingresan con token o enlace de compra/taquilla.</span>
+                </label>
+
+                <label style={{
+                  padding: '12px',
+                  borderRadius: '12px',
                   border: `2px solid ${accessMode === 'free' ? primaryColor : '#e2e8f0'}`,
                   background: accessMode === 'free' ? `${primaryColor}08` : '#ffffff',
                   cursor: 'pointer'
@@ -1939,36 +1928,63 @@ export default function AdminBingoTab() {
                     onChange={() => setAccessMode('free')}
                     style={{ accentColor: primaryColor }}
                   />
-                  <strong style={{ display: 'block', fontSize: '0.88rem', marginTop: '4px' }}>🟢 Acceso Gratis</strong>
-                  <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Cualquiera entra solo con su Nickname.</span>
-                </label>
-
-                <label style={{
-                  padding: '14px',
-                  borderRadius: '14px',
-                  border: `2px solid ${accessMode === 'code' ? primaryColor : '#e2e8f0'}`,
-                  background: accessMode === 'code' ? `${primaryColor}08` : '#ffffff',
-                  cursor: 'pointer'
-                }}>
-                  <input
-                    type="radio"
-                    name="accessMode"
-                    checked={accessMode === 'code'}
-                    onChange={() => setAccessMode('code')}
-                    style={{ accentColor: primaryColor }}
-                  />
-                  <strong style={{ display: 'block', fontSize: '0.88rem', marginTop: '4px' }}>🔴 Código Obligatorio</strong>
-                  <span style={{ fontSize: '0.74rem', color: '#64748b' }}>Se requiere código único para generar cartón.</span>
+                  <strong style={{ display: 'block', fontSize: '0.86rem', marginTop: '4px', color: '#0f172a' }}>🟢 Acceso Libre / Abierto</strong>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Cualquiera entra solo con su Nickname sin cobrar boleto.</span>
                 </label>
               </div>
 
-              {/* Formulario de Participante */}
-              <div className="bingo-form-group" style={{ marginTop: '10px' }}>
-                <label>Datos Adicionales del Participante:</label>
-                
+              {/* Fijación de Precio Oficial por Cartón (Q) */}
+              <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: '12px', padding: '14px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                  <label style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
+                    💵 Costo Oficial del Cartón en Quetzales (Q):
+                  </label>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#10b981' }}>Q {cardPriceQ}.00 c/u</span>
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
+                  {[10, 25, 50, 100].map(tierP => (
+                    <button
+                      key={tierP}
+                      type="button"
+                      onClick={() => setCardPriceQ(tierP)}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '8px',
+                        border: cardPriceQ === tierP ? '2px solid #10b981' : '1px solid #cbd5e1',
+                        background: cardPriceQ === tierP ? '#dcfce7' : '#ffffff',
+                        color: cardPriceQ === tierP ? '#15803d' : '#334155',
+                        fontWeight: 'bold',
+                        fontSize: '0.78rem',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      Q {tierP}.00
+                    </button>
+                  ))}
+                </div>
+
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>O ingresa un monto personalizado:</span>
+                  <input
+                    type="number"
+                    min="1"
+                    max="1000"
+                    className="bingo-input"
+                    value={cardPriceQ}
+                    onChange={e => setCardPriceQ(Math.max(1, parseInt(e.target.value) || 25))}
+                    style={{ width: '90px', padding: '4px 8px', fontSize: '0.84rem', fontWeight: 'bold' }}
+                  />
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>(Se sincroniza con la tómbola y la tienda de boletos)</span>
+                </div>
+              </div>
+
+              {/* Formulario de Captura de Jugador */}
+              <div className="bingo-form-group" style={{ margin: 0 }}>
+                <label style={{ fontSize: '0.82rem' }}>Datos Requeridos al Registrar Jugador:</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Capturar Número de Teléfono</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>📱 Capturar Número de WhatsApp</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <label style={{ fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <input
@@ -1994,8 +2010,8 @@ export default function AdminBingoTab() {
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 14px', background: '#f8fafc', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                    <span style={{ fontSize: '0.82rem', fontWeight: 600 }}>Capturar Ciudad / Ubicación</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '8px 12px', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>📍 Capturar Ciudad / Departamento</span>
                     <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
                       <label style={{ fontSize: '0.74rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
                         <input
@@ -2023,227 +2039,354 @@ export default function AdminBingoTab() {
                 </div>
               </div>
 
-              {/* Medios de Pago y Cobro (con Instrucciones Enriquecidas) */}
-              <div className="bingo-form-group" style={{ marginTop: '10px' }}>
-                <label>Datos para Cobro y Pago de Cartones:</label>
-                <div className="bingo-grid-2">
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>SINPE Móvil / Teléfono de Pago:</span>
-                    <input
-                      type="text"
-                      className="bingo-input"
-                      value={sinpeNumber}
-                      onChange={e => setSinpeNumber(e.target.value)}
-                      placeholder="Ej: 8888-8888"
-                    />
-                  </div>
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: '#64748b' }}>WhatsApp para Recibir Comprobantes:</span>
-                    <input
-                      type="text"
-                      className="bingo-input"
-                      value={whatsappNumber}
-                      onChange={e => setWhatsappNumber(e.target.value)}
-                      placeholder="Ej: +50688888888"
-                    />
-                  </div>
-                </div>
+            </div>
 
-                <div style={{ marginTop: '6px' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Cuenta Bancaria / IBAN:</span>
+            {/* Tarjeta 2: Datos Bancarios de Guatemala para Transferencia y Efectivo */}
+            <div className="bingo-card">
+              <div className="bingo-card-header">
+                <h3 className="bingo-card-title"><span>🇬🇹</span> Datos de Cobro Local (Guatemala)</h3>
+              </div>
+              <p className="bingo-card-subtitle">
+                Datos de depósito y WhatsApp que ven los compradores al seleccionar pago por transferencia o en efectivo.
+              </p>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Banco en Guatemala:</span>
                   <input
                     type="text"
                     className="bingo-input"
-                    value={bankAccount}
-                    onChange={e => setBankAccount(e.target.value)}
-                    placeholder="Ej: CR050152020010264..."
+                    value={bankName}
+                    onChange={e => setBankName(e.target.value)}
+                    placeholder="Ej: Banco Industrial, Banrural, BAC"
+                    style={{ fontSize: '0.82rem' }}
                   />
                 </div>
-
-                {/* Bug Resuelto: Campo de Instrucciones de Pago */}
-                <div style={{ marginTop: '6px' }}>
-                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>Instrucciones y Mensaje para el Jugador:</span>
-                  <textarea
-                    rows={2}
-                    className="bingo-textarea"
-                    value={paymentInstructions}
-                    onChange={e => setPaymentInstructions(e.target.value)}
-                    placeholder="Ej: Deposita el valor de ₡3,000 por cartón y envía la captura de pantalla a nuestro WhatsApp indicando tu nombre."
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Generador y Administrador de Códigos de Activación */}
-            <div className="bingo-card">
-              <div className="bingo-card-header">
-                <h3 className="bingo-card-title">
-                  <span>🎟️</span> Códigos de Activación ({generatedCodesList.length})
-                </h3>
-              </div>
-              <p className="bingo-card-subtitle">
-                Genera lotes masivos de códigos individuales para enviar a los participantes por WhatsApp o imprimir.
-              </p>
-
-              {/* Barra de Generación en Lote */}
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <div style={{ width: '130px' }}>
-                  <label style={{ fontSize: '0.75rem', fontWeight: 700 }}>Cantidad:</label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="200"
+                <div>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Tipo de Cuenta:</span>
+                  <select
                     className="bingo-input"
-                    value={generateCount}
-                    onChange={e => setGenerateCount(Math.max(1, Math.min(200, parseInt(e.target.value) || 20)))}
-                  />
+                    value={bankAccountType}
+                    onChange={e => setBankAccountType(e.target.value)}
+                    style={{ fontSize: '0.82rem' }}
+                  >
+                    <option value="Monetaria">Cuenta Monetaria</option>
+                    <option value="Ahorro">Cuenta de Ahorro</option>
+                  </select>
                 </div>
-                <button
-                  type="button"
-                  onClick={generateCodes}
-                  disabled={isGenerating || !activeGame}
-                  className="bingo-btn-action primary"
-                  style={{ alignSelf: 'flex-end', height: '41px', flex: 1, justifyContent: 'center' }}
-                >
-                  {isGenerating ? 'Generando...' : '🎲 Generar Lote'}
-                </button>
               </div>
 
-              {/* Filtros, Búsqueda y Acciones Rápidas */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  <div className="bingo-col-filters">
-                    {(['all', 'free', 'used'] as const).map(f => (
-                      <button
-                        key={f}
-                        type="button"
-                        onClick={() => setCodeStatusFilter(f)}
-                        className={`bingo-col-btn ${codeStatusFilter === f ? 'active' : ''}`}
-                      >
-                        {f === 'all' && `Todos (${generatedCodesList.length})`}
-                        {f === 'free' && `Libres (${generatedCodesList.filter(c => !c.used).length})`}
-                        {f === 'used' && `Usados (${generatedCodesList.filter(c => c.used).length})`}
-                      </button>
-                    ))}
-                  </div>
-
-                  <div style={{ display: 'flex', gap: '6px' }}>
-                    <button
-                      type="button"
-                      onClick={copyAvailableCodes}
-                      className="bingo-btn-action"
-                      style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                      title="Copia la lista de códigos libres al portapapeles"
-                    >
-                      📋 Copiar Libres
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => exportCodesToFile('csv')}
-                      className="bingo-btn-action"
-                      style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                      title="Exportar archivo CSV para hojas de cálculo"
-                    >
-                      📥 CSV
-                    </button>
-                    <button
-                      type="button"
-                      onClick={clearAllCodes}
-                      className="bingo-btn-action danger-outline"
-                      style={{ padding: '6px 10px', fontSize: '0.75rem' }}
-                      title="Eliminar todos los códigos generados de la sesión"
-                    >
-                      🗑️
-                    </button>
-                  </div>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Número de Cuenta:</span>
+                  <input
+                    type="text"
+                    className="bingo-input"
+                    value={bankAccountNumber}
+                    onChange={e => setBankAccountNumber(e.target.value)}
+                    placeholder="Ej: 004-0012345-6"
+                    style={{ fontSize: '0.82rem' }}
+                  />
                 </div>
+                <div>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Nombre del Titular:</span>
+                  <input
+                    type="text"
+                    className="bingo-input"
+                    value={bankAccountOwner}
+                    onChange={e => setBankAccountOwner(e.target.value)}
+                    placeholder="Ej: Editorial Lluvia de Ideas"
+                    style={{ fontSize: '0.82rem' }}
+                  />
+                </div>
+              </div>
 
-                <input
-                  type="text"
-                  className="bingo-input"
-                  placeholder="Buscar por código o nombre de jugador..."
-                  value={codeSearchQuery}
-                  onChange={e => setCodeSearchQuery(e.target.value)}
-                  style={{ fontSize: '0.85rem' }}
+              <div style={{ marginBottom: '10px' }}>
+                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>📱 WhatsApp Oficial de Taquilla (para recibir comprobantes):</span>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 'bold', color: '#16a34a' }}>+502</span>
+                  <input
+                    type="text"
+                    className="bingo-input"
+                    value={whatsappTaquilla}
+                    onChange={e => setWhatsappTaquilla(e.target.value.replace(/\D/g, ''))}
+                    placeholder="Ej: 36135616"
+                    style={{ fontSize: '0.82rem', flex: 1 }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 600 }}>Mensaje de Instrucciones para el Jugador:</span>
+                <textarea
+                  rows={2}
+                  className="bingo-textarea"
+                  value={paymentInstructions}
+                  onChange={e => setPaymentInstructions(e.target.value)}
+                  placeholder="Ej: Realiza tu transferencia o depósito bancario y envía tu boleta a nuestro WhatsApp para recibir tu pase oficial al instante."
+                  style={{ fontSize: '0.8rem' }}
                 />
               </div>
 
-              {/* Tabla de Códigos */}
-              <div className="bingo-table-wrapper" style={{ maxHeight: '280px', overflowY: 'auto' }}>
-                <table className="bingo-table">
-                  <thead>
+              {/* Bot de Telegram & Automatizaciones Integradas */}
+              <div style={{ marginTop: '14px', background: 'rgba(34, 158, 217, 0.08)', border: '1px solid rgba(34, 158, 217, 0.3)', borderRadius: '10px', padding: '10px 14px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div>
+                    <strong style={{ fontSize: '0.84rem', color: '#0284c7', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span>🤖</span> Bot Oficial de Telegram Activo
+                    </strong>
+                    <span style={{ fontSize: '0.72rem', color: '#64748b', display: 'block' }}>
+                      @Bingotenangobot entrega pases con 1 clic de forma autónoma.
+                    </span>
+                  </div>
+                  <a
+                    href="https://t.me/Bingotenangobot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: '#0284c7',
+                      color: '#ffffff',
+                      padding: '5px 12px',
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
+                      fontWeight: 'bold',
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
+                    }}
+                  >
+                    ✈️ Abrir Bot
+                  </a>
+                </div>
+              </div>
+
+            </div>
+
+          </div>
+
+          {/* Fila Inferior: Monitor y Taquilla de Pases en Tiempo Real */}
+          <div className="bingo-card" style={{ width: '100%', boxSizing: 'border-box' }}>
+            <div className="bingo-card-header" style={{ flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h3 className="bingo-card-title">
+                  <span>🎟️</span> Monitor de Pases & Taquilla en Vivo ({accessTokensList.length})
+                </h3>
+                <p className="bingo-card-subtitle" style={{ margin: 0 }}>
+                  Todos los pases únicos emitidos para jugar. Puedes registrar cobros en efectivo y despachar enlaces por WhatsApp o Telegram.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.75rem', color: '#16a34a', background: '#dcfce7', padding: '4px 10px', borderRadius: '20px', fontWeight: 'bold' }}>
+                  ✓ {accessTokensList.filter(t => t.paymentMethod === 'efectivo' || !!t.paidAmount).length} Cobrados
+                </span>
+                <span style={{ fontSize: '0.75rem', color: '#d97706', background: '#fef3c7', padding: '4px 10px', borderRadius: '20px', fontWeight: 'bold' }}>
+                  ⏳ {accessTokensList.filter(t => t.paymentMethod !== 'efectivo' && !t.paidAmount).length} Pendientes
+                </span>
+              </div>
+            </div>
+
+            {/* Filtros y Buscador */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '14px', flexWrap: 'wrap' }}>
+              <div className="bingo-col-filters">
+                {(['all', 'paid', 'pending'] as const).map(f => (
+                  <button
+                    key={f}
+                    type="button"
+                    onClick={() => setTokenStatusFilter(f)}
+                    className={`bingo-col-btn ${tokenStatusFilter === f ? 'active' : ''}`}
+                    style={{ fontSize: '0.78rem' }}
+                  >
+                    {f === 'all' && `Todos (${accessTokensList.length})`}
+                    {f === 'paid' && `Cobrados (${accessTokensList.filter(t => t.paymentMethod === 'efectivo' || !!t.paidAmount).length})`}
+                    {f === 'pending' && `Pendientes (${accessTokensList.filter(t => t.paymentMethod !== 'efectivo' && !t.paidAmount).length})`}
+                  </button>
+                ))}
+              </div>
+
+              <input
+                type="text"
+                className="bingo-input"
+                placeholder="Buscar por jugador, teléfono o ID de pase..."
+                value={tokenSearchQuery}
+                onChange={e => setTokenSearchQuery(e.target.value)}
+                style={{ width: '280px', fontSize: '0.82rem' }}
+              />
+            </div>
+
+            {/* Tabla de Pases de Taquilla */}
+            <div className="bingo-table-wrapper" style={{ maxHeight: '380px', overflowY: 'auto' }}>
+              <table className="bingo-table" style={{ fontSize: '0.82rem' }}>
+                <thead>
+                  <tr>
+                    <th>PASE / ID</th>
+                    <th>JUGADOR / WHATSAPP</th>
+                    <th>CARTONES</th>
+                    <th>TOTAL</th>
+                    <th>ESTADO COBRO</th>
+                    <th>ENLACE</th>
+                    <th style={{ textAlign: 'right' }}>ACCIONES DE TAQUILLA</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredTokensList.length === 0 ? (
                     <tr>
-                      <th>Código</th>
-                      <th>Estado</th>
-                      <th>Asignado A</th>
-                      <th style={{ textAlign: 'right' }}>Acciones</th>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                        No hay pases de taquilla registrados con este filtro.
+                      </td>
                     </tr>
-                  </thead>
-                  <tbody>
-                    {filteredCodesList.length === 0 ? (
-                      <tr>
-                        <td colSpan={4} style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
-                          No hay códigos que coincidan con la búsqueda o filtro.
-                        </td>
-                      </tr>
-                    ) : (
-                      filteredCodesList.map(c => (
-                        <tr key={c.id}>
+                  ) : (
+                    filteredTokensList.map(token => {
+                      const isPaid = token.paymentMethod === 'efectivo' || !!token.paidAmount;
+                      const priceAmount = token.paidAmount || ((token.unitPriceQ || cardPriceQ || 10) * (token.quantity || 1));
+                      const cleanPhone = (token.playerWhatsapp || '').replace(/\D/g, '');
+
+                      return (
+                        <tr key={token.id}>
                           <td>
-                            <code style={{ fontWeight: 700, fontSize: '0.88rem', background: '#f1f5f9', padding: '2px 6px', borderRadius: '6px' }}>
-                              {c.code}
+                            <code style={{ fontWeight: 700, fontSize: '0.82rem', background: '#f1f5f9', padding: '2px 6px', borderRadius: '6px', color: '#0f172a' }}>
+                              {token.id}
                             </code>
                           </td>
                           <td>
-                            {c.used ? (
-                              <span style={{ color: '#dc2626', background: '#fee2e2', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>
-                                Usado
+                            <strong style={{ display: 'block', color: '#0f172a' }}>{token.playerName || 'Jugador'}</strong>
+                            {cleanPhone ? (
+                              <a
+                                href={`https://wa.me/502${cleanPhone}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: '0.72rem', color: '#16a34a', textDecoration: 'none' }}
+                              >
+                                📱 +502 {cleanPhone}
+                              </a>
+                            ) : (
+                              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Sin WhatsApp</span>
+                            )}
+                          </td>
+                          <td>
+                            <span style={{ fontWeight: 'bold', color: '#4338ca' }}>
+                              {token.quantity || 1} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
+                            </span>
+                            <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'block' }}>
+                              {token.tierName || 'Oficial'}
+                            </span>
+                          </td>
+                          <td>
+                            <strong style={{ color: '#059669', fontSize: '0.86rem' }}>
+                              Q {priceAmount}.00
+                            </strong>
+                          </td>
+                          <td>
+                            {isPaid ? (
+                              <span style={{ color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
+                                ✓ {token.paymentMethod === 'efectivo' ? 'Efectivo' : 'Pagado'}
                               </span>
                             ) : (
-                              <span style={{ color: '#16a34a', background: '#dcfce7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>
-                                Libre
+                              <span style={{ color: '#b45309', background: '#fef3c7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
+                                ⏳ Pendiente
                               </span>
                             )}
                           </td>
-                          <td style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                            {c.used ? (
-                              <span><strong>{c.usedByPlayer || 'Jugador'}</strong> (Cartón: {c.usedByCardId?.slice(0, 8)}...)</span>
+                          <td>
+                            {token.linkSent ? (
+                              <span style={{ color: '#0284c7', background: 'rgba(2, 132, 199, 0.12)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>
+                                📲 Despachado ({token.linkSentCount || 1})
+                              </span>
                             ) : (
-                              <span style={{ fontStyle: 'italic' }}>Disponible</span>
+                              <span style={{ color: '#64748b', fontSize: '0.7rem' }}>
+                                No enviado
+                              </span>
                             )}
                           </td>
                           <td style={{ textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                              {!c.used && (
+                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                              {!isPaid && (
                                 <button
                                   type="button"
-                                  onClick={() => copyDirectLinkCode(c.code || '')}
-                                  className="bingo-btn-action"
-                                  style={{ padding: '4px 8px', fontSize: '0.72rem' }}
-                                  title="Copiar enlace de WhatsApp con código pre-cargado"
+                                  onClick={() => handleConfirmCashToken(token)}
+                                  style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    background: '#dcfce7',
+                                    border: '1px solid #86efac',
+                                    color: '#15803d',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 'bold',
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Marcar como cobrado en efectivo"
                                 >
-                                  🔗 Link
+                                  💵 Cobrar
                                 </button>
                               )}
+
                               <button
                                 type="button"
-                                onClick={() => deleteCode(c.id)}
-                                style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', fontWeight: 700 }}
-                                title="Eliminar código"
+                                onClick={() => handleSendWhatsAppToken(token)}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(34, 197, 94, 0.15)',
+                                  border: '1px solid rgba(34, 197, 94, 0.4)',
+                                  color: '#16a34a',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer'
+                                }}
+                                title="Enviar enlace de acceso oficial por WhatsApp"
                               >
-                                ✕
+                                📲 WhatsApp
+                              </button>
+
+                              <a
+                                href={`https://t.me/Bingotenangobot?start=${token.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(34, 158, 217, 0.15)',
+                                  border: '1px solid rgba(34, 158, 217, 0.4)',
+                                  color: '#0284c7',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 'bold',
+                                  textDecoration: 'none',
+                                  cursor: 'pointer'
+                                }}
+                                title="Abrir y despachar en Telegram (@Bingotenangobot)"
+                              >
+                                ✈️ Telegram
+                              </a>
+
+                              <button
+                                type="button"
+                                onClick={() => handleCopyTokenLink(token.id)}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  background: '#f1f5f9',
+                                  border: '1px solid #cbd5e1',
+                                  color: '#334155',
+                                  fontSize: '0.72rem',
+                                  cursor: 'pointer'
+                                }}
+                                title="Copiar enlace de juego al portapapeles"
+                              >
+                                📋
                               </button>
                             </div>
                           </td>
                         </tr>
-                      ))
-                    )}
-                  </tbody>
-                </table>
-              </div>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
 
           </div>
+
         </div>
       )}
 

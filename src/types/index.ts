@@ -263,8 +263,12 @@ export interface BingoCustomization {
       location: { enabled: boolean; required: boolean };
     };
     paymentInfo?: {
-      sinpeNumber?: string;
+      bankName?: string;
+      bankAccountType?: string;
+      bankAccountNumber?: string;
+      bankAccountOwner?: string;
       bankAccount?: string;
+      sinpeNumber?: string;
       whatsappNumber?: string;
       paymentInstructions?: string;
     };
@@ -361,6 +365,7 @@ export interface BingoAccessToken {
   linkSentCount?: number; // Cantidad de veces que se ha despachado el enlace
   paymentMethod?: string;
   paidAmount?: number;
+  unitPriceQ?: number;
   createdAt: number;
 }
 
