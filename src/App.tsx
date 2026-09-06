@@ -78,7 +78,7 @@ function App() {
   const isBingoCardView = currentPath.includes('/juegos/bingo') || currentPath.includes('/bingo');
 
   return (
-    <div className={`app-container ${isBoletosView ? 'boletos-view-full' : ''}`}>
+    <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''}`}>
       {/* Tirador del Menú Lateral (Gamer HUD Trigger) */}
       <button 
         className={`gamer-sidebar-trigger ${isSidebarOpen ? 'open' : ''} ${isBingoCardView || isBoletosView ? 'hide-on-mobile-card' : ''}`}

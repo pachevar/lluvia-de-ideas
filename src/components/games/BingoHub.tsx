@@ -8,6 +8,12 @@ import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardColli
 import type { MarkedSlots } from '../../utils/bingoGenerator';
 import { soundEffects } from '../../utils/soundEffects';
 import { CONTACT } from '../../constants';
+import {
+  isNotificationSupported,
+  getNotificationPermission,
+  requestNotificationPermission,
+  triggerBrowserNotification
+} from '../../utils/webNotificationUtils';
 import './Bingo.css';
 
 type StoredCardMatrix = {
@@ -197,6 +203,36 @@ export default function BingoHub() {
 
   // Filtros de la lista de jugadores de la partida programada
   const [scheduledPlayersFilter, setScheduledPlayersFilter] = useState<'all' | 'paid' | 'pending' | 'link_pending' | 'link_sent'>('all');
+
+  // Estados para Notificaciones Web Push y Compartir Enlace en Sala
+  const [lobbyPushPermission, setLobbyPushPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission());
+  const [lobbyPushActivating, setLobbyPushActivating] = useState(false);
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
+
+  const handleEnableLobbyPush = async () => {
+    setLobbyPushActivating(true);
+    try {
+      const res = await requestNotificationPermission();
+      setLobbyPushPermission(res);
+      if (res === 'granted') {
+        triggerBrowserNotification("🎟️ ¡Notificaciones de Bingotenango Activadas!", {
+          body: "¡Listo! Te avisaremos en esta pantalla cuando inicie la partida y se canten los números.",
+          url: window.location.href
+        });
+      }
+    } catch (err) {
+      console.warn("Error solicitando permisos de notificación en sala:", err);
+    } finally {
+      setLobbyPushActivating(false);
+    }
+  };
+
+  const handleCopyShareLink = (urlToCopy?: string) => {
+    const finalUrl = urlToCopy || `${window.location.origin}/juegos/bingo`;
+    navigator.clipboard.writeText(finalUrl);
+    setCopiedShareLink(true);
+    setTimeout(() => setCopiedShareLink(false), 2500);
+  };
 
   // Estados para Registro de Cobro en Efectivo y Envío Controlado de Enlaces
   const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
@@ -2404,6 +2440,72 @@ export default function BingoHub() {
                         <p style={{ fontSize: '0.72rem', opacity: 0.8, color: '#d1c4e9', marginTop: '6px', lineHeight: 1.3 }}>
                           O ingresa desde tu móvil a: <br /><strong>{window.location.host}/juegos/bingo</strong>
                         </p>
+
+                        {/* Botones de Compartir Enlace cuando el QR no está al alcance */}
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleCopyShareLink()}
+                            style={{
+                              background: copiedShareLink ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                              border: `1px solid ${copiedShareLink ? '#10b981' : 'rgba(255, 255, 255, 0.2)'}`,
+                              color: copiedShareLink ? '#34d399' : '#e2e8f0',
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              fontSize: '0.74rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            {copiedShareLink ? '✓ ¡Link Copiado!' : '📋 Copiar Enlace'}
+                          </button>
+
+                          <a
+                            href={`https://wa.me/?text=${encodeURIComponent(
+                              `¡Hola! 🎟️ Te invito a unirte ahora a la sala en vivo de Bingotenango:\n\n` +
+                              `📲 Entra aquí para registrarte o jugar:\n${window.location.origin}/juegos/bingo\n\n` +
+                              `¡No te lo pierdas!`
+                            )}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: 'rgba(37, 211, 102, 0.2)',
+                              border: '1px solid rgba(37, 211, 102, 0.4)',
+                              color: '#25d366',
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              fontSize: '0.74rem',
+                              fontWeight: 'bold',
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            💬 WhatsApp
+                          </a>
+
+                          <a
+                            href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/juegos/bingo`)}&text=${encodeURIComponent('¡Hola! 🎟️ Te invito a unirte a la sala de Bingotenango para jugar en vivo:')}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style={{
+                              background: 'rgba(34, 158, 217, 0.2)',
+                              border: '1px solid rgba(34, 158, 217, 0.4)',
+                              color: '#38bdf8',
+                              borderRadius: '8px',
+                              padding: '6px 12px',
+                              fontSize: '0.74rem',
+                              fontWeight: 'bold',
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            ✈️ Telegram
+                          </a>
+                        </div>
                       </div>
 
                       {/* Lista de jugadores conectados en tiempo real */}
@@ -5140,10 +5242,245 @@ export default function BingoHub() {
               )}
 
               {/* ==========================================
-                 MOBILE PORTION: GET BINGO CARD ("OBTENER EL CARTÓN")
+                 LOBBY DEL JUGADOR: NOTIFICACIONES PUSH, PARTIDAS EN ESPERA Y ACCESO
                  ========================================== */}
-              <div className="mobile-gamer-section mobile-only" style={{ width: '100%' }}>
+              <div className="mobile-gamer-section lobby-player-section" style={{ width: '100%' }}>
                 
+                {/* 1. NOTIFICACIONES WEB PUSH EN LA SALA DE JUEGO */}
+                {isNotificationSupported() && lobbyPushPermission !== 'unsupported' && (
+                  <div style={{
+                    background: lobbyPushPermission === 'granted'
+                      ? 'rgba(16, 185, 129, 0.12)'
+                      : 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
+                    border: `1.5px solid ${lobbyPushPermission === 'granted' ? 'rgba(16, 185, 129, 0.45)' : 'rgba(245, 158, 11, 0.5)'}`,
+                    borderRadius: '16px',
+                    padding: '12px 16px',
+                    marginBottom: '14px',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    flexWrap: 'wrap',
+                    gap: '10px',
+                    boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '220px' }}>
+                      <span style={{ fontSize: '1.4rem' }}>{lobbyPushPermission === 'granted' ? '🔔' : '📣'}</span>
+                      <div>
+                        <strong style={{
+                          fontSize: '0.86rem',
+                          color: lobbyPushPermission === 'granted' ? '#34d399' : '#fbbf24',
+                          display: 'block',
+                          fontFamily: 'var(--font-gamer)'
+                        }}>
+                          {lobbyPushPermission === 'granted' ? 'ALERTAS EN PANTALLA ACTIVAS' : 'ACTIVAR ALERTAS DE LA SALA'}
+                        </strong>
+                        <span style={{ fontSize: '0.75rem', color: '#cbd5e1', lineHeight: 1.3, display: 'block' }}>
+                          {lobbyPushPermission === 'granted'
+                            ? 'Te avisaremos cuando comience la partida y se canten bolas en vivo.'
+                            : '¿Deseas que te avisemos en tu pantalla cuando empiece el bingo y se canten bolas?'}
+                        </span>
+                      </div>
+                    </div>
+
+                    {lobbyPushPermission !== 'granted' && (
+                      <button
+                        type="button"
+                        onClick={handleEnableLobbyPush}
+                        disabled={lobbyPushActivating}
+                        style={{
+                          background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                          border: 'none',
+                          borderRadius: '10px',
+                          padding: '8px 16px',
+                          color: '#ffffff',
+                          fontSize: '0.78rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)',
+                          transition: 'all 0.2s ease',
+                          whiteSpace: 'nowrap'
+                        }}
+                      >
+                        {lobbyPushActivating ? 'Activando...' : '🔔 Activar Alertas'}
+                      </button>
+                    )}
+                  </div>
+                )}
+
+                {/* 2. CARTELERA DE PARTIDAS EN ESPERA CON COMPRA DIRECTA DE TICKETS */}
+                {(() => {
+                  const waitingGames = scheduledGamesList.filter(g => 
+                    g.status === 'scheduled' || 
+                    (g.status === 'live' && g.id !== activeGame?.id)
+                  );
+
+                  if (waitingGames.length === 0) return null;
+
+                  return (
+                    <div style={{
+                      background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.9) 0%, rgba(10, 8, 22, 0.98) 100%)',
+                      border: '1.5px solid rgba(168, 85, 247, 0.45)',
+                      borderRadius: '16px',
+                      padding: '14px',
+                      marginBottom: '16px',
+                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1.2rem' }}>📅</span>
+                          <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#f3e8ff', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
+                            PARTIDAS EN ESPERA ({waitingGames.length})
+                          </h4>
+                        </div>
+                        <span style={{ fontSize: '0.72rem', color: '#c084fc', textTransform: 'uppercase', fontWeight: 'bold' }}>
+                          Próximos Bingos
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                        {waitingGames.slice(0, 4).map(game => (
+                          <div key={game.id} style={{
+                            background: 'rgba(255, 255, 255, 0.04)',
+                            border: '1px solid rgba(168, 85, 247, 0.25)',
+                            borderRadius: '12px',
+                            padding: '10px 12px',
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            flexWrap: 'wrap',
+                            gap: '10px'
+                          }}>
+                            <div style={{ textAlign: 'left', flex: 1, minWidth: '180px' }}>
+                              <strong style={{ display: 'block', fontSize: '0.88rem', color: '#ffffff', marginBottom: '2px' }}>
+                                {game.title}
+                              </strong>
+                              <div style={{ display: 'flex', gap: '10px', fontSize: '0.74rem', color: '#94a3b8', flexWrap: 'wrap' }}>
+                                <span>⏰ {new Date(game.scheduledAt).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' })}</span>
+                                <span style={{ color: '#38bdf8' }}>🏷️ {game.tierName || 'Cartón Oficial'}</span>
+                                <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>Q{game.cardPriceQ || 25}.00</span>
+                              </div>
+                              {game.prizeHighlight && (
+                                <span style={{ display: 'block', fontSize: '0.72rem', color: '#34d399', marginTop: '3px' }}>
+                                  🏆 {game.prizeHighlight}
+                                </span>
+                              )}
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=${game.gameType || 'tier-25'}`)}
+                              style={{
+                                background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                                border: '1px solid rgba(56, 189, 248, 0.5)',
+                                color: '#ffffff',
+                                padding: '8px 16px',
+                                borderRadius: '10px',
+                                fontSize: '0.78rem',
+                                fontWeight: 800,
+                                fontFamily: 'var(--font-gamer)',
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 15px rgba(37, 99, 235, 0.4)',
+                                whiteSpace: 'nowrap'
+                              }}
+                            >
+                              🎟️ Comprar Ticket
+                            </button>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  );
+                })()}
+
+                {/* 3. PASO 1: COMPARTIR ENLACE DE LA SALA SI NO TIENEN EL QR AL ALCANCE */}
+                <div style={{
+                  background: 'rgba(0, 0, 0, 0.35)',
+                  border: '1px solid rgba(255, 255, 255, 0.1)',
+                  borderRadius: '14px',
+                  padding: '10px 14px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px'
+                }}>
+                  <div style={{ textAlign: 'left' }}>
+                    <span style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>
+                      ¿El código QR no está a tu alcance?
+                    </span>
+                    <strong style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
+                      Comparte el enlace de la sala con tus amigos:
+                    </strong>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={() => handleCopyShareLink()}
+                      style={{
+                        background: copiedShareLink ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
+                        border: `1px solid ${copiedShareLink ? '#10b981' : 'rgba(255, 255, 255, 0.2)'}`,
+                        color: copiedShareLink ? '#34d399' : '#e2e8f0',
+                        borderRadius: '8px',
+                        padding: '5px 10px',
+                        fontSize: '0.72rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer'
+                      }}
+                    >
+                      {copiedShareLink ? '✓ Copiado' : '📋 Copiar Link'}
+                    </button>
+
+                    <a
+                      href={`https://wa.me/?text=${encodeURIComponent(
+                        `¡Hola! 🎟️ Te invito a jugar Bingo en vivo en Bingotenango:\n\n` +
+                        `📲 Entra a la sala aquí:\n${window.location.origin}/juegos/bingo\n\n` +
+                        `¡Vamos a jugar!`
+                      )}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: 'rgba(37, 211, 102, 0.2)',
+                        border: '1px solid rgba(37, 211, 102, 0.4)',
+                        color: '#25d366',
+                        borderRadius: '8px',
+                        padding: '5px 10px',
+                        fontSize: '0.72rem',
+                        fontWeight: 'bold',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      💬 WhatsApp
+                    </a>
+
+                    <a
+                      href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/juegos/bingo`)}&text=${encodeURIComponent('¡Hola! 🎟️ Te invito a la sala en vivo de Bingotenango:')}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style={{
+                        background: 'rgba(34, 158, 217, 0.2)',
+                        border: '1px solid rgba(34, 158, 217, 0.4)',
+                        color: '#38bdf8',
+                        borderRadius: '8px',
+                        padding: '5px 10px',
+                        fontSize: '0.72rem',
+                        fontWeight: 'bold',
+                        textDecoration: 'none',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      }}
+                    >
+                      ✈️ Telegram
+                    </a>
+                  </div>
+                </div>
+
                 {/* Check if user already has a saved card in localStorage */}
                 {savedCardId ? (
                   <div className="gamer-register-card">
