@@ -1,5 +1,5 @@
 import { initializeApp } from 'firebase/app';
-import { getFirestore, doc, getDoc, updateDoc } from 'firebase/firestore';
+import { getFirestore, doc, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 
 const BOT_TOKEN = '8871378697:AAHbLJumNh9FhiRIzROq_g2QjbaPLlzuUj4';
 const TELEGRAM_API = `https://api.telegram.org/bot${BOT_TOKEN}`;
@@ -90,6 +90,24 @@ async function handleStartCommand(chatId, payload, userName = 'Jugador') {
         linkSentCount: (token.linkSentCount || 0) + 1
       });
 
+      // Vincular a la Cartera de Clientes bingo_players si tenemos el teléfono
+      if (token.playerWhatsapp) {
+        const normPhone = token.playerWhatsapp.replace(/\D/g, '');
+        const finalPhone = normPhone.length === 8 ? `502${normPhone}` : normPhone;
+        if (finalPhone) {
+          const pRef = doc(db, 'bingo_players', finalPhone);
+          await setDoc(pRef, {
+            id: finalPhone,
+            phone: finalPhone,
+            name: playerName,
+            telegramChatId: chatId,
+            telegramUsername: userName,
+            updatedAt: Date.now()
+          }, { merge: true });
+          console.log(`👤 Jugador ${finalPhone} vinculado con Telegram Chat ID: ${chatId}`);
+        }
+      }
+
       console.log(`✅ Pase ${tokenId} entregado exitosamente por Telegram a ${playerName} (Chat: ${chatId})`);
       return;
     }
@@ -120,6 +138,23 @@ async function handleStartCommand(chatId, payload, userName = 'Jugador') {
         linkSent: true,
         linkSentAt: Date.now()
       });
+
+      if (card.playerWhatsapp) {
+        const normPhone = card.playerWhatsapp.replace(/\D/g, '');
+        const finalPhone = normPhone.length === 8 ? `502${normPhone}` : normPhone;
+        if (finalPhone) {
+          const pRef = doc(db, 'bingo_players', finalPhone);
+          await setDoc(pRef, {
+            id: finalPhone,
+            phone: finalPhone,
+            name: card.playerName || userName,
+            telegramChatId: chatId,
+            telegramUsername: userName,
+            updatedAt: Date.now()
+          }, { merge: true });
+          console.log(`👤 Jugador ${finalPhone} vinculado con Telegram Chat ID: ${chatId}`);
+        }
+      }
 
       console.log(`✅ Cartón #${tokenId} entregado por Telegram a ${card.playerName} (Chat: ${chatId})`);
       return;

@@ -3,6 +3,16 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { BingoAccessToken } from '../types';
+import {
+  recordPlayerPurchase,
+  autoDispatchPurchaseToTelegramIfLinked
+} from '../services/bingoPlayerService';
+import {
+  isNotificationSupported,
+  getNotificationPermission,
+  requestNotificationPermission,
+  triggerBrowserNotification
+} from '../utils/webNotificationUtils';
 import './BingoBoletos.css';
 
 interface GiftLinkItem {
@@ -30,6 +40,9 @@ const BingoBoletosConfirmacion: React.FC = () => {
   const [giftLinks, setGiftLinks] = useState<GiftLinkItem[]>([]);
   const [copiedMainLink, setCopiedMainLink] = useState(false);
   const [showTelegramGuide, setShowTelegramGuide] = useState(false);
+  const [telegramAutoDispatched, setTelegramAutoDispatched] = useState(false);
+  const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission());
+  const [pushActivating, setPushActivating] = useState(false);
 
   useEffect(() => {
     const fetchOrderAndToken = async () => {
@@ -100,6 +113,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
         const effectiveOrderId = orderId || ('ord_sim_' + Date.now());
         const isGift = currentOrder?.purchaseMode === 'gift';
         const totalQty = currentOrder?.quantity || 1;
+        let effectiveTokenId = '';
 
         if (isGift && totalQty > 1) {
           // Generar tokens independientes para cada contacto
@@ -138,13 +152,16 @@ const BingoBoletosConfirmacion: React.FC = () => {
             });
           }
           setGiftLinks(generatedLinks);
+          effectiveTokenId = generatedLinks[0]?.id || '';
         } else {
           // Modo personal: token único con todos los cartones (1 a 3) cargados
           const qToken = query(collection(db, 'bingo_access_tokens'), where('orderId', '==', effectiveOrderId), limit(1));
           const snapToken = await getDocs(qToken);
 
           if (!snapToken.empty) {
-            setAccessToken(snapToken.docs[0].data() as BingoAccessToken);
+            const existingToken = snapToken.docs[0].data() as BingoAccessToken;
+            setAccessToken(existingToken);
+            effectiveTokenId = existingToken.id;
           } else if (currentOrder) {
             const newTokenId = 'tkn_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
             const tokenObj: BingoAccessToken = {
@@ -168,6 +185,51 @@ const BingoBoletosConfirmacion: React.FC = () => {
             };
             await setDoc(doc(db, 'bingo_access_tokens', newTokenId), tokenObj);
             setAccessToken(tokenObj);
+            effectiveTokenId = newTokenId;
+          }
+        }
+
+        // REGISTRO EN CARTERA DE JUGADORES (CRM) Y AUTO-DESPACHO
+        if (currentOrder && currentOrder.playerWhatsapp) {
+          try {
+            const currentPermission = getNotificationPermission();
+            await recordPlayerPurchase({
+              phone: currentOrder.playerWhatsapp,
+              name: currentOrder.playerName,
+              email: currentOrder.playerEmail || '',
+              spentQ: currentOrder.totalPriceQ || currentOrder.priceQ || 25,
+              webPushEnabled: currentPermission === 'granted'
+            });
+          } catch (errCrm) {
+            console.warn("Aviso registrando perfil de cliente en cartera:", errCrm);
+          }
+
+          // AUTO-DESPACHO TELEGRAM SI EL CLIENTE YA ESTABA VINCULADO
+          try {
+            if (effectiveTokenId) {
+              const targetUrl = `${window.location.origin}/juegos/bingo?access=${effectiveTokenId}`;
+              const autoRes = await autoDispatchPurchaseToTelegramIfLinked({
+                phone: currentOrder.playerWhatsapp,
+                playerName: currentOrder.playerName,
+                tokenId: effectiveTokenId,
+                quantity: currentOrder.quantity || 1,
+                url: targetUrl
+              });
+              if (autoRes.dispatched) {
+                setTelegramAutoDispatched(true);
+              }
+            }
+          } catch (errAuto) {
+            console.warn("Aviso en auto-despacho de Telegram:", errAuto);
+          }
+
+          // DISPARO DE NOTIFICACIÓN DE NAVEGADOR SI YA ESTABA PERMITIDA
+          if (getNotificationPermission() === 'granted' && effectiveTokenId) {
+            const targetUrl = `${window.location.origin}/juegos/bingo?access=${effectiveTokenId}`;
+            triggerBrowserNotification("🎟️ ¡Tus Cartones de Bingotenango están Listos!", {
+              body: `¡Hola ${currentOrder.playerName}! Tu compra fue confirmada. Toca aquí para abrir tus cartones.`,
+              url: targetUrl
+            });
           }
         }
 
@@ -180,6 +242,39 @@ const BingoBoletosConfirmacion: React.FC = () => {
 
     fetchOrderAndToken();
   }, [orderId, isSuccess, pkgId, tierId, qtyParam, playerNameParam, phoneParam, modeParam]);
+
+  const handleEnableWebPush = async () => {
+    setPushActivating(true);
+    try {
+      const res = await requestNotificationPermission();
+      setPushPermission(res);
+      if (res === 'granted') {
+        const effectiveTokenId = accessToken?.id || (giftLinks.length > 0 ? giftLinks[0]?.id : '');
+        const targetUrl = effectiveTokenId 
+          ? `${window.location.origin}/juegos/bingo?access=${effectiveTokenId}`
+          : `${window.location.origin}/juegos/bingo`;
+
+        triggerBrowserNotification("🎟️ ¡Notificaciones de Bingotenango Activadas!", {
+          body: `Hola ${orderData?.playerName || 'Jugador'}, tus notificaciones están listas. Te avisaremos el inicio de la partida.`,
+          url: targetUrl
+        });
+
+        if (orderData?.playerWhatsapp) {
+          recordPlayerPurchase({
+            phone: orderData.playerWhatsapp,
+            name: orderData.playerName,
+            email: orderData.playerEmail || '',
+            spentQ: orderData.totalPriceQ || orderData.priceQ || 25,
+            webPushEnabled: true
+          }).catch(() => {});
+        }
+      }
+    } catch (e) {
+      console.error("Error activando web push:", e);
+    } finally {
+      setPushActivating(false);
+    }
+  };
 
   const copyGiftLink = (index: number, url: string) => {
     navigator.clipboard.writeText(url);
@@ -490,6 +585,115 @@ const BingoBoletosConfirmacion: React.FC = () => {
               </button>
             </>
           )}
+
+              {/* BANNER DE AUTO-DESPACHO A TELEGRAM SI YA ERA CLIENTE REGISTRADO */}
+              {telegramAutoDispatched && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(6, 78, 59, 0.6) 100%)',
+                  border: '1.5px solid #10b981',
+                  borderRadius: '16px',
+                  padding: '14px 18px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  textAlign: 'left',
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.3)'
+                }}>
+                  <span style={{ fontSize: '1.8rem', flexShrink: 0 }}>⚡</span>
+                  <div>
+                    <strong style={{ color: '#34d399', fontSize: '0.92rem', display: 'block', fontFamily: 'var(--font-gamer)' }}>
+                      ¡DESPACHADO EN AUTOMÁTICO A TU TELEGRAM!
+                    </strong>
+                    <span style={{ color: '#e2e8f0', fontSize: '0.8rem', lineHeight: 1.35, display: 'block' }}>
+                      Como ya eres cliente registrado en nuestra cartera, enviamos tus cartones directamente a tu chat de <strong>@Bingotenangobot</strong>.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* NOTIFICACIONES WEB PUSH EN EL NAVEGADOR */}
+              {isNotificationSupported() && pushPermission !== 'unsupported' && (
+                <div style={{
+                  background: pushPermission === 'granted' 
+                    ? 'rgba(16, 185, 129, 0.12)' 
+                    : 'linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(30, 27, 75, 0.5) 100%)',
+                  border: `1.5px solid ${pushPermission === 'granted' ? 'rgba(16, 185, 129, 0.4)' : 'rgba(245, 158, 11, 0.4)'}`,
+                  borderRadius: '16px',
+                  padding: '14px 18px',
+                  marginBottom: '16px',
+                  textAlign: 'left',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '12px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '220px' }}>
+                    <span style={{ fontSize: '1.5rem' }}>{pushPermission === 'granted' ? '🔔' : '📣'}</span>
+                    <div>
+                      <strong style={{ 
+                        fontSize: '0.88rem', 
+                        color: pushPermission === 'granted' ? '#34d399' : '#fbbf24',
+                        display: 'block',
+                        fontFamily: 'var(--font-gamer)'
+                      }}>
+                        {pushPermission === 'granted' ? 'ALERTAS EN PANTALLA ACTIVAS' : 'ALERTAS DIRECTAS EN TU NAVEGADOR'}
+                      </strong>
+                      <span style={{ fontSize: '0.76rem', color: '#cbd5e1', lineHeight: 1.3, display: 'block' }}>
+                        {pushPermission === 'granted'
+                          ? 'Recibirás avisos nativos del inicio de la partida en esta pantalla.'
+                          : '¿No usas Telegram? Activa las notificaciones en tu pantalla para avisarte cuando empiece el bingo.'}
+                      </span>
+                    </div>
+                  </div>
+
+                  {pushPermission !== 'granted' && (
+                    <button
+                      type="button"
+                      onClick={handleEnableWebPush}
+                      disabled={pushActivating}
+                      style={{
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        border: 'none',
+                        borderRadius: '10px',
+                        padding: '8px 16px',
+                        color: '#ffffff',
+                        fontSize: '0.8rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 15px rgba(245, 158, 11, 0.4)',
+                        transition: 'all 0.2s ease',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {pushActivating ? 'Activando...' : '🔔 Activar Alertas'}
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* RESPALDO DE CORREO ELECTRÓNICO */}
+              {orderData?.playerEmail && (
+                <div style={{
+                  background: 'rgba(255, 255, 255, 0.05)',
+                  border: '1px solid rgba(255, 255, 255, 0.15)',
+                  borderRadius: '12px',
+                  padding: '10px 14px',
+                  marginBottom: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  fontSize: '0.78rem',
+                  color: '#cbd5e1',
+                  textAlign: 'left'
+                }}>
+                  <span>✉️</span>
+                  <span>
+                    Comprobante y accesos respaldados para: <strong style={{ color: '#ffffff' }}>{orderData.playerEmail}</strong>
+                  </span>
+                </div>
+              )}
 
               {/* TARJETA GUIADA DE ENTREGA AUTOMÁTICA POR TELEGRAM */}
               {accessToken && (

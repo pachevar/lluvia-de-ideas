@@ -7,7 +7,7 @@ import {
 import { db } from '../../firebase';
 import type { 
   BingoGame, BingoCustomization, BingoPrize, BingoPromoter, 
-  Sponsor, BingoCard, BingoAccessToken 
+  Sponsor, BingoCard, BingoAccessToken, BingoPlayerProfile 
 } from '../../types';
 import { compressImageWebP, blobToDataURL } from '../../utils/imageUpload';
 import './AdminBingoTab.css';
@@ -241,6 +241,10 @@ export default function AdminBingoTab() {
   const [tokenStatusFilter, setTokenStatusFilter] = useState<'all' | 'paid' | 'pending'>('all');
   const [tokenSearchQuery, setTokenSearchQuery] = useState('');
 
+  // Cartera de Jugadores (CRM - bingo_players)
+  const [playersList, setPlayersList] = useState<BingoPlayerProfile[]>([]);
+  const [playerSearchQuery, setPlayerSearchQuery] = useState('');
+
   // Prizes Gallery States
   const [prizesList, setPrizesList] = useState<BingoPrize[]>([]);
   const [newPrizeTitle, setNewPrizeTitle] = useState('');
@@ -362,6 +366,19 @@ export default function AdminBingoTab() {
       unsubPromos();
       unsubCards();
     };
+  }, []);
+
+  // 3.1. Escuchar Cartera de Jugadores (CRM - bingo_players)
+  useEffect(() => {
+    const qPlayers = query(collection(db, 'bingo_players'));
+    const unsubPlayers = onSnapshot(qPlayers, (snapshot) => {
+      const list = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as BingoPlayerProfile));
+      list.sort((a, b) => (b.lastPurchaseAt || b.createdAt || 0) - (a.lastPurchaseAt || a.createdAt || 0));
+      setPlayersList(list);
+    }, (err) => {
+      console.warn("Aviso leyendo cartera bingo_players:", err);
+    });
+    return () => unsubPlayers();
   }, []);
 
   // 4. Cargar configuración de Links de Recurrente (Boletos)
@@ -2385,6 +2402,208 @@ export default function AdminBingoTab() {
               </table>
             </div>
 
+          </div>
+
+          {/* SECCIÓN 3: CARTERA DE JUGADORES (CRM) & CANALES MULTICANAL */}
+          <div className="bingo-card" style={{ marginTop: '24px' }}>
+            <div className="bingo-card-header">
+              <h3 className="bingo-card-title">
+                <span>👥</span> Cartera de Jugadores (CRM) & Canales Activos ({playersList.length})
+              </h3>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  type="text"
+                  placeholder="🔍 Buscar por nombre, teléfono o email..."
+                  value={playerSearchQuery}
+                  onChange={(e) => setPlayerSearchQuery(e.target.value)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '8px',
+                    border: '1px solid #cbd5e1',
+                    fontSize: '0.8rem',
+                    width: '260px'
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* KPI Cards de la Cartera */}
+            <div style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(170px, 1fr))',
+              gap: '12px',
+              padding: '16px 20px',
+              background: '#f8fafc',
+              borderBottom: '1px solid #e2e8f0'
+            }}>
+              <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.72rem', color: '#64748b', textTransform: 'uppercase', fontWeight: 600 }}>Total Clientes</span>
+                <strong style={{ display: 'block', fontSize: '1.4rem', color: '#0f172a', marginTop: '2px' }}>{playersList.length}</strong>
+              </div>
+              <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.72rem', color: '#0284c7', textTransform: 'uppercase', fontWeight: 600 }}>✈️ Telegram Activo</span>
+                <strong style={{ display: 'block', fontSize: '1.4rem', color: '#0284c7', marginTop: '2px' }}>
+                  {playersList.filter(p => p.telegramChatId).length}
+                </strong>
+              </div>
+              <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.72rem', color: '#16a34a', textTransform: 'uppercase', fontWeight: 600 }}>🔔 Web Push</span>
+                <strong style={{ display: 'block', fontSize: '1.4rem', color: '#16a34a', marginTop: '2px' }}>
+                  {playersList.filter(p => p.webPushEnabled).length}
+                </strong>
+              </div>
+              <div style={{ background: '#ffffff', padding: '12px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.72rem', color: '#d97706', textTransform: 'uppercase', fontWeight: 600 }}>💰 Gasto Acumulado</span>
+                <strong style={{ display: 'block', fontSize: '1.4rem', color: '#d97706', marginTop: '2px' }}>
+                  Q{playersList.reduce((acc, p) => acc + (p.totalSpentQ || 0), 0)}.00
+                </strong>
+              </div>
+            </div>
+
+            {/* Tabla de Jugadores */}
+            <div style={{ overflowX: 'auto' }}>
+              <table className="bingo-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#f1f5f9', borderBottom: '1px solid #cbd5e1' }}>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>JUGADOR</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>CONTACTO</th>
+                    <th style={{ textAlign: 'center', padding: '10px 12px' }}>HISTORIAL</th>
+                    <th style={{ textAlign: 'left', padding: '10px 12px' }}>CANALES VINCULADOS</th>
+                    <th style={{ textAlign: 'right', padding: '10px 12px' }}>ACCIONES</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {(() => {
+                    const filtered = playersList.filter(p => {
+                      if (!playerSearchQuery) return true;
+                      const q = playerSearchQuery.toLowerCase();
+                      return (
+                        (p.name && p.name.toLowerCase().includes(q)) ||
+                        (p.phone && p.phone.includes(q)) ||
+                        (p.email && p.email.toLowerCase().includes(q)) ||
+                        (p.telegramUsername && p.telegramUsername.toLowerCase().includes(q))
+                      );
+                    });
+
+                    if (filtered.length === 0) {
+                      return (
+                        <tr>
+                          <td colSpan={5} style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
+                            {playersList.length === 0
+                              ? 'Aún no hay clientes registrados en la cartera. Se registrarán automáticamente con cada compra o interacción en Telegram.'
+                              : 'No hay clientes que coincidan con la búsqueda.'}
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return filtered.map(player => (
+                      <tr key={player.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                        <td style={{ padding: '10px 12px' }}>
+                          <strong style={{ display: 'block', color: '#0f172a', fontSize: '0.85rem' }}>
+                            {player.name || 'Jugador'}
+                          </strong>
+                          <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            Reg: {player.createdAt ? new Date(player.createdAt).toLocaleDateString() : 'N/A'}
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <span style={{ display: 'block', fontFamily: 'monospace', fontSize: '0.82rem', color: '#334155' }}>
+                            +{player.phone}
+                          </span>
+                          {player.email && (
+                            <span style={{ fontSize: '0.72rem', color: '#64748b' }}>{player.email}</span>
+                          )}
+                        </td>
+                        <td style={{ textAlign: 'center', padding: '10px 12px' }}>
+                          <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '12px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                            {player.totalOrdersCount || 1} compra(s)
+                          </span>
+                          <span style={{ display: 'block', fontSize: '0.74rem', color: '#16a34a', fontWeight: 'bold', marginTop: '2px' }}>
+                            Q{player.totalSpentQ || 0}.00
+                          </span>
+                        </td>
+                        <td style={{ padding: '10px 12px' }}>
+                          <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                            {player.telegramChatId ? (
+                              <span style={{
+                                background: 'rgba(34, 158, 217, 0.15)',
+                                color: '#0284c7',
+                                border: '1px solid rgba(34, 158, 217, 0.4)',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                fontSize: '0.7rem',
+                                fontWeight: 'bold'
+                              }}>
+                                ✈️ Telegram Conectado {player.telegramUsername ? `(@${player.telegramUsername})` : ''}
+                              </span>
+                            ) : (
+                              <span style={{ color: '#94a3b8', fontSize: '0.7rem' }}>Sin Telegram</span>
+                            )}
+
+                            {player.webPushEnabled && (
+                              <span style={{
+                                background: 'rgba(34, 197, 94, 0.15)',
+                                color: '#16a34a',
+                                border: '1px solid rgba(34, 197, 94, 0.4)',
+                                padding: '2px 8px',
+                                borderRadius: '10px',
+                                fontSize: '0.7rem',
+                                fontWeight: 'bold'
+                              }}>
+                                🔔 Push Activo
+                              </span>
+                            )}
+                          </div>
+                        </td>
+                        <td style={{ textAlign: 'right', padding: '10px 12px' }}>
+                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                            <a
+                              href={`https://wa.me/${player.phone}?text=${encodeURIComponent(`¡Hola ${player.name}! Te saludamos de Bingotenango 🎟️`)}`}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                padding: '4px 10px',
+                                borderRadius: '6px',
+                                background: 'rgba(34, 197, 94, 0.15)',
+                                border: '1px solid rgba(34, 197, 94, 0.4)',
+                                color: '#16a34a',
+                                fontSize: '0.72rem',
+                                fontWeight: 'bold',
+                                textDecoration: 'none'
+                              }}
+                              title="Escribir por WhatsApp"
+                            >
+                              📲 WhatsApp
+                            </a>
+                            {player.telegramUsername && (
+                              <a
+                                href={`https://t.me/${player.telegramUsername}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(34, 158, 217, 0.15)',
+                                  border: '1px solid rgba(34, 158, 217, 0.4)',
+                                  color: '#0284c7',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 'bold',
+                                  textDecoration: 'none'
+                                }}
+                                title="Abrir chat en Telegram"
+                              >
+                                ✈️ Telegram
+                              </a>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    ));
+                  })()}
+                </tbody>
+              </table>
+            </div>
           </div>
 
         </div>

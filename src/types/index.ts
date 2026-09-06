@@ -413,3 +413,20 @@ export interface Inscripcion {
   school: string;
   timestamp: number;
 }
+
+export interface BingoPlayerProfile {
+  id: string; // Teléfono normalizado (ej: "50236135616")
+  name: string;
+  phone: string;
+  email?: string;
+  telegramChatId?: number | string;
+  telegramUsername?: string;
+  telegramFirstName?: string;
+  webPushEnabled?: boolean;
+  totalOrdersCount: number;
+  totalSpentQ: number;
+  lastPurchaseAt?: number;
+  createdAt: number;
+  updatedAt: number;
+  notes?: string;
+}
