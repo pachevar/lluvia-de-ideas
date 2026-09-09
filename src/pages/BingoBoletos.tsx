@@ -823,14 +823,38 @@ const BingoBoletos: React.FC = () => {
                 />
               </div>
 
-              {/* AVISO DE ENTREGA INSTANTÁNEA POR TELEGRAM O WHATSAPP */}
+              {/* RECORDATORIO BOT OFICIAL DE TELEGRAM */}
               <div className="step-delivery-notice">
-                <span className="notice-icon">🤖</span>
-                <div className="notice-body">
-                  <strong>Entrega Instantánea en Telegram o WhatsApp</strong>
-                  <span>
-                    Al confirmar tu orden, recibirás tu cartón automáticamente en <strong>Telegram (@Bingotenangobot)</strong> con 1 solo toque o podrás abrirlo directo en este navegador.
+                <span className="notice-icon">✈️</span>
+                <div className="notice-body" style={{ width: '100%' }}>
+                  <span style={{ fontSize: '0.84rem', color: '#e2e8f0', lineHeight: 1.4, marginBottom: '8px', display: 'block' }}>
+                    Si quieres jugar seguido y estar pendiente de nuestros bingos, sigue el link y presiona <strong>Start</strong>:
                   </span>
+                  <a
+                    href="https://t.me/Bingotenangobot"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      background: 'linear-gradient(135deg, rgba(34, 158, 217, 0.25) 0%, rgba(14, 165, 233, 0.35) 100%)',
+                      border: '1px solid rgba(56, 189, 248, 0.5)',
+                      borderRadius: '10px',
+                      padding: '8px 16px',
+                      color: '#38bdf8',
+                      fontSize: '0.86rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      fontFamily: 'var(--font-gamer)',
+                      letterSpacing: '0.5px',
+                      transition: 'all 0.2s ease',
+                      boxShadow: '0 2px 12px rgba(14, 165, 233, 0.2)'
+                    }}
+                  >
+                    <span>✈️</span>
+                    <span>Abrir @Bingotenangobot en Telegram</span>
+                  </a>
                 </div>
               </div>
 
