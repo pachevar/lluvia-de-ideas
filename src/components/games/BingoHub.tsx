@@ -158,52 +158,6 @@ function GameCountdownBadge({ scheduledAt }: { scheduledAt: number }) {
   );
 }
 
-// Mini badge de cuenta regresiva en vivo para cada fila de partida en espera
-function GameMiniCountdown({ scheduledAt }: { scheduledAt: number }) {
-  const [diff, setDiff] = useState(() => Math.max(0, Math.floor((scheduledAt - Date.now()) / 1000)));
-
-  useEffect(() => {
-    const update = () => setDiff(Math.max(0, Math.floor((scheduledAt - Date.now()) / 1000)));
-    update();
-    const t = setInterval(update, 1000);
-    return () => clearInterval(t);
-  }, [scheduledAt]);
-
-  if (diff <= 0) {
-    return (
-      <span style={{
-        color: '#4ade80',
-        fontWeight: 'bold',
-        background: 'rgba(34, 197, 94, 0.15)',
-        border: '1px solid rgba(34, 197, 94, 0.4)',
-        padding: '2px 8px',
-        borderRadius: '6px',
-        fontSize: '0.72rem'
-      }}>
-        ● En Vivo / Iniciando
-      </span>
-    );
-  }
-
-  const h = Math.floor(diff / 3600);
-  const m = Math.floor((diff % 3600) / 60);
-  const s = diff % 60;
-
-  return (
-    <span style={{
-      color: '#38bdf8',
-      fontWeight: 'bold',
-      background: 'rgba(56, 189, 248, 0.15)',
-      border: '1px solid rgba(56, 189, 248, 0.3)',
-      padding: '2px 8px',
-      borderRadius: '6px',
-      fontSize: '0.72rem',
-      fontFamily: 'var(--font-gamer)'
-    }}>
-      ⏳ {h > 0 ? `${h}h ` : ''}{String(m).padStart(2, '0')}m {String(s).padStart(2, '0')}s
-    </span>
-  );
-}
 
 export default function BingoHub() {
   const navigate = useNavigate();
@@ -5588,29 +5542,19 @@ export default function BingoHub() {
                   </div>
                 )}
 
-                {/* 2. CARTELERA DE PARTIDAS EN ESPERA CON RELOJ REGRESIVO Y BOTONES CENTRADOS */}
+                {/* 2. RELOJ DE PRÓXIMA PARTIDA Y ADQUISICIÓN DE TICKET (COMPACTO) */}
                 {(() => {
-                  let gamesToShow = scheduledGamesList.filter(g => 
-                    g.status === 'scheduled' || g.status === 'live'
-                  );
-
-                  if (gamesToShow.length === 0 && activeGame) {
-                    gamesToShow = [{
-                      id: activeGame.id,
-                      title: activeGame.title || 'Gran Ronda Oficial de Bingotenango',
-                      scheduledAt: activeGame.nextRoundTime || Date.now(),
-                      cardPriceQ: activeGame.cardPriceQ ?? (activeGame.gameType === 'tier-free' ? 0 : 25),
-                      gameType: activeGame.gameType || (activeGame.cardPriceQ === 0 ? 'tier-free' : 'tier-25'),
-                      status: 'live' as const,
-                      prizeHighlight: activeGame.currentPrizeTitle || 'Premios en vivo',
-                      tierName: activeGame.cardPriceQ === 0 ? 'Partida Gratuita' : 'Cartón Oficial',
-                      totalCardsLimit: 100,
-                      soldCardsCount: 0,
-                      createdAt: Date.now()
-                    } as BingoScheduledGame];
+                  const upcomingCandidates: number[] = [];
+                  scheduledGamesList.forEach(g => {
+                    if ((g.status === 'scheduled' || g.status === 'live') && g.scheduledAt) {
+                      upcomingCandidates.push(g.scheduledAt);
+                    }
+                  });
+                  if (activeGame?.nextRoundTime) {
+                    upcomingCandidates.push(activeGame.nextRoundTime);
                   }
-
-                  if (gamesToShow.length === 0) return null;
+                  upcomingCandidates.sort((a, b) => a - b);
+                  const nearestTime = upcomingCandidates.find(t => t > Date.now() - 15 * 60 * 1000) || upcomingCandidates[0] || null;
 
                   return (
                     <div style={{
@@ -5619,159 +5563,83 @@ export default function BingoHub() {
                       borderRadius: '18px',
                       padding: '16px',
                       marginBottom: '16px',
-                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5)'
+                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(168, 85, 247, 0.08)',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      textAlign: 'center',
+                      gap: '12px'
                     }}>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '10px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                          <span style={{ fontSize: '1.2rem' }}>📅</span>
-                          <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#f3e8ff', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
-                            PARTIDAS DISPONIBLES ({gamesToShow.length})
-                          </h4>
-                        </div>
-                        <span style={{ fontSize: '0.72rem', color: '#c084fc', textTransform: 'uppercase', fontWeight: 'bold' }}>
-                          Próximos Bingos
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '1.2rem' }}>⏱️</span>
+                        <span style={{
+                          fontSize: '0.85rem',
+                          color: '#c084fc',
+                          fontWeight: 800,
+                          textTransform: 'uppercase',
+                          letterSpacing: '1.5px',
+                          fontFamily: 'var(--font-gamer)'
+                        }}>
+                          Próxima Partida en Vivo
                         </span>
                       </div>
 
-                      {/* RELOJ REGRESIVO EN VIVO DENTRO DE PARTIDAS EN ESPERA */}
-                      {hostTimeLeft ? (
+                      {nearestTime ? (
                         <div style={{
-                          background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.12) 0%, rgba(168, 85, 247, 0.18) 100%)',
-                          border: '1.5px solid rgba(0, 240, 255, 0.4)',
+                          background: 'linear-gradient(135deg, rgba(0, 240, 255, 0.1) 0%, rgba(168, 85, 247, 0.16) 100%)',
+                          border: '1.5px solid rgba(0, 240, 255, 0.35)',
                           borderRadius: '14px',
-                          padding: '12px 16px',
-                          marginBottom: '14px',
+                          padding: '10px 20px',
+                          width: '100%',
+                          maxWidth: '360px',
                           display: 'flex',
                           flexDirection: 'column',
                           alignItems: 'center',
-                          justifyContent: 'center',
-                          textAlign: 'center',
-                          boxShadow: '0 0 20px rgba(0, 240, 255, 0.15)'
+                          boxShadow: '0 0 20px rgba(0, 240, 255, 0.12)'
                         }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                            <span style={{ fontSize: '1rem' }}>⏱️</span>
-                            <span style={{ fontSize: '0.72rem', color: hostTimeLeft.isStarted ? '#fca5a5' : '#38bdf8', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                              {hostTimeLeft.isStarted ? '¡LA RONDA ESTÁ POR INICIAR!' : 'INICIO DE LA PRÓXIMA RONDA:'}
-                            </span>
-                          </div>
-                          <div style={{
-                            fontSize: '2.2rem',
-                            fontFamily: 'var(--font-gamer)',
-                            fontWeight: 900,
-                            color: hostTimeLeft.isStarted ? '#ef4444' : '#00f0ff',
-                            letterSpacing: '2px',
-                            textShadow: '0 0 15px rgba(0, 240, 255, 0.6)'
-                          }}>
-                            {hostTimeLeft.isStarted 
-                              ? '00:00' 
-                              : `${hostTimeLeft.hasDays ? `${hostTimeLeft.days}d ` : ''}${hostTimeLeft.hasHours ? `${hostTimeLeft.hours}:` : ''}${hostTimeLeft.minutes}:${hostTimeLeft.seconds}`}
-                          </div>
-                          {hostTimeLeft.formattedDate && !hostTimeLeft.isStarted && (
-                            <span style={{ fontSize: '0.72rem', color: '#cbd5e1', marginTop: '2px' }}>
-                              📅 {hostTimeLeft.formattedDate}
-                            </span>
-                          )}
+                          <GameCountdownBadge scheduledAt={nearestTime} />
+                          <span style={{ fontSize: '0.74rem', color: '#cbd5e1', marginTop: '2px', fontWeight: 600 }}>
+                            📅 {new Date(nearestTime).toLocaleString('es-GT', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                          </span>
                         </div>
                       ) : (
-                        gamesToShow[0]?.scheduledAt && (
-                          <div style={{
-                            background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(59, 130, 246, 0.15) 100%)',
-                            border: '1.5px solid rgba(168, 85, 247, 0.35)',
-                            borderRadius: '14px',
-                            padding: '12px 16px',
-                            marginBottom: '14px',
-                            display: 'flex',
-                            flexDirection: 'column',
-                            alignItems: 'center',
-                            justifyContent: 'center',
-                            textAlign: 'center',
-                            boxShadow: '0 0 20px rgba(168, 85, 247, 0.15)'
-                          }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-                              <span style={{ fontSize: '1rem' }}>⏱️</span>
-                              <span style={{ fontSize: '0.72rem', color: '#c084fc', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                                PRÓXIMO BINGO EN VIVO:
-                              </span>
-                            </div>
-                            <GameCountdownBadge scheduledAt={gamesToShow[0].scheduledAt} />
-                            <span style={{ fontSize: '0.72rem', color: '#cbd5e1', marginTop: '2px' }}>
-                              📅 {new Date(gamesToShow[0].scheduledAt).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' })}
-                            </span>
-                          </div>
-                        )
+                        <div style={{
+                          background: 'rgba(255, 255, 255, 0.04)',
+                          border: '1px solid rgba(168, 85, 247, 0.25)',
+                          borderRadius: '12px',
+                          padding: '8px 16px',
+                          fontSize: '0.8rem',
+                          color: '#cbd5e1'
+                        }}>
+                          ⚡ ¡Partidas continuas en Bingotenango!
+                        </div>
                       )}
 
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {gamesToShow.slice(0, 4).map(game => (
-                          <div key={game.id} style={{
-                            background: 'rgba(255, 255, 255, 0.04)',
-                            border: '1px solid rgba(168, 85, 247, 0.25)',
-                            borderRadius: '14px',
-                            padding: '12px 14px',
+                      <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
+                        <button
+                          type="button"
+                          onClick={() => navigate('/juegos/bingo/boletos')}
+                          className="cyber-btn-primary animate-pulse"
+                          style={{
+                            width: '100%',
+                            maxWidth: '340px',
+                            padding: '12px 24px',
+                            fontSize: '0.95rem',
+                            fontWeight: 900,
+                            fontFamily: 'var(--font-gamer)',
+                            letterSpacing: '1px',
+                            borderRadius: '12px',
+                            boxShadow: '0 4px 20px rgba(0, 240, 255, 0.45)',
+                            cursor: 'pointer',
                             display: 'flex',
-                            flexDirection: 'column',
-                            gap: '10px'
-                          }}>
-                            <div style={{ textAlign: 'center' }}>
-                              <strong style={{ display: 'block', fontSize: '0.92rem', color: '#ffffff', marginBottom: '4px' }}>
-                                {game.title}
-                              </strong>
-                              <div style={{ display: 'flex', gap: '8px', fontSize: '0.74rem', color: '#94a3b8', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
-                                <span>⏰ {new Date(game.scheduledAt).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' })}</span>
-                                <span style={{ color: '#38bdf8' }}>🏷️ {game.tierName || (game.cardPriceQ === 0 ? 'Partida Gratuita' : 'Cartón Oficial')}</span>
-                                {game.cardPriceQ === 0 ? (
-                                  <span style={{ color: '#4ade80', fontWeight: 'bold', background: 'rgba(34, 197, 94, 0.15)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
-                                    🎁 GRATIS (Prueba)
-                                  </span>
-                                ) : (
-                                  <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>Q{game.cardPriceQ || 25}.00</span>
-                                )}
-                                <GameMiniCountdown scheduledAt={game.scheduledAt} />
-                              </div>
-                              {game.prizeHighlight && (
-                                <span style={{ display: 'block', fontSize: '0.74rem', color: '#34d399', marginTop: '4px', fontWeight: 'bold' }}>
-                                  🏆 {game.prizeHighlight}
-                                </span>
-                              )}
-                            </div>
-
-                            {/* BOTÓN CENTRADO: DIRIGE DIRECTO A LA PANTALLA DE COMPRA GUIADA Y FORMULARIO */}
-                            <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  if (game.cardPriceQ === 0 || game.gameType === 'tier-free') {
-                                    navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=tier-free`);
-                                  } else {
-                                    navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=${game.gameType || 'tier-25'}`);
-                                  }
-                                }}
-                                style={{
-                                  background: (game.cardPriceQ === 0 || game.gameType === 'tier-free')
-                                    ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
-                                    : 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                                  border: (game.cardPriceQ === 0 || game.gameType === 'tier-free')
-                                    ? '1px solid rgba(52, 211, 153, 0.5)'
-                                    : '1px solid rgba(56, 189, 248, 0.5)',
-                                  color: '#ffffff',
-                                  padding: '10px 24px',
-                                  borderRadius: '12px',
-                                  fontSize: '0.85rem',
-                                  fontWeight: 800,
-                                  fontFamily: 'var(--font-gamer)',
-                                  cursor: 'pointer',
-                                  boxShadow: (game.cardPriceQ === 0 || game.gameType === 'tier-free')
-                                    ? '0 4px 15px rgba(16, 185, 129, 0.4)'
-                                    : '0 4px 15px rgba(37, 99, 235, 0.4)',
-                                  whiteSpace: 'nowrap',
-                                  minWidth: '200px'
-                                }}
-                              >
-                                {(game.cardPriceQ === 0 || game.gameType === 'tier-free') ? '🎁 Unirme Gratis' : '🎟️ Comprar Ticket'}
-                              </button>
-                            </div>
-                          </div>
-                        ))}
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px'
+                          }}
+                        >
+                          <span>🎟️</span>
+                          <span>ADQUIRIR TICKET</span>
+                        </button>
                       </div>
                     </div>
                   );
