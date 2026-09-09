@@ -1,6 +1,6 @@
 /* ==========================================================================
    TIENDA OFICIAL DE BOLETOS BINGOTENANGO - PASARELA RECURRENTE (GUATEMALA)
-   COMPRA GUIADA, MINIMALISTA Y FLUIDA (PRECIO FIJADO POR PARTIDA)
+   COMPRA GUIADA EN 4 PASOS, MINIMALISTA Y FLUIDA (PREFIJO +502 FIJO)
    ========================================================================== */
 
 .bingo-boletos-page {
@@ -25,7 +25,7 @@
 /* CABECERA Y LOGO */
 .boletos-header {
   text-align: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
   animation: fadeInDown 0.6s ease-out;
 }
 
@@ -69,7 +69,7 @@
 }
 
 .boletos-hero-subtitle {
-  font-size: clamp(0.9rem, 1.8vw, 1.05rem);
+  font-size: clamp(0.88rem, 1.8vw, 1.02rem);
   color: #94a3b8;
   max-width: 620px;
   margin: 0 auto 16px;
@@ -99,31 +99,156 @@
 }
 
 /* ==========================================================================
-   1. TARJETA DESTACADA DEL JUEGO (PRECIO ÚNICO FIJADO)
+   BARRA GUÍA DE PROGRESO DE LOS 4 PASOS (STEPPER)
    ========================================================================== */
-.active-game-highlight-card {
-  background: linear-gradient(135deg, rgba(20, 15, 42, 0.95) 0%, rgba(10, 8, 25, 0.98) 100%);
-  border: 1.5px solid rgba(0, 240, 255, 0.4);
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 28px;
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 240, 255, 0.15);
+.boletos-stepper-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(13, 10, 30, 0.85);
+  backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 12px 18px;
+  margin-bottom: 24px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  position: relative;
   width: 100%;
   box-sizing: border-box;
 }
 
-.active-game-header-row {
+.stepper-step-item {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 16px;
-  margin-bottom: 18px;
+  gap: 10px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 6px 10px;
+  border-radius: 12px;
+  transition: all 0.25s ease;
+  text-align: left;
 }
 
-.game-badge-chip {
+.stepper-step-item:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.stepper-step-item.active {
+  color: #ffffff;
+  background: rgba(0, 240, 255, 0.1);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+}
+
+.stepper-step-item.completed {
+  color: #38bdf8;
+  cursor: pointer;
+}
+
+.stepper-step-item.completed:hover {
+  background: rgba(56, 189, 248, 0.15);
+  transform: translateY(-1px);
+}
+
+.stepper-badge-circle {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: var(--font-gamer, sans-serif);
+  font-size: 0.95rem;
+  font-weight: 900;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.stepper-step-item.active .stepper-badge-circle {
+  background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
+  border-color: #00f0ff;
+  color: #050b14;
+  box-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
+  transform: scale(1.08);
+}
+
+.stepper-step-item.completed .stepper-badge-circle {
+  background: #10b981;
+  border-color: #10b981;
+  color: #ffffff;
+  box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.stepper-text-col {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.15;
+}
+
+.stepper-title-sub {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.stepper-step-item.active .stepper-title-sub {
+  color: #38bdf8;
+}
+
+.stepper-step-item.completed .stepper-title-sub {
+  color: #10b981;
+}
+
+.stepper-title-main {
+  font-family: var(--font-gamer, sans-serif);
+  font-size: 0.88rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.stepper-divider {
+  flex: 1;
+  height: 2px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 0 8px;
+  border-radius: 999px;
+  transition: background 0.3s ease;
+}
+
+.stepper-divider.completed {
+  background: linear-gradient(90deg, #10b981, #00f0ff);
+}
+
+/* ==========================================================================
+   CONTENEDOR DE CADA PASO
+   ========================================================================== */
+.boletos-step-container {
+  background: linear-gradient(135deg, rgba(20, 15, 42, 0.95) 0%, rgba(10, 8, 25, 0.98) 100%);
+  border: 1.5px solid rgba(0, 240, 255, 0.35);
+  border-radius: 20px;
+  padding: 28px 24px;
+  margin-bottom: 24px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.5), 0 0 25px rgba(0, 240, 255, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+  animation: fadeInDown 0.4s ease-out;
+}
+
+.step-header-wrap {
+  margin-bottom: 22px;
+  text-align: left;
+}
+
+.step-badge-indicator {
   display: inline-block;
-  font-family: var(--font-gamer);
+  font-family: var(--font-gamer, sans-serif);
   font-size: 0.72rem;
   font-weight: 900;
   letter-spacing: 1.2px;
@@ -135,223 +260,341 @@
   margin-bottom: 8px;
 }
 
-.game-title-text {
-  font-family: var(--font-gamer);
-  font-size: 1.45rem;
+.step-main-title {
+  font-family: var(--font-gamer, sans-serif);
+  font-size: clamp(1.3rem, 3.2vw, 1.7rem);
   color: #ffffff;
   margin: 0 0 6px 0;
   line-height: 1.25;
 }
 
-.game-date-text {
+.step-main-desc {
   font-size: 0.88rem;
   color: #94a3b8;
   margin: 0;
+  line-height: 1.45;
 }
 
-.game-price-pill {
-  display: flex;
-  align-items: baseline;
-  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.3) 100%);
-  border: 1.5px solid #f59e0b;
-  border-radius: 16px;
-  padding: 10px 18px;
-  box-shadow: 0 0 20px rgba(245, 158, 11, 0.25);
-}
-
-.pill-currency {
-  font-size: 1.1rem;
-  font-weight: 800;
-  color: #fbbf24;
-  margin-right: 2px;
-}
-
-.pill-amount {
-  font-family: var(--font-gamer);
-  font-size: 2.2rem;
-  font-weight: 900;
-  color: #ffffff;
-  line-height: 1;
-}
-
-.pill-unit {
-  font-size: 0.8rem;
-  color: #cbd5e1;
-  margin-left: 6px;
-  font-weight: 600;
-}
-
-.game-switch-selector {
-  margin-bottom: 16px;
+/* PILDORA DE RESUMEN DE PASOS PREVIOS DENTRO DEL PASO */
+.step-current-game-pill {
   display: flex;
   align-items: center;
-  gap: 10px;
   flex-wrap: wrap;
-  font-size: 0.82rem;
-  color: #94a3b8;
-}
-
-.game-switch-selector select {
-  background: rgba(13, 10, 26, 0.9);
-  border: 1px solid rgba(0, 240, 255, 0.35);
-  color: #f8fafc;
-  padding: 8px 14px;
-  border-radius: 10px;
-  font-size: 0.85rem;
-  cursor: pointer;
-  outline: none;
-}
-
-.game-prize-strip {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  background: rgba(0, 240, 255, 0.05);
-  border: 1px dashed rgba(0, 240, 255, 0.3);
+  gap: 8px;
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 12px;
-  padding: 12px 16px;
+  padding: 8px 14px;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  margin-bottom: 20px;
 }
 
-.prize-icon {
-  font-size: 1.6rem;
-}
-
-.prize-info strong {
-  display: block;
-  font-size: 0.8rem;
+.pill-item-game strong,
+.pill-item-price strong,
+.pill-item-mode strong {
   color: #38bdf8;
-  margin-bottom: 2px;
 }
 
-.prize-info span {
-  font-size: 0.85rem;
-  color: #e2e8f0;
+.pill-sep {
+  color: #64748b;
 }
 
 /* ==========================================================================
-   2. SELECTOR DE MODO DE PARTICIPACIÓN (GUIADO)
+   PASO 1: SELECCIÓN DE PARTIDA
    ========================================================================== */
-.purchase-mode-section {
-  margin-bottom: 28px;
-  width: 100%;
-  box-sizing: border-box;
-}
-
-.section-title-guided {
-  font-family: var(--font-gamer);
-  font-size: 1.15rem;
-  color: #ffffff;
-  letter-spacing: 1px;
-  margin: 0 0 4px 0;
-}
-
-.section-subtitle-guided {
-  font-size: 0.84rem;
-  color: #94a3b8;
-  margin: 0 0 16px 0;
-}
-
-.purchase-mode-grid {
+.partidas-selection-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 16px;
+  grid-template-columns: 1fr;
+  gap: 14px;
+  margin-bottom: 24px;
   width: 100%;
   box-sizing: border-box;
 }
 
-.mode-card {
-  background: rgba(18, 14, 33, 0.8);
+.partida-selection-card {
+  background: rgba(12, 9, 28, 0.85);
   border: 2px solid rgba(255, 255, 255, 0.12);
-  border-radius: 18px;
-  padding: 20px 18px;
-  display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  border-radius: 16px;
+  padding: 18px 20px;
   cursor: pointer;
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   position: relative;
+  text-align: left;
   box-sizing: border-box;
 }
 
-.mode-card:hover {
-  border-color: rgba(0, 240, 255, 0.4);
+.partida-selection-card:hover {
+  border-color: rgba(0, 240, 255, 0.6);
+  background: rgba(20, 16, 46, 0.95);
   transform: translateY(-2px);
-  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4);
+  box-shadow: 0 8px 25px rgba(0, 240, 255, 0.15);
 }
 
-.mode-card.active {
-  background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.8) 100%);
-  border-color: #00f0ff !important;
-  box-shadow: 0 0 25px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 240, 255, 0.08);
+.partida-selection-card.selected {
+  border-color: #00f0ff;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(13, 10, 35, 0.95) 100%);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.08);
 }
 
-.mode-card-radio {
-  padding-top: 2px;
+.partida-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 10px;
 }
 
-.radio-dot {
-  display: inline-block;
-  width: 20px;
-  height: 20px;
+.partida-radio-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.partida-radio {
+  width: 22px;
+  height: 22px;
   border-radius: 50%;
   border: 2px solid rgba(255, 255, 255, 0.3);
-  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   transition: all 0.2s ease;
+  flex-shrink: 0;
 }
 
-.radio-dot.selected {
+.partida-selection-card.selected .partida-radio {
   border-color: #00f0ff;
+}
+
+.partida-radio.checked::after {
+  content: '';
+  width: 10px;
+  height: 10px;
   background: #00f0ff;
-  box-shadow: 0 0 10px #00f0ff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00f0ff;
 }
 
-.mode-card-icon {
-  font-size: 2rem;
-  line-height: 1;
-}
-
-.mode-card-body h4 {
-  font-size: 1.05rem;
-  color: #ffffff;
-  margin: 0 0 4px 0;
-  font-family: var(--font-gamer);
-}
-
-.mode-card-body p {
-  font-size: 0.8rem;
-  color: #94a3b8;
-  line-height: 1.35;
-  margin: 0 0 8px 0;
-}
-
-.mode-limit-badge {
-  display: inline-block;
+.partida-status-chip {
+  font-family: var(--font-gamer, sans-serif);
   font-size: 0.72rem;
-  font-weight: 800;
+  font-weight: 900;
+  padding: 3px 10px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+.partida-status-chip.live {
+  background: rgba(239, 68, 68, 0.2);
+  border: 1px solid #ef4444;
+  color: #f87171;
+  animation: pulseGlow 2s infinite;
+}
+
+.partida-status-chip.free {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid #10b981;
+  color: #34d399;
+}
+
+.partida-status-chip.scheduled {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.4);
   color: #38bdf8;
-  background: rgba(56, 189, 248, 0.12);
-  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.partida-price-badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  padding: 4px 12px;
+  border-radius: 12px;
+}
+
+.partida-price-badge.free {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+}
+
+.partida-price-badge .price-val {
+  font-family: var(--font-gamer, monospace);
+  font-size: 1.15rem;
+  font-weight: 900;
+  color: #fbbf24;
+}
+
+.partida-price-badge.free .price-val {
+  color: #34d399;
+}
+
+.partida-price-badge .price-unit {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  font-weight: 700;
+}
+
+.partida-card-title {
+  font-family: var(--font-gamer, sans-serif);
+  font-size: 1.25rem;
+  color: #ffffff;
+  margin: 0 0 10px 0;
+  line-height: 1.3;
+}
+
+.partida-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+}
+
+.meta-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meta-icon {
+  font-size: 0.95rem;
+  flex-shrink: 0;
+}
+
+.meta-text.highlight {
+  color: #fbbf24;
+  font-weight: 600;
+}
+
+.partida-selected-chip {
+  display: inline-block;
+  margin-top: 10px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  color: #00f0ff;
+  background: rgba(0, 240, 255, 0.15);
+  border: 1px solid rgba(0, 240, 255, 0.4);
   padding: 3px 10px;
   border-radius: 8px;
 }
 
+/* ==========================================================================
+   PASO 2: MODO DE COMPRA
+   ========================================================================== */
+.purchase-mode-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.mode-card {
+  background: rgba(12, 9, 28, 0.85);
+  border: 2px solid rgba(255, 255, 255, 0.12);
+  border-radius: 18px;
+  padding: 20px;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+}
+
+.mode-card:hover {
+  border-color: rgba(0, 240, 255, 0.6);
+  background: rgba(20, 16, 46, 0.95);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 240, 255, 0.15);
+}
+
+.mode-card.active {
+  border-color: #00f0ff;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(13, 10, 35, 0.95) 100%);
+  box-shadow: 0 0 25px rgba(0, 240, 255, 0.3), inset 0 0 15px rgba(0, 240, 255, 0.08);
+}
+
+.mode-card-radio {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+}
+
+.radio-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.mode-card.active .radio-dot {
+  border-color: #00f0ff;
+}
+
+.radio-dot.selected::after {
+  content: '';
+  width: 10px;
+  height: 10px;
+  background: #00f0ff;
+  border-radius: 50%;
+  box-shadow: 0 0 8px #00f0ff;
+}
+
+.mode-card-icon {
+  font-size: 2.2rem;
+  margin-bottom: 12px;
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.4));
+}
+
+.mode-card-body h4 {
+  font-family: var(--font-gamer);
+  font-size: 1.15rem;
+  color: #ffffff;
+  margin: 0 0 6px 0;
+}
+
+.mode-card-body p {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  line-height: 1.4;
+  margin: 0 0 14px 0;
+}
+
+.mode-limit-badge {
+  display: inline-block;
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  padding: 4px 10px;
+  border-radius: 8px;
+  letter-spacing: 0.5px;
+}
+
 .mode-limit-badge.gift-badge {
   color: #fbbf24;
-  background: rgba(245, 158, 11, 0.12);
-  border-color: rgba(245, 158, 11, 0.3);
+  background: rgba(245, 158, 11, 0.15);
+  border-color: rgba(245, 158, 11, 0.4);
 }
 
 /* ==========================================================================
-   3. SELECCIÓN DE CANTIDAD GUIADA
+   PASO 3: SELECCIÓN DE CANTIDAD
    ========================================================================== */
 .quantity-guided-card {
-  background: linear-gradient(135deg, rgba(20, 15, 42, 0.9) 0%, rgba(12, 9, 26, 0.95) 100%);
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
-  border-radius: 20px;
-  padding: 24px;
-  margin-bottom: 28px;
-  width: 100%;
-  box-sizing: border-box;
+  background: rgba(12, 9, 28, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 18px;
+  padding: 22px 20px;
+  margin-bottom: 24px;
 }
 
 .quantity-header {
@@ -360,120 +603,120 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 12px;
-  margin-bottom: 18px;
+  margin-bottom: 20px;
 }
 
 .quantity-title {
   font-family: var(--font-gamer);
-  font-size: 1.1rem;
+  font-size: 1.15rem;
   color: #ffffff;
   margin: 0 0 4px 0;
 }
 
 .quantity-help-text {
   font-size: 0.82rem;
-  color: #38bdf8;
+  color: #94a3b8;
   margin: 0;
 }
 
 .quantity-summary-badge {
   font-family: var(--font-gamer);
-  font-size: 1.15rem;
-  color: #f8fafc;
-  background: rgba(0, 0, 0, 0.4);
-  border: 1px solid rgba(255, 255, 255, 0.15);
-  padding: 8px 16px;
-  border-radius: 12px;
-}
-
-.quantity-summary-badge strong {
+  background: rgba(245, 158, 11, 0.15);
+  border: 1.5px solid #f59e0b;
   color: #fbbf24;
-  margin-left: 4px;
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 1.05rem;
+  box-shadow: 0 0 15px rgba(245, 158, 11, 0.2);
 }
 
-/* MODO PERSONAL: 3 BOTONES GRANDES (1, 2, 3 CARTONES) */
 .personal-stepper-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 14px;
-  width: 100%;
-  box-sizing: border-box;
+  margin-bottom: 20px;
 }
 
 .personal-qty-btn {
-  background: rgba(18, 14, 33, 0.9);
+  background: rgba(255, 255, 255, 0.04);
   border: 2px solid rgba(255, 255, 255, 0.12);
   border-radius: 16px;
-  padding: 16px 12px;
+  padding: 16px 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
+  gap: 4px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-sizing: border-box;
+  color: #ffffff;
 }
 
 .personal-qty-btn:hover {
-  border-color: rgba(0, 240, 255, 0.4);
-  transform: translateY(-3px);
+  border-color: rgba(0, 240, 255, 0.5);
+  background: rgba(0, 240, 255, 0.08);
+  transform: translateY(-2px);
 }
 
 .personal-qty-btn.active {
-  background: linear-gradient(135deg, rgba(2, 132, 199, 0.2) 0%, rgba(37, 99, 235, 0.3) 100%);
-  border-color: #00f0ff !important;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+  background: linear-gradient(135deg, rgba(0, 240, 255, 0.25) 0%, rgba(2, 132, 199, 0.35) 100%);
+  border-color: #00f0ff;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.35);
+  transform: scale(1.02);
 }
 
 .qty-number {
   font-family: var(--font-gamer);
   font-size: 2.2rem;
   font-weight: 900;
-  color: #ffffff;
   line-height: 1;
-  margin-bottom: 4px;
+}
+
+.personal-qty-btn.active .qty-number {
+  color: #00f0ff;
+  text-shadow: 0 0 12px rgba(0, 240, 255, 0.6);
 }
 
 .qty-label {
-  font-size: 0.85rem;
+  font-size: 0.82rem;
   font-weight: 700;
-  color: #38bdf8;
-  margin-bottom: 6px;
+  color: #94a3b8;
 }
 
 .qty-price {
+  font-family: var(--font-gamer);
   font-size: 0.92rem;
-  font-weight: 800;
   color: #fbbf24;
+  font-weight: 800;
+  margin-top: 2px;
 }
 
-/* MODO REGALO: STEPPER + CHIPS */
 .gift-stepper-wrap {
   display: flex;
   flex-direction: column;
-  gap: 14px;
-  width: 100%;
-  box-sizing: border-box;
+  gap: 16px;
+  margin-bottom: 20px;
 }
 
 .stepper-controls-row {
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 18px;
-  background: rgba(13, 10, 26, 0.8);
-  border: 1.5px solid rgba(245, 158, 11, 0.3);
+  gap: 20px;
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
-  padding: 10px 20px;
+  padding: 14px 20px;
 }
 
 .stepper-action-btn {
   width: 48px;
   height: 48px;
   border-radius: 12px;
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
   background: rgba(255, 255, 255, 0.08);
-  border: 1px solid rgba(255, 255, 255, 0.2);
   color: #ffffff;
   font-size: 1.6rem;
+  font-weight: 900;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -482,8 +725,10 @@
 }
 
 .stepper-action-btn:hover:not(:disabled) {
-  background: #f59e0b;
+  background: #00f0ff;
   color: #000;
+  border-color: #00f0ff;
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.4);
 }
 
 .stepper-action-btn:disabled {
@@ -493,7 +738,7 @@
 
 .stepper-display {
   text-align: center;
-  min-width: 160px;
+  min-width: 140px;
 }
 
 .stepper-val {
@@ -514,8 +759,6 @@
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 8px;
-  width: 100%;
-  box-sizing: border-box;
 }
 
 .gift-chip {
@@ -544,33 +787,140 @@
   border-color: #f59e0b;
 }
 
+/* DETALLES DE PRECIO EN EL PASO 3 */
+.step-pricing-detail-box {
+  background: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  font-size: 0.86rem;
+}
+
+.pricing-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #cbd5e1;
+}
+
+.pricing-row strong {
+  color: #ffffff;
+}
+
+.pricing-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 4px 0;
+}
+
+.pricing-row.total-highlight {
+  font-size: 1rem;
+}
+
+.pricing-row.total-highlight strong {
+  font-family: var(--font-gamer, monospace);
+  font-size: 1.25rem;
+  color: #fbbf24;
+}
+
+.pricing-row.total-highlight strong.free-total {
+  color: #10b981;
+}
+
 /* ==========================================================================
-   4. FORMULARIO Y CHECKOUT MINIMALISTA
+   PASO 4: DATOS DE ENTREGA Y PAGO SEGURO
    ========================================================================== */
-.checkout-guided-section {
-  background: linear-gradient(135deg, rgba(20, 15, 42, 0.95) 0%, rgba(10, 8, 25, 0.98) 100%);
-  border: 1.5px solid rgba(0, 240, 255, 0.3);
-  border-radius: 20px;
-  padding: 28px 24px;
-  margin-bottom: 24px;
-  width: 100%;
-  box-sizing: border-box;
+.step-order-summary-card {
+  background: rgba(0, 0, 0, 0.5);
+  border: 1.5px solid rgba(0, 240, 255, 0.35);
+  border-radius: 16px;
+  padding: 16px 20px;
+  margin-bottom: 22px;
 }
 
-.checkout-error-banner {
-  background: rgba(239, 68, 68, 0.15);
-  border: 1.5px solid #ef4444;
-  color: #fca5a5;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-size: 0.85rem;
-  margin-bottom: 18px;
+.order-summary-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding-bottom: 8px;
 }
 
+.summary-card-icon {
+  font-size: 1.2rem;
+}
+
+.order-summary-header h4 {
+  font-family: var(--font-gamer);
+  font-size: 1rem;
+  color: #00f0ff;
+  margin: 0;
+}
+
+.order-summary-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.order-summary-item {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.86rem;
+}
+
+.order-summary-item .lbl {
+  color: #94a3b8;
+}
+
+.order-summary-item .val {
+  color: #f1f5f9;
+  font-weight: 600;
+  text-align: right;
+}
+
+.order-summary-item .val.font-highlight {
+  color: #38bdf8;
+  font-weight: 800;
+}
+
+.order-summary-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.12);
+  margin: 4px 0;
+}
+
+.order-summary-item.total-row {
+  padding-top: 4px;
+}
+
+.order-summary-item.total-row .lbl {
+  font-size: 0.95rem;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.order-summary-item.total-row .total-big {
+  font-family: var(--font-gamer, monospace);
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #fbbf24;
+}
+
+.order-summary-item.total-row .total-big.free-badge {
+  color: #10b981;
+}
+
+/* FORMULARIO Y ENTRADA DE WHATSAPP FIJA */
 .checkout-guided-form {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 18px;
   width: 100%;
   box-sizing: border-box;
 }
@@ -579,10 +929,11 @@
   display: flex;
   flex-direction: column;
   gap: 6px;
+  text-align: left;
 }
 
 .form-group-guided label {
-  font-size: 0.82rem;
+  font-size: 0.84rem;
   font-weight: 700;
   color: #cbd5e1;
 }
@@ -605,106 +956,268 @@
   box-shadow: 0 0 15px rgba(0, 240, 255, 0.25);
 }
 
-.checkout-summary-bar {
+/* GRUPO DE ENTRADA CON PREFIJO +502 FIJO NO EDITABLE */
+.phone-prefix-input-group {
   display: flex;
-  justify-content: space-between;
+  align-items: stretch;
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(10, 6, 22, 0.85);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: all 0.25s ease;
+}
+
+.phone-prefix-input-group:focus-within {
+  border-color: #00f0ff;
+  box-shadow: 0 0 18px rgba(0, 240, 255, 0.3);
+}
+
+.phone-fixed-prefix {
+  display: inline-flex;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 14px;
-  background: rgba(0, 0, 0, 0.5);
-  border: 1px solid rgba(255, 255, 255, 0.12);
-  border-radius: 16px;
-  padding: 16px 20px;
-  margin-top: 8px;
-}
-
-.summary-left {
-  display: flex;
-  flex-direction: column;
-}
-
-.summary-qty-desc {
-  font-size: 0.85rem;
-  color: #94a3b8;
-}
-
-.summary-total-amount {
-  font-family: var(--font-gamer);
-  font-size: 1.5rem;
-  font-weight: 900;
-  color: #fbbf24;
-}
-
-.btn-guided-pay {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  border: 1px solid rgba(52, 211, 153, 0.5);
-  color: #ffffff;
-  font-family: var(--font-gamer);
+  gap: 6px;
+  background: rgba(14, 165, 233, 0.15);
+  border-right: 1.5px solid rgba(0, 240, 255, 0.35);
+  padding: 0 16px;
+  font-family: var(--font-gamer, sans-serif);
   font-size: 1.05rem;
   font-weight: 900;
-  text-transform: uppercase;
-  letter-spacing: 1px;
-  padding: 15px 28px;
+  color: #38bdf8;
+  user-select: none;
+  flex-shrink: 0;
+}
+
+.phone-fixed-prefix .flag-icon {
+  font-size: 1.25rem;
+}
+
+.phone-fixed-prefix .lock-icon {
+  font-size: 0.75rem;
+  opacity: 0.6;
+}
+
+.phone-input-digits {
+  flex: 1;
+  background: transparent !important;
+  border: none !important;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+  font-family: var(--font-gamer, monospace);
+  font-size: 1.25rem !important;
+  letter-spacing: 2.5px;
+  color: #ffffff;
+  padding: 14px 16px;
+}
+
+.phone-input-digits::placeholder {
+  font-family: var(--font-main, sans-serif);
+  font-size: 0.95rem;
+  letter-spacing: normal;
+  color: #64748b;
+}
+
+.field-hint-text {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  line-height: 1.35;
+  margin-top: 2px;
+}
+
+.field-hint-text strong {
+  color: #38bdf8;
+}
+
+/* BANNER DE ENTREGA TELEGRAM / WHATSAPP */
+.step-delivery-notice {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(30, 27, 75, 0.4) 100%);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 14px;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  text-align: left;
+}
+
+.notice-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+}
+
+.notice-body strong {
+  font-size: 0.86rem;
+  color: #38bdf8;
+  display: block;
+  margin-bottom: 2px;
+  font-family: var(--font-gamer);
+}
+
+.notice-body span {
+  font-size: 0.78rem;
+  color: #cbd5e1;
+  line-height: 1.35;
+  display: block;
+}
+
+/* ==========================================================================
+   BOTONES DE ACCIÓN Y NAVEGACIÓN DE CADA PASO
+   ========================================================================== */
+.step-actions-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 24px;
+  padding-top: 18px;
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.step-actions-footer.single-action {
+  justify-content: flex-end;
+}
+
+.btn-step-prev {
+  background: rgba(255, 255, 255, 0.08);
+  border: 1.5px solid rgba(255, 255, 255, 0.2);
+  color: #cbd5e1;
+  font-family: var(--font-gamer, sans-serif);
+  font-size: 0.88rem;
+  font-weight: 700;
+  padding: 14px 20px;
   border-radius: 14px;
   cursor: pointer;
   transition: all 0.2s ease;
-  box-shadow: 0 8px 25px rgba(16, 185, 129, 0.4);
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-step-prev:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.4);
+  transform: translateX(-2px);
+}
+
+.btn-step-next {
+  background: linear-gradient(135deg, #00f0ff 0%, #0284c7 100%);
+  border: none;
+  color: #050b14;
+  font-family: var(--font-gamer, sans-serif);
+  font-size: 0.96rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  padding: 15px 28px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(0, 240, 255, 0.4);
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-step-next:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 25px rgba(0, 240, 255, 0.6);
+  filter: brightness(1.1);
+}
+
+.btn-guided-pay {
+  background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+  border: none;
+  color: #000000;
+  font-family: var(--font-gamer);
+  font-size: 1.05rem;
+  font-weight: 900;
+  letter-spacing: 0.5px;
+  padding: 16px 28px;
+  border-radius: 14px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.4);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-guided-pay:hover:not(:disabled) {
   transform: translateY(-2px);
-  box-shadow: 0 12px 30px rgba(16, 185, 129, 0.6);
+  box-shadow: 0 6px 25px rgba(245, 158, 11, 0.6);
+  filter: brightness(1.1);
 }
 
-.btn-guided-pay:disabled {
-  opacity: 0.6;
+.btn-guided-pay:disabled,
+.btn-step-next:disabled,
+.btn-step-prev:disabled {
+  opacity: 0.4;
   cursor: not-allowed;
+  transform: none !important;
 }
 
 .guided-trust-bar {
   display: flex;
   justify-content: center;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   font-size: 0.74rem;
-  color: #94a3b8;
-  margin-top: 6px;
-  flex-wrap: wrap;
+  color: #64748b;
+  font-weight: 600;
+  margin-top: 14px;
 }
 
-/* AYUDA / EFECTIVO */
-.cash-help-banner {
-  text-align: center;
-  background: rgba(18, 14, 33, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.08);
+.checkout-error-banner {
+  background: rgba(239, 68, 68, 0.15);
+  border: 1.5px solid #ef4444;
+  color: #fca5a5;
+  padding: 12px 18px;
   border-radius: 14px;
-  padding: 14px;
+  font-size: 0.88rem;
+  margin-bottom: 20px;
+  text-align: left;
+}
+
+/* AYUDA POR WHATSAPP O EFECTIVO */
+.cash-help-banner {
+  background: rgba(10, 6, 22, 0.85);
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  padding: 14px 18px;
   display: flex;
   align-items: center;
-  justify-content: center;
-  gap: 14px;
+  justify-content: space-between;
   flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 18px;
 }
 
 .cash-help-banner p {
   margin: 0;
-  font-size: 0.85rem;
-  color: #cbd5e1;
+  font-size: 0.84rem;
+  color: #94a3b8;
+  text-align: left;
+}
+
+.cash-help-banner p strong {
+  color: #25d366;
 }
 
 .btn-cash-help {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
   background: rgba(37, 211, 102, 0.15);
   border: 1px solid rgba(37, 211, 102, 0.4);
   color: #25d366;
   font-size: 0.8rem;
   font-weight: 700;
-  padding: 6px 14px;
+  padding: 8px 16px;
   border-radius: 10px;
   text-decoration: none;
   transition: all 0.2s ease;
+  white-space: nowrap;
 }
 
 .btn-cash-help:hover {
@@ -713,93 +1226,72 @@
 }
 
 /* ==========================================================================
-   OPTIMIZACIONES ULTRA-FLUIDAS PARA MÓVILES (100% HORIZONTAL, SIN DESBORDES)
+   OPTIMIZACIONES ULTRA-FLUIDAS PARA MÓVILES (100% RESPONSIVE)
    ========================================================================== */
 @media (max-width: 768px) {
   .bingo-boletos-page {
-    padding: 10px 4px 50px !important;
-    background: transparent !important;
+    padding: 12px 8px 50px !important;
     width: 100% !important;
-    max-width: 100% !important;
-    margin: 0 !important;
-    box-sizing: border-box !important;
-  }
-
-  .bingo-boletos-container {
-    width: 100% !important;
-    max-width: 100% !important;
-    padding: 0 !important;
-    margin: 0 !important;
     box-sizing: border-box !important;
   }
 
   .boletos-header {
-    margin-bottom: 18px;
-    padding: 0 6px;
+    margin-bottom: 16px;
   }
 
   .boletos-hero-title {
     font-size: 1.55rem;
     line-height: 1.2;
-    margin-bottom: 4px;
   }
 
   .boletos-hero-subtitle {
-    font-size: 0.8rem;
+    font-size: 0.82rem;
     margin-bottom: 12px;
   }
 
-  .active-game-highlight-card {
-    padding: 16px 12px;
+  /* STEPPER MÓVIL: COMPACTO CON ICONOS Y NÚMEROS */
+  .boletos-stepper-bar {
+    padding: 8px 10px;
+    gap: 4px;
+    margin-bottom: 18px;
+  }
+
+  .stepper-step-item {
+    padding: 4px 6px;
+    gap: 6px;
+  }
+
+  .stepper-badge-circle {
+    width: 26px;
+    height: 26px;
+    font-size: 0.8rem;
+  }
+
+  .stepper-title-sub {
+    display: none;
+  }
+
+  .stepper-title-main {
+    font-size: 0.76rem;
+  }
+
+  .stepper-divider {
+    margin: 0 3px;
+  }
+
+  .boletos-step-container {
+    padding: 18px 14px;
     border-radius: 16px;
     margin-bottom: 20px;
-    width: 100%;
-    box-sizing: border-box;
-  }
-
-  .active-game-header-row {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 12px;
-  }
-
-  .game-title-text {
-    font-size: 1.2rem;
-  }
-
-  .game-price-pill {
-    width: 100%;
-    box-sizing: border-box;
-    justify-content: center;
-    padding: 8px 14px;
   }
 
   .purchase-mode-grid {
     grid-template-columns: 1fr;
-    gap: 10px;
+    gap: 12px;
   }
 
   .mode-card {
     padding: 14px 12px;
-    border-radius: 14px;
-  }
-
-  .quantity-guided-card {
-    padding: 16px 12px;
-    border-radius: 16px;
-    margin-bottom: 20px;
-  }
-
-  .quantity-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 8px;
-  }
-
-  .quantity-summary-badge {
-    width: 100%;
-    box-sizing: border-box;
-    text-align: center;
   }
 
   .personal-stepper-grid {
@@ -807,54 +1299,44 @@
   }
 
   .personal-qty-btn {
-    padding: 12px 6px;
-    border-radius: 12px;
+    padding: 10px 4px;
   }
 
   .qty-number {
-    font-size: 1.8rem;
+    font-size: 1.7rem;
   }
 
-  .qty-label {
-    font-size: 0.74rem;
+  .step-actions-footer {
+    flex-direction: column-reverse;
+    gap: 10px;
   }
 
-  .qty-price {
-    font-size: 0.82rem;
-  }
-
-  .gift-quick-chips {
-    grid-template-columns: repeat(5, 1fr);
-    gap: 4px;
-  }
-
-  .gift-chip {
-    padding: 8px 2px;
-    font-size: 0.72rem;
-  }
-
-  .checkout-guided-section {
-    padding: 16px 12px;
-    border-radius: 16px;
-    margin-bottom: 20px;
-  }
-
-  .guided-input {
-    font-size: 16px !important; /* Evita zoom automático en iOS */
-    padding: 12px 14px;
-  }
-
-  .checkout-summary-bar {
-    flex-direction: column;
-    align-items: stretch;
-    padding: 14px 12px;
-    gap: 12px;
-  }
-
+  .btn-step-prev,
+  .btn-step-next,
   .btn-guided-pay {
     width: 100%;
-    padding: 15px 12px;
+    justify-content: center;
+    padding: 14px 16px;
+    box-sizing: border-box;
+  }
+
+  .phone-fixed-prefix {
+    padding: 0 10px;
     font-size: 0.95rem;
+  }
+
+  .phone-input-digits {
+    font-size: 1.15rem !important;
+    padding: 12px 10px;
+  }
+
+  .cash-help-banner {
+    flex-direction: column;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .btn-cash-help {
     text-align: center;
   }
 }
@@ -863,7 +1345,7 @@
 @keyframes fadeInDown {
   from {
     opacity: 0;
-    transform: translateY(-16px);
+    transform: translateY(-14px);
   }
   to {
     opacity: 1;
