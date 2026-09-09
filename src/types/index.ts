@@ -359,6 +359,8 @@ export interface BingoAccessToken {
   sessionResetAt: number; // Marca temporal de apertura de ronda para vigencia
   status: 'active' | 'used' | 'expired';
   usedByDevice?: string | null;
+  usedByCardId?: string | null;
+  cardIds?: string[];
   firstUsedAt?: number | null;
   linkSent?: boolean; // Check de si el enlace ya fue enviado al cliente
   linkSentAt?: number | null; // Fecha y hora en que se envió el enlace

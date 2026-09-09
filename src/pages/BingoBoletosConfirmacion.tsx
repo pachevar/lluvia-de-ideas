@@ -3,6 +3,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { BingoAccessToken } from '../types';
+import { generateBingoMatrix, hashBingoMatrix } from '../utils/bingoGenerator';
 import {
   recordPlayerPurchase,
   autoDispatchPurchaseToTelegramIfLinked
@@ -30,19 +31,81 @@ const BingoBoletosConfirmacion: React.FC = () => {
   const pkgId = searchParams.get('pkg');
   const tierId = searchParams.get('tier');
   const qtyParam = parseInt(searchParams.get('qty') || '1', 10);
-  const playerNameParam = searchParams.get('name');
+  const playerNameParam = searchParams.get('playerName') || searchParams.get('name');
   const phoneParam = searchParams.get('phone');
   const modeParam = (searchParams.get('mode') as 'personal' | 'gift') || 'personal';
 
   const [loading, setLoading] = useState(true);
   const [orderData, setOrderData] = useState<any>(null);
   const [accessToken, setAccessToken] = useState<BingoAccessToken | null>(null);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [isActivatingCard, setIsActivatingCard] = useState(false);
+  const [isOrderPending, setIsOrderPending] = useState(false);
+  const [isRechecking, setIsRechecking] = useState(false);
   const [giftLinks, setGiftLinks] = useState<GiftLinkItem[]>([]);
   const [copiedMainLink, setCopiedMainLink] = useState(false);
   const [showTelegramGuide, setShowTelegramGuide] = useState(false);
   const [telegramAutoDispatched, setTelegramAutoDispatched] = useState(false);
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission());
   const [pushActivating, setPushActivating] = useState(false);
+
+  // Función para generar y asignar cartón en Firestore directamente
+  const generateAndAssignCard = async (
+    tknId: string | null,
+    ord: any,
+    targetGameId: string
+  ): Promise<string | null> => {
+    try {
+      const currentMatrix = generateBingoMatrix();
+      const currentHash = hashBingoMatrix(currentMatrix);
+      let currentShortId = '';
+      let unique = false;
+      while (!unique) {
+        currentShortId = Math.floor(1000000 + Math.random() * 9000000).toString();
+        const cardRef = doc(db, 'bingo_cards', currentShortId);
+        const cardSnap = await getDoc(cardRef);
+        if (!cardSnap.exists()) {
+          unique = true;
+        }
+      }
+
+      await setDoc(doc(db, 'bingo_cards', currentShortId), {
+        gameId: targetGameId,
+        playerName: ord?.playerName || 'Jugador Bingotenango',
+        phone: ord?.playerWhatsapp || null,
+        promoterCode: null,
+        tierId: ord?.tierId || null,
+        tierName: ord?.tierName || null,
+        prizeLevel: ord?.prizeLevel || null,
+        tokenId: tknId || null,
+        cardNumber: 1,
+        totalCards: 1,
+        matrix: {
+          r0: currentMatrix[0],
+          r1: currentMatrix[1],
+          r2: currentMatrix[2],
+          r3: currentMatrix[3],
+          r4: currentMatrix[4]
+        },
+        hash: currentHash,
+        createdAt: Date.now()
+      });
+
+      if (tknId) {
+        await updateDoc(doc(db, 'bingo_access_tokens', tknId), {
+          usedByCardId: currentShortId,
+          cardIds: [currentShortId],
+          status: 'used',
+          firstUsedAt: Date.now()
+        });
+      }
+
+      return currentShortId;
+    } catch (e) {
+      console.error("Error generando cartón directo:", e);
+      return null;
+    }
+  };
 
   useEffect(() => {
     const fetchOrderAndToken = async () => {
@@ -59,7 +122,8 @@ const BingoBoletosConfirmacion: React.FC = () => {
           const snap = await getDoc(ref);
           if (snap.exists()) {
             currentOrder = snap.data();
-            if (isSuccess && currentOrder.status !== 'completed') {
+            const isFree = (currentOrder.totalPriceQ === 0) || (currentOrder.priceQ === 0) || (currentOrder.unitPriceQ === 0) || (currentOrder.gateway === 'gratis_cortesia') || (tierId === 'tier-free');
+            if ((isSuccess || isFree) && currentOrder.status !== 'completed') {
               await updateDoc(ref, {
                 status: 'completed',
                 paidAt: Date.now()
@@ -79,7 +143,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
           currentOrder = {
             playerName: decodeURIComponent(playerNameParam),
             playerWhatsapp: phoneParam,
-            tierId: targetTier || 'tier-25',
+            tierId: targetTier || (unitPrice === 0 ? 'tier-free' : 'tier-25'),
             tierName: tierName,
             prizeLevel: prizeLevel,
             packageName: `${tierName} (${qtyParam} ${qtyParam === 1 ? 'Cartón' : 'Cartones'})`,
@@ -88,10 +152,14 @@ const BingoBoletosConfirmacion: React.FC = () => {
             priceQ: totalQ,
             totalPriceQ: totalQ,
             cartonesCount: qtyParam,
-            purchaseMode: modeParam
+            purchaseMode: modeParam,
+            status: (isSuccess || unitPrice === 0) ? 'completed' : 'pending'
           };
         }
 
+        const isFree = (currentOrder?.totalPriceQ === 0) || (currentOrder?.priceQ === 0) || (currentOrder?.unitPriceQ === 0) || (currentOrder?.gateway === 'gratis_cortesia') || (tierId === 'tier-free');
+        const isPaid = isFree || isSuccess || currentOrder?.status === 'completed' || currentOrder?.status === 'paid';
+        setIsOrderPending(!isPaid && (currentOrder?.status === 'pending' || !currentOrder?.status));
         setOrderData(currentOrder);
 
         // 2. Obtener la sesión activa de Bingo para vincular el token
@@ -154,23 +222,24 @@ const BingoBoletosConfirmacion: React.FC = () => {
           setGiftLinks(generatedLinks);
           effectiveTokenId = generatedLinks[0]?.id || '';
         } else {
-          // Modo personal: token único con todos los cartones (1 a 3) cargados
+          // Modo personal: token único con su cartón
           const qToken = query(collection(db, 'bingo_access_tokens'), where('orderId', '==', effectiveOrderId), limit(1));
           const snapToken = await getDocs(qToken);
 
+          let tokenObj: BingoAccessToken | null = null;
           if (!snapToken.empty) {
-            const existingToken = snapToken.docs[0].data() as BingoAccessToken;
-            setAccessToken(existingToken);
-            effectiveTokenId = existingToken.id;
+            tokenObj = snapToken.docs[0].data() as BingoAccessToken;
+            setAccessToken(tokenObj);
+            effectiveTokenId = tokenObj.id;
           } else if (currentOrder) {
             const newTokenId = 'tkn_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
-            const tokenObj: BingoAccessToken = {
+            tokenObj = {
               id: newTokenId,
               orderId: effectiveOrderId,
               playerName: currentOrder.playerName,
               playerWhatsapp: currentOrder.playerWhatsapp || '',
-              tierId: currentOrder.tierId || 'tier-25',
-              tierName: currentOrder.tierName || 'Cartón Oficial',
+              tierId: currentOrder.tierId || (isFree ? 'tier-free' : 'tier-25'),
+              tierName: currentOrder.tierName || (isFree ? 'Cartón Gratuito' : 'Cartón Oficial'),
               prizeLevel: currentOrder.prizeLevel || 'Premios en vivo',
               quantity: currentOrder.quantity || 1,
               purchaseMode: 'personal',
@@ -187,6 +256,19 @@ const BingoBoletosConfirmacion: React.FC = () => {
             setAccessToken(tokenObj);
             effectiveTokenId = newTokenId;
           }
+
+          // Si el pago ya está verificado, asegurar que el cartón esté generado y asignado de inmediato
+          if (isPaid && currentOrder) {
+            let cardIdToUse = tokenObj?.usedByCardId;
+            if (!cardIdToUse) {
+              cardIdToUse = await generateAndAssignCard(effectiveTokenId, currentOrder, activeGameId);
+            }
+            if (cardIdToUse) {
+              setActiveCardId(cardIdToUse);
+              localStorage.setItem('my_bingo_card_id', cardIdToUse);
+              localStorage.setItem('my_bingo_card_ids', JSON.stringify([cardIdToUse]));
+            }
+          }
         }
 
         // REGISTRO EN CARTERA DE JUGADORES (CRM) Y AUTO-DESPACHO
@@ -197,7 +279,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
               phone: currentOrder.playerWhatsapp,
               name: currentOrder.playerName,
               email: currentOrder.playerEmail || '',
-              spentQ: currentOrder.totalPriceQ || currentOrder.priceQ || 25,
+              spentQ: currentOrder.totalPriceQ ?? currentOrder.priceQ ?? (isFree ? 0 : 25),
               webPushEnabled: currentPermission === 'granted'
             });
           } catch (errCrm) {
@@ -284,6 +366,65 @@ const BingoBoletosConfirmacion: React.FC = () => {
     }, 2500);
   };
 
+  const handleCheckPaymentStatus = async () => {
+    if (!orderId) return;
+    setIsRechecking(true);
+    try {
+      const ref = doc(db, 'bingo_orders', orderId);
+      const snap = await getDoc(ref);
+      if (snap.exists()) {
+        const updated = snap.data();
+        setOrderData(updated);
+        const isFree = (updated.totalPriceQ === 0) || (updated.priceQ === 0) || (updated.unitPriceQ === 0) || (updated.gateway === 'gratis_cortesia') || (tierId === 'tier-free');
+        const isNowPaid = isFree || updated.status === 'completed' || updated.status === 'paid';
+        if (isNowPaid) {
+          setIsOrderPending(false);
+          let cardIdToUse = accessToken?.usedByCardId;
+          if (!cardIdToUse && accessToken) {
+            cardIdToUse = await generateAndAssignCard(accessToken.id, updated, accessToken.gameId || 'juego-principal');
+          }
+          if (cardIdToUse) {
+            setActiveCardId(cardIdToUse);
+            localStorage.setItem('my_bingo_card_id', cardIdToUse);
+            localStorage.setItem('my_bingo_card_ids', JSON.stringify([cardIdToUse]));
+          }
+        }
+      }
+    } catch (e) {
+      console.error("Error comprobando pago:", e);
+    } finally {
+      setIsRechecking(false);
+    }
+  };
+
+  const handleEnterCardDirectly = async () => {
+    if (activeCardId) {
+      localStorage.setItem('my_bingo_card_id', activeCardId);
+      localStorage.setItem('my_bingo_card_ids', JSON.stringify([activeCardId]));
+      navigate(`/juegos/bingo/carton/${activeCardId}`);
+      return;
+    }
+
+    setIsActivatingCard(true);
+    try {
+      const targetGame = accessToken?.gameId || 'juego-principal';
+      const cardId = await generateAndAssignCard(accessToken?.id || null, orderData, targetGame);
+      if (cardId) {
+        setActiveCardId(cardId);
+        localStorage.setItem('my_bingo_card_id', cardId);
+        localStorage.setItem('my_bingo_card_ids', JSON.stringify([cardId]));
+        navigate(`/juegos/bingo/carton/${cardId}`);
+        return;
+      }
+    } catch (err) {
+      console.error("Error al ingresar directo al cartón:", err);
+    } finally {
+      setIsActivatingCard(false);
+    }
+
+    navigate(accessToken ? `/juegos/bingo?access=${accessToken.id}` : '/juegos/bingo');
+  };
+
   if (loading) {
     return (
       <div className="bingo-boletos-page" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '60vh' }}>
@@ -296,6 +437,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
   }
 
   const isGiftMode = orderData?.purchaseMode === 'gift' && giftLinks.length > 0;
+  const effectivePaidQ = orderData?.totalPriceQ ?? orderData?.priceQ ?? (tierId === 'tier-free' ? 0 : 25);
 
   return (
     <div className="bingo-boletos-page">
@@ -318,25 +460,25 @@ const BingoBoletosConfirmacion: React.FC = () => {
             width: '68px',
             height: '68px',
             borderRadius: '50%',
-            background: 'rgba(16, 185, 129, 0.2)',
-            border: '2px solid #10b981',
+            background: isOrderPending ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)',
+            border: `2px solid ${isOrderPending ? '#f59e0b' : '#10b981'}`,
             fontSize: '2rem',
             marginBottom: '16px',
-            boxShadow: '0 0 25px rgba(16, 185, 129, 0.4)'
+            boxShadow: isOrderPending ? '0 0 25px rgba(245, 158, 11, 0.4)' : '0 0 25px rgba(16, 185, 129, 0.4)'
           }}>
-            {isGiftMode ? '🎁' : '🎉'}
+            {isOrderPending ? '⏳' : isGiftMode ? '🎁' : '🎉'}
           </div>
 
           <span style={{
             display: 'block',
             fontFamily: 'var(--font-gamer)',
             fontSize: '0.85rem',
-            color: '#10b981',
+            color: isOrderPending ? '#fbbf24' : '#10b981',
             letterSpacing: '2px',
             textTransform: 'uppercase',
             marginBottom: '6px'
           }}>
-            {isGiftMode ? '¡ENLACES GENERADOS CON ÉXITO!' : '¡COMPRA CONFIRMADA!'}
+            {isOrderPending ? 'EN PROCESO DE VERIFICACIÓN' : isGiftMode ? '¡ENLACES GENERADOS CON ÉXITO!' : '¡COMPRA CONFIRMADA!'}
           </span>
 
           <h1 style={{
@@ -346,11 +488,13 @@ const BingoBoletosConfirmacion: React.FC = () => {
             margin: '0 0 10px 0',
             letterSpacing: '1px'
           }}>
-            {isGiftMode ? 'Tus Links para Contactos están Listos' : '¡Tus Boletos Están Listos!'}
+            {isOrderPending ? 'Verificando tu Pago' : isGiftMode ? 'Tus Links para Contactos están Listos' : '¡Tu Cartón está Listo!'}
           </h1>
 
           <p style={{ color: '#cbd5e1', fontSize: '0.92rem', margin: '0 auto 24px', maxWidth: '520px', lineHeight: 1.5 }}>
-            Felicidades <strong>{orderData?.playerName || 'Jugador'}</strong>, tu pago ha sido procesado. {isGiftMode ? 'A continuación tienes cada uno de los enlaces independientes para repartir a tus contactos.' : 'Ya puedes ingresar directamente a la sala de juego en vivo.'}
+            {isOrderPending
+              ? `Hola ${orderData?.playerName || 'Jugador'}, estamos a la espera de la acreditación bancaria para habilitar tu cartón.`
+              : `Felicidades ${orderData?.playerName || 'Jugador'}, tu orden ha sido procesada. ${isGiftMode ? 'A continuación tienes cada uno de los enlaces independientes para repartir a tus contactos.' : 'Ya puedes entrar directo a tu cartón de juego en pantalla.'}`}
           </p>
 
           {/* DETALLES DE LA COMPRA */}
@@ -376,7 +520,9 @@ const BingoBoletosConfirmacion: React.FC = () => {
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.85rem', color: '#94a3b8' }}>
               <span>Total Pagado:</span>
-              <strong style={{ color: '#fbbf24' }}>Q {orderData?.totalPriceQ || orderData?.priceQ || 25}.00</strong>
+              <strong style={{ color: effectivePaidQ === 0 ? '#4ade80' : '#fbbf24' }}>
+                {effectivePaidQ === 0 ? 'Q 0.00 (Gratis)' : `Q ${effectivePaidQ}.00`}
+              </strong>
             </div>
             {orderId && (
               <div style={{ display: 'flex', justifyContent: 'space-between', padding: '6px 0', fontSize: '0.78rem', color: '#64748b' }}>
@@ -399,26 +545,37 @@ const BingoBoletosConfirmacion: React.FC = () => {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {giftLinks.map((item, idx) => (
                   <div key={item.id} style={{
-                    background: 'rgba(18, 14, 33, 0.85)',
-                    border: '1.5px solid rgba(56, 189, 248, 0.3)',
-                    borderRadius: '14px',
-                    padding: '12px 16px',
+                    background: 'rgba(255, 255, 255, 0.04)',
+                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                    borderRadius: '12px',
+                    padding: '12px 14px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    flexWrap: 'wrap',
-                    gap: '10px'
+                    gap: '10px',
+                    flexWrap: 'wrap'
                   }}>
-                    <div>
-                      <span style={{ fontFamily: 'var(--font-gamer)', fontSize: '0.85rem', color: '#fbbf24', display: 'block' }}>
-                        🎁 Enlace #{item.num} para Contacto
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{
+                        background: '#0284c7',
+                        color: '#fff',
+                        borderRadius: '50%',
+                        width: '24px',
+                        height: '24px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        fontSize: '0.76rem',
+                        fontWeight: 'bold'
+                      }}>
+                        {item.num}
                       </span>
-                      <span style={{ fontFamily: 'monospace', fontSize: '0.72rem', color: '#64748b' }}>
-                        {item.id}
+                      <span style={{ fontSize: '0.84rem', color: '#ffffff', fontWeight: 'bold' }}>
+                        Cartón #{item.num}
                       </span>
                     </div>
 
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    <div style={{ display: 'flex', gap: '6px' }}>
                       <button
                         type="button"
                         onClick={() => copyGiftLink(idx, item.url)}
@@ -438,9 +595,9 @@ const BingoBoletosConfirmacion: React.FC = () => {
 
                       <a
                         href={`https://wa.me/?text=${encodeURIComponent(
-                          `¡Hola! 🎟️ Te comparto tu cartón para jugar hoy en Bingotenango.\n\n` +
-                          `🔑 Tu enlace directo de acceso:\n${item.url}\n\n` +
-                          `¡Ábrelo en tu celular para ingresar a la sala en vivo!`
+                          `¡Hola! 🎟️ Te comparto tu cartón oficial para jugar en vivo en Bingotenango:\n\n` +
+                          `📲 Entra aquí para abrir tu cartón:\n${item.url}\n\n` +
+                          `¡Vamos a jugar!`
                         )}`}
                         target="_blank"
                         rel="noopener noreferrer"
@@ -462,7 +619,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
                       </a>
 
                       <a
-                        href={`https://t.me/share/url?url=${encodeURIComponent(item.url)}&text=${encodeURIComponent('¡Hola! 🎟️ Te comparto tu pase para jugar hoy en Bingotenango. Ábrelo en tu celular para ingresar a la sala en vivo!')}`}
+                        href={`https://t.me/share/url?url=${encodeURIComponent(item.url)}&text=${encodeURIComponent('¡Hola! 🎟️ Te comparto tu cartón para Bingotenango:')}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         style={{
@@ -487,102 +644,148 @@ const BingoBoletosConfirmacion: React.FC = () => {
               </div>
             </div>
           ) : (
-            /* CASO B: MODO PERSONAL (PASE ÚNICO Y BOTÓN DIRECTO A LA SALA) */
+            /* CASO B: MODO PERSONAL (PASE ÚNICO Y BOTÓN DIRECTO A MI CARTÓN) */
             <>
-              {accessToken && (
+              {isOrderPending ? (
                 <div style={{
-                  background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
-                  border: '1.5px solid rgba(56, 189, 248, 0.4)',
+                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%)',
+                  border: '1.5px solid rgba(245, 158, 11, 0.55)',
                   borderRadius: '18px',
-                  padding: '20px',
+                  padding: '24px 20px',
                   margin: '0 auto 24px',
                   textAlign: 'center',
-                  boxShadow: '0 8px 25px rgba(0, 240, 255, 0.15)'
+                  boxShadow: '0 8px 30px rgba(245, 158, 11, 0.2)'
                 }}>
-                  <span style={{
-                    fontSize: '0.72rem',
+                  <span style={{ fontSize: '2.4rem', display: 'block', marginBottom: '10px' }}>⏳</span>
+                  <h3 style={{
                     fontFamily: 'var(--font-gamer)',
-                    color: '#38bdf8',
-                    letterSpacing: '1.5px',
-                    textTransform: 'uppercase',
-                    display: 'block',
-                    marginBottom: '6px'
+                    color: '#fbbf24',
+                    fontSize: '1.1rem',
+                    margin: '0 0 10px 0',
+                    letterSpacing: '1px'
                   }}>
-                    🔑 TU PASE DE SESIÓN EN VIVO
-                  </span>
-
-                  <div style={{
-                    fontFamily: 'monospace',
-                    fontSize: '1.15rem',
-                    fontWeight: 900,
-                    color: '#00f0ff',
-                    letterSpacing: '2px',
-                    background: 'rgba(0, 0, 0, 0.6)',
-                    padding: '8px 16px',
-                    borderRadius: '10px',
-                    border: '1px dashed rgba(0, 240, 255, 0.3)',
-                    display: 'inline-block',
-                    marginBottom: '12px'
-                  }}>
-                    {accessToken.id}
-                  </div>
-
-                  <p style={{ margin: '0 0 16px 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.4 }}>
-                    Este pase contiene tus <strong>{orderData?.quantity || 1} {((orderData?.quantity || 1) === 1) ? 'cartón' : 'cartones'}</strong> y se cargará automáticamente en tu dispositivo.
+                    PAGO EN PROCESO DE VERIFICACIÓN
+                  </h3>
+                  <p style={{ fontSize: '0.88rem', color: '#fef3c7', lineHeight: 1.5, margin: '0 auto 16px', maxWidth: '480px' }}>
+                    Si realizaste tu pago mediante <strong>Transferencia Bancaria</strong>, la pasarela de Recurrente requiere un tiempo de espera de <strong>hasta 10 minutos</strong> para conciliar con el banco. Si pagaste con <strong>Tarjeta de Débito o Crédito</strong>, la acreditación es inmediata.
                   </p>
-
                   <button
                     type="button"
-                    onClick={() => {
-                      const url = `${window.location.origin}/juegos/bingo?access=${accessToken.id}`;
-                      navigator.clipboard.writeText(url);
-                      setCopiedMainLink(true);
-                      setTimeout(() => setCopiedMainLink(false), 2500);
-                    }}
+                    onClick={handleCheckPaymentStatus}
+                    disabled={isRechecking}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.2)',
-                      borderRadius: '10px',
-                      padding: '8px 16px',
-                      color: copiedMainLink ? '#34d399' : '#e2e8f0',
-                      fontSize: '0.82rem',
-                      fontWeight: 'bold',
-                      cursor: 'pointer'
+                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '12px 28px',
+                      color: '#ffffff',
+                      fontFamily: 'var(--font-gamer)',
+                      fontSize: '0.95rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 18px rgba(245, 158, 11, 0.45)',
+                      transition: 'all 0.2s ease'
                     }}
                   >
-                    {copiedMainLink ? '✓ ¡Enlace Copiado!' : '📋 Copiar Enlace de Acceso'}
+                    {isRechecking ? 'Comprobando con el Banco...' : '🔄 Comprobar Estado de Pago'}
                   </button>
                 </div>
-              )}
+              ) : (
+                <>
+                  {accessToken && (
+                    <div style={{
+                      background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
+                      border: '1.5px solid rgba(56, 189, 248, 0.4)',
+                      borderRadius: '18px',
+                      padding: '20px',
+                      margin: '0 auto 24px',
+                      textAlign: 'center',
+                      boxShadow: '0 8px 25px rgba(0, 240, 255, 0.15)'
+                    }}>
+                      <span style={{
+                        fontSize: '0.72rem',
+                        fontFamily: 'var(--font-gamer)',
+                        color: '#38bdf8',
+                        letterSpacing: '1.5px',
+                        textTransform: 'uppercase',
+                        display: 'block',
+                        marginBottom: '6px'
+                      }}>
+                        🔑 TU PASE DE SESIÓN EN VIVO
+                      </span>
 
-              {/* BOTÓN PRINCIPAL PARA ENTRAR A JUGAR */}
-              <button
-                onClick={() => {
-                  const targetUrl = accessToken 
-                    ? `/juegos/bingo?access=${accessToken.id}`
-                    : '/juegos/bingo';
-                  navigate(targetUrl);
-                }}
-                style={{
-                  width: '100%',
-                  padding: '16px 24px',
-                  borderRadius: '14px',
-                  background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                  border: '1px solid rgba(0, 240, 255, 0.5)',
-                  color: '#ffffff',
-                  fontFamily: 'var(--font-gamer)',
-                  fontSize: '1.15rem',
-                  fontWeight: 900,
-                  textTransform: 'uppercase',
-                  letterSpacing: '1px',
-                  cursor: 'pointer',
-                  boxShadow: '0 8px 30px rgba(37, 99, 235, 0.5)',
-                  transition: 'all 0.2s ease',
-                  marginBottom: '16px'
-                }}
-              >
-                🎮 ENTRAR A LA SALA CON MIS CARTONES
-              </button>
+                      <div style={{
+                        fontFamily: 'monospace',
+                        fontSize: '1.15rem',
+                        fontWeight: 900,
+                        color: '#00f0ff',
+                        letterSpacing: '2px',
+                        background: 'rgba(0, 0, 0, 0.6)',
+                        padding: '8px 16px',
+                        borderRadius: '10px',
+                        border: '1px dashed rgba(0, 240, 255, 0.3)',
+                        display: 'inline-block',
+                        marginBottom: '12px'
+                      }}>
+                        {accessToken.id}
+                      </div>
+
+                      <p style={{ margin: '0 0 16px 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                        Tu cartón oficial ha sido asignado a este dispositivo. Ya puedes ingresar directamente a jugar.
+                      </p>
+
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const url = activeCardId 
+                            ? `${window.location.origin}/juegos/bingo/carton/${activeCardId}`
+                            : `${window.location.origin}/juegos/bingo?access=${accessToken.id}`;
+                          navigator.clipboard.writeText(url);
+                          setCopiedMainLink(true);
+                          setTimeout(() => setCopiedMainLink(false), 2500);
+                        }}
+                        style={{
+                          background: 'rgba(255, 255, 255, 0.08)',
+                          border: '1px solid rgba(255, 255, 255, 0.2)',
+                          borderRadius: '10px',
+                          padding: '8px 16px',
+                          color: copiedMainLink ? '#34d399' : '#e2e8f0',
+                          fontSize: '0.82rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        {copiedMainLink ? '✓ ¡Enlace Copiado!' : '📋 Copiar Enlace Directo a Mi Cartón'}
+                      </button>
+                    </div>
+                  )}
+
+                  {/* BOTÓN PRINCIPAL: ENTRAR DIRECTO A MI CARTÓN */}
+                  <button
+                    onClick={handleEnterCardDirectly}
+                    disabled={isActivatingCard}
+                    style={{
+                      width: '100%',
+                      padding: '16px 24px',
+                      borderRadius: '14px',
+                      background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                      border: '1px solid rgba(52, 211, 153, 0.5)',
+                      color: '#ffffff',
+                      fontFamily: 'var(--font-gamer)',
+                      fontSize: '1.15rem',
+                      fontWeight: 900,
+                      textTransform: 'uppercase',
+                      letterSpacing: '1px',
+                      cursor: 'pointer',
+                      boxShadow: '0 8px 30px rgba(16, 185, 129, 0.5)',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '16px'
+                    }}
+                  >
+                    {isActivatingCard ? '🎮 PREPARANDO CARTÓN...' : '🎮 ENTRAR DIRECTO A MI CARTÓN'}
+                  </button>
+                </>
+              )}
             </>
           )}
 
