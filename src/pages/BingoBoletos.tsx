@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { collection, addDoc, getDoc, doc, onSnapshot, query, limit } from 'firebase/firestore';
+import { collection, addDoc, getDoc, doc, onSnapshot, query, limit, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { BingoGame, BingoScheduledGame } from '../types';
 import './BingoBoletos.css';
@@ -299,6 +299,37 @@ const BingoBoletos: React.FC = () => {
     const cleanPhone = '502' + playerWhatsappDigits.trim();
 
     setIsProcessing(true);
+
+    try {
+      // 0. VERIFICAR DUPLICADOS POR TELÉFONO: Si el jugador ya tiene un cartón en juego para esta partida
+      if (purchaseMode === 'personal') {
+        const targetGameId = activeGame?.id || 'juego-principal';
+        const qExistingCard = query(
+          collection(db, 'bingo_cards'),
+          where('phone', '==', cleanPhone),
+          where('gameId', '==', targetGameId),
+          limit(1)
+        );
+        const existingSnap = await getDocs(qExistingCard);
+
+        if (!existingSnap.empty) {
+          const existingCardDoc = existingSnap.docs[0];
+          const existingCardId = existingCardDoc.id;
+          
+          // Guardar sesión en navegador
+          localStorage.setItem('my_bingo_card_id', existingCardId);
+          localStorage.setItem('my_bingo_card_ids', JSON.stringify([existingCardId]));
+          localStorage.setItem('my_bingo_player_name', playerName.trim());
+
+          // Redirigir de inmediato al cartón activo
+          navigate(`/juegos/bingo/carton/${existingCardId}`);
+          return;
+        }
+      }
+    } catch (checkErr) {
+      console.warn("Aviso al verificar cartón previo por teléfono:", checkErr);
+    }
+
     let orderId = 'ord_' + Date.now();
 
     try {

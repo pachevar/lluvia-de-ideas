@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, deleteDoc } from 'firebase/firestore';
+import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, deleteDoc, getDocs } from 'firebase/firestore';
 import { auth, db } from '../../firebase';
 import type { BingoGame, BingoCard, BingoPrize, Sponsor, BingoPromoter, BingoAccessToken, BingoScheduledGame } from '../../types';
 import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardCollision } from '../../utils/bingoGenerator';
@@ -523,6 +523,20 @@ export default function BingoHub() {
             firstUsedAt: Date.now(),
             status: 'used'
           });
+        }
+
+        // Si el pase ya tiene cartón generado y asignado, redirigir directamente al juego
+        if (tData.usedByCardId) {
+          localStorage.setItem('my_bingo_card_id', tData.usedByCardId);
+          if (tData.cardIds && tData.cardIds.length > 0) {
+            localStorage.setItem('my_bingo_card_ids', JSON.stringify(tData.cardIds));
+          } else {
+            localStorage.setItem('my_bingo_card_ids', JSON.stringify([tData.usedByCardId]));
+          }
+          localStorage.setItem('my_bingo_player_name', tData.playerName);
+          setSavedCardId(tData.usedByCardId);
+          navigate(`/juegos/bingo/carton/${tData.usedByCardId}`);
+          return;
         }
 
         setAccessTokenData(tData);
@@ -1489,7 +1503,23 @@ export default function BingoHub() {
       if (selectedScheduledGame?.id === gameId) {
         setSelectedScheduledGame(null);
       }
-      addLog(`HOST: Partida programada "${gameTitle}" eliminada.`);
+
+      // Limpiar tokens y órdenes asociados a esta partida eliminada
+      try {
+        const qTokensSched = query(collection(db, 'bingo_access_tokens'), where('scheduledGameId', '==', gameId));
+        const snapTokens = await getDocs(qTokensSched);
+        const delTokenPromises = snapTokens.docs.map((d: any) => deleteDoc(doc(db, 'bingo_access_tokens', d.id)));
+        await Promise.all(delTokenPromises);
+
+        const qOrdersSched = query(collection(db, 'bingo_orders'), where('scheduledGameId', '==', gameId));
+        const snapOrders = await getDocs(qOrdersSched);
+        const delOrderPromises = snapOrders.docs.map((d: any) => deleteDoc(doc(db, 'bingo_orders', d.id)));
+        await Promise.all(delOrderPromises);
+      } catch (cleanSchedErr) {
+        console.warn("Aviso al limpiar registros asociados a la partida programada:", cleanSchedErr);
+      }
+
+      addLog(`HOST: Partida programada "${gameTitle}" y sus registros asociados fueron eliminados.`);
     } catch (err) {
       console.error(err);
       await showAlert("Error al eliminar la partida.", "Error", "❌");

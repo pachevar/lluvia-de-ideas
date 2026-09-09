@@ -49,13 +49,40 @@ const BingoBoletosConfirmacion: React.FC = () => {
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission());
   const [pushActivating, setPushActivating] = useState(false);
 
-  // Función para generar y asignar cartón en Firestore directamente
+  // Función para generar y asignar cartón en Firestore directamente (evitando duplicados por teléfono)
   const generateAndAssignCard = async (
     tknId: string | null,
     ord: any,
     targetGameId: string
   ): Promise<string | null> => {
     try {
+      // 1. Si el jugador ya tiene un número de teléfono, verificar si ya existe un cartón activo para esta partida
+      if (ord?.playerWhatsapp) {
+        try {
+          const qExisting = query(
+            collection(db, 'bingo_cards'),
+            where('phone', '==', ord.playerWhatsapp),
+            where('gameId', '==', targetGameId),
+            limit(1)
+          );
+          const existingSnap = await getDocs(qExisting);
+          if (!existingSnap.empty) {
+            const existingId = existingSnap.docs[0].id;
+            if (tknId) {
+              await updateDoc(doc(db, 'bingo_access_tokens', tknId), {
+                usedByCardId: existingId,
+                cardIds: [existingId],
+                status: 'used',
+                firstUsedAt: Date.now()
+              });
+            }
+            return existingId;
+          }
+        } catch (checkErr) {
+          console.warn("Aviso al verificar cartón previo por teléfono en confirmación:", checkErr);
+        }
+      }
+
       const currentMatrix = generateBingoMatrix();
       const currentHash = hashBingoMatrix(currentMatrix);
       let currentShortId = '';
