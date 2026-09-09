@@ -303,8 +303,8 @@ export interface BingoGame {
   } | null;
   nextRoundTime?: number | null; // Timestamp en milisegundos para el reloj regresivo de la próxima ronda
   scheduledGameId?: string | null;
-  cardPriceQ?: number; // Precio oficial por cartón fijado para el juego (ej. Q10, Q25, Q50, Q100)
-  gameType?: 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi';
+  cardPriceQ?: number; // Precio oficial por cartón fijado para el juego (ej. Q0 gratis, Q10, Q25, Q50, Q100)
+  gameType?: 'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi';
 }
 
 export interface BingoCard {
@@ -326,7 +326,7 @@ export interface BingoCard {
   tierId?: string | null;
   tierName?: string | null;
   prizeLevel?: string | null;
-  paymentStatus?: 'paid' | 'pending';
+  paymentStatus?: 'paid' | 'pending' | 'cortesia';
   paymentMethod?: 'efectivo' | 'online' | 'cortesia';
   paidAmount?: number;
   paidAt?: number;
@@ -373,7 +373,7 @@ export interface BingoScheduledGame {
   id: string;
   title: string;
   scheduledAt: number; // Timestamp milisegundos de fecha y hora programada
-  gameType: 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi';
+  gameType: 'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi';
   tierName: string;
   cardPriceQ?: number; // Precio oficial por cartón fijado para la partida
   prizeHighlight?: string;

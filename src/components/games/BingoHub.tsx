@@ -253,7 +253,7 @@ export default function BingoHub() {
   const [showCreateScheduleModal, setShowCreateScheduleModal] = useState(false);
   const [newScheduleTitle, setNewScheduleTitle] = useState('');
   const [newScheduleDateTime, setNewScheduleDateTime] = useState('');
-  const [newScheduleTier, setNewScheduleTier] = useState<'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
+  const [newScheduleTier, setNewScheduleTier] = useState<'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
   const [newSchedulePrize, setNewSchedulePrize] = useState('');
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
 
@@ -261,7 +261,7 @@ export default function BingoHub() {
   const [editingScheduleGame, setEditingScheduleGame] = useState<BingoScheduledGame | null>(null);
   const [editScheduleTitle, setEditScheduleTitle] = useState('');
   const [editScheduleDateTime, setEditScheduleDateTime] = useState('');
-  const [editScheduleTier, setEditScheduleTier] = useState<'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
+  const [editScheduleTier, setEditScheduleTier] = useState<'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
   const [editSchedulePrice, setEditSchedulePrice] = useState<number>(25);
   const [editSchedulePrize, setEditSchedulePrize] = useState('');
   const [isSavingEditSchedule, setIsSavingEditSchedule] = useState(false);
@@ -273,6 +273,12 @@ export default function BingoHub() {
   const [lobbyPushPermission, setLobbyPushPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission());
   const [lobbyPushActivating, setLobbyPushActivating] = useState(false);
   const [copiedShareLink, setCopiedShareLink] = useState(false);
+
+  // Estados para Entrada Directa a Partida Gratuita y Canje Manual de Token
+  const [freePlayerName, setFreePlayerName] = useState(() => localStorage.getItem('my_bingo_player_name') || '');
+  const [freePlayerPhone, setFreePlayerPhone] = useState('');
+  const [freeJoinError, setFreeJoinError] = useState('');
+  const [manualTokenInput, setManualTokenInput] = useState('');
 
   const handleEnableLobbyPush = async () => {
     setLobbyPushActivating(true);
@@ -1423,6 +1429,7 @@ export default function BingoHub() {
     try {
       const schedId = 'sched_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
       const tierMap: Record<string, string> = {
+        'tier-free': 'Partida Gratuita / Prueba (Q0)',
         'tier-10': 'Cartón Bronce (Q10)',
         'tier-25': 'Cartón Plata (Q25)',
         'tier-50': 'Cartón Oro (Q50)',
@@ -1430,13 +1437,14 @@ export default function BingoHub() {
         'multi': 'Ronda Multicategoría (Q25)'
       };
       const priceMap: Record<string, number> = {
+        'tier-free': 0,
         'tier-10': 10,
         'tier-25': 25,
         'tier-50': 50,
         'tier-100': 100,
         'multi': 25
       };
-      const cardPrice = priceMap[newScheduleTier] || 25;
+      const cardPrice = newScheduleTier === 'tier-free' ? 0 : (priceMap[newScheduleTier] ?? 25);
 
       const newGame: BingoScheduledGame = {
         id: schedId,
@@ -1469,8 +1477,9 @@ export default function BingoHub() {
 
   const handleActivateScheduledGame = async (game: BingoScheduledGame) => {
     if (!activeGame) return;
+    const priceDisplay = game.cardPriceQ === 0 ? 'GRATIS / PRUEBA (Q0)' : `Q${game.cardPriceQ || 25}`;
     const confirm = await showConfirm(
-      `¿Deseas ACTIVAR la partida "${game.title}" en la Tómbola ahora?\n\nEsto sincronizará el temporizador de la sala de espera y actualizará el título, valor del cartón (Q${game.cardPriceQ || 25}) y premios activos en vivo.`,
+      `¿Deseas ACTIVAR la partida "${game.title}" en la Tómbola ahora?\n\nEsto sincronizará el temporizador de la sala de espera y actualizará el título, valor del cartón (${priceDisplay}) y premios activos en vivo.`,
       "Activar Partida en Vivo",
       "🚀",
       "SÍ, ACTIVAR AHORA",
@@ -1480,13 +1489,14 @@ export default function BingoHub() {
 
     try {
       const priceMap: Record<string, number> = {
+        'tier-free': 0,
         'tier-10': 10,
         'tier-25': 25,
         'tier-50': 50,
         'tier-100': 100,
         'multi': 25
       };
-      const cardPrice = game.cardPriceQ || priceMap[game.gameType] || 25;
+      const cardPrice = game.cardPriceQ !== undefined ? game.cardPriceQ : (priceMap[game.gameType] ?? 25);
 
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
         title: game.title,
@@ -1503,7 +1513,7 @@ export default function BingoHub() {
       });
 
       addLog(`HOST: Partida programada "${game.title}" (Q${cardPrice}/cartón) activada en vivo en la Tómbola.`);
-      await showAlert(`¡La partida "${game.title}" (Q${cardPrice}/cartón) está activa en la Tómbola y el reloj regresivo fue sincronizado! 🚀`, "Partida Activa", "🚀");
+      await showAlert(`¡La partida "${game.title}" (${cardPrice === 0 ? 'GRATIS / PRUEBA' : `Q${cardPrice}/cartón`}) está activa en la Tómbola y el reloj regresivo fue sincronizado! 🚀`, "Partida Activa", "🚀");
     } catch (err) {
       console.error(err);
       await showAlert("Error al activar la partida.", "Error", "❌");
@@ -1541,7 +1551,7 @@ export default function BingoHub() {
     setEditScheduleTitle(game.title);
     setEditScheduleDateTime(formattedDate);
     setEditScheduleTier(game.gameType || 'tier-25');
-    setEditSchedulePrice(game.cardPriceQ || (game.gameType === 'tier-10' ? 10 : game.gameType === 'tier-50' ? 50 : game.gameType === 'tier-100' ? 100 : 25));
+    setEditSchedulePrice(game.cardPriceQ !== undefined ? game.cardPriceQ : (game.gameType === 'tier-free' ? 0 : game.gameType === 'tier-10' ? 10 : game.gameType === 'tier-50' ? 50 : game.gameType === 'tier-100' ? 100 : 25));
     setEditSchedulePrize(game.prizeHighlight || '');
   };
 
@@ -1563,6 +1573,7 @@ export default function BingoHub() {
     setIsSavingEditSchedule(true);
     try {
       const tierMap: Record<string, string> = {
+        'tier-free': `Partida Gratuita (Q${editSchedulePrice})`,
         'tier-10': `Cartón Bronce (Q${editSchedulePrice})`,
         'tier-25': `Cartón Plata (Q${editSchedulePrice})`,
         'tier-50': `Cartón Oro (Q${editSchedulePrice})`,
@@ -1570,12 +1581,15 @@ export default function BingoHub() {
         'multi': `Ronda Multicategoría (Q${editSchedulePrice})`
       };
 
+      const parsedPrice = Number(editSchedulePrice);
+      const safePrice = !isNaN(parsedPrice) && parsedPrice >= 0 ? parsedPrice : 25;
+
       const updatedFields = {
         title: editScheduleTitle.trim(),
         scheduledAt: scheduledTimestamp,
         gameType: editScheduleTier,
         tierName: tierMap[editScheduleTier] || 'Cartón Estándar',
-        cardPriceQ: Number(editSchedulePrice) || 25,
+        cardPriceQ: safePrice,
         prizeHighlight: editSchedulePrize.trim() || null
       };
 
@@ -1587,7 +1601,7 @@ export default function BingoHub() {
           title: editScheduleTitle.trim(),
           nextRoundTime: scheduledTimestamp,
           currentPrizeTitle: editSchedulePrize.trim() || activeGame.currentPrizeTitle || '',
-          cardPriceQ: Number(editSchedulePrice) || 25,
+          cardPriceQ: safePrice,
           gameType: editScheduleTier
         });
       }
@@ -2038,6 +2052,112 @@ export default function BingoHub() {
     setSavedCardId(null);
     addLog("JUGADOR: Cartón anterior descartado del dispositivo.");
     setShowDiscardModal(false);
+  };
+
+  // Ingreso directo a partida gratuita / prueba desde la sala
+  const handleJoinFreeGame = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!activeGame) return;
+
+    const trimmedName = freePlayerName.trim();
+    if (!trimmedName) {
+      setFreeJoinError('Por favor ingresa tu nombre o nickname para unirte.');
+      return;
+    }
+
+    setIsRegistering(true);
+    setFreeJoinError('');
+
+    try {
+      const ac = activeGame?.customization?.accessConfig;
+      const maxOverlapThreshold = ac?.maxOverlapThreshold || (ac?.massiveMode ? 10 : 8);
+
+      let currentMatrix = generateBingoMatrix();
+      let currentHash = hashBingoMatrix(currentMatrix);
+      let acceptable = false;
+      let attemptsCount = 0;
+
+      while (!acceptable && attemptsCount < 500) {
+        attemptsCount++;
+        const collision = registeredCards.some(otherCard => {
+          if (otherCard.hash && otherCard.hash === currentHash) return true;
+          if (!otherCard.matrix) return false;
+          let otherMatrix: (number | null)[][];
+          if (Array.isArray(otherCard.matrix)) {
+            otherMatrix = otherCard.matrix;
+          } else if ((otherCard.matrix as unknown as StoredCardMatrix)?.r0) {
+            const rawM = otherCard.matrix as unknown as StoredCardMatrix;
+            otherMatrix = [rawM.r0, rawM.r1, rawM.r2, rawM.r3, rawM.r4];
+          } else {
+            return false;
+          }
+          return checkCardCollision(currentMatrix, otherMatrix, maxOverlapThreshold);
+        });
+
+        if (!collision) {
+          acceptable = true;
+        } else {
+          currentMatrix = generateBingoMatrix();
+          currentHash = hashBingoMatrix(currentMatrix);
+        }
+      }
+
+      let currentShortId = '';
+      let unique = false;
+      while (!unique) {
+        currentShortId = Math.floor(1000000 + Math.random() * 9000000).toString();
+        const cardRef = doc(db, 'bingo_cards', currentShortId);
+        const cardSnap = await getDoc(cardRef);
+        if (!cardSnap.exists()) {
+          unique = true;
+        }
+      }
+
+      await setDoc(doc(db, 'bingo_cards', currentShortId), {
+        gameId: activeGame.id,
+        playerName: trimmedName,
+        phone: freePlayerPhone.trim() || null,
+        promoterCode: null,
+        tierId: 'tier-free',
+        tierName: 'Cartón Gratuito (Prueba)',
+        prizeLevel: activeGame.currentPrizeTitle || 'Partida de Demostración',
+        tokenId: null,
+        cardNumber: 1,
+        totalCards: 1,
+        paymentStatus: 'cortesia',
+        paymentMethod: 'cortesia',
+        paidAmount: 0,
+        matrix: {
+          r0: currentMatrix[0],
+          r1: currentMatrix[1],
+          r2: currentMatrix[2],
+          r3: currentMatrix[3],
+          r4: currentMatrix[4]
+        },
+        hash: currentHash,
+        createdAt: Date.now()
+      });
+
+      localStorage.setItem('my_bingo_player_name', trimmedName);
+      localStorage.setItem('my_bingo_card_ids', JSON.stringify([currentShortId]));
+      localStorage.setItem('my_bingo_card_id', currentShortId);
+      setSavedCardId(currentShortId);
+
+      addLog(`JUGADOR: ${trimmedName} ingresó a la partida gratuita con el cartón #${currentShortId}`);
+      navigate(`/juegos/bingo/carton/${currentShortId}`);
+    } catch (err) {
+      console.error('Error al generar cartón gratuito:', err);
+      setFreeJoinError('Error al generar tu cartón gratuito. Por favor intenta de nuevo.');
+    } finally {
+      setIsRegistering(false);
+    }
+  };
+
+  const handleManualTokenSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const cleanToken = manualTokenInput.trim();
+    if (!cleanToken) return;
+    window.location.href = `${window.location.pathname}?access=${encodeURIComponent(cleanToken)}`;
   };
 
 
@@ -2603,6 +2723,134 @@ export default function BingoHub() {
                       <span className="label">Título de la Sesión</span>
                       <span className="value" style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{activeGame.title}</span>
                     </div>
+                  </div>
+
+                  {/* Tarjeta de Entrada/Juego para Usuarios en Computadora (Desktop) */}
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.15) 0%, rgba(13, 6, 28, 0.95) 100%)',
+                    border: '1.5px solid rgba(168, 85, 247, 0.4)',
+                    borderRadius: '14px',
+                    padding: '14px',
+                    marginBottom: '14px',
+                    textAlign: 'center'
+                  }}>
+                    {savedCardId ? (
+                      <div>
+                        <div style={{ fontSize: '0.78rem', color: '#34d399', fontWeight: 'bold', marginBottom: '6px' }}>
+                          🎮 CARTÓN ACTIVO DETECTADO
+                        </div>
+                        <button
+                          type="button"
+                          className="cyber-btn-primary animate-pulse"
+                          onClick={() => navigate(`/juegos/bingo/carton/${savedCardId}`)}
+                          style={{ width: '100%', padding: '10px 14px', fontSize: '0.85rem' }}
+                        >
+                          🎮 ABRIR MI CARTÓN
+                        </button>
+                      </div>
+                    ) : accessTokenData ? (
+                      <div>
+                        <div style={{ fontSize: '0.78rem', color: '#38bdf8', fontWeight: 'bold', marginBottom: '6px' }}>
+                          🎟️ PASE DE JUEGO VERIFICADO
+                        </div>
+                        <button
+                          type="button"
+                          className="cyber-btn-primary animate-pulse"
+                          onClick={handleActivatePass}
+                          disabled={isRegistering}
+                          style={{ width: '100%', padding: '10px 14px', fontSize: '0.85rem' }}
+                        >
+                          {isRegistering ? 'ACTIVANDO...' : '🎮 ACTIVAR Y JUGAR'}
+                        </button>
+                      </div>
+                    ) : (activeGame.cardPriceQ === 0 || activeGame.gameType === 'tier-free' || activeGame.customization?.accessConfig?.mode === 'free') ? (
+                      <div>
+                        <div style={{ fontSize: '0.72rem', color: '#34d399', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                          🎁 PARTIDA GRATUITA EN VIVO
+                        </div>
+                        <p style={{ fontSize: '0.75rem', color: '#cbd5e1', margin: '0 0 10px' }}>
+                          Ingresa tu nombre para jugar gratis en esta ronda de prueba:
+                        </p>
+                        <form onSubmit={handleJoinFreeGame} style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Tu Nombre o Nickname"
+                            value={freePlayerName}
+                            onChange={e => setFreePlayerName(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '8px 10px',
+                              background: 'rgba(0,0,0,0.6)',
+                              border: '1px solid rgba(16, 185, 129, 0.5)',
+                              borderRadius: '8px',
+                              color: '#fff',
+                              fontSize: '0.82rem',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                          <button
+                            type="submit"
+                            disabled={isRegistering}
+                            className="cyber-btn-primary"
+                            style={{
+                              width: '100%',
+                              padding: '10px',
+                              fontSize: '0.84rem',
+                              background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                              border: '1px solid #34d399'
+                            }}
+                          >
+                            {isRegistering ? 'GENERANDO...' : '🎮 JUGAR GRATIS'}
+                          </button>
+                        </form>
+                      </div>
+                    ) : (
+                      <div>
+                        <div style={{ fontSize: '0.72rem', color: '#fbbf24', fontWeight: 900, textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>
+                          🎟️ CARTÓN OFICIAL • Q{activeGame.cardPriceQ || 25}.00
+                        </div>
+                        <button
+                          type="button"
+                          className="cyber-btn-primary"
+                          onClick={() => navigate('/juegos/bingo/boletos')}
+                          style={{ width: '100%', padding: '10px 14px', fontSize: '0.84rem', marginBottom: '8px' }}
+                        >
+                          🎟️ COMPRAR BOLETO
+                        </button>
+                        <form onSubmit={handleManualTokenSubmit} style={{ display: 'flex', gap: '4px' }}>
+                          <input
+                            type="text"
+                            placeholder="Código Pase (tkn_...)"
+                            value={manualTokenInput}
+                            onChange={e => setManualTokenInput(e.target.value)}
+                            style={{
+                              flex: 1,
+                              padding: '6px 8px',
+                              background: 'rgba(0,0,0,0.5)',
+                              border: '1px solid rgba(168, 85, 247, 0.4)',
+                              borderRadius: '6px',
+                              color: '#fff',
+                              fontSize: '0.74rem'
+                            }}
+                          />
+                          <button
+                            type="submit"
+                            style={{
+                              background: 'rgba(168, 85, 247, 0.3)',
+                              border: '1px solid #a855f7',
+                              color: '#fff',
+                              borderRadius: '6px',
+                              padding: '6px 8px',
+                              fontSize: '0.74rem',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            OK
+                          </button>
+                        </form>
+                      </div>
+                    )}
                   </div>
 
                   <div className="rules-container">
@@ -4002,6 +4250,7 @@ export default function BingoHub() {
                                 outline: 'none'
                               }}
                             >
+                              <option value="tier-free">🎁 Partida Gratuita / Prueba — Q0 (Acceso Libre)</option>
                               <option value="tier-10">🥉 Cartón Bronce — Q10 (Ronda Rápida)</option>
                               <option value="tier-25">🥈 Cartón Plata — Q25 (Ronda Estándar)</option>
                               <option value="tier-50">🥇 Cartón Oro — Q50 (Premios Especiales)</option>
@@ -4167,7 +4416,7 @@ export default function BingoHub() {
                               onChange={(e) => {
                                 const newTier = e.target.value as any;
                                 setEditScheduleTier(newTier);
-                                const defaultPrice = newTier === 'tier-10' ? 10 : newTier === 'tier-50' ? 50 : newTier === 'tier-100' ? 100 : 25;
+                                const defaultPrice = newTier === 'tier-free' ? 0 : newTier === 'tier-10' ? 10 : newTier === 'tier-50' ? 50 : newTier === 'tier-100' ? 100 : 25;
                                 setEditSchedulePrice(defaultPrice);
                               }}
                               style={{
@@ -4181,6 +4430,7 @@ export default function BingoHub() {
                                 outline: 'none'
                               }}
                             >
+                              <option value="tier-free">🎁 Partida Gratuita / Prueba (Q0)</option>
                               <option value="tier-10">🥉 Cartón Bronce (Sugerido Q10)</option>
                               <option value="tier-25">🥈 Cartón Plata (Sugerido Q25)</option>
                               <option value="tier-50">🥇 Cartón Oro (Sugerido Q50)</option>
@@ -4196,7 +4446,7 @@ export default function BingoHub() {
                             </label>
                             <input
                               type="number"
-                              min={1}
+                              min={0}
                               max={1000}
                               required
                               value={editSchedulePrice}
@@ -5395,8 +5645,14 @@ export default function BingoHub() {
                               </strong>
                               <div style={{ display: 'flex', gap: '8px', fontSize: '0.74rem', color: '#94a3b8', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
                                 <span>⏰ {new Date(game.scheduledAt).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' })}</span>
-                                <span style={{ color: '#38bdf8' }}>🏷️ {game.tierName || 'Cartón Oficial'}</span>
-                                <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>Q{game.cardPriceQ || 25}.00</span>
+                                <span style={{ color: '#38bdf8' }}>🏷️ {game.tierName || (game.cardPriceQ === 0 ? 'Partida Gratuita' : 'Cartón Oficial')}</span>
+                                {game.cardPriceQ === 0 ? (
+                                  <span style={{ color: '#4ade80', fontWeight: 'bold', background: 'rgba(34, 197, 94, 0.15)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(34, 197, 94, 0.3)' }}>
+                                    🎁 GRATIS (Prueba)
+                                  </span>
+                                ) : (
+                                  <span style={{ color: '#fbbf24', fontWeight: 'bold' }}>Q{game.cardPriceQ || 25}.00</span>
+                                )}
                                 <GameMiniCountdown scheduledAt={game.scheduledAt} />
                               </div>
                               {game.prizeHighlight && (
@@ -5410,10 +5666,29 @@ export default function BingoHub() {
                             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                               <button
                                 type="button"
-                                onClick={() => navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=${game.gameType || 'tier-25'}`)}
+                                onClick={() => {
+                                  if (game.cardPriceQ === 0 || game.gameType === 'tier-free') {
+                                    if (activeGame?.id === game.id || activeGame?.scheduledGameId === game.id) {
+                                      const regEl = document.querySelector('.gamer-register-card');
+                                      if (regEl) {
+                                        regEl.scrollIntoView({ behavior: 'smooth' });
+                                      } else {
+                                        navigate('/juegos/bingo');
+                                      }
+                                    } else {
+                                      navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=tier-free`);
+                                    }
+                                  } else {
+                                    navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=${game.gameType || 'tier-25'}`);
+                                  }
+                                }}
                                 style={{
-                                  background: 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
-                                  border: '1px solid rgba(56, 189, 248, 0.5)',
+                                  background: (game.cardPriceQ === 0 || game.gameType === 'tier-free')
+                                    ? 'linear-gradient(135deg, #059669 0%, #10b981 100%)'
+                                    : 'linear-gradient(135deg, #0284c7 0%, #2563eb 100%)',
+                                  border: (game.cardPriceQ === 0 || game.gameType === 'tier-free')
+                                    ? '1px solid rgba(52, 211, 153, 0.5)'
+                                    : '1px solid rgba(56, 189, 248, 0.5)',
                                   color: '#ffffff',
                                   padding: '10px 24px',
                                   borderRadius: '12px',
@@ -5421,12 +5696,14 @@ export default function BingoHub() {
                                   fontWeight: 800,
                                   fontFamily: 'var(--font-gamer)',
                                   cursor: 'pointer',
-                                  boxShadow: '0 4px 15px rgba(37, 99, 235, 0.4)',
+                                  boxShadow: (game.cardPriceQ === 0 || game.gameType === 'tier-free')
+                                    ? '0 4px 15px rgba(16, 185, 129, 0.4)'
+                                    : '0 4px 15px rgba(37, 99, 235, 0.4)',
                                   whiteSpace: 'nowrap',
                                   minWidth: '200px'
                                 }}
                               >
-                                🎟️ Comprar Ticket
+                                {(game.cardPriceQ === 0 || game.gameType === 'tier-free') ? '🎁 Unirme Gratis' : '🎟️ Comprar Ticket'}
                               </button>
                             </div>
                           </div>
@@ -5639,7 +5916,166 @@ export default function BingoHub() {
                       {isRegistering ? 'GENERANDO TUS CARTONES...' : '🎮 ACTIVAR CARTÓN Y JUGAR'}
                     </button>
                   </div>
-                ) : null}
+                ) : (activeGame.cardPriceQ === 0 || activeGame.gameType === 'tier-free' || activeGame.customization?.accessConfig?.mode === 'free') ? (
+                  /* Caso 3: Partida Gratuita / Prueba en vivo - Entrada directa desde la sala para cualquiera */
+                  <div className="gamer-register-card" style={{
+                    borderColor: '#10b981',
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(13, 6, 28, 0.98) 100%)',
+                    boxShadow: '0 0 35px rgba(16, 185, 129, 0.35)',
+                    textAlign: 'center'
+                  }}>
+                    <span className="gamer-register-icon" style={{ filter: 'drop-shadow(0 0 15px #10b981)' }}>🎁</span>
+                    <div style={{ display: 'inline-block', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid #10b981', borderRadius: '20px', padding: '4px 14px', fontSize: '0.75rem', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>
+                      PARTIDA GRATUITA • ACCESO LIBRE
+                    </div>
+                    <h3 style={{ color: '#ffffff', margin: '4px 0 8px', fontSize: '1.25rem' }}>
+                      ¡ÚNETE Y JUEGA EN VIVO!
+                    </h3>
+                    <p style={{ margin: '0 auto 16px', fontSize: '0.84rem', color: '#cbd5e1', maxWidth: '380px', lineHeight: 1.4 }}>
+                      Esta partida es de demostración o acceso libre (Q0.00). Ingresa tu nombre o apodo para generar tu cartón de juego y comenzar de inmediato.
+                    </p>
+
+                    <form onSubmit={handleJoinFreeGame} style={{ maxWidth: '340px', margin: '0 auto', textAlign: 'left' }}>
+                      <div style={{ marginBottom: '12px' }}>
+                        <label style={{ display: 'block', fontSize: '0.74rem', color: '#94a3b8', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase' }}>
+                          👤 Tu Nombre o Nickname *
+                        </label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ej. Sofia / Carlos Gamer"
+                          value={freePlayerName}
+                          onChange={(e) => setFreePlayerName(e.target.value)}
+                          style={{
+                            width: '100%',
+                            padding: '12px 14px',
+                            background: 'rgba(0, 0, 0, 0.6)',
+                            border: '1.5px solid rgba(16, 185, 129, 0.5)',
+                            borderRadius: '12px',
+                            color: '#ffffff',
+                            fontSize: '0.92rem',
+                            outline: 'none',
+                            boxSizing: 'border-box'
+                          }}
+                        />
+                      </div>
+
+                      {/* Teléfono opcional si el anfitrión configuró el campo */}
+                      {activeGame.customization?.accessConfig?.formFields?.phone?.enabled && (
+                        <div style={{ marginBottom: '14px' }}>
+                          <label style={{ display: 'block', fontSize: '0.74rem', color: '#94a3b8', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase' }}>
+                            📱 Teléfono / WhatsApp {activeGame.customization.accessConfig.formFields.phone.required ? '*' : '(Opcional)'}
+                          </label>
+                          <input
+                            type="tel"
+                            required={activeGame.customization.accessConfig.formFields.phone.required}
+                            placeholder="Ej. 50212345678"
+                            value={freePlayerPhone}
+                            onChange={(e) => setFreePlayerPhone(e.target.value)}
+                            style={{
+                              width: '100%',
+                              padding: '12px 14px',
+                              background: 'rgba(0, 0, 0, 0.6)',
+                              border: '1.5px solid rgba(16, 185, 129, 0.4)',
+                              borderRadius: '12px',
+                              color: '#ffffff',
+                              fontSize: '0.92rem',
+                              outline: 'none',
+                              boxSizing: 'border-box'
+                            }}
+                          />
+                        </div>
+                      )}
+
+                      {freeJoinError && (
+                        <div style={{ color: '#f87171', fontSize: '0.82rem', marginBottom: '12px', fontWeight: 'bold', textAlign: 'center' }}>
+                          {freeJoinError}
+                        </div>
+                      )}
+
+                      <button
+                        type="submit"
+                        disabled={isRegistering}
+                        className="cyber-btn-primary animate-pulse"
+                        style={{
+                          width: '100%',
+                          padding: '14px 20px',
+                          fontSize: '1rem',
+                          fontWeight: 900,
+                          borderRadius: '12px',
+                          cursor: 'pointer',
+                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          border: '1px solid #34d399',
+                          boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)'
+                        }}
+                      >
+                        {isRegistering ? 'GENERANDO CARTÓN...' : '🎮 ENTRAR Y JUGAR AHORA'}
+                      </button>
+                    </form>
+                  </div>
+                ) : (
+                  /* Caso 4: Partida de Pago sin pase verificado */
+                  <div className="gamer-register-card" style={{
+                    borderColor: 'rgba(168, 85, 247, 0.4)',
+                    background: 'rgba(13, 6, 28, 0.85)',
+                    textAlign: 'center'
+                  }}>
+                    <span className="gamer-register-icon">🎟️</span>
+                    <h3 style={{ color: '#ffffff', margin: '4px 0 8px', fontSize: '1.15rem' }}>
+                      SALA EN VIVO • ADQUIERE TU CARTÓN
+                    </h3>
+                    <p style={{ margin: '0 auto 16px', fontSize: '0.84rem', color: '#cbd5e1', maxWidth: '360px', lineHeight: 1.4 }}>
+                      Para participar por los premios en esta ronda oficial necesitas un cartón registrado.
+                    </p>
+
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', maxWidth: '320px', margin: '0 auto' }}>
+                      <button
+                        type="button"
+                        onClick={() => navigate('/juegos/bingo/boletos')}
+                        className="cyber-btn-primary animate-pulse"
+                        style={{ width: '100%', padding: '12px 20px', fontSize: '0.95rem' }}
+                      >
+                        🎟️ COMPRAR CARTÓN (Q{activeGame.cardPriceQ || 25}.00)
+                      </button>
+
+                      {/* Canje de token manual si tiene uno */}
+                      <form onSubmit={handleManualTokenSubmit} style={{ width: '100%', marginTop: '6px' }}>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <input
+                            type="text"
+                            placeholder="Tengo un Pase (tkn_...)"
+                            value={manualTokenInput}
+                            onChange={e => setManualTokenInput(e.target.value)}
+                            style={{
+                              flex: 1,
+                              padding: '8px 10px',
+                              background: 'rgba(0,0,0,0.5)',
+                              border: '1px solid rgba(168, 85, 247, 0.4)',
+                              borderRadius: '8px',
+                              color: '#fff',
+                              fontSize: '0.78rem'
+                            }}
+                          />
+                          <button
+                            type="submit"
+                            style={{
+                              background: 'rgba(168, 85, 247, 0.3)',
+                              border: '1px solid #a855f7',
+                              color: '#fff',
+                              borderRadius: '8px',
+                              padding: '8px 12px',
+                              fontSize: '0.78rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            Canjear
+                          </button>
+                        </div>
+                      </form>
+                    </div>
+                  </div>
+                )}
               </div>
             </div>
 

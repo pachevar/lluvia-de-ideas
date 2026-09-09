@@ -312,7 +312,7 @@ export default function AdminBingoTab() {
             setFieldLocationEnabled(ac?.formFields?.location?.enabled || false);
             setFieldLocationRequired(ac?.formFields?.location?.required || false);
 
-            setCardPriceQ(gData.cardPriceQ || 25);
+            setCardPriceQ(gData.cardPriceQ !== undefined ? gData.cardPriceQ : 25);
             setBankName(ac?.paymentInfo?.bankName || 'Banco Industrial');
             setBankAccountType(ac?.paymentInfo?.bankAccountType || 'Monetaria');
             setBankAccountNumber(ac?.paymentInfo?.bankAccountNumber || ac?.paymentInfo?.bankAccount || '');
@@ -507,7 +507,7 @@ export default function AdminBingoTab() {
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
         title: gameTitle.trim() || 'Gran Bingo Familiar',
         winningPattern: winningPattern,
-        cardPriceQ: Number(cardPriceQ) || 25,
+        cardPriceQ: typeof cardPriceQ === 'number' && !isNaN(cardPriceQ) ? Math.max(0, cardPriceQ) : 25,
         customization: getCustomizationObject()
       });
       await showAlert("¡Toda la configuración del Bingo y la Tómbola ha sido guardada con éxito! 🎉", "Guardado Exitoso", "💾");
@@ -568,7 +568,7 @@ export default function AdminBingoTab() {
         winningPattern: winningPattern,
         createdAt: Date.now(),
         active: true,
-        cardPriceQ: Number(cardPriceQ) || 25,
+        cardPriceQ: typeof cardPriceQ === 'number' && !isNaN(cardPriceQ) ? Math.max(0, cardPriceQ) : 25,
         customization: getCustomizationObject()
       });
       await showAlert("¡Bingo creado! La tómbola y la configuración ya están disponibles en tiempo real.", "Partida Creada", "🚀");
@@ -1956,11 +1956,13 @@ export default function AdminBingoTab() {
                   <label style={{ fontSize: '0.84rem', fontWeight: 700, color: '#1e293b', margin: 0 }}>
                     💵 Costo Oficial del Cartón en Quetzales (Q):
                   </label>
-                  <span style={{ fontSize: '1rem', fontWeight: 900, color: '#10b981' }}>Q {cardPriceQ}.00 c/u</span>
+                  <span style={{ fontSize: '1rem', fontWeight: 900, color: cardPriceQ === 0 ? '#059669' : '#10b981' }}>
+                    {cardPriceQ === 0 ? '🎁 Q 0.00 (Gratis / Prueba)' : `Q ${cardPriceQ}.00 c/u`}
+                  </span>
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                  {[10, 25, 50, 100].map(tierP => (
+                  {[0, 10, 25, 50, 100].map(tierP => (
                     <button
                       key={tierP}
                       type="button"
@@ -1976,7 +1978,7 @@ export default function AdminBingoTab() {
                         cursor: 'pointer'
                       }}
                     >
-                      Q {tierP}.00
+                      {tierP === 0 ? '🎁 Q 0.00 (Gratis)' : `Q ${tierP}.00`}
                     </button>
                   ))}
                 </div>
@@ -1985,14 +1987,17 @@ export default function AdminBingoTab() {
                   <span style={{ fontSize: '0.75rem', color: '#64748b' }}>O ingresa un monto personalizado:</span>
                   <input
                     type="number"
-                    min="1"
+                    min="0"
                     max="1000"
                     className="bingo-input"
                     value={cardPriceQ}
-                    onChange={e => setCardPriceQ(Math.max(1, parseInt(e.target.value) || 25))}
+                    onChange={e => {
+                      const val = parseInt(e.target.value, 10);
+                      setCardPriceQ(isNaN(val) ? 0 : Math.max(0, val));
+                    }}
                     style={{ width: '90px', padding: '4px 8px', fontSize: '0.84rem', fontWeight: 'bold' }}
                   />
-                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>(Se sincroniza con la tómbola y la tienda de boletos)</span>
+                  <span style={{ fontSize: '0.72rem', color: '#64748b' }}>(Coloca 0 para partida gratuita de prueba)</span>
                 </div>
               </div>
 

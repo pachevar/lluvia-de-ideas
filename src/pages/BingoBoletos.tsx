@@ -18,6 +18,17 @@ interface CardTier {
 }
 
 const CARD_TIERS_MAP: Record<string, CardTier> = {
+  'tier-free': {
+    id: 'tier-free',
+    name: 'Cartón Gratuito (Prueba)',
+    unitPriceQ: 0,
+    prizeLevel: 'Partida de Demostración / Prueba',
+    badge: 'GRATIS / PRUEBA',
+    badgeClass: 'bronce',
+    description: 'Cartón oficial sin costo para participar en la partida de demostración y pruebas.',
+    prizeHighlight: 'Acceso libre para toda la comunidad.',
+    icon: '🎁'
+  },
   'tier-10': {
     id: 'tier-10',
     name: 'Cartón Bronce',
@@ -164,18 +175,20 @@ const BingoBoletos: React.FC = () => {
   }, [selectedScheduledGame, activeGame]);
 
   // Determinar el tier y precio oficial fijado para esta partida (ocultando los otros)
-  const currentPriceQ = selectedScheduledGame?.cardPriceQ || activeGame?.cardPriceQ || 25;
-  const currentTierId = selectedScheduledGame?.gameType || activeGame?.gameType || (currentPriceQ === 10 ? 'tier-10' : currentPriceQ === 50 ? 'tier-50' : currentPriceQ === 100 ? 'tier-100' : 'tier-25');
+  const currentPriceQ = selectedScheduledGame?.cardPriceQ !== undefined 
+    ? selectedScheduledGame.cardPriceQ 
+    : (activeGame?.cardPriceQ !== undefined ? activeGame.cardPriceQ : 25);
+  const currentTierId = selectedScheduledGame?.gameType || activeGame?.gameType || (currentPriceQ === 0 ? 'tier-free' : currentPriceQ === 10 ? 'tier-10' : currentPriceQ === 50 ? 'tier-50' : currentPriceQ === 100 ? 'tier-100' : 'tier-25');
   const activeTier: CardTier = CARD_TIERS_MAP[currentTierId] || {
     id: currentTierId,
-    name: `Cartón Oficial Bingotenango`,
+    name: currentPriceQ === 0 ? 'Cartón Gratuito (Prueba)' : `Cartón Oficial Bingotenango`,
     unitPriceQ: currentPriceQ,
-    prizeLevel: selectedScheduledGame?.prizeHighlight || 'Premios Oficiales de la Ronda',
-    badge: 'PARTIDA ACTIVA',
-    badgeClass: 'popular',
-    description: 'Cartón oficial para participar en la partida programada.',
-    prizeHighlight: selectedScheduledGame?.prizeHighlight || 'Premios en vivo.',
-    icon: '🎟️'
+    prizeLevel: selectedScheduledGame?.prizeHighlight || (currentPriceQ === 0 ? 'Partida de Demostración' : 'Premios Oficiales de la Ronda'),
+    badge: currentPriceQ === 0 ? 'GRATIS / PRUEBA' : 'PARTIDA ACTIVA',
+    badgeClass: currentPriceQ === 0 ? 'bronce' : 'popular',
+    description: currentPriceQ === 0 ? 'Cartón de demostración y pruebas con acceso libre sin costo.' : 'Cartón oficial para participar en la partida programada.',
+    prizeHighlight: selectedScheduledGame?.prizeHighlight || (currentPriceQ === 0 ? 'Partida de demostración y prueba libre.' : 'Premios en vivo.'),
+    icon: currentPriceQ === 0 ? '🎁' : '🎟️'
   };
 
   // Ajustar cantidad al alternar entre modos
@@ -230,11 +243,19 @@ const BingoBoletos: React.FC = () => {
         scheduledGameTitle: selectedScheduledGame?.title || null,
         linkSent: false,
         linkSentAt: null,
-        gateway: 'recurrente_guatemala',
-        status: 'pending',
+        gateway: currentPriceQ === 0 ? 'gratis_cortesia' : 'recurrente_guatemala',
+        status: currentPriceQ === 0 ? 'completed' : 'pending',
+        paidAmount: currentPriceQ === 0 ? 0 : undefined,
+        paidAt: currentPriceQ === 0 ? Date.now() : undefined,
         createdAt: Date.now()
       });
       orderId = orderRef.id;
+
+      // Si el costo es 0 (Gratis/Prueba), saltamos la pasarela de pago y confirmamos de inmediato
+      if (currentPriceQ === 0) {
+        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=tier-free&qty=${quantity}&mode=${purchaseMode}`);
+        return;
+      }
     } catch (fsErr) {
       console.warn("Aviso al guardar orden:", fsErr);
     }
@@ -635,8 +656,14 @@ const BingoBoletos: React.FC = () => {
                 type="submit" 
                 className="btn-guided-pay"
                 disabled={isProcessing}
+                style={currentPriceQ === 0 ? {
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)'
+                } : undefined}
               >
-                {isProcessing ? 'Conectando Pasarela...' : `💳 Pagar Q${totalPriceQ}.00 con Recurrente`}
+                {isProcessing 
+                  ? (currentPriceQ === 0 ? 'Generando Boletos Gratis...' : 'Conectando Pasarela...') 
+                  : (currentPriceQ === 0 ? '🎁 Obtener Boletos Gratis' : `💳 Pagar Q${totalPriceQ}.00 con Recurrente`)}
               </button>
             </div>
 
