@@ -276,7 +276,7 @@ export default function BingoHub() {
 
   // Estados para Entrada Directa a Partida Gratuita y Canje Manual de Token
   const [freePlayerName, setFreePlayerName] = useState(() => localStorage.getItem('my_bingo_player_name') || '');
-  const [freePlayerPhone, setFreePlayerPhone] = useState('');
+  const [freePlayerPhone] = useState('');
   const [freeJoinError, setFreeJoinError] = useState('');
   const [manualTokenInput, setManualTokenInput] = useState('');
 
@@ -2789,6 +2789,12 @@ export default function BingoHub() {
                               boxSizing: 'border-box'
                             }}
                           />
+                          {freeJoinError && (
+                            <div style={{ color: '#f87171', fontSize: '0.72rem', textAlign: 'center' }}>
+                              {freeJoinError}
+                            </div>
+                          )}
+
                           <button
                             type="submit"
                             disabled={isRegistering}
@@ -5530,14 +5536,81 @@ export default function BingoHub() {
                   </div>
                 )}
 
+                {/* ALERTAS DE TOKEN O REGISTRO */}
+                {(tokenError || regError) && (
+                  <div style={{
+                    background: 'rgba(239, 68, 68, 0.2)',
+                    border: '1.5px solid #ef4444',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    color: '#fca5a5',
+                    fontSize: '0.84rem',
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }}>
+                    {tokenError || regError}
+                  </div>
+                )}
+
+                {tokenSuccessMsg && (
+                  <div style={{
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    border: '1.5px solid #10b981',
+                    borderRadius: '12px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    color: '#34d399',
+                    fontSize: '0.84rem',
+                    fontWeight: 'bold',
+                    textAlign: 'center'
+                  }}>
+                    🎉 {tokenSuccessMsg}
+                  </div>
+                )}
+
+                {/* PASE DE ACCESO RECONOCIDO EN LA SALA */}
+                {accessTokenData && (
+                  <div className="gamer-register-card" style={{ borderColor: '#10b981', boxShadow: '0 0 35px rgba(16, 185, 129, 0.35)', marginBottom: '16px', textAlign: 'center' }}>
+                    <span className="gamer-register-icon">🎟️</span>
+                    <h3 style={{ color: '#34d399', margin: '4px 0 8px' }}>¡PASE DE JUEGO VERIFICADO!</h3>
+                    <p style={{ margin: '0 auto 14px', fontSize: '0.84rem', color: '#cbd5e1' }}>
+                      Pase reconocido para <strong>{accessTokenData.playerName}</strong> ({accessTokenData.quantity} {accessTokenData.quantity === 1 ? 'cartón' : 'cartones'}).
+                    </p>
+                    <button 
+                      className="cyber-btn-primary animate-pulse" 
+                      onClick={handleActivatePass}
+                      disabled={isRegistering}
+                      style={{ padding: '12px 24px', fontSize: '0.95rem', borderRadius: '12px' }}
+                    >
+                      {isRegistering ? 'ACTIVANDO...' : '🎮 ACTIVAR CARTÓN Y JUGAR'}
+                    </button>
+                  </div>
+                )}
+
                 {/* 2. CARTELERA DE PARTIDAS EN ESPERA CON RELOJ REGRESIVO Y BOTONES CENTRADOS */}
                 {(() => {
-                  const waitingGames = scheduledGamesList.filter(g => 
-                    g.status === 'scheduled' || 
-                    (g.status === 'live' && g.id !== activeGame?.id)
+                  let gamesToShow = scheduledGamesList.filter(g => 
+                    g.status === 'scheduled' || g.status === 'live'
                   );
 
-                  if (waitingGames.length === 0) return null;
+                  if (gamesToShow.length === 0 && activeGame) {
+                    gamesToShow = [{
+                      id: activeGame.id,
+                      title: activeGame.title || 'Gran Ronda Oficial de Bingotenango',
+                      scheduledAt: activeGame.nextRoundTime || Date.now(),
+                      cardPriceQ: activeGame.cardPriceQ ?? (activeGame.gameType === 'tier-free' ? 0 : 25),
+                      gameType: activeGame.gameType || (activeGame.cardPriceQ === 0 ? 'tier-free' : 'tier-25'),
+                      status: 'live' as const,
+                      prizeHighlight: activeGame.currentPrizeTitle || 'Premios en vivo',
+                      tierName: activeGame.cardPriceQ === 0 ? 'Partida Gratuita' : 'Cartón Oficial',
+                      totalCardsLimit: 100,
+                      soldCardsCount: 0,
+                      createdAt: Date.now()
+                    } as BingoScheduledGame];
+                  }
+
+                  if (gamesToShow.length === 0) return null;
 
                   return (
                     <div style={{
@@ -5552,7 +5625,7 @@ export default function BingoHub() {
                         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                           <span style={{ fontSize: '1.2rem' }}>📅</span>
                           <h4 style={{ margin: 0, fontSize: '0.95rem', color: '#f3e8ff', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
-                            PARTIDAS EN ESPERA ({waitingGames.length})
+                            PARTIDAS DISPONIBLES ({gamesToShow.length})
                           </h4>
                         </div>
                         <span style={{ fontSize: '0.72rem', color: '#c084fc', textTransform: 'uppercase', fontWeight: 'bold' }}>
@@ -5600,7 +5673,7 @@ export default function BingoHub() {
                           )}
                         </div>
                       ) : (
-                        waitingGames[0]?.scheduledAt && (
+                        gamesToShow[0]?.scheduledAt && (
                           <div style={{
                             background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.12) 0%, rgba(59, 130, 246, 0.15) 100%)',
                             border: '1.5px solid rgba(168, 85, 247, 0.35)',
@@ -5620,16 +5693,16 @@ export default function BingoHub() {
                                 PRÓXIMO BINGO EN VIVO:
                               </span>
                             </div>
-                            <GameCountdownBadge scheduledAt={waitingGames[0].scheduledAt} />
+                            <GameCountdownBadge scheduledAt={gamesToShow[0].scheduledAt} />
                             <span style={{ fontSize: '0.72rem', color: '#cbd5e1', marginTop: '2px' }}>
-                              📅 {new Date(waitingGames[0].scheduledAt).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' })}
+                              📅 {new Date(gamesToShow[0].scheduledAt).toLocaleString('es-GT', { dateStyle: 'short', timeStyle: 'short' })}
                             </span>
                           </div>
                         )
                       )}
 
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        {waitingGames.slice(0, 4).map(game => (
+                        {gamesToShow.slice(0, 4).map(game => (
                           <div key={game.id} style={{
                             background: 'rgba(255, 255, 255, 0.04)',
                             border: '1px solid rgba(168, 85, 247, 0.25)',
@@ -5662,22 +5735,13 @@ export default function BingoHub() {
                               )}
                             </div>
 
-                            {/* BOTÓN CENTRADO PARA MEJORA ESTÉTICA */}
+                            {/* BOTÓN CENTRADO: DIRIGE DIRECTO A LA PANTALLA DE COMPRA GUIADA Y FORMULARIO */}
                             <div style={{ display: 'flex', justifyContent: 'center', width: '100%' }}>
                               <button
                                 type="button"
                                 onClick={() => {
                                   if (game.cardPriceQ === 0 || game.gameType === 'tier-free') {
-                                    if (activeGame?.id === game.id || activeGame?.scheduledGameId === game.id) {
-                                      const regEl = document.querySelector('.gamer-register-card');
-                                      if (regEl) {
-                                        regEl.scrollIntoView({ behavior: 'smooth' });
-                                      } else {
-                                        navigate('/juegos/bingo');
-                                      }
-                                    } else {
-                                      navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=tier-free`);
-                                    }
+                                    navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=tier-free`);
                                   } else {
                                     navigate(`/juegos/bingo/boletos?scheduledGame=${game.id}&tier=${game.gameType || 'tier-25'}`);
                                   }
@@ -5712,6 +5776,47 @@ export default function BingoHub() {
                     </div>
                   );
                 })()}
+
+                {/* ACCESO RÁPIDO A CARTÓN ACTIVO SI EXISTE EN ESTE DISPOSITIVO */}
+                {savedCardId && (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(168, 85, 247, 0.18) 0%, rgba(13, 6, 28, 0.95) 100%)',
+                    border: '1.5px solid #a855f7',
+                    borderRadius: '16px',
+                    padding: '12px 16px',
+                    marginBottom: '16px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '12px',
+                    flexWrap: 'wrap'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <span style={{ fontSize: '1.4rem' }}>🎮</span>
+                      <div>
+                        <strong style={{ color: '#ffffff', fontSize: '0.88rem', display: 'block' }}>Tienes un Cartón Activo</strong>
+                        <span style={{ color: '#cbd5e1', fontSize: '0.76rem' }}>Sesión detectada en este dispositivo.</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button 
+                        type="button"
+                        className="cyber-btn-primary animate-pulse" 
+                        onClick={() => navigate(`/juegos/bingo/carton/${savedCardId}`)}
+                        style={{ padding: '8px 16px', fontSize: '0.82rem', borderRadius: '10px' }}
+                      >
+                        🎮 Entrar a Mi Cartón
+                      </button>
+                      <button 
+                        type="button"
+                        onClick={handleDiscardCard}
+                        style={{ background: 'transparent', border: 'none', color: '#94a3b8', fontSize: '0.74rem', cursor: 'pointer' }}
+                      >
+                        Descartar
+                      </button>
+                    </div>
+                  </div>
+                )}
 
                 {/* 3. COMPARTIR ENLACE DE LA SALA CON BOTONES CENTRADOS */}
                 <div style={{
@@ -5802,283 +5907,9 @@ export default function BingoHub() {
                     </a>
                   </div>
                 </div>
-
-                {/* Alertas de Pase de Juego Verificado o Errores de Pase */}
-                {tokenError && (
-                  <div style={{
-                    background: 'rgba(239, 68, 68, 0.2)',
-                    border: '1.5px solid #ef4444',
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    marginBottom: '16px',
-                    color: '#fca5a5',
-                    fontSize: '0.84rem',
-                    fontWeight: 'bold',
-                    textAlign: 'center'
-                  }}>
-                    {tokenError}
-                  </div>
-                )}
-
-                {tokenSuccessMsg && (
-                  <div style={{
-                    background: 'rgba(16, 185, 129, 0.2)',
-                    border: '1.5px solid #10b981',
-                    borderRadius: '12px',
-                    padding: '12px 16px',
-                    marginBottom: '16px',
-                    color: '#34d399',
-                    fontSize: '0.84rem',
-                    fontWeight: 'bold',
-                    textAlign: 'center'
-                  }}>
-                    🎉 {tokenSuccessMsg}
-                  </div>
-                )}
-
-                {/* Check if user already has a saved card in localStorage (BOTONES CENTRADOS) */}
-                {savedCardId ? (
-                  <div className="gamer-register-card" style={{ textAlign: 'center' }}>
-                    <span className="gamer-register-icon">🎮</span>
-                    <h3>CARTÓN ACTIVO DETECTADO</h3>
-                    <p style={{ margin: '10px 0 20px' }}>
-                      Hemos detectado una sesión de juego anterior en este dispositivo. Puedes regresar de inmediato a tu cartón.
-                    </p>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', maxWidth: '320px', margin: '0 auto' }}>
-                      <button 
-                        className="cyber-btn-primary animate-pulse" 
-                        onClick={() => navigate(`/juegos/bingo/carton/${savedCardId}`)}
-                        style={{ width: '100%', padding: '12px 20px' }}
-                      >
-                        🎮 ENTRAR A MI CARTÓN
-                      </button>
-
-                      <button 
-                        className="cyber-badge cyber-badge-magenta"
-                        onClick={handleDiscardCard}
-                        style={{ border: 'none', background: 'rgba(239, 68, 68, 0.1)', cursor: 'pointer', padding: '8px 16px', fontSize: '0.75rem', width: '100%' }}
-                      >
-                        🗑️ DESCARTAR Y GENERAR NUEVO CARTÓN
-                      </button>
-                    </div>
-                  </div>
-                ) : accessTokenData ? (
-                  /* Caso 2: El usuario cuenta con un Pase de Acceso verificado (Compra confirmada o link de amigo) */
-                  <div className="gamer-register-card" style={{ borderColor: '#10b981', boxShadow: '0 0 35px rgba(16, 185, 129, 0.35)' }}>
-                    <span className="gamer-register-icon">🎟️</span>
-                    <h3 style={{ color: '#34d399' }}>¡PASE DE JUEGO VERIFICADO!</h3>
-                    <p style={{ margin: '8px 0 16px', fontSize: '0.88rem', color: '#cbd5e1' }}>
-                      Tu pase de juego ha sido reconocido. Todo está listo para que generes tus cartones oficiales y te conectes a la sala en vivo.
-                    </p>
-
-                    <div style={{
-                      background: 'rgba(0, 0, 0, 0.35)',
-                      border: '1px solid rgba(16, 185, 129, 0.3)',
-                      borderRadius: '14px',
-                      padding: '14px 16px',
-                      marginBottom: '18px',
-                      textAlign: 'left'
-                    }}>
-                      <div style={{ fontSize: '0.9rem', color: '#ffffff', marginBottom: '6px' }}>
-                        <strong>👤 Jugador:</strong> <span style={{ color: '#38bdf8' }}>{accessTokenData.playerName}</span>
-                      </div>
-                      {accessTokenData.playerWhatsapp && (
-                        <div style={{ fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '6px' }}>
-                          <strong>📞 Contacto:</strong> {accessTokenData.playerWhatsapp}
-                        </div>
-                      )}
-                      <div style={{ fontSize: '0.85rem', color: '#34d399' }}>
-                        <strong>🎟️ Cartones:</strong> {accessTokenData.quantity} {accessTokenData.quantity === 1 ? 'Cartón Oficial' : 'Cartones Oficiales'} ({accessTokenData.tierName || 'Bingotenango'})
-                      </div>
-                    </div>
-
-                    {regError && (
-                      <div style={{ color: '#f87171', fontSize: '0.85rem', marginBottom: '14px', fontWeight: 'bold' }}>
-                        {regError}
-                      </div>
-                    )}
-
-                    <button 
-                      className="cyber-btn-primary animate-pulse" 
-                      onClick={handleActivatePass}
-                      disabled={isRegistering}
-                      style={{
-                        width: '100%',
-                        padding: '14px 20px',
-                        fontSize: '1rem',
-                        fontWeight: 'bold',
-                        borderRadius: '14px',
-                        cursor: 'pointer',
-                        letterSpacing: '0.5px'
-                      }}
-                    >
-                      {isRegistering ? 'GENERANDO TUS CARTONES...' : '🎮 ACTIVAR CARTÓN Y JUGAR'}
-                    </button>
-                  </div>
-                ) : (activeGame.cardPriceQ === 0 || activeGame.gameType === 'tier-free' || activeGame.customization?.accessConfig?.mode === 'free') ? (
-                  /* Caso 3: Partida Gratuita / Prueba en vivo - Entrada directa desde la sala para cualquiera */
-                  <div className="gamer-register-card" style={{
-                    borderColor: '#10b981',
-                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(13, 6, 28, 0.98) 100%)',
-                    boxShadow: '0 0 35px rgba(16, 185, 129, 0.35)',
-                    textAlign: 'center'
-                  }}>
-                    <span className="gamer-register-icon" style={{ filter: 'drop-shadow(0 0 15px #10b981)' }}>🎁</span>
-                    <div style={{ display: 'inline-block', background: 'rgba(16, 185, 129, 0.2)', color: '#34d399', border: '1px solid #10b981', borderRadius: '20px', padding: '4px 14px', fontSize: '0.75rem', fontWeight: 900, letterSpacing: '1px', textTransform: 'uppercase', marginBottom: '8px' }}>
-                      PARTIDA GRATUITA • ACCESO LIBRE
-                    </div>
-                    <h3 style={{ color: '#ffffff', margin: '4px 0 8px', fontSize: '1.25rem' }}>
-                      ¡ÚNETE Y JUEGA EN VIVO!
-                    </h3>
-                    <p style={{ margin: '0 auto 16px', fontSize: '0.84rem', color: '#cbd5e1', maxWidth: '380px', lineHeight: 1.4 }}>
-                      Esta partida es de demostración o acceso libre (Q0.00). Ingresa tu nombre o apodo para generar tu cartón de juego y comenzar de inmediato.
-                    </p>
-
-                    <form onSubmit={handleJoinFreeGame} style={{ maxWidth: '340px', margin: '0 auto', textAlign: 'left' }}>
-                      <div style={{ marginBottom: '12px' }}>
-                        <label style={{ display: 'block', fontSize: '0.74rem', color: '#94a3b8', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase' }}>
-                          👤 Tu Nombre o Nickname *
-                        </label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Ej. Sofia / Carlos Gamer"
-                          value={freePlayerName}
-                          onChange={(e) => setFreePlayerName(e.target.value)}
-                          style={{
-                            width: '100%',
-                            padding: '12px 14px',
-                            background: 'rgba(0, 0, 0, 0.6)',
-                            border: '1.5px solid rgba(16, 185, 129, 0.5)',
-                            borderRadius: '12px',
-                            color: '#ffffff',
-                            fontSize: '0.92rem',
-                            outline: 'none',
-                            boxSizing: 'border-box'
-                          }}
-                        />
-                      </div>
-
-                      {/* Teléfono opcional si el anfitrión configuró el campo */}
-                      {activeGame.customization?.accessConfig?.formFields?.phone?.enabled && (
-                        <div style={{ marginBottom: '14px' }}>
-                          <label style={{ display: 'block', fontSize: '0.74rem', color: '#94a3b8', fontWeight: 'bold', marginBottom: '4px', textTransform: 'uppercase' }}>
-                            📱 Teléfono / WhatsApp {activeGame.customization.accessConfig.formFields.phone.required ? '*' : '(Opcional)'}
-                          </label>
-                          <input
-                            type="tel"
-                            required={activeGame.customization.accessConfig.formFields.phone.required}
-                            placeholder="Ej. 50212345678"
-                            value={freePlayerPhone}
-                            onChange={(e) => setFreePlayerPhone(e.target.value)}
-                            style={{
-                              width: '100%',
-                              padding: '12px 14px',
-                              background: 'rgba(0, 0, 0, 0.6)',
-                              border: '1.5px solid rgba(16, 185, 129, 0.4)',
-                              borderRadius: '12px',
-                              color: '#ffffff',
-                              fontSize: '0.92rem',
-                              outline: 'none',
-                              boxSizing: 'border-box'
-                            }}
-                          />
-                        </div>
-                      )}
-
-                      {freeJoinError && (
-                        <div style={{ color: '#f87171', fontSize: '0.82rem', marginBottom: '12px', fontWeight: 'bold', textAlign: 'center' }}>
-                          {freeJoinError}
-                        </div>
-                      )}
-
-                      <button
-                        type="submit"
-                        disabled={isRegistering}
-                        className="cyber-btn-primary animate-pulse"
-                        style={{
-                          width: '100%',
-                          padding: '14px 20px',
-                          fontSize: '1rem',
-                          fontWeight: 900,
-                          borderRadius: '12px',
-                          cursor: 'pointer',
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                          border: '1px solid #34d399',
-                          boxShadow: '0 4px 20px rgba(16, 185, 129, 0.4)'
-                        }}
-                      >
-                        {isRegistering ? 'GENERANDO CARTÓN...' : '🎮 ENTRAR Y JUGAR AHORA'}
-                      </button>
-                    </form>
-                  </div>
-                ) : (
-                  /* Caso 4: Partida de Pago sin pase verificado */
-                  <div className="gamer-register-card" style={{
-                    borderColor: 'rgba(168, 85, 247, 0.4)',
-                    background: 'rgba(13, 6, 28, 0.85)',
-                    textAlign: 'center'
-                  }}>
-                    <span className="gamer-register-icon">🎟️</span>
-                    <h3 style={{ color: '#ffffff', margin: '4px 0 8px', fontSize: '1.15rem' }}>
-                      SALA EN VIVO • ADQUIERE TU CARTÓN
-                    </h3>
-                    <p style={{ margin: '0 auto 16px', fontSize: '0.84rem', color: '#cbd5e1', maxWidth: '360px', lineHeight: 1.4 }}>
-                      Para participar por los premios en esta ronda oficial necesitas un cartón registrado.
-                    </p>
-
-                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px', maxWidth: '320px', margin: '0 auto' }}>
-                      <button
-                        type="button"
-                        onClick={() => navigate('/juegos/bingo/boletos')}
-                        className="cyber-btn-primary animate-pulse"
-                        style={{ width: '100%', padding: '12px 20px', fontSize: '0.95rem' }}
-                      >
-                        🎟️ COMPRAR CARTÓN (Q{activeGame.cardPriceQ || 25}.00)
-                      </button>
-
-                      {/* Canje de token manual si tiene uno */}
-                      <form onSubmit={handleManualTokenSubmit} style={{ width: '100%', marginTop: '6px' }}>
-                        <div style={{ display: 'flex', gap: '6px' }}>
-                          <input
-                            type="text"
-                            placeholder="Tengo un Pase (tkn_...)"
-                            value={manualTokenInput}
-                            onChange={e => setManualTokenInput(e.target.value)}
-                            style={{
-                              flex: 1,
-                              padding: '8px 10px',
-                              background: 'rgba(0,0,0,0.5)',
-                              border: '1px solid rgba(168, 85, 247, 0.4)',
-                              borderRadius: '8px',
-                              color: '#fff',
-                              fontSize: '0.78rem'
-                            }}
-                          />
-                          <button
-                            type="submit"
-                            style={{
-                              background: 'rgba(168, 85, 247, 0.3)',
-                              border: '1px solid #a855f7',
-                              color: '#fff',
-                              borderRadius: '8px',
-                              padding: '8px 12px',
-                              fontSize: '0.78rem',
-                              fontWeight: 'bold',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            Canjear
-                          </button>
-                        </div>
-                      </form>
-                    </div>
-                  </div>
-                )}
               </div>
-            </div>
 
+            </div>
           </div>
         )}
       </section>

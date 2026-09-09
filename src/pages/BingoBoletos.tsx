@@ -198,6 +198,41 @@ const BingoBoletos: React.FC = () => {
     return () => clearInterval(interval);
   }, [selectedScheduledGame, activeGame]);
 
+  // Lista unificada de todas las partidas disponibles (programadas + juego activo si no está duplicado)
+  const allAvailableGames: BingoScheduledGame[] = [...scheduledGames];
+  if (activeGame && !scheduledGames.some(g => g.id === activeGame.id || (activeGame.scheduledGameId && g.id === activeGame.scheduledGameId))) {
+    allAvailableGames.unshift({
+      id: activeGame.id,
+      title: activeGame.title || 'Gran Ronda Oficial de Bingotenango',
+      scheduledAt: activeGame.nextRoundTime || Date.now(),
+      cardPriceQ: activeGame.cardPriceQ ?? (activeGame.gameType === 'tier-free' ? 0 : 25),
+      gameType: activeGame.gameType || (activeGame.cardPriceQ === 0 ? 'tier-free' : 'tier-25'),
+      status: 'live',
+      prizeHighlight: activeGame.currentPrizeTitle || 'Premios en vivo',
+      tierName: activeGame.cardPriceQ === 0 ? 'Partida Gratuita' : 'Cartón Oficial',
+      totalCardsLimit: 100,
+      soldCardsCount: 0,
+      createdAt: Date.now()
+    } as BingoScheduledGame);
+  }
+
+  // Sincronizar selección de partida por URL o primera opción disponible
+  useEffect(() => {
+    if (allAvailableGames.length > 0) {
+      if (urlScheduledGameId) {
+        const matched = allAvailableGames.find(g => g.id === urlScheduledGameId);
+        if (matched) {
+          setSelectedScheduledGame(matched);
+          return;
+        }
+      }
+      setSelectedScheduledGame(prev => {
+        if (prev && allAvailableGames.some(g => g.id === prev.id)) return prev;
+        return allAvailableGames[0];
+      });
+    }
+  }, [allAvailableGames.length, urlScheduledGameId]);
+
   // Determinar el tier y precio oficial fijado para esta partida
   const currentPriceQ = selectedScheduledGame?.cardPriceQ !== undefined 
     ? selectedScheduledGame.cardPriceQ 
@@ -493,9 +528,9 @@ const BingoBoletos: React.FC = () => {
               </p>
             </div>
 
-            {scheduledGames.length > 0 ? (
+            {allAvailableGames.length > 0 ? (
               <div className="partidas-selection-grid">
-                {scheduledGames.map((game) => {
+                {allAvailableGames.map((game) => {
                   const isSelected = selectedScheduledGame?.id === game.id;
                   const isFree = (game.cardPriceQ === 0);
                   const isLive = (game.status === 'live');
