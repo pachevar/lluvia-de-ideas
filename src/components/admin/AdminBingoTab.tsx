@@ -804,9 +804,10 @@ export default function AdminBingoTab() {
 
     const cleanPhone = (token.playerWhatsapp || '').replace(/\D/g, '');
     if (cleanPhone.length < 8) {
-      await showAlert("Este pase no tiene un número de WhatsApp válido registrado.", "Sin Teléfono", "⚠️");
+      await showAlert("Este pase no tiene un número de teléfono válido registrado.", "Sin Teléfono", "⚠️");
       return;
     }
+    const finalPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
 
     const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
     const text = encodeURIComponent(
@@ -818,7 +819,7 @@ export default function AdminBingoTab() {
       `⚠️ Este enlace es de un solo uso para tu dispositivo. Ábrelo al iniciar la partida para ingresar directamente a la sala. ¡Muchos éxitos!`
     );
 
-    window.open(`https://wa.me/502${cleanPhone}?text=${text}`, '_blank');
+    window.open(`https://wa.me/${finalPhone}?text=${text}`, '_blank');
 
     try {
       await updateDoc(doc(db, 'bingo_access_tokens', token.id), {
@@ -2273,16 +2274,20 @@ export default function AdminBingoTab() {
                           </td>
                           <td>
                             <strong style={{ display: 'block', color: '#0f172a' }}>{token.playerName || 'Jugador'}</strong>
-                            {cleanPhone ? (
-                              <a
-                                href={`https://wa.me/502${cleanPhone}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{ fontSize: '0.72rem', color: '#16a34a', textDecoration: 'none' }}
-                              >
-                                📱 +502 {cleanPhone}
-                              </a>
-                            ) : (
+                            {cleanPhone ? (() => {
+                              const finalPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+                              const displayDigits = cleanPhone.startsWith('502') ? cleanPhone.substring(3) : cleanPhone;
+                              return (
+                                <a
+                                  href={`https://wa.me/${finalPhone}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{ fontSize: '0.72rem', color: '#16a34a', textDecoration: 'none' }}
+                                >
+                                  📱 +502 {displayDigits}
+                                </a>
+                              );
+                            })() : (
                               <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Sin WhatsApp</span>
                             )}
                           </td>

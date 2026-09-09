@@ -1054,17 +1054,20 @@ const BingoBoletosConfirmacion: React.FC = () => {
               )}
 
               {/* BOTÓN SECUNDARIO PARA ENVIAR AL WHATSAPP DEL COMPRADOR */}
-              {orderData?.playerWhatsapp && (
-                <a
-                  href={`https://wa.me/502${orderData.playerWhatsapp.replace(/\D/g, '')}?text=${encodeURIComponent(
-                    `¡Hola ${orderData?.playerName || 'Jugador'}! 🎟️ Comprobante de boletos de Bingotenango:\n\n` +
-                    `Tipo: ${isGiftMode ? `${orderData?.quantity} Links para Contactos` : `${orderData?.quantity} Cartón(es) Personal`}\n` +
-                    `Total: Q${orderData?.totalPriceQ || 25}.00\n\n` +
-                    (accessToken ? `Enlace de acceso: ${window.location.origin}/juegos/bingo?access=${accessToken.id}\n\n` : '') +
-                    `¡Buena suerte en la partida en vivo!`
-                  )}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
+              {orderData?.playerWhatsapp && (() => {
+                const rawDigits = orderData.playerWhatsapp.replace(/\D/g, '');
+                const finalPhone = rawDigits.startsWith('502') ? rawDigits : `502${rawDigits}`;
+                return (
+                  <a
+                    href={`https://wa.me/${finalPhone}?text=${encodeURIComponent(
+                      `¡Hola ${orderData?.playerName || 'Jugador'}! 🎟️ Comprobante de boletos de Bingotenango:\n\n` +
+                      `Tipo: ${isGiftMode ? `${orderData?.quantity} Links para Contactos` : `${orderData?.quantity} Cartón(es) Personal`}\n` +
+                      `Total: Q${orderData?.totalPriceQ ?? orderData?.priceQ ?? (tierId === 'tier-free' ? 0 : 25)}.00\n\n` +
+                      (accessToken ? `Enlace de acceso: ${window.location.origin}/juegos/bingo?access=${accessToken.id}\n\n` : '') +
+                      `¡Buena suerte en la partida en vivo!`
+                    )}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -1085,7 +1088,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
                 >
                   <span>📲</span> Guardar Comprobante en mi WhatsApp
                 </a>
-              )}
+              );})()}
 
         </div>
 

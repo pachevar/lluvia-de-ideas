@@ -1657,7 +1657,8 @@ export default function BingoHub() {
       `⚠️ Este enlace es de un solo uso para tu dispositivo. Al iniciar la partida podrás jugar directamente. ¡Mucha suerte!`
     );
 
-    window.open(`https://wa.me/502${cleanPhone}?text=${text}`, '_blank');
+    const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+    window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');
 
     try {
       const nextCount = (token.linkSentCount || 0) + 1;
@@ -1745,7 +1746,8 @@ export default function BingoHub() {
       `Ábrelo en tu teléfono para jugar en tiempo real junto con la tómbola en vivo. ¡Muchos éxitos!`
     );
 
-    window.open(`https://wa.me/502${cleanPhone}?text=${text}`, '_blank');
+    const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+    window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');
 
     try {
       const nextCount = (card.linkSentCount || 0) + 1;
@@ -1802,7 +1804,8 @@ export default function BingoHub() {
           `🎮 ENLACE OFICIAL DE TU CARTÓN:\n${playUrl}\n\n` +
           `Ábrelo en tu teléfono para ingresar y marcar tus números en vivo durante la partida. ¡Mucha suerte!`
         );
-        window.open(`https://wa.me/502${cleanPhone}?text=${text}`, '_blank');
+        const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+    window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');
         await showAlert(`¡Cobro en efectivo de Q${cashPaymentAmount} confirmado exitosamente y enlace enviado a ${cashPlayerName.trim()} por WhatsApp! 🚀`, "Cobro Confirmado", "✅");
       } else {
         // CASO B: Registrar nuevo cliente que paga en efectivo en taquilla/mesa
@@ -1882,7 +1885,8 @@ export default function BingoHub() {
           `🔑 ENLACE EXCLUSIVO DE ACCESO:\n${playUrl}\n\n` +
           `Ábrelo en tu teléfono para ingresar a la sala y activar tus cartones oficiales. ¡Mucha suerte!`
         );
-        window.open(`https://wa.me/502${cleanPhone}?text=${text}`, '_blank');
+        const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+    window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');
         await showAlert(`¡Pase Único (${selectedQty} cartones) generado y enviado exitosamente por WhatsApp a ${cashPlayerName.trim()}! 🚀`, "Pase Despachado", "✅");
       }
 
@@ -4904,16 +4908,21 @@ export default function BingoHub() {
                                         {/* Jugador */}
                                         <td style={{ padding: '10px 14px' }}>
                                           <strong style={{ color: '#fff', display: 'block', fontSize: '0.88rem' }}>{token.playerName}</strong>
-                                          {token.playerWhatsapp ? (
-                                            <a
-                                              href={`https://wa.me/502${token.playerWhatsapp.replace(/\D/g, '')}`}
-                                              target="_blank"
-                                              rel="noreferrer"
-                                              style={{ color: '#4ade80', fontSize: '0.74rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
-                                            >
-                                              <span>📱</span> +502 {token.playerWhatsapp}
-                                            </a>
-                                          ) : (
+                                          {token.playerWhatsapp ? (() => {
+                                            const rawDigits = token.playerWhatsapp.replace(/\D/g, '');
+                                            const finalPhone = rawDigits.startsWith('502') ? rawDigits : `502${rawDigits}`;
+                                            const displayDigits = rawDigits.startsWith('502') ? rawDigits.substring(3) : rawDigits;
+                                            return (
+                                              <a
+                                                href={`https://wa.me/${finalPhone}`}
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                style={{ color: '#4ade80', fontSize: '0.74rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                              >
+                                                <span>📱</span> +502 {displayDigits}
+                                              </a>
+                                            );
+                                          })() : (
                                             <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Sin teléfono</span>
                                           )}
                                         </td>

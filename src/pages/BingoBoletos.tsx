@@ -292,7 +292,7 @@ const BingoBoletos: React.FC = () => {
     }
 
     if (playerWhatsappDigits.trim().length !== 8) {
-      setErrorMessage('Por favor ingresa los 8 dígitos de tu número de WhatsApp de Guatemala (ej. 5555 1234).');
+      setErrorMessage('Por favor ingresa los 8 dígitos de tu número de teléfono (ej. 5555 1234).');
       return;
     }
 
@@ -733,8 +733,8 @@ const BingoBoletos: React.FC = () => {
               </h2>
               <p className="step-main-desc">
                 {purchaseMode === 'personal' 
-                  ? 'Ingresa tu nombre y tu número de WhatsApp para generar tu pase de juego en vivo de forma inmediata (1 cartón por dispositivo móvil).' 
-                  : 'A este WhatsApp te enviaremos el enlace independiente para que tu contacto ingrese en su dispositivo móvil.'}
+                  ? 'Ingresa tu nombre y tu número de teléfono para generar tu pase de juego en vivo de forma inmediata (1 cartón por dispositivo móvil).' 
+                  : 'A este número de teléfono te enviaremos el enlace independiente para que tu contacto ingrese en su dispositivo móvil.'}
               </p>
             </div>
 
@@ -782,10 +782,10 @@ const BingoBoletos: React.FC = () => {
                 />
               </div>
 
-              {/* CAMPO WHATSAPP CON PREFIJO +502 FIJO NO EDITABLE */}
+              {/* CAMPO NÚMERO DE TELÉFONO CON PREFIJO +502 FIJO NO EDITABLE */}
               <div className="form-group-guided">
-                <label htmlFor="playerWhatsapp">
-                  WhatsApp para Entrega en Guatemala *
+                <label htmlFor="playerPhone">
+                  Número de Teléfono *
                 </label>
                 
                 <div className="phone-prefix-input-group">
@@ -795,7 +795,7 @@ const BingoBoletos: React.FC = () => {
                     <span className="lock-icon" aria-label="Fijo">🔒</span>
                   </div>
                   <input 
-                    id="playerWhatsapp"
+                    id="playerPhone"
                     type="tel" 
                     inputMode="numeric"
                     className="guided-input phone-input-digits" 
@@ -807,12 +807,12 @@ const BingoBoletos: React.FC = () => {
                   />
                 </div>
                 <span className="field-hint-text">
-                  Ingresa únicamente los 8 dígitos de tu número celular en Guatemala. El código <strong>+502</strong> ya está fijado automáticamente.
+                  Ingresa únicamente los 8 dígitos de tu número de teléfono. El código de país <strong>+502</strong> se añade automáticamente.
                 </span>
               </div>
 
               <div className="form-group-guided">
-                <label htmlFor="playerEmail">Correo Electrónico (Opcional, para comprobante bancario)</label>
+                <label htmlFor="playerEmail">Correo Electrónico (Opcional, para comprobante)</label>
                 <input 
                   id="playerEmail"
                   type="email" 
