@@ -75,13 +75,12 @@ const CARD_TIERS_MAP: Record<string, CardTier> = {
   }
 };
 
-type WizardStep = 1 | 2 | 3 | 4;
+type WizardStep = 1 | 2 | 3;
 
 const WIZARD_STEPS = [
   { num: 1 as const, title: 'Partida', icon: '🎮', label: '1. Partida' },
   { num: 2 as const, title: 'Modalidad', icon: '👥', label: '2. Modalidad' },
-  { num: 3 as const, title: 'Cartones', icon: '🎟️', label: '3. Cartones' },
-  { num: 4 as const, title: 'Entrega y Pago', icon: '💳', label: '4. Entrega y Pago' },
+  { num: 3 as const, title: 'Entrega y Pago', icon: '💳', label: '3. Entrega y Pago' },
 ];
 
 const BingoBoletos: React.FC = () => {
@@ -89,12 +88,12 @@ const BingoBoletos: React.FC = () => {
   const [searchParams] = useSearchParams();
   const urlScheduledGameId = searchParams.get('scheduledGame');
 
-  // Estado del flujo guiado (Paso 1, 2, 3, 4)
+  // Estado del flujo guiado (Paso 1, 2, 3)
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
 
-  // Modo de compra guiado: 'personal' (1 a 3 cartones) o 'gift' (1 a 10 links)
+  // Modo de compra guiado: 'personal' (1 cartón en este dispositivo) o 'gift' (1 link para un contacto)
   const [purchaseMode, setPurchaseMode] = useState<'personal' | 'gift'>('personal');
-  const [quantity, setQuantity] = useState<number>(1);
+  const quantity = 1; // Fijado a 1 cartón por dispositivo móvil
   const [playerName, setPlayerName] = useState('');
   
   // WhatsApp: Solo los 8 dígitos locales de Guatemala (el +502 es fijo y no editable)
@@ -250,12 +249,9 @@ const BingoBoletos: React.FC = () => {
     icon: currentPriceQ === 0 ? '🎁' : '🎟️'
   };
 
-  // Ajustar cantidad al alternar entre modos
+  // Alternar entre modos de compra
   const handleModeChange = (mode: 'personal' | 'gift') => {
     setPurchaseMode(mode);
-    if (mode === 'personal' && quantity > 3) {
-      setQuantity(3);
-    }
   };
 
   // Manejador del campo de WhatsApp con +502 preestablecido y 8 dígitos
@@ -519,7 +515,7 @@ const BingoBoletos: React.FC = () => {
         {currentStep === 1 && (
           <section className="boletos-step-container">
             <div className="step-header-wrap">
-              <span className="step-badge-indicator">PASO 1 DE 4</span>
+              <span className="step-badge-indicator">PASO 1 DE 3</span>
               <h2 className="step-main-title">
                 1. ESCOGE TU PARTIDA
               </h2>
@@ -651,12 +647,12 @@ const BingoBoletos: React.FC = () => {
         {currentStep === 2 && (
           <section className="boletos-step-container">
             <div className="step-header-wrap">
-              <span className="step-badge-indicator">PASO 2 DE 4</span>
+              <span className="step-badge-indicator">PASO 2 DE 3</span>
               <h2 className="step-main-title">
                 2. ¿CÓMO DESEAS PARTICIPAR?
               </h2>
               <p className="step-main-desc">
-                Elige si jugarás tú mismo en la sala desde este dispositivo o si deseas repartir enlaces independientes a tus contactos.
+                Elige si jugarás tú mismo en la sala desde este dispositivo o si deseas adquirir un enlace independiente para tu contacto.
               </p>
             </div>
 
@@ -683,8 +679,8 @@ const BingoBoletos: React.FC = () => {
                 <div className="mode-card-icon">👤</div>
                 <div className="mode-card-body">
                   <h4>Para mí (Jugar en vivo)</h4>
-                  <p>Jugarás tú mismo desde este celular o computadora. Recibirás tu pase con tus cartones listos para marcar en pantalla.</p>
-                  <span className="mode-limit-badge">De 1 a 3 cartones</span>
+                  <p>Jugarás tú mismo desde este celular o computadora. Recibirás tu pase con tu cartón listo para marcar en pantalla.</p>
+                  <span className="mode-limit-badge">1 cartón por dispositivo móvil</span>
                 </div>
               </div>
 
@@ -698,9 +694,9 @@ const BingoBoletos: React.FC = () => {
                 </div>
                 <div className="mode-card-icon">🎁</div>
                 <div className="mode-card-body">
-                  <h4>Para repartir a contactos</h4>
-                  <p>Comprarás links independientes para enviar a tus amigos o familiares por WhatsApp para que cada uno juegue en su propio teléfono.</p>
-                  <span className="mode-limit-badge gift-badge">De 1 a 10 links</span>
+                  <h4>Para regalar a un contacto</h4>
+                  <p>Comprarás 1 link de acceso independiente para enviar a un amigo o familiar por WhatsApp para que juegue en su propio teléfono móvil.</p>
+                  <span className="mode-limit-badge gift-badge">1 link para su dispositivo</span>
                 </div>
               </div>
             </div>
@@ -719,169 +715,26 @@ const BingoBoletos: React.FC = () => {
                 className="btn-step-next"
                 onClick={() => goToStep(3)}
               >
-                Continuar al Paso 3: Cantidad ➔
+                Continuar al Paso 3: Datos de Entrega ➔
               </button>
             </div>
           </section>
         )}
 
         {/* ==========================================================================
-            PASO 3: ¿CON CUÁNTOS CARTONES JUGARÁS?
+            PASO 3: DATOS DE ENTREGA Y PAGO SEGURO
             ========================================================================== */}
         {currentStep === 3 && (
           <section className="boletos-step-container">
             <div className="step-header-wrap">
-              <span className="step-badge-indicator">PASO 3 DE 4</span>
+              <span className="step-badge-indicator">PASO 3 DE 3</span>
               <h2 className="step-main-title">
-                {purchaseMode === 'personal' ? '3. ¿CON CUÁNTOS CARTONES JUGARÁS?' : '3. ¿CUÁNTOS LINKS PARA CONTACTOS NECESITAS?'}
+                3. DATOS DE ENTREGA Y PAGO SEGURO
               </h2>
               <p className="step-main-desc">
                 {purchaseMode === 'personal' 
-                  ? '💡 Recomendación: de 1 a 3 cartones es ideal para marcar cómodo sin perder números en vivo.'
-                  : '💡 Cada link es 100% independiente para que un contacto diferente ingrese a su propio juego.'}
-              </p>
-            </div>
-
-            {/* Resumen de partida y modalidad */}
-            <div className="step-current-game-pill">
-              <span className="pill-item-game">
-                🎮 <strong>{selectedScheduledGame?.title || activeGame?.title || 'Partida Oficial'}</strong>
-              </span>
-              <span className="pill-sep">•</span>
-              <span className="pill-item-mode">
-                Modo: <strong>{purchaseMode === 'personal' ? 'Para mí' : 'Para repartir'}</strong>
-              </span>
-            </div>
-
-            <div className="quantity-guided-card">
-              <div className="quantity-header">
-                <div>
-                  <h3 className="quantity-title">
-                    Selecciona tu cantidad
-                  </h3>
-                  <p className="quantity-help-text">
-                    {purchaseMode === 'personal' ? 'Elige cuántos cartones deseas tener en pantalla simultáneamente.' : 'Elige cuántos enlaces independientes deseas adquirir.'}
-                  </p>
-                </div>
-                
-                <div className="quantity-summary-badge">
-                  Total: <strong>{currentPriceQ === 0 ? 'Q0.00 (Gratis)' : `Q${totalPriceQ}.00`}</strong>
-                </div>
-              </div>
-
-              {/* MODO PERSONAL: SELECTOR DE 1 A 3 CARTONES */}
-              {purchaseMode === 'personal' ? (
-                <div className="personal-stepper-grid">
-                  {[1, 2, 3].map((qty) => (
-                    <button
-                      key={qty}
-                      type="button"
-                      className={`personal-qty-btn ${quantity === qty ? 'active' : ''}`}
-                      onClick={() => setQuantity(qty)}
-                    >
-                      <span className="qty-number">{qty}</span>
-                      <span className="qty-label">{qty === 1 ? 'Cartón' : 'Cartones'}</span>
-                      <span className="qty-price">
-                        {currentPriceQ === 0 ? 'Q0.00 (Gratis)' : `Q${qty * currentPriceQ}.00`}
-                      </span>
-                    </button>
-                  ))}
-                </div>
-              ) : (
-                /* MODO REPARTIR: SELECTOR DE 1 A 10 LINKS */
-                <div className="gift-stepper-wrap">
-                  <div className="stepper-controls-row">
-                    <button 
-                      type="button" 
-                      className="stepper-action-btn"
-                      onClick={() => setQuantity(prev => Math.max(1, prev - 1))}
-                      disabled={quantity <= 1}
-                    >
-                      −
-                    </button>
-                    <div className="stepper-display">
-                      <span className="stepper-val">{quantity}</span>
-                      <span className="stepper-lbl">{quantity === 1 ? 'Link de Regalo' : 'Links para Contactos'}</span>
-                    </div>
-                    <button 
-                      type="button" 
-                      className="stepper-action-btn"
-                      onClick={() => setQuantity(prev => Math.min(10, prev + 1))}
-                      disabled={quantity >= 10}
-                    >
-                      +
-                    </button>
-                  </div>
-
-                  <div className="gift-quick-chips">
-                    {[1, 2, 3, 5, 10].map((num) => (
-                      <button
-                        key={num}
-                        type="button"
-                        className={`gift-chip ${quantity === num ? 'active' : ''}`}
-                        onClick={() => setQuantity(num)}
-                      >
-                        {num} {num === 1 ? 'link' : 'links'}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* TARJETA DE RESUMEN DE PRECIO */}
-              <div className="step-pricing-detail-box">
-                <div className="pricing-row">
-                  <span>Precio unitario por cartón:</span>
-                  <strong>{currentPriceQ === 0 ? 'Q0.00 (Entrada Gratuita)' : `Q${currentPriceQ}.00`}</strong>
-                </div>
-                <div className="pricing-row">
-                  <span>Cantidad seleccionada:</span>
-                  <strong>{quantity} {quantity === 1 ? (purchaseMode === 'personal' ? 'cartón' : 'link') : (purchaseMode === 'personal' ? 'cartones' : 'links')}</strong>
-                </div>
-                <div className="pricing-divider" />
-                <div className="pricing-row total-highlight">
-                  <span>Total estimado a pagar:</span>
-                  <strong className={currentPriceQ === 0 ? 'free-total' : ''}>
-                    {currentPriceQ === 0 ? 'Q0.00 (Totalmente Gratis)' : `Q${totalPriceQ}.00 GTQ`}
-                  </strong>
-                </div>
-              </div>
-            </div>
-
-            {/* ACCIONES DEL PASO 3 */}
-            <div className="step-actions-footer">
-              <button 
-                type="button" 
-                className="btn-step-prev"
-                onClick={() => goToStep(2)}
-              >
-                ⬅️ Volver a Modalidad
-              </button>
-              <button 
-                type="button" 
-                className="btn-step-next"
-                onClick={() => goToStep(4)}
-              >
-                Continuar al Paso 4: Datos de Entrega ➔
-              </button>
-            </div>
-          </section>
-        )}
-
-        {/* ==========================================================================
-            PASO 4: DATOS DE ENTREGA Y PAGO SEGURO
-            ========================================================================== */}
-        {currentStep === 4 && (
-          <section className="boletos-step-container">
-            <div className="step-header-wrap">
-              <span className="step-badge-indicator">PASO 4 DE 4</span>
-              <h2 className="step-main-title">
-                4. DATOS DE ENTREGA Y PAGO SEGURO
-              </h2>
-              <p className="step-main-desc">
-                {purchaseMode === 'personal' 
-                  ? 'Ingresa tu nombre y tu número de WhatsApp para generar tu pase de juego en vivo de forma inmediata.' 
-                  : 'A este WhatsApp te enviaremos la lista completa de links para compartir con tus contactos.'}
+                  ? 'Ingresa tu nombre y tu número de WhatsApp para generar tu pase de juego en vivo de forma inmediata (1 cartón por dispositivo móvil).' 
+                  : 'A este WhatsApp te enviaremos el enlace independiente para que tu contacto ingrese en su dispositivo móvil.'}
               </p>
             </div>
 
@@ -898,11 +751,11 @@ const BingoBoletos: React.FC = () => {
                 </div>
                 <div className="order-summary-item">
                   <span className="lbl">Modalidad:</span>
-                  <span className="val">{purchaseMode === 'personal' ? '👤 Para mí (Uso Personal)' : '🎁 Para repartir a contactos'}</span>
+                  <span className="val">{purchaseMode === 'personal' ? '👤 Para mí (Uso Personal)' : '🎁 Para regalar a un contacto'}</span>
                 </div>
                 <div className="order-summary-item">
-                  <span className="lbl">Cartones / Links:</span>
-                  <span className="val font-highlight">{quantity} {quantity === 1 ? 'cartón' : 'cartones'}</span>
+                  <span className="lbl">Cartón:</span>
+                  <span className="val font-highlight">1 cartón (1 por dispositivo móvil)</span>
                 </div>
                 <div className="order-summary-divider" />
                 <div className="order-summary-item total-row">
@@ -976,7 +829,7 @@ const BingoBoletos: React.FC = () => {
                 <div className="notice-body">
                   <strong>Entrega Instantánea en Telegram o WhatsApp</strong>
                   <span>
-                    Al confirmar tu orden, recibirás tus cartones automáticamente en <strong>Telegram (@Bingotenangobot)</strong> con 1 solo toque o podrás abrirlos directo en este navegador.
+                    Al confirmar tu orden, recibirás tu cartón automáticamente en <strong>Telegram (@Bingotenangobot)</strong> con 1 solo toque o podrás abrirlo directo en este navegador.
                   </span>
                 </div>
               </div>
@@ -986,10 +839,10 @@ const BingoBoletos: React.FC = () => {
                 <button 
                   type="button" 
                   className="btn-step-prev"
-                  onClick={() => goToStep(3)}
+                  onClick={() => goToStep(2)}
                   disabled={isProcessing}
                 >
-                  ⬅️ Volver a Cantidad
+                  ⬅️ Volver a Modalidad
                 </button>
 
                 <button 
@@ -1002,8 +855,8 @@ const BingoBoletos: React.FC = () => {
                   } : undefined}
                 >
                   {isProcessing 
-                    ? (currentPriceQ === 0 ? 'Generando Boletos Gratis...' : 'Conectando Pasarela...') 
-                    : (currentPriceQ === 0 ? '🎁 Confirmar y Obtener Boletos Gratis' : `💳 Pagar Q${totalPriceQ}.00 con Recurrente`)}
+                    ? (currentPriceQ === 0 ? 'Generando Boleto Gratis...' : 'Conectando Pasarela...') 
+                    : (currentPriceQ === 0 ? '🎁 Confirmar y Obtener Boleto Gratis' : `💳 Pagar Q${totalPriceQ}.00 con Recurrente`)}
                 </button>
               </div>
 
@@ -1024,7 +877,7 @@ const BingoBoletos: React.FC = () => {
             ¿Prefieres pagar en <strong>Efectivo</strong> o necesitas ayuda personalizada?
           </p>
           <a 
-            href={`https://wa.me/50242250165?text=${encodeURIComponent(`¡Hola! Deseo comprar ${quantity} boletos para Bingotenango (Total: Q${totalPriceQ}.00). ¿Me apoyan con las opciones de pago?`)}`}
+            href={`https://wa.me/50242250165?text=${encodeURIComponent(`¡Hola! Deseo comprar 1 boleto para Bingotenango (Total: Q${totalPriceQ}.00). ¿Me apoyan con las opciones de pago?`)}`}
             target="_blank"
             rel="noopener noreferrer"
             className="btn-cash-help"
