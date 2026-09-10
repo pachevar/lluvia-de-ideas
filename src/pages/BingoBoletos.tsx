@@ -1073,6 +1073,13 @@ const BingoBoletos: React.FC = () => {
                 </div>
               )}
 
+              {/* MENSAJE DE ERROR LOCALIZADO EN EL PASO 3 */}
+              {errorMessage && (
+                <div className="checkout-error-banner" style={{ marginTop: '14px', marginBottom: '14px' }}>
+                  ⚠️ {errorMessage}
+                </div>
+              )}
+
               {/* BARRA DE ACCIONES FINALES */}
               <div className="step-actions-footer final-checkout-actions">
                 <button 
@@ -1110,7 +1117,10 @@ const BingoBoletos: React.FC = () => {
                         <button
                           type="button"
                           className="btn-alt-cash"
-                          onClick={() => setPaymentMethodChoice('efectivo')}
+                          onClick={() => {
+                            setPaymentMethodChoice('efectivo');
+                            setErrorMessage('');
+                          }}
                           disabled={isProcessing}
                         >
                           💵 O pagar Q{totalPriceQ}.00 en efectivo (con promotor cerca)
@@ -1119,17 +1129,19 @@ const BingoBoletos: React.FC = () => {
                     ) : (
                       <>
                         <button 
-                          type="button" 
-                          onClick={() => handleProceedToCashPayment()}
+                          type="submit" 
                           className="btn-guided-pay btn-guided-cash"
                           disabled={isProcessing}
                         >
-                          {isProcessing ? 'Registrando Solicitud...' : `💵 Solicitar Boleto y Pagar Q${totalPriceQ}.00 en Efectivo`}
+                          {isProcessing ? '⏳ Registrando Solicitud...' : `💵 Solicitar Boleto y Pagar Q${totalPriceQ}.00 en Efectivo`}
                         </button>
                         <button
                           type="button"
                           className="btn-alt-cash"
-                          onClick={() => setPaymentMethodChoice('recurrente')}
+                          onClick={() => {
+                            setPaymentMethodChoice('recurrente');
+                            setErrorMessage('');
+                          }}
                           disabled={isProcessing}
                         >
                           💳 O pagar en línea con Recurrente (Tarjeta)

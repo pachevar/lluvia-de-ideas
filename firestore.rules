@@ -95,6 +95,12 @@ service cloud.firestore {
       allow write: if true; // Creación y actualización por organizadores y tómbola
     }
 
+    // Cartera de clientes / perfiles de jugadores de Bingo
+    match /bingo_players/{playerId} {
+      allow read, create, update: if true;
+      allow delete: if isAdmin();
+    }
+
     // Configuración general de Bingo (pasarelas de pago, etc.)
     match /bingo_settings/{settingId} {
       allow read: if true; // Lectura pública de links y configuraciones
