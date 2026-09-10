@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
 import { useSearchParams, useNavigate } from 'react-router-dom';
-import { doc, getDoc, updateDoc, setDoc, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, getDoc, updateDoc, setDoc, onSnapshot, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../firebase';
 import type { BingoAccessToken } from '../types';
 import { generateBingoMatrix, hashBingoMatrix } from '../utils/bingoGenerator';
+import { soundEffects } from '../utils/soundEffects';
 import {
   recordPlayerPurchase,
   autoDispatchPurchaseToTelegramIfLinked
@@ -149,8 +150,9 @@ const BingoBoletosConfirmacion: React.FC = () => {
           const snap = await getDoc(ref);
           if (snap.exists()) {
             currentOrder = snap.data();
+            const isCash = currentOrder.paymentMethod === 'efectivo';
             const isFree = (currentOrder.totalPriceQ === 0) || (currentOrder.priceQ === 0) || (currentOrder.unitPriceQ === 0) || (currentOrder.gateway === 'gratis_cortesia') || (tierId === 'tier-free');
-            if ((isSuccess || isFree) && currentOrder.status !== 'completed') {
+            if (!isCash && (isSuccess || isFree) && currentOrder.status !== 'completed') {
               await updateDoc(ref, {
                 status: 'completed',
                 paidAt: Date.now()
@@ -166,6 +168,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
           const tierName = targetTier === 'tier-free' ? 'Cartón Gratuito (Prueba)' : (targetTier === 'tier-10' || targetTier === 'pkg-10' ? 'Cartón Bronce' : targetTier === 'tier-50' || targetTier === 'pkg-50' ? 'Cartón Oro' : targetTier === 'tier-100' || targetTier === 'pkg-100' ? 'Cartón Diamante VIP' : 'Cartón Plata');
           const prizeLevel = targetTier === 'tier-free' ? 'Partida Gratuita / Demostración' : (targetTier === 'tier-10' ? 'Premios Estándar' : targetTier === 'tier-50' ? 'Grandes Premios' : targetTier === 'tier-100' ? 'Premio Mayor / Pozo VIP' : 'Premios Intermedios');
           const totalQ = unitPrice * qtyParam;
+          const isCashFromParam = searchParams.get('paymentMethod') === 'efectivo';
 
           currentOrder = {
             playerName: decodeURIComponent(playerNameParam),
@@ -180,14 +183,17 @@ const BingoBoletosConfirmacion: React.FC = () => {
             totalPriceQ: totalQ,
             cartonesCount: qtyParam,
             purchaseMode: modeParam,
-            status: (isSuccess || unitPrice === 0) ? 'completed' : 'pending'
+            paymentMethod: isCashFromParam ? 'efectivo' : 'online',
+            status: (!isCashFromParam && (isSuccess || unitPrice === 0)) ? 'completed' : 'pending'
           };
         }
 
+        const isCash = currentOrder?.paymentMethod === 'efectivo';
         const isFree = (currentOrder?.totalPriceQ === 0) || (currentOrder?.priceQ === 0) || (currentOrder?.unitPriceQ === 0) || (currentOrder?.gateway === 'gratis_cortesia') || (tierId === 'tier-free');
-        const isPaid = isFree || isSuccess || currentOrder?.status === 'completed' || currentOrder?.status === 'paid';
+        const isPaid = isFree || (!isCash && isSuccess) || currentOrder?.status === 'completed' || currentOrder?.status === 'paid' || currentOrder?.paymentStatus === 'paid';
         setIsOrderPending(!isPaid && (currentOrder?.status === 'pending' || !currentOrder?.status));
         setOrderData(currentOrder);
+
 
         // 2. Obtener la sesión activa de Bingo para vincular el token
         let activeGameId = 'juego-principal';
@@ -352,6 +358,50 @@ const BingoBoletosConfirmacion: React.FC = () => {
     fetchOrderAndToken();
   }, [orderId, isSuccess, pkgId, tierId, qtyParam, playerNameParam, phoneParam, modeParam]);
 
+  // Escuchar en tiempo real la orden para cuando el promotor habilite el pago en efectivo
+  useEffect(() => {
+    if (!orderId) return;
+
+    const unsub = onSnapshot(doc(db, 'bingo_orders', orderId), async (snap) => {
+      if (!snap.exists()) return;
+      const updated = snap.data();
+      setOrderData(updated);
+
+      const isFree = (updated.totalPriceQ === 0) || (updated.priceQ === 0) || (updated.unitPriceQ === 0) || (updated.gateway === 'gratis_cortesia') || (tierId === 'tier-free');
+      const isNowPaid = isFree || updated.status === 'completed' || updated.status === 'paid' || updated.paymentStatus === 'paid';
+
+      if (isNowPaid) {
+        setIsOrderPending(false);
+
+        // Si ya está habilitado, asegurar que el cartón esté generado y guardado en sesión
+        let cardIdToUse = activeCardId || accessToken?.usedByCardId;
+        if (!cardIdToUse) {
+          const targetGameId = updated.gameId || accessToken?.gameId || 'juego-principal';
+          cardIdToUse = await generateAndAssignCard(accessToken?.id || null, updated, targetGameId);
+        }
+
+        if (cardIdToUse) {
+          setActiveCardId(cardIdToUse);
+          localStorage.setItem('my_bingo_card_id', cardIdToUse);
+          localStorage.setItem('my_bingo_card_ids', JSON.stringify([cardIdToUse]));
+          localStorage.setItem('my_bingo_player_name', updated.playerName);
+
+          // Si vino por pago en efectivo y es modo personal, celebrar y entrar automáticamente
+          if (updated.paymentMethod === 'efectivo' && updated.purchaseMode !== 'gift') {
+            soundEffects.playSuccessFanfare();
+            setTimeout(() => {
+              navigate(`/juegos/bingo/carton/${cardIdToUse}`);
+            }, 1800);
+          }
+        }
+      }
+    }, (err) => {
+      console.warn("Aviso escuchando orden en tiempo real:", err);
+    });
+
+    return () => unsub();
+  }, [orderId, accessToken?.id, accessToken?.usedByCardId, activeCardId, tierId, navigate]);
+
   const handleEnableWebPush = async () => {
     setPushActivating(true);
     try {
@@ -487,25 +537,31 @@ const BingoBoletosConfirmacion: React.FC = () => {
             width: '68px',
             height: '68px',
             borderRadius: '50%',
-            background: isOrderPending ? 'rgba(245, 158, 11, 0.2)' : 'rgba(16, 185, 129, 0.2)',
-            border: `2px solid ${isOrderPending ? '#f59e0b' : '#10b981'}`,
+            background: isOrderPending 
+              ? (orderData?.paymentMethod === 'efectivo' ? 'rgba(16, 185, 129, 0.2)' : 'rgba(245, 158, 11, 0.2)')
+              : 'rgba(16, 185, 129, 0.2)',
+            border: `2px solid ${isOrderPending ? (orderData?.paymentMethod === 'efectivo' ? '#10b981' : '#f59e0b') : '#10b981'}`,
             fontSize: '2rem',
             marginBottom: '16px',
-            boxShadow: isOrderPending ? '0 0 25px rgba(245, 158, 11, 0.4)' : '0 0 25px rgba(16, 185, 129, 0.4)'
+            boxShadow: isOrderPending 
+              ? (orderData?.paymentMethod === 'efectivo' ? '0 0 25px rgba(16, 185, 129, 0.4)' : '0 0 25px rgba(245, 158, 11, 0.4)')
+              : '0 0 25px rgba(16, 185, 129, 0.4)'
           }}>
-            {isOrderPending ? '⏳' : isGiftMode ? '🎁' : '🎉'}
+            {isOrderPending ? (orderData?.paymentMethod === 'efectivo' ? '💵' : '⏳') : isGiftMode ? '🎁' : '🎉'}
           </div>
 
           <span style={{
             display: 'block',
             fontFamily: 'var(--font-gamer)',
             fontSize: '0.85rem',
-            color: isOrderPending ? '#fbbf24' : '#10b981',
+            color: isOrderPending ? (orderData?.paymentMethod === 'efectivo' ? '#34d399' : '#fbbf24') : '#10b981',
             letterSpacing: '2px',
             textTransform: 'uppercase',
             marginBottom: '6px'
           }}>
-            {isOrderPending ? 'EN PROCESO DE VERIFICACIÓN' : isGiftMode ? '¡ENLACES GENERADOS CON ÉXITO!' : '¡COMPRA CONFIRMADA!'}
+            {isOrderPending 
+              ? (orderData?.paymentMethod === 'efectivo' ? 'SOLICITUD EN EFECTIVO - ESPERANDO PROMOTOR' : 'EN PROCESO DE VERIFICACIÓN') 
+              : isGiftMode ? '¡ENLACES GENERADOS CON ÉXITO!' : '¡COMPRA CONFIRMADA!'}
           </span>
 
           <h1 style={{
@@ -515,14 +571,19 @@ const BingoBoletosConfirmacion: React.FC = () => {
             margin: '0 0 10px 0',
             letterSpacing: '1px'
           }}>
-            {isOrderPending ? 'Verificando tu Pago' : isGiftMode ? 'Tus Links para Contactos están Listos' : '¡Tu Cartón está Listo!'}
+            {isOrderPending 
+              ? (orderData?.paymentMethod === 'efectivo' ? 'Esperando Cobro en Efectivo' : 'Verificando tu Pago') 
+              : isGiftMode ? 'Tus Links para Contactos están Listos' : '¡Tu Cartón está Listo!'}
           </h1>
 
           <p style={{ color: '#cbd5e1', fontSize: '0.92rem', margin: '0 auto 24px', maxWidth: '520px', lineHeight: 1.5 }}>
             {isOrderPending
-              ? `Hola ${orderData?.playerName || 'Jugador'}, estamos a la espera de la acreditación bancaria para habilitar tu cartón.`
+              ? (orderData?.paymentMethod === 'efectivo'
+                  ? `Hola ${orderData?.playerName || 'Jugador'}, tu solicitud de boleto en efectivo está registrada. Un promotor debe cobrar tus Q${effectivePaidQ}.00 para habilitar tu cartón.`
+                  : `Hola ${orderData?.playerName || 'Jugador'}, estamos a la espera de la acreditación bancaria para habilitar tu cartón.`)
               : `Felicidades ${orderData?.playerName || 'Jugador'}, tu orden ha sido procesada. ${isGiftMode ? 'A continuación tienes cada uno de los enlaces independientes para repartir a tus contactos.' : 'Ya puedes entrar directo a tu cartón de juego en pantalla.'}`}
           </p>
+
 
           {/* DETALLES DE LA COMPRA */}
           <div style={{
@@ -674,50 +735,143 @@ const BingoBoletosConfirmacion: React.FC = () => {
             /* CASO B: MODO PERSONAL (PASE ÚNICO Y BOTÓN DIRECTO A MI CARTÓN) */
             <>
               {isOrderPending ? (
-                <div style={{
-                  background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%)',
-                  border: '1.5px solid rgba(245, 158, 11, 0.55)',
-                  borderRadius: '18px',
-                  padding: '24px 20px',
-                  margin: '0 auto 24px',
-                  textAlign: 'center',
-                  boxShadow: '0 8px 30px rgba(245, 158, 11, 0.2)'
-                }}>
-                  <span style={{ fontSize: '2.4rem', display: 'block', marginBottom: '10px' }}>⏳</span>
-                  <h3 style={{
-                    fontFamily: 'var(--font-gamer)',
-                    color: '#fbbf24',
-                    fontSize: '1.1rem',
-                    margin: '0 0 10px 0',
-                    letterSpacing: '1px'
+                orderData?.paymentMethod === 'efectivo' ? (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)',
+                    border: '2px solid rgba(16, 185, 129, 0.65)',
+                    borderRadius: '20px',
+                    padding: '28px 20px',
+                    margin: '0 auto 24px',
+                    textAlign: 'center',
+                    boxShadow: '0 8px 32px rgba(16, 185, 129, 0.3)'
                   }}>
-                    PAGO EN PROCESO DE VERIFICACIÓN
-                  </h3>
-                  <p style={{ fontSize: '0.88rem', color: '#fef3c7', lineHeight: 1.5, margin: '0 auto 16px', maxWidth: '480px' }}>
-                    Si realizaste tu pago mediante <strong>Transferencia Bancaria</strong>, la pasarela de Recurrente requiere un tiempo de espera de <strong>hasta 10 minutos</strong> para conciliar con el banco. Si pagaste con <strong>Tarjeta de Débito o Crédito</strong>, la acreditación es inmediata.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={handleCheckPaymentStatus}
-                    disabled={isRechecking}
-                    style={{
-                      background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                      border: 'none',
-                      borderRadius: '12px',
-                      padding: '12px 28px',
-                      color: '#ffffff',
+                    <span style={{ fontSize: '3rem', display: 'block', marginBottom: '10px' }}>💵⏳</span>
+                    <h3 style={{
                       fontFamily: 'var(--font-gamer)',
-                      fontSize: '0.95rem',
-                      fontWeight: 800,
-                      cursor: 'pointer',
-                      boxShadow: '0 4px 18px rgba(245, 158, 11, 0.45)',
-                      transition: 'all 0.2s ease'
-                    }}
-                  >
-                    {isRechecking ? 'Comprobando con el Banco...' : '🔄 Comprobar Estado de Pago'}
-                  </button>
-                </div>
+                      color: '#34d399',
+                      fontSize: '1.2rem',
+                      margin: '0 0 10px 0',
+                      letterSpacing: '1px'
+                    }}>
+                      ESPERANDO CONFIRMACIÓN DEL PROMOTOR
+                    </h3>
+                    <div style={{
+                      background: 'rgba(0, 0, 0, 0.6)',
+                      border: '1px dashed rgba(52, 211, 153, 0.5)',
+                      borderRadius: '14px',
+                      padding: '14px 18px',
+                      marginBottom: '16px',
+                      display: 'inline-block',
+                      textAlign: 'left',
+                      minWidth: '280px'
+                    }}>
+                      <div style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '4px' }}>
+                        👤 Jugador: <strong style={{ color: '#fff' }}>{orderData?.playerName}</strong>
+                      </div>
+                      <div style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '4px' }}>
+                        📱 Teléfono: <strong style={{ color: '#38bdf8' }}>+{orderData?.playerWhatsapp}</strong>
+                      </div>
+                      <div style={{ fontSize: '0.98rem', color: '#e2e8f0', marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                        💵 Total a Pagar al Promotor: <strong style={{ color: '#fbbf24', fontSize: '1.15rem' }}>Q{effectivePaidQ}.00 GTQ</strong>
+                      </div>
+                    </div>
+                    <p style={{ fontSize: '0.88rem', color: '#e2e8f0', lineHeight: 1.5, margin: '0 auto 18px', maxWidth: '520px' }}>
+                      Entrega tu dinero en efectivo al promotor o encargado más cercano indicándole tu nombre.
+                      <strong style={{ color: '#34d399', display: 'block', marginTop: '8px' }}>
+                        ⚡ Mantén esta pantalla abierta. En cuanto el promotor presione "Cobrar y Habilitar" en su registro, tu sesión se desbloqueará de inmediato y entrarás a tu cartón.
+                      </strong>
+                    </p>
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        onClick={handleCheckPaymentStatus}
+                        disabled={isRechecking}
+                        style={{
+                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '12px 24px',
+                          color: '#ffffff',
+                          fontFamily: 'var(--font-gamer)',
+                          fontSize: '0.92rem',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 18px rgba(16, 185, 129, 0.45)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        {isRechecking ? 'Verificando Registro...' : '🔄 Comprobar Si Ya Me Habilitaron'}
+                      </button>
+                      <a
+                        href={`https://wa.me/50242250165?text=${encodeURIComponent(`Hola, solicité pagar en efectivo Q${effectivePaidQ}.00 para Bingotenango a nombre de ${orderData?.playerName} (Orden: ${orderId}). ¿Me apoyan con la verificación?`)}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        style={{
+                          background: 'rgba(37, 211, 102, 0.2)',
+                          border: '1px solid rgba(37, 211, 102, 0.5)',
+                          borderRadius: '12px',
+                          padding: '12px 18px',
+                          color: '#25d366',
+                          fontFamily: 'var(--font-gamer)',
+                          fontSize: '0.88rem',
+                          fontWeight: 700,
+                          textDecoration: 'none',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}
+                      >
+                        💬 WhatsApp Taquilla
+                      </a>
+                    </div>
+                  </div>
+                ) : (
+                  <div style={{
+                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%)',
+                    border: '1.5px solid rgba(245, 158, 11, 0.55)',
+                    borderRadius: '18px',
+                    padding: '24px 20px',
+                    margin: '0 auto 24px',
+                    textAlign: 'center',
+                    boxShadow: '0 8px 30px rgba(245, 158, 11, 0.2)'
+                  }}>
+                    <span style={{ fontSize: '2.4rem', display: 'block', marginBottom: '10px' }}>⏳</span>
+                    <h3 style={{
+                      fontFamily: 'var(--font-gamer)',
+                      color: '#fbbf24',
+                      fontSize: '1.1rem',
+                      margin: '0 0 10px 0',
+                      letterSpacing: '1px'
+                    }}>
+                      PAGO EN PROCESO DE VERIFICACIÓN
+                    </h3>
+                    <p style={{ fontSize: '0.88rem', color: '#fef3c7', lineHeight: 1.5, margin: '0 auto 16px', maxWidth: '480px' }}>
+                      Si realizaste tu pago mediante <strong>Transferencia Bancaria</strong>, la pasarela de Recurrente requiere un tiempo de espera de <strong>hasta 10 minutos</strong> para conciliar con el banco. Si pagaste con <strong>Tarjeta de Débito o Crédito</strong>, la acreditación es inmediata.
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleCheckPaymentStatus}
+                      disabled={isRechecking}
+                      style={{
+                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                        border: 'none',
+                        borderRadius: '12px',
+                        padding: '12px 28px',
+                        color: '#ffffff',
+                        fontFamily: 'var(--font-gamer)',
+                        fontSize: '0.95rem',
+                        fontWeight: 800,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 18px rgba(245, 158, 11, 0.45)',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      {isRechecking ? 'Comprobando con el Banco...' : '🔄 Comprobar Estado de Pago'}
+                    </button>
+                  </div>
+                )
               ) : (
+
                 <>
                   {accessToken && (
                     <div style={{

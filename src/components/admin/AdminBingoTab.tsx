@@ -10,6 +10,7 @@ import type {
   Sponsor, BingoCard, BingoAccessToken, BingoPlayerProfile 
 } from '../../types';
 import { compressImageWebP, blobToDataURL } from '../../utils/imageUpload';
+import { recordPlayerPurchase } from '../../services/bingoPlayerService';
 import './AdminBingoTab.css';
 
 
@@ -749,8 +750,8 @@ export default function AdminBingoTab() {
   // Lógica de Taquilla, Pases de Acceso y Cobros en Quetzales
   // --------------------------------------------------------------------------
   const handleConfirmCashToken = async (token: BingoAccessToken) => {
-    const isPaid = token.paymentMethod === 'efectivo' || !!token.paidAmount;
-    const priceAmount = (token.unitPriceQ || cardPriceQ || 10) * (token.quantity || 1);
+    const isPaid = token.paymentStatus === 'paid' || (token.status === 'active' && !!token.paidAmount && token.paymentStatus !== 'pending');
+    const priceAmount = token.paidAmount || ((token.unitPriceQ || cardPriceQ || 10) * (token.quantity || 1));
 
     if (isPaid) {
       await showAlert(`Este pase ya figura con cobro confirmado (Q${token.paidAmount || priceAmount}.00).`, "Cobro Ya Registrado", "ℹ️");
@@ -758,10 +759,10 @@ export default function AdminBingoTab() {
     }
 
     const confirm = await showConfirm(
-      `¿Deseas confirmar el cobro en efectivo de Q${priceAmount}.00 para el jugador "${token.playerName || 'Jugador'}" (${token.quantity} cartón${token.quantity > 1 ? 'es' : ''})?`,
+      `¿Deseas confirmar el cobro en efectivo de Q${priceAmount}.00 para el jugador "${token.playerName || 'Jugador'}" (${token.quantity} cartón${token.quantity > 1 ? 'es' : ''})?\n\nAl confirmar, la sesión en el navegador del jugador se activará de inmediato y recibirá acceso a su cartón.`,
       "Confirmar Cobro en Efectivo",
       "💵",
-      "SÍ, CONFIRMAR COBRO",
+      "SÍ, COBRAR Y HABILITAR",
       "CANCELAR"
     );
     if (!confirm) return;
@@ -769,17 +770,30 @@ export default function AdminBingoTab() {
     try {
       await updateDoc(doc(db, 'bingo_access_tokens', token.id), {
         paymentMethod: 'efectivo',
+        paymentStatus: 'paid',
         paidAmount: priceAmount,
+        paidAt: Date.now(),
         status: 'active'
       });
       if (token.orderId) {
         await updateDoc(doc(db, 'bingo_orders', token.orderId), {
-          status: 'paid',
+          status: 'completed',
+          paymentStatus: 'paid',
           paymentMethod: 'efectivo',
+          paidAmount: priceAmount,
           paidAt: Date.now()
         });
       }
-      await showAlert(`¡Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}! El pase está listo para despachar. 🚀`, "Cobro Exitoso", "✅");
+      if (token.playerWhatsapp) {
+        recordPlayerPurchase({
+          phone: token.playerWhatsapp,
+          name: token.playerName,
+          email: '',
+          spentQ: priceAmount,
+          webPushEnabled: false
+        }).catch(() => {});
+      }
+      await showAlert(`¡Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}! El navegador del jugador ha sido habilitado para ingresar a su cartón. 🚀`, "Cobro Exitoso", "✅");
     } catch (err) {
       console.error("Error al confirmar cobro:", err);
       await showAlert("No se pudo confirmar el cobro en la base de datos.", "Error", "❌");
@@ -787,7 +801,7 @@ export default function AdminBingoTab() {
   };
 
   const handleSendWhatsAppToken = async (token: BingoAccessToken) => {
-    const isPaid = token.paymentMethod === 'efectivo' || !!token.paidAmount;
+    const isPaid = token.paymentStatus === 'paid' || (token.status === 'active' && !!token.paidAmount && token.paymentStatus !== 'pending') || token.unitPriceQ === 0;
     if (!isPaid) {
       const confirmCash = await showConfirm(
         `El jugador "${token.playerName}" figura con cobro PENDIENTE.\n\nPara enviarle su enlace de juego por WhatsApp, primero debes confirmar el cobro realizado.\n\n¿Deseas confirmar el cobro en efectivo ahora?`,
@@ -839,7 +853,7 @@ export default function AdminBingoTab() {
   // Filtrado de pases de acceso
   const filteredTokensList = useMemo(() => {
     return accessTokensList.filter(t => {
-      const isPaid = t.paymentMethod === 'efectivo' || !!t.paidAmount;
+      const isPaid = t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0;
       if (tokenStatusFilter === 'paid' && !isPaid) return false;
       if (tokenStatusFilter === 'pending' && isPaid) return false;
       if (tokenSearchQuery.trim()) {
@@ -2202,10 +2216,10 @@ export default function AdminBingoTab() {
 
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.75rem', color: '#16a34a', background: '#dcfce7', padding: '4px 10px', borderRadius: '20px', fontWeight: 'bold' }}>
-                  ✓ {accessTokensList.filter(t => t.paymentMethod === 'efectivo' || !!t.paidAmount).length} Cobrados
+                  ✓ {accessTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length} Cobrados
                 </span>
                 <span style={{ fontSize: '0.75rem', color: '#d97706', background: '#fef3c7', padding: '4px 10px', borderRadius: '20px', fontWeight: 'bold' }}>
-                  ⏳ {accessTokensList.filter(t => t.paymentMethod !== 'efectivo' && !t.paidAmount).length} Pendientes
+                  ⏳ {accessTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length} Pendientes
                 </span>
               </div>
             </div>
@@ -2222,8 +2236,8 @@ export default function AdminBingoTab() {
                     style={{ fontSize: '0.78rem' }}
                   >
                     {f === 'all' && `Todos (${accessTokensList.length})`}
-                    {f === 'paid' && `Cobrados (${accessTokensList.filter(t => t.paymentMethod === 'efectivo' || !!t.paidAmount).length})`}
-                    {f === 'pending' && `Pendientes (${accessTokensList.filter(t => t.paymentMethod !== 'efectivo' && !t.paidAmount).length})`}
+                    {f === 'paid' && `Cobrados (${accessTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length})`}
+                    {f === 'pending' && `Pendientes (${accessTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length})`}
                   </button>
                 ))}
               </div>
@@ -2261,7 +2275,8 @@ export default function AdminBingoTab() {
                     </tr>
                   ) : (
                     filteredTokensList.map(token => {
-                      const isPaid = token.paymentMethod === 'efectivo' || !!token.paidAmount;
+                      const isPaid = token.paymentStatus === 'paid' || (token.status === 'active' && !!token.paidAmount && token.paymentStatus !== 'pending') || token.unitPriceQ === 0;
+                      const isPendingCash = !isPaid && token.paymentMethod === 'efectivo';
                       const priceAmount = token.paidAmount || ((token.unitPriceQ || cardPriceQ || 10) * (token.quantity || 1));
                       const cleanPhone = (token.playerWhatsapp || '').replace(/\D/g, '');
 
@@ -2307,7 +2322,11 @@ export default function AdminBingoTab() {
                           <td>
                             {isPaid ? (
                               <span style={{ color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
-                                ✓ {token.paymentMethod === 'efectivo' ? 'Efectivo' : 'Pagado'}
+                                ✓ {token.paymentMethod === 'efectivo' ? 'Efectivo Cobrado' : 'Pagado'}
+                              </span>
+                            ) : isPendingCash ? (
+                              <span style={{ color: '#b45309', background: '#fef3c7', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
+                                💵 Efectivo Pendiente
                               </span>
                             ) : (
                               <span style={{ color: '#b45309', background: '#fef3c7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
@@ -2333,20 +2352,25 @@ export default function AdminBingoTab() {
                                   type="button"
                                   onClick={() => handleConfirmCashToken(token)}
                                   style={{
-                                    padding: '4px 8px',
-                                    borderRadius: '6px',
-                                    background: '#dcfce7',
-                                    border: '1px solid #86efac',
-                                    color: '#15803d',
-                                    fontSize: '0.72rem',
+                                    padding: '5px 10px',
+                                    borderRadius: '8px',
+                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                    border: 'none',
+                                    color: '#ffffff',
+                                    fontSize: '0.74rem',
                                     fontWeight: 'bold',
-                                    cursor: 'pointer'
+                                    cursor: 'pointer',
+                                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px'
                                   }}
-                                  title="Marcar como cobrado en efectivo"
+                                  title="Confirmar cobro en efectivo y habilitar al jugador"
                                 >
-                                  💵 Cobrar
+                                  💵 Cobrar y Habilitar
                                 </button>
                               )}
+
 
                               <button
                                 type="button"

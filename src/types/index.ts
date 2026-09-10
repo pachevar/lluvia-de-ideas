@@ -355,9 +355,11 @@ export interface BingoAccessToken {
   quantity: number;
   purchaseMode?: 'personal' | 'gift'; // Modo de compra: para mí (1-3) o para repartir a contactos (1-10)
   gameId: string; // Vinculado a la ronda en curso
-  scheduledGameId?: string; // Vinculado al juego programado
+  scheduledGameId?: string | null; // Vinculado al juego programado
   sessionResetAt: number; // Marca temporal de apertura de ronda para vigencia
-  status: 'active' | 'used' | 'expired';
+  status: 'active' | 'used' | 'expired' | 'pending';
+  paymentStatus?: 'paid' | 'pending' | 'cortesia';
+  paidAt?: number | null;
   usedByDevice?: string | null;
   usedByCardId?: string | null;
   cardIds?: string[];
@@ -370,6 +372,7 @@ export interface BingoAccessToken {
   unitPriceQ?: number;
   createdAt: number;
 }
+
 
 export interface BingoScheduledGame {
   id: string;

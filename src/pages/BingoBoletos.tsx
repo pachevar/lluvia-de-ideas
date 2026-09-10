@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { collection, addDoc, getDoc, doc, onSnapshot, query, limit, where, getDocs } from 'firebase/firestore';
+import { collection, addDoc, getDoc, setDoc, doc, onSnapshot, query, limit, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { BingoGame, BingoScheduledGame } from '../types';
+import type { BingoGame, BingoScheduledGame, BingoAccessToken } from '../types';
 import './BingoBoletos.css';
 
 interface CardTier {
@@ -99,6 +99,7 @@ const BingoBoletos: React.FC = () => {
   // WhatsApp: Solo los 8 dígitos locales de Guatemala (el +502 es fijo y no editable)
   const [playerWhatsappDigits, setPlayerWhatsappDigits] = useState('');
   const [playerEmail, setPlayerEmail] = useState('');
+  const [paymentMethodChoice, setPaymentMethodChoice] = useState<'recurrente' | 'efectivo'>('recurrente');
   const [isProcessing, setIsProcessing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
@@ -281,10 +282,133 @@ const BingoBoletos: React.FC = () => {
     window.scrollTo({ top: 120, behavior: 'smooth' });
   };
 
+  // Procesar pago en efectivo presencial con verificación manual de un promotor
+  const handleProceedToCashPayment = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    setErrorMessage('');
+
+    if (!playerName.trim()) {
+      setErrorMessage('Por favor ingresa tu nombre completo.');
+      return;
+    }
+
+    if (playerWhatsappDigits.trim().length !== 8) {
+      setErrorMessage('Por favor ingresa los 8 dígitos de tu número de teléfono (ej. 5555 1234).');
+      return;
+    }
+
+    const cleanPhone = '502' + playerWhatsappDigits.trim();
+    setIsProcessing(true);
+
+    try {
+      // 0. VERIFICAR DUPLICADOS POR TELÉFONO
+      if (purchaseMode === 'personal') {
+        const targetGameId = activeGame?.id || 'juego-principal';
+        const qExistingCard = query(
+          collection(db, 'bingo_cards'),
+          where('phone', '==', cleanPhone),
+          where('gameId', '==', targetGameId),
+          limit(1)
+        );
+        const existingSnap = await getDocs(qExistingCard);
+
+        if (!existingSnap.empty) {
+          const existingCardDoc = existingSnap.docs[0];
+          const existingCardId = existingCardDoc.id;
+          
+          localStorage.setItem('my_bingo_card_id', existingCardId);
+          localStorage.setItem('my_bingo_card_ids', JSON.stringify([existingCardId]));
+          localStorage.setItem('my_bingo_player_name', playerName.trim());
+
+          navigate(`/juegos/bingo/carton/${existingCardId}`);
+          return;
+        }
+      }
+    } catch (checkErr) {
+      console.warn("Aviso al verificar cartón previo por teléfono:", checkErr);
+    }
+
+    try {
+      const targetGameId = activeGame?.id || 'juego-principal';
+
+      // 1. Guardar la orden en Firestore con método efectivo y estado pending
+      const orderRef = await addDoc(collection(db, 'bingo_orders'), {
+        playerName: playerName.trim(),
+        playerWhatsapp: cleanPhone,
+        playerEmail: playerEmail.trim() || null,
+        tierId: activeTier.id,
+        tierName: activeTier.name,
+        prizeLevel: activeTier.prizeLevel,
+        unitPriceQ: currentPriceQ,
+        quantity: quantity,
+        priceQ: totalPriceQ,
+        totalPriceQ: totalPriceQ,
+        cartonesCount: quantity,
+        purchaseMode: purchaseMode,
+        packageName: purchaseMode === 'personal' 
+          ? `${activeTier.name} (${quantity} ${quantity === 1 ? 'Cartón Personal' : 'Cartones Personales'})`
+          : `${activeTier.name} (${quantity} ${quantity === 1 ? 'Link para Contacto' : 'Links para Contactos'})`,
+        gameId: targetGameId,
+        scheduledGameId: selectedScheduledGame?.id || null,
+        scheduledGameTitle: selectedScheduledGame?.title || null,
+        linkSent: false,
+        linkSentAt: null,
+        gateway: 'efectivo',
+        paymentMethod: 'efectivo',
+        paymentStatus: 'pending',
+        status: 'pending',
+        paidAmount: 0,
+        createdAt: Date.now()
+      });
+      const orderId = orderRef.id;
+
+      // 2. Crear de una vez el pase en bingo_access_tokens con estado pending
+      const newTokenId = 'tkn_' + Date.now().toString(36) + Math.random().toString(36).substring(2, 7);
+      const tokenObj: BingoAccessToken = {
+        id: newTokenId,
+        orderId: orderId,
+        playerName: playerName.trim(),
+        playerWhatsapp: cleanPhone,
+        tierId: activeTier.id,
+        tierName: activeTier.name,
+        prizeLevel: activeTier.prizeLevel,
+        quantity: quantity,
+        purchaseMode: purchaseMode,
+        gameId: targetGameId,
+        scheduledGameId: selectedScheduledGame?.id || null,
+        sessionResetAt: activeGame?.lastResetAt || Date.now(),
+        status: 'pending',
+        paymentStatus: 'pending',
+        paymentMethod: 'efectivo',
+        paidAmount: 0,
+        unitPriceQ: currentPriceQ,
+        usedByDevice: null,
+        linkSent: false,
+        linkSentAt: null,
+        createdAt: Date.now()
+      };
+      await setDoc(doc(db, 'bingo_access_tokens', newTokenId), tokenObj);
+
+      // Guardar nombre en localStorage
+      localStorage.setItem('my_bingo_player_name', playerName.trim());
+
+      // Redirigir a confirmación en modo de espera presencial
+      navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tokenId=${newTokenId}&paymentMethod=efectivo&status=pending_cash&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=${activeTier.id}&qty=${quantity}&mode=${purchaseMode}`);
+    } catch (cashErr) {
+      console.error("Error al registrar orden en efectivo:", cashErr);
+      setErrorMessage("No se pudo registrar la solicitud en efectivo. Intenta de nuevo o contáctanos por WhatsApp.");
+      setIsProcessing(false);
+    }
+  };
+
   // Procesar pago / confirmación
   const handleProceedToPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMessage('');
+
+    if (currentPriceQ > 0 && paymentMethodChoice === 'efectivo') {
+      return handleProceedToCashPayment(e);
+    }
 
     if (!playerName.trim()) {
       setErrorMessage('Por favor ingresa tu nombre completo.');
@@ -889,6 +1013,66 @@ const BingoBoletos: React.FC = () => {
                 </div>
               </div>
 
+              {/* OPCIONES DE PAGO SI TIENE COSTO (RECURRENTE O EFECTIVO) */}
+              {currentPriceQ > 0 && (
+                <div className="payment-method-selector-section">
+                  <span className="payment-method-selector-title">
+                    💳 Elige tu Forma de Pago:
+                  </span>
+
+                  <div className="payment-method-options-grid">
+                    {/* OPCIÓN 1: RECURRENTE */}
+                    <div 
+                      className={`payment-option-card ${paymentMethodChoice === 'recurrente' ? 'selected' : ''}`}
+                      onClick={() => setPaymentMethodChoice('recurrente')}
+                    >
+                      <div className="option-radio-circle">
+                        <span className={`radio-inner ${paymentMethodChoice === 'recurrente' ? 'active' : ''}`} />
+                      </div>
+                      <div className="option-icon">💳</div>
+                      <div className="option-info">
+                        <div className="option-title-tag">
+                          <strong>Pagar con Recurrente</strong>
+                          <span className="option-tag-instant">AUTOMÁTICO</span>
+                        </div>
+                        <p>Paga en línea con tarjeta de débito o crédito. Tu pase y cartón se activan al instante.</p>
+                      </div>
+                    </div>
+
+                    {/* OPCIÓN 2: EFECTIVO */}
+                    <div 
+                      className={`payment-option-card ${paymentMethodChoice === 'efectivo' ? 'selected' : ''}`}
+                      onClick={() => setPaymentMethodChoice('efectivo')}
+                    >
+                      <div className="option-radio-circle">
+                        <span className={`radio-inner ${paymentMethodChoice === 'efectivo' ? 'active' : ''}`} />
+                      </div>
+                      <div className="option-icon">💵</div>
+                      <div className="option-info">
+                        <div className="option-title-tag">
+                          <strong>Pagar en Efectivo</strong>
+                          <span className="option-tag-manual">PROMOTOR CERCA</span>
+                        </div>
+                        <p>Pago presencial en efectivo. Un promotor habilitará tu cartón manualmente.</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* ADVERTENCIA OBLIGATORIA AL SELECCIONAR PAGO EN EFECTIVO */}
+                  {paymentMethodChoice === 'efectivo' && (
+                    <div className="cash-promoter-warning">
+                      <span className="warning-symbol">⚠️</span>
+                      <div className="warning-content">
+                        <strong>Solo disponible con un promotor presencial:</strong>
+                        <p>
+                          Esta opción de pago en efectivo <strong>solo funciona si te encuentras presencialmente con un promotor o encargado cerca</strong> para cobrar tu dinero y habilitar tu boleto de manera manual en el registro.
+                        </p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )}
+
               {/* BARRA DE ACCIONES FINALES */}
               <div className="step-actions-footer final-checkout-actions">
                 <button 
@@ -900,19 +1084,60 @@ const BingoBoletos: React.FC = () => {
                   ⬅️ Volver a Modalidad
                 </button>
 
-                <button 
-                  type="submit" 
-                  className="btn-guided-pay"
-                  disabled={isProcessing}
-                  style={currentPriceQ === 0 ? {
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                    boxShadow: '0 4px 25px rgba(16, 185, 129, 0.45)'
-                  } : undefined}
-                >
-                  {isProcessing 
-                    ? (currentPriceQ === 0 ? 'Generando Boleto Gratis...' : 'Conectando Pasarela...') 
-                    : (currentPriceQ === 0 ? '🎁 Confirmar y Obtener Boleto Gratis' : `💳 Pagar Q${totalPriceQ}.00 con Recurrente`)}
-                </button>
+                {currentPriceQ === 0 ? (
+                  <button 
+                    type="submit" 
+                    className="btn-guided-pay"
+                    disabled={isProcessing}
+                    style={{
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      boxShadow: '0 4px 25px rgba(16, 185, 129, 0.45)'
+                    }}
+                  >
+                    {isProcessing ? 'Generando Boleto Gratis...' : '🎁 Confirmar y Obtener Boleto Gratis'}
+                  </button>
+                ) : (
+                  <div className="checkout-pay-buttons-col">
+                    {paymentMethodChoice === 'recurrente' ? (
+                      <>
+                        <button 
+                          type="submit" 
+                          className="btn-guided-pay"
+                          disabled={isProcessing}
+                        >
+                          {isProcessing ? 'Conectando Pasarela...' : `💳 Pagar Q${totalPriceQ}.00 con Recurrente`}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-alt-cash"
+                          onClick={() => setPaymentMethodChoice('efectivo')}
+                          disabled={isProcessing}
+                        >
+                          💵 O pagar Q{totalPriceQ}.00 en efectivo (con promotor cerca)
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button 
+                          type="button" 
+                          onClick={() => handleProceedToCashPayment()}
+                          className="btn-guided-pay btn-guided-cash"
+                          disabled={isProcessing}
+                        >
+                          {isProcessing ? 'Registrando Solicitud...' : `💵 Solicitar Boleto y Pagar Q${totalPriceQ}.00 en Efectivo`}
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-alt-cash"
+                          onClick={() => setPaymentMethodChoice('recurrente')}
+                          disabled={isProcessing}
+                        >
+                          💳 O pagar en línea con Recurrente (Tarjeta)
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
 
               <div className="guided-trust-bar">

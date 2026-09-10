@@ -1361,3 +1361,220 @@
     box-shadow: 0 0 25px rgba(245, 158, 11, 0.45);
   }
 }
+
+/* ==========================================================================
+   SELECTOR DE MÉTODO DE PAGO Y PAGO EN EFECTIVO CON PROMOTOR
+   ========================================================================== */
+.payment-method-selector-section {
+  margin-top: 20px;
+  margin-bottom: 22px;
+  text-align: left;
+  animation: fadeInDown 0.35s ease-out;
+}
+
+.payment-method-selector-title {
+  display: block;
+  font-family: var(--font-gamer, sans-serif);
+  font-size: 0.95rem;
+  color: #38bdf8;
+  font-weight: 700;
+  margin-bottom: 12px;
+  letter-spacing: 0.5px;
+}
+
+.payment-method-options-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 12px;
+  margin-bottom: 14px;
+}
+
+.payment-option-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 14px 16px;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.payment-option-card:hover {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(15, 23, 42, 0.9);
+  transform: translateY(-2px);
+}
+
+.payment-option-card.selected {
+  border-color: #00f0ff;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(30, 27, 75, 0.5) 100%);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.22);
+}
+
+.option-radio-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2px;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.payment-option-card.selected .option-radio-circle {
+  border-color: #00f0ff;
+  box-shadow: 0 0 8px rgba(0, 240, 255, 0.5);
+}
+
+.radio-inner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  transition: all 0.2s ease;
+}
+
+.radio-inner.active {
+  background: #00f0ff;
+  box-shadow: 0 0 8px #00f0ff;
+}
+
+.option-icon {
+  font-size: 1.6rem;
+  flex-shrink: 0;
+  line-height: 1;
+  margin-top: 2px;
+}
+
+.option-info {
+  flex: 1;
+}
+
+.option-title-tag {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.option-title-tag strong {
+  font-size: 0.92rem;
+  color: #ffffff;
+  font-weight: 700;
+}
+
+.option-tag-instant {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.5);
+  color: #34d399;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+.option-tag-manual {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: rgba(245, 158, 11, 0.2);
+  border: 1px solid rgba(245, 158, 11, 0.5);
+  color: #fbbf24;
+  padding: 2px 8px;
+  border-radius: 999px;
+  letter-spacing: 0.5px;
+}
+
+.option-info p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+/* RECUADRO DE ADVERTENCIA PARA PAGO EN EFECTIVO */
+.cash-promoter-warning {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.16) 0%, rgba(180, 83, 9, 0.22) 100%);
+  border: 1.5px solid #f59e0b;
+  border-radius: 14px;
+  padding: 14px 16px;
+  margin-top: 10px;
+  animation: fadeInDown 0.3s ease-out;
+  box-shadow: 0 4px 20px rgba(245, 158, 11, 0.25);
+}
+
+.cash-promoter-warning .warning-symbol {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+  line-height: 1;
+}
+
+.cash-promoter-warning .warning-content strong {
+  display: block;
+  font-size: 0.88rem;
+  color: #fbbf24;
+  margin-bottom: 4px;
+  font-family: var(--font-gamer, sans-serif);
+  letter-spacing: 0.5px;
+}
+
+.cash-promoter-warning .warning-content p {
+  margin: 0;
+  font-size: 0.82rem;
+  color: #fef3c7;
+  line-height: 1.45;
+}
+
+.cash-promoter-warning .warning-content strong em {
+  font-style: normal;
+  text-decoration: underline;
+}
+
+/* COLUMNA DE BOTONES DE PAGO Y ALTERNATIVAS */
+.checkout-pay-buttons-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+  width: 100%;
+}
+
+.btn-guided-cash {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
+  box-shadow: 0 4px 20px rgba(16, 185, 129, 0.45) !important;
+  color: #ffffff !important;
+}
+
+.btn-guided-cash:hover:not(:disabled) {
+  box-shadow: 0 6px 25px rgba(16, 185, 129, 0.65) !important;
+  filter: brightness(1.1);
+}
+
+.btn-alt-cash {
+  background: transparent;
+  border: none;
+  color: #38bdf8;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 4px 8px;
+  text-decoration: underline;
+  transition: all 0.2s ease;
+  font-family: var(--font-main, sans-serif);
+}
+
+.btn-alt-cash:hover:not(:disabled) {
+  color: #7dd3fc;
+  transform: translateY(-1px);
+}
