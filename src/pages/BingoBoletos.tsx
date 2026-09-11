@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, addDoc, getDoc, setDoc, doc, onSnapshot, query, limit, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -109,7 +109,18 @@ const BingoBoletos: React.FC = () => {
   const [selectedScheduledGame, setSelectedScheduledGame] = useState<BingoScheduledGame | null>(null);
   const [recurrenteLinks, setRecurrenteLinks] = useState<{ [pkgId: string]: string }>({});
   const [recurrenteSecretKey, setRecurrenteSecretKey] = useState<string>('');
-  const [countdownText, setCountdownText] = useState<string | null>(null);
+
+  // Referencia y control para desplazamiento horizontal de partidas (bidireccional)
+  const partidasScrollRef = useRef<HTMLDivElement>(null);
+  const scrollPartidas = (direction: 'left' | 'right') => {
+    if (partidasScrollRef.current) {
+      const scrollAmount = 320;
+      partidasScrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
 
   // Cargar juego activo
   useEffect(() => {
@@ -171,32 +182,6 @@ const BingoBoletos: React.FC = () => {
     loadSettings();
   }, []);
 
-  // Temporizador en vivo
-  useEffect(() => {
-    const targetTimestamp = selectedScheduledGame?.scheduledAt || activeGame?.nextRoundTime;
-    if (!targetTimestamp) {
-      setCountdownText(null);
-      return;
-    }
-
-    const updateTimer = () => {
-      const diff = targetTimestamp - Date.now();
-      if (diff <= 0) {
-        setCountdownText('¡EN VIVO AHORA!');
-      } else {
-        const hours = Math.floor(diff / (1000 * 60 * 60));
-        const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-        const seconds = Math.floor((diff % (1000 * 60)) / 1000);
-        setCountdownText(
-          `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`
-        );
-      }
-    };
-
-    updateTimer();
-    const interval = setInterval(updateTimer, 1000);
-    return () => clearInterval(interval);
-  }, [selectedScheduledGame, activeGame]);
 
   // Lista unificada de todas las partidas disponibles (programadas + juego activo si no está duplicado)
   const allAvailableGames: BingoScheduledGame[] = [...scheduledGames];
@@ -628,20 +613,8 @@ const BingoBoletos: React.FC = () => {
           </h1>
 
           <p className="boletos-hero-subtitle">
-            Sigue los 4 sencillos pasos para asegurar tu lugar en la próxima transmisión en vivo.
+            Sigue los 3 sencillos pasos para asegurar tu lugar en la próxima transmisión en vivo.
           </p>
-
-          {countdownText && (
-            <div className="boletos-countdown-banner">
-              <span>⏱️</span>
-              <span style={{ fontSize: '0.82rem', color: '#cbd5e1', fontWeight: 'bold' }}>
-                PRÓXIMA RONDA EN:
-              </span>
-              <span className="boletos-countdown-digits">
-                {countdownText}
-              </span>
-            </div>
-          )}
         </header>
 
         {/* BARRA DE NAVEGACIÓN Y PROGRESO DE LOS 4 PASOS */}
@@ -685,7 +658,7 @@ const BingoBoletos: React.FC = () => {
         )}
 
         {/* ==========================================================================
-            PASO 1: ESCOGER LA PARTIDA
+            PASO 1: ESCOGER LA PARTIDA (CARRUSEL HORIZONTAL BIDIRECCIONAL)
             ========================================================================== */}
         {currentStep === 1 && (
           <section className="boletos-step-container">
@@ -699,109 +672,140 @@ const BingoBoletos: React.FC = () => {
               </p>
             </div>
 
-            {allAvailableGames.length > 0 ? (
-              <div className="partidas-selection-grid">
-                {allAvailableGames.map((game) => {
-                  const isSelected = selectedScheduledGame?.id === game.id;
-                  const isFree = (game.cardPriceQ === 0);
-                  const isLive = (game.status === 'live');
-
-                  return (
-                    <div
-                      key={game.id}
-                      className={`partida-selection-card ${isSelected ? 'selected' : ''}`}
-                      onClick={() => setSelectedScheduledGame(game)}
+            {/* CARRUSEL HORIZONTAL CON SÍMBOLOS Y NAVEGACIÓN EN AMBOS SENTIDOS */}
+            <div className="partidas-carousel-wrapper">
+              <div className="partidas-carousel-top-bar">
+                <span className="partidas-scroll-legend">
+                  <span className="scroll-symbol-pulse">↔️</span>
+                  <span>Desliza horizontalmente para ver todas las partidas</span>
+                </span>
+                {allAvailableGames.length > 1 && (
+                  <div className="partidas-scroll-nav-btns">
+                    <button 
+                      type="button" 
+                      className="partidas-nav-arrow" 
+                      onClick={() => scrollPartidas('left')}
+                      title="Ver partidas anteriores (desplazar a la izquierda)"
+                      aria-label="Desplazar a la izquierda"
                     >
-                      <div className="partida-card-top">
-                        <div className="partida-radio-wrap">
-                          <span className={`partida-radio ${isSelected ? 'checked' : ''}`} />
-                          <span className={`partida-status-chip ${isLive ? 'live' : isFree ? 'free' : 'scheduled'}`}>
-                            {isLive ? '🔴 EN VIVO AHORA' : isFree ? '🎁 GRATIS / PRUEBA' : '📅 PROGRAMADA'}
-                          </span>
-                        </div>
-
-                        <div className={`partida-price-badge ${isFree ? 'free' : ''}`}>
-                          <span className="price-val">
-                            {isFree ? 'Q0.00' : `Q${game.cardPriceQ || 25}.00`}
-                          </span>
-                          <span className="price-unit">
-                            {isFree ? '¡GRATIS!' : '/ cartón'}
-                          </span>
-                        </div>
-                      </div>
-
-                      <h3 className="partida-card-title">
-                        {game.title}
-                      </h3>
-
-                      <div className="partida-card-meta">
-                        <div className="meta-row">
-                          <span className="meta-icon">⏰</span>
-                          <span className="meta-text">
-                            {new Date(game.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' })}
-                          </span>
-                        </div>
-                        <div className="meta-row">
-                          <span className="meta-icon">🏆</span>
-                          <span className="meta-text highlight">
-                            {game.prizeHighlight || 'Premios en efectivo, combos y sorpresas.'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {isSelected && (
-                        <div className="partida-selected-chip">
-                          ✓ Partida Seleccionada
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
+                      ◀
+                    </button>
+                    <span className="scroll-nav-divider">◀ ↔ ▶</span>
+                    <button 
+                      type="button" 
+                      className="partidas-nav-arrow" 
+                      onClick={() => scrollPartidas('right')}
+                      title="Ver siguientes partidas (desplazar a la derecha)"
+                      aria-label="Desplazar a la derecha"
+                    >
+                      ▶
+                    </button>
+                  </div>
+                )}
               </div>
-            ) : (
-              /* Tarjeta activa por defecto si no hay lista programada aún */
-              <div className="partidas-selection-grid">
-                <div className="partida-selection-card selected">
-                  <div className="partida-card-top">
-                    <div className="partida-radio-wrap">
-                      <span className="partida-radio checked" />
-                      <span className="partida-status-chip live">
-                        🔴 EN VIVO / ACTIVA
-                      </span>
+
+              <div className="partidas-horizontal-track" ref={partidasScrollRef}>
+                {allAvailableGames.length > 0 ? (
+                  allAvailableGames.map((game) => {
+                    const isSelected = selectedScheduledGame?.id === game.id;
+                    const isFree = (game.cardPriceQ === 0);
+                    const isLive = (game.status === 'live');
+
+                    return (
+                      <div
+                        key={game.id}
+                        className={`partida-selection-card ${isSelected ? 'selected' : ''}`}
+                        onClick={() => setSelectedScheduledGame(game)}
+                      >
+                        <div className="partida-card-top">
+                          <div className="partida-radio-wrap">
+                            <span className={`partida-radio ${isSelected ? 'checked' : ''}`} />
+                            <span className={`partida-status-chip ${isLive ? 'live' : isFree ? 'free' : 'scheduled'}`}>
+                              {isLive ? '🔴 EN VIVO AHORA' : isFree ? '🎁 GRATIS / PRUEBA' : '📅 PROGRAMADA'}
+                            </span>
+                          </div>
+
+                          <div className={`partida-price-badge ${isFree ? 'free' : ''}`}>
+                            <span className="price-val">
+                              {isFree ? 'Q0.00' : `Q${game.cardPriceQ || 25}.00`}
+                            </span>
+                            <span className="price-unit">
+                              {isFree ? '¡GRATIS!' : '/ cartón'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <h3 className="partida-card-title">
+                          {game.title}
+                        </h3>
+
+                        <div className="partida-card-meta">
+                          <div className="meta-row">
+                            <span className="meta-icon">⏰</span>
+                            <span className="meta-text">
+                              {new Date(game.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' })}
+                            </span>
+                          </div>
+                          <div className="meta-row">
+                            <span className="meta-icon">🏆</span>
+                            <span className="meta-text highlight">
+                              {game.prizeHighlight || 'Premios en efectivo, combos y sorpresas.'}
+                            </span>
+                          </div>
+                        </div>
+
+                        {isSelected && (
+                          <div className="partida-selected-chip">
+                            ✓ Partida Seleccionada
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })
+                ) : (
+                  /* Tarjeta activa por defecto si no hay lista programada aún */
+                  <div className="partida-selection-card selected">
+                    <div className="partida-card-top">
+                      <div className="partida-radio-wrap">
+                        <span className="partida-radio checked" />
+                        <span className="partida-status-chip live">
+                          🔴 EN VIVO / ACTIVA
+                        </span>
+                      </div>
+                      <div className={`partida-price-badge ${currentPriceQ === 0 ? 'free' : ''}`}>
+                        <span className="price-val">
+                          {currentPriceQ === 0 ? 'Q0.00' : `Q${currentPriceQ}.00`}
+                        </span>
+                        <span className="price-unit">
+                          {currentPriceQ === 0 ? '¡GRATIS!' : '/ cartón'}
+                        </span>
+                      </div>
                     </div>
-                    <div className={`partida-price-badge ${currentPriceQ === 0 ? 'free' : ''}`}>
-                      <span className="price-val">
-                        {currentPriceQ === 0 ? 'Q0.00' : `Q${currentPriceQ}.00`}
-                      </span>
-                      <span className="price-unit">
-                        {currentPriceQ === 0 ? '¡GRATIS!' : '/ cartón'}
-                      </span>
+
+                    <h3 className="partida-card-title">
+                      {activeGame?.title || 'Gran Ronda Oficial de Bingotenango'}
+                    </h3>
+
+                    <div className="partida-card-meta">
+                      <div className="meta-row">
+                        <span className="meta-icon">📅</span>
+                        <span className="meta-text">Transmisión interactiva en vivo por el canal</span>
+                      </div>
+                      <div className="meta-row">
+                        <span className="meta-icon">🏆</span>
+                        <span className="meta-text highlight">
+                          {activeGame?.currentPrizeTitle || 'Premios en efectivo, combos y sorpresas en vivo.'}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="partida-selected-chip">
+                      ✓ Partida Seleccionada
                     </div>
                   </div>
-
-                  <h3 className="partida-card-title">
-                    {activeGame?.title || 'Gran Ronda Oficial de Bingotenango'}
-                  </h3>
-
-                  <div className="partida-card-meta">
-                    <div className="meta-row">
-                      <span className="meta-icon">📅</span>
-                      <span className="meta-text">Transmisión interactiva en vivo por el canal</span>
-                    </div>
-                    <div className="meta-row">
-                      <span className="meta-icon">🏆</span>
-                      <span className="meta-text highlight">
-                        {activeGame?.currentPrizeTitle || 'Premios en efectivo, combos y sorpresas en vivo.'}
-                      </span>
-                    </div>
-                  </div>
-
-                  <div className="partida-selected-chip">
-                    ✓ Partida Seleccionada
-                  </div>
-                </div>
+                )}
               </div>
-            )}
+            </div>
 
             {/* BOTÓN CONTINUAR PASO 1 */}
             <div className="step-actions-footer single-action">
