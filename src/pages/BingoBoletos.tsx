@@ -75,12 +75,13 @@ const CARD_TIERS_MAP: Record<string, CardTier> = {
   }
 };
 
-type WizardStep = 1 | 2 | 3;
+type WizardStep = 1 | 2 | 3 | 4;
 
 const WIZARD_STEPS = [
   { num: 1 as const, title: 'Partida', icon: '🎮', label: '1. Partida' },
   { num: 2 as const, title: 'Modalidad', icon: '👥', label: '2. Modalidad' },
-  { num: 3 as const, title: 'Entrega y Pago', icon: '💳', label: '3. Entrega y Pago' },
+  { num: 3 as const, title: 'Tus Datos', icon: '📝', label: '3. Tus Datos' },
+  { num: 4 as const, title: 'Pago', icon: '💳', label: '4. Pago' },
 ];
 
 const BingoBoletos: React.FC = () => {
@@ -248,12 +249,37 @@ const BingoBoletos: React.FC = () => {
   // Navegación guiada entre pasos
   const goToStep = (step: WizardStep) => {
     setErrorMessage('');
-    if (step === 2 && !selectedScheduledGame && !activeGame) {
+    if (step >= 2 && !selectedScheduledGame && !activeGame) {
       setErrorMessage('Por favor selecciona una partida para continuar.');
       return;
     }
+    if (step === 4) {
+      if (!playerName.trim()) {
+        setErrorMessage('⚠️ Ingresa tu Nombre y Apellido para continuar.');
+        const el = document.getElementById('playerName');
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+      if (playerWhatsappDigits.trim().length !== 8) {
+        setErrorMessage('⚠️ Ingresa los 8 dígitos de tu número de teléfono (ej. 5555 1234).');
+        const el = document.getElementById('playerPhone');
+        if (el) {
+          el.focus();
+          el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        return;
+      }
+    }
     setCurrentStep(step);
     window.scrollTo({ top: 120, behavior: 'smooth' });
+  };
+
+  const handleContinueToStep4 = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    goToStep(4);
   };
 
   // Procesar pago en efectivo presencial con verificación manual de un promotor
@@ -602,7 +628,7 @@ const BingoBoletos: React.FC = () => {
           </h1>
 
           <p className="boletos-hero-subtitle">
-            Sigue los 3 sencillos pasos para asegurar tu lugar en la próxima transmisión en vivo.
+            Sigue los 4 sencillos pasos para asegurar tu lugar en la próxima transmisión en vivo.
           </p>
         </header>
 
@@ -852,59 +878,36 @@ const BingoBoletos: React.FC = () => {
                 className="btn-step-next"
                 onClick={() => goToStep(3)}
               >
-                Continuar al Paso 3: Datos de Entrega ➔
+                Continuar al Paso 3: Tus Datos ➔
               </button>
             </div>
           </section>
         )}
 
         {/* ==========================================================================
-            PASO 3: DATOS DE ENTREGA Y PAGO SEGURO
+            PASO 3: FORMULARIO EXCLUSIVO DE DATOS DEL USUARIO
             ========================================================================== */}
         {currentStep === 3 && (
           <section className="boletos-step-container">
             <div className="step-header-wrap">
               <h2 className="step-main-title">
-                3. DATOS DE ENTREGA Y PAGO SEGURO
+                3. INGRESA TUS DATOS
               </h2>
-              <p className="step-main-desc">
-                {purchaseMode === 'personal' 
-                  ? 'Ingresa tu nombre y tu número de teléfono para generar tu pase de juego en vivo de forma inmediata (1 cartón por dispositivo móvil).' 
-                  : 'A este número de teléfono te enviaremos el enlace independiente para que tu contacto ingrese en su dispositivo móvil.'}
-              </p>
             </div>
 
-            {/* RESUMEN DETALLADO DE LA ORDEN ANTES DE PAGAR */}
-            <div className="step-order-summary-card">
-              <div className="order-summary-header">
-                <span className="summary-card-icon">📋</span>
-                <h4>Resumen de tu Pedido</h4>
-              </div>
-              <div className="order-summary-body">
-                <div className="order-summary-item">
-                  <span className="lbl">Partida:</span>
-                  <span className="val">{selectedScheduledGame?.title || activeGame?.title || 'Partida Oficial'}</span>
-                </div>
-                <div className="order-summary-item">
-                  <span className="lbl">Modalidad:</span>
-                  <span className="val">{purchaseMode === 'personal' ? '👤 Para mí (Uso Personal)' : '🎁 Para regalar a un contacto'}</span>
-                </div>
-                <div className="order-summary-item">
-                  <span className="lbl">Cartón:</span>
-                  <span className="val font-highlight">1 cartón (1 por dispositivo móvil)</span>
-                </div>
-                <div className="order-summary-divider" />
-                <div className="order-summary-item total-row">
-                  <span className="lbl">Total Final:</span>
-                  <span className={`val total-big ${currentPriceQ === 0 ? 'free-badge' : ''}`}>
-                    {currentPriceQ === 0 ? 'Q0.00 (Acceso Libre)' : `Q${totalPriceQ}.00 GTQ`}
-                  </span>
-                </div>
-              </div>
+            {/* Resumen de la partida seleccionada */}
+            <div className="step-current-game-pill">
+              <span className="pill-item-game">
+                🎮 Partida: <strong>{selectedScheduledGame?.title || activeGame?.title || 'Partida Oficial'}</strong>
+              </span>
+              <span className="pill-sep">•</span>
+              <span className="pill-item-price">
+                Modalidad: <strong>{purchaseMode === 'personal' ? 'Para mí (Celular)' : 'Para regalar a un contacto'}</strong>
+              </span>
             </div>
 
-            {/* FORMULARIO FINAL */}
-            <form onSubmit={handleProceedToPayment} className="checkout-guided-form" noValidate>
+            {/* FORMULARIO DE DATOS DEL JUGADOR */}
+            <form onSubmit={handleContinueToStep4} className="checkout-guided-form" noValidate>
               <div className="form-group-guided">
                 <label htmlFor="playerName">Tu Nombre y Apellido *</label>
                 <input 
@@ -994,6 +997,79 @@ const BingoBoletos: React.FC = () => {
                 </div>
               </div>
 
+              {/* MENSAJE DE ERROR LOCALIZADO EN EL PASO 3 */}
+              {errorMessage && (
+                <div className="checkout-error-banner" style={{ marginTop: '14px', marginBottom: '14px' }}>
+                  ⚠️ {errorMessage}
+                </div>
+              )}
+
+              {/* ACCIONES DEL PASO 3 */}
+              <div className="step-actions-footer">
+                <button 
+                  type="button" 
+                  className="btn-step-prev"
+                  onClick={() => goToStep(2)}
+                >
+                  ⬅️ Volver a Modalidad
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-step-next"
+                >
+                  Continuar al Paso 4: Forma de Pago ➔
+                </button>
+              </div>
+            </form>
+          </section>
+        )}
+
+        {/* ==========================================================================
+            PASO 4: MÉTODO DE PAGO Y CONFIRMACIÓN
+            ========================================================================== */}
+        {currentStep === 4 && (
+          <section className="boletos-step-container">
+            <div className="step-header-wrap">
+              <h2 className="step-main-title">
+                4. MÉTODO DE PAGO Y CONFIRMACIÓN
+              </h2>
+            </div>
+
+            {/* RESUMEN DETALLADO DE LA ORDEN ANTES DE PAGAR */}
+            <div className="step-order-summary-card">
+              <div className="order-summary-header">
+                <span className="summary-card-icon">📋</span>
+                <h4>Resumen de tu Pedido</h4>
+              </div>
+              <div className="order-summary-body">
+                <div className="order-summary-item">
+                  <span className="lbl">Partida:</span>
+                  <span className="val">{selectedScheduledGame?.title || activeGame?.title || 'Partida Oficial'}</span>
+                </div>
+                <div className="order-summary-item">
+                  <span className="lbl">Modalidad:</span>
+                  <span className="val">{purchaseMode === 'personal' ? '👤 Para mí (Uso Personal)' : '🎁 Para regalar a un contacto'}</span>
+                </div>
+                <div className="order-summary-item">
+                  <span className="lbl">Jugador:</span>
+                  <span className="val font-highlight">{playerName} (+502 {playerWhatsappDigits})</span>
+                </div>
+                <div className="order-summary-item">
+                  <span className="lbl">Cartón:</span>
+                  <span className="val font-highlight">1 cartón (1 por dispositivo móvil)</span>
+                </div>
+                <div className="order-summary-divider" />
+                <div className="order-summary-item total-row">
+                  <span className="lbl">Total Final:</span>
+                  <span className={`val total-big ${currentPriceQ === 0 ? 'free-badge' : ''}`}>
+                    {currentPriceQ === 0 ? 'Q0.00 (Acceso Libre)' : `Q${totalPriceQ}.00 GTQ`}
+                  </span>
+                </div>
+              </div>
+            </div>
+
+            {/* FORMULARIO Y SELECTOR DE PAGO */}
+            <form onSubmit={handleProceedToPayment} className="checkout-guided-form" noValidate>
               {/* OPCIONES DE PAGO SI TIENE COSTO (RECURRENTE O EFECTIVO) */}
               {currentPriceQ > 0 && (
                 <div className="payment-method-selector-section">
@@ -1041,43 +1117,20 @@ const BingoBoletos: React.FC = () => {
 
                   {/* ADVERTENCIA OBLIGATORIA AL SELECCIONAR PAGO EN EFECTIVO */}
                   {paymentMethodChoice === 'efectivo' && (
-                    <>
-                      <div className="cash-promoter-warning">
-                        <span className="warning-symbol">⚠️</span>
-                        <div className="warning-content">
-                          <strong>Solo disponible con un promotor presencial:</strong>
-                          <p>
-                            Esta opción de pago en efectivo <strong>solo funciona si te encuentras presencialmente con un promotor o encargado cerca</strong> para cobrar tu dinero y habilitar tu boleto de manera manual en el registro.
-                          </p>
-                        </div>
+                    <div className="cash-promoter-warning">
+                      <span className="warning-symbol">⚠️</span>
+                      <div className="warning-content">
+                        <strong>Solo disponible con un promotor presencial:</strong>
+                        <p>
+                          Esta opción de pago en efectivo <strong>solo funciona si te encuentras presencialmente con un promotor o encargado cerca</strong> para cobrar tu dinero y habilitar tu boleto de manera manual en el registro.
+                        </p>
                       </div>
-
-                      {(!playerName.trim() || playerWhatsappDigits.trim().length !== 8) && (
-                        <div style={{
-                          marginTop: '10px',
-                          padding: '10px 14px',
-                          borderRadius: '10px',
-                          background: 'rgba(234, 179, 8, 0.12)',
-                          border: '1px solid rgba(234, 179, 8, 0.4)',
-                          color: '#fef08a',
-                          fontSize: '0.84rem',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '10px',
-                          lineHeight: 1.4
-                        }}>
-                          <span style={{ fontSize: '1.2rem' }}>📝</span>
-                          <span>
-                            <strong>Paso previo:</strong> Asegúrate de ingresar tu <strong>Nombre</strong> y <strong>Teléfono de 8 dígitos</strong> arriba para que el promotor pueda identificarte.
-                          </span>
-                        </div>
-                      )}
-                    </>
+                    </div>
                   )}
                 </div>
               )}
 
-              {/* MENSAJE DE ERROR LOCALIZADO EN EL PASO 3 */}
+              {/* MENSAJE DE ERROR LOCALIZADO EN EL PASO 4 */}
               {errorMessage && (
                 <div className="checkout-error-banner" style={{ marginTop: '14px', marginBottom: '14px' }}>
                   ⚠️ {errorMessage}
@@ -1089,10 +1142,10 @@ const BingoBoletos: React.FC = () => {
                 <button 
                   type="button" 
                   className="btn-step-prev"
-                  onClick={() => goToStep(2)}
+                  onClick={() => goToStep(3)}
                   disabled={isProcessing}
                 >
-                  ⬅️ Volver a Modalidad
+                  ⬅️ Volver a Tus Datos
                 </button>
 
                 {currentPriceQ === 0 ? (
