@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { collection, addDoc, getDoc, setDoc, doc, onSnapshot, query, limit, where, getDocs } from 'firebase/firestore';
 import { db } from '../firebase';
@@ -110,17 +110,6 @@ const BingoBoletos: React.FC = () => {
   const [recurrenteLinks, setRecurrenteLinks] = useState<{ [pkgId: string]: string }>({});
   const [recurrenteSecretKey, setRecurrenteSecretKey] = useState<string>('');
 
-  // Referencia y control para desplazamiento horizontal de partidas (bidireccional)
-  const partidasScrollRef = useRef<HTMLDivElement>(null);
-  const scrollPartidas = (direction: 'left' | 'right') => {
-    if (partidasScrollRef.current) {
-      const scrollAmount = 320;
-      partidasScrollRef.current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
 
   // Cargar juego activo
   useEffect(() => {
@@ -663,7 +652,6 @@ const BingoBoletos: React.FC = () => {
         {currentStep === 1 && (
           <section className="boletos-step-container">
             <div className="step-header-wrap">
-              <span className="step-badge-indicator">PASO 1 DE 3</span>
               <h2 className="step-main-title">
                 1. ESCOGE TU PARTIDA
               </h2>
@@ -672,39 +660,16 @@ const BingoBoletos: React.FC = () => {
               </p>
             </div>
 
-            {/* CARRUSEL HORIZONTAL CON SÍMBOLOS Y NAVEGACIÓN EN AMBOS SENTIDOS */}
+            {/* CARRUSEL HORIZONTAL CON SÍMBOLO DE DESPLAZAMIENTO */}
             <div className="partidas-carousel-wrapper">
               <div className="partidas-carousel-top-bar">
                 <span className="partidas-scroll-legend">
                   <span className="scroll-symbol-pulse">↔️</span>
-                  <span>Desliza horizontalmente para ver todas las partidas</span>
+                  <span>Desliza horizontalmente</span>
                 </span>
-                {allAvailableGames.length > 1 && (
-                  <div className="partidas-scroll-nav-btns">
-                    <button 
-                      type="button" 
-                      className="partidas-nav-arrow" 
-                      onClick={() => scrollPartidas('left')}
-                      title="Ver partidas anteriores (desplazar a la izquierda)"
-                      aria-label="Desplazar a la izquierda"
-                    >
-                      ◀
-                    </button>
-                    <span className="scroll-nav-divider">◀ ↔ ▶</span>
-                    <button 
-                      type="button" 
-                      className="partidas-nav-arrow" 
-                      onClick={() => scrollPartidas('right')}
-                      title="Ver siguientes partidas (desplazar a la derecha)"
-                      aria-label="Desplazar a la derecha"
-                    >
-                      ▶
-                    </button>
-                  </div>
-                )}
               </div>
 
-              <div className="partidas-horizontal-track" ref={partidasScrollRef}>
+              <div className="partidas-horizontal-track">
                 {allAvailableGames.length > 0 ? (
                   allAvailableGames.map((game) => {
                     const isSelected = selectedScheduledGame?.id === game.id;
@@ -826,7 +791,6 @@ const BingoBoletos: React.FC = () => {
         {currentStep === 2 && (
           <section className="boletos-step-container">
             <div className="step-header-wrap">
-              <span className="step-badge-indicator">PASO 2 DE 3</span>
               <h2 className="step-main-title">
                 2. ¿CÓMO DESEAS PARTICIPAR?
               </h2>
@@ -906,7 +870,6 @@ const BingoBoletos: React.FC = () => {
         {currentStep === 3 && (
           <section className="boletos-step-container">
             <div className="step-header-wrap">
-              <span className="step-badge-indicator">PASO 3 DE 3</span>
               <h2 className="step-main-title">
                 3. DATOS DE ENTREGA Y PAGO SEGURO
               </h2>
