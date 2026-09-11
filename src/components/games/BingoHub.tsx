@@ -261,6 +261,27 @@ export default function BingoHub() {
     setTimeout(() => setCopiedShareLink(false), 2500);
   };
 
+  const handleShareGameLink = async (customUrl?: string) => {
+    const finalUrl = customUrl || `${window.location.origin}/juegos/bingo`;
+    const shareData = {
+      title: 'Bingotenango - Bingo Digital en Vivo',
+      text: '¡Hola! 🎟️ Te invito a unirte a la sala de Bingotenango para jugar en vivo:',
+      url: finalUrl
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+        return;
+      } catch (err: unknown) {
+        if (err instanceof Error && err.name === 'AbortError') return;
+        console.warn("navigator.share no completado, usando portapapeles:", err);
+      }
+    }
+
+    handleCopyShareLink(finalUrl);
+  };
+
   // Estados para Registro de Cobro en Efectivo y Envío Controlado de Enlaces
   const [showCashPaymentModal, setShowCashPaymentModal] = useState(false);
   const [cashPaymentTargetCard, setCashPaymentTargetCard] = useState<BingoCard | null>(null);
@@ -2580,70 +2601,28 @@ export default function BingoHub() {
                           O ingresa desde tu móvil a: <br /><strong>{window.location.host}/juegos/bingo</strong>
                         </p>
 
-                        {/* Botones de Compartir Enlace cuando el QR no está al alcance */}
-                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '10px', flexWrap: 'wrap' }}>
+                        {/* Botón de Compartir Enlace cuando el QR no está al alcance */}
+                        <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', marginTop: '8px', flexWrap: 'wrap' }}>
                           <button
                             type="button"
-                            onClick={() => handleCopyShareLink()}
+                            onClick={() => handleShareGameLink()}
                             style={{
-                              background: copiedShareLink ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                              border: `1px solid ${copiedShareLink ? '#10b981' : 'rgba(255, 255, 255, 0.2)'}`,
-                              color: copiedShareLink ? '#34d399' : '#e2e8f0',
+                              background: copiedShareLink ? 'rgba(16, 185, 129, 0.25)' : 'linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(168, 85, 247, 0.2) 100%)',
+                              border: `1px solid ${copiedShareLink ? '#10b981' : 'rgba(56, 189, 248, 0.4)'}`,
+                              color: copiedShareLink ? '#34d399' : '#ffffff',
                               borderRadius: '8px',
-                              padding: '6px 12px',
-                              fontSize: '0.74rem',
+                              padding: '6px 14px',
+                              fontSize: '0.75rem',
                               fontWeight: 'bold',
-                              cursor: 'pointer'
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px'
                             }}
                           >
-                            {copiedShareLink ? '✓ ¡Link Copiado!' : '📋 Copiar Enlace'}
+                            <span>{copiedShareLink ? '✓' : '🔗'}</span>
+                            <span>{copiedShareLink ? '¡Link Copiado!' : 'Compartir Sala'}</span>
                           </button>
-
-                          <a
-                            href={`https://wa.me/?text=${encodeURIComponent(
-                              `¡Hola! 🎟️ Te invito a unirte ahora a la sala en vivo de Bingotenango:\n\n` +
-                              `📲 Entra aquí para registrarte o jugar:\n${window.location.origin}/juegos/bingo\n\n` +
-                              `¡No te lo pierdas!`
-                            )}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              background: 'rgba(37, 211, 102, 0.2)',
-                              border: '1px solid rgba(37, 211, 102, 0.4)',
-                              color: '#25d366',
-                              borderRadius: '8px',
-                              padding: '6px 12px',
-                              fontSize: '0.74rem',
-                              fontWeight: 'bold',
-                              textDecoration: 'none',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            💬 WhatsApp
-                          </a>
-
-                          <a
-                            href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/juegos/bingo`)}&text=${encodeURIComponent('¡Hola! 🎟️ Te invito a unirte a la sala de Bingotenango para jugar en vivo:')}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            style={{
-                              background: 'rgba(34, 158, 217, 0.2)',
-                              border: '1px solid rgba(34, 158, 217, 0.4)',
-                              color: '#38bdf8',
-                              borderRadius: '8px',
-                              padding: '6px 12px',
-                              fontSize: '0.74rem',
-                              fontWeight: 'bold',
-                              textDecoration: 'none',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '4px'
-                            }}
-                          >
-                            ✈️ Telegram
-                          </a>
                         </div>
                       </div>
 
@@ -2964,17 +2943,16 @@ export default function BingoHub() {
                 </span>
               </div>
 
-              <div className="cyber-panel-header" style={{ width: '100%' }}>
-                <span className="cyber-panel-title">
-                  <span className="icon">🔮</span> 
-                  {activeGame.status === 'playing' ? 'Transmisión Tómbola' : 'Obtención de Cartón'}
-                </span>
-                {activeGame.status === 'playing' && (
+              {activeGame.status === 'playing' && (
+                <div className="cyber-panel-header" style={{ width: '100%' }}>
+                  <span className="cyber-panel-title">
+                    <span className="icon">🔮</span> Transmisión Tómbola
+                  </span>
                   <span className="cyber-badge cyber-badge-green" style={{ animation: 'pulse 1.5s infinite' }}>
                     🟢 EN VIVO
                   </span>
-                )}
-              </div>
+                </div>
+              )}
 
               {/* BANNER DE ALERTA DE BINGO EN VIVO DENTRO DE LA TÓMBOLA */}
               {activeBingoShouts.length > 0 && (
@@ -6109,7 +6087,7 @@ export default function BingoHub() {
                           }}
                         >
                           <span>🎟️</span>
-                          <span>ADQUIRIR TICKET</span>
+                          <span>ADQUIRIR CARTÓN</span>
                         </button>
                       </div>
                     </div>
@@ -6157,94 +6135,50 @@ export default function BingoHub() {
                   </div>
                 )}
 
-                {/* 3. COMPARTIR ENLACE DE LA SALA CON BOTONES CENTRADOS */}
+                {/* 3. COMPARTIR ENLACE DE LA SALA (COMPACTO Y MULTIAPLICACIÓN) */}
                 <div style={{
                   background: 'rgba(0, 0, 0, 0.35)',
-                  border: '1px solid rgba(255, 255, 255, 0.1)',
-                  borderRadius: '16px',
-                  padding: '14px',
-                  marginBottom: '16px',
+                  border: '1px solid rgba(255, 255, 255, 0.08)',
+                  borderRadius: '14px',
+                  padding: '10px 14px',
+                  marginBottom: '14px',
                   display: 'flex',
-                  flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'center',
-                  textAlign: 'center',
-                  gap: '10px'
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: '8px'
                 }}>
-                  <div>
-                    <span style={{ fontSize: '0.72rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>
+                  <div style={{ textAlign: 'left' }}>
+                    <span style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block' }}>
                       ¿El código QR no está a tu alcance?
                     </span>
-                    <strong style={{ fontSize: '0.82rem', color: '#cbd5e1' }}>
-                      Comparte el enlace de la sala con tus amigos:
+                    <strong style={{ fontSize: '0.78rem', color: '#cbd5e1' }}>
+                      Comparte el enlace de la sala:
                     </strong>
                   </div>
 
-                  {/* BOTONES CENTRADOS */}
-                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                    <button
-                      type="button"
-                      onClick={() => handleCopyShareLink()}
-                      style={{
-                        background: copiedShareLink ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.08)',
-                        border: `1px solid ${copiedShareLink ? '#10b981' : 'rgba(255, 255, 255, 0.2)'}`,
-                        color: copiedShareLink ? '#34d399' : '#e2e8f0',
-                        borderRadius: '10px',
-                        padding: '7px 14px',
-                        fontSize: '0.78rem',
-                        fontWeight: 'bold',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      {copiedShareLink ? '✓ Copiado' : '📋 Copiar Link'}
-                    </button>
-
-                    <a
-                      href={`https://wa.me/?text=${encodeURIComponent(
-                        `¡Hola! 🎟️ Te invito a jugar Bingo en vivo en Bingotenango:\n\n` +
-                        `📲 Entra a la sala aquí:\n${window.location.origin}/juegos/bingo\n\n` +
-                        `¡Vamos a jugar!`
-                      )}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: 'rgba(37, 211, 102, 0.2)',
-                        border: '1px solid rgba(37, 211, 102, 0.4)',
-                        color: '#25d366',
-                        borderRadius: '10px',
-                        padding: '7px 14px',
-                        fontSize: '0.78rem',
-                        fontWeight: 'bold',
-                        textDecoration: 'none',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      💬 WhatsApp
-                    </a>
-
-                    <a
-                      href={`https://t.me/share/url?url=${encodeURIComponent(`${window.location.origin}/juegos/bingo`)}&text=${encodeURIComponent('¡Hola! 🎟️ Te invito a la sala en vivo de Bingotenango:')}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style={{
-                        background: 'rgba(34, 158, 217, 0.2)',
-                        border: '1px solid rgba(34, 158, 217, 0.4)',
-                        color: '#38bdf8',
-                        borderRadius: '10px',
-                        padding: '7px 14px',
-                        fontSize: '0.78rem',
-                        fontWeight: 'bold',
-                        textDecoration: 'none',
-                        display: 'inline-flex',
-                        alignItems: 'center',
-                        gap: '6px'
-                      }}
-                    >
-                      ✈️ Telegram
-                    </a>
-                  </div>
+                  <button
+                    type="button"
+                    onClick={() => handleShareGameLink()}
+                    style={{
+                      background: copiedShareLink ? 'rgba(16, 185, 129, 0.25)' : 'linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(168, 85, 247, 0.25) 100%)',
+                      border: `1px solid ${copiedShareLink ? '#10b981' : 'rgba(56, 189, 248, 0.45)'}`,
+                      color: copiedShareLink ? '#34d399' : '#ffffff',
+                      borderRadius: '10px',
+                      padding: '8px 16px',
+                      fontSize: '0.8rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      boxShadow: '0 2px 10px rgba(0, 0, 0, 0.25)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    <span>{copiedShareLink ? '✓' : '🔗'}</span>
+                    <span>{copiedShareLink ? '¡Enlace Copiado!' : 'Compartir'}</span>
+                  </button>
                 </div>
               </div>
 
