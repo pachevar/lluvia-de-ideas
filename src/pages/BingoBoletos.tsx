@@ -655,9 +655,6 @@ const BingoBoletos: React.FC = () => {
               <h2 className="step-main-title">
                 1. ESCOGE TU PARTIDA
               </h2>
-              <p className="step-main-desc">
-                Selecciona la ronda en la que deseas participar. Conoce el horario, costo de entrada y los premios en juego.
-              </p>
             </div>
 
             {/* CARRUSEL HORIZONTAL CON SÍMBOLO DE DESPLAZAMIENTO */}
