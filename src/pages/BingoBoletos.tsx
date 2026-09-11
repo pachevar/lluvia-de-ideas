@@ -995,21 +995,25 @@ const BingoBoletos: React.FC = () => {
                 </div>
                 <div className="order-summary-item">
                   <span className="lbl">Modalidad:</span>
-                  <span className="val">{purchaseMode === 'personal' ? '👤 Para mí (Uso Personal)' : '🎁 Para regalar a un contacto'}</span>
+                  <span className="val">{purchaseMode === 'personal' ? '👤 Para mí' : '🎁 Para regalar a un contacto'}</span>
                 </div>
                 <div className="order-summary-item">
-                  <span className="lbl">Jugador:</span>
-                  <span className="val font-highlight">{playerName} (+502 {playerWhatsappDigits})</span>
+                  <span className="lbl">Nombre:</span>
+                  <span className="val">{playerName}</span>
                 </div>
                 <div className="order-summary-item">
-                  <span className="lbl">Cartón:</span>
-                  <span className="val font-highlight">1 cartón (1 por dispositivo móvil)</span>
+                  <span className="lbl">Teléfono:</span>
+                  <span className="val font-highlight">+502 {playerWhatsappDigits}</span>
+                </div>
+                <div className="order-summary-item">
+                  <span className="lbl">Número de cartones:</span>
+                  <span className="val font-highlight">{quantity}</span>
                 </div>
                 <div className="order-summary-divider" />
                 <div className="order-summary-item total-row">
                   <span className="lbl">Total Final:</span>
                   <span className={`val total-big ${currentPriceQ === 0 ? 'free-badge' : ''}`}>
-                    {currentPriceQ === 0 ? 'Q0.00 (Acceso Libre)' : `Q${totalPriceQ}.00 GTQ`}
+                    {currentPriceQ === 0 ? 'Q0.00' : `Q${totalPriceQ}.00`}
                   </span>
                 </div>
               </div>
@@ -1017,7 +1021,7 @@ const BingoBoletos: React.FC = () => {
 
             {/* FORMULARIO Y SELECTOR DE PAGO */}
             <form onSubmit={handleProceedToPayment} className="checkout-guided-form" noValidate>
-              {/* OPCIONES DE PAGO SI TIENE COSTO (RECURRENTE O EFECTIVO) */}
+              {/* OPCIONES DE PAGO SI TIENE COSTO (TARJETA/TRANSFERENCIA O EFECTIVO) */}
               {currentPriceQ > 0 && (
                 <div className="payment-method-selector-section">
                   <span className="payment-method-selector-title">
@@ -1025,7 +1029,7 @@ const BingoBoletos: React.FC = () => {
                   </span>
 
                   <div className="payment-method-options-grid">
-                    {/* OPCIÓN 1: RECURRENTE */}
+                    {/* OPCIÓN 1: TARJETA O TRANSFERENCIA */}
                     <div 
                       className={`payment-option-card ${paymentMethodChoice === 'recurrente' ? 'selected' : ''}`}
                       onClick={() => setPaymentMethodChoice('recurrente')}
@@ -1036,10 +1040,10 @@ const BingoBoletos: React.FC = () => {
                       <div className="option-icon">💳</div>
                       <div className="option-info">
                         <div className="option-title-tag">
-                          <strong>Pagar con Recurrente</strong>
+                          <strong>Pagar con tarjeta o transferencia</strong>
                           <span className="option-tag-instant">AUTOMÁTICO</span>
                         </div>
-                        <p>Paga en línea con tarjeta de débito o crédito. Tu pase y cartón se activan al instante.</p>
+                        <p>Paga en línea con tarjeta de débito, crédito o transferencia. Tu pase y cartón se activan al instante.</p>
                       </div>
                     </div>
 
@@ -1054,7 +1058,7 @@ const BingoBoletos: React.FC = () => {
                       <div className="option-icon">💵</div>
                       <div className="option-info">
                         <div className="option-title-tag">
-                          <strong>Pagar en Efectivo</strong>
+                          <strong>Pagar en efectivo</strong>
                           <span className="option-tag-manual">PROMOTOR CERCA</span>
                         </div>
                         <p>Pago presencial en efectivo. Un promotor habilitará tu cartón manualmente.</p>
@@ -1076,41 +1080,6 @@ const BingoBoletos: React.FC = () => {
                   )}
                 </div>
               )}
-
-              {/* RECORDATORIO BOT OFICIAL DE TELEGRAM */}
-              <div className="step-delivery-notice" style={{ marginTop: '16px', marginBottom: '8px' }}>
-                <span className="notice-icon">✈️</span>
-                <div className="notice-body" style={{ width: '100%' }}>
-                  <span style={{ fontSize: '0.84rem', color: '#e2e8f0', lineHeight: 1.4, marginBottom: '8px', display: 'block' }}>
-                    Si quieres jugar seguido y estar pendiente de nuestros bingos, sigue el link y presiona <strong>Start</strong>:
-                  </span>
-                  <a
-                    href="https://t.me/Bingotenangobot"
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '8px',
-                      background: 'linear-gradient(135deg, rgba(34, 158, 217, 0.25) 0%, rgba(14, 165, 233, 0.35) 100%)',
-                      border: '1px solid rgba(56, 189, 248, 0.5)',
-                      borderRadius: '10px',
-                      padding: '8px 16px',
-                      color: '#38bdf8',
-                      fontSize: '0.86rem',
-                      fontWeight: 700,
-                      textDecoration: 'none',
-                      fontFamily: 'var(--font-gamer)',
-                      letterSpacing: '0.5px',
-                      transition: 'all 0.2s ease',
-                      boxShadow: '0 2px 12px rgba(14, 165, 233, 0.2)'
-                    }}
-                  >
-                    <span>✈️</span>
-                    <span>Abrir @Bingotenangobot en Telegram</span>
-                  </a>
-                </div>
-              </div>
 
               {/* MENSAJE DE ERROR LOCALIZADO EN EL PASO 4 */}
               {errorMessage && (
@@ -1151,18 +1120,18 @@ const BingoBoletos: React.FC = () => {
                           className="btn-guided-pay"
                           disabled={isProcessing}
                         >
-                          {isProcessing ? 'Conectando Pasarela...' : `💳 Pagar Q${totalPriceQ}.00 con Recurrente`}
+                          {isProcessing ? 'Conectando...' : '💳 Pagar con tarjeta o transferencia'}
                         </button>
                         <button
                           type="button"
-                          className="btn-alt-cash"
+                          className="btn-secondary-action"
                           onClick={() => {
                             setPaymentMethodChoice('efectivo');
                             setErrorMessage('');
                           }}
                           disabled={isProcessing}
                         >
-                          💵 O pagar Q{totalPriceQ}.00 en efectivo (con promotor cerca)
+                          💵 Pagar en efectivo
                         </button>
                       </>
                     ) : (
@@ -1177,18 +1146,18 @@ const BingoBoletos: React.FC = () => {
                           }}
                           disabled={isProcessing}
                         >
-                          {isProcessing ? '⏳ Registrando Solicitud en Efectivo...' : `💵 Solicitar Boleto y Pagar Q${totalPriceQ}.00 en Efectivo`}
+                          {isProcessing ? 'Registrando...' : '💵 Pagar en efectivo'}
                         </button>
                         <button
                           type="button"
-                          className="btn-alt-cash"
+                          className="btn-secondary-action"
                           onClick={() => {
                             setPaymentMethodChoice('recurrente');
                             setErrorMessage('');
                           }}
                           disabled={isProcessing}
                         >
-                          💳 O pagar en línea con Recurrente (Tarjeta)
+                          💳 Pagar con tarjeta o transferencia
                         </button>
                       </>
                     )}
@@ -1197,13 +1166,48 @@ const BingoBoletos: React.FC = () => {
               </div>
 
               <div className="guided-trust-bar">
-                <span>🔒 Pago Cifrado por Recurrente</span>
+                <span>🔒 Pago Cifrado</span>
                 <span>•</span>
-                <span>⚡ Entrega Inmediata de Enlaces</span>
+                <span>⚡ Entrega Inmediata</span>
                 <span>•</span>
                 <span>🇬🇹 Válido en toda Guatemala</span>
               </div>
             </form>
+
+            {/* RECORDATORIO BOT OFICIAL DE TELEGRAM AL FINAL DE LA PÁGINA */}
+            <div className="step-delivery-notice" style={{ marginTop: '24px' }}>
+              <span className="notice-icon">✈️</span>
+              <div className="notice-body" style={{ width: '100%' }}>
+                <span style={{ fontSize: '0.84rem', color: '#e2e8f0', lineHeight: 1.4, marginBottom: '8px', display: 'block' }}>
+                  Si quieres jugar seguido y estar pendiente de nuestros bingos, sigue el link y presiona <strong>Start</strong>:
+                </span>
+                <a
+                  href="https://t.me/Bingotenangobot"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    background: 'linear-gradient(135deg, rgba(34, 158, 217, 0.25) 0%, rgba(14, 165, 233, 0.35) 100%)',
+                    border: '1px solid rgba(56, 189, 248, 0.5)',
+                    borderRadius: '10px',
+                    padding: '8px 16px',
+                    color: '#38bdf8',
+                    fontSize: '0.86rem',
+                    fontWeight: 700,
+                    textDecoration: 'none',
+                    fontFamily: 'var(--font-gamer)',
+                    letterSpacing: '0.5px',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 2px 12px rgba(14, 165, 233, 0.2)'
+                  }}
+                >
+                  <span>✈️</span>
+                  <span>Abrir @Bingotenangobot en Telegram</span>
+                </a>
+              </div>
+            </div>
           </section>
         )}
 
