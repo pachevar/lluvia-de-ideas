@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, deleteDoc, getDocs } from 'firebase/firestore';
@@ -8,6 +8,7 @@ import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardColli
 import type { MarkedSlots } from '../../utils/bingoGenerator';
 import { soundEffects } from '../../utils/soundEffects';
 import { CONTACT } from '../../constants';
+import { recordPlayerPurchase } from '../../services/bingoPlayerService';
 import {
   isNotificationSupported,
   getNotificationPermission,
@@ -196,8 +197,9 @@ export default function BingoHub() {
   const [showInstructionsModal, setShowInstructionsModal] = useState(false);
   const [instructionsTab, setInstructionsTab] = useState<'boletos' | 'canales' | 'jugar' | 'ganar'>('boletos');
 
-  // SUB-PESTAÑA EN MÓDULO REGISTRO (Sesión Activa vs Juegos Programados)
-  const [waitingSubTab, setWaitingSubTab] = useState<'session_directory' | 'scheduled_games'>('session_directory');
+  // SUB-PESTAÑA EN MÓDULO REGISTRO (Sesión Activa vs Solicitudes Efectivo vs Juegos Programados)
+  const [waitingSubTab, setWaitingSubTab] = useState<'session_directory' | 'cash_requests' | 'scheduled_games'>('session_directory');
+  const [cashRequestsSearchQuery, setCashRequestsSearchQuery] = useState('');
   const [scheduledGamesList, setScheduledGamesList] = useState<BingoScheduledGame[]>([]);
   const [selectedScheduledGame, setSelectedScheduledGame] = useState<BingoScheduledGame | null>(null);
   const [allAccessTokens, setAllAccessTokens] = useState<BingoAccessToken[]>([]);
@@ -355,6 +357,70 @@ export default function BingoHub() {
       unsubOrders();
     };
   }, []);
+
+  // Solicitudes de Pago en Efectivo pendientes de cobrar y habilitar
+  const pendingCashTokens = useMemo(() => {
+    return allAccessTokens.filter(t => {
+      const isCash = t.paymentMethod === 'efectivo';
+      const isPending = t.paymentStatus === 'pending' || t.status === 'pending' || (!t.paidAmount && t.paymentStatus !== 'paid');
+      return isCash && isPending;
+    }).sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }, [allAccessTokens]);
+
+  const allCashTokens = useMemo(() => {
+    return allAccessTokens.filter(t => t.paymentMethod === 'efectivo').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+  }, [allAccessTokens]);
+
+  // Cobrar y habilitar pase en efectivo desde el módulo de Registro del Host
+  const handleCollectCashAndEnablePass = async (token: BingoAccessToken) => {
+    const order = allBingoOrders.find(o => o.id === token.orderId);
+    const priceAmount = token.paidAmount || (token.unitPriceQ ? token.unitPriceQ * (token.quantity || 1) : (order?.totalPriceQ || order?.priceQ || 25));
+
+    const confirm = await showConfirm(
+      `¿Confirmas haber recibido el pago en efectivo de Q${priceAmount}.00 del jugador "${token.playerName || 'Jugador'}" (${token.quantity} cartón${token.quantity > 1 ? 'es' : ''})?\n\nAl confirmar, la sesión en el navegador del jugador se desbloqueará de inmediato y recibirá acceso a su cartón oficial.`,
+      "Confirmar Cobro en Efectivo",
+      "💵",
+      "SÍ, COBRAR Y HABILITAR",
+      "CANCELAR"
+    );
+    if (!confirm) return;
+
+    try {
+      await updateDoc(doc(db, 'bingo_access_tokens', token.id), {
+        status: 'active',
+        paymentStatus: 'paid',
+        paymentMethod: 'efectivo',
+        paidAmount: priceAmount,
+        paidAt: Date.now()
+      });
+
+      if (token.orderId) {
+        await updateDoc(doc(db, 'bingo_orders', token.orderId), {
+          status: 'completed',
+          paymentStatus: 'paid',
+          paymentMethod: 'efectivo',
+          paidAmount: priceAmount,
+          paidAt: Date.now()
+        });
+      }
+
+      if (token.playerWhatsapp) {
+        recordPlayerPurchase({
+          phone: token.playerWhatsapp,
+          name: token.playerName,
+          email: '',
+          spentQ: priceAmount,
+          webPushEnabled: false
+        }).catch(() => {});
+      }
+
+      addLog(`HOST: Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}. Boleto habilitado en vivo.`);
+      await showAlert(`¡Cobro de Q${priceAmount}.00 confirmado para ${token.playerName}! El navegador del jugador ha sido habilitado al instante. 🚀`, "Cobro Exitoso", "✅");
+    } catch (err) {
+      console.error("Error al registrar cobro en efectivo:", err);
+      await showAlert("Ocurrió un error al registrar el cobro en la base de datos.", "Error", "❌");
+    }
+  };
 
   const toggleRevealId = (id: string) => {
     setRevealedIds(prev => ({ ...prev, [id]: !prev[id] }));
@@ -3220,7 +3286,53 @@ export default function BingoHub() {
                       </span>
                     </div>
 
-                    {/* SELECTOR DE SUB-PESTAÑAS: Sesión Activa vs Juegos Programados */}
+                    {/* BANNER DESTACADO DE ALERTA: SOLICITUDES DE EFECTIVO PENDIENTES */}
+                    {pendingCashTokens.length > 0 && (
+                      <div style={{
+                        background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(217, 119, 6, 0.3) 100%)',
+                        border: '1.5px solid #f59e0b',
+                        borderRadius: '14px',
+                        padding: '14px 18px',
+                        marginBottom: '18px',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        flexWrap: 'wrap',
+                        gap: '12px',
+                        boxShadow: '0 0 24px rgba(245, 158, 11, 0.25)'
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <span style={{ fontSize: '1.6rem' }}>💵</span>
+                          <div>
+                            <strong style={{ color: '#fbbf24', fontSize: '0.95rem', display: 'block' }}>
+                              ¡Tienes {pendingCashTokens.length} solicitud{pendingCashTokens.length > 1 ? 'es' : ''} de pago en efectivo pendiente{pendingCashTokens.length > 1 ? 's' : ''}!
+                            </strong>
+                            <span style={{ color: '#e2e8f0', fontSize: '0.78rem' }}>
+                              Jugador: <strong>{pendingCashTokens[0].playerName}</strong> ({pendingCashTokens[0].playerWhatsapp || 'Sin teléfono'}). Su pantalla está esperando tu confirmación.
+                            </span>
+                          </div>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setWaitingSubTab('cash_requests')}
+                          style={{
+                            background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                            color: '#000',
+                            fontWeight: 'bold',
+                            fontSize: '0.82rem',
+                            padding: '8px 18px',
+                            borderRadius: '10px',
+                            border: 'none',
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 10px rgba(245, 158, 11, 0.4)'
+                          }}
+                        >
+                          Ver y Habilitar en 1 Clic ➔
+                        </button>
+                      </div>
+                    )}
+
+                    {/* SELECTOR DE SUB-PESTAÑAS: Sesión Activa vs Solicitudes Efectivo vs Juegos Programados */}
                     <div style={{ display: 'flex', gap: '10px', marginBottom: '20px', borderBottom: '1px solid rgba(255,255,255,0.1)', paddingBottom: '14px', flexWrap: 'wrap' }}>
                       <button
                         type="button"
@@ -3242,6 +3354,33 @@ export default function BingoHub() {
                         }}
                       >
                         👥 Jugadores en Sesión Activa ({registeredCards.length})
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setWaitingSubTab('cash_requests')}
+                        style={{
+                          padding: '10px 20px',
+                          borderRadius: '12px',
+                          background: waitingSubTab === 'cash_requests' ? 'linear-gradient(135deg, rgba(245, 158, 11, 0.3) 0%, rgba(217, 119, 6, 0.4) 100%)' : pendingCashTokens.length > 0 ? 'rgba(245, 158, 11, 0.15)' : 'rgba(255,255,255,0.04)',
+                          border: waitingSubTab === 'cash_requests' ? '1.5px solid #f59e0b' : pendingCashTokens.length > 0 ? '1.5px dashed #f59e0b' : '1px solid rgba(255,255,255,0.1)',
+                          color: waitingSubTab === 'cash_requests' ? '#fbbf24' : pendingCashTokens.length > 0 ? '#fcd34d' : '#94a3b8',
+                          fontWeight: 'bold',
+                          fontSize: '0.88rem',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '8px',
+                          boxShadow: waitingSubTab === 'cash_requests' ? '0 0 16px rgba(245, 158, 11, 0.25)' : 'none',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <span>💵</span> Solicitudes en Efectivo ({pendingCashTokens.length})
+                        {pendingCashTokens.length > 0 && (
+                          <span style={{ background: '#f59e0b', color: '#000', fontSize: '0.72rem', padding: '2px 8px', borderRadius: '10px', fontWeight: 800 }}>
+                            {pendingCashTokens.length} Pendiente{pendingCashTokens.length > 1 ? 's' : ''}
+                          </span>
+                        )}
                       </button>
 
                       <button
@@ -4100,6 +4239,299 @@ export default function BingoHub() {
                       </table>
                     </div>
 
+                  </div>
+                )}
+
+                {/* VISTA INTERMEDIA: SOLICITUDES DE PAGO EN EFECTIVO (TAQUILLA PRESENCIAL) */}
+                {waitingSubTab === 'cash_requests' && (
+                  <div className="cash-requests-dashboard animate-fade-in">
+                    {/* BARRA SUPERIOR DE ACCIONES */}
+                    <div style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '16px',
+                      background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.95) 0%, rgba(10, 8, 22, 0.98) 100%)',
+                      border: '1.5px solid rgba(245, 158, 11, 0.5)',
+                      borderRadius: '16px',
+                      padding: '16px 20px',
+                      marginBottom: '20px',
+                      boxShadow: '0 8px 30px rgba(0, 0, 0, 0.5), inset 0 0 20px rgba(245, 158, 11, 0.08)'
+                    }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '1.3rem' }}>💵</span>
+                          <h4 style={{ margin: 0, fontSize: '1.15rem', color: '#ffffff', fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
+                            TAQUILLA: GESTIÓN DE COBROS EN EFECTIVO
+                          </h4>
+                        </div>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.78rem', color: '#cbd5e1' }}>
+                          Revisa las solicitudes presenciales de jugadores. Al recibir el efectivo en mano, pulsa <strong>"Cobrar y Habilitar"</strong> para desbloquear su pantalla y activar su cartón de inmediato.
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <span style={{ fontSize: '0.76rem', color: '#fbbf24', background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.35)', padding: '6px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
+                          ⏳ {pendingCashTokens.length} Pendiente{pendingCashTokens.length !== 1 ? 's' : ''}
+                        </span>
+                        <span style={{ fontSize: '0.76rem', color: '#4ade80', background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.35)', padding: '6px 12px', borderRadius: '20px', fontWeight: 'bold' }}>
+                          ✓ {allCashTokens.filter(t => t.paymentStatus === 'paid' || t.status === 'active').length} Cobrado{allCashTokens.filter(t => t.paymentStatus === 'paid' || t.status === 'active').length !== 1 ? 's' : ''}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Buscador de Solicitudes */}
+                    <div style={{ marginBottom: '14px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <input
+                        type="text"
+                        placeholder="Buscar por jugador, teléfono (+502) o ID..."
+                        value={cashRequestsSearchQuery}
+                        onChange={(e) => setCashRequestsSearchQuery(e.target.value)}
+                        style={{
+                          background: 'rgba(0, 0, 0, 0.5)',
+                          border: '1px solid rgba(245, 158, 11, 0.3)',
+                          color: '#fff',
+                          padding: '8px 14px',
+                          borderRadius: '10px',
+                          fontSize: '0.82rem',
+                          width: '320px',
+                          maxWidth: '100%',
+                          outline: 'none'
+                        }}
+                      />
+                      <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                        Mostrando {allCashTokens.filter(t => {
+                          if (!cashRequestsSearchQuery.trim()) return true;
+                          const q = cashRequestsSearchQuery.toLowerCase();
+                          return (t.playerName || '').toLowerCase().includes(q) ||
+                            (t.playerWhatsapp || '').includes(q) ||
+                            t.id.toLowerCase().includes(q);
+                        }).length} registro(s) de efectivo
+                      </span>
+                    </div>
+
+                    {/* Tabla Cyberpunk de Solicitudes de Efectivo */}
+                    <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.25)', background: 'rgba(10, 8, 22, 0.8)' }}>
+                      <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                        <thead>
+                          <tr style={{ background: 'rgba(245, 158, 11, 0.12)', borderBottom: '1.5px solid rgba(245, 158, 11, 0.3)', color: '#fbbf24' }}>
+                            <th style={{ padding: '12px 14px' }}>FECHA / HORA</th>
+                            <th style={{ padding: '12px 14px' }}>JUGADOR / WHATSAPP</th>
+                            <th style={{ padding: '12px 14px' }}>PARTIDA</th>
+                            <th style={{ padding: '12px 14px' }}>CARTONES & MONTO</th>
+                            <th style={{ padding: '12px 14px' }}>ESTADO</th>
+                            <th style={{ padding: '12px 14px', textAlign: 'right' }}>ACCIONES DE COBRO</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {allCashTokens
+                            .filter(t => {
+                              if (!cashRequestsSearchQuery.trim()) return true;
+                              const q = cashRequestsSearchQuery.toLowerCase();
+                              return (t.playerName || '').toLowerCase().includes(q) ||
+                                (t.playerWhatsapp || '').includes(q) ||
+                                t.id.toLowerCase().includes(q);
+                            })
+                            .map((token) => {
+                              const order = allBingoOrders.find(o => o.id === token.orderId);
+                              const isPaid = token.paymentStatus === 'paid' || (token.status === 'active' && !!token.paidAmount && token.paymentStatus !== 'pending');
+                              const priceAmount = token.paidAmount || (token.unitPriceQ ? token.unitPriceQ * (token.quantity || 1) : (order?.totalPriceQ || order?.priceQ || 25));
+                              const schedGame = scheduledGamesList.find(g => g.id === token.scheduledGameId);
+                              const cleanPhone = (token.playerWhatsapp || '').replace(/\D/g, '');
+                              const finalPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+                              const displayPhone = cleanPhone.startsWith('502') ? cleanPhone.substring(3) : cleanPhone;
+                              const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
+
+                              return (
+                                <tr key={token.id} style={{
+                                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                                  background: isPaid ? 'rgba(34, 197, 94, 0.03)' : 'rgba(245, 158, 11, 0.06)'
+                                }}>
+                                  {/* Fecha / Hora */}
+                                  <td style={{ padding: '12px 14px', color: '#94a3b8', whiteSpace: 'nowrap' }}>
+                                    <span style={{ display: 'block', color: '#e2e8f0', fontWeight: 600 }}>
+                                      {token.createdAt ? new Date(token.createdAt).toLocaleDateString('es-GT', { day: '2-digit', month: 'short' }) : 'Hoy'}
+                                    </span>
+                                    <span style={{ fontSize: '0.72rem' }}>
+                                      {token.createdAt ? new Date(token.createdAt).toLocaleTimeString('es-GT', { hour: '2-digit', minute: '2-digit' }) : ''}
+                                    </span>
+                                  </td>
+
+                                  {/* Jugador / WhatsApp */}
+                                  <td style={{ padding: '12px 14px' }}>
+                                    <strong style={{ color: '#fff', display: 'block', fontSize: '0.88rem' }}>
+                                      {token.playerName || 'Jugador'}
+                                    </strong>
+                                    {cleanPhone ? (
+                                      <a
+                                        href={`https://wa.me/${finalPhone}?text=${encodeURIComponent(`¡Hola ${token.playerName}! Te saludamos de Bingotenango para coordinar tu boleto de Bingo.`)}`}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                        style={{ color: '#4ade80', fontSize: '0.74rem', textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: '4px', marginTop: '2px' }}
+                                        title="Abrir conversación en WhatsApp"
+                                      >
+                                        <span>📱</span> +502 {displayPhone}
+                                      </a>
+                                    ) : (
+                                      <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Sin teléfono</span>
+                                    )}
+                                  </td>
+
+                                  {/* Partida */}
+                                  <td style={{ padding: '12px 14px' }}>
+                                    <span style={{ color: '#cbd5e1', fontSize: '0.76rem', display: 'block', fontWeight: 600 }}>
+                                      {schedGame ? schedGame.title : activeGame?.title || 'Partida General'}
+                                    </span>
+                                    <span style={{ color: '#94a3b8', fontSize: '0.68rem' }}>
+                                      {token.tierName || 'Cartón Oficial'}
+                                    </span>
+                                  </td>
+
+                                  {/* Cartones & Monto */}
+                                  <td style={{ padding: '12px 14px' }}>
+                                    <span style={{
+                                      background: 'rgba(168, 85, 247, 0.15)',
+                                      border: '1px solid rgba(168, 85, 247, 0.35)',
+                                      color: '#c084fc',
+                                      padding: '2px 8px',
+                                      borderRadius: '6px',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 'bold',
+                                      display: 'inline-block',
+                                      marginBottom: '3px'
+                                    }}>
+                                      🎟️ {token.quantity || 1} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
+                                    </span>
+                                    <strong style={{ display: 'block', color: '#4ade80', fontSize: '0.92rem' }}>
+                                      Q{priceAmount}.00
+                                    </strong>
+                                  </td>
+
+                                  {/* Estado */}
+                                  <td style={{ padding: '12px 14px' }}>
+                                    {isPaid ? (
+                                      <span style={{
+                                        background: 'rgba(34, 197, 94, 0.15)',
+                                        border: '1px solid rgba(34, 197, 94, 0.4)',
+                                        color: '#4ade80',
+                                        padding: '4px 10px',
+                                        borderRadius: '8px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 'bold',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}>
+                                        ✓ Cobrado & Habilitado
+                                      </span>
+                                    ) : (
+                                      <span style={{
+                                        background: 'rgba(245, 158, 11, 0.18)',
+                                        border: '1px solid rgba(245, 158, 11, 0.5)',
+                                        color: '#fbbf24',
+                                        padding: '4px 10px',
+                                        borderRadius: '8px',
+                                        fontSize: '0.72rem',
+                                        fontWeight: 'bold',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px'
+                                      }}>
+                                        ⏳ Esperando Cobro
+                                      </span>
+                                    )}
+                                    {token.linkSent && (
+                                      <span style={{ display: 'block', color: '#38bdf8', fontSize: '0.68rem', marginTop: '3px' }}>
+                                        📲 Link despachado
+                                      </span>
+                                    )}
+                                  </td>
+
+                                  {/* Acciones */}
+                                  <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center', flexWrap: 'wrap' }}>
+                                      {!isPaid ? (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleCollectCashAndEnablePass(token)}
+                                          style={{
+                                            background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                            border: 'none',
+                                            color: '#ffffff',
+                                            fontWeight: 'bold',
+                                            padding: '7px 14px',
+                                            borderRadius: '8px',
+                                            fontSize: '0.76rem',
+                                            cursor: 'pointer',
+                                            boxShadow: '0 2px 10px rgba(16, 185, 129, 0.4)',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '5px'
+                                          }}
+                                          title="Confirmar recepción del dinero y habilitar al jugador"
+                                        >
+                                          <span>💵</span> Cobrar y Habilitar
+                                        </button>
+                                      ) : (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSendWhatsAppPass(token)}
+                                          style={{
+                                            background: token.linkSent ? 'rgba(2, 132, 199, 0.2)' : 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
+                                            border: token.linkSent ? '1px solid #0284c7' : 'none',
+                                            color: token.linkSent ? '#38bdf8' : '#fff',
+                                            fontWeight: 'bold',
+                                            padding: '6px 12px',
+                                            borderRadius: '8px',
+                                            fontSize: '0.74rem',
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                          }}
+                                          title="Enviar o reenviar pase por WhatsApp"
+                                        >
+                                          <span>📲</span> {token.linkSent ? 'Reenviar Link' : 'Enviar Link'}
+                                        </button>
+                                      )}
+
+                                      <button
+                                        type="button"
+                                        onClick={() => {
+                                          navigator.clipboard.writeText(playUrl);
+                                          alert(`¡Enlace copiado al portapapeles!\n\n${playUrl}`);
+                                        }}
+                                        style={{
+                                          background: 'rgba(255, 255, 255, 0.06)',
+                                          border: '1px solid rgba(255, 255, 255, 0.15)',
+                                          color: '#cbd5e1',
+                                          borderRadius: '8px',
+                                          padding: '6px 10px',
+                                          fontSize: '0.74rem',
+                                          cursor: 'pointer'
+                                        }}
+                                        title="Copiar link directo de acceso"
+                                      >
+                                        📋
+                                      </button>
+                                    </div>
+                                  </td>
+                                </tr>
+                              );
+                            })}
+
+                          {allCashTokens.length === 0 && (
+                            <tr>
+                              <td colSpan={6} style={{ textAlign: 'center', padding: '36px', color: '#94a3b8' }}>
+                                <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>💵</span>
+                                No hay solicitudes de pago en efectivo registradas aún. Cuando los jugadores seleccionen "Pagar en Efectivo" en el formulario de boletos, aparecerán aquí para ser cobrados y habilitados.
+                              </td>
+                            </tr>
+                          )}
+                        </tbody>
+                      </table>
+                    </div>
                   </div>
                 )}
 

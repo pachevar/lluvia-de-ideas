@@ -866,6 +866,13 @@ export default function AdminBingoTab() {
     });
   }, [accessTokensList, tokenStatusFilter, tokenSearchQuery]);
 
+  const pendingCashTokensList = useMemo(() => {
+    return accessTokensList.filter(t => 
+      t.paymentMethod === 'efectivo' && 
+      (t.paymentStatus === 'pending' || t.status === 'pending' || (!t.paidAmount && t.paymentStatus !== 'paid'))
+    );
+  }, [accessTokensList]);
+
   // --------------------------------------------------------------------------
   // Lógica de Promotores de Venta
   // --------------------------------------------------------------------------
@@ -1070,6 +1077,55 @@ export default function AdminBingoTab() {
         </div>
       )}
 
+      {/* BANNER DESTACADO DE ALERTA: SOLICITUDES DE PAGO EN EFECTIVO PENDIENTES */}
+      {pendingCashTokensList.length > 0 && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.14) 0%, rgba(217, 119, 6, 0.22) 100%)',
+          border: '1.5px solid #f59e0b',
+          borderRadius: '12px',
+          padding: '12px 18px',
+          marginBottom: '16px',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '10px',
+          boxShadow: '0 4px 16px rgba(245, 158, 11, 0.15)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '1.4rem' }}>💵</span>
+            <div>
+              <strong style={{ color: '#d97706', fontSize: '0.88rem' }}>
+                ¡Atención Taquilla: Hay {pendingCashTokensList.length} solicitud{pendingCashTokensList.length > 1 ? 'es' : ''} de pago en efectivo pendiente{pendingCashTokensList.length > 1 ? 's' : ''}!
+              </strong>
+              <span style={{ color: '#475569', fontSize: '0.76rem', display: 'block' }}>
+                Jugador(es): <strong>{pendingCashTokensList.map(t => t.playerName).slice(0, 3).join(', ')}{pendingCashTokensList.length > 3 ? '...' : ''}</strong>. Pulsa "Cobrar y Habilitar" para autorizar su cartón.
+              </span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => {
+              setActiveTab('acceso');
+              setTokenStatusFilter('pending');
+            }}
+            style={{
+              background: '#f59e0b',
+              color: '#ffffff',
+              fontWeight: 'bold',
+              fontSize: '0.78rem',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(245, 158, 11, 0.35)'
+            }}
+          >
+            Ir a Taquilla y Cobrar ➔
+          </button>
+        </div>
+      )}
+
       {/* ====================================================================
           2. NAVEGACIÓN MODULAR DE SUB-PESTAÑAS
          ==================================================================== */}
@@ -1106,6 +1162,19 @@ export default function AdminBingoTab() {
         >
           🎟️ Taquilla, Pases & Cobros
           <span className="bingo-badge-chip">{accessTokensList.length} Pases</span>
+          {pendingCashTokensList.length > 0 && (
+            <span style={{
+              background: '#f59e0b',
+              color: '#000',
+              fontWeight: 800,
+              fontSize: '0.68rem',
+              padding: '2px 7px',
+              borderRadius: '10px',
+              marginLeft: '6px'
+            }}>
+              ⚠️ {pendingCashTokensList.length} Efectivo
+            </span>
+          )}
         </button>
 
         <button
@@ -2237,7 +2306,7 @@ export default function AdminBingoTab() {
                   >
                     {f === 'all' && `Todos (${accessTokensList.length})`}
                     {f === 'paid' && `Cobrados (${accessTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length})`}
-                    {f === 'pending' && `Pendientes (${accessTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length})`}
+                    {f === 'pending' && `💵 Efectivo Pendiente (${accessTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length})`}
                   </button>
                 ))}
               </div>
