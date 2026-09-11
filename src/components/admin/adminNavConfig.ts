@@ -117,11 +117,11 @@ export const PILLAR_REGISTRY: Record<EducationalPillar, PillarDefinition> = {
 
 export const PROJECT_PILLARS: PillarDefinition[] = Object.values(PILLAR_REGISTRY);
 
-// 🗂️ CATEGORÍAS ADMINISTRATIVAS ORGANIZADAS POR PILARES
-export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
-  // =========================================================================
+// =========================================================================
+// 🏛️ CATEGORÍAS DE LOS 4 PILARES EDUCATIVOS FUNDAMENTALES (DESPLEGABLES)
+// =========================================================================
+export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
   // 1. ✨ CREATIKA: Todo lo artístico y creativo
-  // =========================================================================
   {
     id: 'cat_creatika',
     title: '✨ Proyecto Creatika',
@@ -173,9 +173,7 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
     ]
   },
 
-  // =========================================================================
   // 2. ⚡ 100TEK: Todo lo lógico, matemática y ciencia
-  // =========================================================================
   {
     id: 'cat_100tek',
     title: '⚡ Proyecto 100tek',
@@ -197,9 +195,7 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
     ]
   },
 
-  // =========================================================================
   // 3. ☁️ SUTZ: El mapa virtual que engloba todas las rutas
-  // =========================================================================
   {
     id: 'cat_sutz',
     title: '☁️ Proyecto Sutz',
@@ -231,9 +227,7 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
     ]
   },
 
-  // =========================================================================
   // 4. 🧪 LABORATORIO: Talleres y proyectos para experimentar
-  // =========================================================================
   {
     id: 'cat_laboratorios',
     title: '🧪 Proyecto Laboratorio',
@@ -253,11 +247,13 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
         roleDescription: 'Talleres prácticos y proyectos de experimentación por grado'
       }
     ]
-  },
+  }
+];
 
-  // =========================================================================
-  // 🚀 MÓDULOS OPERATIVOS Y DE SOPORTE COMPLEMENTARIO
-  // =========================================================================
+// =========================================================================
+// 🚀 CATEGORÍAS OPERATIVAS, GESTIÓN Y SOPORTE COMPLEMENTARIO
+// =========================================================================
+export const OPERATIONAL_NAV_CATEGORIES: AdminCategory[] = [
   {
     id: 'cat_juegos',
     title: '🎮 Juegos & Dinámicas',
@@ -346,6 +342,12 @@ export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
       }
     ]
   }
+];
+
+// 🗂️ CATEGORÍAS ADMINISTRATIVAS COMPLETAS (Mantiene retrocompatibilidad)
+export const ADMIN_NAV_CATEGORIES: AdminCategory[] = [
+  ...PILLAR_NAV_CATEGORIES,
+  ...OPERATIONAL_NAV_CATEGORIES
 ];
 
 // =========================================================================

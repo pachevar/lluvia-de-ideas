@@ -17,7 +17,39 @@
 .admin-header-left {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 6px;
+}
+
+.admin-header-nav-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.btn-header-sidebar-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.btn-header-sidebar-toggle:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.5);
+  color: #ffffff;
+}
+
+.btn-header-sidebar-toggle .toggle-icon {
+  font-size: 0.85rem;
+  color: #38bdf8;
 }
 
 .admin-breadcrumb {

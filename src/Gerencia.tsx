@@ -34,6 +34,25 @@ export default function Gerencia() {
   const [localConfig, setLocalConfig] = useState<PortalConfig | null>(null);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [saving, setSaving] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('admin_sidebar_collapsed') === 'true';
+    } catch {
+      return false;
+    }
+  });
+
+  const toggleSidebar = () => {
+    setIsSidebarCollapsed(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('admin_sidebar_collapsed', String(next));
+      } catch (e) {
+        console.error(e);
+      }
+      return next;
+    });
+  };
 
   // Initialize local config copy and reactively synchronize external asset updates
   const isInitialLoad = useRef(true);
@@ -328,7 +347,7 @@ export default function Gerencia() {
   }
 
   return (
-    <div className="admin-dashboard-container">
+    <div className={`admin-dashboard-container ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
       <AdminSidebar
         userEmail={user.email}
         activeAdminTab={activeAdminTab}
@@ -337,9 +356,11 @@ export default function Gerencia() {
         saving={saving}
         onBackToPortal={onBackToPortal}
         handleLogout={handleLogout}
+        isCollapsed={isSidebarCollapsed}
+        onToggleCollapse={toggleSidebar}
       />
 
-      <main className="admin-main-panel">
+      <main className={`admin-main-panel ${isSidebarCollapsed ? 'wide-panel' : ''}`}>
         {/* Header Bar Modular con Breadcrumbs, Atajos y Respaldo */}
         <AdminHeaderBar 
           activeTab={activeAdminTab}
@@ -349,6 +370,8 @@ export default function Gerencia() {
           onBackToPortal={onBackToPortal}
           handleExportBackup={handleExportBackup}
           handleImportBackup={handleImportBackup}
+          isSidebarCollapsed={isSidebarCollapsed}
+          onToggleSidebar={toggleSidebar}
         />
 
         <div className="admin-tab-content">

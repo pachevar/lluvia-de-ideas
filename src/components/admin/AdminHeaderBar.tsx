@@ -9,6 +9,8 @@ interface AdminHeaderBarProps {
   onBackToPortal: () => void;
   handleExportBackup?: () => void;
   handleImportBackup?: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  isSidebarCollapsed?: boolean;
+  onToggleSidebar?: () => void;
 }
 
 export default function AdminHeaderBar({
@@ -18,7 +20,9 @@ export default function AdminHeaderBar({
   handleSaveConfig,
   onBackToPortal,
   handleExportBackup,
-  handleImportBackup
+  handleImportBackup,
+  isSidebarCollapsed = false,
+  onToggleSidebar
 }: AdminHeaderBarProps) {
   // Find current tab details & category
   let currentCategoryTitle = 'Gerencia';
@@ -40,34 +44,49 @@ export default function AdminHeaderBar({
   return (
     <header className="admin-header-bar card-glass animate-fade-in">
       <div className="admin-header-left">
-        <div className="admin-breadcrumb">
-          <span className="breadcrumb-root">⚙️ Gerencia</span>
-          <span className="breadcrumb-sep">/</span>
-          <span className="breadcrumb-category">{currentCategoryTitle}</span>
-          <span className="breadcrumb-sep">/</span>
-          <span className="breadcrumb-current">{currentItemLabel}</span>
-          {activePillar && (
-            <span 
-              className="admin-header-pillar-badge"
-              style={{
-                backgroundColor: `${activePillar.color}22`,
-                color: activePillar.color,
-                border: `1px solid ${activePillar.color}55`,
-                borderRadius: '6px',
-                padding: '2px 8px',
-                fontSize: '0.72rem',
-                fontWeight: 800,
-                marginLeft: '8px',
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '4px'
-              }}
+        <div className="admin-header-nav-row">
+          {onToggleSidebar && (
+            <button
+              type="button"
+              className="btn-header-sidebar-toggle"
+              onClick={onToggleSidebar}
+              title={isSidebarCollapsed ? "Expandir menú lateral" : "Colapsar menú lateral (Modo pantalla amplia)"}
             >
-              <span>{activePillar.icon}</span>
-              <span>{activePillar.badge}</span>
-            </span>
+              <span className="toggle-icon">{isSidebarCollapsed ? '☰' : '◀'}</span>
+              <span className="toggle-label">{isSidebarCollapsed ? 'Menú' : 'Colapsar'}</span>
+            </button>
           )}
+
+          <div className="admin-breadcrumb">
+            <span className="breadcrumb-root">⚙️ Gerencia</span>
+            <span className="breadcrumb-sep">/</span>
+            <span className="breadcrumb-category">{currentCategoryTitle}</span>
+            <span className="breadcrumb-sep">/</span>
+            <span className="breadcrumb-current">{currentItemLabel}</span>
+            {activePillar && (
+              <span 
+                className="admin-header-pillar-badge"
+                style={{
+                  backgroundColor: `${activePillar.color}22`,
+                  color: activePillar.color,
+                  border: `1px solid ${activePillar.color}55`,
+                  borderRadius: '6px',
+                  padding: '2px 8px',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  marginLeft: '8px',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                <span>{activePillar.icon}</span>
+                <span>{activePillar.badge}</span>
+              </span>
+            )}
+          </div>
         </div>
+
         <h2 className="admin-header-title">{currentItemLabel}</h2>
         <p className="admin-header-subtitle">{currentItemDesc}</p>
       </div>
