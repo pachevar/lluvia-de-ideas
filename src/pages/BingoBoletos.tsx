@@ -1175,20 +1175,6 @@ const BingoBoletos: React.FC = () => {
           </section>
         )}
 
-        {/* AYUDA POR WHATSAPP O PAGO EN EFECTIVO */}
-        <div className="cash-help-banner">
-          <p>
-            ¿Prefieres pagar en <strong>Efectivo</strong> o necesitas ayuda personalizada?
-          </p>
-          <a 
-            href={`https://wa.me/50242250165?text=${encodeURIComponent(`¡Hola! Deseo comprar 1 boleto para Bingotenango (Total: Q${totalPriceQ}.00). ¿Me apoyan con las opciones de pago?`)}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn-cash-help"
-          >
-            💬 Coordinar por WhatsApp
-          </a>
-        </div>
 
       </div>
     </div>
