@@ -1071,9 +1071,8 @@ const BingoBoletos: React.FC = () => {
                     <div className="cash-promoter-warning">
                       <span className="warning-symbol">⚠️</span>
                       <div className="warning-content">
-                        <strong>Solo disponible con un promotor presencial:</strong>
                         <p>
-                          Esta opción de pago en efectivo <strong>solo funciona si te encuentras presencialmente con un promotor o encargado cerca</strong> para cobrar tu dinero y habilitar tu boleto de manera manual en el registro.
+                          <strong>Pago presencial:</strong> Un promotor o encargado debe estar cerca para cobrar tu dinero y habilitar tu cartón en el registro.
                         </p>
                       </div>
                     </div>
@@ -1088,7 +1087,7 @@ const BingoBoletos: React.FC = () => {
                 </div>
               )}
 
-              {/* BARRA DE ACCIONES FINALES */}
+              {/* BARRA DE ACCIONES FINALES - UN SOLO BOTÓN SEGÚN SELECCIÓN */}
               <div className="step-actions-footer final-checkout-actions">
                 <button 
                   type="button" 
@@ -1109,59 +1108,29 @@ const BingoBoletos: React.FC = () => {
                       boxShadow: '0 4px 25px rgba(16, 185, 129, 0.45)'
                     }}
                   >
-                    {isProcessing ? 'Generando Boleto Gratis...' : '🎁 Confirmar y Obtener Boleto Gratis'}
+                    {isProcessing ? 'Generando...' : '🎁 Confirmar y Obtener Boleto Gratis'}
+                  </button>
+                ) : paymentMethodChoice === 'recurrente' ? (
+                  <button 
+                    type="submit" 
+                    className="btn-guided-pay"
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? 'Conectando...' : '💳 Pagar con tarjeta o transferencia'}
                   </button>
                 ) : (
-                  <div className="checkout-pay-buttons-col">
-                    {paymentMethodChoice === 'recurrente' ? (
-                      <>
-                        <button 
-                          type="submit" 
-                          className="btn-guided-pay"
-                          disabled={isProcessing}
-                        >
-                          {isProcessing ? 'Conectando...' : '💳 Pagar con tarjeta o transferencia'}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-secondary-action"
-                          onClick={() => {
-                            setPaymentMethodChoice('efectivo');
-                            setErrorMessage('');
-                          }}
-                          disabled={isProcessing}
-                        >
-                          💵 Pagar en efectivo
-                        </button>
-                      </>
-                    ) : (
-                      <>
-                        <button 
-                          type="button" 
-                          className="btn-guided-pay btn-guided-cash"
-                          onClick={(e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            handleProceedToCashPayment(e);
-                          }}
-                          disabled={isProcessing}
-                        >
-                          {isProcessing ? 'Registrando...' : '💵 Pagar en efectivo'}
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-secondary-action"
-                          onClick={() => {
-                            setPaymentMethodChoice('recurrente');
-                            setErrorMessage('');
-                          }}
-                          disabled={isProcessing}
-                        >
-                          💳 Pagar con tarjeta o transferencia
-                        </button>
-                      </>
-                    )}
-                  </div>
+                  <button 
+                    type="button" 
+                    className="btn-guided-pay btn-guided-cash"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      handleProceedToCashPayment(e);
+                    }}
+                    disabled={isProcessing}
+                  >
+                    {isProcessing ? 'Registrando...' : '💵 Pagar en efectivo'}
+                  </button>
                 )}
               </div>
 
