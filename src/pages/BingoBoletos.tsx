@@ -791,9 +791,6 @@ const BingoBoletos: React.FC = () => {
               <h2 className="step-main-title">
                 2. ¿CÓMO DESEAS PARTICIPAR?
               </h2>
-              <p className="step-main-desc">
-                Elige si jugarás tú mismo en la sala desde este dispositivo o si deseas adquirir un enlace independiente para tu contacto.
-              </p>
             </div>
 
             {/* Resumen de la partida seleccionada */}
@@ -819,7 +816,7 @@ const BingoBoletos: React.FC = () => {
                 <div className="mode-card-icon">👤</div>
                 <div className="mode-card-body">
                   <h4>Para mí (Jugar en vivo)</h4>
-                  <p>Jugarás tú mismo desde este celular o computadora. Recibirás tu pase con tu cartón listo para marcar en pantalla.</p>
+                  <p>Jugarás tú mismo desde este celular.</p>
                   <span className="mode-limit-badge">1 cartón por dispositivo móvil</span>
                 </div>
               </div>
@@ -835,8 +832,8 @@ const BingoBoletos: React.FC = () => {
                 <div className="mode-card-icon">🎁</div>
                 <div className="mode-card-body">
                   <h4>Para regalar a un contacto</h4>
-                  <p>Comprarás 1 link de acceso independiente para enviar a un amigo o familiar por WhatsApp para que juegue en su propio teléfono móvil.</p>
-                  <span className="mode-limit-badge gift-badge">1 link para su dispositivo</span>
+                  <p>Compra links independientes para enviar a amigos y familia.</p>
+                  <span className="mode-limit-badge gift-badge">Compra links para otros</span>
                 </div>
               </div>
             </div>
