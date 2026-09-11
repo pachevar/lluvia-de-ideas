@@ -288,12 +288,22 @@ const BingoBoletos: React.FC = () => {
     setErrorMessage('');
 
     if (!playerName.trim()) {
-      setErrorMessage('Por favor ingresa tu nombre completo.');
+      setErrorMessage('⚠️ Ingresa tu Nombre y Apellido para registrar tu boleto.');
+      const el = document.getElementById('playerName');
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
     if (playerWhatsappDigits.trim().length !== 8) {
-      setErrorMessage('Por favor ingresa los 8 dígitos de tu número de teléfono (ej. 5555 1234).');
+      setErrorMessage('⚠️ Ingresa los 8 dígitos de tu número de teléfono (ej. 5555 1234).');
+      const el = document.getElementById('playerPhone');
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
@@ -411,12 +421,22 @@ const BingoBoletos: React.FC = () => {
     }
 
     if (!playerName.trim()) {
-      setErrorMessage('Por favor ingresa tu nombre completo.');
+      setErrorMessage('⚠️ Ingresa tu Nombre y Apellido para continuar.');
+      const el = document.getElementById('playerName');
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
     if (playerWhatsappDigits.trim().length !== 8) {
-      setErrorMessage('Por favor ingresa los 8 dígitos de tu número de teléfono (ej. 5555 1234).');
+      setErrorMessage('⚠️ Ingresa los 8 dígitos de tu número de teléfono (ej. 5555 1234).');
+      const el = document.getElementById('playerPhone');
+      if (el) {
+        el.focus();
+        el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
       return;
     }
 
@@ -923,7 +943,7 @@ const BingoBoletos: React.FC = () => {
             </div>
 
             {/* FORMULARIO FINAL */}
-            <form onSubmit={handleProceedToPayment} className="checkout-guided-form">
+            <form onSubmit={handleProceedToPayment} className="checkout-guided-form" noValidate>
               <div className="form-group-guided">
                 <label htmlFor="playerName">Tu Nombre y Apellido *</label>
                 <input 
@@ -1060,15 +1080,38 @@ const BingoBoletos: React.FC = () => {
 
                   {/* ADVERTENCIA OBLIGATORIA AL SELECCIONAR PAGO EN EFECTIVO */}
                   {paymentMethodChoice === 'efectivo' && (
-                    <div className="cash-promoter-warning">
-                      <span className="warning-symbol">⚠️</span>
-                      <div className="warning-content">
-                        <strong>Solo disponible con un promotor presencial:</strong>
-                        <p>
-                          Esta opción de pago en efectivo <strong>solo funciona si te encuentras presencialmente con un promotor o encargado cerca</strong> para cobrar tu dinero y habilitar tu boleto de manera manual en el registro.
-                        </p>
+                    <>
+                      <div className="cash-promoter-warning">
+                        <span className="warning-symbol">⚠️</span>
+                        <div className="warning-content">
+                          <strong>Solo disponible con un promotor presencial:</strong>
+                          <p>
+                            Esta opción de pago en efectivo <strong>solo funciona si te encuentras presencialmente con un promotor o encargado cerca</strong> para cobrar tu dinero y habilitar tu boleto de manera manual en el registro.
+                          </p>
+                        </div>
                       </div>
-                    </div>
+
+                      {(!playerName.trim() || playerWhatsappDigits.trim().length !== 8) && (
+                        <div style={{
+                          marginTop: '10px',
+                          padding: '10px 14px',
+                          borderRadius: '10px',
+                          background: 'rgba(234, 179, 8, 0.12)',
+                          border: '1px solid rgba(234, 179, 8, 0.4)',
+                          color: '#fef08a',
+                          fontSize: '0.84rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          lineHeight: 1.4
+                        }}>
+                          <span style={{ fontSize: '1.2rem' }}>📝</span>
+                          <span>
+                            <strong>Paso previo:</strong> Asegúrate de ingresar tu <strong>Nombre</strong> y <strong>Teléfono de 8 dígitos</strong> arriba para que el promotor pueda identificarte.
+                          </span>
+                        </div>
+                      )}
+                    </>
                   )}
                 </div>
               )}
@@ -1129,11 +1172,16 @@ const BingoBoletos: React.FC = () => {
                     ) : (
                       <>
                         <button 
-                          type="submit" 
+                          type="button" 
                           className="btn-guided-pay btn-guided-cash"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            handleProceedToCashPayment(e);
+                          }}
                           disabled={isProcessing}
                         >
-                          {isProcessing ? '⏳ Registrando Solicitud...' : `💵 Solicitar Boleto y Pagar Q${totalPriceQ}.00 en Efectivo`}
+                          {isProcessing ? '⏳ Registrando Solicitud en Efectivo...' : `💵 Solicitar Boleto y Pagar Q${totalPriceQ}.00 en Efectivo`}
                         </button>
                         <button
                           type="button"
