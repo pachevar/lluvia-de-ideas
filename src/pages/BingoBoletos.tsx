@@ -634,33 +634,29 @@ const BingoBoletos: React.FC = () => {
 
         {/* BARRA DE NAVEGACIÓN Y PROGRESO DE LOS 4 PASOS */}
         <nav className="boletos-stepper-bar" aria-label="Progreso de compra">
-          {WIZARD_STEPS.map((stepItem, idx) => {
+          {WIZARD_STEPS.map((stepItem) => {
             const isCurrent = currentStep === stepItem.num;
             const isCompleted = currentStep > stepItem.num;
             return (
-              <React.Fragment key={stepItem.num}>
-                <button
-                  type="button"
-                  className={`stepper-step-item ${isCurrent ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
-                  onClick={() => goToStep(stepItem.num)}
-                  disabled={!isCompleted && !isCurrent}
-                >
-                  <div className="stepper-badge-circle">
-                    {isCompleted ? '✓' : stepItem.num}
-                  </div>
-                  <div className="stepper-text-col">
-                    <span className="stepper-title-sub">
-                      {stepItem.icon} Paso {stepItem.num}
-                    </span>
-                    <span className="stepper-title-main">
-                      {stepItem.title}
-                    </span>
-                  </div>
-                </button>
-                {idx < WIZARD_STEPS.length - 1 && (
-                  <div className={`stepper-divider ${currentStep > stepItem.num ? 'completed' : ''}`} />
-                )}
-              </React.Fragment>
+              <button
+                key={stepItem.num}
+                type="button"
+                className={`stepper-step-item ${isCurrent ? 'active' : ''} ${isCompleted ? 'completed' : ''}`}
+                onClick={() => goToStep(stepItem.num)}
+                disabled={!isCompleted && !isCurrent}
+              >
+                <div className="stepper-badge-circle">
+                  {isCompleted ? '✓' : stepItem.num}
+                </div>
+                <div className="stepper-text-col">
+                  <span className="stepper-title-sub">
+                    {stepItem.icon} Paso {stepItem.num}
+                  </span>
+                  <span className="stepper-title-main">
+                    {stepItem.title}
+                  </span>
+                </div>
+              </button>
             );
           })}
         </nav>
@@ -895,17 +891,6 @@ const BingoBoletos: React.FC = () => {
               </h2>
             </div>
 
-            {/* Resumen de la partida seleccionada */}
-            <div className="step-current-game-pill">
-              <span className="pill-item-game">
-                🎮 Partida: <strong>{selectedScheduledGame?.title || activeGame?.title || 'Partida Oficial'}</strong>
-              </span>
-              <span className="pill-sep">•</span>
-              <span className="pill-item-price">
-                Modalidad: <strong>{purchaseMode === 'personal' ? 'Para mí (Celular)' : 'Para regalar a un contacto'}</strong>
-              </span>
-            </div>
-
             {/* FORMULARIO DE DATOS DEL JUGADOR */}
             <form onSubmit={handleContinueToStep4} className="checkout-guided-form" noValidate>
               <div className="form-group-guided">
@@ -945,9 +930,6 @@ const BingoBoletos: React.FC = () => {
                     required
                   />
                 </div>
-                <span className="field-hint-text">
-                  Ingresa únicamente los 8 dígitos de tu número de teléfono. El código de país <strong>+502</strong> se añade automáticamente.
-                </span>
               </div>
 
               <div className="form-group-guided">
