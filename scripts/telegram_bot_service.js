@@ -31,9 +31,24 @@ async function sendMessage(chatId, text, inlineKeyboard = null) {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload)
     });
-    return await res.json();
+    const data = await res.json();
+    if (!data.ok) {
+      console.error(`❌ Error Telegram enviando a chat ${chatId}:`, data.description);
+      if (data.description && data.description.includes("can't parse entities")) {
+        delete payload.parse_mode;
+        const resFallback = await fetch(`${TELEGRAM_API}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        return await resFallback.json();
+      }
+    } else {
+      console.log(`✅ Mensaje enviado exitosamente a chat ${chatId}`);
+    }
+    return data;
   } catch (err) {
-    console.error(`Error enviando mensaje a chat ${chatId}:`, err);
+    console.error(`Error de red enviando mensaje a chat ${chatId}:`, err.message);
   }
 }
 
@@ -188,12 +203,15 @@ async function startBotPolling() {
             const chatId = update.message.chat.id;
             const text = update.message.text.trim();
             const userName = update.message.from.first_name || update.message.from.username || 'Jugador';
+            const lower = text.toLowerCase();
+            console.log(`\n📩 Mensaje recibido de ${userName} (Chat ${chatId}): "${text}"`);
 
-            if (text.startsWith('/start')) {
+            if (lower.startsWith('/start')) {
               const parts = text.split(' ');
               const payload = parts.length > 1 ? parts[1].trim() : '';
               await handleStartCommand(chatId, payload, userName);
-            } else if (text.startsWith('/jugar')) {
+            } else if (lower.startsWith('/jugar')) {
+              console.log(`▶️ Ejecutando /jugar para ${userName}`);
               await sendMessage(
                 chatId,
                 `🎮 <b>SALA DE BINGO EN VIVO</b>\n\n` +
@@ -204,7 +222,8 @@ async function startBotPolling() {
                   [{ text: '🛒 Tienda de Boletos', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo/boletos' }]
                 ]
               );
-            } else if (text.startsWith('/boletos')) {
+            } else if (lower.startsWith('/boletos')) {
+              console.log(`▶️ Ejecutando /boletos para ${userName}`);
               await sendMessage(
                 chatId,
                 `🎟️ <b>TIENDA OFICIAL DE BOLETOS</b>\n\n` +
@@ -215,7 +234,8 @@ async function startBotPolling() {
                   [{ text: '🎮 Entrar a la Sala', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo' }]
                 ]
               );
-            } else if (text.startsWith('/ayuda')) {
+            } else if (lower.startsWith('/ayuda')) {
+              console.log(`▶️ Ejecutando /ayuda para ${userName}`);
               await sendMessage(
                 chatId,
                 `💬 <b>ATENCIÓN Y SOPORTE DE BINGOTENANGO</b>\n\n` +
@@ -229,7 +249,7 @@ async function startBotPolling() {
                 ]
               );
             } else {
-              // Respuesta por defecto ante cualquier otro mensaje
+              console.log(`▶️ Mensaje general de ${userName}, respondiendo con menú`);
               await sendMessage(
                 chatId,
                 `👋 ¡Hola <b>${userName}</b>! Soy el asistente automatizado de <b>Bingotenango Oficial</b> 🎟️\n\n` +
