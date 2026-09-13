@@ -9,6 +9,7 @@ import type { StoryConfig, CustomHexagon } from '../types';
 import { HexagonGrid } from '../components/map/HexagonGrid';
 import { getCandidateHexes } from '../utils/hexUtils';
 import { TechTreeModal } from '../components/sutz/TechTreeModal';
+import { SutzSettingsModal } from '../components/sutz/SutzSettingsModal';
 import { sutzAudio } from '../utils/sutzSoundEffects';
 import './Sutz.css';
 
@@ -151,10 +152,8 @@ export default function Sutz() {
   const [isCodexModalOpen, setIsCodexModalOpen] = useState(false);
   const [isQuestsModalOpen, setIsQuestsModalOpen] = useState(false);
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [selectedRelic, setSelectedRelic] = useState<MayanRelic | null>(null);
-
-  // Audio State
-  const [isAudioMuted, setIsAudioMuted] = useState(() => sutzAudio.getMuted());
 
   // Controles de mapa para botón de Centrar/Radar
   const mapControlsRef = useRef<{ zoomIn: () => void; zoomOut: () => void; centerView: () => void } | null>(null);
@@ -223,12 +222,7 @@ export default function Sutz() {
     return 'Sabio Iniciado 📜';
   };
 
-  const handleToggleAudio = () => {
-    const muted = sutzAudio.toggleMute();
-    setIsAudioMuted(muted);
-  };
-
-  const handleOpenModal = (type: 'profile' | 'tree' | 'codex' | 'quests' | 'inventory') => {
+  const handleOpenModal = (type: 'profile' | 'tree' | 'codex' | 'quests' | 'inventory' | 'settings') => {
     sutzAudio.playOpenModal();
     // Cerrar otros para que no se sobrepongan
     setIsProfileModalOpen(type === 'profile');
@@ -236,6 +230,7 @@ export default function Sutz() {
     setIsCodexModalOpen(type === 'codex');
     setIsQuestsModalOpen(type === 'quests');
     setIsInventoryModalOpen(type === 'inventory');
+    setIsSettingsModalOpen(type === 'settings');
   };
 
   const handleCloseModals = () => {
@@ -245,6 +240,7 @@ export default function Sutz() {
     setIsCodexModalOpen(false);
     setIsQuestsModalOpen(false);
     setIsInventoryModalOpen(false);
+    setIsSettingsModalOpen(false);
     setSelectedRelic(null);
   };
 
@@ -380,24 +376,14 @@ export default function Sutz() {
             </div>
           </div>
 
-          {/* Botón de Audio */}
+          {/* Botón de Ajustes y Configuración */}
           <button 
-            className="sutz-hud-action-btn"
-            onClick={handleToggleAudio}
-            title={isAudioMuted ? 'Activar Efectos de Sonido' : 'Silenciar Audio'}
-            aria-label="Conmutar sonido"
+            className="sutz-hud-action-btn settings-btn"
+            onClick={() => handleOpenModal('settings')}
+            title="Ajustes de Sonido, Música, Vibración, Notificaciones y Recompensas"
           >
-            {isAudioMuted ? '🔇' : '🔊'}
-          </button>
-
-          {/* Botón de Salir al Portal */}
-          <button 
-            className="sutz-hud-action-btn home-btn"
-            onClick={() => { sutzAudio.playClick(); navigate('/'); }}
-            title="Regresar a la página principal del Portal Educativo"
-          >
-            <span>🏠</span>
-            <span>Inicio</span>
+            <span>⚙️</span>
+            <span>Ajustes</span>
           </button>
         </div>
       </header>
@@ -891,6 +877,12 @@ export default function Sutz() {
           </div>
         </div>
       )}
+
+      {/* Modal de Ajustes y Configuración */}
+      <SutzSettingsModal 
+        isOpen={isSettingsModalOpen} 
+        onClose={handleCloseModals} 
+      />
 
     </div>
   );

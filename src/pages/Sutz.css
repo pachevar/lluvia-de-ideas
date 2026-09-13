@@ -401,20 +401,23 @@
   transform: scale(0.92);
 }
 
-.sutz-hud-action-btn.home-btn {
+.sutz-hud-action-btn.settings-btn {
   width: auto;
   padding: 0 14px;
-  gap: 6px;
+  gap: 7px;
   font-size: 0.82rem;
   font-weight: 800;
-  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%);
-  border-color: rgba(255, 255, 255, 0.4);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(51, 65, 85, 0.95) 100%);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5), 0 0 10px rgba(56, 189, 248, 0.15);
 }
 
-.sutz-hud-action-btn.home-btn:hover {
-  background: linear-gradient(135deg, #0369a1 0%, #1d4ed8 100%);
-  border-color: #ffffff;
+.sutz-hud-action-btn.settings-btn:hover {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 8px 20px rgba(2, 132, 199, 0.5), 0 0 16px rgba(56, 189, 248, 0.4);
 }
+
 
 /* ==========================================================================
    2. BARRA INFERIOR DE ACCIÓN GAMIFICADA (BOTTOM ACTION DOCK)
