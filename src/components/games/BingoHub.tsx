@@ -423,6 +423,24 @@ export default function BingoHub() {
           paidAmount: priceAmount,
           paidAt: Date.now()
         });
+
+        // Activar tokens hijos de regalo si existen
+        try {
+          const qGifts = query(collection(db, 'bingo_access_tokens'), where('orderId', '==', token.orderId));
+          const snapGifts = await getDocs(qGifts);
+          for (const gDoc of snapGifts.docs) {
+            if (gDoc.id !== token.id) {
+              await updateDoc(doc(db, 'bingo_access_tokens', gDoc.id), {
+                paymentStatus: 'paid',
+                status: 'active',
+                paymentMethod: 'efectivo',
+                paidAt: Date.now()
+              });
+            }
+          }
+        } catch (giftErr) {
+          console.warn("Aviso actualizando gift tokens hijos en Hub:", giftErr);
+        }
       }
 
       if (token.playerWhatsapp) {
@@ -588,6 +606,14 @@ export default function BingoHub() {
         // Validar si la ronda fue reiniciada posteriormente por el Host
         if (activeGame.lastResetAt && tData.sessionResetAt && tData.sessionResetAt < activeGame.lastResetAt) {
           setTokenError('⚠️ Esta ronda fue reiniciada por el organizador. El enlace ha caducado automáticamente.');
+          return;
+        }
+
+        // Validar pago si requiere costo en efectivo
+        const isFree = tData.unitPriceQ === 0 || tData.tierId === 'tier-free';
+        const isPaid = isFree || tData.paymentStatus === 'paid' || (tData.status === 'active' && !!tData.paidAmount);
+        if (!isPaid && tData.paymentMethod === 'efectivo') {
+          setTokenError('💵 Este pase de acceso está pendiente de cobro en efectivo por el promotor o taquilla. En cuanto sea confirmado podrás ingresar a tu cartón.');
           return;
         }
 
@@ -1735,10 +1761,31 @@ export default function BingoHub() {
             paymentMethod: 'efectivo',
             paidAt: Date.now()
           });
+
+          // Activar child tokens de regalo
+          try {
+            const qGifts = query(collection(db, 'bingo_access_tokens'), where('orderId', '==', token.orderId));
+            const snapGifts = await getDocs(qGifts);
+            for (const gDoc of snapGifts.docs) {
+              if (gDoc.id !== token.id) {
+                await updateDoc(doc(db, 'bingo_access_tokens', gDoc.id), {
+                  paymentStatus: 'paid',
+                  status: 'active',
+                  paymentMethod: 'efectivo',
+                  paidAt: Date.now()
+                });
+              }
+            }
+          } catch (giftErr) {
+            console.warn("Aviso activando gift tokens en pass:", giftErr);
+          }
         }
         await updateDoc(doc(db, 'bingo_access_tokens', token.id), {
           paymentMethod: 'efectivo',
-          paidAmount: order?.amount || order?.totalPriceQ || 10
+          paymentStatus: 'paid',
+          status: 'active',
+          paidAmount: order?.amount || order?.totalPriceQ || 10,
+          paidAt: Date.now()
         });
         addLog(`HOST: Cobro en efectivo registrado para ${token.playerName}.`);
       } catch (err) {
@@ -1765,14 +1812,39 @@ export default function BingoHub() {
       return;
     }
 
-    const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
-    const text = encodeURIComponent(
-      `¡Hola ${token.playerName}! 🎟️ Te compartimos tu Pase Único oficial para Bingotenango:\n\n` +
-      `🏆 Categoría: ${token.tierName || 'Cartón Oficial'} (${token.prizeLevel || 'En vivo'})\n` +
-      `🎟️ Total Cartones: ${token.quantity}\n\n` +
-      `🔑 ENLACE EXCLUSIVO DE ACCESO:\n${playUrl}\n\n` +
-      `⚠️ Este enlace es de un solo uso para tu dispositivo. Al iniciar la partida podrás jugar directamente. ¡Mucha suerte!`
-    );
+    const isGift = token.purchaseMode === 'gift';
+    const totalQty = token.quantity || 1;
+    let text = '';
+
+    if (isGift) {
+      let linksText = '';
+      for (let i = 1; i <= totalQty; i++) {
+        const giftUrl = `${window.location.origin}/juegos/bingo?access=tkn_gift_${token.orderId}_c${i}`;
+        linksText += `🎁 *Cartón #${i}:*\n${giftUrl}\n\n`;
+      }
+      const portalUrl = `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${token.orderId}&status=success`;
+
+      text = encodeURIComponent(
+        `¡Hola ${token.playerName}! 🎟️ Tu paquete de ${totalQty} links para Bingotenango ha sido confirmado:\n\n` +
+        `🏆 Partida: ${activeGame?.title || 'Gran Bingo Familiar'}\n` +
+        `🎟️ Total Cartones: ${totalQty} Enlace(s) para Contactos\n` +
+        `💵 Cobro Confirmado: Q${token.paidAmount || (token.unitPriceQ || 10) * totalQty}.00\n\n` +
+        `📲 ENLACES INDEPENDIENTES PARA TUS CONTACTOS:\n\n` +
+        `${linksText}` +
+        `👉 Cada amigo o contacto debe abrir su enlace en su propio celular para jugar su cartón en vivo.\n\n` +
+        `📋 También puedes gestionar tus links desde tu portal:\n${portalUrl}\n\n` +
+        `¡Muchos éxitos a todos en la partida! 🎉`
+      );
+    } else {
+      const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
+      text = encodeURIComponent(
+        `¡Hola ${token.playerName}! 🎟️ Te compartimos tu Pase Único oficial para Bingotenango:\n\n` +
+        `🏆 Categoría: ${token.tierName || 'Cartón Oficial'} (${token.prizeLevel || 'En vivo'})\n` +
+        `🎟️ Total Cartones: ${token.quantity}\n\n` +
+        `🔑 ENLACE EXCLUSIVO DE ACCESO:\n${playUrl}\n\n` +
+        `⚠️ Este enlace es de un solo uso para tu dispositivo. Al iniciar la partida podrás jugar directamente. ¡Mucha suerte!`
+      );
+    }
 
     const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
     window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');

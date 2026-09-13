@@ -758,8 +758,9 @@ export default function AdminBingoTab() {
       return;
     }
 
+    const isGift = token.purchaseMode === 'gift';
     const confirm = await showConfirm(
-      `¿Deseas confirmar el cobro en efectivo de Q${priceAmount}.00 para el jugador "${token.playerName || 'Jugador'}" (${token.quantity} cartón${token.quantity > 1 ? 'es' : ''})?\n\nAl confirmar, la sesión en el navegador del jugador se activará de inmediato y recibirá acceso a su cartón.`,
+      `¿Deseas confirmar el cobro en efectivo de Q${priceAmount}.00 para el jugador "${token.playerName || 'Jugador'}" (${token.quantity} ${isGift ? 'link(s) de regalo' : 'cartón(es)'})?\n\nAl confirmar, la sesión en el navegador del jugador se activará de inmediato y recibirá acceso a sus enlaces.`,
       "Confirmar Cobro en Efectivo",
       "💵",
       "SÍ, COBRAR Y HABILITAR",
@@ -783,6 +784,24 @@ export default function AdminBingoTab() {
           paidAmount: priceAmount,
           paidAt: Date.now()
         });
+
+        // Activar todos los pases individuales de regalo vinculados a esta orden
+        try {
+          const qGifts = query(collection(db, 'bingo_access_tokens'), where('orderId', '==', token.orderId));
+          const snapGifts = await getDocs(qGifts);
+          for (const gDoc of snapGifts.docs) {
+            if (gDoc.id !== token.id) {
+              await updateDoc(doc(db, 'bingo_access_tokens', gDoc.id), {
+                paymentStatus: 'paid',
+                status: 'active',
+                paymentMethod: 'efectivo',
+                paidAt: Date.now()
+              });
+            }
+          }
+        } catch (giftErr) {
+          console.warn("Aviso actualizando gift tokens hijos:", giftErr);
+        }
       }
       if (token.playerWhatsapp) {
         recordPlayerPurchase({
@@ -793,7 +812,7 @@ export default function AdminBingoTab() {
           webPushEnabled: false
         }).catch(() => {});
       }
-      await showAlert(`¡Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}! El navegador del jugador ha sido habilitado para ingresar a su cartón. 🚀`, "Cobro Exitoso", "✅");
+      await showAlert(`¡Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}! Los enlaces han sido habilitados con éxito. 🚀`, "Cobro Exitoso", "✅");
     } catch (err) {
       console.error("Error al confirmar cobro:", err);
       await showAlert("No se pudo confirmar el cobro en la base de datos.", "Error", "❌");
@@ -823,15 +842,40 @@ export default function AdminBingoTab() {
     }
     const finalPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
 
-    const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
-    const text = encodeURIComponent(
-      `¡Hola ${token.playerName}! 🎟️ Te compartimos tu Pase Único oficial para Bingotenango:\n\n` +
-      `🏆 Partida: ${activeGame?.title || 'Gran Bingo Familiar'}\n` +
-      `🎟️ Total Cartones: ${token.quantity} Cartón(es)\n` +
-      `💵 Estado: Cobro Confirmado (Q${token.paidAmount || (token.unitPriceQ || 10) * token.quantity}.00)\n\n` +
-      `🔑 ENLACE EXCLUSIVO PARA JUGAR:\n${playUrl}\n\n` +
-      `⚠️ Este enlace es de un solo uso para tu dispositivo. Ábrelo al iniciar la partida para ingresar directamente a la sala. ¡Muchos éxitos!`
-    );
+    const isGift = token.purchaseMode === 'gift';
+    const totalQty = token.quantity || 1;
+    const priceAmount = token.paidAmount || ((token.unitPriceQ || cardPriceQ || 10) * totalQty);
+    let text = '';
+
+    if (isGift) {
+      let linksText = '';
+      for (let i = 1; i <= totalQty; i++) {
+        const giftUrl = `${window.location.origin}/juegos/bingo?access=tkn_gift_${token.orderId}_c${i}`;
+        linksText += `🎁 *Cartón #${i}:*\n${giftUrl}\n\n`;
+      }
+      const portalUrl = `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${token.orderId}&status=success`;
+
+      text = encodeURIComponent(
+        `¡Hola ${token.playerName}! 🎟️ Tu paquete de ${totalQty} links para Bingotenango ha sido confirmado:\n\n` +
+        `🏆 Partida: ${activeGame?.title || 'Gran Bingo Familiar'}\n` +
+        `💵 Cobro Confirmado: Q${priceAmount}.00 (${totalQty} ${totalQty === 1 ? 'Cartón' : 'Cartones'})\n\n` +
+        `📲 ENLACES INDEPENDIENTES PARA TUS CONTACTOS:\n\n` +
+        `${linksText}` +
+        `👉 Cada amigo o contacto debe abrir su enlace en su propio celular para recibir su cartón en vivo.\n\n` +
+        `📋 También puedes gestionar o copiar todos tus links desde tu portal:\n${portalUrl}\n\n` +
+        `¡Muchos éxitos a todos en la partida! 🎉`
+      );
+    } else {
+      const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
+      text = encodeURIComponent(
+        `¡Hola ${token.playerName}! 🎟️ Te compartimos tu Pase Único oficial para Bingotenango:\n\n` +
+        `🏆 Partida: ${activeGame?.title || 'Gran Bingo Familiar'}\n` +
+        `🎟️ Total Cartones: ${token.quantity} Cartón(es)\n` +
+        `💵 Estado: Cobro Confirmado (Q${token.paidAmount || (token.unitPriceQ || 10) * token.quantity}.00)\n\n` +
+        `🔑 ENLACE EXCLUSIVO PARA JUGAR:\n${playUrl}\n\n` +
+        `⚠️ Este enlace es de un solo uso para tu dispositivo. Ábrelo al iniciar la partida para ingresar directamente a la sala. ¡Muchos éxitos!`
+      );
+    }
 
     window.open(`https://wa.me/${finalPhone}?text=${text}`, '_blank');
 
@@ -853,6 +897,10 @@ export default function AdminBingoTab() {
   // Filtrado de pases de acceso
   const filteredTokensList = useMemo(() => {
     return accessTokensList.filter(t => {
+      // Ocultar tokens hijos de regalo si no se están buscando explícitamente, para mostrar la orden principal
+      if (!tokenSearchQuery.trim() && t.id.startsWith('tkn_gift_')) {
+        return false;
+      }
       const isPaid = t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0;
       if (tokenStatusFilter === 'paid' && !isPaid) return false;
       if (tokenStatusFilter === 'pending' && isPaid) return false;
@@ -869,6 +917,7 @@ export default function AdminBingoTab() {
   const pendingCashTokensList = useMemo(() => {
     return accessTokensList.filter(t => 
       t.paymentMethod === 'efectivo' && 
+      !t.id.startsWith('tkn_gift_') &&
       (t.paymentStatus === 'pending' || t.status === 'pending' || (!t.paidAmount && t.paymentStatus !== 'paid'))
     );
   }, [accessTokensList]);

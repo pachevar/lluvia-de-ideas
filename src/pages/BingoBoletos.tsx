@@ -399,6 +399,37 @@ const BingoBoletos: React.FC = () => {
       };
       await setDoc(doc(db, 'bingo_access_tokens', newTokenId), tokenObj);
 
+      // Si es paquete de links para regalo/contactos, pre-crear los tokens individuales en Firestore
+      if (purchaseMode === 'gift') {
+        for (let i = 1; i <= quantity; i++) {
+          const giftTokenId = `tkn_gift_${orderId}_c${i}`;
+          const giftTokenObj: BingoAccessToken = {
+            id: giftTokenId,
+            orderId: orderId,
+            playerName: `${playerName.trim()} (Contacto #${i})`,
+            playerWhatsapp: cleanPhone,
+            tierId: activeTier.id,
+            tierName: activeTier.name,
+            prizeLevel: activeTier.prizeLevel,
+            quantity: 1,
+            purchaseMode: 'gift',
+            gameId: targetGameId,
+            scheduledGameId: selectedScheduledGame?.id || null,
+            sessionResetAt: activeGame?.lastResetAt || Date.now(),
+            status: 'pending',
+            paymentStatus: 'pending',
+            paymentMethod: 'efectivo',
+            paidAmount: 0,
+            unitPriceQ: currentPriceQ,
+            usedByDevice: null,
+            linkSent: false,
+            linkSentAt: null,
+            createdAt: Date.now()
+          };
+          await setDoc(doc(db, 'bingo_access_tokens', giftTokenId), giftTokenObj);
+        }
+      }
+
       // Guardar nombre en localStorage
       localStorage.setItem('my_bingo_player_name', playerName.trim());
 
@@ -509,6 +540,34 @@ const BingoBoletos: React.FC = () => {
 
       // Si el costo es 0 (Gratis/Prueba), confirmamos de inmediato sin pasarela bancaria
       if (currentPriceQ === 0) {
+        if (purchaseMode === 'gift') {
+          for (let i = 1; i <= quantity; i++) {
+            const giftTokenId = `tkn_gift_${orderId}_c${i}`;
+            await setDoc(doc(db, 'bingo_access_tokens', giftTokenId), {
+              id: giftTokenId,
+              orderId: orderId,
+              playerName: `${playerName.trim()} (Contacto #${i})`,
+              playerWhatsapp: cleanPhone,
+              tierId: 'tier-free',
+              tierName: 'Cartón Gratuito',
+              prizeLevel: 'Partida Gratuita',
+              quantity: 1,
+              purchaseMode: 'gift',
+              gameId: activeGame?.id || 'default_game',
+              scheduledGameId: selectedScheduledGame?.id || null,
+              sessionResetAt: activeGame?.lastResetAt || Date.now(),
+              status: 'active',
+              paymentStatus: 'paid',
+              paymentMethod: 'gratis',
+              paidAmount: 0,
+              unitPriceQ: 0,
+              usedByDevice: null,
+              linkSent: false,
+              linkSentAt: null,
+              createdAt: Date.now()
+            });
+          }
+        }
         navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=tier-free&qty=${quantity}&mode=${purchaseMode}`);
         return;
       }

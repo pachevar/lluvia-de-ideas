@@ -216,34 +216,48 @@ const BingoBoletosConfirmacion: React.FC = () => {
         const totalQty = currentOrder?.quantity || 1;
         let effectiveTokenId = '';
 
-        if (isGift && totalQty > 1) {
-          // Generar tokens independientes para cada contacto
+        if (isGift && totalQty >= 1) {
+          // Generar o recuperar tokens independientes para cada contacto
           const generatedLinks: GiftLinkItem[] = [];
           for (let i = 1; i <= totalQty; i++) {
             const giftTokenId = `tkn_gift_${effectiveOrderId}_c${i}`;
-            const giftTokenObj: BingoAccessToken = {
-              id: giftTokenId,
-              orderId: effectiveOrderId,
-              playerName: `${currentOrder.playerName} (Invitado #${i})`,
-              playerWhatsapp: currentOrder.playerWhatsapp || '',
-              tierId: currentOrder.tierId || 'tier-25',
-              tierName: currentOrder.tierName || 'Cartón Oficial',
-              prizeLevel: currentOrder.prizeLevel || 'Premios en vivo',
-              quantity: 1, // Cada amigo recibe 1 cartón independiente
-              purchaseMode: 'gift',
-              gameId: activeGameId,
-              scheduledGameId: currentOrder.scheduledGameId || null,
-              sessionResetAt: sessionResetAt,
-              status: 'active',
-              usedByDevice: null,
-              linkSent: false,
-              linkSentAt: null,
-              createdAt: Date.now()
-            };
+            const giftTokenRef = doc(db, 'bingo_access_tokens', giftTokenId);
             try {
-              await setDoc(doc(db, 'bingo_access_tokens', giftTokenId), giftTokenObj);
+              const giftTokenSnap = await getDoc(giftTokenRef);
+              if (!giftTokenSnap.exists()) {
+                const giftTokenObj: BingoAccessToken = {
+                  id: giftTokenId,
+                  orderId: effectiveOrderId,
+                  playerName: `${currentOrder.playerName} (Contacto #${i})`,
+                  playerWhatsapp: currentOrder.playerWhatsapp || '',
+                  tierId: currentOrder.tierId || 'tier-25',
+                  tierName: currentOrder.tierName || 'Cartón Oficial',
+                  prizeLevel: currentOrder.prizeLevel || 'Premios en vivo',
+                  quantity: 1, // Cada amigo recibe 1 cartón independiente
+                  purchaseMode: 'gift',
+                  gameId: activeGameId,
+                  scheduledGameId: currentOrder.scheduledGameId || null,
+                  sessionResetAt: sessionResetAt,
+                  status: isPaid ? 'active' : 'pending',
+                  paymentStatus: isPaid ? 'paid' : 'pending',
+                  paymentMethod: currentOrder.paymentMethod || 'efectivo',
+                  paidAmount: isPaid ? (currentOrder.unitPriceQ || 0) : 0,
+                  unitPriceQ: currentOrder.unitPriceQ || 0,
+                  usedByDevice: null,
+                  linkSent: false,
+                  linkSentAt: null,
+                  createdAt: Date.now()
+                };
+                await setDoc(giftTokenRef, giftTokenObj);
+              } else if (isPaid && giftTokenSnap.data()?.status === 'pending') {
+                await updateDoc(giftTokenRef, {
+                  status: 'active',
+                  paymentStatus: 'paid',
+                  paidAt: Date.now()
+                });
+              }
             } catch (errSet) {
-              console.warn("Aviso al guardar gift token:", errSet);
+              console.warn("Aviso al procesar gift token:", errSet);
             }
             generatedLinks.push({
               id: giftTokenId,
@@ -373,25 +387,42 @@ const BingoBoletosConfirmacion: React.FC = () => {
       if (isNowPaid) {
         setIsOrderPending(false);
 
-        // Si ya está habilitado, asegurar que el cartón esté generado y guardado en sesión
-        let cardIdToUse = activeCardId || accessToken?.usedByCardId;
-        if (!cardIdToUse) {
-          const targetGameId = updated.gameId || accessToken?.gameId || 'juego-principal';
-          cardIdToUse = await generateAndAssignCard(accessToken?.id || null, updated, targetGameId);
-        }
+        if (updated.purchaseMode === 'gift') {
+          const totalQty = updated.quantity || 1;
+          for (let i = 1; i <= totalQty; i++) {
+            const giftTokenId = `tkn_gift_${orderId}_c${i}`;
+            try {
+              await updateDoc(doc(db, 'bingo_access_tokens', giftTokenId), {
+                status: 'active',
+                paymentStatus: 'paid',
+                paidAt: Date.now()
+              });
+            } catch (err) {
+              console.warn("Aviso activando gift token en snapshot:", err);
+            }
+          }
+          soundEffects.playSuccessFanfare();
+        } else {
+          // Si ya está habilitado, asegurar que el cartón esté generado y guardado en sesión
+          let cardIdToUse = activeCardId || accessToken?.usedByCardId;
+          if (!cardIdToUse) {
+            const targetGameId = updated.gameId || accessToken?.gameId || 'juego-principal';
+            cardIdToUse = await generateAndAssignCard(accessToken?.id || null, updated, targetGameId);
+          }
 
-        if (cardIdToUse) {
-          setActiveCardId(cardIdToUse);
-          localStorage.setItem('my_bingo_card_id', cardIdToUse);
-          localStorage.setItem('my_bingo_card_ids', JSON.stringify([cardIdToUse]));
-          localStorage.setItem('my_bingo_player_name', updated.playerName);
+          if (cardIdToUse) {
+            setActiveCardId(cardIdToUse);
+            localStorage.setItem('my_bingo_card_id', cardIdToUse);
+            localStorage.setItem('my_bingo_card_ids', JSON.stringify([cardIdToUse]));
+            localStorage.setItem('my_bingo_player_name', updated.playerName);
 
-          // Si vino por pago en efectivo y es modo personal, celebrar y entrar automáticamente
-          if (updated.paymentMethod === 'efectivo' && updated.purchaseMode !== 'gift') {
-            soundEffects.playSuccessFanfare();
-            setTimeout(() => {
-              navigate(`/juegos/bingo/carton/${cardIdToUse}`);
-            }, 1800);
+            // Si vino por pago en efectivo y es modo personal, celebrar y entrar automáticamente
+            if (updated.paymentMethod === 'efectivo') {
+              soundEffects.playSuccessFanfare();
+              setTimeout(() => {
+                navigate(`/juegos/bingo/carton/${cardIdToUse}`);
+              }, 1800);
+            }
           }
         }
       }
@@ -435,13 +466,61 @@ const BingoBoletosConfirmacion: React.FC = () => {
     }
   };
 
-  const copyGiftLink = (index: number, url: string) => {
-    navigator.clipboard.writeText(url);
-    setGiftLinks(prev => prev.map((item, idx) => idx === index ? { ...item, copied: true } : item));
-    setTimeout(() => {
-      setGiftLinks(prev => prev.map((item, idx) => idx === index ? { ...item, copied: false } : item));
-    }, 2500);
+  const [copiedAllLinks, setCopiedAllLinks] = useState(false);
+
+  const getAllLinksWhatsAppText = () => {
+    const totalQty = orderData?.quantity || giftLinks.length || 1;
+    let linksText = '';
+    giftLinks.forEach((item) => {
+      linksText += `🎁 *Cartón #${item.num}:*\n${item.url}\n\n`;
+    });
+
+    const portalUrl = `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId || ''}&status=success`;
+
+    return (
+      `¡Hola! 🎟️ Aquí están los links de Bingotenango (${totalQty} ${totalQty === 1 ? 'cartón' : 'cartones'}):\n\n` +
+      `🏆 Partida Oficial en Vivo\n` +
+      `💵 Estado: Cobro Confirmado\n\n` +
+      `📲 ENLACES PARA REPARTIR A TUS CONTACTOS:\n\n` +
+      `${linksText}` +
+      `👉 Cada amigo o contacto debe tocar su enlace exclusivo para ingresar y jugar en su propio celular.\n\n` +
+      `📋 También puedes gestionar tus links desde tu portal:\n${portalUrl}\n\n` +
+      `¡Muchos éxitos a todos! 🎉`
+    );
   };
+
+  const handleSendAllLinksToMyWhatsApp = () => {
+    const rawPhone = orderData?.playerWhatsapp || phoneParam || '';
+    const cleanPhone = rawPhone.replace(/\D/g, '');
+    const finalPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+    const text = encodeURIComponent(getAllLinksWhatsAppText());
+    if (cleanPhone.length >= 8) {
+      window.open(`https://wa.me/${finalPhone}?text=${text}`, '_blank');
+    } else {
+      window.open(`https://wa.me/?text=${text}`, '_blank');
+    }
+  };
+
+  const handleCopyAllLinks = () => {
+    const text = getAllLinksWhatsAppText();
+    navigator.clipboard.writeText(text);
+    setCopiedAllLinks(true);
+    setTimeout(() => setCopiedAllLinks(false), 3000);
+  };
+
+  const handleShareAllNative = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: '🎟️ Mis Links de Bingotenango',
+          text: getAllLinksWhatsAppText()
+        });
+      } catch {}
+    } else {
+      handleCopyAllLinks();
+    }
+  };
+
 
   const handleCheckPaymentStatus = async () => {
     if (!orderId) return;
@@ -620,14 +699,227 @@ const BingoBoletosConfirmacion: React.FC = () => {
             )}
           </div>
 
-          {/* CASO A: MODO REPARTIR A CONTACTOS (LISTA DE ENLACES CON BOTÓN DE COMPARTIR) */}
-          {isGiftMode ? (
+          {/* SI LA ORDEN ESTÁ PENDIENTE (PAGO EN EFECTIVO O EN CONCILIACIÓN), MOSTRAR CAJA DE ESPERA */}
+          {isOrderPending ? (
+            orderData?.paymentMethod === 'efectivo' ? (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)',
+                border: '2px solid rgba(16, 185, 129, 0.65)',
+                borderRadius: '20px',
+                padding: '28px 20px',
+                margin: '0 auto 24px',
+                textAlign: 'center',
+                boxShadow: '0 8px 32px rgba(16, 185, 129, 0.3)'
+              }}>
+                <span style={{ fontSize: '3rem', display: 'block', marginBottom: '10px' }}>💵⏳</span>
+                <h3 style={{
+                  fontFamily: 'var(--font-gamer)',
+                  color: '#34d399',
+                  fontSize: '1.2rem',
+                  margin: '0 0 10px 0',
+                  letterSpacing: '1px'
+                }}>
+                  ESPERANDO CONFIRMACIÓN DEL PROMOTOR
+                </h3>
+                <div style={{
+                  background: 'rgba(0, 0, 0, 0.6)',
+                  border: '1px dashed rgba(52, 211, 153, 0.5)',
+                  borderRadius: '14px',
+                  padding: '14px 18px',
+                  marginBottom: '16px',
+                  display: 'inline-block',
+                  textAlign: 'left',
+                  minWidth: '280px'
+                }}>
+                  <div style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '4px' }}>
+                    👤 Comprador: <strong style={{ color: '#fff' }}>{orderData?.playerName}</strong>
+                  </div>
+                  <div style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '4px' }}>
+                    📱 Teléfono Inscrito: <strong style={{ color: '#38bdf8' }}>+{orderData?.playerWhatsapp}</strong>
+                  </div>
+                  <div style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '4px' }}>
+                    🎁 Modalidad: <strong style={{ color: '#38bdf8' }}>{orderData?.purchaseMode === 'gift' ? `${orderData?.quantity || 1} Links para Contactos` : 'Uso Personal'}</strong>
+                  </div>
+                  <div style={{ fontSize: '0.98rem', color: '#e2e8f0', marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
+                    💵 Total a Pagar al Promotor: <strong style={{ color: '#fbbf24', fontSize: '1.15rem' }}>Q{effectivePaidQ}.00 GTQ</strong>
+                  </div>
+                </div>
+                <p style={{ fontSize: '0.88rem', color: '#e2e8f0', lineHeight: 1.5, margin: '0 auto 18px', maxWidth: '520px' }}>
+                  Entrega tus <strong>Q{effectivePaidQ}.00</strong> en efectivo al promotor o taquilla indicándole tu nombre.
+                  <strong style={{ color: '#34d399', display: 'block', marginTop: '8px' }}>
+                    ⚡ Mantén esta pantalla abierta. En cuanto el promotor presione "Cobrar y Habilitar" en su registro, tu sesión se desbloqueará de inmediato {orderData?.purchaseMode === 'gift' ? 'y se habilitarán todos tus enlaces para enviarlos por WhatsApp a tus contactos.' : 'y entrarás a tu cartón.'}
+                  </strong>
+                </p>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleCheckPaymentStatus}
+                    disabled={isRechecking}
+                    style={{
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '12px 24px',
+                      color: '#ffffff',
+                      fontFamily: 'var(--font-gamer)',
+                      fontSize: '0.92rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 18px rgba(16, 185, 129, 0.45)',
+                      transition: 'all 0.2s ease'
+                    }}
+                  >
+                    {isRechecking ? 'Verificando Registro...' : '🔄 Comprobar Si Ya Me Habilitaron'}
+                  </button>
+                  <a
+                    href={`https://wa.me/50242250165?text=${encodeURIComponent(`Hola, solicité pagar en efectivo Q${effectivePaidQ}.00 para Bingotenango a nombre de ${orderData?.playerName} (Orden: ${orderId}). ¿Me apoyan con la verificación?`)}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{
+                      background: 'rgba(37, 211, 102, 0.2)',
+                      border: '1px solid rgba(37, 211, 102, 0.5)',
+                      borderRadius: '12px',
+                      padding: '12px 18px',
+                      color: '#25d366',
+                      fontFamily: 'var(--font-gamer)',
+                      fontSize: '0.88rem',
+                      fontWeight: 700,
+                      textDecoration: 'none',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    💬 WhatsApp Taquilla
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%)',
+                border: '1.5px solid rgba(245, 158, 11, 0.55)',
+                borderRadius: '18px',
+                padding: '24px 20px',
+                margin: '0 auto 24px',
+                textAlign: 'center',
+                boxShadow: '0 8px 30px rgba(245, 158, 11, 0.2)'
+              }}>
+                <span style={{ fontSize: '2.4rem', display: 'block', marginBottom: '10px' }}>⏳</span>
+                <h3 style={{
+                  fontFamily: 'var(--font-gamer)',
+                  color: '#fbbf24',
+                  fontSize: '1.1rem',
+                  margin: '0 0 10px 0',
+                  letterSpacing: '1px'
+                }}>
+                  PAGO EN PROCESO DE VERIFICACIÓN
+                </h3>
+                <p style={{ fontSize: '0.88rem', color: '#fef3c7', lineHeight: 1.5, margin: '0 auto 16px', maxWidth: '480px' }}>
+                  Si realizaste tu pago mediante <strong>Transferencia Bancaria</strong>, la pasarela de Recurrente requiere un tiempo de espera de <strong>hasta 10 minutos</strong> para conciliar con el banco. Si pagaste con <strong>Tarjeta de Débito o Crédito</strong>, la acreditación es inmediata.
+                </p>
+                <button
+                  type="button"
+                  onClick={handleCheckPaymentStatus}
+                  disabled={isRechecking}
+                  style={{
+                    background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '12px 28px',
+                    color: '#ffffff',
+                    fontFamily: 'var(--font-gamer)',
+                    fontSize: '0.95rem',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    boxShadow: '0 4px 18px rgba(245, 158, 11, 0.45)',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  {isRechecking ? 'Comprobando con el Banco...' : '🔄 Comprobar Estado de Pago'}
+                </button>
+              </div>
+            )
+          ) : isGiftMode ? (
+            /* CASO A: MODO REPARTIR A CONTACTOS (PAGADO/HABILITADO) */
             <div style={{ textAlign: 'left', marginBottom: '24px' }}>
+              <div style={{
+                background: 'linear-gradient(135deg, rgba(37, 211, 102, 0.15) 0%, rgba(16, 185, 129, 0.2) 100%)',
+                border: '1.5px solid rgba(37, 211, 102, 0.5)',
+                borderRadius: '16px',
+                padding: '18px 20px',
+                marginBottom: '20px',
+                textAlign: 'center'
+              }}>
+                <span style={{ fontSize: '0.82rem', color: '#86efac', fontWeight: 'bold', display: 'block', marginBottom: '8px', letterSpacing: '1px' }}>
+                  🚀 DESPACHO RÁPIDO PARA EL COMPRADOR
+                </span>
+                <button
+                  type="button"
+                  onClick={handleSendAllLinksToMyWhatsApp}
+                  style={{
+                    width: '100%',
+                    padding: '14px 20px',
+                    borderRadius: '12px',
+                    background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
+                    border: 'none',
+                    color: '#ffffff',
+                    fontFamily: 'var(--font-gamer)',
+                    fontSize: '0.98rem',
+                    fontWeight: 900,
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '10px',
+                    boxShadow: '0 4px 20px rgba(34, 197, 94, 0.45)',
+                    marginBottom: '10px'
+                  }}
+                >
+                  📲 Enviar todos los links a mi WhatsApp {orderData?.playerWhatsapp ? `(+${orderData.playerWhatsapp})` : ''}
+                </button>
+
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    onClick={handleCopyAllLinks}
+                    style={{
+                      background: copiedAllLinks ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.08)',
+                      border: `1px solid ${copiedAllLinks ? '#10b981' : 'rgba(255, 255, 255, 0.2)'}`,
+                      color: copiedAllLinks ? '#34d399' : '#e2e8f0',
+                      borderRadius: '8px',
+                      padding: '8px 16px',
+                      fontSize: '0.78rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    {copiedAllLinks ? '✓ ¡Todos los Links Copiados!' : '📋 Copiar Todos los Links'}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleShareAllNative}
+                    style={{
+                      background: 'rgba(56, 189, 248, 0.15)',
+                      border: '1px solid rgba(56, 189, 248, 0.4)',
+                      color: '#38bdf8',
+                      borderRadius: '8px',
+                      padding: '8px 16px',
+                      fontSize: '0.78rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    🔗 Compartir Todos
+                  </button>
+                </div>
+              </div>
+
               <h3 style={{ fontFamily: 'var(--font-gamer)', fontSize: '1rem', color: '#38bdf8', marginBottom: '8px', textAlign: 'center' }}>
-                📲 COMPARTE CADA ENLACE CON UN CONTACTO:
+                📲 O COMPARTE CADA ENLACE POR SEPARADO:
               </h3>
               <p style={{ fontSize: '0.78rem', color: '#94a3b8', textAlign: 'center', marginBottom: '16px' }}>
-                Cada link contiene <strong>1 cartón único</strong>. Una vez que un contacto lo abra en su dispositivo, quedará registrado a su nombre.
+                Cada link contiene <strong>1 cartón único</strong>. Al abrirlo en un celular o computadora, quedará asignado al invitado.
               </p>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -732,241 +1024,100 @@ const BingoBoletosConfirmacion: React.FC = () => {
               </div>
             </div>
           ) : (
-            /* CASO B: MODO PERSONAL (PASE ÚNICO Y BOTÓN DIRECTO A MI CARTÓN) */
+            /* CASO B: MODO PERSONAL (PAGADO/HABILITADO) */
             <>
-              {isOrderPending ? (
-                orderData?.paymentMethod === 'efectivo' ? (
-                  <div style={{
-                    background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(5, 150, 105, 0.25) 100%)',
-                    border: '2px solid rgba(16, 185, 129, 0.65)',
-                    borderRadius: '20px',
-                    padding: '28px 20px',
-                    margin: '0 auto 24px',
-                    textAlign: 'center',
-                    boxShadow: '0 8px 32px rgba(16, 185, 129, 0.3)'
+              {accessToken && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
+                  border: '1.5px solid rgba(56, 189, 248, 0.4)',
+                  borderRadius: '18px',
+                  padding: '20px',
+                  margin: '0 auto 24px',
+                  textAlign: 'center',
+                  boxShadow: '0 8px 25px rgba(0, 240, 255, 0.15)'
+                }}>
+                  <span style={{
+                    fontSize: '0.72rem',
+                    fontFamily: 'var(--font-gamer)',
+                    color: '#38bdf8',
+                    letterSpacing: '1.5px',
+                    textTransform: 'uppercase',
+                    display: 'block',
+                    marginBottom: '6px'
                   }}>
-                    <span style={{ fontSize: '3rem', display: 'block', marginBottom: '10px' }}>💵⏳</span>
-                    <h3 style={{
-                      fontFamily: 'var(--font-gamer)',
-                      color: '#34d399',
-                      fontSize: '1.2rem',
-                      margin: '0 0 10px 0',
-                      letterSpacing: '1px'
-                    }}>
-                      ESPERANDO CONFIRMACIÓN DEL PROMOTOR
-                    </h3>
-                    <div style={{
-                      background: 'rgba(0, 0, 0, 0.6)',
-                      border: '1px dashed rgba(52, 211, 153, 0.5)',
-                      borderRadius: '14px',
-                      padding: '14px 18px',
-                      marginBottom: '16px',
-                      display: 'inline-block',
-                      textAlign: 'left',
-                      minWidth: '280px'
-                    }}>
-                      <div style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '4px' }}>
-                        👤 Jugador: <strong style={{ color: '#fff' }}>{orderData?.playerName}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.88rem', color: '#cbd5e1', marginBottom: '4px' }}>
-                        📱 Teléfono: <strong style={{ color: '#38bdf8' }}>+{orderData?.playerWhatsapp}</strong>
-                      </div>
-                      <div style={{ fontSize: '0.98rem', color: '#e2e8f0', marginTop: '6px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.1)' }}>
-                        💵 Total a Pagar al Promotor: <strong style={{ color: '#fbbf24', fontSize: '1.15rem' }}>Q{effectivePaidQ}.00 GTQ</strong>
-                      </div>
-                    </div>
-                    <p style={{ fontSize: '0.88rem', color: '#e2e8f0', lineHeight: 1.5, margin: '0 auto 18px', maxWidth: '520px' }}>
-                      Entrega tu dinero en efectivo al promotor o encargado más cercano indicándole tu nombre.
-                      <strong style={{ color: '#34d399', display: 'block', marginTop: '8px' }}>
-                        ⚡ Mantén esta pantalla abierta. En cuanto el promotor presione "Cobrar y Habilitar" en su registro, tu sesión se desbloqueará de inmediato y entrarás a tu cartón.
-                      </strong>
-                    </p>
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
-                      <button
-                        type="button"
-                        onClick={handleCheckPaymentStatus}
-                        disabled={isRechecking}
-                        style={{
-                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                          border: 'none',
-                          borderRadius: '12px',
-                          padding: '12px 24px',
-                          color: '#ffffff',
-                          fontFamily: 'var(--font-gamer)',
-                          fontSize: '0.92rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          boxShadow: '0 4px 18px rgba(16, 185, 129, 0.45)',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        {isRechecking ? 'Verificando Registro...' : '🔄 Comprobar Si Ya Me Habilitaron'}
-                      </button>
-                      <a
-                        href={`https://wa.me/50242250165?text=${encodeURIComponent(`Hola, solicité pagar en efectivo Q${effectivePaidQ}.00 para Bingotenango a nombre de ${orderData?.playerName} (Orden: ${orderId}). ¿Me apoyan con la verificación?`)}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        style={{
-                          background: 'rgba(37, 211, 102, 0.2)',
-                          border: '1px solid rgba(37, 211, 102, 0.5)',
-                          borderRadius: '12px',
-                          padding: '12px 18px',
-                          color: '#25d366',
-                          fontFamily: 'var(--font-gamer)',
-                          fontSize: '0.88rem',
-                          fontWeight: 700,
-                          textDecoration: 'none',
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px'
-                        }}
-                      >
-                        💬 WhatsApp Taquilla
-                      </a>
-                    </div>
-                  </div>
-                ) : (
+                    🔑 TU PASE DE SESIÓN EN VIVO
+                  </span>
+
                   <div style={{
-                    background: 'linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(217, 119, 6, 0.25) 100%)',
-                    border: '1.5px solid rgba(245, 158, 11, 0.55)',
-                    borderRadius: '18px',
-                    padding: '24px 20px',
-                    margin: '0 auto 24px',
-                    textAlign: 'center',
-                    boxShadow: '0 8px 30px rgba(245, 158, 11, 0.2)'
+                    fontFamily: 'monospace',
+                    fontSize: '1.15rem',
+                    fontWeight: 900,
+                    color: '#00f0ff',
+                    letterSpacing: '2px',
+                    background: 'rgba(0, 0, 0, 0.6)',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    border: '1px dashed rgba(0, 240, 255, 0.3)',
+                    display: 'inline-block',
+                    marginBottom: '12px'
                   }}>
-                    <span style={{ fontSize: '2.4rem', display: 'block', marginBottom: '10px' }}>⏳</span>
-                    <h3 style={{
-                      fontFamily: 'var(--font-gamer)',
-                      color: '#fbbf24',
-                      fontSize: '1.1rem',
-                      margin: '0 0 10px 0',
-                      letterSpacing: '1px'
-                    }}>
-                      PAGO EN PROCESO DE VERIFICACIÓN
-                    </h3>
-                    <p style={{ fontSize: '0.88rem', color: '#fef3c7', lineHeight: 1.5, margin: '0 auto 16px', maxWidth: '480px' }}>
-                      Si realizaste tu pago mediante <strong>Transferencia Bancaria</strong>, la pasarela de Recurrente requiere un tiempo de espera de <strong>hasta 10 minutos</strong> para conciliar con el banco. Si pagaste con <strong>Tarjeta de Débito o Crédito</strong>, la acreditación es inmediata.
-                    </p>
-                    <button
-                      type="button"
-                      onClick={handleCheckPaymentStatus}
-                      disabled={isRechecking}
-                      style={{
-                        background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)',
-                        border: 'none',
-                        borderRadius: '12px',
-                        padding: '12px 28px',
-                        color: '#ffffff',
-                        fontFamily: 'var(--font-gamer)',
-                        fontSize: '0.95rem',
-                        fontWeight: 800,
-                        cursor: 'pointer',
-                        boxShadow: '0 4px 18px rgba(245, 158, 11, 0.45)',
-                        transition: 'all 0.2s ease'
-                      }}
-                    >
-                      {isRechecking ? 'Comprobando con el Banco...' : '🔄 Comprobar Estado de Pago'}
-                    </button>
+                    {accessToken.id}
                   </div>
-                )
-              ) : (
 
-                <>
-                  {accessToken && (
-                    <div style={{
-                      background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
-                      border: '1.5px solid rgba(56, 189, 248, 0.4)',
-                      borderRadius: '18px',
-                      padding: '20px',
-                      margin: '0 auto 24px',
-                      textAlign: 'center',
-                      boxShadow: '0 8px 25px rgba(0, 240, 255, 0.15)'
-                    }}>
-                      <span style={{
-                        fontSize: '0.72rem',
-                        fontFamily: 'var(--font-gamer)',
-                        color: '#38bdf8',
-                        letterSpacing: '1.5px',
-                        textTransform: 'uppercase',
-                        display: 'block',
-                        marginBottom: '6px'
-                      }}>
-                        🔑 TU PASE DE SESIÓN EN VIVO
-                      </span>
+                  <p style={{ margin: '0 0 16px 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.4 }}>
+                    Tu cartón oficial ha sido asignado a este dispositivo. Ya puedes ingresar directamente a jugar.
+                  </p>
 
-                      <div style={{
-                        fontFamily: 'monospace',
-                        fontSize: '1.15rem',
-                        fontWeight: 900,
-                        color: '#00f0ff',
-                        letterSpacing: '2px',
-                        background: 'rgba(0, 0, 0, 0.6)',
-                        padding: '8px 16px',
-                        borderRadius: '10px',
-                        border: '1px dashed rgba(0, 240, 255, 0.3)',
-                        display: 'inline-block',
-                        marginBottom: '12px'
-                      }}>
-                        {accessToken.id}
-                      </div>
-
-                      <p style={{ margin: '0 0 16px 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.4 }}>
-                        Tu cartón oficial ha sido asignado a este dispositivo. Ya puedes ingresar directamente a jugar.
-                      </p>
-
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const url = activeCardId 
-                            ? `${window.location.origin}/juegos/bingo/carton/${activeCardId}`
-                            : `${window.location.origin}/juegos/bingo?access=${accessToken.id}`;
-                          navigator.clipboard.writeText(url);
-                          setCopiedMainLink(true);
-                          setTimeout(() => setCopiedMainLink(false), 2500);
-                        }}
-                        style={{
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          border: '1px solid rgba(255, 255, 255, 0.2)',
-                          borderRadius: '10px',
-                          padding: '8px 16px',
-                          color: copiedMainLink ? '#34d399' : '#e2e8f0',
-                          fontSize: '0.82rem',
-                          fontWeight: 'bold',
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {copiedMainLink ? '✓ ¡Enlace Copiado!' : '📋 Copiar Enlace Directo a Mi Cartón'}
-                      </button>
-                    </div>
-                  )}
-
-                  {/* BOTÓN PRINCIPAL: ENTRAR DIRECTO A MI CARTÓN */}
                   <button
-                    onClick={handleEnterCardDirectly}
-                    disabled={isActivatingCard}
+                    type="button"
+                    onClick={() => {
+                      const url = activeCardId 
+                        ? `${window.location.origin}/juegos/bingo/carton/${activeCardId}`
+                        : `${window.location.origin}/juegos/bingo?access=${accessToken.id}`;
+                      navigator.clipboard.writeText(url);
+                      setCopiedMainLink(true);
+                      setTimeout(() => setCopiedMainLink(false), 2500);
+                    }}
                     style={{
-                      width: '100%',
-                      padding: '16px 24px',
-                      borderRadius: '14px',
-                      background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
-                      border: '1px solid rgba(52, 211, 153, 0.5)',
-                      color: '#ffffff',
-                      fontFamily: 'var(--font-gamer)',
-                      fontSize: '1.15rem',
-                      fontWeight: 900,
-                      textTransform: 'uppercase',
-                      letterSpacing: '1px',
-                      cursor: 'pointer',
-                      boxShadow: '0 8px 30px rgba(16, 185, 129, 0.5)',
-                      transition: 'all 0.2s ease',
-                      marginBottom: '16px'
+                      background: 'rgba(255, 255, 255, 0.08)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      borderRadius: '10px',
+                      padding: '8px 16px',
+                      color: copiedMainLink ? '#34d399' : '#e2e8f0',
+                      fontSize: '0.82rem',
+                      fontWeight: 'bold',
+                      cursor: 'pointer'
                     }}
                   >
-                    {isActivatingCard ? '🎮 PREPARANDO CARTÓN...' : '🎮 ENTRAR DIRECTO A MI CARTÓN'}
+                    {copiedMainLink ? '✓ ¡Enlace Copiado!' : '📋 Copiar Enlace Directo a Mi Cartón'}
                   </button>
-                </>
+                </div>
               )}
+
+              {/* BOTÓN PRINCIPAL: ENTRAR DIRECTO A MI CARTÓN */}
+              <button
+                onClick={handleEnterCardDirectly}
+                disabled={isActivatingCard}
+                style={{
+                  width: '100%',
+                  padding: '16px 24px',
+                  borderRadius: '14px',
+                  background: 'linear-gradient(135deg, #059669 0%, #10b981 100%)',
+                  border: '1px solid rgba(52, 211, 153, 0.5)',
+                  color: '#ffffff',
+                  fontFamily: 'var(--font-gamer)',
+                  fontSize: '1.15rem',
+                  fontWeight: 900,
+                  textTransform: 'uppercase',
+                  letterSpacing: '1px',
+                  cursor: 'pointer',
+                  boxShadow: '0 8px 30px rgba(16, 185, 129, 0.5)',
+                  transition: 'all 0.2s ease',
+                  marginBottom: '16px'
+                }}
+              >
+                {isActivatingCard ? '🎮 PREPARANDO CARTÓN...' : '🎮 ENTRAR DIRECTO A MI CARTÓN'}
+              </button>
             </>
           )}
 
