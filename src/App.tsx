@@ -76,6 +76,7 @@ function App() {
 
   const isBoletosView = currentPath.includes('/boletos');
   const isBingoCardView = currentPath.includes('/juegos/bingo') || currentPath.includes('/bingo');
+  const isSutzView = currentPath === '/sutz' || currentPath.startsWith('/sutz') || currentPath === '/mundo-virtual';
 
   return (
     <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''}`}>
@@ -311,41 +312,43 @@ function App() {
         </footer>
       )}
 
-      {/* Floating Action Buttons */}
-      <div className="floating-action-buttons">
-        {/* Floating Sound Toggle */}
-        <SoundToggle />
+      {/* Floating Action Buttons (Audio & WhatsApp - Ocultos en el Mundo Virtual Sutz) */}
+      {!isSutzView && (
+        <div className="floating-action-buttons">
+          {/* Floating Sound Toggle */}
+          <SoundToggle />
 
-        {/* Floating Cart Button */}
-        {cart.length > 0 && (
-          <button 
-            className="floating-btn floating-cart-btn animate-zoom-in"
-            onClick={() => navigateTo('/libros')}
-            aria-label="Ver carrito"
-          >
-            <span className="floating-icon">🛒</span>
-            <span className="floating-badge">{cart.length}</span>
-          </button>
-        )}
-        
-        {/* Floating WhatsApp Button */}
-        <div className="whatsapp-floating-wrapper">
-          <div className="whatsapp-tooltip">¿Necesitas ayuda? Escríbenos</div>
-          <a 
-            href={CONTACT.whatsappUrl}
-            target="_blank" 
-            rel="noopener noreferrer" 
-            className="floating-btn floating-whatsapp-btn"
-            aria-label="Contactar por WhatsApp"
-          >
-            <span className="floating-icon">
-              <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
-                <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.549 4.142 1.594 5.945L.057 24l6.326-1.666a11.844 11.844 0 005.666 1.442h.005c6.556 0 11.892-5.335 11.895-11.893a11.82 11.82 0 00-3.48-8.413Z" />
-              </svg>
-            </span>
-          </a>
+          {/* Floating Cart Button */}
+          {cart.length > 0 && (
+            <button 
+              className="floating-btn floating-cart-btn animate-zoom-in"
+              onClick={() => navigateTo('/libros')}
+              aria-label="Ver carrito"
+            >
+              <span className="floating-icon">🛒</span>
+              <span className="floating-badge">{cart.length}</span>
+            </button>
+          )}
+          
+          {/* Floating WhatsApp Button */}
+          <div className="whatsapp-floating-wrapper">
+            <div className="whatsapp-tooltip">¿Necesitas ayuda? Escríbenos</div>
+            <a 
+              href={CONTACT.whatsappUrl}
+              target="_blank" 
+              rel="noopener noreferrer" 
+              className="floating-btn floating-whatsapp-btn"
+              aria-label="Contactar por WhatsApp"
+            >
+              <span className="floating-icon">
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="currentColor">
+                  <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.549 4.142 1.594 5.945L.057 24l6.326-1.666a11.844 11.844 0 005.666 1.442h.005c6.556 0 11.892-5.335 11.895-11.893a11.82 11.82 0 00-3.48-8.413Z" />
+                </svg>
+              </span>
+            </a>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 }

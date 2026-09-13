@@ -931,3 +931,11 @@
     font-size: 0.55rem;
   }
 }
+
+/* Ocultar botones flotantes globales (WhatsApp y Audio) en el Mundo Virtual Sutz */
+body:has(.sutz-game-container) .floating-action-buttons,
+.sutz-game-container ~ .floating-action-buttons {
+  display: none !important;
+  visibility: hidden !important;
+  pointer-events: none !important;
+}
