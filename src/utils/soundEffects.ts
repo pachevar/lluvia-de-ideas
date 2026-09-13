@@ -7,7 +7,7 @@ class SoundManager {
   private listeners: Array<(muted: boolean) => void> = [];
 
   constructor() {
-    const saved = localStorage.getItem('sutz_portal_sound_muted');
+    const saved = typeof window !== 'undefined' ? localStorage.getItem('sutz_portal_sound_muted') : null;
     if (saved !== null) {
       this.muted = saved === 'true';
     }
@@ -25,13 +25,35 @@ class SoundManager {
     }
   }
 
+  /**
+   * Desbloquea proactivamente el AudioContext y SpeechSynthesis en navegadores móviles (iOS Safari / Chrome)
+   * tras la primera interacción táctil o clic del usuario.
+   */
+  public unlockAudio() {
+    this.initContext();
+    if (this.ctx && this.ctx.state === 'suspended') {
+      this.ctx.resume().catch(() => {});
+    }
+    if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+      try {
+        const silent = new SpeechSynthesisUtterance('');
+        silent.volume = 0;
+        window.speechSynthesis.speak(silent);
+      } catch (_e) {
+        // Silencio intencional
+      }
+    }
+  }
+
   public isMuted(): boolean {
     return this.muted;
   }
 
   public setMuted(muted: boolean) {
     this.muted = muted;
-    localStorage.setItem('sutz_portal_sound_muted', String(muted));
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('sutz_portal_sound_muted', String(muted));
+    }
     this.listeners.forEach((fn) => fn(muted));
   }
 
@@ -71,8 +93,8 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.05);
-    } catch {
-      // Ignore audio context errors if blocked
+    } catch (_e) {
+      // Ignorar fallos de audio temporal
     }
   }
 
@@ -98,7 +120,13 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.04);
-    } catch {}
+    } catch (_e) {
+      // Ignorar
+    }
+  }
+
+  public playBadgeUnlock() {
+    this.playHover();
   }
 
   public playSlotSpin() {
@@ -123,7 +151,9 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.12);
-    } catch {}
+    } catch (_e) {
+      // Ignorar
+    }
   }
 
   public playSlotStop() {
@@ -148,7 +178,9 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.08);
-    } catch {}
+    } catch (_e) {
+      // Ignorar
+    }
   }
 
   public playSuccessFanfare() {
@@ -179,7 +211,9 @@ class SoundManager {
         osc.start(startTime);
         osc.stop(startTime + duration);
       });
-    } catch {}
+    } catch (_e) {
+      // Ignorar
+    }
   }
 
   public playBingoBall() {
@@ -204,7 +238,9 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.2);
-    } catch {}
+    } catch (_e) {
+      // Ignorar
+    }
   }
 
   public playSpacePulse() {
@@ -229,7 +265,9 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.4);
-    } catch {}
+    } catch (_e) {
+      // Ignorar
+    }
   }
 
   public playMathChime(correct: boolean = true) {
@@ -263,8 +301,21 @@ class SoundManager {
         osc.start(now);
         osc.stop(now + 0.25);
       }
-    } catch {}
+    } catch (_e) {
+      // Ignorar
+    }
   }
 }
 
 export const soundEffects = new SoundManager();
+
+// Desbloqueo universal al primer gesto de interacción táctil o clic
+if (typeof window !== 'undefined') {
+  const handleGlobalFirstGesture = () => {
+    soundEffects.unlockAudio();
+    window.removeEventListener('click', handleGlobalFirstGesture);
+    window.removeEventListener('touchstart', handleGlobalFirstGesture);
+  };
+  window.addEventListener('click', handleGlobalFirstGesture, { once: true, passive: true });
+  window.addEventListener('touchstart', handleGlobalFirstGesture, { once: true, passive: true });
+}

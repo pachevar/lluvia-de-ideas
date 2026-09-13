@@ -318,6 +318,30 @@ export default function BingoCardView() {
     window.speechSynthesis.speak(utterance);
   };
 
+  // Desbloqueo universal de audio y SpeechSynthesis al primer gesto táctil en móviles
+  useEffect(() => {
+    const unlockMobileAudio = () => {
+      soundEffects.unlockAudio();
+      if ('speechSynthesis' in window) {
+        try {
+          const silent = new SpeechSynthesisUtterance('');
+          silent.volume = 0;
+          window.speechSynthesis.speak(silent);
+        } catch (_e) {}
+      }
+      window.removeEventListener('click', unlockMobileAudio);
+      window.removeEventListener('touchstart', unlockMobileAudio);
+    };
+
+    window.addEventListener('click', unlockMobileAudio, { once: true, passive: true });
+    window.addEventListener('touchstart', unlockMobileAudio, { once: true, passive: true });
+
+    return () => {
+      window.removeEventListener('click', unlockMobileAudio);
+      window.removeEventListener('touchstart', unlockMobileAudio);
+    };
+  }, []);
+
   useEffect(() => {
     if (!cartonId) return;
 
@@ -373,7 +397,7 @@ export default function BingoCardView() {
             } catch {}
           }
 
-          // Inicializar las marcas desde localStorage si están vacías
+          // Inicializar las marcas desde localStorage si están disponibles
           setMarkedSlots(prev => {
             const isDefault = prev.every(row => row.every(val => !val));
             if (isDefault) {
@@ -381,9 +405,16 @@ export default function BingoCardView() {
               if (storedMarksStr) {
                 try {
                   const parsed = JSON.parse(storedMarksStr);
-                  return parsed;
+                  // Si tiene metadata estructurada { gameId, lastResetAt, marks }
+                  if (parsed && parsed.marks && Array.isArray(parsed.marks)) {
+                    if (!parsed.gameId || parsed.gameId === cData.gameId) {
+                      return parsed.marks;
+                    }
+                  } else if (Array.isArray(parsed)) {
+                    return parsed;
+                  }
                 } catch (e) {
-                  console.error("Error parsing stored marks", e);
+                  console.error("Error al restaurar marcas guardadas:", e);
                 }
               }
               // Inicializar por defecto (centro en true)
@@ -481,20 +512,16 @@ export default function BingoCardView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- playFeedbackSound is a stable-by-convention closure; gameData tracked via drawnNumbers
   }, [gameData?.drawnNumbers, voiceMode, cardData]);
 
-  // Limpiar marcas y almacenamiento si la partida se reinicia o se inicia una nueva ronda
+  // Limpiar marcas y almacenamiento únicamente si el Host reinicia explícitamente la partida
   const lastResetRef = useRef<number | null>(null);
 
   useEffect(() => {
     if (!gameData || !cartonId) return;
 
     const currentReset = gameData.lastResetAt || 0;
-    const isDrawnEmpty = !gameData.drawnNumbers || gameData.drawnNumbers.length === 0;
 
-    if (
-      gameData.status === 'waiting' ||
-      isDrawnEmpty ||
-      (lastResetRef.current !== null && lastResetRef.current !== currentReset)
-    ) {
+    // Solo si el host ejecutó un nuevo reinicio durante esta sesión activa
+    if (lastResetRef.current !== null && currentReset > lastResetRef.current) {
       // Limpiar marcas locales (dejar solo el comodín central en true)
       const clearedMarks = Array(5).fill(null).map(() => Array(5).fill(false));
       clearedMarks[2][2] = true;
@@ -508,8 +535,7 @@ export default function BingoCardView() {
       prevDrawnCountRef.current = 0;
     }
     lastResetRef.current = currentReset;
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- narrow deps track the reset source; whole gameData would retrigger on every sync
-  }, [gameData?.status, gameData?.drawnNumbers?.length, gameData?.lastResetAt, cartonId]);
+  }, [gameData?.lastResetAt, cartonId]);
 
   // Auto-reset previous balls rail scroll position to the newest past ball when a new number arrives
   useEffect(() => {
@@ -578,7 +604,17 @@ export default function BingoCardView() {
     setMarkedSlots(prev => {
       const newMarks = prev.map(r => [...r]);
       newMarks[row][col] = !newMarks[row][col];
-      localStorage.setItem(`bingo_marks_${cartonId}`, JSON.stringify(newMarks));
+      
+      try {
+        const payloadToSave = {
+          gameId: gameData.id,
+          lastResetAt: gameData.lastResetAt || 0,
+          marks: newMarks,
+          savedAt: Date.now()
+        };
+        localStorage.setItem(`bingo_marks_${cartonId}`, JSON.stringify(payloadToSave));
+      } catch (_e) {}
+
       return newMarks;
     });
   };
