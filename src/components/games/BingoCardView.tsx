@@ -907,7 +907,7 @@ export default function BingoCardView() {
   return (
     <div className={`bingo-card-view-pane animate-fade-in ${getThemeClass()}`} style={{ ...customStyles, paddingBottom: '100px', position: 'relative', overflow: 'hidden' }}>
 
-      {/* Tirador Flotante Pegado al Borde de la Pantalla (Viewport Flush Fixed Handle) */}
+      {/* Tirador Flotante Pegado al Borde Derecho de la Pantalla (Viewport Flush Fixed Handle) */}
       {createPortal(
         <button 
           className={`card-gamer-sidebar-handle ${showPrizesModal ? 'active' : ''}`}
@@ -916,7 +916,7 @@ export default function BingoCardView() {
           style={{
             position: 'fixed',
             top: '55px',
-            left: 0,
+            right: 0,
             zIndex: 99997,
             display: 'flex',
             flexDirection: 'column',
@@ -925,11 +925,11 @@ export default function BingoCardView() {
             gap: '8px',
             padding: '14px 6px',
             width: '36px',
-            borderRadius: '0 16px 16px 0',
+            borderRadius: '16px 0 0 16px',
             background: 'rgba(13, 6, 28, 0.95)',
             border: `2px solid ${primaryColor}`,
-            borderLeft: 'none',
-            boxShadow: `4px 0 25px ${primaryColor}77`,
+            borderRight: 'none',
+            boxShadow: `-4px 0 25px ${primaryColor}77`,
             color: '#fff',
             cursor: 'pointer',
             fontFamily: 'var(--font-gamer, Orbitron, sans-serif)',
