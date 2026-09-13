@@ -117,5 +117,28 @@ service cloud.firestore {
         allow read, write: if request.auth != null && (request.auth.uid == userId || isAdmin());
       }
     }
+
+    // =========================================================================
+    // INFRAESTRUCTURA DE SUTZ: SESIÓN ÚNICA, PRESENCIA Y COORDINACIÓN ESCOLAR
+    // =========================================================================
+
+    // Control de Sesión Única de Estudiantes en Sutz (para evitar sesiones concurrentes)
+    match /sutz_sessions/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isAdmin());
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Presencia de Exploradores en Línea en Sutz (para visualizar compañeros activos)
+    match /sutz_presence/{userId} {
+      allow read: if request.auth != null;
+      allow write: if request.auth != null && (request.auth.uid == userId || isAdmin());
+    }
+
+    // Señales de Coordinación y Aprendizaje Colaborativo en Sutz
+    match /sutz_coordination_signals/{signalId} {
+      allow read: if request.auth != null;
+      allow create: if request.auth != null && request.resource.data.authorUid == request.auth.uid;
+      allow update, delete: if request.auth != null && (resource.data.authorUid == request.auth.uid || isAdmin());
+    }
   }
 }

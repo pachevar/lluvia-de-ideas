@@ -11,6 +11,21 @@ import { getCandidateHexes } from '../utils/hexUtils';
 import { TechTreeModal } from '../components/sutz/TechTreeModal';
 import { SutzSettingsModal } from '../components/sutz/SutzSettingsModal';
 import { SutzAlliancesModal } from '../components/sutz/SutzAlliancesModal';
+import { SutzAuthGateModal } from '../components/sutz/SutzAuthGateModal';
+import { SutzSessionConflictModal } from '../components/sutz/SutzSessionConflictModal';
+import { SutzCoordinationModal } from '../components/sutz/SutzCoordinationModal';
+import { 
+  startSutzSession, 
+  listenToSutzSession, 
+  heartbeatSutzSession, 
+  closeSutzSession, 
+  type SutzSessionData 
+} from '../services/sutzSessionService';
+import { 
+  publishStudentPresence, 
+  setStudentOffline, 
+  listenToOnlineStudents 
+} from '../services/sutzCoordinationService';
 import { sutzAudio } from '../utils/sutzSoundEffects';
 import '../styles/sutz-palette.css';
 import './Sutz.css';
@@ -131,7 +146,7 @@ const MAYAN_RELICS: MayanRelic[] = [
 
 export default function Sutz() {
   const { config, loading } = usePortalConfig();
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, loading: authLoading } = useAuth();
   const { 
     resources, 
     addResources,
@@ -156,6 +171,11 @@ export default function Sutz() {
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [isAlliancesModalOpen, setIsAlliancesModalOpen] = useState(false);
+  const [isCoordinationModalOpen, setIsCoordinationModalOpen] = useState(false);
+  const [isSessionConflictOpen, setIsSessionConflictOpen] = useState(false);
+  const [remoteSession, setRemoteSession] = useState<SutzSessionData | null>(null);
+  const [onlinePeersCount, setOnlinePeersCount] = useState<number>(1);
+  const [currentHexCoord, setCurrentHexCoord] = useState<{ q: number; r: number; label?: string } | null>(null);
   const [selectedRelic, setSelectedRelic] = useState<MayanRelic | null>(null);
 
   // Controles de mapa para botón de Centrar/Radar
@@ -172,6 +192,7 @@ export default function Sutz() {
 
   const handleHexClick = (hex: CustomHexagon) => {
     sutzAudio.playClick();
+    setCurrentHexCoord({ q: hex.col, r: hex.row, label: hex.title || hex.id });
     if (!hex.action || hex.action.type === 'none') return;
     
     switch (hex.action.type) {
@@ -225,7 +246,71 @@ export default function Sutz() {
     return 'Sabio Iniciado 📜';
   };
 
-  const handleOpenModal = (type: 'profile' | 'tree' | 'codex' | 'quests' | 'inventory' | 'settings' | 'alliances') => {
+  // =========================================================================
+  // GESTIÓN DE SESIÓN ÚNICA Y PRESENCIA ESCOLAR EN SUTZ
+  // =========================================================================
+  useEffect(() => {
+    if (!user) return;
+
+    const studentName = userProfile?.displayName || user.displayName || (user.email ? user.email.split('@')[0] : 'Estudiante');
+    const allianceId = localStorage.getItem('sutz_student_alliance') || 'Hermandad del Quetzal Solar';
+
+    // 1. Iniciar sesión única en Firestore
+    startSutzSession(user.uid, studentName, user.email).catch(err => {
+      console.warn('Error iniciando sesión única en Sutz:', err);
+    });
+
+    // 2. Escuchar conflictos de sesión concurrente
+    const unsubSession = listenToSutzSession(user.uid, (remote) => {
+      setRemoteSession(remote);
+      setIsSessionConflictOpen(true);
+      sutzAudio.playError();
+    });
+
+    // 3. Publicar presencia activa del estudiante
+    publishStudentPresence({
+      uid: user.uid,
+      displayName: studentName,
+      photoURL: userProfile?.photoURL || user.photoURL || null,
+      allianceId,
+      allianceName: allianceId,
+      level: level || 1,
+      rankTitle: getRankTitle(level || 1),
+      isOnline: true,
+      currentCoord: currentHexCoord,
+    }).catch(console.error);
+
+    // 4. Escuchar conteo de compañeros en línea
+    const unsubPeers = listenToOnlineStudents((peers) => {
+      setOnlinePeersCount(peers.length);
+    });
+
+    // 5. Heartbeat periódico cada 40 segundos
+    const heartbeatInterval = setInterval(() => {
+      heartbeatSutzSession(user.uid);
+      publishStudentPresence({
+        uid: user.uid,
+        displayName: studentName,
+        photoURL: userProfile?.photoURL || user.photoURL || null,
+        allianceId,
+        allianceName: allianceId,
+        level: level || 1,
+        rankTitle: getRankTitle(level || 1),
+        isOnline: true,
+        currentCoord: currentHexCoord,
+      });
+    }, 40000);
+
+    return () => {
+      clearInterval(heartbeatInterval);
+      unsubSession();
+      unsubPeers();
+      closeSutzSession(user.uid);
+      setStudentOffline(user.uid);
+    };
+  }, [user, userProfile, level, currentHexCoord]);
+
+  const handleOpenModal = (type: 'profile' | 'tree' | 'codex' | 'quests' | 'inventory' | 'settings' | 'alliances' | 'coordination') => {
     sutzAudio.playOpenModal();
     // Cerrar otros para que no se sobrepongan
     setIsProfileModalOpen(type === 'profile');
@@ -235,6 +320,7 @@ export default function Sutz() {
     setIsInventoryModalOpen(type === 'inventory');
     setIsSettingsModalOpen(type === 'settings');
     setIsAlliancesModalOpen(type === 'alliances');
+    setIsCoordinationModalOpen(type === 'coordination');
   };
 
   const handleCloseModals = () => {
@@ -246,6 +332,7 @@ export default function Sutz() {
     setIsInventoryModalOpen(false);
     setIsSettingsModalOpen(false);
     setIsAlliancesModalOpen(false);
+    setIsCoordinationModalOpen(false);
     setSelectedRelic(null);
   };
 
@@ -394,6 +481,16 @@ export default function Sutz() {
               <span className="sutz-world-sub">{mapCompletionPercent}% Descubierto</span>
             </div>
           </div>
+
+          {/* Botón de Exploradores Conectados y Coordinación Escolar */}
+          <button 
+            className="sutz-hud-action-btn coord-btn"
+            onClick={() => handleOpenModal('coordination')}
+            title="Centro de Coordinación Escolar: Ver compañeros conectados y compartir hallazgos"
+          >
+            <span className="sutz-coord-live-dot" />
+            <span>👥 {onlinePeersCount} en Línea</span>
+          </button>
 
           {/* Botón de Ajustes y Configuración */}
           <button 
@@ -904,10 +1001,27 @@ export default function Sutz() {
         onClose={handleCloseModals}
       />
 
+      {/* Centro de Coordinación y Expedición Escolar */}
+      <SutzCoordinationModal 
+        isOpen={isCoordinationModalOpen}
+        onClose={handleCloseModals}
+        currentHexCoord={currentHexCoord}
+      />
+
       {/* Modal de Ajustes y Configuración */}
       <SutzSettingsModal 
         isOpen={isSettingsModalOpen} 
         onClose={handleCloseModals} 
+      />
+
+      {/* Gate de Autenticación Obligatoria de Estudiantes */}
+      <SutzAuthGateModal isOpen={!user && !authLoading} />
+
+      {/* Modal de Conflicto de Sesión Única */}
+      <SutzSessionConflictModal 
+        isOpen={isSessionConflictOpen}
+        remoteSession={remoteSession}
+        onSessionReclaimed={() => setIsSessionConflictOpen(false)}
       />
 
     </div>
