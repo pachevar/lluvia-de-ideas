@@ -11,6 +11,7 @@ import { getCandidateHexes } from '../utils/hexUtils';
 import { TechTreeModal } from '../components/sutz/TechTreeModal';
 import { SutzSettingsModal } from '../components/sutz/SutzSettingsModal';
 import { sutzAudio } from '../utils/sutzSoundEffects';
+import '../styles/sutz-palette.css';
 import './Sutz.css';
 
 import camazotzTitulo from '../cuentos/Camazotz titulo.png';
@@ -201,8 +202,8 @@ export default function Sutz() {
     row,
     col,
     title: 'Tierra Inexplorada',
-    glowColor: 'rgba(255,255,255,0.2)',
-    layerBg: { type: 'color', value: 'rgba(0,0,0,0.5)' },
+    glowColor: 'var(--sutz-fog-border, rgba(215, 225, 240, 0.15))',
+    layerBg: { type: 'color', value: 'var(--sutz-fog-bg, rgba(15, 23, 42, 0.55))' },
     layerDeco: { type: 'none', value: '' },
     layerInteractive: { type: 'text', value: '☁️' },
     action: { type: 'none', target: '' }

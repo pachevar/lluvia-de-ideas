@@ -24,3 +24,5 @@ Este archivo contiene reglas y directrices específicas para el espacio de traba
 
 1. **Tecnologías**: React, TypeScript, Vite, Vanilla CSS.
 2. **Calidad de Diseño**: Mantén siempre una estética premium, dinámica e interactiva con paletas de colores HSL bien definidas y micro-animaciones refinadas. No uses marcadores de posición (*placeholders*).
+3. **Neurodiseño y Paleta Visual en Sutz**: Sigue obligatoriamente las directrices de [.agents/rules/neuro-design-palette.md](file:///home/lluviadeideas/Imágenes/Editorial/Portal%20web/.agents/rules/neuro-design-palette.md) y los tokens de `src/styles/sutz-palette.css`. Emplea fondos neutros/desaturados (azules y verdes de calma y concentración), colores cálidos (ámbar/naranja) exclusivamente para elementos interactivos/metas, y un código semántico estricto (verde=éxito, rojo=error, ámbar=reto, cian=ayuda) para evitar fatiga cognitiva.
+

@@ -1,0 +1,97 @@
+/* ==========================================================================
+   SUTZ MUNDO VIRTUAL - PALETA NEUROEDUCATIVA Y SISTEMA DE TOKENS VISUALES
+   Referencia Oficial de Diseño Cognitivo y Neuroeducación
+   Editorial Lluvia de Ideas
+   ========================================================================== */
+
+:root {
+  /* --------------------------------------------------------------------------
+     1. FONDOS Y CALMA COGNITIVA (Azules y Verdes Desaturados / Neutros)
+     Objetivo: Inducir estado alfa, concentración profunda y cero fatiga visual
+     en tareas de resolución de problemas y exploración continua.
+     -------------------------------------------------------------------------- */
+  --sutz-bg-space-void: hsl(222, 47%, 5%);        /* #060913: Vacío cósmico base */
+  --sutz-bg-space-surface: hsl(220, 38%, 10%);     /* #0f172a: Superficie neutra de paneles */
+  --sutz-bg-space-elevated: hsl(218, 30%, 15%);    /* #1a233a: Tarjetas y elevaciones */
+
+  /* Atmósfera de Concentración (Nebulosas Desaturadas) */
+  --sutz-nebula-blue: hsla(205, 60%, 40%, 0.12);   /* Azul marino profundo calmante */
+  --sutz-nebula-cyan: hsla(185, 55%, 38%, 0.10);   /* Cian desaturado de claridad mental */
+  --sutz-nebula-emerald: hsla(160, 45%, 35%, 0.08);/* Verde esmeralda de concentración */
+  --sutz-nebula-vignette: hsla(220, 50%, 6%, 0.75);/* Viñeta para enfocar la visión central */
+
+  /* Celdas Hexagonales (Fondo Muted) */
+  --sutz-cell-bg-idle: linear-gradient(135deg, hsla(220, 35%, 11%, 0.88) 0%, hsla(218, 28%, 16%, 0.82) 100%);
+  --sutz-cell-border-idle: hsla(215, 25%, 35%, 0.35);
+  --sutz-cell-inner-idle: hsla(210, 30%, 60%, 0.12);
+
+  /* Celdas Inexploradas (Bruma / Fog Desaturada) */
+  --sutz-fog-bg: hsla(220, 25%, 12%, 0.55);
+  --sutz-fog-border: hsla(215, 20%, 35%, 0.20);
+  --sutz-fog-icon: hsla(215, 20%, 65%, 0.45);
+
+  /* --------------------------------------------------------------------------
+     2. CÓDIGO VISUAL SEMÁNTICO PREDICTIBLE (Cero Ambigüedad = Cero Fatiga Mental)
+     Regla de Oro:
+       - Verde: Siempre correcto, éxito, completado, avance seguro.
+       - Rojo: Siempre error, riesgo, límite, cancelado.
+       - Ámbar / Naranja: Reto, meta activa, acción interactiva clave, energía.
+       - Cian / Azul Eléctrico: Ayuda, guía didáctica, orientación cartesiana.
+       - Índigo / Lavanda Astral: Sabiduría, códices, tesoro literario.
+     -------------------------------------------------------------------------- */
+  
+  /* Verde Semántico (Correcto / Logro / Aprobado) */
+  --sutz-color-success: hsl(158, 75%, 45%);         /* #10b981 */
+  --sutz-color-success-light: hsl(158, 70%, 55%);   /* #34d399 */
+  --sutz-color-success-glow: hsla(158, 75%, 45%, 0.45);
+  --sutz-color-success-surface: hsla(158, 75%, 45%, 0.12);
+
+  /* Rojo Semántico (Error / Bloqueo / Advertencia) */
+  --sutz-color-error: hsl(350, 84%, 60%);           /* #ef4444 */
+  --sutz-color-error-light: hsl(350, 85%, 68%);     /* #f87171 */
+  --sutz-color-error-glow: hsla(350, 84%, 60%, 0.45);
+  --sutz-color-error-surface: hsla(350, 84%, 60%, 0.12);
+
+  /* Ámbar / Naranja Semántico (Reto Activo / Meta / Pistas / Energía Visual) */
+  --sutz-color-challenge: hsl(38, 92%, 50%);        /* #f59e0b */
+  --sutz-color-challenge-warm: hsl(24, 95%, 53%);   /* #f97316 */
+  --sutz-color-challenge-glow: hsla(38, 92%, 50%, 0.55);
+  --sutz-color-challenge-surface: hsla(38, 92%, 50%, 0.15);
+
+  /* Cian / Azul Didáctico (Ayuda / Guía / Orientación Cartesiana) */
+  --sutz-color-guide: hsl(199, 89%, 48%);           /* #0ea5e9 */
+  --sutz-color-guide-light: hsl(199, 95%, 62%);     /* #38bdf8 */
+  --sutz-color-guide-glow: hsla(199, 89%, 48%, 0.45);
+  --sutz-color-guide-surface: hsla(199, 89%, 48%, 0.12);
+
+  /* Índigo / Lavanda (Códices / Sabiduría / Neuroeducación) */
+  --sutz-color-wisdom: hsl(245, 68%, 68%);          /* #818cf8 */
+  --sutz-color-wisdom-deep: hsl(255, 65%, 58%);     /* #6366f1 */
+  --sutz-color-wisdom-glow: hsla(245, 68%, 68%, 0.45);
+  --sutz-color-wisdom-surface: hsla(245, 68%, 68%, 0.12);
+
+  /* --------------------------------------------------------------------------
+     3. CONTRASTES DE TEXTO Y TIPOGRAFÍA DIDÁCTICA
+     -------------------------------------------------------------------------- */
+  --sutz-text-bright: hsl(210, 40%, 98%);           /* #f8fafc: Títulos y lecturas principales */
+  --sutz-text-normal: hsl(215, 20%, 82%);           /* #cbd5e1: Textos explicativos */
+  --sutz-text-muted: hsl(215, 16%, 62%);            /* #94a3b8: Subtítulos, metadatos y coordenadas */
+  --sutz-text-subtle: hsl(215, 14%, 42%);           /* #64748b: Desactivados y bordes neutros */
+
+  /* --------------------------------------------------------------------------
+     4. COORDENADAS PLANO CARTESIANO (Ejes Didácticos)
+     -------------------------------------------------------------------------- */
+  --sutz-axis-x-color: var(--sutz-color-guide-light); /* Cian: Eje Horizontal X */
+  --sutz-axis-y-color: var(--sutz-color-success-light);/* Verde: Eje Vertical Y */
+  --sutz-axis-origin-color: var(--sutz-color-challenge); /* Ámbar: Centro Cósmico (0,0) */
+  --sutz-axis-grid-line: hsla(215, 25%, 35%, 0.18);
+  --sutz-axis-subgrid-line: hsla(215, 25%, 35%, 0.08);
+
+  /* --------------------------------------------------------------------------
+     5. SOMBRAS Y RELIEVES VISUALES
+     -------------------------------------------------------------------------- */
+  --sutz-shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.4);
+  --sutz-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
+  --sutz-shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.7);
+  --sutz-shadow-action: 0 0 14px var(--sutz-color-challenge-glow);
+}

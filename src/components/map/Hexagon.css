@@ -1,3 +1,5 @@
+@import '../../styles/sutz-palette.css';
+
 .hex-grid-container {
   position: relative;
   width: 100%;
@@ -27,14 +29,14 @@
 .hex-cell-wrapper.is-editing {
   transform: scale(1.1) translateY(-8px);
   z-index: 20;
-  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 20px var(--hex-glow-color, rgba(56, 189, 248, 0.6)));
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 20px var(--hex-glow-color, var(--sutz-color-guide-glow)));
 }
 
 .hex-cell-wrapper.has-bg-image:hover,
 .hex-cell-wrapper.has-bg-image.is-editing {
   transform: scale(1.08) translateY(-6px);
   z-index: 25;
-  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 18px var(--hex-glow-color, rgba(56, 189, 248, 0.65)));
+  filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 18px var(--hex-glow-color, var(--sutz-color-guide-glow)));
 }
 
 .hex-cell {
@@ -47,7 +49,7 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg, rgba(15, 23, 42, 0.85) 0%, rgba(30, 41, 59, 0.75) 100%);
+  background: var(--sutz-cell-bg-idle);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
 }
@@ -213,55 +215,60 @@
   text-overflow: ellipsis;
 }
 
-/* Subtle Interactive Action Pulse Indicator */
+/* Subtle Interactive Action Pulse Indicator (Warm Saturated Accent for Targets/Goals) */
 .hex-action-pill {
   position: absolute;
   bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  width: 18px;
-  height: 3px;
+  width: 20px;
+  height: 3.5px;
   border-radius: 3px;
-  background: var(--hex-glow-color, #38bdf8);
-  box-shadow: 0 0 8px var(--hex-glow-color, #38bdf8);
-  opacity: 0.8;
+  background: linear-gradient(90deg, var(--sutz-color-challenge) 0%, var(--sutz-color-challenge-warm) 100%);
+  box-shadow: 0 0 10px var(--sutz-color-challenge-glow), 0 0 4px #ffffff;
+  opacity: 0.95;
   transition: all 0.3s ease;
   z-index: 5;
 }
 
 .hex-cell-wrapper:hover .hex-action-pill {
-  width: 32px;
+  width: 36px;
   opacity: 1;
-  box-shadow: 0 0 12px var(--hex-glow-color, #38bdf8);
+  box-shadow: 0 0 16px var(--sutz-color-challenge-glow), 0 0 6px var(--sutz-color-challenge);
 }
 
-/* Unexplored Foggy Cells Style */
+/* Unexplored Foggy Cells Style (Muted, Calm & Non-Distracting) */
 .hex-cell-wrapper.is-unexplored {
   filter: drop-shadow(0 4px 10px rgba(0,0,0,0.3));
 }
 
 .hex-cell-wrapper.is-unexplored .hex-cell {
-  background: rgba(15, 23, 42, 0.45);
+  background: var(--sutz-fog-bg);
   border: none;
 }
 
 .hex-cell-wrapper.is-unexplored .hex-inner-border {
-  background: rgba(255, 255, 255, 0.15);
+  background: var(--sutz-fog-border);
 }
 
 .hex-cell-wrapper.is-unexplored .hex-icon-disc {
-  background: rgba(15, 23, 42, 0.5);
-  border-color: rgba(255, 255, 255, 0.15);
+  background: var(--sutz-fog-bg);
+  border-color: var(--sutz-fog-border);
   box-shadow: none;
 }
 
+.hex-cell-wrapper.is-unexplored .hex-icon-glyph {
+  opacity: 0.55;
+  filter: grayscale(0.5);
+}
+
 .hex-cell-wrapper.is-unexplored .hex-title-badge {
-  background: rgba(15, 23, 42, 0.6);
-  border-color: rgba(255, 255, 255, 0.1);
+  background: var(--sutz-fog-bg);
+  border-color: var(--sutz-fog-border);
 }
 
 .hex-cell-wrapper.is-unexplored .hex-title-text {
-  color: #94a3b8 !important;
+  color: var(--sutz-text-muted) !important;
   font-size: 0.74rem;
 }
 
@@ -329,21 +336,21 @@
 }
 
 .cartesian-hud-x {
-  color: #7dd3fc;
+  color: var(--sutz-axis-x-color);
 }
 
 .cartesian-hud-y {
-  color: #6ee7b7;
+  color: var(--sutz-axis-y-color);
 }
 
 .cartesian-hud-origin {
-  color: #fbbf24;
+  color: var(--sutz-axis-origin-color);
 }
 
 .map-controls button.active {
-  background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(52, 211, 153, 0.4)) !important;
-  border-color: #38bdf8 !important;
-  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
+  background: linear-gradient(135deg, var(--sutz-color-guide-surface), var(--sutz-color-success-surface)) !important;
+  border-color: var(--sutz-color-guide-light) !important;
+  box-shadow: 0 0 12px var(--sutz-color-guide-glow);
 }
 
 /* Map viewport styles with deep cosmic atmosphere */
@@ -352,28 +359,28 @@
   height: 100%;
   min-height: 100%;
   overflow: hidden;
-  background: transparent;
+  background: var(--sutz-bg-space-void);
   position: relative;
   border-radius: 0;
   box-shadow: none;
 }
 
-/* Ambient Glowing Nebulae & Star Dust */
+/* Ambient Glowing Nebulae & Star Dust (Deep Oceanic Blues & Calming Emerald Greens for Deep Focus) */
 .map-viewport::before {
   content: '';
   position: absolute;
   inset: 0;
   background-image: 
-    radial-gradient(circle at 20% 25%, rgba(0, 229, 255, 0.16) 0%, transparent 45%),
-    radial-gradient(circle at 80% 30%, rgba(147, 51, 234, 0.18) 0%, transparent 48%),
-    radial-gradient(circle at 50% 75%, rgba(34, 197, 94, 0.1) 0%, transparent 55%),
-    radial-gradient(circle at 75% 85%, rgba(217, 70, 239, 0.12) 0%, transparent 45%),
-    radial-gradient(2px 2px at 25px 35px, rgba(255, 255, 255, 0.75), rgba(0, 0, 0, 0)),
-    radial-gradient(2px 2px at 60px 85px, rgba(255, 255, 255, 0.6), rgba(0, 0, 0, 0)),
-    radial-gradient(1.5px 1.5px at 120px 50px, rgba(0, 229, 255, 0.8), rgba(0, 0, 0, 0)),
-    radial-gradient(2px 2px at 190px 140px, rgba(255, 255, 255, 0.55), rgba(0, 0, 0, 0)),
-    radial-gradient(1.5px 1.5px at 260px 210px, rgba(217, 70, 239, 0.7), rgba(0, 0, 0, 0)),
-    radial-gradient(2px 2px at 320px 95px, rgba(255, 255, 255, 0.65), rgba(0, 0, 0, 0));
+    radial-gradient(circle at 20% 25%, hsla(205, 65%, 45%, 0.14) 0%, transparent 48%),
+    radial-gradient(circle at 80% 30%, hsla(185, 55%, 38%, 0.10) 0%, transparent 48%),
+    radial-gradient(circle at 50% 75%, hsla(160, 48%, 32%, 0.09) 0%, transparent 55%),
+    radial-gradient(circle at 75% 85%, hsla(215, 50%, 38%, 0.10) 0%, transparent 48%),
+    radial-gradient(2px 2px at 25px 35px, rgba(255, 255, 255, 0.70), rgba(0, 0, 0, 0)),
+    radial-gradient(2px 2px at 60px 85px, rgba(255, 255, 255, 0.55), rgba(0, 0, 0, 0)),
+    radial-gradient(1.5px 1.5px at 120px 50px, hsla(199, 95%, 62%, 0.75), rgba(0, 0, 0, 0)),
+    radial-gradient(2px 2px at 190px 140px, rgba(255, 255, 255, 0.50), rgba(0, 0, 0, 0)),
+    radial-gradient(1.5px 1.5px at 260px 210px, hsla(160, 65%, 55%, 0.65), rgba(0, 0, 0, 0)),
+    radial-gradient(2px 2px at 320px 95px, rgba(255, 255, 255, 0.60), rgba(0, 0, 0, 0));
   background-repeat: no-repeat, no-repeat, no-repeat, no-repeat, repeat, repeat, repeat, repeat, repeat, repeat;
   background-size: 100% 100%, 100% 100%, 100% 100%, 100% 100%, 350px 350px, 400px 400px, 280px 280px, 450px 450px, 320px 320px, 500px 500px;
   pointer-events: none;
@@ -381,12 +388,12 @@
   opacity: 0.95;
 }
 
-/* Atmospheric Vignette & Depth Falloff */
+/* Atmospheric Vignette & Depth Falloff to Center Student Attention */
 .map-viewport::after {
   content: '';
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at center, transparent 45%, rgba(0, 10, 25, 0.35) 75%, rgba(0, 5, 15, 0.75) 100%);
+  background: radial-gradient(ellipse at center, transparent 48%, rgba(6, 12, 28, 0.38) 75%, var(--sutz-bg-space-void) 100%);
   pointer-events: none;
   z-index: 10;
 }
