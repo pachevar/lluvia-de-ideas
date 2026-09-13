@@ -116,7 +116,14 @@ export const sendTelegramDirectMessage = async (
   inlineKeyboard?: Array<Array<{ text: string; url?: string }>>
 ): Promise<boolean> => {
   try {
-    const payload: any = {
+    const payload: {
+      chat_id: number | string;
+      text: string;
+      parse_mode: string;
+      reply_markup?: {
+        inline_keyboard: Array<Array<{ text: string; url?: string }>>;
+      };
+    } = {
       chat_id: chatId,
       text: text,
       parse_mode: 'HTML',
