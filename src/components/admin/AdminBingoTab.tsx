@@ -858,7 +858,9 @@ export default function AdminBingoTab() {
       text = encodeURIComponent(
         `¡Hola ${token.playerName}! 🎟️ Tu paquete de ${totalQty} links para Bingotenango ha sido confirmado:\n\n` +
         `🏆 Partida: ${activeGame?.title || 'Gran Bingo Familiar'}\n` +
-        `💵 Cobro Confirmado: Q${priceAmount}.00 (${totalQty} ${totalQty === 1 ? 'Cartón' : 'Cartones'})\n\n` +
+        `💵 Cobro Confirmado: Q${priceAmount}.00 (${totalQty} ${totalQty === 1 ? 'Link' : 'Links'})\n\n` +
+        `⚠️ *AVISO IMPORTANTE:*\n` +
+        `Cada link es único y habilita solo un cartón en pantalla. Compártelos con cuidado: envía cada link únicamente a su dueño, ya que al abrirse en un celular quedará vinculado a esa persona.\n\n` +
         `📲 ENLACES INDEPENDIENTES PARA TUS CONTACTOS:\n\n` +
         `${linksText}` +
         `👉 Cada amigo o contacto debe abrir su enlace en su propio celular para recibir su cartón en vivo.\n\n` +

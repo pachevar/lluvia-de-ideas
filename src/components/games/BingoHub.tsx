@@ -1831,6 +1831,7 @@ export default function BingoHub() {
         `💵 Cobro Confirmado: Q${token.paidAmount || (token.unitPriceQ || 10) * totalQty}.00\n\n` +
         `📲 ENLACES INDEPENDIENTES PARA TUS CONTACTOS:\n\n` +
         `${linksText}` +
+        `⚠️ *IMPORTANTE:* Cada link es único y habilita solo un cartón en pantalla. Compártelos con cuidado: envía cada link únicamente a su dueño, ya que al abrirse en un dispositivo quedará vinculado a esa persona.\n\n` +
         `👉 Cada amigo o contacto debe abrir su enlace en su propio celular para jugar su cartón en vivo.\n\n` +
         `📋 También puedes gestionar tus links desde tu portal:\n${portalUrl}\n\n` +
         `¡Muchos éxitos a todos en la partida! 🎉`

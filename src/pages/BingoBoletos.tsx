@@ -92,9 +92,15 @@ const BingoBoletos: React.FC = () => {
   // Estado del flujo guiado (Paso 1, 2, 3)
   const [currentStep, setCurrentStep] = useState<WizardStep>(1);
 
-  // Modo de compra guiado: 'personal' (1 cartón en este dispositivo) o 'gift' (1 link para un contacto)
+  // Modo de compra guiado: 'personal' (1 cartón en este dispositivo) o 'gift' (1 a 20 links para contactos)
   const [purchaseMode, setPurchaseMode] = useState<'personal' | 'gift'>('personal');
-  const quantity = 1; // Fijado a 1 cartón por dispositivo móvil
+  const [giftQuantity, setGiftQuantity] = useState<number>(1);
+  const quantity = purchaseMode === 'personal' ? 1 : Math.max(1, Math.min(20, giftQuantity));
+
+  const handleGiftQuantityChange = (val: number) => {
+    const safe = Math.max(1, Math.min(20, val));
+    setGiftQuantity(safe);
+  };
   const [playerName, setPlayerName] = useState('');
   
   // WhatsApp: Solo los 8 dígitos locales de Guatemala (el +502 es fijo y no editable)
@@ -912,12 +918,95 @@ const BingoBoletos: React.FC = () => {
                 </div>
                 <div className="mode-card-icon">🎁</div>
                 <div className="mode-card-body">
-                  <h4>Para regalar a un contacto</h4>
+                  <h4>Para regalar a contactos</h4>
                   <p>Compra links independientes para enviar a amigos y familia.</p>
-                  <span className="mode-limit-badge gift-badge">Compra links para otros</span>
+                  <span className="mode-limit-badge gift-badge">
+                    {purchaseMode === 'gift' 
+                      ? `${quantity} ${quantity === 1 ? 'link seleccionado' : 'links seleccionados'}` 
+                      : 'Mín 1 • Máx 20 links'}
+                  </span>
                 </div>
               </div>
             </div>
+
+            {/* SELECTOR DE CANTIDAD PARA REGALO / CONTACTOS */}
+            {purchaseMode === 'gift' && (
+              <div className="gift-quantity-picker-card">
+                <div className="gift-quantity-header">
+                  <span className="gift-quantity-badge">🎁 Selección de Links</span>
+                  <h3 className="gift-quantity-title">¿Cuántos links deseas comprar?</h3>
+                  <p className="gift-quantity-sub">
+                    Elige entre <strong>1 y 20 enlaces</strong>. Cada link es único y habilita exactamente un cartón en pantalla para tu contacto.
+                  </p>
+                </div>
+
+                {/* CONTROLES STEPPER (-) / (+) */}
+                <div className="stepper-controls-row">
+                  <button 
+                    type="button" 
+                    className="stepper-action-btn minus"
+                    onClick={() => handleGiftQuantityChange(quantity - 1)}
+                    disabled={quantity <= 1}
+                    aria-label="Disminuir un link"
+                    title="Disminuir un link"
+                  >
+                    −
+                  </button>
+                  <div className="stepper-display">
+                    <span className="stepper-number">{quantity}</span>
+                    <span className="stepper-label">{quantity === 1 ? 'LINK INDEPENDIENTE' : 'LINKS INDEPENDIENTES'}</span>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="stepper-action-btn plus"
+                    onClick={() => handleGiftQuantityChange(quantity + 1)}
+                    disabled={quantity >= 20}
+                    aria-label="Aumentar un link"
+                    title="Aumentar un link"
+                  >
+                    +
+                  </button>
+                </div>
+
+                {/* CHIPS DE SELECCIÓN RÁPIDA */}
+                <div className="gift-quick-chips-wrapper">
+                  <span className="gift-chips-title">Selección rápida:</span>
+                  <div className="gift-quick-chips">
+                    {[1, 2, 3, 5, 10, 15, 20].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        className={`gift-chip ${quantity === num ? 'active' : ''}`}
+                        onClick={() => handleGiftQuantityChange(num)}
+                      >
+                        {num} {num === 1 ? 'link' : 'links'}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* DESGLOSE DE PRECIO EN TIEMPO REAL */}
+                <div className="gift-price-summary-box">
+                  <span className="gift-calc-detail">
+                    {quantity} {quantity === 1 ? 'link' : 'links'} × {currentPriceQ === 0 ? 'Gratis' : `Q${currentPriceQ}.00`}
+                  </span>
+                  <span className="gift-calc-total">
+                    Total: <strong>{currentPriceQ === 0 ? 'Q0.00' : `Q${totalPriceQ}.00`}</strong>
+                  </span>
+                </div>
+
+                {/* AVISO DE SEGURIDAD Y VINCULACIÓN DE CARTÓN */}
+                <div className="gift-security-notice">
+                  <span className="gift-security-icon">⚠️</span>
+                  <div className="gift-security-text">
+                    <strong>Importante sobre los enlaces:</strong>
+                    <p>
+                      Cada link es único y habilita solo <strong>un cartón en pantalla</strong>. Compártelos con cuidado: envía cada link únicamente a su dueño, ya que al abrirse en un dispositivo quedará vinculado a esa persona.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* ACCIONES DEL PASO 2 */}
             <div className="step-actions-footer">
@@ -1054,7 +1143,11 @@ const BingoBoletos: React.FC = () => {
                 </div>
                 <div className="order-summary-item">
                   <span className="lbl">Modalidad:</span>
-                  <span className="val">{purchaseMode === 'personal' ? '👤 Para mí' : '🎁 Para regalar a un contacto'}</span>
+                  <span className="val">
+                    {purchaseMode === 'personal' 
+                      ? '👤 Para mí (Jugar en este celular)' 
+                      : `🎁 Para regalar (${quantity} ${quantity === 1 ? 'contacto' : 'contactos'})`}
+                  </span>
                 </div>
                 <div className="order-summary-item">
                   <span className="lbl">Nombre:</span>
@@ -1065,8 +1158,12 @@ const BingoBoletos: React.FC = () => {
                   <span className="val font-highlight">+502 {playerWhatsappDigits}</span>
                 </div>
                 <div className="order-summary-item">
-                  <span className="lbl">Número de cartones:</span>
-                  <span className="val font-highlight">{quantity}</span>
+                  <span className="lbl">{purchaseMode === 'gift' ? 'Total de enlaces:' : 'Número de cartones:'}</span>
+                  <span className="val font-highlight">
+                    {quantity} {purchaseMode === 'gift' 
+                      ? (quantity === 1 ? 'link independiente' : 'links independientes') 
+                      : (quantity === 1 ? 'cartón oficial' : 'cartones oficiales')}
+                  </span>
                 </div>
                 <div className="order-summary-divider" />
                 <div className="order-summary-item total-row">
@@ -1077,6 +1174,16 @@ const BingoBoletos: React.FC = () => {
                 </div>
               </div>
             </div>
+
+            {/* AVISO RECORDATORIO EN CHECKOUT PARA MODALIDAD REGALO */}
+            {purchaseMode === 'gift' && (
+              <div className="gift-checkout-reminder">
+                <span className="reminder-icon">⚠️</span>
+                <p>
+                  Recibirás <strong>{quantity} {quantity === 1 ? 'enlace único' : 'enlaces únicos'}</strong> por WhatsApp o Telegram al confirmar tu compra. Cada link es exclusivo y habilita <strong>solo un cartón en pantalla</strong> para la persona que lo abra.
+                </p>
+              </div>
+            )}
 
             {/* FORMULARIO Y SELECTOR DE PAGO */}
             <form onSubmit={handleProceedToPayment} className="checkout-guided-form" noValidate>

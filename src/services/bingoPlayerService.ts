@@ -159,25 +159,59 @@ export const autoDispatchPurchaseToTelegramIfLinked = async (params: {
   tokenId: string;
   quantity: number;
   url: string;
+  purchaseMode?: 'personal' | 'gift';
+  giftLinks?: Array<{ num: number; url: string }>;
 }): Promise<{ dispatched: boolean; chatId?: number | string }> => {
   const check = await checkTelegramLinked(params.phone);
   if (!check.linked || !check.chatId) {
     return { dispatched: false };
   }
 
-  const messageText = `🎉 <b>¡Hola ${params.playerName}!</b>\n\n` +
-    `🎟️ Tu compra de <b>${params.quantity} ${params.quantity === 1 ? 'cartón' : 'cartones'}</b> de <b>Bingotenango</b> fue confirmada con éxito.\n\n` +
-    `🔑 <b>Tu Pase de Sesión:</b> <code>${params.tokenId}</code>\n\n` +
-    `⚡ Ya puedes tocar el botón de abajo para ingresar a la sala en vivo con tus cartones listos:`;
+  let messageText = '';
+  let inlineKeyboard: Array<Array<{ text: string; url?: string }>> = [];
 
-  const inlineKeyboard = [
-    [
-      {
-        text: '🎮 ABRIR SALA DE JUEGO EN VIVO',
-        url: params.url,
-      }
-    ]
-  ];
+  if (params.purchaseMode === 'gift' && params.giftLinks && params.giftLinks.length > 0) {
+    let linksFormatted = '';
+    params.giftLinks.forEach((item) => {
+      linksFormatted += `🎁 <b>Link #${item.num} (1 Cartón):</b>\n${item.url}\n\n`;
+    });
+
+    messageText = 
+      `🎉 <b>¡Hola ${params.playerName}!</b>\n\n` +
+      `🎟️ Tu compra de <b>${params.quantity} ${params.quantity === 1 ? 'link independiente' : 'links independientes'}</b> para regalar en <b>Bingotenango</b> fue confirmada con éxito.\n\n` +
+      `⚠️ <b>AVISO IMPORTANTE:</b>\n` +
+      `<i>Cada link es único y habilita exactamente 1 cartón en pantalla. Compártelos con cuidado: envía cada link únicamente a su dueño, ya que al abrirse en un dispositivo quedará vinculado a esa persona.</i>\n\n` +
+      `📲 <b>TUS ENLACES PARA REPARTIR:</b>\n\n` +
+      `${linksFormatted}` +
+      `✨ ¡Muchos éxitos a todos tus invitados en la partida!`;
+
+    inlineKeyboard = [
+      [
+        {
+          text: '🎮 ABRIR SALA DE JUEGO',
+          url: params.url,
+        },
+        {
+          text: '🛒 Tienda de Boletos',
+          url: 'https://lluviadeideas-educativo.web.app/juegos/bingo/boletos'
+        }
+      ]
+    ];
+  } else {
+    messageText = `🎉 <b>¡Hola ${params.playerName}!</b>\n\n` +
+      `🎟️ Tu compra de <b>${params.quantity} ${params.quantity === 1 ? 'cartón' : 'cartones'}</b> de <b>Bingotenango</b> fue confirmada con éxito.\n\n` +
+      `🔑 <b>Tu Pase de Sesión:</b> <code>${params.tokenId}</code>\n\n` +
+      `⚡ Ya puedes tocar el botón de abajo para ingresar a la sala en vivo con tus cartones listos:`;
+
+    inlineKeyboard = [
+      [
+        {
+          text: '🎮 ABRIR SALA DE JUEGO EN VIVO',
+          url: params.url,
+        }
+      ]
+    ];
+  }
 
   const ok = await sendTelegramDirectMessage(check.chatId, messageText, inlineKeyboard);
   return { dispatched: ok, chatId: check.chatId };

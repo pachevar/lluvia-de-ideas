@@ -215,10 +215,10 @@ const BingoBoletosConfirmacion: React.FC = () => {
         const isGift = currentOrder?.purchaseMode === 'gift';
         const totalQty = currentOrder?.quantity || 1;
         let effectiveTokenId = '';
+        const generatedLinks: GiftLinkItem[] = [];
 
         if (isGift && totalQty >= 1) {
           // Generar o recuperar tokens independientes para cada contacto
-          const generatedLinks: GiftLinkItem[] = [];
           for (let i = 1; i <= totalQty; i++) {
             const giftTokenId = `tkn_gift_${effectiveOrderId}_c${i}`;
             const giftTokenRef = doc(db, 'bingo_access_tokens', giftTokenId);
@@ -335,14 +335,16 @@ const BingoBoletosConfirmacion: React.FC = () => {
 
           // AUTO-DESPACHO TELEGRAM SI EL CLIENTE YA ESTABA VINCULADO
           try {
-            if (effectiveTokenId) {
-              const targetUrl = `${window.location.origin}/juegos/bingo?access=${effectiveTokenId}`;
+            if (effectiveTokenId || (isGift && generatedLinks.length > 0)) {
+              const targetUrl = isGift ? `${window.location.origin}/juegos/bingo` : `${window.location.origin}/juegos/bingo?access=${effectiveTokenId}`;
               const autoRes = await autoDispatchPurchaseToTelegramIfLinked({
                 phone: currentOrder.playerWhatsapp,
                 playerName: currentOrder.playerName,
                 tokenId: effectiveTokenId,
                 quantity: currentOrder.quantity || 1,
-                url: targetUrl
+                url: targetUrl,
+                purchaseMode: isGift ? 'gift' : 'personal',
+                giftLinks: isGift ? generatedLinks.map(g => ({ num: g.num, url: g.url })) : undefined
               });
               if (autoRes.dispatched) {
                 setTelegramAutoDispatched(true);
@@ -402,6 +404,31 @@ const BingoBoletosConfirmacion: React.FC = () => {
             }
           }
           soundEffects.playSuccessFanfare();
+
+          // Auto-despacho a Telegram al confirmarse cobro en efectivo
+          try {
+            const currentLinks = giftLinks.length > 0
+              ? giftLinks.map(g => ({ num: g.num, url: g.url }))
+              : Array.from({ length: totalQty }, (_, idx) => ({
+                  num: idx + 1,
+                  url: `${window.location.origin}/juegos/bingo?access=tkn_gift_${orderId}_c${idx + 1}`
+                }));
+
+            const autoRes = await autoDispatchPurchaseToTelegramIfLinked({
+              phone: updated.playerWhatsapp,
+              playerName: updated.playerName,
+              tokenId: `tkn_gift_${orderId}_c1`,
+              quantity: totalQty,
+              url: `${window.location.origin}/juegos/bingo`,
+              purchaseMode: 'gift',
+              giftLinks: currentLinks
+            });
+            if (autoRes.dispatched) {
+              setTelegramAutoDispatched(true);
+            }
+          } catch (errTg) {
+            console.warn("Aviso auto-despacho Telegram en snapshot:", errTg);
+          }
         } else {
           // Si ya está habilitado, asegurar que el cartón esté generado y guardado en sesión
           let cardIdToUse = activeCardId || accessToken?.usedByCardId;
@@ -480,15 +507,17 @@ const BingoBoletosConfirmacion: React.FC = () => {
     const totalQty = orderData?.quantity || giftLinks.length || 1;
     let linksText = '';
     giftLinks.forEach((item) => {
-      linksText += `🎁 *Cartón #${item.num}:*\n${item.url}\n\n`;
+      linksText += `🎁 *Link #${item.num} (1 Cartón):*\n${item.url}\n\n`;
     });
 
     const portalUrl = `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId || ''}&status=success`;
 
     return (
-      `¡Hola! 🎟️ Aquí están los links de Bingotenango (${totalQty} ${totalQty === 1 ? 'cartón' : 'cartones'}):\n\n` +
+      `¡Hola! 🎟️ Aquí tienes tus enlaces de Bingotenango (${totalQty} ${totalQty === 1 ? 'link para contacto' : 'links independientes'}):\n\n` +
       `🏆 Partida Oficial en Vivo\n` +
       `💵 Estado: Cobro Confirmado\n\n` +
+      `⚠️ *AVISO IMPORTANTE:*\n` +
+      `Cada link es único y habilita solo un cartón en pantalla. Compártelos con cuidado: envía cada link únicamente a su dueño, ya que al abrirse en un celular quedará vinculado a esa persona.\n\n` +
       `📲 ENLACES PARA REPARTIR A TUS CONTACTOS:\n\n` +
       `${linksText}` +
       `👉 Cada amigo o contacto debe tocar su enlace exclusivo para ingresar y jugar en su propio celular.\n\n` +
@@ -926,9 +955,22 @@ const BingoBoletosConfirmacion: React.FC = () => {
               <h3 style={{ fontFamily: 'var(--font-gamer)', fontSize: '1rem', color: '#38bdf8', marginBottom: '8px', textAlign: 'center' }}>
                 📲 O COMPARTE CADA ENLACE POR SEPARADO:
               </h3>
-              <p style={{ fontSize: '0.78rem', color: '#94a3b8', textAlign: 'center', marginBottom: '16px' }}>
-                Cada link contiene <strong>1 cartón único</strong>. Al abrirlo en un celular o computadora, quedará asignado al invitado.
-              </p>
+              <div style={{
+                background: 'rgba(245, 158, 11, 0.1)',
+                border: '1px solid rgba(245, 158, 11, 0.35)',
+                borderRadius: '12px',
+                padding: '10px 14px',
+                marginBottom: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '10px',
+                textAlign: 'left'
+              }}>
+                <span style={{ fontSize: '1.25rem' }}>⚠️</span>
+                <span style={{ fontSize: '0.8rem', color: '#fde68a', lineHeight: 1.4 }}>
+                  <strong>Cada link es único y habilita solo un cartón en pantalla:</strong> Compártelos con cuidado. Envía cada link únicamente a su dueño, ya que al abrirse en un celular quedará vinculado a esa persona.
+                </span>
+              </div>
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
                 {giftLinks.map((item, idx) => (
