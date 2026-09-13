@@ -193,6 +193,53 @@ async function startBotPolling() {
               const parts = text.split(' ');
               const payload = parts.length > 1 ? parts[1].trim() : '';
               await handleStartCommand(chatId, payload, userName);
+            } else if (text.startsWith('/jugar')) {
+              await sendMessage(
+                chatId,
+                `🎮 <b>SALA DE BINGO EN VIVO</b>\n\n` +
+                `¡Hola <b>${userName}</b>! Ya puedes ingresar a la sala de juego en vivo para marcar tus cartones en pantalla.\n\n` +
+                `👇 <i>Toca el botón abajo para ingresar de inmediato:</i>`,
+                [
+                  [{ text: '🎲 ENTRAR A LA SALA DE JUEGO', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo' }],
+                  [{ text: '🛒 Tienda de Boletos', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo/boletos' }]
+                ]
+              );
+            } else if (text.startsWith('/boletos')) {
+              await sendMessage(
+                chatId,
+                `🎟️ <b>TIENDA OFICIAL DE BOLETOS</b>\n\n` +
+                `¡Hola <b>${userName}</b>! Adquiere tus cartones para participar en la próxima partida de Bingotenango.\n\n` +
+                `👇 <i>Toca el botón abajo para elegir tus cartones:</i>`,
+                [
+                  [{ text: '🛒 COMPRAR CARTONES AHORA', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo/boletos' }],
+                  [{ text: '🎮 Entrar a la Sala', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo' }]
+                ]
+              );
+            } else if (text.startsWith('/ayuda')) {
+              await sendMessage(
+                chatId,
+                `💬 <b>ATENCIÓN Y SOPORTE DE BINGOTENANGO</b>\n\n` +
+                `¡Hola <b>${userName}</b>! Estamos listos para apoyarte con cualquier duda o consulta sobre tus cartones o el juego en vivo.\n\n` +
+                `• Al comprar tus cartones en la web, los recibirás aquí automáticamente.\n` +
+                `• También puedes comunicarte directamente con nuestro equipo por WhatsApp:`,
+                [
+                  [{ text: '💬 Contactar Soporte por WhatsApp', url: 'https://wa.me/50246741239?text=Hola,%20necesito%20asistencia%20con%20Bingotenango' }],
+                  [{ text: '🛒 Tienda de Boletos', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo/boletos' }],
+                  [{ text: '🎮 Sala de Juego', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo' }]
+                ]
+              );
+            } else {
+              // Respuesta por defecto ante cualquier otro mensaje
+              await sendMessage(
+                chatId,
+                `👋 ¡Hola <b>${userName}</b>! Soy el asistente automatizado de <b>Bingotenango Oficial</b> 🎟️\n\n` +
+                `¿En qué podemos ayudarte hoy? Selecciona una de las opciones rápidas:`,
+                [
+                  [{ text: '🎮 Entrar a la Sala de Juego', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo' }],
+                  [{ text: '🛒 Comprar Cartones de Bingo', url: 'https://lluviadeideas-educativo.web.app/juegos/bingo/boletos' }],
+                  [{ text: '💬 Soporte por WhatsApp', url: 'https://wa.me/50246741239?text=Hola,%20necesito%20asistencia%20con%20Bingotenango' }]
+                ]
+              );
             }
           }
         }
