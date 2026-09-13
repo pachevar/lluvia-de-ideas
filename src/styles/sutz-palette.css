@@ -94,4 +94,31 @@
   --sutz-shadow-md: 0 6px 18px rgba(0, 0, 0, 0.55);
   --sutz-shadow-lg: 0 12px 28px rgba(0, 0, 0, 0.7);
   --sutz-shadow-action: 0 0 14px var(--sutz-color-challenge-glow);
+
+  /* --------------------------------------------------------------------------
+     6. ESTILO DE CUADROS, PANELES Y VIDRIO TEMPLADO (GLASSMORPHISM)
+     -------------------------------------------------------------------------- */
+  --sutz-glass-bg: linear-gradient(145deg, hsla(220, 40%, 10%, 0.94) 0%, hsla(222, 45%, 6%, 0.97) 100%);
+  --sutz-glass-border: hsla(199, 89%, 48%, 0.35);
+  --sutz-glass-border-muted: hsla(215, 25%, 35%, 0.25);
+  --sutz-glass-bevel: inset 0 1px 1px hsla(210, 100%, 90%, 0.15);
+  --sutz-glass-blur: blur(16px);
+
+  /* --------------------------------------------------------------------------
+     7. ESTILO DE BOTONES Y CÁPSULAS INTERACTIVAS
+     -------------------------------------------------------------------------- */
+  --sutz-btn-base-bg: linear-gradient(135deg, hsla(220, 32%, 15%, 0.95) 0%, hsla(218, 28%, 10%, 0.98) 100%);
+  --sutz-btn-base-border: hsla(215, 25%, 45%, 0.35);
+  --sutz-btn-action-bg: linear-gradient(135deg, var(--sutz-color-challenge) 0%, var(--sutz-color-challenge-warm) 100%);
+  --sutz-btn-action-hover: linear-gradient(135deg, hsl(42, 95%, 55%) 0%, hsl(26, 98%, 58%) 100%);
+  --sutz-btn-guide-bg: linear-gradient(135deg, hsl(199, 89%, 48%) 0%, hsl(217, 91%, 60%) 100%);
+
+  /* --------------------------------------------------------------------------
+     8. BARRAS DE PROGRESO Y RIELES
+     -------------------------------------------------------------------------- */
+  --sutz-bar-track: hsla(222, 45%, 8%, 0.85);
+  --sutz-bar-track-border: hsla(215, 25%, 35%, 0.25);
+  --sutz-bar-xp-fill: linear-gradient(90deg, var(--sutz-color-guide-light) 0%, var(--sutz-color-wisdom) 100%);
+  --sutz-bar-energy-fill: linear-gradient(90deg, var(--sutz-color-success) 0%, var(--sutz-color-success-light) 100%);
 }
+
