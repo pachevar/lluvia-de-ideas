@@ -269,6 +269,11 @@
   border: 1px solid hsla(38, 92%, 50%, 0.45);
 }
 
+.sutz-res-pod.monedas.jade .sutz-res-icon-circle {
+  background: radial-gradient(circle, var(--sutz-color-success-glow) 0%, hsla(160, 60%, 8%, 0.4) 70%);
+  border: 1px solid hsla(160, 84%, 39%, 0.55);
+}
+
 .sutz-res-pod.gemas .sutz-res-icon-circle {
   background: radial-gradient(circle, var(--sutz-color-error-glow) 0%, hsla(222, 45%, 10%, 0.4) 70%);
   border: 1px solid hsla(350, 84%, 60%, 0.45);
@@ -544,6 +549,15 @@
 .sutz-dock-item.quests:hover .sutz-dock-icon-disc {
   border-color: #fbbf24;
   box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.5);
+}
+
+.sutz-dock-item.alliances .sutz-dock-icon-disc {
+  background: linear-gradient(145deg, rgba(16, 185, 129, 0.25) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border-color: rgba(16, 185, 129, 0.4);
+}
+.sutz-dock-item.alliances:hover .sutz-dock-icon-disc {
+  border-color: #34d399;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.6), 0 0 16px rgba(16, 185, 129, 0.5);
 }
 
 .sutz-dock-badge {

@@ -8,10 +8,10 @@ import type { SutzResourceKey, SutzResources } from '../types';
 export const SUTZ_RESOURCE_KEYS: SutzResourceKey[] = ['pergaminos', 'puntos', 'monedas', 'gemas'];
 
 export const SUTZ_RESOURCE_META: Record<SutzResourceKey, { label: string; short: string; icon: string; color: string }> = {
-  pergaminos: { label: 'Pergaminos Míticos', short: 'Pergaminos', icon: '📜', color: '#ffc24d' },
-  puntos: { label: 'Puntos de Conocimiento', short: 'Puntos', icon: '⚡', color: '#00e5ff' },
-  monedas: { label: 'Monedas de Oro', short: 'Monedas', icon: '🪙', color: '#ffc24d' },
-  gemas: { label: 'Gemas de Aprendizaje', short: 'Gemas', icon: '💎', color: '#d946ef' }
+  pergaminos: { label: 'Pergaminos Míticos', short: 'Pergaminos', icon: '📜', color: '#818cf8' },
+  puntos: { label: 'Puntos de Sabiduría', short: 'Sabiduría', icon: '⚡', color: '#38bdf8' },
+  monedas: { label: 'Jade Sagrado', short: 'Jade', icon: '🟢', color: '#10b981' },
+  gemas: { label: 'Gemas de Aprendizaje', short: 'Gemas', icon: '💎', color: '#f43f5e' }
 };
 
 /** Valores iniciales del monedero (reflejan los recursos mostrados originalmente en el HUD). */

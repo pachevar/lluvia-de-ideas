@@ -1,0 +1,333 @@
+@import '../../styles/sutz-palette.css';
+
+/* ==========================================================================
+   SUTZ ALLIANCES MODAL (ALIANZAS Y GREMIOS ESCOLARES)
+   ========================================================================== */
+
+.sutz-alliances-modal {
+  max-width: 680px;
+  width: 92%;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.sutz-modal-icon-badge.alliance-badge {
+  background: radial-gradient(circle, var(--sutz-color-success-glow) 0%, hsla(222, 45%, 10%, 0.4) 70%);
+  border-color: var(--sutz-color-success-light);
+  box-shadow: 0 0 16px var(--sutz-color-success-glow);
+}
+
+.sutz-alliances-body {
+  padding: 20px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Toast de tributo diario */
+.sutz-alliance-tribute-toast {
+  margin: 0 20px;
+  padding: 10px 16px;
+  background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+  border: 1.5px solid #6ee7b7;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 800;
+  text-align: center;
+  box-shadow: 0 6px 20px rgba(16, 185, 129, 0.5);
+  animation: bounceInToast 0.4s ease-out;
+}
+
+/* Tarjeta de Alianza Activa */
+.sutz-active-alliance-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px;
+  border-radius: 20px;
+  border: 1.5px solid;
+  box-shadow: var(--sutz-shadow-md), var(--sutz-glass-bevel);
+  flex-wrap: wrap;
+}
+
+.sutz-alliance-hero-emblem {
+  width: 68px;
+  height: 68px;
+  border-radius: 18px;
+  background: hsla(222, 45%, 8%, 0.85);
+  border: 2px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.6);
+  flex-shrink: 0;
+}
+
+.sutz-alliance-status-pill {
+  font-size: 0.7rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--sutz-color-success-surface);
+  border: 1px solid var(--sutz-color-success);
+  color: var(--sutz-color-success-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.sutz-alliance-perk-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 8px;
+  background: var(--sutz-color-challenge-surface);
+  border: 1px solid var(--sutz-color-challenge);
+  color: var(--sutz-color-challenge);
+}
+
+.sutz-alliance-hero-title {
+  margin: 6px 0 2px 0;
+  font-size: 1.2rem;
+  font-weight: 900;
+  color: var(--sutz-text-bright);
+}
+
+.sutz-alliance-hero-motto {
+  margin: 0 0 6px 0;
+  font-size: 0.82rem;
+  font-style: italic;
+  color: var(--sutz-color-guide-light);
+}
+
+.sutz-alliance-hero-desc {
+  margin: 0;
+  font-size: 0.78rem;
+  line-height: 1.4;
+  color: var(--sutz-text-normal);
+}
+
+/* Caja de Tributo de Jade */
+.sutz-alliance-tribute-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  background: hsla(222, 45%, 8%, 0.7);
+  padding: 12px 16px;
+  border-radius: 16px;
+  border: 1px solid hsla(158, 75%, 45%, 0.3);
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.sutz-alliance-tribute-btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.82rem;
+  font-weight: 900;
+  cursor: pointer;
+  border: 1px solid #6ee7b7;
+  background: linear-gradient(135deg, var(--sutz-color-success) 0%, hsl(158, 85%, 35%) 100%);
+  color: #ffffff;
+  box-shadow: 0 4px 14px var(--sutz-color-success-glow);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.sutz-alliance-tribute-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px var(--sutz-color-success-glow);
+}
+
+.sutz-alliance-tribute-btn.claimed {
+  background: hsla(158, 75%, 45%, 0.15);
+  border-color: hsla(158, 75%, 45%, 0.35);
+  color: var(--sutz-color-success-light);
+  box-shadow: none;
+  cursor: default;
+}
+
+.sutz-tribute-hint {
+  font-size: 0.68rem;
+  color: var(--sutz-text-muted);
+}
+
+/* Sección de Gremios */
+.sutz-alliances-section-title {
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: var(--sutz-text-bright);
+}
+
+.sutz-alliances-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .sutz-alliances-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.sutz-alliance-item-card {
+  background: hsla(220, 35%, 11%, 0.85);
+  border: 1.5px solid hsla(215, 25%, 35%, 0.3);
+  border-radius: 16px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sutz-alliance-item-card:hover {
+  background: hsla(220, 35%, 15%, 0.9);
+  transform: translateY(-2px);
+  box-shadow: var(--sutz-shadow-md);
+}
+
+.sutz-alliance-item-card.selected {
+  background: hsla(220, 38%, 13%, 0.95);
+  box-shadow: 0 0 16px rgba(56, 189, 248, 0.25);
+}
+
+.sutz-alliance-item-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.sutz-alliance-item-icon {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  border: 1.5px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+}
+
+.sutz-alliance-item-name {
+  margin: 0;
+  font-size: 0.9rem;
+  font-weight: 800;
+  color: var(--sutz-text-bright);
+}
+
+.sutz-alliance-item-sub {
+  font-size: 0.72rem;
+  color: var(--sutz-text-muted);
+}
+
+.sutz-alliance-check-pill {
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 8px;
+  background: var(--sutz-color-success);
+  color: #064e3b;
+}
+
+.sutz-alliance-item-perk {
+  font-size: 0.78rem;
+  color: var(--sutz-text-normal);
+  background: hsla(222, 45%, 8%, 0.6);
+  padding: 6px 10px;
+  border-radius: 8px;
+  border: 1px solid hsla(215, 25%, 35%, 0.2);
+}
+
+.sutz-alliance-item-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: var(--sutz-text-muted);
+  font-weight: 700;
+}
+
+.sutz-alliance-select-btn {
+  margin-top: 4px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  background: hsla(215, 25%, 35%, 0.25);
+  border: 1px solid hsla(215, 25%, 45%, 0.35);
+  color: var(--sutz-text-bright);
+  transition: all 0.2s ease;
+}
+
+.sutz-alliance-select-btn:hover {
+  background: var(--sutz-btn-guide-bg);
+  border-color: var(--sutz-color-guide-light);
+  color: #ffffff;
+}
+
+/* Tabla de Posiciones */
+.sutz-alliance-leaderboard-card {
+  background: hsla(220, 35%, 10%, 0.9);
+  border: 1px solid hsla(215, 25%, 35%, 0.3);
+  border-radius: 16px;
+  padding: 14px 18px;
+}
+
+.sutz-leaderboard-heading {
+  margin: 0 0 10px 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  color: var(--sutz-color-challenge);
+}
+
+.sutz-leaderboard-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sutz-leaderboard-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: hsla(222, 45%, 8%, 0.5);
+  font-size: 0.8rem;
+}
+
+.sutz-leaderboard-rank {
+  font-weight: 900;
+  color: var(--sutz-color-guide-light);
+  min-width: 24px;
+}
+
+.sutz-leaderboard-emblem {
+  font-size: 1.1rem;
+}
+
+.sutz-leaderboard-name {
+  flex: 1;
+  font-weight: 700;
+  color: var(--sutz-text-bright);
+}
+
+.sutz-leaderboard-score {
+  font-weight: 800;
+  color: var(--sutz-color-success-light);
+}

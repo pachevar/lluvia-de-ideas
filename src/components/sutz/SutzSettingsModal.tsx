@@ -435,7 +435,7 @@ export const SutzSettingsModal: React.FC<SutzSettingsModalProps> = ({ isOpen, on
 
                       <div className="sutz-social-rewards-badge">
                         <span>⚡ +{item.rewards.puntos} Sabiduría</span>
-                        <span>🪙 +{item.rewards.monedas} Oro</span>
+                        <span>🟢 +{item.rewards.monedas} Jade</span>
                         {item.rewards.gemas && <span>💎 +{item.rewards.gemas} Gemas</span>}
                       </div>
 

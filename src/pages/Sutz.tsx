@@ -10,6 +10,7 @@ import { HexagonGrid } from '../components/map/HexagonGrid';
 import { getCandidateHexes } from '../utils/hexUtils';
 import { TechTreeModal } from '../components/sutz/TechTreeModal';
 import { SutzSettingsModal } from '../components/sutz/SutzSettingsModal';
+import { SutzAlliancesModal } from '../components/sutz/SutzAlliancesModal';
 import { sutzAudio } from '../utils/sutzSoundEffects';
 import '../styles/sutz-palette.css';
 import './Sutz.css';
@@ -154,6 +155,7 @@ export default function Sutz() {
   const [isQuestsModalOpen, setIsQuestsModalOpen] = useState(false);
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isAlliancesModalOpen, setIsAlliancesModalOpen] = useState(false);
   const [selectedRelic, setSelectedRelic] = useState<MayanRelic | null>(null);
 
   // Controles de mapa para botón de Centrar/Radar
@@ -223,7 +225,7 @@ export default function Sutz() {
     return 'Sabio Iniciado 📜';
   };
 
-  const handleOpenModal = (type: 'profile' | 'tree' | 'codex' | 'quests' | 'inventory' | 'settings') => {
+  const handleOpenModal = (type: 'profile' | 'tree' | 'codex' | 'quests' | 'inventory' | 'settings' | 'alliances') => {
     sutzAudio.playOpenModal();
     // Cerrar otros para que no se sobrepongan
     setIsProfileModalOpen(type === 'profile');
@@ -232,6 +234,7 @@ export default function Sutz() {
     setIsQuestsModalOpen(type === 'quests');
     setIsInventoryModalOpen(type === 'inventory');
     setIsSettingsModalOpen(type === 'settings');
+    setIsAlliancesModalOpen(type === 'alliances');
   };
 
   const handleCloseModals = () => {
@@ -242,13 +245,14 @@ export default function Sutz() {
     setIsQuestsModalOpen(false);
     setIsInventoryModalOpen(false);
     setIsSettingsModalOpen(false);
+    setIsAlliancesModalOpen(false);
     setSelectedRelic(null);
   };
 
   const handleClaimQuest = (questTitle: string) => {
     sutzAudio.playReward();
     addResources({ puntos: 150, monedas: 60, gemas: 5 });
-    alert(`🎉 ¡Recompensa reclamada por completar: "${questTitle}"! (+150 Sabiduría, +60 Monedas, +5 Gemas)`);
+    alert(`🎉 ¡Recompensa reclamada por completar: "${questTitle}"! (+150 Sabiduría, +60 Jade, +5 Gemas)`);
   };
 
   if (loading) {
@@ -338,18 +342,32 @@ export default function Sutz() {
             </div>
           </div>
 
-          {/* Monedas de Oro */}
+          {/* Jade Sagrado Maya */}
           <div 
-            className="sutz-res-pod monedas" 
+            className="sutz-res-pod monedas jade" 
             onClick={() => handleOpenModal('quests')}
-            title="Monedas Doradas: Gánalas completando misiones y descubriendo enigmas"
+            title="Jade Sagrado: Gánalo completando misiones, retos y enigmas mayas"
           >
-            <div className="sutz-res-icon-circle">🪙</div>
+            <div className="sutz-res-icon-circle">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none">
+                <circle cx="12" cy="12" r="10" fill="url(#sutzJadeGrad)" stroke="#6ee7b7" strokeWidth="1.5" />
+                <circle cx="12" cy="12" r="5.5" fill="#064e3b" stroke="#34d399" strokeWidth="1.2" />
+                <circle cx="12" cy="12" r="2.2" fill="#022c22" />
+                <defs>
+                  <radialGradient id="sutzJadeGrad" cx="35%" cy="30%" r="70%">
+                    <stop offset="0%" stopColor="#6ee7b7" />
+                    <stop offset="45%" stopColor="#10b981" />
+                    <stop offset="85%" stopColor="#047857" />
+                    <stop offset="100%" stopColor="#064e3b" />
+                  </radialGradient>
+                </defs>
+              </svg>
+            </div>
             <div className="sutz-res-val-wrap">
               <span className="sutz-res-val">{formatSutzResource(resources.monedas)}</span>
-              <span className="sutz-res-label">Oro Maya</span>
+              <span className="sutz-res-label">Jade</span>
             </div>
-            <span className="sutz-res-plus-btn" title="Completar retos para conseguir oro">+</span>
+            <span className="sutz-res-plus-btn" title="Completar retos para conseguir jade">+</span>
           </div>
 
           {/* Gemas Místicas */}
@@ -405,14 +423,15 @@ export default function Sutz() {
           ========================================================================== */}
       <div className="sutz-bottom-dock-container">
         <nav className="sutz-bottom-dock">
-          {/* 1. PERFIL */}
+          {/* 1. ALIANZAS */}
           <button 
-            className={`sutz-dock-item ${isProfileModalOpen ? 'active' : ''}`}
-            onClick={() => handleOpenModal('profile')}
-            title="Perfil del Estudiante, Títulos y Medallas"
+            className={`sutz-dock-item alliances ${isAlliancesModalOpen ? 'active' : ''}`}
+            onClick={() => handleOpenModal('alliances')}
+            title="Alianzas y Gremios Escolares de Sutz"
           >
-            <div className="sutz-dock-icon-disc">👤</div>
-            <span className="sutz-dock-label">Perfil</span>
+            <div className="sutz-dock-icon-disc">🛡️</div>
+            <span className="sutz-dock-label">Alianzas</span>
+            <span className="sutz-dock-badge" style={{ background: '#10b981' }}>★</span>
           </button>
 
           {/* 2. ÁRBOL TEC */}
@@ -847,7 +866,7 @@ export default function Sutz() {
                     {activeStory.summary}
                   </p>
                   <div style={{ background: 'rgba(56,189,248,0.12)', border: '1px solid rgba(56,189,248,0.3)', borderRadius: '10px', padding: '8px 12px', fontSize: '0.78rem', color: '#38bdf8' }}>
-                    🎁 <strong>Recompensa de lectura:</strong> +1 Pergamino, +120 Puntos de Sabiduría, +50 Monedas, +10 Gemas.
+                    🎁 <strong>Recompensa de lectura:</strong> +1 Pergamino, +120 Puntos de Sabiduría, +50 Jade, +10 Gemas.
                   </div>
                 </div>
               </div>
@@ -878,6 +897,12 @@ export default function Sutz() {
           </div>
         </div>
       )}
+
+      {/* Modal de Alianzas y Gremios Escolares */}
+      <SutzAlliancesModal 
+        isOpen={isAlliancesModalOpen}
+        onClose={handleCloseModals}
+      />
 
       {/* Modal de Ajustes y Configuración */}
       <SutzSettingsModal 
