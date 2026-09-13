@@ -77,8 +77,21 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
     } catch (err: unknown) {
       sutzAudio.playError();
       const code = (err as { code?: string }).code;
-      if (code !== 'auth/popup-closed-by-user') {
-        setError('Error al ingresar con Google. Intenta nuevamente.');
+      const msg = (err as { message?: string }).message;
+      console.error('Error al iniciar sesión con Google:', code, msg, err);
+
+      if (code === 'auth/operation-not-allowed') {
+        setError('El proveedor de Google aún no está activado en Firebase Console (Authentication > Sign-in method > Google). Mientras se habilita, puedes ingresar o registrarte con Correo y Contraseña.');
+      } else if (code === 'auth/unauthorized-domain') {
+        setError(`El dominio actual (${typeof window !== 'undefined' ? window.location.hostname : ''}) no está en la lista de dominios autorizados de Firebase Console.`);
+      } else if (code === 'auth/popup-blocked') {
+        setError('Tu navegador bloqueó la ventana emergente de Google. Por favor permite las ventanas emergentes en el candado o barra de direcciones.');
+      } else if (code === 'auth/popup-closed-by-user') {
+        setError('La ventana de Google se cerró antes de completar el acceso. Intenta de nuevo.');
+      } else if (code === 'auth/cancelled-popup-request') {
+        setError('Se canceló la ventana anterior de Google.');
+      } else {
+        setError(`Error con Google (${code || 'desconocido'}): ${msg || 'Por favor intenta de nuevo o regístrate con correo.'}`);
       }
     } finally {
       setLoading(false);
