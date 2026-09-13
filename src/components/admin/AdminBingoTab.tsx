@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef, useMemo } from 'react';
 import { createPortal } from 'react-dom';
 import { 
-  collection, doc, getDoc, addDoc, updateDoc, setDoc, deleteDoc, 
+  collection, doc, getDoc, getDocs, addDoc, updateDoc, setDoc, deleteDoc, 
   onSnapshot, query, limit, where 
 } from 'firebase/firestore';
 import { db } from '../../firebase';

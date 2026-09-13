@@ -468,6 +468,14 @@ const BingoBoletosConfirmacion: React.FC = () => {
 
   const [copiedAllLinks, setCopiedAllLinks] = useState(false);
 
+  const copyGiftLink = (index: number, url: string) => {
+    navigator.clipboard.writeText(url);
+    setGiftLinks(prev => prev.map((item, idx) => idx === index ? { ...item, copied: true } : item));
+    setTimeout(() => {
+      setGiftLinks(prev => prev.map((item, idx) => idx === index ? { ...item, copied: false } : item));
+    }, 2500);
+  };
+
   const getAllLinksWhatsAppText = () => {
     const totalQty = orderData?.quantity || giftLinks.length || 1;
     let linksText = '';
