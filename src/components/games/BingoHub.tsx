@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, deleteDoc, getDocs } from 'firebase/firestore';
@@ -8,7 +8,7 @@ import { generateBingoMatrix, hashBingoMatrix, validateBingoCard, checkCardColli
 import type { MarkedSlots } from '../../utils/bingoGenerator';
 import { soundEffects } from '../../utils/soundEffects';
 import { CONTACT } from '../../constants';
-import { recordPlayerPurchase } from '../../services/bingoPlayerService';
+import { recordPlayerPurchase, autoDispatchPurchaseToTelegramIfLinked } from '../../services/bingoPlayerService';
 import {
   isNotificationSupported,
   getNotificationPermission,
@@ -291,6 +291,7 @@ export default function BingoHub() {
   const [cashPaymentAmount, setCashPaymentAmount] = useState<number>(10);
   const [cashScheduledGameId, setCashScheduledGameId] = useState<string>('');
   const [isSavingCashPayment, setIsSavingCashPayment] = useState(false);
+  const [expandedCashGiftOrderId, setExpandedCashGiftOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const qPromos = query(collection(db, 'bingo_promoters'));
@@ -382,6 +383,7 @@ export default function BingoHub() {
   // Solicitudes de Pago en Efectivo pendientes de cobrar y habilitar
   const pendingCashTokens = useMemo(() => {
     return allAccessTokens.filter(t => {
+      if (t.id.startsWith('tkn_gift_')) return false;
       const isCash = t.paymentMethod === 'efectivo';
       const isPending = t.paymentStatus === 'pending' || t.status === 'pending' || (!t.paidAmount && t.paymentStatus !== 'paid');
       return isCash && isPending;
@@ -389,16 +391,19 @@ export default function BingoHub() {
   }, [allAccessTokens]);
 
   const allCashTokens = useMemo(() => {
-    return allAccessTokens.filter(t => t.paymentMethod === 'efectivo').sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+    return allAccessTokens
+      .filter(t => t.paymentMethod === 'efectivo' && !t.id.startsWith('tkn_gift_'))
+      .sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
   }, [allAccessTokens]);
 
   // Cobrar y habilitar pase en efectivo desde el módulo de Registro del Host
   const handleCollectCashAndEnablePass = async (token: BingoAccessToken) => {
     const order = allBingoOrders.find(o => o.id === token.orderId);
     const priceAmount = token.paidAmount || (token.unitPriceQ ? token.unitPriceQ * (token.quantity || 1) : (order?.totalPriceQ || order?.priceQ || 25));
+    const isGift = token.purchaseMode === 'gift';
 
     const confirm = await showConfirm(
-      `¿Confirmas haber recibido el pago en efectivo de Q${priceAmount}.00 del jugador "${token.playerName || 'Jugador'}" (${token.quantity} cartón${token.quantity > 1 ? 'es' : ''})?\n\nAl confirmar, la sesión en el navegador del jugador se desbloqueará de inmediato y recibirá acceso a su cartón oficial.`,
+      `¿Confirmas haber recibido el pago en efectivo de Q${priceAmount}.00 del jugador "${token.playerName || 'Jugador'}" por el ${isGift ? `PAQUETE COMPLETO DE ${token.quantity} LINKS para sus contactos` : `${token.quantity} cartón(es)`}?\n\nAl confirmar, se habilitarán los ${isGift ? token.quantity : 1} pases de inmediato y la pantalla del comprador se desbloqueará.`,
       "Confirmar Cobro en Efectivo",
       "💵",
       "SÍ, COBRAR Y HABILITAR",
@@ -451,10 +456,42 @@ export default function BingoHub() {
           spentQ: priceAmount,
           webPushEnabled: false
         }).catch(() => {});
+
+        // Auto-despacho a Telegram si está vinculado
+        if (isGift) {
+          try {
+            const totalQty = token.quantity || 1;
+            const currentLinks = Array.from({ length: totalQty }, (_, idx) => ({
+              num: idx + 1,
+              url: `${window.location.origin}/juegos/bingo?access=tkn_gift_${token.orderId}_c${idx + 1}`
+            }));
+            await autoDispatchPurchaseToTelegramIfLinked({
+              phone: token.playerWhatsapp,
+              playerName: token.playerName,
+              tokenId: `tkn_gift_${token.orderId}_c1`,
+              quantity: totalQty,
+              url: `${window.location.origin}/juegos/bingo`,
+              purchaseMode: 'gift',
+              giftLinks: currentLinks
+            });
+          } catch (tgErr) {
+            console.warn("Aviso auto-despacho Telegram en Hub:", tgErr);
+          }
+        }
       }
 
       addLog(`HOST: Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}. Boleto habilitado en vivo.`);
-      await showAlert(`¡Cobro de Q${priceAmount}.00 confirmado para ${token.playerName}! El navegador del jugador ha sido habilitado al instante. 🚀`, "Cobro Exitoso", "✅");
+
+      const openWa = await showConfirm(
+        `¡Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}!\n\n${isGift ? `Los ${token.quantity} enlaces del paquete están 100% habilitados.` : 'El cartón ha sido habilitado con éxito.'}\n\n¿Deseas abrir WhatsApp para enviar el mensaje oficial con los enlaces ahora?`,
+        "Cobro Exitoso",
+        "✅",
+        "SÍ, ABRIR WHATSAPP",
+        "LISTO"
+      );
+      if (openWa) {
+        handleSendWhatsAppPass({ ...token, status: 'active', paymentStatus: 'paid', paidAmount: priceAmount });
+      }
     } catch (err) {
       console.error("Error al registrar cobro en efectivo:", err);
       await showAlert("Ocurrió un error al registrar el cobro en la base de datos.", "Error", "❌");
@@ -4395,8 +4432,9 @@ export default function BingoHub() {
                               const playUrl = `${window.location.origin}/juegos/bingo?access=${token.id}`;
 
                               return (
-                                <tr key={token.id} style={{
-                                  borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
+                                <Fragment key={token.id}>
+                                  <tr style={{
+                                    borderBottom: '1px solid rgba(255, 255, 255, 0.06)',
                                   background: isPaid ? 'rgba(34, 197, 94, 0.03)' : 'rgba(245, 158, 11, 0.06)'
                                 }}>
                                   {/* Fecha / Hora */}
@@ -4441,22 +4479,43 @@ export default function BingoHub() {
 
                                   {/* Cartones & Monto */}
                                   <td style={{ padding: '12px 14px' }}>
-                                    <span style={{
-                                      background: 'rgba(168, 85, 247, 0.15)',
-                                      border: '1px solid rgba(168, 85, 247, 0.35)',
-                                      color: '#c084fc',
-                                      padding: '2px 8px',
-                                      borderRadius: '6px',
-                                      fontSize: '0.74rem',
-                                      fontWeight: 'bold',
-                                      display: 'inline-block',
-                                      marginBottom: '3px'
-                                    }}>
-                                      🎟️ {token.quantity || 1} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
-                                    </span>
+                                    {token.purchaseMode === 'gift' ? (
+                                      <span style={{
+                                        background: 'rgba(245, 158, 11, 0.2)',
+                                        border: '1px solid rgba(245, 158, 11, 0.5)',
+                                        color: '#fbbf24',
+                                        padding: '3px 10px',
+                                        borderRadius: '8px',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 'bold',
+                                        display: 'inline-block',
+                                        marginBottom: '3px'
+                                      }}>
+                                        🎁 Paquete {token.quantity || 1} Links
+                                      </span>
+                                    ) : (
+                                      <span style={{
+                                        background: 'rgba(168, 85, 247, 0.15)',
+                                        border: '1px solid rgba(168, 85, 247, 0.35)',
+                                        color: '#c084fc',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        fontSize: '0.74rem',
+                                        fontWeight: 'bold',
+                                        display: 'inline-block',
+                                        marginBottom: '3px'
+                                      }}>
+                                        🎟️ {token.quantity || 1} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
+                                      </span>
+                                    )}
                                     <strong style={{ display: 'block', color: '#4ade80', fontSize: '0.92rem' }}>
                                       Q{priceAmount}.00
                                     </strong>
+                                    {token.purchaseMode === 'gift' && (
+                                      <span style={{ fontSize: '0.66rem', color: '#94a3b8', display: 'block' }}>
+                                        ({token.quantity} × Q{token.unitPriceQ || 10})
+                                      </span>
+                                    )}
                                   </td>
 
                                   {/* Estado */}
@@ -4520,9 +4579,9 @@ export default function BingoHub() {
                                             alignItems: 'center',
                                             gap: '5px'
                                           }}
-                                          title="Confirmar recepción del dinero y habilitar al jugador"
+                                          title={token.purchaseMode === 'gift' ? `Cobrar Q${priceAmount}.00 y habilitar todos los ${token.quantity} links` : "Confirmar recepción del dinero y habilitar al jugador"}
                                         >
-                                          <span>💵</span> Cobrar y Habilitar
+                                          <span>💵</span> {token.purchaseMode === 'gift' ? `Cobrar Paquete (${token.quantity} Links)` : 'Cobrar y Habilitar'}
                                         </button>
                                       ) : (
                                         <button
@@ -4541,36 +4600,180 @@ export default function BingoHub() {
                                             alignItems: 'center',
                                             gap: '4px'
                                           }}
-                                          title="Enviar o reenviar pase por WhatsApp"
+                                          title={token.purchaseMode === 'gift' ? "Enviar paquete completo de links por WhatsApp" : "Enviar o reenviar pase por WhatsApp"}
                                         >
-                                          <span>📲</span> {token.linkSent ? 'Reenviar Link' : 'Enviar Link'}
+                                          <span>📲</span> {token.purchaseMode === 'gift' ? 'Enviar Paquete WhatsApp' : (token.linkSent ? 'Reenviar Link' : 'Enviar Link')}
                                         </button>
                                       )}
 
-                                      <button
-                                        type="button"
-                                        onClick={() => {
-                                          navigator.clipboard.writeText(playUrl);
-                                          alert(`¡Enlace copiado al portapapeles!\n\n${playUrl}`);
-                                        }}
-                                        style={{
-                                          background: 'rgba(255, 255, 255, 0.06)',
-                                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                                          color: '#cbd5e1',
-                                          borderRadius: '8px',
-                                          padding: '6px 10px',
-                                          fontSize: '0.74rem',
-                                          cursor: 'pointer'
-                                        }}
-                                        title="Copiar link directo de acceso"
-                                      >
-                                        📋
-                                      </button>
+                                      {token.purchaseMode === 'gift' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => setExpandedCashGiftOrderId(prev => prev === token.id ? null : token.id)}
+                                          style={{
+                                            background: expandedCashGiftOrderId === token.id ? 'rgba(245, 158, 11, 0.3)' : 'rgba(245, 158, 11, 0.15)',
+                                            border: '1px solid rgba(245, 158, 11, 0.45)',
+                                            color: '#fbbf24',
+                                            fontWeight: 'bold',
+                                            padding: '6px 12px',
+                                            borderRadius: '8px',
+                                            fontSize: '0.74rem',
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                          }}
+                                          title="Ver y gestionar todos los enlaces independientes del paquete"
+                                        >
+                                          <span>📦</span> {expandedCashGiftOrderId === token.id ? 'Ocultar Links ▴' : `Ver ${token.quantity} Links ▾`}
+                                        </button>
+                                      )}
+
+                                      {token.purchaseMode !== 'gift' && (
+                                        <button
+                                          type="button"
+                                          onClick={() => {
+                                            navigator.clipboard.writeText(playUrl);
+                                            alert(`¡Enlace copiado al portapapeles!\n\n${playUrl}`);
+                                          }}
+                                          style={{
+                                            background: 'rgba(255, 255, 255, 0.06)',
+                                            border: '1px solid rgba(255, 255, 255, 0.15)',
+                                            color: '#cbd5e1',
+                                            borderRadius: '8px',
+                                            padding: '6px 10px',
+                                            fontSize: '0.74rem',
+                                            cursor: 'pointer'
+                                          }}
+                                          title="Copiar link directo de acceso"
+                                        >
+                                          📋
+                                        </button>
+                                      )}
                                     </div>
                                   </td>
                                 </tr>
-                              );
-                            })}
+
+                                {/* SUB-FILA DESPLEGABLE CON LOS ENLACES INDEPENDIENTES DEL PAQUETE */}
+                                {token.purchaseMode === 'gift' && expandedCashGiftOrderId === token.id && (
+                                  <tr key={`${token.id}_expanded`}>
+                                    <td colSpan={6} style={{ background: 'rgba(245, 158, 11, 0.08)', padding: '16px 20px', borderLeft: '4px solid #fbbf24', borderBottom: '1.5px solid rgba(245, 158, 11, 0.3)' }}>
+                                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                                        <div>
+                                          <strong style={{ color: '#fbbf24', fontSize: '0.88rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                            <span>🎁</span> Paquete de {token.quantity} Enlaces — Comprador: {token.playerName} (+502 {displayPhone})
+                                          </strong>
+                                          <span style={{ fontSize: '0.74rem', color: '#cbd5e1', display: 'block', marginTop: '2px' }}>
+                                            ⚠️ Cada enlace es único y habilita solo un cartón en pantalla para el amigo que lo abra.
+                                          </span>
+                                        </div>
+                                        <button
+                                          type="button"
+                                          onClick={() => handleSendWhatsAppPass(token)}
+                                          style={{
+                                            padding: '6px 14px',
+                                            borderRadius: '8px',
+                                            background: 'linear-gradient(135deg, #16a34a, #22c55e)',
+                                            border: 'none',
+                                            color: '#fff',
+                                            fontWeight: 'bold',
+                                            fontSize: '0.76rem',
+                                            cursor: 'pointer',
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '4px'
+                                          }}
+                                        >
+                                          <span>📲</span> Enviar Paquete Completo por WhatsApp
+                                        </button>
+                                      </div>
+
+                                      <div style={{
+                                        display: 'grid',
+                                        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                                        gap: '8px',
+                                        maxHeight: '240px',
+                                        overflowY: 'auto'
+                                      }}>
+                                        {Array.from({ length: token.quantity || 1 }, (_, idx) => {
+                                          const num = idx + 1;
+                                          const giftTokenId = `tkn_gift_${token.orderId}_c${num}`;
+                                          const giftUrl = `${window.location.origin}/juegos/bingo?access=${giftTokenId}`;
+                                          return (
+                                            <div key={giftTokenId} style={{
+                                              display: 'flex',
+                                              alignItems: 'center',
+                                              justifyContent: 'space-between',
+                                              background: 'rgba(0, 0, 0, 0.4)',
+                                              border: '1px solid rgba(245, 158, 11, 0.3)',
+                                              borderRadius: '8px',
+                                              padding: '7px 10px',
+                                              fontSize: '0.74rem'
+                                            }}>
+                                              <div>
+                                                <span style={{ fontWeight: 'bold', color: '#fbbf24', marginRight: '6px' }}>
+                                                  Cartón #{num}
+                                                </span>
+                                                <code style={{ color: '#94a3b8', fontSize: '0.68rem' }}>
+                                                  ...c{num}
+                                                </code>
+                                              </div>
+                                              <div style={{ display: 'flex', gap: '4px' }}>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    navigator.clipboard.writeText(giftUrl);
+                                                    alert(`¡Enlace del Cartón #${num} copiado!\n\n${giftUrl}`);
+                                                  }}
+                                                  style={{
+                                                    padding: '3px 8px',
+                                                    borderRadius: '4px',
+                                                    background: 'rgba(255, 255, 255, 0.1)',
+                                                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                                                    color: '#fff',
+                                                    fontSize: '0.68rem',
+                                                    fontWeight: '600',
+                                                    cursor: 'pointer'
+                                                  }}
+                                                  title="Copiar este enlace"
+                                                >
+                                                  📋 Copiar
+                                                </button>
+                                                <button
+                                                  type="button"
+                                                  onClick={() => {
+                                                    const text = encodeURIComponent(
+                                                      `¡Hola! 🎟️ Te comparto tu enlace de Bingotenango para jugar tu cartón en vivo:\n\n` +
+                                                      `🎁 *Tu Cartón:* ${giftUrl}\n\n` +
+                                                      `⚠️ *Importante:* Cada link es único y habilita solo un cartón en pantalla. Ábrelo en tu celular para ingresar directamente a la sala.`
+                                                    );
+                                                    window.open(`https://wa.me/?text=${text}`, '_blank');
+                                                  }}
+                                                  style={{
+                                                    padding: '3px 8px',
+                                                    borderRadius: '4px',
+                                                    background: 'rgba(34, 197, 94, 0.2)',
+                                                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                                                    color: '#4ade80',
+                                                    fontSize: '0.68rem',
+                                                    fontWeight: 'bold',
+                                                    cursor: 'pointer'
+                                                  }}
+                                                  title="Compartir enlace con este contacto por WhatsApp"
+                                                >
+                                                  📲
+                                                </button>
+                                              </div>
+                                            </div>
+                                          );
+                                        })}
+                                      </div>
+                                    </td>
+                                  </tr>
+                                )}
+                              </Fragment>
+                            );
+                          })}
 
                           {allCashTokens.length === 0 && (
                             <tr>
@@ -5260,7 +5463,7 @@ export default function BingoHub() {
                     {/* SECCIÓN DETALLADA: JUGADORES DEL JUEGO SELECCIONADO */}
                     {selectedScheduledGame && (() => {
                       const isMatchActive = (activeGame?.scheduledGameId === selectedScheduledGame.id) || (selectedScheduledGame.id.includes(activeGame?.id || ''));
-                      const currentTokens = allAccessTokens.filter(t => t.scheduledGameId === selectedScheduledGame.id || (!t.scheduledGameId && isMatchActive));
+                      const currentTokens = allAccessTokens.filter(t => (t.scheduledGameId === selectedScheduledGame.id || (!t.scheduledGameId && isMatchActive)) && !t.id.startsWith('tkn_gift_'));
                       const currentOrders = allBingoOrders.filter(o => o.scheduledGameId === selectedScheduledGame.id || (!o.scheduledGameId && isMatchActive));
 
                       const filteredTokens = currentTokens.filter(t => {
@@ -5442,17 +5645,31 @@ export default function BingoHub() {
 
                                         {/* Cartones */}
                                         <td style={{ padding: '10px 14px' }}>
-                                          <span style={{
-                                            background: 'rgba(56, 189, 248, 0.15)',
-                                            border: '1px solid rgba(56, 189, 248, 0.3)',
-                                            color: '#38bdf8',
-                                            padding: '3px 8px',
-                                            borderRadius: '6px',
-                                            fontWeight: 'bold',
-                                            fontSize: '0.75rem'
-                                          }}>
-                                            🎟️ {token.quantity} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
-                                          </span>
+                                          {token.purchaseMode === 'gift' ? (
+                                            <span style={{
+                                              background: 'rgba(245, 158, 11, 0.2)',
+                                              border: '1px solid rgba(245, 158, 11, 0.5)',
+                                              color: '#fbbf24',
+                                              padding: '3px 8px',
+                                              borderRadius: '6px',
+                                              fontWeight: 'bold',
+                                              fontSize: '0.75rem'
+                                            }}>
+                                              🎁 Paquete {token.quantity} Links
+                                            </span>
+                                          ) : (
+                                            <span style={{
+                                              background: 'rgba(56, 189, 248, 0.15)',
+                                              border: '1px solid rgba(56, 189, 248, 0.3)',
+                                              color: '#38bdf8',
+                                              padding: '3px 8px',
+                                              borderRadius: '6px',
+                                              fontWeight: 'bold',
+                                              fontSize: '0.75rem'
+                                            }}>
+                                              🎟️ {token.quantity} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
+                                            </span>
+                                          )}
                                         </td>
 
                                         {/* Estado Pago */}

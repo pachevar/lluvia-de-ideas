@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo } from 'react';
+import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { 
   collection, doc, getDoc, getDocs, addDoc, updateDoc, setDoc, deleteDoc, 
@@ -10,7 +10,7 @@ import type {
   Sponsor, BingoCard, BingoAccessToken, BingoPlayerProfile 
 } from '../../types';
 import { compressImageWebP, blobToDataURL } from '../../utils/imageUpload';
-import { recordPlayerPurchase } from '../../services/bingoPlayerService';
+import { recordPlayerPurchase, autoDispatchPurchaseToTelegramIfLinked } from '../../services/bingoPlayerService';
 import './AdminBingoTab.css';
 
 
@@ -241,6 +241,7 @@ export default function AdminBingoTab() {
   const [accessTokensList, setAccessTokensList] = useState<BingoAccessToken[]>([]);
   const [tokenStatusFilter, setTokenStatusFilter] = useState<'all' | 'paid' | 'pending'>('all');
   const [tokenSearchQuery, setTokenSearchQuery] = useState('');
+  const [expandedGiftTokenId, setExpandedGiftTokenId] = useState<string | null>(null);
 
   // Cartera de Jugadores (CRM - bingo_players)
   const [playersList, setPlayersList] = useState<BingoPlayerProfile[]>([]);
@@ -760,7 +761,7 @@ export default function AdminBingoTab() {
 
     const isGift = token.purchaseMode === 'gift';
     const confirm = await showConfirm(
-      `¿Deseas confirmar el cobro en efectivo de Q${priceAmount}.00 para el jugador "${token.playerName || 'Jugador'}" (${token.quantity} ${isGift ? 'link(s) de regalo' : 'cartón(es)'})?\n\nAl confirmar, la sesión en el navegador del jugador se activará de inmediato y recibirá acceso a sus enlaces.`,
+      `¿Deseas confirmar el cobro en efectivo de Q${priceAmount}.00 para el jugador "${token.playerName || 'Jugador'}" (${isGift ? `PAQUETE COMPLETO DE ${token.quantity} LINKS` : `${token.quantity} cartón(es)`})?\n\nAl confirmar, se habilitarán simultáneamente todos los ${isGift ? token.quantity : 1} pases y el portal del comprador se desbloqueará de inmediato.`,
       "Confirmar Cobro en Efectivo",
       "💵",
       "SÍ, COBRAR Y HABILITAR",
@@ -811,8 +812,40 @@ export default function AdminBingoTab() {
           spentQ: priceAmount,
           webPushEnabled: false
         }).catch(() => {});
+
+        // Auto-despacho en Telegram si está vinculado
+        if (isGift) {
+          try {
+            const totalQty = token.quantity || 1;
+            const currentLinks = Array.from({ length: totalQty }, (_, idx) => ({
+              num: idx + 1,
+              url: `${window.location.origin}/juegos/bingo?access=tkn_gift_${token.orderId}_c${idx + 1}`
+            }));
+            await autoDispatchPurchaseToTelegramIfLinked({
+              phone: token.playerWhatsapp,
+              playerName: token.playerName,
+              tokenId: `tkn_gift_${token.orderId}_c1`,
+              quantity: totalQty,
+              url: `${window.location.origin}/juegos/bingo`,
+              purchaseMode: 'gift',
+              giftLinks: currentLinks
+            });
+          } catch (tgErr) {
+            console.warn("Aviso auto-despacho Telegram en Taquilla:", tgErr);
+          }
+        }
       }
-      await showAlert(`¡Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}! Los enlaces han sido habilitados con éxito. 🚀`, "Cobro Exitoso", "✅");
+
+      const openWa = await showConfirm(
+        `¡Cobro en efectivo de Q${priceAmount}.00 confirmado para ${token.playerName}!\n\n${isGift ? `Los ${token.quantity} enlaces del paquete están 100% habilitados.` : 'El cartón ha sido habilitado con éxito.'}\n\n¿Deseas abrir WhatsApp para enviar el mensaje oficial con los enlaces ahora?`,
+        "Cobro Exitoso",
+        "✅",
+        "SÍ, ABRIR WHATSAPP",
+        "LISTO"
+      );
+      if (openWa) {
+        handleSendWhatsAppToken({ ...token, status: 'active', paymentStatus: 'paid', paidAmount: priceAmount });
+      }
     } catch (err) {
       console.error("Error al confirmar cobro:", err);
       await showAlert("No se pudo confirmar el cobro en la base de datos.", "Error", "❌");
@@ -896,13 +929,14 @@ export default function AdminBingoTab() {
     showAlert(`¡Enlace exclusivo del pase copiado al portapapeles! 📋\n\n${playUrl}`, "Enlace Copiado", "🔗");
   };
 
+  // Lista de pases principales (oculta tokens hijos individuales tkn_gift_ para no saturar Taquilla)
+  const mainTokensList = useMemo(() => {
+    return accessTokensList.filter(t => !t.id.startsWith('tkn_gift_'));
+  }, [accessTokensList]);
+
   // Filtrado de pases de acceso
   const filteredTokensList = useMemo(() => {
-    return accessTokensList.filter(t => {
-      // Ocultar tokens hijos de regalo si no se están buscando explícitamente, para mostrar la orden principal
-      if (!tokenSearchQuery.trim() && t.id.startsWith('tkn_gift_')) {
-        return false;
-      }
+    return mainTokensList.filter(t => {
       const isPaid = t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0;
       if (tokenStatusFilter === 'paid' && !isPaid) return false;
       if (tokenStatusFilter === 'pending' && isPaid) return false;
@@ -910,19 +944,19 @@ export default function AdminBingoTab() {
         const q = tokenSearchQuery.toLowerCase();
         return (t.playerName || '').toLowerCase().includes(q) ||
           (t.playerWhatsapp || '').includes(q) ||
+          (t.orderId || '').toLowerCase().includes(q) ||
           t.id.toLowerCase().includes(q);
       }
       return true;
     });
-  }, [accessTokensList, tokenStatusFilter, tokenSearchQuery]);
+  }, [mainTokensList, tokenStatusFilter, tokenSearchQuery]);
 
   const pendingCashTokensList = useMemo(() => {
-    return accessTokensList.filter(t => 
+    return mainTokensList.filter(t => 
       t.paymentMethod === 'efectivo' && 
-      !t.id.startsWith('tkn_gift_') &&
       (t.paymentStatus === 'pending' || t.status === 'pending' || (!t.paidAmount && t.paymentStatus !== 'paid'))
     );
-  }, [accessTokensList]);
+  }, [mainTokensList]);
 
   // --------------------------------------------------------------------------
   // Lógica de Promotores de Venta
@@ -2327,7 +2361,7 @@ export default function AdminBingoTab() {
             <div className="bingo-card-header" style={{ flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <h3 className="bingo-card-title">
-                  <span>🎟️</span> Monitor de Pases & Taquilla en Vivo ({accessTokensList.length})
+                  <span>🎟️</span> Monitor de Pases & Taquilla en Vivo ({mainTokensList.length})
                 </h3>
                 <p className="bingo-card-subtitle" style={{ margin: 0 }}>
                   Todos los pases únicos emitidos para jugar. Puedes registrar cobros en efectivo y despachar enlaces por WhatsApp o Telegram.
@@ -2336,10 +2370,10 @@ export default function AdminBingoTab() {
 
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.75rem', color: '#16a34a', background: '#dcfce7', padding: '4px 10px', borderRadius: '20px', fontWeight: 'bold' }}>
-                  ✓ {accessTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length} Cobrados
+                  ✓ {mainTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length} Cobrados
                 </span>
                 <span style={{ fontSize: '0.75rem', color: '#d97706', background: '#fef3c7', padding: '4px 10px', borderRadius: '20px', fontWeight: 'bold' }}>
-                  ⏳ {accessTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length} Pendientes
+                  ⏳ {mainTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length} Pendientes
                 </span>
               </div>
             </div>
@@ -2355,9 +2389,9 @@ export default function AdminBingoTab() {
                     className={`bingo-col-btn ${tokenStatusFilter === f ? 'active' : ''}`}
                     style={{ fontSize: '0.78rem' }}
                   >
-                    {f === 'all' && `Todos (${accessTokensList.length})`}
-                    {f === 'paid' && `Cobrados (${accessTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length})`}
-                    {f === 'pending' && `💵 Efectivo Pendiente (${accessTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length})`}
+                    {f === 'all' && `Todos (${mainTokensList.length})`}
+                    {f === 'paid' && `Cobrados (${mainTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length})`}
+                    {f === 'pending' && `💵 Efectivo Pendiente (${mainTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length})`}
                   </button>
                 ))}
               </div>
@@ -2373,13 +2407,13 @@ export default function AdminBingoTab() {
             </div>
 
             {/* Tabla de Pases de Taquilla */}
-            <div className="bingo-table-wrapper" style={{ maxHeight: '380px', overflowY: 'auto' }}>
+            <div className="bingo-table-wrapper" style={{ maxHeight: '420px', overflowY: 'auto' }}>
               <table className="bingo-table" style={{ fontSize: '0.82rem' }}>
                 <thead>
                   <tr>
                     <th>PASE / ID</th>
                     <th>JUGADOR / WHATSAPP</th>
-                    <th>CARTONES</th>
+                    <th>MODALIDAD & CARTONES</th>
                     <th>TOTAL</th>
                     <th>ESTADO COBRO</th>
                     <th>ENLACE</th>
@@ -2395,160 +2429,329 @@ export default function AdminBingoTab() {
                     </tr>
                   ) : (
                     filteredTokensList.map(token => {
+                      const isGift = token.purchaseMode === 'gift';
                       const isPaid = token.paymentStatus === 'paid' || (token.status === 'active' && !!token.paidAmount && token.paymentStatus !== 'pending') || token.unitPriceQ === 0;
                       const isPendingCash = !isPaid && token.paymentMethod === 'efectivo';
                       const priceAmount = token.paidAmount || ((token.unitPriceQ || cardPriceQ || 10) * (token.quantity || 1));
                       const cleanPhone = (token.playerWhatsapp || '').replace(/\D/g, '');
+                      const isExpanded = expandedGiftTokenId === token.id;
 
                       return (
-                        <tr key={token.id}>
-                          <td>
-                            <code style={{ fontWeight: 700, fontSize: '0.82rem', background: '#f1f5f9', padding: '2px 6px', borderRadius: '6px', color: '#0f172a' }}>
-                              {token.id}
-                            </code>
-                          </td>
-                          <td>
-                            <strong style={{ display: 'block', color: '#0f172a' }}>{token.playerName || 'Jugador'}</strong>
-                            {cleanPhone ? (() => {
-                              const finalPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
-                              const displayDigits = cleanPhone.startsWith('502') ? cleanPhone.substring(3) : cleanPhone;
-                              return (
-                                <a
-                                  href={`https://wa.me/${finalPhone}`}
-                                  target="_blank"
-                                  rel="noopener noreferrer"
-                                  style={{ fontSize: '0.72rem', color: '#16a34a', textDecoration: 'none' }}
-                                >
-                                  📱 +502 {displayDigits}
-                                </a>
-                              );
-                            })() : (
-                              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Sin WhatsApp</span>
-                            )}
-                          </td>
-                          <td>
-                            <span style={{ fontWeight: 'bold', color: '#4338ca' }}>
-                              {token.quantity || 1} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
-                            </span>
-                            <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'block' }}>
-                              {token.tierName || 'Oficial'}
-                            </span>
-                          </td>
-                          <td>
-                            <strong style={{ color: '#059669', fontSize: '0.86rem' }}>
-                              Q {priceAmount}.00
-                            </strong>
-                          </td>
-                          <td>
-                            {isPaid ? (
-                              <span style={{ color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
-                                ✓ {token.paymentMethod === 'efectivo' ? 'Efectivo Cobrado' : 'Pagado'}
-                              </span>
-                            ) : isPendingCash ? (
-                              <span style={{ color: '#b45309', background: '#fef3c7', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
-                                💵 Efectivo Pendiente
-                              </span>
-                            ) : (
-                              <span style={{ color: '#b45309', background: '#fef3c7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
-                                ⏳ Pendiente
-                              </span>
-                            )}
-                          </td>
-                          <td>
-                            {token.linkSent ? (
-                              <span style={{ color: '#0284c7', background: 'rgba(2, 132, 199, 0.12)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>
-                                📲 Despachado ({token.linkSentCount || 1})
-                              </span>
-                            ) : (
-                              <span style={{ color: '#64748b', fontSize: '0.7rem' }}>
-                                No enviado
-                              </span>
-                            )}
-                          </td>
-                          <td style={{ textAlign: 'right' }}>
-                            <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-                              {!isPaid && (
+                        <Fragment key={token.id}>
+                          <tr key={token.id} style={{ background: isGift ? 'rgba(245, 158, 11, 0.03)' : undefined }}>
+                            <td>
+                              <code style={{ fontWeight: 700, fontSize: '0.82rem', background: isGift ? '#fef3c7' : '#f1f5f9', padding: '2px 6px', borderRadius: '6px', color: isGift ? '#92400e' : '#0f172a' }}>
+                                {token.id}
+                              </code>
+                              {isGift && (
+                                <span style={{ display: 'block', fontSize: '0.66rem', color: '#d97706', fontWeight: 'bold', marginTop: '2px' }}>
+                                  📦 PAQUETE
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              <strong style={{ display: 'block', color: '#0f172a' }}>{token.playerName || 'Jugador'}</strong>
+                              {cleanPhone ? (() => {
+                                const finalPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+                                const displayDigits = cleanPhone.startsWith('502') ? cleanPhone.substring(3) : cleanPhone;
+                                return (
+                                  <a
+                                    href={`https://wa.me/${finalPhone}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style={{ fontSize: '0.72rem', color: '#16a34a', textDecoration: 'none' }}
+                                  >
+                                    📱 +502 {displayDigits}
+                                  </a>
+                                );
+                              })() : (
+                                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Sin WhatsApp</span>
+                              )}
+                            </td>
+                            <td>
+                              {isGift ? (
+                                <>
+                                  <span style={{ fontWeight: 'bold', color: '#b45309', background: '#fef3c7', border: '1px solid #fde68a', padding: '3px 8px', borderRadius: '12px', display: 'inline-block' }}>
+                                    🎁 Paquete {token.quantity} Links
+                                  </span>
+                                  <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'block', marginTop: '2px' }}>
+                                    Para Amigos y Contactos
+                                  </span>
+                                </>
+                              ) : (
+                                <>
+                                  <span style={{ fontWeight: 'bold', color: '#4338ca' }}>
+                                    {token.quantity || 1} {token.quantity === 1 ? 'Cartón' : 'Cartones'}
+                                  </span>
+                                  <span style={{ fontSize: '0.68rem', color: '#64748b', display: 'block' }}>
+                                    {token.tierName || 'Oficial'}
+                                  </span>
+                                </>
+                              )}
+                            </td>
+                            <td>
+                              <strong style={{ color: '#059669', fontSize: '0.88rem' }}>
+                                Q {priceAmount}.00
+                              </strong>
+                              {isGift && (
+                                <span style={{ fontSize: '0.66rem', color: '#64748b', display: 'block' }}>
+                                  ({token.quantity} × Q{token.unitPriceQ || 10})
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              {isPaid ? (
+                                <span style={{ color: '#15803d', background: '#dcfce7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
+                                  ✓ {token.paymentMethod === 'efectivo' ? 'Efectivo Cobrado' : 'Pagado'}
+                                </span>
+                              ) : isPendingCash ? (
+                                <span style={{ color: '#b45309', background: '#fef3c7', border: '1px solid #fde68a', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
+                                  💵 Efectivo Pendiente
+                                </span>
+                              ) : (
+                                <span style={{ color: '#b45309', background: '#fef3c7', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700, display: 'inline-block' }}>
+                                  ⏳ Pendiente
+                                </span>
+                              )}
+                            </td>
+                            <td>
+                              {token.linkSent ? (
+                                <span style={{ color: '#0284c7', background: 'rgba(2, 132, 199, 0.12)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.7rem', fontWeight: 700 }}>
+                                  📲 Despachado ({token.linkSentCount || 1})
+                                </span>
+                              ) : (
+                                <span style={{ color: '#64748b', fontSize: '0.7rem' }}>
+                                  No enviado
+                                </span>
+                              )}
+                            </td>
+                            <td style={{ textAlign: 'right' }}>
+                              <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+                                {!isPaid && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleConfirmCashToken(token)}
+                                    style={{
+                                      padding: '5px 10px',
+                                      borderRadius: '8px',
+                                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                                      border: 'none',
+                                      color: '#ffffff',
+                                      fontSize: '0.74rem',
+                                      fontWeight: 'bold',
+                                      cursor: 'pointer',
+                                      boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                    title={isGift ? `Confirmar cobro de Q${priceAmount}.00 y habilitar todos los ${token.quantity} links` : "Confirmar cobro en efectivo y habilitar al jugador"}
+                                  >
+                                    💵 {isGift ? `Cobrar Paquete (${token.quantity} Links)` : 'Cobrar y Habilitar'}
+                                  </button>
+                                )}
+
+                                {isGift && (
+                                  <button
+                                    type="button"
+                                    onClick={() => setExpandedGiftTokenId(prev => prev === token.id ? null : token.id)}
+                                    style={{
+                                      padding: '4px 8px',
+                                      borderRadius: '6px',
+                                      background: isExpanded ? 'rgba(245, 158, 11, 0.25)' : 'rgba(245, 158, 11, 0.12)',
+                                      border: '1px solid rgba(245, 158, 11, 0.4)',
+                                      color: '#d97706',
+                                      fontSize: '0.72rem',
+                                      fontWeight: 'bold',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '3px'
+                                    }}
+                                    title="Ver todos los enlaces del paquete"
+                                  >
+                                    <span>📦</span> {isExpanded ? 'Ocultar Links ▴' : `Ver ${token.quantity} Links ▾`}
+                                  </button>
+                                )}
+
                                 <button
                                   type="button"
-                                  onClick={() => handleConfirmCashToken(token)}
+                                  onClick={() => handleSendWhatsAppToken(token)}
                                   style={{
-                                    padding: '5px 10px',
-                                    borderRadius: '8px',
-                                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
-                                    border: 'none',
-                                    color: '#ffffff',
-                                    fontSize: '0.74rem',
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(34, 197, 94, 0.15)',
+                                    border: '1px solid rgba(34, 197, 94, 0.4)',
+                                    color: '#16a34a',
+                                    fontSize: '0.72rem',
                                     fontWeight: 'bold',
-                                    cursor: 'pointer',
-                                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    gap: '4px'
+                                    cursor: 'pointer'
                                   }}
-                                  title="Confirmar cobro en efectivo y habilitar al jugador"
+                                  title={isGift ? "Enviar paquete completo de links por WhatsApp" : "Enviar enlace de acceso oficial por WhatsApp"}
                                 >
-                                  💵 Cobrar y Habilitar
+                                  📲 WhatsApp
                                 </button>
-                              )}
 
+                                <a
+                                  href={`https://t.me/Bingotenangobot?start=${token.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  style={{
+                                    padding: '4px 8px',
+                                    borderRadius: '6px',
+                                    background: 'rgba(34, 158, 217, 0.15)',
+                                    border: '1px solid rgba(34, 158, 217, 0.4)',
+                                    color: '#0284c7',
+                                    fontSize: '0.72rem',
+                                    fontWeight: 'bold',
+                                    textDecoration: 'none',
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Abrir y despachar en Telegram (@Bingotenangobot)"
+                                >
+                                  ✈️ Telegram
+                                </a>
 
-                              <button
-                                type="button"
-                                onClick={() => handleSendWhatsAppToken(token)}
-                                style={{
-                                  padding: '4px 8px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(34, 197, 94, 0.15)',
-                                  border: '1px solid rgba(34, 197, 94, 0.4)',
-                                  color: '#16a34a',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 'bold',
-                                  cursor: 'pointer'
-                                }}
-                                title="Enviar enlace de acceso oficial por WhatsApp"
-                              >
-                                📲 WhatsApp
-                              </button>
+                                {!isGift && (
+                                  <button
+                                    type="button"
+                                    onClick={() => handleCopyTokenLink(token.id)}
+                                    style={{
+                                      padding: '4px 8px',
+                                      borderRadius: '6px',
+                                      background: '#f1f5f9',
+                                      border: '1px solid #cbd5e1',
+                                      color: '#334155',
+                                      fontSize: '0.72rem',
+                                      cursor: 'pointer'
+                                    }}
+                                    title="Copiar enlace de juego al portapapeles"
+                                  >
+                                    📋
+                                  </button>
+                                )}
+                              </div>
+                            </td>
+                          </tr>
 
-                              <a
-                                href={`https://t.me/Bingotenangobot?start=${token.id}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                style={{
-                                  padding: '4px 8px',
-                                  borderRadius: '6px',
-                                  background: 'rgba(34, 158, 217, 0.15)',
-                                  border: '1px solid rgba(34, 158, 217, 0.4)',
-                                  color: '#0284c7',
-                                  fontSize: '0.72rem',
-                                  fontWeight: 'bold',
-                                  textDecoration: 'none',
-                                  cursor: 'pointer'
-                                }}
-                                title="Abrir y despachar en Telegram (@Bingotenangobot)"
-                              >
-                                ✈️ Telegram
-                              </a>
+                          {/* FILA DESPLEGABLE CON EL DETALLE DE LOS N LINKS DEL PAQUETE */}
+                          {isGift && isExpanded && (
+                            <tr key={`${token.id}_expanded`}>
+                              <td colSpan={7} style={{ background: '#fffbeb', padding: '14px 18px', borderLeft: '4px solid #f59e0b', borderBottom: '2px solid #fde68a' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                                  <div>
+                                    <strong style={{ color: '#92400e', fontSize: '0.86rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <span>🎁</span> Paquete de {token.quantity} Enlaces — Comprador: {token.playerName} (+502 {cleanPhone})
+                                    </strong>
+                                    <span style={{ fontSize: '0.72rem', color: '#78350f', display: 'block', marginTop: '2px' }}>
+                                      ⚠️ Cada enlace es único y habilita solo un cartón en pantalla para un contacto.
+                                    </span>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleSendWhatsAppToken(token)}
+                                    style={{
+                                      padding: '5px 12px',
+                                      borderRadius: '6px',
+                                      background: '#16a34a',
+                                      border: 'none',
+                                      color: '#ffffff',
+                                      fontWeight: 'bold',
+                                      fontSize: '0.74rem',
+                                      cursor: 'pointer',
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px'
+                                    }}
+                                  >
+                                    <span>📲</span> Enviar Paquete Completo por WhatsApp
+                                  </button>
+                                </div>
 
-                              <button
-                                type="button"
-                                onClick={() => handleCopyTokenLink(token.id)}
-                                style={{
-                                  padding: '4px 8px',
-                                  borderRadius: '6px',
-                                  background: '#f1f5f9',
-                                  border: '1px solid #cbd5e1',
-                                  color: '#334155',
-                                  fontSize: '0.72rem',
-                                  cursor: 'pointer'
-                                }}
-                                title="Copiar enlace de juego al portapapeles"
-                              >
-                                📋
-                              </button>
-                            </div>
-                          </td>
-                        </tr>
+                                <div style={{
+                                  display: 'grid',
+                                  gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                                  gap: '8px',
+                                  maxHeight: '240px',
+                                  overflowY: 'auto'
+                                }}>
+                                  {Array.from({ length: token.quantity || 1 }, (_, idx) => {
+                                    const num = idx + 1;
+                                    const giftTokenId = `tkn_gift_${token.orderId}_c${num}`;
+                                    const giftUrl = `${window.location.origin}/juegos/bingo?access=${giftTokenId}`;
+                                    return (
+                                      <div key={giftTokenId} style={{
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        justifyContent: 'space-between',
+                                        background: '#ffffff',
+                                        border: '1px solid #fcd34d',
+                                        borderRadius: '8px',
+                                        padding: '6px 10px',
+                                        fontSize: '0.74rem'
+                                      }}>
+                                        <div>
+                                          <span style={{ fontWeight: 'bold', color: '#b45309', marginRight: '6px' }}>
+                                            Cartón #{num}
+                                          </span>
+                                          <code style={{ color: '#64748b', fontSize: '0.68rem' }}>
+                                            ...c{num}
+                                          </code>
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '4px' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(giftUrl);
+                                              showAlert(`¡Enlace del Cartón #${num} copiado!\n\n${giftUrl}`, "Enlace Copiado", "📋");
+                                            }}
+                                            style={{
+                                              padding: '3px 7px',
+                                              borderRadius: '4px',
+                                              background: '#f1f5f9',
+                                              border: '1px solid #cbd5e1',
+                                              color: '#0f172a',
+                                              fontSize: '0.68rem',
+                                              fontWeight: '600',
+                                              cursor: 'pointer'
+                                            }}
+                                            title="Copiar este enlace"
+                                          >
+                                            📋 Copiar
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              const text = encodeURIComponent(
+                                                `¡Hola! 🎟️ Te comparto tu enlace exclusivo de Bingotenango para jugar tu cartón en vivo:\n\n` +
+                                                `🎁 *Tu Cartón:* ${giftUrl}\n\n` +
+                                                `⚠️ *Importante:* Cada link es único y habilita solo un cartón en pantalla. Ábrelo en tu celular para jugar directamente.`
+                                              );
+                                              window.open(`https://wa.me/?text=${text}`, '_blank');
+                                            }}
+                                            style={{
+                                              padding: '3px 7px',
+                                              borderRadius: '4px',
+                                              background: 'rgba(34, 197, 94, 0.15)',
+                                              border: '1px solid rgba(34, 197, 94, 0.4)',
+                                              color: '#16a34a',
+                                              fontSize: '0.68rem',
+                                              fontWeight: 'bold',
+                                              cursor: 'pointer'
+                                            }}
+                                            title="Compartir enlace con este contacto por WhatsApp"
+                                          >
+                                            📲
+                                          </button>
+                                        </div>
+                                      </div>
+                                    );
+                                  })}
+                                </div>
+                              </td>
+                            </tr>
+                          )}
+                        </Fragment>
                       );
                     })
                   )}
