@@ -1,6 +1,5 @@
 import React from 'react';
 import type { CustomHexagon } from '../../types';
-import { getHexLabel } from '../../utils/hexUtils';
 import { renderHexLayer } from './hexLayers';
 import './Hexagon.css';
 
@@ -68,10 +67,12 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
         {/* Indicador de acción interactiva */}
         {hasAction && !showLabel && <div className="hex-action-pill" />}
 
-        {/* Coordinadas / Etiqueta para Admin */}
+        {/* Coordenadas Cartesianas (Eje X: Columna, Eje Y: Fila) */}
         {showLabel && (
-          <div className="hex-admin-label">
-            {getHexLabel(data.row, data.col)}
+          <div className="hex-admin-label" title={`Coordenadas Cartesianas: X = ${data.col}, Y = ${data.row}`}>
+            <span style={{ color: '#38bdf8', fontWeight: 800 }}>X:</span>{data.col}
+            <span style={{ color: '#94a3b8', margin: '0 2px' }}>·</span>
+            <span style={{ color: '#34d399', fontWeight: 800 }}>Y:</span>{data.row}
           </div>
         )}
       </div>

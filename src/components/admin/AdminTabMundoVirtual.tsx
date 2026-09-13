@@ -51,6 +51,16 @@ const QUICK_ACTIONS = [
 
 const DECORATIVE_EMOJIS = ['🏰', '🌲', '🐉', '🏛️', '🏔️', '🌿', '⭐', '🚀', '💎', '🛡️', '⚡', '🌌'];
 
+export const getCartesianQuadrant = (col: number, row: number): string => {
+  if (col === 0 && row === 0) return 'Origen (0, 0)';
+  if (col === 0) return `Sobre Eje Y (${row > 0 ? 'Sur / +Y' : 'Norte / -Y'})`;
+  if (row === 0) return `Sobre Eje X (${col > 0 ? 'Este / +X' : 'Oeste / -X'})`;
+  if (col > 0 && row < 0) return 'Cuadrante I (+X, -Y)';
+  if (col < 0 && row < 0) return 'Cuadrante II (-X, -Y)';
+  if (col < 0 && row > 0) return 'Cuadrante III (-X, +Y)';
+  return 'Cuadrante IV (+X, +Y)';
+};
+
 interface AdminTabMundoVirtualProps {
   localConfig: PortalConfig;
   setLocalConfig: React.Dispatch<React.SetStateAction<PortalConfig | null>>;
@@ -66,6 +76,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
   const [showGradientBuilder, setShowGradientBuilder] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [showCartesianAxes, setShowCartesianAxes] = useState(true);
 
   const inspectorSectionRef = useRef<HTMLDivElement>(null);
 
@@ -244,7 +255,14 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
               </span>
               {editingHex ? (
                 <span className="inspector-coords-badge">
-                  📍 Editando Celda ({editingHex.row}, {editingHex.col}) — {editingHex.title || 'Sin Título'}
+                  <span>📍</span>
+                  <strong style={{ color: '#38bdf8' }}>X: {editingHex.col}</strong>
+                  <span style={{ color: '#94a3b8' }}>·</span>
+                  <strong style={{ color: '#34d399' }}>Y: {editingHex.row}</strong>
+                  <span style={{ opacity: 0.85, fontSize: '0.74rem', marginLeft: '4px' }}>
+                    [{getCartesianQuadrant(editingHex.col, editingHex.row)}]
+                  </span>
+                  <span style={{ marginLeft: '4px', color: '#f1f5f9' }}>— {editingHex.title || 'Sin Título'}</span>
                 </span>
               ) : (
                 <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
@@ -254,8 +272,28 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
             </div>
 
             <div className="map-canvas-toolbar-right">
+              {/* Toggle de Plano Cartesiano Didáctico */}
+              <button
+                type="button"
+                className={`btn btn-secondary btn-sm ${showCartesianAxes ? 'active' : ''}`}
+                onClick={() => setShowCartesianAxes(prev => !prev)}
+                style={{
+                  fontSize: '0.74rem',
+                  padding: '4px 10px',
+                  color: showCartesianAxes ? '#38bdf8' : '#94a3b8',
+                  borderColor: showCartesianAxes ? 'rgba(56, 189, 248, 0.5)' : 'rgba(255, 255, 255, 0.15)',
+                  background: showCartesianAxes ? 'rgba(56, 189, 248, 0.18)' : 'transparent',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+                title="Mostrar u ocultar los ejes del Plano Cartesiano (X, Y) y sus cuadrantes"
+              >
+                <span>📐</span> Plano Cartesiano: {showCartesianAxes ? 'Activo' : 'Oculto'}
+              </button>
+
               <span style={{ fontSize: '0.76rem', color: '#64748b' }}>
-                🖱️ Rueda para Zoom · Arrastra para explorar
+                🖱️ Rueda para Zoom · Arrastra libre
               </span>
               {editingHex && (
                 <button
@@ -277,6 +315,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
               hexWidth={142} 
               hexHeight={124} 
               showLabels={true} 
+              showCartesianAxes={showCartesianAxes}
               editingHexRow={editingHex?.row}
               editingHexCol={editingHex?.col}
             />
@@ -398,8 +437,13 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                         className="inspector-input"
                       />
                     </div>
-                    <div style={{ marginTop: '8px', fontSize: '0.78rem', color: '#94a3b8' }}>
-                      Coordenadas en la cuadrícula: <strong>Fila {editingHex.row}, Columna {editingHex.col}</strong>
+                    <div style={{ marginTop: '10px', fontSize: '0.8rem', color: '#94a3b8', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      <div>
+                        📐 Plano Cartesiano: <strong style={{ color: '#38bdf8' }}>X = {editingHex.col}</strong> (Columna) · <strong style={{ color: '#34d399' }}>Y = {editingHex.row}</strong> (Fila)
+                      </div>
+                      <div style={{ color: '#cbd5e1', fontSize: '0.76rem' }}>
+                        🧭 Posición: <strong style={{ color: '#fde68a' }}>{getCartesianQuadrant(editingHex.col, editingHex.row)}</strong>
+                      </div>
                     </div>
                   </div>
 

@@ -265,21 +265,85 @@
   font-size: 0.74rem;
 }
 
-/* Admin Label */
+/* Admin Label / Cartesian Label */
 .hex-admin-label {
   position: absolute;
   bottom: 8px;
   left: 50%;
   transform: translateX(-50%);
-  background: rgba(15, 23, 42, 0.9);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  color: #38bdf8;
-  padding: 2px 10px;
+  background: rgba(10, 15, 30, 0.92);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #ffffff;
+  padding: 2px 9px;
   border-radius: 10px;
-  font-size: 0.75rem;
+  font-size: 0.74rem;
   font-weight: 800;
   z-index: 100;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.5);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+/* Cartesian Axes & Didactic HUD */
+.cartesian-axes-svg {
+  pointer-events: none;
+  overflow: visible;
+}
+
+.cartesian-hud-badge {
+  position: absolute;
+  top: 14px;
+  left: 16px;
+  z-index: 100;
+  background: rgba(10, 15, 30, 0.88);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 14px;
+  padding: 8px 14px;
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.cartesian-hud-title {
+  font-size: 0.82rem;
+  font-weight: 900;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cartesian-hud-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  flex-wrap: wrap;
+}
+
+.cartesian-hud-x {
+  color: #7dd3fc;
+}
+
+.cartesian-hud-y {
+  color: #6ee7b7;
+}
+
+.cartesian-hud-origin {
+  color: #fbbf24;
+}
+
+.map-controls button.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.4), rgba(52, 211, 153, 0.4)) !important;
+  border-color: #38bdf8 !important;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.5);
 }
 
 /* Map viewport styles with deep cosmic atmosphere */
