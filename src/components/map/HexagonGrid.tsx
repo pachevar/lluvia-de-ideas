@@ -131,6 +131,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
           <div 
             style={{ width: '100%', height: '100%', position: 'relative', touchAction: 'none' }}
             onWheel={(e) => {
+              e.preventDefault();
               if (e.deltaY < 0) {
                 zoomIn(0.2, 250, "easeOut");
               } else if (e.deltaY > 0) {

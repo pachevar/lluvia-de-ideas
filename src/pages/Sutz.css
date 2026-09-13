@@ -17,7 +17,8 @@
 
 /* Contenedor Principal del Juego */
 .sutz-game-container {
-  position: relative;
+  position: fixed;
+  inset: 0;
   width: 100vw;
   height: 100vh;
   overflow: hidden;
@@ -30,17 +31,24 @@
    1. BARRA SUPERIOR GAMER (TOP GAME HUD)
    ========================================================================== */
 .sutz-top-game-hud {
-  position: absolute;
+  position: fixed;
   top: 0;
   left: 0;
   right: 0;
-  z-index: 100;
+  z-index: 150;
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 12px 18px;
   background: linear-gradient(180deg, rgba(6, 9, 19, 0.95) 0%, rgba(10, 15, 30, 0.82) 75%, rgba(6, 9, 19, 0) 100%);
   pointer-events: none;
+}
+
+/* Evitar que el badge del plano cartesiano se sobreponga al perfil del estudiante */
+.sutz-game-container .cartesian-hud-badge {
+  top: 84px;
+  left: 18px;
+  z-index: 60;
 }
 
 .sutz-hud-left,
