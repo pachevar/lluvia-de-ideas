@@ -506,37 +506,42 @@
 
 .map-controls {
   position: absolute;
-  bottom: 95px;
-  right: 24px;
-  z-index: 100;
+  top: 86px;
+  right: 20px;
+  z-index: 120;
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: 8px;
+  background: var(--sutz-elevation-2, rgba(15, 23, 42, 0.9));
+  padding: 6px;
+  border-radius: 18px;
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.65), 0 0 16px rgba(56, 189, 248, 0.15);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
 }
 
 .map-controls button {
-  width: 44px;
-  height: 44px;
-  border-radius: 14px;
-  background: var(--sutz-btn-base-bg);
-  border: 1.5px solid var(--sutz-btn-base-border);
+  width: 42px;
+  height: 42px;
+  border-radius: 13px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  font-size: 1.2rem;
+  font-size: 1.18rem;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: var(--sutz-shadow-md), inset 0 1px 1px hsla(210, 100%, 90%, 0.15);
-  backdrop-filter: var(--sutz-glass-blur);
-  -webkit-backdrop-filter: var(--sutz-glass-blur);
-  transition: all 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+  transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .map-controls button:hover {
-  background: var(--sutz-glass-bg);
-  border-color: var(--sutz-color-guide-light);
-  box-shadow: var(--sutz-shadow-lg), 0 0 16px var(--sutz-color-guide-glow);
-  transform: translateY(-2px) scale(1.08);
+  background: rgba(56, 189, 248, 0.2);
+  border-color: rgba(56, 189, 248, 0.6);
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.45);
+  transform: scale(1.06);
 }
 
 .map-controls button:active {
@@ -592,18 +597,22 @@
   }
 
   .map-controls {
-    bottom: 84px;
-    right: 14px;
-    gap: 8px;
+    top: 76px;
+    bottom: auto;
+    right: 12px;
+    padding: 5px;
+    gap: 6px;
+    border-radius: 16px;
   }
   
   .map-controls button {
-    width: 42px;
-    height: 42px;
-    font-size: 1.15rem;
-    background: rgba(15, 23, 42, 0.9);
+    width: 38px;
+    height: 38px;
+    font-size: 1.05rem;
+    border-radius: 11px;
+    background: rgba(15, 23, 42, 0.92);
     border: 1px solid rgba(56, 189, 248, 0.4);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.6);
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.6);
   }
 
   .map-controls button:active {

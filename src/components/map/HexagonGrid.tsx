@@ -118,12 +118,14 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
 
       <TransformWrapper
         initialScale={initialScale}
-        minScale={0.25}
-        maxScale={3.2}
+        minScale={0.35}
+        maxScale={2.2}
         centerOnInit={true}
         limitToBounds={false}
         smooth={true}
-        wheel={{ step: 0.15 }}
+        wheel={{ step: 0.04 }}
+        zoomAnimation={{ animationType: 'easeOutQuad', animationTime: 280 }}
+        doubleClick={{ disabled: true }}
         pinch={{ step: 5 }}
         panning={{ 
           velocityDisabled: true,
@@ -140,8 +142,6 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
             )}
             
             <div className="map-controls" style={{ zIndex: 1000 }}>
-              <button onClick={() => zoomIn()} title="Acercar">+</button>
-              <button onClick={() => zoomOut()} title="Alejar">-</button>
               <button onClick={() => centerView()} title="Centrar Mapa (Origen)">⌂</button>
               <button 
                 type="button"
