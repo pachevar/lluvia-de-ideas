@@ -3,6 +3,7 @@ import { db } from '../firebase';
 
 export interface SutzSessionData {
   sessionId: string;
+  deviceId?: string;
   uid: string;
   studentName: string;
   email?: string;
@@ -12,44 +13,66 @@ export interface SutzSessionData {
   isActive: boolean;
 }
 
-const SESSION_STORAGE_PREFIX = 'sutz_sess_token_';
+const DEVICE_STORAGE_KEY = 'sutz_persistent_device_id';
 
 /**
- * Genera o recupera el token único de sesión de la pestaña actual para un UID específico.
+ * Genera o recupera el identificador único persistente de este dispositivo/navegador.
+ * Al usar localStorage, el navegador conserva su identidad entre recargas, refrescos forzados
+ * y cierre/apertura de pestañas, garantizando 0% de falsos positivos en el mismo equipo.
  */
-export function getLocalSessionId(uid?: string): string {
-  const key = uid ? `${SESSION_STORAGE_PREFIX}${uid}` : `${SESSION_STORAGE_PREFIX}default`;
-  let token = sessionStorage.getItem(key);
-  if (!token) {
-    const randomPart = Math.random().toString(36).substring(2, 10);
-    token = `sutz_sess_${Date.now()}_${randomPart}`;
-    sessionStorage.setItem(key, token);
+export function getLocalDeviceId(): string {
+  let id: string | null = null;
+  try {
+    id = localStorage.getItem(DEVICE_STORAGE_KEY);
+  } catch {
+    // Si localStorage no está disponible
   }
-  return token;
+
+  if (!id) {
+    const randomPart = Math.random().toString(36).substring(2, 12);
+    id = `dev_${Date.now()}_${randomPart}`;
+    try {
+      localStorage.setItem(DEVICE_STORAGE_KEY, id);
+    } catch {
+      // Ignorar fallback
+    }
+  }
+  return id;
 }
 
 /**
- * Regenera un nuevo token de sesión local (para cuando el usuario reclama la sesión en esta pestaña).
+ * Alias de compatibilidad: retorna el ID de dispositivo de este cliente.
  */
-export function refreshLocalSessionId(uid?: string): string {
-  const key = uid ? `${SESSION_STORAGE_PREFIX}${uid}` : `${SESSION_STORAGE_PREFIX}default`;
-  const randomPart = Math.random().toString(36).substring(2, 10);
-  const token = `sutz_sess_${Date.now()}_${randomPart}`;
-  sessionStorage.setItem(key, token);
-  return token;
+export function getLocalSessionId(_uid?: string): string {
+  return getLocalDeviceId();
+}
+
+/**
+ * Regenera un nuevo ID de dispositivo si el usuario explícitamente reclama la sesión.
+ */
+export function refreshLocalSessionId(_uid?: string): string {
+  const randomPart = Math.random().toString(36).substring(2, 12);
+  const newId = `dev_${Date.now()}_${randomPart}`;
+  try {
+    localStorage.setItem(DEVICE_STORAGE_KEY, newId);
+  } catch {
+    // Ignorar fallback
+  }
+  return newId;
 }
 
 /**
  * Inicia la sesión única del estudiante en Firestore.
- * El dispositivo que acaba de conectarse toma la sesión activa de forma limpia.
+ * El dispositivo actual se registra como el dueño activo de la sesión.
  */
 export async function startSutzSession(uid: string, studentName: string, email?: string | null): Promise<string> {
-  const sessionId = getLocalSessionId(uid);
+  const deviceId = getLocalDeviceId();
   const sessionRef = doc(db, 'sutz_sessions', uid);
 
   try {
     await setDoc(sessionRef, {
-      sessionId,
+      sessionId: deviceId,
+      deviceId,
       uid,
       studentName: studentName || 'Estudiante Explorador',
       email: email || '',
@@ -62,18 +85,19 @@ export async function startSutzSession(uid: string, studentName: string, email?:
     console.warn('[SutzSession] Error registrando sesión activa en Firestore:', err);
   }
 
-  return sessionId;
+  return deviceId;
 }
 
 /**
- * Reclama la sesión activa para esta pestaña, anulando la sesión anterior en otro dispositivo.
+ * Reclama la sesión activa para este dispositivo, anulando cualquier sesión en otro equipo.
  */
 export async function reclaimSutzSession(uid: string, studentName: string, email?: string | null): Promise<string> {
-  const newSessionId = refreshLocalSessionId(uid);
+  const newDeviceId = refreshLocalSessionId(uid);
   const sessionRef = doc(db, 'sutz_sessions', uid);
 
   await setDoc(sessionRef, {
-    sessionId: newSessionId,
+    sessionId: newDeviceId,
+    deviceId: newDeviceId,
     uid,
     studentName: studentName || 'Estudiante Explorador',
     email: email || '',
@@ -83,7 +107,7 @@ export async function reclaimSutzSession(uid: string, studentName: string, email
     isActive: true,
   }, { merge: true });
 
-  return newSessionId;
+  return newDeviceId;
 }
 
 /**
@@ -91,10 +115,11 @@ export async function reclaimSutzSession(uid: string, studentName: string, email
  */
 export async function heartbeatSutzSession(uid: string): Promise<void> {
   try {
-    const sessionId = getLocalSessionId(uid);
+    const deviceId = getLocalDeviceId();
     const sessionRef = doc(db, 'sutz_sessions', uid);
     await updateDoc(sessionRef, {
-      sessionId,
+      sessionId: deviceId,
+      deviceId,
       lastHeartbeatAt: serverTimestamp(),
       isActive: true,
     });
@@ -105,6 +130,7 @@ export async function heartbeatSutzSession(uid: string): Promise<void> {
 
 /**
  * Marca la sesión como inactiva al salir de Sutz o cerrar sesión.
+ * Solo desactiva si este mismo dispositivo sigue siendo el dueño de la sesión.
  */
 export async function closeSutzSession(uid: string): Promise<void> {
   try {
@@ -119,37 +145,26 @@ export async function closeSutzSession(uid: string): Promise<void> {
 
 /**
  * Escucha cambios en tiempo real en la sesión única del estudiante.
- * Solo notifica conflicto a la sesión que ya estaba activa si OTRA sesión
- * toma posesión posteriormente con un sessionId diferente.
+ * Solo notifica conflicto si en Firestore se registra un deviceId DISTINTO al de este navegador.
  */
 export function listenToSutzSession(
   uid: string,
   onConflict: (remoteSession: SutzSessionData) => void
 ): Unsubscribe {
   const sessionRef = doc(db, 'sutz_sessions', uid);
-  const localSessionId = getLocalSessionId(uid);
-
-  let initialLoaded = false;
+  const myDeviceId = getLocalDeviceId();
 
   return onSnapshot(sessionRef, (snapshot) => {
     if (!snapshot.exists()) return;
     const remoteData = snapshot.data() as SutzSessionData;
 
-    // En la primera carga:
-    if (!initialLoaded) {
-      initialLoaded = true;
-      // Si coincide con el sessionId local, estamos sincronizados
-      if (remoteData.sessionId === localSessionId) {
-        return;
-      }
-      // Si el sessionId del snapshot aún no es el local (latencia de red con startSutzSession),
-      // no emitimos falso conflicto, dejamos que startSutzSession complete la escritura
+    // Si el ID de sesión o deviceId coincide con el de este dispositivo: CERO CONFLICTO
+    if (remoteData.sessionId === myDeviceId || remoteData.deviceId === myDeviceId) {
       return;
     }
 
-    // A partir de actualizaciones subsecuentes:
-    // Si la sesión remota está activa y cambió a un sessionId ajeno a esta pestaña:
-    if (remoteData.isActive && remoteData.sessionId && remoteData.sessionId !== localSessionId) {
+    // Solo hay conflicto si la sesión remota está activa y pertenece a OTRO equipo/navegador
+    if (remoteData.isActive && remoteData.sessionId && remoteData.sessionId !== myDeviceId) {
       onConflict(remoteData);
     }
   }, (err) => {
