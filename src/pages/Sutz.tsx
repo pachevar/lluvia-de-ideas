@@ -250,24 +250,48 @@ export default function Sutz() {
   // GESTIÓN DE SESIÓN ÚNICA Y PRESENCIA ESCOLAR EN SUTZ
   // =========================================================================
   useEffect(() => {
-    if (!user) return;
+    if (!user?.uid) return;
 
     const studentName = userProfile?.displayName || user.displayName || (user.email ? user.email.split('@')[0] : 'Estudiante');
-    const allianceId = localStorage.getItem('sutz_student_alliance') || 'Hermandad del Quetzal Solar';
 
-    // 1. Iniciar sesión única en Firestore
+    // 1. Iniciar sesión única en Firestore para este UID
     startSutzSession(user.uid, studentName, user.email).catch(err => {
       console.warn('Error iniciando sesión única en Sutz:', err);
     });
 
-    // 2. Escuchar conflictos de sesión concurrente
+    // 2. Escuchar conflictos de sesión concurrente solo si hay otra pestaña activa reciente
     const unsubSession = listenToSutzSession(user.uid, (remote) => {
       setRemoteSession(remote);
       setIsSessionConflictOpen(true);
       sutzAudio.playError();
     });
 
-    // 3. Publicar presencia activa del estudiante
+    // 3. Escuchar conteo de compañeros en línea
+    const unsubPeers = listenToOnlineStudents((peers) => {
+      setOnlinePeersCount(peers.length);
+    });
+
+    // 4. Heartbeat periódico cada 40 segundos
+    const heartbeatInterval = setInterval(() => {
+      heartbeatSutzSession(user.uid);
+    }, 40000);
+
+    return () => {
+      clearInterval(heartbeatInterval);
+      unsubSession();
+      unsubPeers();
+      closeSutzSession(user.uid);
+      setStudentOffline(user.uid);
+    };
+  }, [user?.uid]);
+
+  // Actualización reactiva de presencia en mapa (coordenadas, nivel) sin reiniciar sesión
+  useEffect(() => {
+    if (!user?.uid) return;
+
+    const studentName = userProfile?.displayName || user.displayName || (user.email ? user.email.split('@')[0] : 'Estudiante');
+    const allianceId = localStorage.getItem('sutz_student_alliance') || 'Hermandad del Quetzal Solar';
+
     publishStudentPresence({
       uid: user.uid,
       displayName: studentName,
@@ -279,36 +303,7 @@ export default function Sutz() {
       isOnline: true,
       currentCoord: currentHexCoord,
     }).catch(console.error);
-
-    // 4. Escuchar conteo de compañeros en línea
-    const unsubPeers = listenToOnlineStudents((peers) => {
-      setOnlinePeersCount(peers.length);
-    });
-
-    // 5. Heartbeat periódico cada 40 segundos
-    const heartbeatInterval = setInterval(() => {
-      heartbeatSutzSession(user.uid);
-      publishStudentPresence({
-        uid: user.uid,
-        displayName: studentName,
-        photoURL: userProfile?.photoURL || user.photoURL || null,
-        allianceId,
-        allianceName: allianceId,
-        level: level || 1,
-        rankTitle: getRankTitle(level || 1),
-        isOnline: true,
-        currentCoord: currentHexCoord,
-      });
-    }, 40000);
-
-    return () => {
-      clearInterval(heartbeatInterval);
-      unsubSession();
-      unsubPeers();
-      closeSutzSession(user.uid);
-      setStudentOffline(user.uid);
-    };
-  }, [user, userProfile, level, currentHexCoord]);
+  }, [user?.uid, currentHexCoord, level, userProfile?.displayName]);
 
   const handleOpenModal = (type: 'profile' | 'tree' | 'codex' | 'quests' | 'inventory' | 'settings' | 'alliances' | 'coordination') => {
     sutzAudio.playOpenModal();

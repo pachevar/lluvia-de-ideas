@@ -45,9 +45,7 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
       position: 'fixed',
       inset: 0,
       zIndex: 100000,
-      background: 'rgba(3, 7, 18, 0.95)',
-      backdropFilter: 'blur(20px)',
-      WebkitBackdropFilter: 'blur(20px)',
+      background: '#080c16fa',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
@@ -55,10 +53,10 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
     }}>
       <div style={{
         width: '100%',
-        maxWidth: '460px',
-        background: 'linear-gradient(165deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-        border: '1px solid rgba(239, 68, 68, 0.5)',
-        boxShadow: '0 25px 50px rgba(0, 0, 0, 0.8), 0 0 35px rgba(239, 68, 68, 0.25)',
+        maxWidth: '480px',
+        background: 'var(--sutz-elevation-2, #1e2536)',
+        border: '1.5px solid rgba(239, 68, 68, 0.45)',
+        boxShadow: '0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(239, 68, 68, 0.2)',
         borderRadius: '24px',
         padding: '30px',
         color: '#f8fafc',
@@ -116,21 +114,21 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
         </h3>
 
         <p style={{
-          margin: '0 0 20px 0',
+          margin: '0 0 16px 0',
           fontSize: '0.86rem',
           lineHeight: 1.55,
           color: '#cbd5e1'
         }}>
-          Tu cuenta de estudiante ha iniciado sesión en Sutz desde otro navegador o dispositivo. Por seguridad escolar y para evitar pérdida de Jade y pergaminos, <strong>solo se permite una sesión activa</strong> a la vez.
+          La cuenta <strong style={{ color: '#ffffff' }}>{user?.email || remoteSession?.email || 'de estudiante'}</strong> ya tiene una sesión abierta en otra pestaña o dispositivo. Por integridad del progreso y seguridad escolar, <strong>solo se permite una sesión activa</strong> por cuenta.
         </p>
 
         {remoteSession?.userAgent && (
           <div style={{
-            background: 'rgba(2, 6, 23, 0.6)',
+            background: 'var(--sutz-elevation-1, #151b27)',
             border: '1px solid rgba(148, 163, 184, 0.2)',
             borderRadius: '12px',
             padding: '10px 14px',
-            marginBottom: '22px',
+            marginBottom: '16px',
             fontSize: '0.76rem',
             color: '#94a3b8',
             textAlign: 'left'
@@ -139,6 +137,20 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
             <div style={{ wordBreak: 'break-all' }}>{remoteSession.userAgent}</div>
           </div>
         )}
+
+        <div style={{
+          background: 'rgba(56, 189, 248, 0.08)',
+          border: '1px solid rgba(56, 189, 248, 0.25)',
+          borderRadius: '12px',
+          padding: '10px 14px',
+          marginBottom: '20px',
+          fontSize: '0.76rem',
+          color: '#bae6fd',
+          textAlign: 'left',
+          lineHeight: 1.45
+        }}>
+          💡 <strong>Nota para pruebas:</strong> Si abres dos pestañas en el mismo navegador normal, ambas compartirán la misma cuenta. Para probar con dos correos diferentes a la vez, abre una de las cuentas en una <strong>Ventana de Incógnito</strong> o en otro navegador (Chrome / Firefox / Edge).
+        </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
