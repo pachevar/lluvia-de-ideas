@@ -16,7 +16,7 @@ export const HexIntroModal: React.FC<HexIntroModalProps> = ({ hexagon, onClose, 
   const characterBadge = intro?.characterBadge?.trim() || 'Anfitrión del Saber';
   const welcomeTitle = intro?.welcomeTitle?.trim() || (hexagon.title ? `¡Explora ${hexagon.title}!` : '¡Bienvenido a este Destino!');
   const description = intro?.description?.trim() || 'Adéntrate en este espacio de aprendizaje interactivo. Descubre nuevos desafíos, herramientas y aventuras diseñadas para expandir tu conocimiento.';
-  const buttonText = intro?.buttonText?.trim() || '🚀 ¡Entrar a la Aventura!';
+  const buttonText = intro?.buttonText?.trim() || 'Continuar a la Página ➔';
   const characterImage = intro?.characterImage;
 
   // Icono por defecto si no hay imagen de personaje

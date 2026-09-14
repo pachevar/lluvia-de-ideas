@@ -32,11 +32,59 @@
   filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 20px var(--hex-glow-color, var(--sutz-color-guide-glow)));
 }
 
+/* Estado Seleccionado al hacer UN SOLO CLIC */
+.hex-cell-wrapper.is-selected {
+  transform: scale(1.13) translateY(-10px);
+  z-index: 40;
+  filter: drop-shadow(0 16px 32px rgba(0, 0, 0, 0.85)) drop-shadow(0 0 22px var(--hex-glow-color, #38bdf8));
+}
+
+.hex-cell-wrapper.is-selected .hex-inner-border {
+  opacity: 1 !important;
+  background: linear-gradient(135deg, #ffffff 0%, var(--hex-glow-color, #38bdf8) 50%, #38bdf8 100%) !important;
+  inset: 0px !important;
+  animation: pulseSelectedHex 2s infinite ease-in-out;
+}
+
+@keyframes pulseSelectedHex {
+  0%, 100% {
+    filter: brightness(1) drop-shadow(0 0 6px var(--hex-glow-color, #38bdf8));
+  }
+  50% {
+    filter: brightness(1.4) drop-shadow(0 0 16px var(--hex-glow-color, #38bdf8));
+  }
+}
+
+.hex-cell-wrapper.is-selected .hex-title-badge {
+  background: hsla(222, 50%, 6%, 0.98);
+  border-color: var(--hex-glow-color, #38bdf8);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.8), 0 0 16px var(--hex-glow-color, rgba(56, 189, 248, 0.6));
+  transform: translateY(2px) scale(1.08);
+}
+
+.hex-cell-wrapper.is-selected .hex-title-text {
+  color: #ffffff !important;
+  font-weight: 800;
+  text-shadow: 0 0 10px var(--hex-glow-color, rgba(56, 189, 248, 0.9));
+}
+
+.hex-cell-wrapper.is-selected .hex-interactive-content {
+  transform: scale(1.12);
+  filter: drop-shadow(0 0 12px var(--hex-glow-color, rgba(56, 189, 248, 0.75)));
+  transition: transform 0.3s ease, filter 0.3s ease;
+}
+
 .hex-cell-wrapper.has-bg-image:hover,
 .hex-cell-wrapper.has-bg-image.is-editing {
   transform: scale(1.08) translateY(-6px);
   z-index: 25;
   filter: drop-shadow(0 12px 24px rgba(0, 0, 0, 0.8)) drop-shadow(0 0 18px var(--hex-glow-color, var(--sutz-color-guide-glow)));
+}
+
+.hex-cell-wrapper.has-bg-image.is-selected {
+  transform: scale(1.11) translateY(-8px);
+  z-index: 45;
+  filter: drop-shadow(0 14px 28px rgba(0, 0, 0, 0.9)) drop-shadow(0 0 22px var(--hex-glow-color, #38bdf8));
 }
 
 .hex-cell {

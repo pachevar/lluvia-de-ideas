@@ -178,6 +178,7 @@ export default function Sutz() {
   const [onlinePeersCount, setOnlinePeersCount] = useState<number>(1);
   const [currentHexCoord, setCurrentHexCoord] = useState<{ q: number; r: number; label?: string } | null>(null);
   const [selectedRelic, setSelectedRelic] = useState<MayanRelic | null>(null);
+  const [selectedHexId, setSelectedHexId] = useState<string | null>(null);
   const [activeIntroHex, setActiveIntroHex] = useState<CustomHexagon | null>(null);
 
   // Controles de mapa para botón de Centrar/Radar
@@ -192,7 +193,7 @@ export default function Sutz() {
 
   const storiesList = config.stories || [];
 
-  // Ejecución definitiva de la acción vinculada al hexágono
+  // Ejecución definitiva de la acción vinculada al hexágono (al pulsar el botón del modal)
   const executeHexAction = (hex: CustomHexagon) => {
     if (!hex.action || hex.action.type === 'none') return;
     
@@ -225,34 +226,22 @@ export default function Sutz() {
     }
   };
 
-  // DOBLE CLIC: Abre el modal interactivo de bienvenida y personaje antes de saltar
+  // DOBLE CLIC: Abre el modal interactivo con el personaje y el botón de continuar
   const handleHexDoubleClick = (hex: CustomHexagon) => {
     sutzAudio.playClick();
+    setSelectedHexId(hex.id);
     setCurrentHexCoord({ q: hex.col, r: hex.row, label: hex.title || hex.id });
     if (!hex.action || hex.action.type === 'none') return;
 
-    // Si el administrador configuró explícitamente enabled: false, va directo
-    if (hex.introModal && hex.introModal.enabled === false) {
-      executeHexAction(hex);
-    } else {
-      sutzAudio.playOpenModal();
-      setActiveIntroHex(hex);
-    }
+    sutzAudio.playOpenModal();
+    setActiveIntroHex(hex);
   };
 
-  // CLIC SIMPLE: Selección y navegación (o modal de bienvenida si está activado)
+  // CLIC SIMPLE: SOLO resalta el hexágono, su título y su ícono. No realiza ninguna otra acción.
   const handleHexClick = (hex: CustomHexagon) => {
     sutzAudio.playClick();
+    setSelectedHexId(hex.id);
     setCurrentHexCoord({ q: hex.col, r: hex.row, label: hex.title || hex.id });
-    if (!hex.action || hex.action.type === 'none') return;
-
-    // Si tiene modal habilitado explícitamente, abrimos el modal de bienvenida
-    if (hex.introModal?.enabled) {
-      sutzAudio.playOpenModal();
-      setActiveIntroHex(hex);
-    } else {
-      executeHexAction(hex);
-    }
   };
 
   // Generación de celdas para el mapa
@@ -574,6 +563,7 @@ export default function Sutz() {
         cells={cells} 
         onHexClick={handleHexClick}
         onHexDoubleClick={handleHexDoubleClick}
+        selectedHexId={selectedHexId}
         onTransformReady={(controls) => {
           mapControlsRef.current = controls;
         }}

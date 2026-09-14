@@ -13,6 +13,7 @@ interface HexagonGridProps {
   showLabels?: boolean;
   editingHexRow?: number | null;
   editingHexCol?: number | null;
+  selectedHexId?: string | null;
   onTransformReady?: (controls: { zoomIn: () => void; zoomOut: () => void; centerView: () => void }) => void;
   showCartesianAxes?: boolean;
 }
@@ -40,6 +41,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   showLabels = false,
   editingHexRow = null,
   editingHexCol = null,
+  selectedHexId = null,
   onTransformReady,
   showCartesianAxes = true
 }) => {
@@ -383,6 +385,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
                     onDoubleClick={onHexDoubleClick ? () => onHexDoubleClick(cell) : undefined}
                     showLabel={showLabels}
                     isEditing={editingHexRow === cell.row && editingHexCol === cell.col}
+                    isSelected={selectedHexId === cell.id}
                   />
                 ))}
               </div>

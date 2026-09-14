@@ -13,6 +13,7 @@ interface HexagonCellProps {
   onDoubleClick?: () => void;
   showLabel?: boolean;
   isEditing?: boolean;
+  isSelected?: boolean;
 }
 
 const HexagonCellComponent: React.FC<HexagonCellProps> = ({
@@ -24,7 +25,8 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
   onClick,
   onDoubleClick,
   showLabel,
-  isEditing
+  isEditing,
+  isSelected
 }) => {
   const lastTapRef = React.useRef<number>(0);
   const isUnexplored = data.id?.startsWith('unexplored-');
@@ -60,7 +62,7 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
 
   return (
     <div
-      className={`hex-cell-wrapper ${isEditing ? 'is-editing' : ''} ${isUnexplored ? 'is-unexplored' : ''} ${hasAction ? 'has-action' : ''} ${hasBgImage ? 'has-bg-image' : ''}`}
+      className={`hex-cell-wrapper ${isSelected ? 'is-selected' : ''} ${isEditing ? 'is-editing' : ''} ${isUnexplored ? 'is-unexplored' : ''} ${hasAction ? 'has-action' : ''} ${hasBgImage ? 'has-bg-image' : ''}`}
       title={data.title}
       style={baseStyle}
       onClick={onClick}
