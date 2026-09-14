@@ -255,6 +255,7 @@ export default function Sutz() {
     const studentName = userProfile?.displayName || user.displayName || (user.email ? user.email.split('@')[0] : 'Estudiante');
 
     // 1. Iniciar sesión única en Firestore para este UID
+    setIsSessionConflictOpen(false);
     startSutzSession(user.uid, studentName, user.email).catch(err => {
       console.warn('Error iniciando sesión única en Sutz:', err);
     });
