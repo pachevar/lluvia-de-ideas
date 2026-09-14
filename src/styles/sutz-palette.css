@@ -71,12 +71,14 @@
   --sutz-color-wisdom-surface: hsla(245, 68%, 68%, 0.12);
 
   /* --------------------------------------------------------------------------
-     3. CONTRASTES DE TEXTO Y TIPOGRAFÍA DIDÁCTICA
+     3. CONTRASTES DE TEXTO Y TIPOGRAFÍA DIDÁCTICA (Neutros sobre oscuro)
+     Regla: El texto principal siempre en blanco hueso (#F8FAFC) o gris claro (#E0E0E0),
+     jamás en neón saturado. Neón reservado exclusivamente a acentos de interacción.
      -------------------------------------------------------------------------- */
-  --sutz-text-bright: hsl(210, 40%, 98%);           /* #f8fafc: Títulos y lecturas principales */
-  --sutz-text-normal: hsl(215, 20%, 82%);           /* #cbd5e1: Textos explicativos */
-  --sutz-text-muted: hsl(215, 16%, 62%);            /* #94a3b8: Subtítulos, metadatos y coordenadas */
-  --sutz-text-subtle: hsl(215, 14%, 42%);           /* #64748b: Desactivados y bordes neutros */
+  --sutz-text-bright: #f8fafc;                      /* Blanco hueso: Títulos y lecturas principales */
+  --sutz-text-normal: #e0e0e0;                      /* Gris claro (#E0E0E0): Textos explicativos legibles */
+  --sutz-text-muted: #94a3b8;                       /* Gris neutro: Subtítulos, metadatos y etiquetas */
+  --sutz-text-subtle: #64748b;                      /* Desactivados y bordes neutros */
 
   /* --------------------------------------------------------------------------
      4. COORDENADAS PLANO CARTESIANO (Ejes Didácticos)
@@ -96,13 +98,20 @@
   --sutz-shadow-action: 0 0 14px var(--sutz-color-challenge-glow);
 
   /* --------------------------------------------------------------------------
-     6. ESTILO DE CUADROS, PANELES Y VIDRIO TEMPLADO (GLASSMORPHISM)
+     6. SISTEMA DE ELEVACIÓN SÓLIDA DE MATERIAL DESIGN (Cero sobrecarga de GPU)
+     Sustituye transparencias dinámicas (backdrop-filter) por capas sólidas escalonadas.
      -------------------------------------------------------------------------- */
-  --sutz-glass-bg: linear-gradient(145deg, hsla(220, 40%, 10%, 0.94) 0%, hsla(222, 45%, 6%, 0.97) 100%);
-  --sutz-glass-border: hsla(199, 89%, 48%, 0.35);
-  --sutz-glass-border-muted: hsla(215, 25%, 35%, 0.25);
-  --sutz-glass-bevel: inset 0 1px 1px hsla(210, 100%, 90%, 0.15);
-  --sutz-glass-blur: blur(16px);
+  --sutz-elevation-0: #0d111a;                      /* Fondo base profundo */
+  --sutz-elevation-1: #151b27;                      /* Superficie neutra / paneles */
+  --sutz-elevation-2: #1e2536;                      /* Pods, tarjetas y barras */
+  --sutz-elevation-3: #262f43;                      /* Modales y diálogos destacados */
+  --sutz-elevation-hover: #2e3850;                  /* Estado interactivo elevado */
+
+  --sutz-glass-bg: #151b27;                         /* Opacidad sólida limpia para paneles */
+  --sutz-glass-border: hsla(215, 25%, 35%, 0.4);   /* Borde sólido sobrio */
+  --sutz-glass-border-muted: hsla(215, 20%, 30%, 0.3);
+  --sutz-glass-bevel: inset 0 1px 1px hsla(210, 30%, 80%, 0.1);
+  --sutz-glass-blur: none;                          /* Eliminado blur dinámico para GPU óptima */
 
   /* --------------------------------------------------------------------------
      7. ESTILO DE BOTONES Y CÁPSULAS INTERACTIVAS

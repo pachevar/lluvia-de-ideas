@@ -63,13 +63,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--sutz-stone-card);
+  background: var(--sutz-elevation-1);
   border: 1.5px solid var(--sutz-stone-border);
   border-radius: 22px;
   padding: 5px 14px 5px 6px;
   box-shadow: var(--sutz-shadow-stone), var(--sutz-bevel-stone);
-  backdrop-filter: var(--sutz-glass-blur);
-  -webkit-backdrop-filter: var(--sutz-glass-blur);
   cursor: pointer;
   transition: all 0.25s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
@@ -228,12 +226,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--sutz-glass-bg);
+  background: var(--sutz-elevation-1);
   border: 1.5px solid var(--sutz-glass-border-muted);
   border-radius: 20px;
   padding: 5px 12px 5px 10px;
-  backdrop-filter: var(--sutz-glass-blur);
-  -webkit-backdrop-filter: var(--sutz-glass-blur);
   box-shadow: var(--sutz-shadow-md), var(--sutz-glass-bevel);
   transition: all 0.22s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   cursor: pointer;
@@ -358,12 +354,10 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  background: var(--sutz-glass-bg);
+  background: var(--sutz-elevation-1);
   border: 1.5px solid var(--sutz-glass-border-muted);
   border-radius: 18px;
   padding: 6px 14px;
-  backdrop-filter: var(--sutz-glass-blur);
-  -webkit-backdrop-filter: var(--sutz-glass-blur);
   box-shadow: var(--sutz-shadow-md), var(--sutz-glass-bevel);
 }
 
@@ -401,7 +395,7 @@
   width: 40px;
   height: 40px;
   border-radius: 14px;
-  background: var(--sutz-btn-base-bg);
+  background: var(--sutz-elevation-1);
   border: 1.5px solid var(--sutz-btn-base-border);
   color: #ffffff;
   font-size: 1.15rem;
@@ -410,7 +404,6 @@
   justify-content: center;
   cursor: pointer;
   box-shadow: var(--sutz-shadow-md);
-  backdrop-filter: var(--sutz-glass-blur);
   transition: all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
@@ -530,16 +523,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--sutz-stone-card);
+  background: var(--sutz-elevation-1);
   border: 1.5px solid var(--sutz-stone-border);
   border-radius: 28px;
   padding: 8px 18px;
   box-shadow: 
     var(--sutz-shadow-stone), 
-    0 0 28px var(--sutz-color-guide-glow),
+    0 0 24px rgba(0, 0, 0, 0.4),
     var(--sutz-bevel-stone);
-  backdrop-filter: blur(24px);
-  -webkit-backdrop-filter: blur(24px);
   pointer-events: auto;
 }
 
@@ -659,18 +650,16 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(4, 7, 18, 0.82);
-  backdrop-filter: blur(14px);
-  -webkit-backdrop-filter: blur(14px);
+  background: #080c16fa;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  animation: fadeInModal 0.25s ease;
+  animation: fadeInModal 0.2s ease;
 }
 
 @keyframes fadeInModal {
-  from { opacity: 0; transform: scale(0.97); }
+  from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
 
@@ -679,17 +668,16 @@
   width: 100%;
   max-width: 580px;
   max-height: 88vh;
-  background: var(--sutz-glass-bg);
-  border: 2px solid var(--sutz-glass-border);
+  background: var(--sutz-elevation-2);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
   border-radius: 24px;
   box-shadow: 
     var(--sutz-shadow-lg), 
-    0 0 35px var(--sutz-color-guide-glow),
-    var(--sutz-glass-bevel);
+    0 20px 50px rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  color: #ffffff;
+  color: var(--sutz-text-normal);
 }
 
 .sutz-modal-header {
@@ -697,8 +685,39 @@
   align-items: center;
   justify-content: space-between;
   padding: 18px 22px;
-  border-bottom: 1px solid hsla(199, 89%, 48%, 0.2);
-  background: hsla(222, 45%, 8%, 0.7);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--sutz-elevation-1);
+}
+
+.sutz-logout-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: 100%;
+  padding: 12px 18px;
+  border-radius: 14px;
+  background: var(--sutz-elevation-0);
+  color: var(--sutz-text-normal);
+  border: 1.5px solid rgba(239, 68, 68, 0.4);
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sutz-logout-btn:hover {
+  background: rgba(239, 68, 68, 0.16);
+  border-color: #ef4444;
+  color: var(--sutz-text-bright);
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.3);
+  transform: translateY(-1px);
+}
+
+.sutz-logout-btn:active {
+  transform: scale(0.98);
 }
 
 .sutz-modal-title-group {

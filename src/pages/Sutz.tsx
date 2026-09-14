@@ -146,7 +146,7 @@ const MAYAN_RELICS: MayanRelic[] = [
 
 export default function Sutz() {
   const { config, loading } = usePortalConfig();
-  const { user, userProfile, loading: authLoading } = useAuth();
+  const { user, userProfile, loading: authLoading, logout } = useAuth();
   const { 
     resources, 
     addResources,
@@ -334,6 +334,20 @@ export default function Sutz() {
     setIsAlliancesModalOpen(false);
     setIsCoordinationModalOpen(false);
     setSelectedRelic(null);
+  };
+
+  const handleLogout = async () => {
+    sutzAudio.playClick();
+    if (user?.uid) {
+      try {
+        await closeSutzSession(user.uid);
+        await setStudentOffline(user.uid);
+      } catch (err) {
+        console.error('Error cerrando sesión en Sutz:', err);
+      }
+    }
+    await logout();
+    handleCloseModals();
   };
 
   const handleClaimQuest = (questTitle: string) => {
@@ -713,9 +727,29 @@ export default function Sutz() {
                   🔐 Iniciar Sesión para Guardar Progreso en la Nube
                 </button>
               ) : (
-                <div style={{ background: 'rgba(16, 185, 129, 0.12)', border: '1px solid rgba(16, 185, 129, 0.35)', padding: '10px 14px', borderRadius: '12px', color: '#34d399', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span>☁️</span>
-                  <span>Conectado como <strong>{user.email}</strong>. Tu progreso se sincroniza en tiempo real.</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '10px' }}>
+                  <div style={{ 
+                    background: 'var(--sutz-elevation-1)', 
+                    border: '1px solid rgba(16, 185, 129, 0.3)', 
+                    padding: '12px 14px', 
+                    borderRadius: '12px', 
+                    color: '#e0e0e0', 
+                    fontSize: '0.84rem', 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    gap: '10px' 
+                  }}>
+                    <span style={{ fontSize: '1.2rem' }}>☁️</span>
+                    <span>Conectado como <strong style={{ color: '#ffffff' }}>{user.email}</strong>. Sincronización en la nube activa.</span>
+                  </div>
+                  <button 
+                    className="sutz-logout-btn"
+                    onClick={handleLogout}
+                    title="Cerrar la sesión activa de estudiante y desconectarse de Sutz"
+                  >
+                    <span>🚪</span>
+                    <span>Cerrar Sesión de Estudiante</span>
+                  </button>
                 </div>
               )}
             </div>

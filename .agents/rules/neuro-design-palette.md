@@ -47,9 +47,10 @@ La predictibilidad visual reduce la tensión cognitiva porque el cerebro no tien
 
 ---
 
-## 4. Archivo de Tokens
+## 4. Archivo de Tokens y Sistema de Elevación
 
 Todas las implementaciones deben vincularse a las variables definidas en `src/styles/sutz-palette.css`:
+- `--sutz-elevation-0` a `--sutz-elevation-3` (Capas de opacidad sólida escalonada)
 - `--sutz-bg-space-void`
 - `--sutz-cell-bg-idle`
 - `--sutz-color-success`
@@ -57,3 +58,20 @@ Todas las implementaciones deben vincularse a las variables definidas en `src/st
 - `--sutz-color-challenge`
 - `--sutz-color-guide`
 - `--sutz-color-wisdom`
+- `--sutz-text-normal` (`#E0E0E0` - Blanco hueso/gris claro)
+- `--sutz-text-bright` (`#F8FAFC` - Alto contraste)
+
+---
+
+## 5. Ergonomía Visual de Rendimiento y Legibilidad
+
+1. **Neón Únicamente como Acento de Interacción**:
+   - Reserva las luces y resplandores neón exclusivamente para estados activos, recompensas (logros, medallas) o botones de acción principal (CTA).
+   - El texto principal de lectura debe mantenerse en tonos blanco hueso o gris claro (`#E0E0E0` / `#F8FAFC`) sobre fondos oscuros neutros (`#121212` / `#151B27`), jamás en colores neón saturados ni fosforescentes que cansen la vista.
+2. **Opacidad Sólida en Vez de Transparencias Dinámicas**:
+   - Queda desaconsejado el uso de `backdrop-filter: blur()` en tiempo real para evitar sobrecargar la GPU de tabletas y dispositivos móviles estudiantiles.
+   - Utilizar capas oscuras sólidas escalonadas con tonalidades de gris y azul oscuro (sistema de elevación Material Design).
+3. **Control Estricto de Contraste Figura-Fondo**:
+   - Los fondos detrás de modales y tarjetas oscuras deben ser superficies lisas o patrones estáticos de alta opacidad (`#080c16fa` / 98% opacidad).
+   - Queda prohibido dejar textos o elementos móviles en movimiento visibles detrás de ventanas abiertas para eliminar ruido visual y permitir una lectura rápida y sin distracciones.
+

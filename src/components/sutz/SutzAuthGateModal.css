@@ -3,27 +3,25 @@
   position: fixed;
   inset: 0;
   z-index: 99999;
-  background: radial-gradient(circle at center, rgba(10, 18, 38, 0.94) 0%, rgba(3, 7, 18, 0.98) 100%);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  background: #050814fa;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
-  animation: sutzGateFadeIn 0.3s ease-out;
+  animation: sutzGateFadeIn 0.25s ease-out;
 }
 
 @keyframes sutzGateFadeIn {
-  from { opacity: 0; transform: scale(0.97); }
+  from { opacity: 0; transform: scale(0.98); }
   to { opacity: 1; transform: scale(1); }
 }
 
 .sutz-auth-gate-card {
   width: 100%;
   max-width: 480px;
-  background: linear-gradient(170deg, rgba(15, 23, 42, 0.92) 0%, rgba(8, 14, 26, 0.96) 100%);
-  border: 1px solid var(--sutz-border-glow);
-  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.7), 0 0 35px rgba(56, 189, 248, 0.15);
+  background: var(--sutz-elevation-2);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 0, 0, 0.5);
   border-radius: 24px;
   padding: 32px;
   color: var(--sutz-text-bright);
