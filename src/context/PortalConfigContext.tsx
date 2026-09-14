@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { PortalConfig, TiendaConfig } from '../types';
+import type { PortalConfig, TiendaConfig, CustomHexagon } from '../types';
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
 import { subscribeArchetypeAssets } from '../services/archetypeAssetsService';
@@ -10,6 +10,7 @@ interface PortalConfigContextProps {
   config: PortalConfig;
   loading: boolean;
   saveConfigToFirestore: (newConfig: PortalConfig) => Promise<void>;
+  saveSutzMapToFirestore: (newMap: CustomHexagon[]) => Promise<void>;
   resetConfigToFirestore: () => Promise<void>;
 }
 
@@ -553,6 +554,26 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return () => unsubAssets();
   }, []);
 
+  // Sincronización en tiempo real con el documento independiente 'config/sutz_map'
+  // Desacopla el mapa de hexágonos para que nunca sature los 1MB de config/portal
+  useEffect(() => {
+    const sutzMapDocRef = doc(db, 'config', 'sutz_map');
+    const unsubMap = onSnapshot(sutzMapDocRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data.map) && data.map.length > 0) {
+          setConfig(prev => ({
+            ...prev,
+            map: data.map
+          }));
+        }
+      }
+    }, (err) => {
+      console.warn('[PortalConfigContext] Listener config/sutz_map:', err);
+    });
+    return () => unsubMap();
+  }, []);
+
   useEffect(() => {
     if (config && config.colors) {
       Object.entries(config.colors).forEach(([key, val]) => {
@@ -561,9 +582,30 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }
   }, [config]);
 
+  const saveSutzMapToFirestore = async (newMap: CustomHexagon[]) => {
+    const sutzMapDocRef = doc(db, 'config', 'sutz_map');
+    await setDoc(sutzMapDocRef, { map: newMap, updatedAt: new Date().toISOString() }, { merge: true });
+    setConfig((prev) => {
+      const updated = { ...prev, map: newMap };
+      try {
+        localStorage.setItem('portal_config_cache', JSON.stringify(updated));
+      } catch {}
+      return updated;
+    });
+  };
+
   const saveConfigToFirestore = async (newConfig: PortalConfig) => {
+    // IMPORTANTE: Excluir archetypeImages, journeyStageImages y map de config/portal
+    // para que NUNCA excedan el límite de 1MB de Firestore (1,048,576 bytes)
+    const { archetypeImages, journeyStageImages, map, ...portalDocData } = newConfig;
+
     const configDocRef = doc(db, 'config', 'portal');
-    await setDoc(configDocRef, newConfig, { merge: true });
+    await setDoc(configDocRef, portalDocData, { merge: true });
+
+    if (map && Array.isArray(map) && map.length > 0) {
+      await saveSutzMapToFirestore(map);
+    }
+
     try {
       localStorage.setItem('portal_config_cache', JSON.stringify(newConfig));
     } catch {}
@@ -576,7 +618,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   return (
-    <PortalConfigContext.Provider value={{ config, loading, saveConfigToFirestore, resetConfigToFirestore }}>
+    <PortalConfigContext.Provider value={{ config, loading, saveConfigToFirestore, saveSutzMapToFirestore, resetConfigToFirestore }}>
       {children}
     </PortalConfigContext.Provider>
   );

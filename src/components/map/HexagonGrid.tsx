@@ -119,7 +119,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
         centerOnInit={true}
         limitToBounds={false}
         smooth={true}
-        wheel={{ disabled: true }}
+        wheel={{ step: 0.15 }}
         pinch={{ step: 5 }}
         panning={{ 
           velocityDisabled: true,
@@ -130,14 +130,6 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
         {({ zoomIn, zoomOut, centerView }) => (
           <div 
             style={{ width: '100%', height: '100%', position: 'relative', touchAction: 'none' }}
-            onWheel={(e) => {
-              e.preventDefault();
-              if (e.deltaY < 0) {
-                zoomIn(0.2, 250, "easeOut");
-              } else if (e.deltaY > 0) {
-                zoomOut(0.2, 250, "easeOut");
-              }
-            }}
           >
             {onTransformReady && (
               <TransformBridge zoomIn={zoomIn} zoomOut={zoomOut} centerView={centerView} onReady={onTransformReady} />

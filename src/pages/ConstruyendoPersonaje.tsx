@@ -8,6 +8,7 @@ import { generateCharacterWorksheetPDF } from '../utils/pdfGenerator';
 import { soundEffects } from '../utils/soundEffects';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
+import { saveArchetypeAsset, deleteArchetypeAsset } from '../services/archetypeAssetsService';
 import './ConstruyendoPersonaje.css';
 
 interface ArchetypeRelation {
@@ -575,7 +576,7 @@ export const CAUSAL_CASE_STUDIES = [
 ];
 
 export default function ConstruyendoPersonaje() {
-  const { config, saveConfigToFirestore } = usePortalConfig();
+  const { config } = usePortalConfig();
   const { user } = useAuth();
 
   const [selectedArchetype, setSelectedArchetype] = useState<ArchetypeData>(ARCHETYPES[0]);
@@ -713,14 +714,8 @@ export default function ConstruyendoPersonaje() {
         await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
         finalUrl = await getDownloadURL(fileRef);
 
-        const updatedImages = {
-          ...(config.archetypeImages || {}),
-          [selectedArchetype.id]: finalUrl
-        };
-        await saveConfigToFirestore({
-          ...config,
-          archetypeImages: updatedImages
-        });
+        // Guardar en la colección dedicada 'archetype_assets' (documento individual de 1MB exclusivo)
+        await saveArchetypeAsset(selectedArchetype.id, finalUrl, 'archetype');
       } else {
         finalUrl = await new Promise((resolve) => {
           const reader = new FileReader();
@@ -757,14 +752,7 @@ export default function ConstruyendoPersonaje() {
     const url = customUrlInput.trim();
 
     if (user) {
-      const updatedImages = {
-        ...(config.archetypeImages || {}),
-        [selectedArchetype.id]: url
-      };
-      await saveConfigToFirestore({
-        ...config,
-        archetypeImages: updatedImages
-      });
+      await saveArchetypeAsset(selectedArchetype.id, url, 'archetype');
     }
 
     const updatedLocal = { ...localArchetypeImages, [selectedArchetype.id]: url };
@@ -782,12 +770,7 @@ export default function ConstruyendoPersonaje() {
     if (!confirm('¿Deseas retirar esta imagen para volver al arte emblemático por defecto?')) return;
 
     if (user) {
-      const updated = { ...(config.archetypeImages || {}) };
-      delete updated[selectedArchetype.id];
-      await saveConfigToFirestore({
-        ...config,
-        archetypeImages: updated
-      });
+      await deleteArchetypeAsset(selectedArchetype.id);
     }
 
     const updatedLocal = { ...localArchetypeImages };

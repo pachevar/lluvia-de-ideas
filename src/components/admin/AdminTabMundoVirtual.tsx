@@ -68,7 +68,7 @@ interface AdminTabMundoVirtualProps {
 }
 
 export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: AdminTabMundoVirtualProps) {
-  const { saveConfigToFirestore } = usePortalConfig();
+  const { saveSutzMapToFirestore } = usePortalConfig();
   const mapData = localConfig.map || [];
 
   const [editingHex, setEditingHex] = useState<CustomHexagon | null>(null);
@@ -81,8 +81,9 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const [showCartesianAxes, setShowCartesianAxes] = useState(true);
 
   const inspectorSectionRef = useRef<HTMLDivElement>(null);
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const updateHexInGlobalConfig = async (targetHex: CustomHexagon, autoSave = true) => {
+  const updateHexInGlobalConfig = (targetHex: CustomHexagon, autoSave = true, immediate = false) => {
     const currentMap = localConfig?.map || [];
     const existingIdx = currentMap.findIndex(h => h.row === targetHex.row && h.col === targetHex.col);
 
@@ -101,10 +102,19 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     setLocalConfig(updatedConfig);
 
     if (autoSave) {
-      try {
-        await saveConfigToFirestore(updatedConfig);
-      } catch (err) {
-        console.warn('Could not auto-save hexagon to Firestore:', err);
+      if (debounceTimerRef.current) {
+        clearTimeout(debounceTimerRef.current);
+      }
+      if (immediate) {
+        saveSutzMapToFirestore(newMap).catch(err => {
+          console.warn('Could not save hexagon to Firestore:', err);
+        });
+      } else {
+        debounceTimerRef.current = setTimeout(() => {
+          saveSutzMapToFirestore(newMap).catch(err => {
+            console.warn('Could not auto-save hexagon to Firestore:', err);
+          });
+        }, 500);
       }
     }
   };
@@ -124,7 +134,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
       };
 
       setEditingHex(updatedHex);
-      await updateHexInGlobalConfig(updatedHex, true);
+      updateHexInGlobalConfig(updatedHex, true, true);
 
       setUploadStatusMsg(
         isBase64
@@ -195,7 +205,8 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
 
   const handleSaveHexagon = async () => {
     if (!editingHex) return;
-    await updateHexInGlobalConfig(editingHex, true);
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
+    updateHexInGlobalConfig(editingHex, true, true);
     setUploadStatusMsg(`✨ Hexágono (${editingHex.row}, ${editingHex.col}) guardado permanentemente en Firestore.`);
     setTimeout(() => setUploadStatusMsg(null), 5000);
   };
@@ -204,28 +215,41 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     if (!editingHex) return;
     if (!window.confirm(`¿Estás seguro de eliminar el hexágono (${editingHex.row}, ${editingHex.col})?`)) return;
 
+    if (debounceTimerRef.current) clearTimeout(debounceTimerRef.current);
     const newMap = (localConfig.map || []).filter(h => !(h.row === editingHex.row && h.col === editingHex.col));
     const updatedConfig: PortalConfig = {
       ...localConfig,
       map: newMap
     };
     setLocalConfig(updatedConfig);
-    await saveConfigToFirestore(updatedConfig);
     setEditingHex(null);
-    setUploadStatusMsg('🗑️ Hexágono eliminado y sincronizado en Firestore.');
-    setTimeout(() => setUploadStatusMsg(null), 4000);
+    try {
+      await saveSutzMapToFirestore(newMap);
+      setUploadStatusMsg('🗑️ Hexágono eliminado y sincronizado en Firestore.');
+      setTimeout(() => setUploadStatusMsg(null), 4000);
+    } catch (err) {
+      console.error('Error al eliminar hexágono:', err);
+    }
   };
 
-  const handleResetMapToDefault = () => {
+  const handleResetMapToDefault = async () => {
     if (!window.confirm("¿Deseas restaurar la disposición por defecto del mapa?")) return;
+    const defaultMap = DEFAULT_CONFIG.map || [];
     setLocalConfig(prev => {
       if (!prev) return null;
       return {
         ...prev,
-        map: DEFAULT_CONFIG.map
+        map: defaultMap
       };
     });
     setEditingHex(null);
+    try {
+      await saveSutzMapToFirestore(defaultMap);
+      setUploadStatusMsg('🔄 Mapa restaurado por defecto.');
+      setTimeout(() => setUploadStatusMsg(null), 3000);
+    } catch (err) {
+      console.error('Error restaurando mapa:', err);
+    }
   };
 
   return (
@@ -408,7 +432,15 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     onChange={e => {
                       const updated = { ...editingHex, title: e.target.value };
                       setEditingHex(updated);
-                      updateHexInGlobalConfig(updated);
+                      updateHexInGlobalConfig(updated, true, false);
+                    }}
+                    onBlur={() => {
+                      if (editingHex) updateHexInGlobalConfig(editingHex, true, true);
+                    }}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter') {
+                        (e.target as HTMLInputElement).blur();
+                      }
                     }}
                     placeholder="Ej: Popol Vuh, Creatika, Portal Sagrado..."
                     className="inspector-title-input-prominent"
@@ -458,7 +490,15 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                         onChange={e => {
                           const updated = { ...editingHex, title: e.target.value };
                           setEditingHex(updated);
-                          updateHexInGlobalConfig(updated);
+                          updateHexInGlobalConfig(updated, true, false);
+                        }}
+                        onBlur={() => {
+                          if (editingHex) updateHexInGlobalConfig(editingHex, true, true);
+                        }}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            (e.target as HTMLInputElement).blur();
+                          }
                         }}
                         placeholder="Ej: Popol Vuh, Creatika, etc."
                         className="inspector-input"
@@ -1001,7 +1041,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                 }
               };
               setEditingHex(updated);
-              updateHexInGlobalConfig(updated);
+              updateHexInGlobalConfig(updated, true, true);
             } else {
               const updated = {
                 ...editingHex,
@@ -1013,7 +1053,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                 }
               };
               setEditingHex(updated);
-              updateHexInGlobalConfig(updated);
+              updateHexInGlobalConfig(updated, true, true);
             }
             setShowIconPicker(false);
           }}
