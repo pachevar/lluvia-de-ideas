@@ -5,7 +5,8 @@ import { uploadImageWithFallback } from '../../utils/imageUpload';
 import { getCandidateHexes } from '../../utils/hexUtils';
 import { HexagonGrid } from '../map/HexagonGrid';
 import GradientBuilder from './GradientBuilder';
-import IconPickerModal from './IconPickerModal';
+import { SutzIconPickerModal } from './SutzIconPickerModal';
+import { IconRenderer } from './IconRegistry';
 import './AdminTabMundoVirtual.css';
 
 const BIOMES = [
@@ -76,6 +77,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
   const [showGradientBuilder, setShowGradientBuilder] = useState(false);
   const [showIconPicker, setShowIconPicker] = useState(false);
+  const [iconPickerTargetLayer, setIconPickerTargetLayer] = useState<'layerInteractive' | 'layerDeco'>('layerInteractive');
   const [showCartesianAxes, setShowCartesianAxes] = useState(true);
 
   const inspectorSectionRef = useRef<HTMLDivElement>(null);
@@ -389,6 +391,31 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                 </div>
               )}
 
+              {/* BARRA PROMINENTE DE TÍTULO INDEPENDIENTE */}
+              <div className="inspector-title-bar-prominent">
+                <div className="inspector-title-content">
+                  <div className="inspector-title-label-row">
+                    <span className="inspector-title-badge-tag">
+                      🏷️ TÍTULO DEL HEXÁGONO
+                    </span>
+                    <span className="inspector-title-badge-hint">
+                      ✏️ Totalmente independiente de los enlaces y acciones
+                    </span>
+                  </div>
+                  <input 
+                    type="text" 
+                    value={editingHex.title} 
+                    onChange={e => {
+                      const updated = { ...editingHex, title: e.target.value };
+                      setEditingHex(updated);
+                      updateHexInGlobalConfig(updated);
+                    }}
+                    placeholder="Ej: Popol Vuh, Creatika, Portal Sagrado..."
+                    className="inspector-title-input-prominent"
+                  />
+                </div>
+              </div>
+
               {/* Pestañas de Capas del Inspector (Ribbon de ancho completo) */}
               <div className="inspector-tabs">
                 <button 
@@ -413,7 +440,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                   className={`inspector-tab-btn ${activeInspectorTab === 'l3' ? 'active' : ''}`}
                   onClick={() => setActiveInspectorTab('l3')}
                 >
-                  <span>🌀</span> 4. Capa 3: Interacción & Enlace
+                  <span>🌀</span> 4. Ícono & Acción Interactiva
                 </button>
               </div>
 
@@ -645,7 +672,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     )}
                   </div>
 
-                  {/* Columna 2: Emojis Rápidos o Subida de Imagen */}
+                    {/* Columna 2: Emojis Rápidos o Subida de Imagen */}
                   <div className="inspector-card-panel">
                     {editingHex.layerDeco.type === 'icon' ? (
                       <>
@@ -667,6 +694,18 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                             </button>
                           ))}
                         </div>
+
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => {
+                            setIconPickerTargetLayer('layerDeco');
+                            setShowIconPicker(true);
+                          }}
+                          style={{ marginTop: '10px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
+                        >
+                          💠 Explorar Catálogo y Biblioteca de Íconos
+                        </button>
                       </>
                     ) : editingHex.layerDeco.type === 'image' ? (
                       <>
@@ -694,76 +733,120 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                 </div>
               )}
 
-              {/* CONTENIDO PESTAÑA 4: CAPA 3 INTERACTIVA & ENLACE */}
+              {/* CONTENIDO PESTAÑA 4: ÍCONO & ACCIÓN INTERACTIVA */}
               {activeInspectorTab === 'l3' && (
                 <div className="inspector-grid-2col">
-                  {/* Tarjeta A: Elemento Interactivo Visual */}
+                  {/* Tarjeta A: Ícono del Hexágono (Configuración, Catálogo & Subida Propia) */}
                   <div className="inspector-card-panel">
-                    <span className="inspector-panel-title">🌀 Elemento Interactivo</span>
-                    <div className="inspector-form-group">
-                      <label className="inspector-label">Modo Interactivo:</label>
-                      <select 
-                        value={editingHex.layerInteractive.type} 
-                        onChange={e => {
-                          const updated = { ...editingHex, layerInteractive: { ...editingHex.layerInteractive, type: e.target.value as 'color' | 'image' | 'icon' | 'text' | 'none' } };
-                          setEditingHex(updated);
-                          updateHexInGlobalConfig(updated);
-                        }}
-                        className="inspector-select"
-                      >
-                        <option value="none">Ninguno</option>
-                        <option value="icon">Ícono SVG / Emoji</option>
-                        <option value="image">Imagen Interactiva (URL / Subir)</option>
-                        <option value="text">Texto / Leyenda</option>
-                      </select>
+                    <span className="inspector-panel-title">💠 Ícono del Hexágono</span>
+                    
+                    {/* Visualización del Ícono Actual */}
+                    <div className="inspector-icon-preview-row">
+                      <div className="inspector-icon-preview-circle">
+                        {editingHex.layerInteractive.value ? (
+                          (editingHex.layerInteractive.value.startsWith('http') || 
+                           editingHex.layerInteractive.value.startsWith('data:image/') || 
+                           editingHex.layerInteractive.value.startsWith('/')) ? (
+                            <img src={editingHex.layerInteractive.value} alt="Ícono" />
+                          ) : (
+                            <IconRenderer 
+                              iconName={editingHex.layerInteractive.value} 
+                              size="1.8rem" 
+                              color={editingHex.layerInteractive.color || '#38bdf8'} 
+                            />
+                          )
+                        ) : (
+                          <span style={{ fontSize: '1.5rem', opacity: 0.35 }}>🔘</span>
+                        )}
+                      </div>
+
+                      <div className="inspector-icon-meta">
+                        <span className="inspector-icon-meta-title">
+                          {editingHex.layerInteractive.value ? (
+                            (editingHex.layerInteractive.value.startsWith('http') || editingHex.layerInteractive.value.startsWith('data:image/'))
+                              ? 'Ícono Personalizado Subido'
+                              : editingHex.layerInteractive.value
+                          ) : 'Sin ícono asignado'}
+                        </span>
+                        <span className="inspector-icon-meta-type">
+                          {editingHex.layerInteractive.value ? 'Visible en el centro de la celda' : 'El hexágono solo mostrará su fondo'}
+                        </span>
+                      </div>
                     </div>
 
-                    {editingHex.layerInteractive.type !== 'none' && (
-                      <div className="inspector-form-group" style={{ marginTop: '10px' }}>
-                        <label className="inspector-label">Valor / Ícono:</label>
-                        <input 
-                          type="text" 
-                          value={editingHex.layerInteractive.value} 
-                          onChange={e => {
-                            const updated = { ...editingHex, layerInteractive: { ...editingHex.layerInteractive, value: e.target.value } };
+                    {/* Botón Principal para Abrir Gestor y Subida */}
+                    <button 
+                      type="button"
+                      className="btn btn-primary"
+                      onClick={() => {
+                        setIconPickerTargetLayer('layerInteractive');
+                        setShowIconPicker(true);
+                      }}
+                      style={{ 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center', 
+                        gap: '8px',
+                        background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
+                        border: 'none',
+                        fontWeight: 700,
+                        padding: '10px 16px',
+                        boxShadow: '0 4px 14px rgba(56, 189, 248, 0.3)'
+                      }}
+                    >
+                      <span>💠</span> Seleccionar Ícono o Subir Propio
+                    </button>
+
+                    {/* Controles de Escala y Quitar */}
+                    {editingHex.layerInteractive.value && (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '4px' }}>
+                        <div className="inspector-scale-control">
+                          <span style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 600 }}>
+                            Escala: {(editingHex.layerInteractive.size ?? 1.0).toFixed(1)}x
+                          </span>
+                          <input 
+                            type="range"
+                            min="0.5"
+                            max="2.5"
+                            step="0.1"
+                            value={editingHex.layerInteractive.size ?? 1.0}
+                            onChange={e => {
+                              const sz = parseFloat(e.target.value);
+                              const updated = {
+                                ...editingHex,
+                                layerInteractive: { ...editingHex.layerInteractive, size: sz }
+                              };
+                              setEditingHex(updated);
+                              updateHexInGlobalConfig(updated);
+                            }}
+                            className="inspector-scale-slider"
+                          />
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn btn-secondary btn-sm"
+                          onClick={() => {
+                            const updated = {
+                              ...editingHex,
+                              layerInteractive: { type: 'none' as const, value: '' }
+                            };
                             setEditingHex(updated);
                             updateHexInGlobalConfig(updated);
                           }}
-                          placeholder="Ej: 🌌, 🎭, 🎮 o URL..."
-                          className="inspector-input"
-                        />
+                          style={{ color: '#f87171', borderColor: 'rgba(239, 68, 68, 0.3)', width: '100%' }}
+                        >
+                          ❌ Quitar Ícono
+                        </button>
                       </div>
-                    )}
-
-                    {editingHex.layerInteractive.type === 'icon' && (
-                      <button 
-                        className="btn btn-secondary btn-sm"
-                        onClick={() => setShowIconPicker(true)}
-                        style={{ marginTop: '10px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px' }}
-                      >
-                        🔍 Explorar Catálogo de Íconos SVG
-                      </button>
-                    )}
-
-                    {editingHex.layerInteractive.type === 'image' && (
-                      <label className="upload-btn-label" style={{ marginTop: '10px' }}>
-                        {uploadingLayer === 'layerInteractive' ? '⏳ Comprimiendo & Subiendo...' : '📤 Subir Imagen Interactiva (WebP Auto)'}
-                        <input 
-                          type="file" 
-                          style={{ display: 'none' }} 
-                          accept="image/*" 
-                          onChange={(e) => handleUpload(e, 'layerInteractive')} 
-                          disabled={uploadingLayer === 'layerInteractive'} 
-                        />
-                      </label>
                     )}
                   </div>
 
-                  {/* Tarjeta B: Acción al Hacer Clic & Rutas Rápidas */}
+                  {/* Tarjeta B: Acción al Clic & Rutas Rápidas (Independiente) */}
                   <div className="inspector-card-panel">
-                    <span className="inspector-panel-title">🎯 Acción al Hacer Clic</span>
+                    <span className="inspector-panel-title">🎯 Acción al Clic (Independiente)</span>
                     <div className="inspector-form-group">
-                      <label className="inspector-label">Tipo de Acción:</label>
+                      <label className="inspector-label">Tipo de Acción al Clic:</label>
                       <select 
                         value={editingHex.action.type} 
                         onChange={e => {
@@ -773,7 +856,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                         }}
                         className="inspector-select"
                       >
-                        <option value="none">Ninguna Acción</option>
+                        <option value="none">Ninguna Acción (Solo informativo / decorativo)</option>
                         <option value="navigate">Navegar a Ruta Interna</option>
                         <option value="external">Abrir Enlace Externo</option>
                         <option value="modal">Abrir Modal de Cuento Popol Vuh</option>
@@ -898,30 +981,40 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
         </div>
       )}
 
-      {/* Modal Catálogo de Íconos SVG */}
+      {/* Modal Catálogo y Gestor de Íconos de Sutz */}
       {showIconPicker && editingHex && (
-        <IconPickerModal 
-          initialIcon={editingHex.layerInteractive.value}
-          initialColor={editingHex.layerInteractive.color}
-          initialSize={editingHex.layerInteractive.size}
-          initialRotation={editingHex.layerInteractive.rotation}
-          initialOffsetX={editingHex.layerInteractive.offsetX}
-          initialOffsetY={editingHex.layerInteractive.offsetY}
-          onApply={(icon, color, size, rotation, offsetX, offsetY) => {
-            const updated = {
-              ...editingHex,
-              layerInteractive: { 
-                ...editingHex.layerInteractive, 
-                value: icon, 
-                color: color, 
-                size: size,
-                rotation: rotation,
-                offsetX: offsetX,
-                offsetY: offsetY
-              }
-            };
-            setEditingHex(updated);
-            updateHexInGlobalConfig(updated);
+        <SutzIconPickerModal 
+          isOpen={showIconPicker}
+          currentValue={
+            iconPickerTargetLayer === 'layerDeco' 
+              ? editingHex.layerDeco.value 
+              : editingHex.layerInteractive.value
+          }
+          onSelectIcon={(iconValue) => {
+            if (iconPickerTargetLayer === 'layerDeco') {
+              const updated = {
+                ...editingHex,
+                layerDeco: {
+                  ...editingHex.layerDeco,
+                  type: 'icon' as const,
+                  value: iconValue
+                }
+              };
+              setEditingHex(updated);
+              updateHexInGlobalConfig(updated);
+            } else {
+              const updated = {
+                ...editingHex,
+                layerInteractive: {
+                  ...editingHex.layerInteractive,
+                  type: 'icon' as const,
+                  value: iconValue,
+                  size: editingHex.layerInteractive.size ?? 1.0
+                }
+              };
+              setEditingHex(updated);
+              updateHexInGlobalConfig(updated);
+            }
             setShowIconPicker(false);
           }}
           onClose={() => setShowIconPicker(false)}

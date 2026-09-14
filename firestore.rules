@@ -25,6 +25,12 @@ service cloud.firestore {
       allow write: if isAdmin();
     }
 
+    // Colección de iconos personalizados para hexágonos de Sutz
+    match /sutz_hex_icons/{iconId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
     // Colección de inscripciones de maestros
     match /inscripciones/{inscripcion} {
       allow create: if true;
