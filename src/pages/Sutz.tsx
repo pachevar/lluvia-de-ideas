@@ -352,7 +352,7 @@ export default function Sutz() {
     alert(`🎉 ¡Recompensa reclamada por completar: "${questTitle}"! (+150 Sabiduría, +60 Jade, +5 Gemas)`);
   };
 
-  if (loading) {
+  if (loading || authLoading) {
     return (
       <div style={{ display: 'flex', height: '100vh', justifyContent: 'center', alignItems: 'center', flexDirection: 'column', background: '#060913' }}>
         <div style={{ width: '50px', height: '50px', border: '5px solid rgba(56,189,248,0.2)', borderTopColor: '#38bdf8', borderRadius: '50%', animation: 'spin 1s linear infinite' }} />
@@ -499,7 +499,9 @@ export default function Sutz() {
             title="Centro de Coordinación Escolar: Ver compañeros conectados y compartir hallazgos"
           >
             <span className="sutz-coord-live-dot" />
-            <span>👥 {onlinePeersCount} en Línea</span>
+            <span className="sutz-coord-icon">👥</span>
+            <span className="sutz-coord-count">{onlinePeersCount}</span>
+            <span className="sutz-coord-btn-text">en Línea</span>
           </button>
 
           {/* Botón de Ajustes y Configuración */}
@@ -509,7 +511,7 @@ export default function Sutz() {
             title="Ajustes de Sonido, Música, Vibración, Notificaciones y Recompensas"
           >
             <span>⚙️</span>
-            <span>Ajustes</span>
+            <span className="sutz-settings-btn-text">Ajustes</span>
           </button>
 
           {/* Botón de Retorno al Portal Principal */}

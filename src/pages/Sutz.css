@@ -913,37 +913,65 @@
    ========================================================================== */
 @media (max-width: 768px) {
   .sutz-top-game-hud {
-    padding: 8px 10px;
+    padding: 6px 8px;
     gap: 6px;
+    justify-content: space-between;
+    flex-wrap: nowrap;
+  }
+
+  /* 1. Izquierda: Perfil compacto */
+  .sutz-hud-left {
+    flex-shrink: 0;
+    min-width: 0;
   }
 
   .sutz-hero-capsule {
-    padding: 4px 8px 4px 4px;
+    padding: 3px 6px 3px 3px;
     gap: 6px;
     border-radius: 14px;
   }
 
   .sutz-hero-avatar-wrap {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+  }
+
+  .sutz-hero-avatar-frame {
+    font-size: 1rem;
+  }
+
+  .sutz-hero-lvl-badge {
+    font-size: 0.55rem;
+    padding: 1px 4px;
+    bottom: -3px;
   }
 
   .sutz-hero-name {
-    font-size: 0.78rem;
-    max-width: 85px;
+    font-size: 0.74rem;
+    max-width: 65px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sutz-hero-rank-tag {
+    display: none !important; /* Ocultar en móvil para liberar 100px */
   }
 
   .sutz-hero-bars {
-    display: none; /* Ahorra espacio vertical y horizontal */
+    display: none !important; /* Ahorra espacio vertical y horizontal */
   }
 
+  /* 2. Centro: Contenedor de Recursos fluido con scroll suave */
   .sutz-hud-center {
-    gap: 6px;
+    flex: 1 1 auto;
+    min-width: 0;
+    gap: 4px;
+    justify-content: center;
     overflow-x: auto;
     scrollbar-width: none;
     -ms-overflow-style: none;
-    padding-bottom: 2px;
-    max-width: calc(100vw - 190px);
+    padding: 0 2px;
   }
 
   .sutz-hud-center::-webkit-scrollbar {
@@ -951,48 +979,80 @@
   }
 
   .sutz-res-pod {
-    padding: 4px 8px;
-    gap: 5px;
-    border-radius: 14px;
+    padding: 3px 6px;
+    gap: 4px;
+    border-radius: 10px;
     flex-shrink: 0;
   }
 
   .sutz-res-icon-circle {
-    width: 24px;
-    height: 24px;
-    font-size: 0.95rem;
-  }
-
-  .sutz-res-val {
+    width: 20px;
+    height: 20px;
     font-size: 0.8rem;
   }
 
-  .sutz-res-label {
-    display: none;
+  .sutz-res-icon-circle svg {
+    width: 16px;
+    height: 16px;
   }
 
-  .sutz-res-plus-btn {
-    display: none;
+  .sutz-res-val {
+    font-size: 0.72rem;
+    font-weight: 800;
+  }
+
+  .sutz-res-label,
+  .sutz-res-plus-btn,
+  .sutz-res-badge-spark {
+    display: none !important;
+  }
+
+  /* 3. Derecha: Botones compactos (Iconos limpios y badges numéricos) */
+  .sutz-hud-right {
+    flex-shrink: 0;
+    min-width: 0;
+    gap: 4px;
   }
 
   .sutz-world-pill {
-    display: none; /* Ocultar emblema en móvil para que quepan los botones de control */
-  }
-
-  .sutz-hud-right {
-    gap: 6px;
+    display: none !important; /* Ocultar emblema en móvil para que quepan los botones de control */
   }
 
   .sutz-hud-action-btn {
-    width: 34px;
-    height: 34px;
-    font-size: 0.95rem;
+    width: 32px;
+    height: 32px;
+    font-size: 0.9rem;
     border-radius: 10px;
+    padding: 0 !important;
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
-  .sutz-hud-action-btn.home-btn {
-    padding: 0 10px;
-    font-size: 0.72rem;
+  .sutz-hud-action-btn.coord-btn {
+    width: auto !important;
+    padding: 0 8px !important;
+    gap: 4px;
+    font-size: 0.75rem;
+  }
+
+  .sutz-coord-btn-text,
+  .sutz-settings-btn-text,
+  .sutz-exit-portal-text {
+    display: none !important; /* Solo iconos y números en móvil */
+  }
+
+  .sutz-coord-live-dot {
+    width: 6px;
+    height: 6px;
+  }
+
+  /* Reposicionar badge del plano cartesiano en móvil */
+  .sutz-game-container .cartesian-hud-badge {
+    top: 52px !important;
+    left: 8px !important;
+    transform: scale(0.85);
+    transform-origin: top left;
   }
 
   /* Bottom Action Dock en Móvil */
@@ -1037,8 +1097,31 @@
 }
 
 @media (max-width: 480px) {
+  .sutz-hero-name {
+    display: none !important; /* En pantallas ultra-estrechas, solo avatar y LVL */
+  }
+
+  .sutz-hero-capsule {
+    padding: 2px;
+    border-radius: 50%;
+  }
+
   .sutz-hud-center {
-    max-width: calc(100vw - 165px);
+    justify-content: flex-start;
+  }
+
+  .sutz-res-pod {
+    padding: 2px 5px;
+    gap: 3px;
+  }
+
+  .sutz-res-val {
+    font-size: 0.68rem;
+  }
+
+  .sutz-hud-action-btn.coord-btn {
+    padding: 0 6px !important;
+    font-size: 0.72rem;
   }
 
   .sutz-dock-item {
