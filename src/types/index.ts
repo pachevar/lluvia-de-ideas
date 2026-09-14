@@ -33,6 +33,16 @@ export interface HexInteractiveAction {
   target: string; // Ej: '/catalogo', 'https://...', 'story-camazotz'
 }
 
+export interface HexIntroModalConfig {
+  enabled?: boolean;            // Si está activo el modal de bienvenida
+  characterImage?: string;      // URL / WebP / SVG del personaje ilustrado
+  characterName?: string;       // Nombre del personaje / anfitrión (ej. "Sutzik", "Ajpop")
+  characterBadge?: string;      // Insignia o título honorífico (ej. "Guardián de la Ciencia")
+  welcomeTitle?: string;        // Título de bienvenida (ej. "¡Bienvenido al Observatorio Solar!")
+  description?: string;         // Explicación de lo que veremos y haremos en ese enlace
+  buttonText?: string;          // Texto del botón de acción (ej. "¡Comenzar la Misión!", "Explorar")
+}
+
 export interface CustomHexagon {
   id: string; // Formato de coordenada precisa: "row,col" ej: "0,0" o "-1,2"
   row: number;
@@ -43,6 +53,7 @@ export interface CustomHexagon {
   layerDeco: HexLayer;       // Capa 2: Decorativa
   layerInteractive: HexLayer; // Capa 3: Interactiva (Ícono o texto)
   action: HexInteractiveAction; // Lógica de acción al hacer clic
+  introModal?: HexIntroModalConfig; // Modal interactivo con personaje y bienvenida antes de entrar
 }
 
 export interface CreatikaConfig {

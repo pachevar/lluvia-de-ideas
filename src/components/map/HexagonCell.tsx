@@ -10,6 +10,7 @@ interface HexagonCellProps {
   xOffset: number;
   yOffset: number;
   onClick?: () => void;
+  onDoubleClick?: () => void;
   showLabel?: boolean;
   isEditing?: boolean;
 }
@@ -21,12 +22,32 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
   xOffset,
   yOffset,
   onClick,
+  onDoubleClick,
   showLabel,
   isEditing
 }) => {
+  const lastTapRef = React.useRef<number>(0);
   const isUnexplored = data.id?.startsWith('unexplored-');
   const hasAction = Boolean(data.action && data.action.type !== 'none');
   const hasBgImage = Boolean(data.layerBg && data.layerBg.type !== 'none' && data.layerBg.value);
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    const now = Date.now();
+    const DOUBLE_TAP_DELAY = 350;
+    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
+      // Doble tap detectado
+      e.preventDefault();
+      if (onDoubleClick) {
+        onDoubleClick();
+      } else if (onClick) {
+        onClick();
+      }
+      lastTapRef.current = 0;
+    } else {
+      lastTapRef.current = now;
+      // Clic simple en touch se procesa normalmente por onClick
+    }
+  };
 
   const baseStyle: React.CSSProperties = {
     '--hex-glow-color': data.glowColor || 'var(--sutz-color-guide-glow, rgba(56, 189, 248, 0.45))'
@@ -43,6 +64,8 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
       title={data.title}
       style={baseStyle}
       onClick={onClick}
+      onDoubleClick={onDoubleClick}
+      onTouchEnd={handleTouchEnd}
     >
       <div className="hex-inner-border"></div>
       <div className="hex-cell">

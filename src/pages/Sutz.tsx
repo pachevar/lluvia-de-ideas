@@ -14,6 +14,7 @@ import { SutzAlliancesModal } from '../components/sutz/SutzAlliancesModal';
 import { SutzAuthGateModal } from '../components/sutz/SutzAuthGateModal';
 import { SutzSessionConflictModal } from '../components/sutz/SutzSessionConflictModal';
 import { SutzCoordinationModal } from '../components/sutz/SutzCoordinationModal';
+import { HexIntroModal } from '../components/sutz/HexIntroModal';
 import { 
   startSutzSession, 
   listenToSutzSession, 
@@ -177,6 +178,7 @@ export default function Sutz() {
   const [onlinePeersCount, setOnlinePeersCount] = useState<number>(1);
   const [currentHexCoord, setCurrentHexCoord] = useState<{ q: number; r: number; label?: string } | null>(null);
   const [selectedRelic, setSelectedRelic] = useState<MayanRelic | null>(null);
+  const [activeIntroHex, setActiveIntroHex] = useState<CustomHexagon | null>(null);
 
   // Controles de mapa para botón de Centrar/Radar
   const mapControlsRef = useRef<{ zoomIn: () => void; zoomOut: () => void; centerView: () => void } | null>(null);
@@ -190,9 +192,8 @@ export default function Sutz() {
 
   const storiesList = config.stories || [];
 
-  const handleHexClick = (hex: CustomHexagon) => {
-    sutzAudio.playClick();
-    setCurrentHexCoord({ q: hex.col, r: hex.row, label: hex.title || hex.id });
+  // Ejecución definitiva de la acción vinculada al hexágono
+  const executeHexAction = (hex: CustomHexagon) => {
     if (!hex.action || hex.action.type === 'none') return;
     
     switch (hex.action.type) {
@@ -210,10 +211,47 @@ export default function Sutz() {
             sutzAudio.playOpenModal();
             setActiveStory(story);
           }
+        } else {
+          // Modal por id directo (ej: camazotz, ixkik, juracan, etc.)
+          const story = storiesList.find((s: StoryConfig) => s.id === hex.action.target);
+          if (story) {
+            sutzAudio.playOpenModal();
+            setActiveStory(story);
+          }
         }
         break;
       default:
         break;
+    }
+  };
+
+  // DOBLE CLIC: Abre el modal interactivo de bienvenida y personaje antes de saltar
+  const handleHexDoubleClick = (hex: CustomHexagon) => {
+    sutzAudio.playClick();
+    setCurrentHexCoord({ q: hex.col, r: hex.row, label: hex.title || hex.id });
+    if (!hex.action || hex.action.type === 'none') return;
+
+    // Si el administrador configuró explícitamente enabled: false, va directo
+    if (hex.introModal && hex.introModal.enabled === false) {
+      executeHexAction(hex);
+    } else {
+      sutzAudio.playOpenModal();
+      setActiveIntroHex(hex);
+    }
+  };
+
+  // CLIC SIMPLE: Selección y navegación (o modal de bienvenida si está activado)
+  const handleHexClick = (hex: CustomHexagon) => {
+    sutzAudio.playClick();
+    setCurrentHexCoord({ q: hex.col, r: hex.row, label: hex.title || hex.id });
+    if (!hex.action || hex.action.type === 'none') return;
+
+    // Si tiene modal habilitado explícitamente, abrimos el modal de bienvenida
+    if (hex.introModal?.enabled) {
+      sutzAudio.playOpenModal();
+      setActiveIntroHex(hex);
+    } else {
+      executeHexAction(hex);
     }
   };
 
@@ -535,6 +573,7 @@ export default function Sutz() {
       <HexagonGrid 
         cells={cells} 
         onHexClick={handleHexClick}
+        onHexDoubleClick={handleHexDoubleClick}
         onTransformReady={(controls) => {
           mapControlsRef.current = controls;
         }}
@@ -1068,6 +1107,18 @@ export default function Sutz() {
         remoteSession={remoteSession}
         onSessionReclaimed={() => setIsSessionConflictOpen(false)}
       />
+
+      {/* Modal Interactivo de Personaje y Bienvenida Previa (Doble Clic) */}
+      {activeIntroHex && (
+        <HexIntroModal 
+          hexagon={activeIntroHex}
+          onClose={() => setActiveIntroHex(null)}
+          onEnter={(hex) => {
+            setActiveIntroHex(null);
+            executeHexAction(hex);
+          }}
+        />
+      )}
 
     </div>
   );

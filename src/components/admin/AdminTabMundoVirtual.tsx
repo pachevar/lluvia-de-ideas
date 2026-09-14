@@ -15,7 +15,20 @@ import {
   removeCustomRoute, 
   type PillarAppRoute 
 } from '../../config/pillarProjectsConfig';
+import camazotzTitulo from '../../cuentos/Camazotz titulo.png';
+import ixkikTitulo from '../../cuentos/Ixkik titulo.png';
+import ixmukanneTitulo from '../../cuentos/Ixmukanne titulo.png';
+import juracanTitulo from '../../cuentos/Juracan titulo.png';
+import ququmatzTitulo from '../../cuentos/Ququmatz titulo.png';
 import './AdminTabMundoVirtual.css';
+
+const PRESET_CHARACTERS = [
+  { id: 'camazotz', name: 'Camazotz', badge: 'Guardián Nocturno', image: camazotzTitulo },
+  { id: 'ixkik', name: 'Ixkik', badge: 'Princesa de Vida', image: ixkikTitulo },
+  { id: 'ixmukanne', name: 'Ixmukanne', badge: 'Abuela Sabia del Maíz', image: ixmukanneTitulo },
+  { id: 'juracan', name: 'Juracán', badge: 'Corazón del Cielo', image: juracanTitulo },
+  { id: 'ququmatz', name: 'Q\'uq\'umatz', badge: 'Serpiente Emplumada', image: ququmatzTitulo },
+];
 
 const BIOMES = [
   { id: 'bosque', name: '🌲 Bosque Verde', value: 'linear-gradient(135deg, #2b580c, #4a7c16)' },
@@ -66,7 +79,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const mapData = localConfig.map || [];
 
   const [editingHex, setEditingHex] = useState<CustomHexagon | null>(null);
-  const [activeInspectorTab, setActiveInspectorTab] = useState<'id' | 'l1' | 'l2' | 'l3'>('id');
+  const [activeInspectorTab, setActiveInspectorTab] = useState<'id' | 'l1' | 'l2' | 'l3' | 'intro'>('id');
   const [uploadingLayer, setUploadingLayer] = useState<string | null>(null);
   const [uploadStatusMsg, setUploadStatusMsg] = useState<string | null>(null);
   const [showGradientBuilder, setShowGradientBuilder] = useState(false);
@@ -194,6 +207,37 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     } catch (err) {
       console.error("Error subiendo archivo:", err);
       alert("Error al comprimir o procesar la imagen.");
+      setUploadStatusMsg(null);
+    } finally {
+      setUploadingLayer(null);
+    }
+  };
+
+  const handleUploadCharacter = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingHex) return;
+
+    setUploadingLayer('characterImage');
+    setUploadStatusMsg('⚡ Comprimiendo personaje a WebP optimizado...');
+    try {
+      const { url } = await uploadImageWithFallback(file, 'character-avatars', 600, 600, 0.82);
+
+      const updatedHex: CustomHexagon = {
+        ...editingHex,
+        introModal: {
+          ...editingHex.introModal,
+          enabled: true,
+          characterImage: url
+        }
+      };
+
+      setEditingHex(updatedHex);
+      updateHexInGlobalConfig(updatedHex, true, true);
+      setUploadStatusMsg('✨ ¡Personaje subido y guardado exitosamente!');
+      setTimeout(() => setUploadStatusMsg(null), 4000);
+    } catch (err) {
+      console.error("Error subiendo personaje:", err);
+      alert("Error al comprimir o subir la imagen del personaje.");
       setUploadStatusMsg(null);
     } finally {
       setUploadingLayer(null);
@@ -522,6 +566,12 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                   onClick={() => setActiveInspectorTab('l3')}
                 >
                   <span>🌀</span> 4. Ícono & Acción Interactiva
+                </button>
+                <button 
+                  className={`inspector-tab-btn ${activeInspectorTab === 'intro' ? 'active' : ''}`}
+                  onClick={() => setActiveInspectorTab('intro')}
+                >
+                  <span>🎭</span> 5. Personaje & Modal Previo (Doble Clic)
                 </button>
               </div>
 
@@ -1144,6 +1194,335 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     </div>
 
                   </div>
+                </div>
+              )}
+
+              {/* CONTENIDO PESTAÑA 5: PERSONAJE & MODAL PREVIO (DOBLE CLIC) */}
+              {activeInspectorTab === 'intro' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  
+                  {/* Interruptor Principal de Activación */}
+                  <div className="inspector-card-panel" style={{ background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8))', border: '1.5px solid rgba(56, 189, 248, 0.3)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#38bdf8', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span>🎭</span> Modal de Bienvenida con Personaje Ilustrado
+                        </span>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.4 }}>
+                          Al hacer doble clic en el hexágono en el mapa (o seleccionarlo en móvil), se mostrará este personaje explicando la misión antes de redirigir al enlace asignado: <strong style={{ color: '#67e8f9' }}>{editingHex.action?.target || 'Sin ruta'}</strong>.
+                        </p>
+                      </div>
+
+                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', cursor: 'pointer', background: 'rgba(0, 0, 0, 0.35)', padding: '8px 16px', borderRadius: '12px', border: '1px solid rgba(255, 255, 255, 0.12)' }}>
+                        <input 
+                          type="checkbox"
+                          checked={editingHex.introModal?.enabled !== false}
+                          onChange={(e) => {
+                            const updated = {
+                              ...editingHex,
+                              introModal: {
+                                ...editingHex.introModal,
+                                enabled: e.target.checked
+                              }
+                            };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated, true, true);
+                          }}
+                          style={{ width: '18px', height: '18px', accentColor: '#0ea5e9', cursor: 'pointer' }}
+                        />
+                        <span style={{ fontSize: '0.88rem', fontWeight: 700, color: editingHex.introModal?.enabled !== false ? '#34d399' : '#94a3b8' }}>
+                          {editingHex.introModal?.enabled !== false ? '✅ Modal Activado' : '⚪ Modal Desactivado'}
+                        </span>
+                      </label>
+                    </div>
+                  </div>
+
+                  {/* Grid de 2 Columnas: Configuración del Personaje y Diálogo */}
+                  <div className="inspector-grid-2col">
+                    
+                    {/* Columna A: Datos y Avatar del Personaje */}
+                    <div className="inspector-card-panel">
+                      <span className="inspector-panel-title">🧙‍♂️ Personaje / Anfitrión del Hexágono</span>
+
+                      {/* Selector Rápido de Personajes Maya Popol Vuh */}
+                      <div className="inspector-form-group">
+                        <label className="inspector-label">Elegir Personaje Prediseñado:</label>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(90px, 1fr))', gap: '8px', marginTop: '4px' }}>
+                          {PRESET_CHARACTERS.map(char => {
+                            const isSelected = editingHex.introModal?.characterImage === char.image;
+                            return (
+                              <button
+                                key={char.id}
+                                type="button"
+                                onClick={() => {
+                                  const updated = {
+                                    ...editingHex,
+                                    introModal: {
+                                      ...editingHex.introModal,
+                                      enabled: true,
+                                      characterImage: char.image,
+                                      characterName: char.name,
+                                      characterBadge: char.badge
+                                    }
+                                  };
+                                  setEditingHex(updated);
+                                  updateHexInGlobalConfig(updated, true, true);
+                                }}
+                                style={{
+                                  display: 'flex',
+                                  flexDirection: 'column',
+                                  alignItems: 'center',
+                                  padding: '6px 4px',
+                                  borderRadius: '10px',
+                                  background: isSelected ? 'rgba(56, 189, 248, 0.2)' : 'rgba(15, 23, 42, 0.6)',
+                                  border: isSelected ? '2px solid #38bdf8' : '1px solid rgba(255, 255, 255, 0.08)',
+                                  cursor: 'pointer',
+                                  transition: 'all 0.2s ease'
+                                }}
+                              >
+                                <img 
+                                  src={char.image} 
+                                  alt={char.name} 
+                                  style={{ width: '42px', height: '42px', objectFit: 'cover', borderRadius: '50%', marginBottom: '4px' }} 
+                                />
+                                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: isSelected ? '#38bdf8' : '#cbd5e1' }}>
+                                  {char.name}
+                                </span>
+                              </button>
+                            );
+                          })}
+                        </div>
+                      </div>
+
+                      {/* Subida de Imagen Propia */}
+                      <div className="inspector-form-group" style={{ marginTop: '12px' }}>
+                        <label className="inspector-label">O Subir Imagen Personalizada (WebP / SVG / PNG):</label>
+                        <label className="upload-btn-label" style={{ marginTop: '4px', textAlign: 'center' }}>
+                          {uploadingLayer === 'characterImage' ? '⏳ Comprimiendo a WebP...' : '📤 Subir Personaje Propio (WebP Auto)'}
+                          <input 
+                            type="file" 
+                            style={{ display: 'none' }} 
+                            accept="image/*" 
+                            onChange={handleUploadCharacter} 
+                            disabled={uploadingLayer === 'characterImage'} 
+                          />
+                        </label>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', marginTop: '12px' }}>
+                        <div className="inspector-form-group">
+                          <label className="inspector-label">Nombre del Personaje:</label>
+                          <input 
+                            type="text"
+                            value={editingHex.introModal?.characterName || ''}
+                            onChange={(e) => {
+                              const updated = {
+                                ...editingHex,
+                                introModal: {
+                                  ...editingHex.introModal,
+                                  enabled: true,
+                                  characterName: e.target.value
+                                }
+                              };
+                              setEditingHex(updated);
+                              updateHexInGlobalConfig(updated);
+                            }}
+                            placeholder="Ej: Sutzik el Sabio"
+                            className="inspector-input"
+                          />
+                        </div>
+
+                        <div className="inspector-form-group">
+                          <label className="inspector-label">Insignia / Rol:</label>
+                          <input 
+                            type="text"
+                            value={editingHex.introModal?.characterBadge || ''}
+                            onChange={(e) => {
+                              const updated = {
+                                ...editingHex,
+                                introModal: {
+                                  ...editingHex.introModal,
+                                  enabled: true,
+                                  characterBadge: e.target.value
+                                }
+                              };
+                              setEditingHex(updated);
+                              updateHexInGlobalConfig(updated);
+                            }}
+                            placeholder="Ej: Guardián Cósmico"
+                            className="inspector-input"
+                          />
+                        </div>
+                      </div>
+
+                    </div>
+
+                    {/* Columna B: Diálogo, Bienvenida y Llamado a la Acción */}
+                    <div className="inspector-card-panel">
+                      <span className="inspector-panel-title">📜 Diálogo de Bienvenida & Misión</span>
+
+                      <div className="inspector-form-group">
+                        <label className="inspector-label">Título de Bienvenida:</label>
+                        <input 
+                          type="text"
+                          value={editingHex.introModal?.welcomeTitle || ''}
+                          onChange={(e) => {
+                            const updated = {
+                              ...editingHex,
+                              introModal: {
+                                ...editingHex.introModal,
+                                enabled: true,
+                                welcomeTitle: e.target.value
+                              }
+                            };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated);
+                          }}
+                          placeholder={`Ej: ¡Bienvenido a ${editingHex.title || 'este destino'}!`}
+                          className="inspector-input"
+                        />
+                      </div>
+
+                      <div className="inspector-form-group" style={{ marginTop: '10px' }}>
+                        <label className="inspector-label">
+                          Explicación de lo que veremos en el enlace (Micro-copywriting):
+                        </label>
+                        <textarea 
+                          rows={4}
+                          value={editingHex.introModal?.description || ''}
+                          onChange={(e) => {
+                            const updated = {
+                              ...editingHex,
+                              introModal: {
+                                ...editingHex.introModal,
+                                enabled: true,
+                                description: e.target.value
+                              }
+                            };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated);
+                          }}
+                          placeholder="Escribe un mensaje conciso (2 a 3 oraciones) donde el personaje guíe al estudiante sobre qué aprenderá o experimentará en este link..."
+                          className="inspector-input"
+                          style={{ resize: 'vertical', minHeight: '85px', fontSize: '0.85rem' }}
+                        />
+                      </div>
+
+                      <div className="inspector-form-group" style={{ marginTop: '10px' }}>
+                        <label className="inspector-label">Texto del Botón de Entrada (CTA):</label>
+                        <input 
+                          type="text"
+                          value={editingHex.introModal?.buttonText || ''}
+                          onChange={(e) => {
+                            const updated = {
+                              ...editingHex,
+                              introModal: {
+                                ...editingHex.introModal,
+                                enabled: true,
+                                buttonText: e.target.value
+                              }
+                            };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated);
+                          }}
+                          placeholder="Ej: 🚀 ¡Entrar a la Aventura!"
+                          className="inspector-input"
+                        />
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Vista Previa en Vivo y Guía de Eficiencia */}
+                  <div className="inspector-card-panel" style={{ background: 'rgba(10, 15, 30, 0.75)', border: '1px solid rgba(255, 255, 255, 0.1)' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                      <span className="inspector-panel-title" style={{ margin: 0 }}>
+                        👁️ Vista Previa en Vivo del Diálogo (Cómo lo verá el alumno)
+                      </span>
+                      <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                        💡 Doble clic en el mapa activará este modal
+                      </span>
+                    </div>
+
+                    <div style={{ 
+                      display: 'grid', 
+                      gridTemplateColumns: '120px 1fr', 
+                      gap: '16px', 
+                      padding: '16px', 
+                      borderRadius: '16px', 
+                      background: '#0a0f1e', 
+                      border: '1.5px solid rgba(56, 189, 248, 0.25)' 
+                    }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', textAlign: 'center' }}>
+                        <div style={{ 
+                          width: '72px', 
+                          height: '72px', 
+                          borderRadius: '50%', 
+                          overflow: 'hidden', 
+                          border: '2px solid #38bdf8', 
+                          background: '#1e293b', 
+                          display: 'flex', 
+                          alignItems: 'center', 
+                          justifyContent: 'center' 
+                        }}>
+                          {editingHex.introModal?.characterImage ? (
+                            <img 
+                              src={editingHex.introModal.characterImage} 
+                              alt="Personaje" 
+                              style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                            />
+                          ) : (
+                            <span style={{ fontSize: '2rem' }}>
+                              {editingHex.layerInteractive?.value || '🧙‍♂️'}
+                            </span>
+                          )}
+                        </div>
+                        <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#f8fafc', marginTop: '6px' }}>
+                          {editingHex.introModal?.characterName || 'Guardián de Sutz'}
+                        </span>
+                        <span style={{ fontSize: '0.66rem', color: '#7dd3fc', background: 'rgba(56, 189, 248, 0.15)', padding: '1px 6px', borderRadius: '10px', marginTop: '2px' }}>
+                          {editingHex.introModal?.characterBadge || 'Anfitrión'}
+                        </span>
+                      </div>
+
+                      <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                        <h4 style={{ margin: '0 0 6px 0', fontSize: '0.98rem', color: '#38bdf8', fontWeight: 800 }}>
+                          {editingHex.introModal?.welcomeTitle || `¡Bienvenido a ${editingHex.title || 'este destino'}!`}
+                        </h4>
+                        <p style={{ margin: '0 0 10px 0', fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                          {editingHex.introModal?.description || 'Adéntrate en este espacio de aprendizaje interactivo. Descubre nuevos desafíos, herramientas y aventuras diseñadas para expandir tu conocimiento.'}
+                        </p>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ 
+                            display: 'inline-flex', 
+                            padding: '6px 16px', 
+                            borderRadius: '10px', 
+                            background: 'linear-gradient(135deg, #059669, #10b981)', 
+                            color: '#fff', 
+                            fontSize: '0.82rem', 
+                            fontWeight: 800 
+                          }}>
+                            {editingHex.introModal?.buttonText || '🚀 ¡Entrar a la Aventura!'}
+                          </span>
+                          <span style={{ fontSize: '0.72rem', color: '#64748b' }}>
+                            Destino: {editingHex.action?.target || 'Sin definir'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Tarjeta de Guía de Eficiencia Técnica y Pedagógica */}
+                  <div className="inspector-card-panel" style={{ borderLeft: '4px solid #38bdf8' }}>
+                    <span className="inspector-panel-title">💡 Guía de Formato y Condiciones para Máxima Eficiencia</span>
+                    <ul style={{ margin: '6px 0 0 0', paddingLeft: '18px', fontSize: '0.8rem', color: '#94a3b8', lineHeight: 1.6 }}>
+                      <li><strong style={{ color: '#e2e8f0' }}>Formato de Imagen:</strong> Usa imágenes con fondo transparente (PNG, SVG o WebP). El sistema comprime automáticamente cualquier foto a WebP para que cargue en menos de 50ms.</li>
+                      <li><strong style={{ color: '#e2e8f0' }}>Dimensiones Ideales:</strong> Entre <strong>400x400 px y 600x600 px</strong> (aspecto 1:1 circular) con peso menor a <strong>80 KB</strong>.</li>
+                      <li><strong style={{ color: '#e2e8f0' }}>Neurodiseño & Longitud del Texto:</strong> Mantén la descripción en un rango de <strong>2 a 3 oraciones cortas</strong> (máximo 40 palabras). Los textos extensos generan fatiga cognitiva previa a la actividad pedagógica.</li>
+                      <li><strong style={{ color: '#e2e8f0' }}>Llamado a la Acción (CTA):</strong> Usa verbos activos de alta energía pedagógica: <em>"¡Comenzar la Misión!", "Explorar el Universo", "Crear mi Personaje"</em>.</li>
+                    </ul>
+                  </div>
+
                 </div>
               )}
 
