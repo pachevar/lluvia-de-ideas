@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import type { PortalConfig, CustomHexagon, HexLayer } from '../../types';
 import { DEFAULT_CONFIG, usePortalConfig } from '../../context/PortalConfigContext';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
@@ -7,6 +7,14 @@ import { HexagonGrid } from '../map/HexagonGrid';
 import GradientBuilder from './GradientBuilder';
 import { SutzIconPickerModal } from './SutzIconPickerModal';
 import { IconRenderer } from './IconRegistry';
+import { 
+  PILLAR_CATEGORIES, 
+  BUILTIN_PILLAR_ROUTES, 
+  subscribeCustomRoutes, 
+  addCustomRoute, 
+  removeCustomRoute, 
+  type PillarAppRoute 
+} from '../../config/pillarProjectsConfig';
 import './AdminTabMundoVirtual.css';
 
 const BIOMES = [
@@ -34,20 +42,6 @@ const AURAS = [
   { id: 'cyan', name: '🔵 Furia Celeste', value: 'rgba(56, 189, 248, 0.85)' },
   { id: 'esmeralda', name: '🟢 Fuerza Esmeralda', value: 'rgba(34, 197, 94, 0.85)' },
   { id: 'carmesi', name: '🔴 Poder Carmesí', value: 'rgba(239, 68, 68, 0.85)' },
-];
-
-const QUICK_ACTIONS = [
-  { label: '📖 Máquina Cuentos', target: '/creatika/maquina-de-cuentos', type: 'navigate' as const },
-  { label: '🎭 Construyendo Personaje', target: '/creatika/construyendo-personaje', type: 'navigate' as const },
-  { label: '🪐 Sistema Solar', target: '/juegos/sistema-solar', type: 'navigate' as const },
-  { label: '🔢 Secuencias Numéricas', target: '/juegos/secuencias-numericas', type: 'navigate' as const },
-  { label: '🎨 Teoría del Color', target: '/juegos/teoria-del-color', type: 'navigate' as const },
-  { label: '🎟️ Bingotenango', target: '/juegos/bingo', type: 'navigate' as const },
-  { label: '🦇 Popol Vuh: Camazotz', target: 'camazotz', type: 'modal' as const },
-  { label: '🌸 Popol Vuh: Ixkik', target: 'ixkik', type: 'modal' as const },
-  { label: '🌾 Popol Vuh: Ixmukanne', target: 'ixmukanne', type: 'modal' as const },
-  { label: '⛈️ Popol Vuh: Juracán', target: 'juracan', type: 'modal' as const },
-  { label: '🐍 Popol Vuh: Q\'uq\'umatz', target: 'ququmatz', type: 'modal' as const }
 ];
 
 const DECORATIVE_EMOJIS = ['🏰', '🌲', '🐉', '🏛️', '🏔️', '🌿', '⭐', '🚀', '💎', '🛡️', '⚡', '🌌'];
@@ -82,6 +76,61 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
 
   const inspectorSectionRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Estados para Proyectos Pilares y Rutas de Aplicaciones
+  const [selectedPillar, setSelectedPillar] = useState<string>('todos');
+  const [customRoutes, setCustomRoutes] = useState<PillarAppRoute[]>([]);
+  const [showAddRouteForm, setShowAddRouteForm] = useState<boolean>(false);
+  const [newRouteLabel, setNewRouteLabel] = useState('');
+  const [newRouteTarget, setNewRouteTarget] = useState('');
+  const [newRouteType, setNewRouteType] = useState<'navigate' | 'external' | 'modal'>('navigate');
+  const [newRoutePillar, setNewRoutePillar] = useState('100tek');
+  const [isSavingRoute, setIsSavingRoute] = useState(false);
+
+  useEffect(() => {
+    const unsub = subscribeCustomRoutes((routes) => {
+      setCustomRoutes(routes);
+    });
+    return () => unsub();
+  }, []);
+
+  const allPillarRoutes = [...BUILTIN_PILLAR_ROUTES, ...customRoutes];
+  const filteredRoutes = selectedPillar === 'todos'
+    ? allPillarRoutes
+    : allPillarRoutes.filter(r => r.pillarId === selectedPillar || (selectedPillar === 'personalizados' && r.isCustom));
+
+  const handleAddCustomRoute = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newRouteLabel.trim() || !newRouteTarget.trim()) return;
+    setIsSavingRoute(true);
+    try {
+      await addCustomRoute({
+        label: newRouteLabel.trim(),
+        target: newRouteTarget.trim(),
+        type: newRouteType,
+        pillarId: newRoutePillar
+      });
+      setNewRouteLabel('');
+      setNewRouteTarget('');
+      setShowAddRouteForm(false);
+      setSelectedPillar(newRoutePillar);
+    } catch (err) {
+      console.error('Error al agregar ruta personalizada:', err);
+      alert('No se pudo guardar la ruta personalizada.');
+    } finally {
+      setIsSavingRoute(false);
+    }
+  };
+
+  const handleRemoveCustomRoute = async (e: React.MouseEvent, routeId: string) => {
+    e.stopPropagation();
+    if (!window.confirm('¿Deseas retirar esta ruta personalizada de la lista?')) return;
+    try {
+      await removeCustomRoute(routeId);
+    } catch (err) {
+      console.error('Error al eliminar ruta personalizada:', err);
+    }
+  };
 
   const updateHexInGlobalConfig = (targetHex: CustomHexagon, autoSave = true, immediate = false) => {
     const currentMap = localConfig?.map || [];
@@ -920,32 +969,177 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                       </div>
                     )}
 
-                    {/* Accesos Rápidos de Destinos Populares */}
-                    <div style={{ marginTop: '10px' }}>
-                      <label className="inspector-label" style={{ display: 'block', marginBottom: '6px' }}>
-                        ⚡ Sugerencias Rápidas de Destino:
-                      </label>
-                      <div className="quick-suggestions-pills">
-                        {QUICK_ACTIONS.map(qa => {
-                          const isMatch = editingHex.action.target === qa.target;
+                    {/* Sección de Proyectos Pilares y Rutas de Aplicaciones */}
+                    <div className="pillar-quick-actions-container">
+                      <div className="pillar-quick-actions-header">
+                        <label className="inspector-label" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span>🏛️ Proyectos Pilares & Aplicaciones:</span>
+                        </label>
+                        <button
+                          type="button"
+                          className="pillar-add-route-toggle-btn"
+                          onClick={() => setShowAddRouteForm(!showAddRouteForm)}
+                        >
+                          {showAddRouteForm ? '✖ Cerrar' : '➕ Añadir Nueva App / Página'}
+                        </button>
+                      </div>
+
+                      {/* Formulario Expandible para Agregar Nuevas Páginas / Apps */}
+                      {showAddRouteForm && (
+                        <form onSubmit={handleAddCustomRoute} className="pillar-add-route-panel">
+                          <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#67e8f9', marginBottom: '8px' }}>
+                            ✨ Registrar Nueva Aplicación o Página en un Pilar
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                            <div>
+                              <label style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>
+                                Nombre / Etiqueta:
+                              </label>
+                              <input
+                                type="text"
+                                className="inspector-input"
+                                placeholder="Ej: 🚀 Simulador Físico"
+                                value={newRouteLabel}
+                                onChange={(e) => setNewRouteLabel(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>
+                                Proyecto Pilar:
+                              </label>
+                              <select
+                                className="inspector-input"
+                                value={newRoutePillar}
+                                onChange={(e) => setNewRoutePillar(e.target.value)}
+                              >
+                                {PILLAR_CATEGORIES.filter(c => c.id !== 'todos' && c.id !== 'personalizados').map(c => (
+                                  <option key={c.id} value={c.id}>
+                                    {c.icon} {c.label}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 0.8fr', gap: '8px', marginBottom: '10px' }}>
+                            <div>
+                              <label style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>
+                                Ruta interna o URL:
+                              </label>
+                              <input
+                                type="text"
+                                className="inspector-input"
+                                placeholder="Ej: /100tek/simulador o https://..."
+                                value={newRouteTarget}
+                                onChange={(e) => setNewRouteTarget(e.target.value)}
+                                required
+                              />
+                            </div>
+                            <div>
+                              <label style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block', marginBottom: '3px' }}>
+                                Tipo de Enlace:
+                              </label>
+                              <select
+                                className="inspector-input"
+                                value={newRouteType}
+                                onChange={(e) => setNewRouteType(e.target.value as any)}
+                              >
+                                <option value="navigate">Página Interna (/...)</option>
+                                <option value="external">Web Externa (https://)</option>
+                                <option value="modal">Modal Popol Vuh</option>
+                              </select>
+                            </div>
+                          </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px' }}>
+                            <button
+                              type="button"
+                              className="btn btn-secondary"
+                              style={{ padding: '4px 12px', fontSize: '0.78rem' }}
+                              onClick={() => setShowAddRouteForm(false)}
+                            >
+                              Cancelar
+                            </button>
+                            <button
+                              type="submit"
+                              disabled={isSavingRoute}
+                              className="btn btn-primary"
+                              style={{ padding: '4px 14px', fontSize: '0.78rem', background: 'linear-gradient(135deg, #0ea5e9, #0284c7)', border: 'none' }}
+                            >
+                              {isSavingRoute ? 'Guardando...' : '💾 Guardar en Pilar'}
+                            </button>
+                          </div>
+                        </form>
+                      )}
+
+                      {/* Selector / Filtro de Pilares */}
+                      <div className="pillar-chips-bar">
+                        {PILLAR_CATEGORIES.map(cat => {
+                          const isSelected = selectedPillar === cat.id;
+                          const count = cat.id === 'todos' 
+                            ? allPillarRoutes.length
+                            : cat.id === 'personalizados'
+                              ? customRoutes.length
+                              : allPillarRoutes.filter(r => r.pillarId === cat.id).length;
+
+                          if (cat.id === 'personalizados' && customRoutes.length === 0) return null;
+
                           return (
                             <button
-                              key={qa.label}
+                              key={cat.id}
                               type="button"
-                              className={`quick-pill-btn ${isMatch ? 'active' : ''}`}
-                              onClick={() => {
-                                const updated = {
-                                  ...editingHex,
-                                  action: { type: qa.type, target: qa.target }
-                                };
-                                setEditingHex(updated);
-                                updateHexInGlobalConfig(updated);
-                              }}
+                              className={`pillar-chip-btn ${isSelected ? 'active' : ''}`}
+                              onClick={() => setSelectedPillar(cat.id)}
                             >
-                              {qa.label}
+                              <span>{cat.icon}</span>
+                              <span>{cat.label}</span>
+                              <span style={{ fontSize: '0.68rem', opacity: 0.75, background: 'rgba(0,0,0,0.25)', padding: '1px 5px', borderRadius: '10px' }}>
+                                {count}
+                              </span>
                             </button>
                           );
                         })}
+                      </div>
+
+                      {/* Lista de Aplicaciones y Enlaces del Pilar Seleccionado */}
+                      <div className="quick-suggestions-pills">
+                        {filteredRoutes.map(qa => {
+                          const isMatch = editingHex.action.target === qa.target;
+                          return (
+                            <div key={qa.id || qa.label} style={{ display: 'inline-flex', position: 'relative' }}>
+                              <button
+                                type="button"
+                                className={`quick-pill-btn ${isMatch ? 'active' : ''}`}
+                                title={`Asignar acción a: ${qa.target}`}
+                                onClick={() => {
+                                  const updated = {
+                                    ...editingHex,
+                                    action: { type: qa.type, target: qa.target }
+                                  };
+                                  setEditingHex(updated);
+                                  updateHexInGlobalConfig(updated, true);
+                                }}
+                              >
+                                {qa.label}
+                                {qa.isCustom && (
+                                  <span 
+                                    className="quick-pill-delete-btn"
+                                    title="Eliminar esta ruta personalizada"
+                                    onClick={(e) => handleRemoveCustomRoute(e, qa.id)}
+                                  >
+                                    ✕
+                                  </span>
+                                )}
+                              </button>
+                            </div>
+                          );
+                        })}
+                        {filteredRoutes.length === 0 && (
+                          <div style={{ fontSize: '0.78rem', color: '#94a3b8', fontStyle: 'italic', padding: '6px 0' }}>
+                            No hay aplicaciones registradas en este pilar todavía. Usa "+ Añadir Nueva App" para registrar una.
+                          </div>
+                        )}
                       </div>
                     </div>
 

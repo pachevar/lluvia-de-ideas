@@ -265,6 +265,7 @@ function App() {
             <Route path="/creatika/maquina-de-cuentos" element={<StoryMachine />} />
             <Route path="/creatika/teoria-del-color" element={<ColorTheory />} />
             <Route path="/creatika/construyendo-el-personaje" element={<ConstruyendoPersonaje />} />
+            <Route path="/creatika/construyendo-personaje" element={<ConstruyendoPersonaje />} />
             <Route path="/construyendo-el-personaje" element={<ConstruyendoPersonaje />} />
             <Route path="/construyendo-personaje" element={<ConstruyendoPersonaje />} />
             <Route path="/personajes" element={<ConstruyendoPersonaje />} />
@@ -273,6 +274,9 @@ function App() {
             <Route path="/creatika/codigo-estudiante" element={<CodigoEstudiante />} />
             <Route path="/codigo-estudiante" element={<CodigoEstudiante />} />
             <Route path="/juegos/maquina-de-cuentos" element={<StoryMachine />} />
+            <Route path="/juegos/sistema-solar" element={<SolarSystem />} />
+            <Route path="/juegos/secuencias-numericas" element={<NumberSequences />} />
+            <Route path="/juegos/teoria-del-color" element={<ColorTheory />} />
             <Route path="/juegos/bingo" element={<BingoHub />} />
             <Route path="/juegos/bingo/boletos" element={<BingoBoletos />} />
             <Route path="/bingo/boletos" element={<BingoBoletos />} />
