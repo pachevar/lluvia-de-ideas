@@ -542,10 +542,31 @@ export const SutzSettingsModal: React.FC<SutzSettingsModalProps> = ({ isOpen, on
 
         </div>
 
-        {/* Pie del Modal */}
-        <div className="sutz-modal-footer">
-          <button className="sutz-modal-confirm-btn" onClick={onClose}>
-            Guardar y Regresar al Juego 👍
+        {/* Pie del Modal con Retorno al Portal */}
+        <div className="sutz-modal-footer" style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+          <button 
+            type="button"
+            style={{
+              background: 'transparent',
+              border: '1px solid rgba(148, 163, 184, 0.3)',
+              color: '#94a3b8',
+              padding: '10px 14px',
+              borderRadius: '12px',
+              fontSize: '0.82rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              whiteSpace: 'nowrap'
+            }}
+            onClick={() => {
+              sutzAudio.playClick();
+              window.location.href = '/';
+            }}
+            title="Volver a la página principal y tienda de Editorial Lluvia de Ideas"
+          >
+            🏛️ Salir al Portal
+          </button>
+          <button className="sutz-modal-confirm-btn" onClick={onClose} style={{ flex: 1 }}>
+            Guardar y Regresar a la Expedición 👍
           </button>
         </div>
 

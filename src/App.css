@@ -358,6 +358,12 @@
   }
 }
 
+/* Ocultar barra lateral en Sutz para inmersión total de videojuego independiente */
+.gamer-sidebar-trigger.hide-on-sutz,
+.gamer-sidebar.hide-on-sutz {
+  display: none !important;
+}
+
 /* Floating Action Buttons */
 .floating-action-buttons {
   position: fixed;

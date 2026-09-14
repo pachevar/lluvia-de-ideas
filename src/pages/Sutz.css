@@ -13,8 +13,16 @@
   height: 100vh;
   overflow: hidden;
   user-select: none;
-  background: var(--sutz-bg-space-void);
-  font-family: var(--font-body, system-ui, -apple-system, sans-serif);
+  background: 
+    radial-gradient(1.2px 1.2px at 15% 25%, rgba(255, 255, 255, 0.75), transparent),
+    radial-gradient(1.5px 1.5px at 70% 15%, rgba(56, 189, 248, 0.8), transparent),
+    radial-gradient(1px 1px at 85% 75%, rgba(110, 231, 183, 0.7), transparent),
+    radial-gradient(1.8px 1.8px at 30% 80%, rgba(253, 224, 71, 0.65), transparent),
+    radial-gradient(ellipse 65% 55% at 50% 45%, var(--sutz-nebula-emerald) 0%, transparent 70%),
+    radial-gradient(ellipse 80% 60% at 20% 80%, var(--sutz-nebula-blue) 0%, transparent 80%),
+    radial-gradient(ellipse 70% 50% at 80% 20%, var(--sutz-nebula-cyan) 0%, transparent 75%),
+    var(--sutz-bg-space-void);
+  font-family: var(--sutz-font-body);
 }
 
 /* ==========================================================================
@@ -55,11 +63,11 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  background: var(--sutz-glass-bg);
-  border: 1.5px solid var(--sutz-glass-border);
+  background: var(--sutz-stone-card);
+  border: 1.5px solid var(--sutz-stone-border);
   border-radius: 22px;
   padding: 5px 14px 5px 6px;
-  box-shadow: var(--sutz-shadow-md), 0 0 16px var(--sutz-color-guide-glow), var(--sutz-glass-bevel);
+  box-shadow: var(--sutz-shadow-stone), var(--sutz-bevel-stone);
   backdrop-filter: var(--sutz-glass-blur);
   -webkit-backdrop-filter: var(--sutz-glass-blur);
   cursor: pointer;
@@ -93,6 +101,7 @@
   justify-content: center;
   font-size: 1.3rem;
   font-weight: 900;
+  font-family: var(--sutz-font-display);
   color: #ffffff;
   box-shadow: 0 0 14px var(--sutz-color-guide-glow);
   overflow: hidden;
@@ -113,6 +122,8 @@
   color: #0f172a;
   font-size: 0.65rem;
   font-weight: 900;
+  font-family: var(--sutz-font-display);
+  letter-spacing: 0.5px;
   padding: 1px 7px;
   border-radius: 9px;
   border: 1px solid #ffffff;
@@ -288,17 +299,18 @@
   font-size: 0.95rem;
   font-weight: 900;
   color: var(--sutz-text-bright);
-  font-family: var(--font-headline, system-ui, sans-serif);
-  letter-spacing: 0.4px;
+  font-family: var(--sutz-font-display, 'Orbitron', monospace);
+  letter-spacing: 0.8px;
   line-height: 1.1;
 }
 
 .sutz-res-label {
-  font-size: 0.62rem;
+  font-size: 0.64rem;
   font-weight: 700;
   color: var(--sutz-text-muted);
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
+  letter-spacing: 0.8px;
 }
 
 .sutz-res-plus-btn {
@@ -368,18 +380,21 @@
 .sutz-world-title {
   font-size: 0.85rem;
   font-weight: 900;
+  font-family: var(--sutz-font-display, 'Orbitron', monospace);
   background: linear-gradient(90deg, var(--sutz-color-guide-light) 0%, var(--sutz-color-wisdom) 100%);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   line-height: 1.1;
   margin: 0;
+  letter-spacing: 0.5px;
 }
 
 .sutz-world-sub {
-  font-size: 0.65rem;
+  font-size: 0.72rem;
   font-weight: 700;
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
   color: var(--sutz-color-success-light);
-  letter-spacing: 0.4px;
+  letter-spacing: 0.5px;
 }
 
 .sutz-hud-action-btn {
@@ -413,8 +428,10 @@
   width: auto;
   padding: 0 14px;
   gap: 8px;
-  font-size: 0.82rem;
-  font-weight: 800;
+  font-size: 0.84rem;
+  font-weight: 700;
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
+  letter-spacing: 0.5px;
   background: var(--sutz-glass-bg);
   border: 1.5px solid rgba(16, 185, 129, 0.4);
   color: #6ee7b7;
@@ -426,6 +443,32 @@
   border-color: #34d399;
   color: #ffffff;
   box-shadow: var(--sutz-shadow-lg), 0 0 20px rgba(16, 185, 129, 0.4);
+}
+
+.sutz-hud-action-btn.exit-portal-btn {
+  width: auto;
+  padding: 0 12px;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(148, 163, 184, 0.35);
+  color: #cbd5e1;
+  box-shadow: var(--sutz-shadow-sm);
+}
+
+.sutz-hud-action-btn.exit-portal-btn:hover {
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
+  border-color: rgba(245, 158, 11, 0.6);
+  color: #ffffff;
+  box-shadow: var(--sutz-shadow-md), 0 0 14px rgba(245, 158, 11, 0.3);
+}
+
+.sutz-exit-portal-text {
+  display: inline-block;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .sutz-coord-live-dot {
@@ -487,14 +530,14 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  background: var(--sutz-glass-bg);
-  border: 1.5px solid var(--sutz-glass-border);
+  background: var(--sutz-stone-card);
+  border: 1.5px solid var(--sutz-stone-border);
   border-radius: 28px;
   padding: 8px 18px;
   box-shadow: 
-    var(--sutz-shadow-lg), 
+    var(--sutz-shadow-stone), 
     0 0 28px var(--sutz-color-guide-glow),
-    var(--sutz-glass-bevel);
+    var(--sutz-bevel-stone);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
   pointer-events: auto;
@@ -531,10 +574,11 @@
 }
 
 .sutz-dock-label {
-  font-size: 0.68rem;
-  font-weight: 800;
+  font-size: 0.74rem;
+  font-weight: 700;
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
   margin-top: 4px;
-  letter-spacing: 0.4px;
+  letter-spacing: 0.6px;
   text-transform: uppercase;
   color: var(--sutz-text-normal);
   transition: color 0.2s ease;

@@ -472,13 +472,13 @@ export default function Sutz() {
           </div>
         </div>
 
-        {/* Derecha: Estado de Mundo, Sonido y Salir */}
+        {/* Derecha: Estado de Mundo, Exploradores, Ajustes y Salir al Portal */}
         <div className="sutz-hud-right">
           <div className="sutz-world-pill">
             <span className="sutz-world-icon">☁️</span>
             <div className="sutz-world-text">
-              <span className="sutz-world-title">Sutz Descubre</span>
-              <span className="sutz-world-sub">{mapCompletionPercent}% Descubierto</span>
+              <span className="sutz-world-title">Sutz Virtual</span>
+              <span className="sutz-world-sub">{mapCompletionPercent}% · Lluvia de Ideas</span>
             </div>
           </div>
 
@@ -500,6 +500,19 @@ export default function Sutz() {
           >
             <span>⚙️</span>
             <span>Ajustes</span>
+          </button>
+
+          {/* Botón de Retorno al Portal Principal */}
+          <button 
+            className="sutz-hud-action-btn exit-portal-btn"
+            onClick={() => {
+              sutzAudio.playClick();
+              navigate('/');
+            }}
+            title="Volver al Portal Principal de Editorial Lluvia de Ideas"
+          >
+            <span style={{ fontSize: '0.9rem' }}>🏛️</span>
+            <span className="sutz-exit-portal-text">Portal</span>
           </button>
         </div>
       </header>

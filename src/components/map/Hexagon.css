@@ -202,13 +202,13 @@
 }
 
 .hex-title-text {
-  font-size: 0.82rem;
-  font-weight: 800;
-  font-family: var(--font-headline, system-ui, sans-serif);
+  font-size: 0.86rem;
+  font-weight: 700;
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
   color: #ffffff !important;
   margin: 0;
   line-height: 1.15;
-  letter-spacing: 0.2px;
+  letter-spacing: 0.4px;
   text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9), 0 0 10px rgba(0, 0, 0, 0.6);
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -322,18 +322,21 @@
 .cartesian-hud-title {
   font-size: 0.82rem;
   font-weight: 900;
+  font-family: var(--sutz-font-display, 'Orbitron', monospace);
   color: #38bdf8;
   display: flex;
   align-items: center;
   gap: 6px;
+  letter-spacing: 0.5px;
 }
 
 .cartesian-hud-legend {
   display: flex;
   align-items: center;
   gap: 12px;
-  font-size: 0.72rem;
+  font-size: 0.82rem;
   font-weight: 700;
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
   flex-wrap: wrap;
 }
 
