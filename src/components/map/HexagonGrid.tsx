@@ -19,15 +19,19 @@ interface HexagonGridProps {
 }
 
 interface TransformBridgeProps {
-  zoomIn: () => void;
-  zoomOut: () => void;
+  zoomIn: (step?: number, animationTime?: number, animationType?: any) => void;
+  zoomOut: (step?: number, animationTime?: number, animationType?: any) => void;
   centerView: () => void;
   onReady: (controls: { zoomIn: () => void; zoomOut: () => void; centerView: () => void }) => void;
 }
 
 const TransformBridge: React.FC<TransformBridgeProps> = ({ zoomIn, zoomOut, centerView, onReady }) => {
   React.useEffect(() => {
-    onReady({ zoomIn, zoomOut, centerView });
+    onReady({ 
+      zoomIn: () => zoomIn(0.25, 240, 'easeOutQuad'), 
+      zoomOut: () => zoomOut(0.25, 240, 'easeOutQuad'), 
+      centerView 
+    });
   }, [zoomIn, zoomOut, centerView, onReady]);
   return null;
 };
@@ -123,8 +127,8 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
         centerOnInit={true}
         limitToBounds={false}
         smooth={true}
-        wheel={{ step: 0.04 }}
-        zoomAnimation={{ animationType: 'easeOutQuad', animationTime: 280 }}
+        wheel={{ step: 0.0008 }}
+        zoomAnimation={{ animationType: 'easeOutQuad', animationTime: 240 }}
         doubleClick={{ disabled: true }}
         pinch={{ step: 5 }}
         panning={{ 
@@ -142,12 +146,38 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
             )}
             
             <div className="map-controls" style={{ zIndex: 1000 }}>
-              <button onClick={() => centerView()} title="Centrar Mapa (Origen)">⌂</button>
+              <button 
+                type="button"
+                className="map-zoom-btn"
+                onClick={() => zoomIn(0.25, 240, 'easeOutQuad')} 
+                title="Acercar Mapa (+)"
+                aria-label="Acercar mapa"
+              >
+                +
+              </button>
+              <button 
+                type="button"
+                className="map-zoom-btn"
+                onClick={() => zoomOut(0.25, 240, 'easeOutQuad')} 
+                title="Alejar Mapa (−)"
+                aria-label="Alejar mapa"
+              >
+                −
+              </button>
+              <button 
+                type="button"
+                onClick={() => centerView()} 
+                title="Centrar Mapa (Origen)"
+                aria-label="Centrar mapa"
+              >
+                ⌂
+              </button>
               <button 
                 type="button"
                 className={internalShowAxes ? 'active' : ''}
                 onClick={() => setInternalShowAxes(prev => !prev)} 
                 title={internalShowAxes ? "Ocultar Plano Cartesiano (Ejes X, Y)" : "Mostrar Plano Cartesiano Didáctico (Ejes X, Y)"}
+                aria-label="Alternar plano cartesiano"
               >
                 📐
               </button>

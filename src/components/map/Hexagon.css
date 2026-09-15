@@ -548,6 +548,14 @@
   transform: scale(0.92);
 }
 
+.map-controls button.map-zoom-btn {
+  font-family: var(--font-headline, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif);
+  font-size: 1.35rem;
+  font-weight: 700;
+  line-height: 1;
+  color: #e0f2fe;
+}
+
 /* --- Mobile & Touch Anti-Flicker Optimizations --- */
 @media (max-width: 768px) {
   .map-viewport {
@@ -603,6 +611,11 @@
     padding: 5px;
     gap: 6px;
     border-radius: 16px;
+  }
+  
+  /* En versión móvil los botones + y - no existen (solo interacción táctil/pellizco) */
+  .map-controls .map-zoom-btn {
+    display: none !important;
   }
   
   .map-controls button {
