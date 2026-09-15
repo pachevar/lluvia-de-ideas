@@ -575,6 +575,33 @@ const CELESTIAL_DATA: Record<string, CelestialBody> = {
       description: 'Magnetosfera con dipolo magnético dinámico y Cinturones de Radiación de Van Allen que generan las auroras polares.'
     }
   },
+  luna: {
+    id: 'luna',
+    name: 'La Luna',
+    type: 'planeta_rocoso',
+    diameter: '3,474 km',
+    diameterKm: 3474,
+    distanceFromSun: '149.6 millones de km (a 384,400 km de la Tierra)',
+    distanceAU: 1.00,
+    eccentricity: 0.0549,
+    perihelionAU: 0.983,
+    aphelionAU: 1.017,
+    axialTilt: '1.54°',
+    orbitalPeriod: '27.3 días (Mes Sideral)',
+    funFact: '¡La Luna está acoplada por marea a la Tierra (rotación sincrónica), por lo que siempre nos muestra la misma cara! Además, se aleja 3.8 cm cada año debido a la transferencia de momento angular con los océanos terrestres.',
+    description: 'El único satélite natural de la Tierra y el quinto satélite más grande del Sistema Solar. Su superficie craterizada y mares de basalto oscuro conservan 4,500 millones de años de historia geológica cósmica. Su atracción gravitatoria estabiliza el eje terrestre.',
+    moons: [],
+    atmosphere: [
+      { gas: 'Argón (Ar)', percent: 40.0, color: '#a855f7' },
+      { gas: 'Helio (He)', percent: 40.0, color: '#ef4444' },
+      { gas: 'Sodio/Potasio', percent: 20.0, color: '#f59e0b' }
+    ],
+    magnetosphere: {
+      hasField: false,
+      description: 'Carece de campo magnético dipolar global generado por dinamo; presenta únicamente anomalías magnéticas corticales remanentes.'
+    },
+    jwstInsights: 'El programa Artemis y telescopios infrarrojos mapean reservas de hielo de agua en los cráteres eternamente ensombrecidos del polo sur lunar.'
+  },
   marte: {
     id: 'marte',
     name: 'Marte',
@@ -1216,9 +1243,18 @@ export default function SolarSystem() {
   const coordsNewHorizons = getNewHorizonsCoords();
   const coordsVoyager1 = getVoyager1Coords();
   const coordsVoyager2 = getVoyager2Coords();
+  const getLunaCoords = () => {
+    const lunaRad = ((angles.luna || 0) * Math.PI) / 180;
+    return {
+      x: coordsTierra.x + 20 * Math.cos(lunaRad),
+      y: coordsTierra.y + 20 * Math.sin(lunaRad)
+    };
+  };
+  const coordsLuna = getLunaCoords();
 
   // Control de Cámara, Pan & Drag y Seguimiento Dinámico
-  const handleSelectBody = (body: CelestialBody) => {
+  const handleSelectBody = (body?: CelestialBody) => {
+    if (!body) return;
     soundEffects.playSpacePulse();
     setSelectedBody(body);
 
@@ -1236,7 +1272,8 @@ export default function SolarSystem() {
 
     if (body.id !== 'sol' && body.type !== 'cinturon') {
       setIsTracking(true);
-      if (body.id === 'hubble' || body.id === 'jwst') setZoomLevel(3.2);
+      if (body.id === 'luna') setZoomLevel(4.2);
+      else if (body.id === 'hubble' || body.id === 'jwst') setZoomLevel(3.2);
       else if (body.id === 'parker') setZoomLevel(2.6);
       else if (body.id === 'voyager1' || body.id === 'voyager2' || body.id === 'newhorizons') setZoomLevel(1.35);
       else if (body.id === 'jupiter' || body.id === 'saturno') setZoomLevel(2.0);
@@ -1419,6 +1456,9 @@ export default function SolarSystem() {
     } else if (selectedBody.id === 'voyager2') {
       camTargetX = coordsVoyager2.x;
       camTargetY = coordsVoyager2.y;
+    } else if (selectedBody.id === 'luna') {
+      camTargetX = coordsLuna.x;
+      camTargetY = coordsLuna.y;
     } else {
       const coords = getCoordinates(selectedBody.id);
       camTargetX = coords.x;
@@ -1693,69 +1733,89 @@ export default function SolarSystem() {
                 </div>
 
                 {/* Sub-Menú Interactivo de Selección Directa según la Categoría Activa */}
-                {(activeCameraPreset === 'rocosos' || activeCameraPreset === 'gigantes' || activeCameraPreset === 'sondas') && (
-                  <div className="camera-subpreset-bar animate-fade-in">
-                    <span className="subpresets-label">
-                      {activeCameraPreset === 'rocosos' && '🪨 Seguir:'}
-                      {activeCameraPreset === 'gigantes' && '🪐 Seguir:'}
-                      {activeCameraPreset === 'sondas' && '🛰️ Seguir:'}
-                    </span>
+                <div className="camera-subpreset-bar">
+                  <span className="subpresets-label">
+                    {activeCameraPreset === 'sistema' && '🌌 Modo:'}
+                    {activeCameraPreset === 'sol' && '☀️ Seguir:'}
+                    {activeCameraPreset === 'rocosos' && '🪨 Seguir:'}
+                    {activeCameraPreset === 'gigantes' && '🪐 Seguir:'}
+                    {activeCameraPreset === 'sondas' && '🛰️ Seguir:'}
+                  </span>
 
-                    {activeCameraPreset === 'rocosos' && [
-                      { id: 'mercurio', label: '☿ Mercurio' },
-                      { id: 'venus', label: '♀ Venus' },
-                      { id: 'tierra', label: '🌍 Tierra' },
-                      { id: 'luna', label: '🌙 Luna' },
-                      { id: 'marte', label: '♂ Marte' }
-                    ].map(item => (
-                      <button 
-                        key={item.id}
-                        className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
-                        onClick={() => handleSelectBody(CELESTIAL_DATA[item.id])}
-                        title={`Centrar y seguir ${item.label}`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                  {activeCameraPreset === 'sistema' && (
+                    <button 
+                      className={`subpreset-chip ${selectedBody.id === 'sol' && !isTracking ? 'active' : ''}`}
+                      onClick={() => setCameraPreset('sistema')}
+                      title="Vista panorámica completa del Sistema Solar"
+                    >
+                      🌌 Sistema Completo
+                    </button>
+                  )}
 
-                    {activeCameraPreset === 'gigantes' && [
-                      { id: 'jupiter', label: '🪐 Júpiter' },
-                      { id: 'saturno', label: '🪐 Saturno' },
-                      { id: 'urano', label: '❄️ Urano' },
-                      { id: 'neptuno', label: '❄️ Neptuno' }
-                    ].map(item => (
-                      <button 
-                        key={item.id}
-                        className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
-                        onClick={() => handleSelectBody(CELESTIAL_DATA[item.id])}
-                        title={`Centrar y seguir ${item.label}`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
+                  {activeCameraPreset === 'sol' && (
+                    <button 
+                      className={`subpreset-chip ${selectedBody.id === 'sol' && isTracking ? 'active' : ''}`}
+                      onClick={() => handleSelectBody(CELESTIAL_DATA.sol)}
+                      title="Centrar y seguir el Sol"
+                    >
+                      ☀️ Sol (Fotosfera / Corona)
+                    </button>
+                  )}
 
-                    {activeCameraPreset === 'sondas' && [
-                      { id: 'jwst', label: '🔭 Webb (L2)' },
-                      { id: 'hubble', label: '🛰️ Hubble (LEO)' },
-                      { id: 'parker', label: '☀️ Parker Solar' },
-                      { id: 'newhorizons', label: '🛸 New Horizons' },
-                      { id: 'voyager1', label: '📡 Voyager 1' },
-                      { id: 'voyager2', label: '📡 Voyager 2' }
-                    ].map(item => (
-                      <button 
-                        key={item.id}
-                        className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
-                        onClick={() => {
-                          setShowProbes(true);
-                          handleSelectBody(CELESTIAL_DATA[item.id]);
-                        }}
-                        title={`Centrar y seguir ${item.label}`}
-                      >
-                        {item.label}
-                      </button>
-                    ))}
-                  </div>
-                )}
+                  {activeCameraPreset === 'rocosos' && [
+                    { id: 'mercurio', label: '☿ Mercurio' },
+                    { id: 'venus', label: '♀ Venus' },
+                    { id: 'tierra', label: '🌍 Tierra' },
+                    { id: 'luna', label: '🌙 Luna' },
+                    { id: 'marte', label: '♂ Marte' }
+                  ].map(item => (
+                    <button 
+                      key={item.id}
+                      className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
+                      onClick={() => handleSelectBody(CELESTIAL_DATA[item.id])}
+                      title={`Centrar y seguir ${item.label}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+
+                  {activeCameraPreset === 'gigantes' && [
+                    { id: 'jupiter', label: '🪐 Júpiter' },
+                    { id: 'saturno', label: '🪐 Saturno' },
+                    { id: 'urano', label: '❄️ Urano' },
+                    { id: 'neptuno', label: '❄️ Neptuno' }
+                  ].map(item => (
+                    <button 
+                      key={item.id}
+                      className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
+                      onClick={() => handleSelectBody(CELESTIAL_DATA[item.id])}
+                      title={`Centrar y seguir ${item.label}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+
+                  {activeCameraPreset === 'sondas' && [
+                    { id: 'jwst', label: '🔭 Webb (L2)' },
+                    { id: 'hubble', label: '🛰️ Hubble (LEO)' },
+                    { id: 'parker', label: '☀️ Parker Solar' },
+                    { id: 'newhorizons', label: '🛸 New Horizons' },
+                    { id: 'voyager1', label: '📡 Voyager 1' },
+                    { id: 'voyager2', label: '📡 Voyager 2' }
+                  ].map(item => (
+                    <button 
+                      key={item.id}
+                      className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
+                      onClick={() => {
+                        setShowProbes(true);
+                        handleSelectBody(CELESTIAL_DATA[item.id]);
+                      }}
+                      title={`Centrar y seguir ${item.label}`}
+                    >
+                      {item.label}
+                    </button>
+                  ))}
+                </div>
 
                 {/* Botón Táctil Móvil para Alternar Capas Secundarias */}
                 <div className="mobile-toggle-layers-bar">
@@ -2203,10 +2263,6 @@ export default function SolarSystem() {
                         LA TIERRA Y LA LUNA CON ATMÓSFERA RAYLEIGH
                        ======================================================= */}
                     {(() => {
-                      const lunaRad = (angles.luna * Math.PI) / 180;
-                      const lunaX = coordsTierra.x + 20 * Math.cos(lunaRad);
-                      const lunaY = coordsTierra.y + 20 * Math.sin(lunaRad);
-
                       return (
                         <g style={{ cursor: 'pointer' }}>
                           {/* Órbita de la Luna */}
@@ -2224,8 +2280,9 @@ export default function SolarSystem() {
                           </g>
 
                           {/* La Luna */}
-                          <g onClick={() => handleSelectBody(CELESTIAL_DATA.luna || CELESTIAL_DATA.tierra)}>
-                            <circle cx={lunaX} cy={lunaY} r="2.5" fill="#e2e8f0" stroke="#94a3b8" strokeWidth="0.5" />
+                          <g onClick={() => handleSelectBody(CELESTIAL_DATA.luna)}>
+                            <circle cx={coordsLuna.x} cy={coordsLuna.y} r="8" fill="transparent" />
+                            <circle cx={coordsLuna.x} cy={coordsLuna.y} r="3" fill="#e2e8f0" stroke={selectedBody.id === 'luna' ? '#38bdf8' : '#94a3b8'} strokeWidth={selectedBody.id === 'luna' ? '1.2' : '0.5'} className={`solar-body ${selectedBody.id === 'luna' ? 'active' : ''}`} />
                           </g>
                         </g>
                       );
@@ -2371,6 +2428,7 @@ export default function SolarSystem() {
                       else if (selectedBody.id === 'newhorizons') { cx = coordsNewHorizons.x; cy = coordsNewHorizons.y; ringRadius = 14; }
                       else if (selectedBody.id === 'voyager1') { cx = coordsVoyager1.x; cy = coordsVoyager1.y; ringRadius = 15; }
                       else if (selectedBody.id === 'voyager2') { cx = coordsVoyager2.x; cy = coordsVoyager2.y; ringRadius = 15; }
+                      else if (selectedBody.id === 'luna') { cx = coordsLuna.x; cy = coordsLuna.y; ringRadius = 8; }
                       else if (selectedBody.id === 'jupiter') { const c = getCoordinates(selectedBody.id); cx = c.x; cy = c.y; ringRadius = 32; }
                       else if (selectedBody.id === 'saturno') { const c = getCoordinates(selectedBody.id); cx = c.x; cy = c.y; ringRadius = 36; }
                       else if (selectedBody.id === 'urano' || selectedBody.id === 'neptuno') { const c = getCoordinates(selectedBody.id); cx = c.x; cy = c.y; ringRadius = 22; }

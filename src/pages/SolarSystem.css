@@ -698,6 +698,8 @@
   font-size: 0.78rem;
   font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
@@ -798,6 +800,8 @@
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   padding: 6px 12px;
+  min-height: 40px;
+  box-sizing: border-box;
   border-radius: 12px;
   border: 1px solid rgba(56, 189, 248, 0.25);
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
@@ -813,6 +817,8 @@
   margin-right: 4px;
   display: inline-flex;
   align-items: center;
+  flex-shrink: 0;
+  white-space: nowrap;
 }
 
 .subpreset-chip {
@@ -824,6 +830,8 @@
   font-size: 0.74rem;
   font-weight: 600;
   cursor: pointer;
+  flex-shrink: 0;
+  white-space: nowrap;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   display: inline-flex;
   align-items: center;
