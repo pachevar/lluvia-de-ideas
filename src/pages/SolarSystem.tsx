@@ -1224,13 +1224,27 @@ export default function SolarSystem() {
     };
   };
 
+  const getEarthOrbitPoint = (angleRad: number) => {
+    const a = semiMajorAxes['tierra'] || 145;
+    const e = useEllipticalOrbits ? 0.0167 : 0;
+    const b = a * Math.sqrt(1 - e * e);
+    const c = a * e;
+    return {
+      x: 450 - c + a * Math.cos(angleRad),
+      y: 450 + b * Math.sin(angleRad)
+    };
+  };
+
   const getNewHorizonsCoords = () => {
     // New Horizons cruzando el Cinturón de Kuiper a ~58.5 UA
     const t = (292 * Math.PI) / 180 + ((angles.newhorizons || 0) * 0.003 * Math.PI) / 180;
     const r = 465 + ((angles.newhorizons || 0) / 360) * 15;
+    const origin = getEarthOrbitPoint(t);
     return {
       x: 450 + r * Math.cos(t),
-      y: 450 + r * Math.sin(t)
+      y: 450 + r * Math.sin(t),
+      originX: origin.x,
+      originY: origin.y
     };
   };
 
@@ -1238,9 +1252,12 @@ export default function SolarSystem() {
     // Voyager 1 en el espacio interestelar profundo a 164.5 UA (muy más allá de Kuiper)
     const t = (52 * Math.PI) / 180 + ((angles.voyager1 || 0) * 0.002 * Math.PI) / 180;
     const r = 630 + ((angles.voyager1 || 0) / 360) * 20;
+    const origin = getEarthOrbitPoint(t);
     return {
       x: 450 + r * Math.cos(t),
-      y: 450 + r * Math.sin(t)
+      y: 450 + r * Math.sin(t),
+      originX: origin.x,
+      originY: origin.y
     };
   };
 
@@ -1248,9 +1265,12 @@ export default function SolarSystem() {
     // Voyager 2 en el espacio interestelar sur a 139 UA
     const t = (220 * Math.PI) / 180 + ((angles.voyager2 || 0) * 0.002 * Math.PI) / 180;
     const r = 580 + ((angles.voyager2 || 0) / 360) * 20;
+    const origin = getEarthOrbitPoint(t);
     return {
       x: 450 + r * Math.cos(t),
-      y: 450 + r * Math.sin(t)
+      y: 450 + r * Math.sin(t),
+      originX: origin.x,
+      originY: origin.y
     };
   };
 
@@ -2177,42 +2197,86 @@ export default function SolarSystem() {
                           <circle cx={coordsParker.x} cy={coordsParker.y} r="5" fill="#ef4444" stroke="#ffffff" strokeWidth="1.2" className={`solar-body ${selectedBody.id === 'parker' ? 'active' : ''}`} />
                           <circle cx={coordsParker.x} cy={coordsParker.y} r="2" fill="#fef08a" />
                           <text x={coordsParker.x + 9} y={coordsParker.y + 4} className="probe-svg-tag">
-                            ☀️ Parker
+                            🚀 Parker
                           </text>
                         </g>
 
                         {/* Sonda New Horizons (Cinturón de Kuiper a ~58.5 UA) */}
                         <g onClick={() => handleSelectBody(CELESTIAL_DATA.newhorizons)} style={{ cursor: 'pointer' }} className="probe-svg-group">
-                          <line x1={450} y1={450} x2={coordsNewHorizons.x} y2={coordsNewHorizons.y} stroke="rgba(251, 146, 60, 0.35)" strokeWidth="1" strokeDasharray="4 4" />
+                          {/* Trayectoria de escape que parte desde la órbita de la Tierra (1 UA) */}
+                          <line 
+                            x1={coordsNewHorizons.originX} y1={coordsNewHorizons.originY} 
+                            x2={coordsNewHorizons.x} y2={coordsNewHorizons.y} 
+                            stroke="rgba(251, 146, 60, 0.45)" strokeWidth="1.2" strokeDasharray="4 4" 
+                          />
+                          {/* Punto de inserción orbital en la órbita terrestre */}
+                          <circle cx={coordsNewHorizons.originX} cy={coordsNewHorizons.originY} r="2.5" fill="#fb923c" opacity="0.85" />
                           <circle cx={coordsNewHorizons.x} cy={coordsNewHorizons.y} r="14" className="probe-radar-pulse pulse-newhorizons" />
                           <circle cx={coordsNewHorizons.x} cy={coordsNewHorizons.y} r="5" fill="#fb923c" stroke="#ffffff" strokeWidth="1.2" className={`solar-body ${selectedBody.id === 'newhorizons' ? 'active' : ''}`} />
                           <circle cx={coordsNewHorizons.x} cy={coordsNewHorizons.y} r="2" fill="#fed7aa" />
                           <text x={coordsNewHorizons.x + 9} y={coordsNewHorizons.y + 4} className="probe-svg-tag">
                             🛸 New Horizons (58 UA)
                           </text>
+                          {/* Enlace DSN a la Tierra al estar seleccionada */}
+                          {selectedBody.id === 'newhorizons' && (
+                            <line 
+                              x1={coordsTierra.x} y1={coordsTierra.y} 
+                              x2={coordsNewHorizons.x} y2={coordsNewHorizons.y} 
+                              stroke="#fb923c" strokeWidth="1" strokeDasharray="2 3" opacity="0.5" 
+                            />
+                          )}
                         </g>
 
                         {/* Voyager 1 (Espacio Interestelar Norte a 164.5 UA) */}
                         <g onClick={() => handleSelectBody(CELESTIAL_DATA.voyager1)} style={{ cursor: 'pointer' }} className="probe-svg-group">
-                          {/* Trayectoria hiperbólica de escape hacia el espacio interestelar */}
-                          <line x1={450} y1={450} x2={coordsVoyager1.x} y2={coordsVoyager1.y} stroke="rgba(192, 132, 252, 0.4)" strokeWidth="1.2" strokeDasharray="5 5" />
+                          {/* Trayectoria hiperbólica de escape que parte desde la órbita de la Tierra (1 UA) hacia el espacio interestelar */}
+                          <line 
+                            x1={coordsVoyager1.originX} y1={coordsVoyager1.originY} 
+                            x2={coordsVoyager1.x} y2={coordsVoyager1.y} 
+                            stroke="rgba(192, 132, 252, 0.5)" strokeWidth="1.2" strokeDasharray="5 5" 
+                          />
+                          {/* Punto de inserción orbital en la órbita terrestre */}
+                          <circle cx={coordsVoyager1.originX} cy={coordsVoyager1.originY} r="2.5" fill="#c084fc" opacity="0.85" />
                           <circle cx={coordsVoyager1.x} cy={coordsVoyager1.y} r="16" className="probe-radar-pulse pulse-voyager" />
                           <circle cx={coordsVoyager1.x} cy={coordsVoyager1.y} r="5.5" fill="#c084fc" stroke="#ffffff" strokeWidth="1.2" className={`solar-body ${selectedBody.id === 'voyager1' ? 'active' : ''}`} />
                           <circle cx={coordsVoyager1.x} cy={coordsVoyager1.y} r="2" fill="#f3e8ff" />
                           <text x={coordsVoyager1.x + 10} y={coordsVoyager1.y + 4} className="probe-svg-tag">
                             📡 Voyager 1 (164.5 UA)
                           </text>
+                          {/* Enlace DSN a la Tierra al estar seleccionada */}
+                          {selectedBody.id === 'voyager1' && (
+                            <line 
+                              x1={coordsTierra.x} y1={coordsTierra.y} 
+                              x2={coordsVoyager1.x} y2={coordsVoyager1.y} 
+                              stroke="#c084fc" strokeWidth="1" strokeDasharray="2 3" opacity="0.5" 
+                            />
+                          )}
                         </g>
 
                         {/* Voyager 2 (Espacio Interestelar Sur a 139 UA) */}
                         <g onClick={() => handleSelectBody(CELESTIAL_DATA.voyager2)} style={{ cursor: 'pointer' }} className="probe-svg-group">
-                          <line x1={450} y1={450} x2={coordsVoyager2.x} y2={coordsVoyager2.y} stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1.2" strokeDasharray="5 5" />
+                          {/* Trayectoria hiperbólica de escape que parte desde la órbita de la Tierra (1 UA) */}
+                          <line 
+                            x1={coordsVoyager2.originX} y1={coordsVoyager2.originY} 
+                            x2={coordsVoyager2.x} y2={coordsVoyager2.y} 
+                            stroke="rgba(168, 85, 247, 0.5)" strokeWidth="1.2" strokeDasharray="5 5" 
+                          />
+                          {/* Punto de inserción orbital en la órbita terrestre */}
+                          <circle cx={coordsVoyager2.originX} cy={coordsVoyager2.originY} r="2.5" fill="#a855f7" opacity="0.85" />
                           <circle cx={coordsVoyager2.x} cy={coordsVoyager2.y} r="16" className="probe-radar-pulse pulse-voyager2" />
                           <circle cx={coordsVoyager2.x} cy={coordsVoyager2.y} r="5.5" fill="#a855f7" stroke="#ffffff" strokeWidth="1.2" className={`solar-body ${selectedBody.id === 'voyager2' ? 'active' : ''}`} />
                           <circle cx={coordsVoyager2.x} cy={coordsVoyager2.y} r="2" fill="#e9d5ff" />
                           <text x={coordsVoyager2.x + 10} y={coordsVoyager2.y + 4} className="probe-svg-tag">
                             📡 Voyager 2 (139 UA)
                           </text>
+                          {/* Enlace DSN a la Tierra al estar seleccionada */}
+                          {selectedBody.id === 'voyager2' && (
+                            <line 
+                              x1={coordsTierra.x} y1={coordsTierra.y} 
+                              x2={coordsVoyager2.x} y2={coordsVoyager2.y} 
+                              stroke="#a855f7" strokeWidth="1" strokeDasharray="2 3" opacity="0.5" 
+                            />
+                          )}
                         </g>
                       </g>
                     )}
