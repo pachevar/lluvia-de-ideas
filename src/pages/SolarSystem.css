@@ -736,8 +736,23 @@
 }
 
 .probe-radar-pulse.pulse-voyager {
-  stroke: rgba(168, 85, 247, 0.7);
+  stroke: rgba(192, 132, 252, 0.7);
   animation-delay: 1.6s;
+}
+
+.probe-radar-pulse.pulse-hubble {
+  stroke: rgba(56, 189, 248, 0.85);
+  animation-delay: 0.4s;
+}
+
+.probe-radar-pulse.pulse-newhorizons {
+  stroke: rgba(251, 146, 60, 0.75);
+  animation-delay: 1.2s;
+}
+
+.probe-radar-pulse.pulse-voyager2 {
+  stroke: rgba(168, 85, 247, 0.75);
+  animation-delay: 2.0s;
 }
 
 @keyframes probeRadarPulse {
@@ -766,6 +781,67 @@
   user-select: none;
   pointer-events: none;
   letter-spacing: 0.2px;
+}
+
+/* ==========================================================================
+   SUB-BARRA DE SELECCIÓN DIRECTA POR CATEGORÍA
+   ========================================================================== */
+.camera-subpreset-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  background: rgba(15, 7, 32, 0.88);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 6px 12px;
+  border-radius: 12px;
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.45);
+  margin-top: 4px;
+}
+
+.subpresets-label {
+  font-size: 0.74rem;
+  font-weight: 800;
+  color: #38bdf8;
+  letter-spacing: 0.3px;
+  text-transform: uppercase;
+  margin-right: 4px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.subpreset-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  color: #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  user-select: none;
+}
+
+.subpreset-chip:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 10px rgba(56, 189, 248, 0.25);
+}
+
+.subpreset-chip.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.45), rgba(14, 165, 233, 0.25));
+  border-color: #38bdf8;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.45), inset 0 0 6px rgba(56, 189, 248, 0.2);
 }
 
 /* ==========================================================================
@@ -3559,6 +3635,42 @@
     font-size: 0.72rem;
     min-height: 30px;
     border-radius: 8px;
+    touch-action: manipulation;
+  }
+
+  /* Sub-Barra de Selección Específica en Móvil: Cinta horizontal deslizable */
+  .camera-subpreset-bar {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 5px 8px;
+    border-radius: 12px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    width: 100%;
+    box-sizing: border-box;
+    background: rgba(15, 7, 32, 0.92);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+  }
+
+  .camera-subpreset-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .subpresets-label {
+    flex-shrink: 0;
+    font-size: 0.68rem;
+    font-weight: 800;
+  }
+
+  .subpreset-chip {
+    flex-shrink: 0;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+    min-height: 32px;
     touch-action: manipulation;
   }
 
