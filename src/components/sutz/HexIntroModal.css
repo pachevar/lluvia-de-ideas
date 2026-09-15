@@ -1,17 +1,17 @@
 /* ==========================================================================
    HEX INTRO MODAL - VENTANA DE BIENVENIDA Y PERSONAJE DE SUTZ
-   Reglas de neurodiseño: Opacidades sólidas (sin backdrop-filter intensivo),
-   contraste figura-fondo estricto, acentos cálidos para acción principal.
+   Rediseño compacto horizontal (menor altura vertical, máxima presencia del personaje)
+   Efecto Typewriter letra por letra con rítmica de voz procedural.
    ========================================================================== */
 
 .sutz-intro-modal-panel {
   position: relative;
   width: 100%;
-  max-width: 620px;
+  max-width: 580px;
   background: var(--sutz-elevation-2, #141c2e);
   border: 1.5px solid rgba(255, 255, 255, 0.14);
-  border-radius: 24px;
-  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.8), 0 0 1px rgba(255, 255, 255, 0.2);
+  border-radius: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85), 0 0 1px rgba(255, 255, 255, 0.2);
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -35,12 +35,12 @@
   }
 }
 
-/* Header */
+/* Header Compacto */
 .sutz-intro-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 14px 20px;
+  padding: 8px 16px;
   background: var(--sutz-elevation-1, #0d1527);
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
 }
@@ -48,82 +48,70 @@
 .sutz-intro-tag {
   display: inline-flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
   font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
   font-weight: 800;
-  letter-spacing: 1.2px;
+  letter-spacing: 0.8px;
   color: #38bdf8;
   text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.sutz-intro-tag-label {
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+.sutz-intro-tag-title {
+  color: #38bdf8;
+  font-weight: 800;
 }
 
 .sutz-intro-tag-dot {
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #38bdf8;
-  box-shadow: 0 0 8px #38bdf8;
+  box-shadow: 0 0 6px #38bdf8;
+  flex-shrink: 0;
 }
 
-/* Cuerpo con Personaje y Diálogo */
+/* Cuerpo Principal: Distribución horizontal protagonista */
 .sutz-intro-body {
   display: grid;
-  grid-template-columns: 180px 1fr;
-  gap: 20px;
-  padding: 24px;
+  grid-template-columns: 130px 1fr;
+  gap: 16px;
+  padding: 14px 18px;
   background: var(--sutz-elevation-0, #080d1a);
+  align-items: center;
 }
 
-@media (max-width: 580px) {
-  .sutz-intro-modal-panel {
-    max-height: 92vh;
-    border-radius: 20px;
-  }
-  .sutz-intro-body {
-    grid-template-columns: 1fr;
-    gap: 14px;
-    padding: 16px;
-    overflow-y: auto;
-  }
-  .sutz-intro-character-frame {
-    width: 100px;
-    height: 100px;
-    margin-bottom: 8px;
-  }
-  .sutz-intro-character-fallback .fallback-emoji {
-    font-size: 2.8rem;
-  }
-  .sutz-intro-footer {
-    padding: 12px 16px;
-  }
-  .sutz-intro-enter-btn {
-    padding: 10px 18px;
-    font-size: 0.95rem;
-  }
-}
-
-/* Escenario del Personaje */
+/* Escenario del Personaje (Hero visual) */
 .sutz-intro-character-stage {
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   text-align: center;
+  flex-shrink: 0;
 }
 
 .sutz-intro-character-frame {
   position: relative;
-  width: 130px;
-  height: 130px;
+  width: 112px;
+  height: 112px;
   border-radius: 50%;
-  background: radial-gradient(circle at 50% 40%, #1e293b 0%, #0f172a 100%);
-  border: 2px solid rgba(56, 189, 248, 0.4);
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5), inset 0 0 15px rgba(56, 189, 248, 0.15);
+  background: radial-gradient(circle at 50% 35%, #1e293b 0%, #0a0f1d 100%);
+  border: 2px solid rgba(56, 189, 248, 0.5);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), inset 0 0 16px rgba(56, 189, 248, 0.25), 0 0 14px rgba(56, 189, 248, 0.2);
   display: flex;
   align-items: center;
   justify-content: center;
   overflow: hidden;
-  margin-bottom: 12px;
+  margin-bottom: 6px;
 }
 
 .sutz-intro-character-img {
@@ -131,7 +119,7 @@
   height: 100%;
   object-fit: cover;
   object-position: center top;
-  transition: transform 0.3s ease;
+  transition: transform 0.25s ease;
 }
 
 .sutz-intro-character-frame:hover .sutz-intro-character-img {
@@ -147,7 +135,7 @@
 }
 
 .sutz-intro-character-fallback .fallback-emoji {
-  font-size: 3.6rem;
+  font-size: 3.2rem;
   filter: drop-shadow(0 4px 10px rgba(0, 0, 0, 0.4));
 }
 
@@ -156,86 +144,139 @@
   bottom: 0;
   left: 0;
   right: 0;
-  height: 8px;
-  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.3), transparent);
+  height: 6px;
+  background: linear-gradient(90deg, transparent, rgba(56, 189, 248, 0.45), transparent);
 }
 
 .sutz-intro-character-info {
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
+  max-width: 100%;
 }
 
 .sutz-intro-char-name {
   margin: 0;
   font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
-  font-size: 1.05rem;
+  font-size: 0.95rem;
   font-weight: 800;
   color: #f8fafc;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 130px;
 }
 
 .sutz-intro-char-badge {
   display: inline-block;
-  padding: 2px 9px;
+  padding: 1.5px 7px;
   border-radius: 999px;
   background: rgba(56, 189, 248, 0.12);
   border: 1px solid rgba(56, 189, 248, 0.3);
   color: #7dd3fc;
-  font-size: 0.72rem;
+  font-size: 0.66rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 0.4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 125px;
 }
 
-/* Escenario del Diálogo */
+/* Escenario del Diálogo (Burbuja de diálogo RPG con Typewriter) */
 .sutz-intro-dialogue-stage {
   display: flex;
   flex-direction: column;
-  justify-content: space-between;
+  min-width: 0;
 }
 
 .sutz-intro-speech-bubble {
   position: relative;
   background: var(--sutz-elevation-2, #141c2e);
-  border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  padding: 16px 20px;
-  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 12px 14px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35);
+  cursor: pointer;
+  transition: border-color 0.2s ease, background 0.2s ease;
+}
+
+.sutz-intro-speech-bubble:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  background: #172136;
+}
+
+.sutz-intro-speech-tail {
+  position: absolute;
+  top: 22px;
+  left: -8px;
+  width: 0;
+  height: 0;
+  border-top: 7px solid transparent;
+  border-bottom: 7px solid transparent;
+  border-right: 8px solid var(--sutz-elevation-2, #141c2e);
 }
 
 .sutz-intro-title {
-  margin: 0 0 10px 0;
-  font-size: 1.15rem;
+  margin: 0 0 5px 0;
+  font-size: 1.02rem;
   font-weight: 800;
   color: #f1f5f9;
   letter-spacing: -0.2px;
-  line-height: 1.35;
+  line-height: 1.25;
 }
 
 .sutz-intro-description {
   margin: 0;
-  font-size: 0.92rem;
-  line-height: 1.55;
+  font-size: 0.86rem;
+  line-height: 1.45;
   color: #cbd5e1;
+  min-height: 2.8em;
+}
+
+/* Efecto Máquina de Escribir (Typewriter Cursor) */
+.sutz-typewriter-cursor {
+  display: inline-block;
+  color: #38bdf8;
+  margin-left: 2px;
+  font-weight: 900;
+  animation: typewriterBlink 0.6s infinite alternate ease-in-out;
+}
+
+@keyframes typewriterBlink {
+  from { opacity: 1; transform: scaleY(1); }
+  to { opacity: 0.15; transform: scaleY(0.85); }
+}
+
+.sutz-typewriter-hint {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 6px;
+  font-size: 0.68rem;
+  color: #38bdf8;
+  font-style: italic;
+  opacity: 0.85;
 }
 
 .sutz-intro-destination-meta {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-top: 14px;
-  padding: 7px 12px;
-  background: rgba(15, 23, 42, 0.6);
+  gap: 6px;
+  margin-top: 8px;
+  padding: 4px 10px;
+  background: rgba(15, 23, 42, 0.65);
   border: 1px dashed rgba(255, 255, 255, 0.1);
-  border-radius: 10px;
-  font-size: 0.76rem;
+  border-radius: 8px;
+  font-size: 0.72rem;
   color: #94a3b8;
 }
 
 .sutz-intro-meta-icon {
-  font-size: 0.85rem;
+  font-size: 0.8rem;
 }
 
 .sutz-intro-destination-meta strong {
@@ -243,24 +284,25 @@
   font-family: monospace;
 }
 
-/* Footer y Botón de Entrada (CTA) */
+/* Footer y Botón de Entrada (CTA) Compactos */
 .sutz-intro-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 12px;
-  padding: 14px 20px;
+  gap: 10px;
+  padding: 10px 16px;
   background: var(--sutz-elevation-1, #0d1527);
   border-top: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .sutz-intro-back-btn {
-  padding: 10px 18px;
-  font-size: 0.88rem;
+  padding: 8px 14px;
+  font-size: 0.82rem;
   font-weight: 700;
   color: #94a3b8;
   border-color: rgba(255, 255, 255, 0.12);
   background: transparent;
+  border-radius: 10px;
 }
 
 .sutz-intro-back-btn:hover {
@@ -272,27 +314,126 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  gap: 8px;
-  padding: 11px 26px;
-  border-radius: 14px;
+  gap: 6px;
+  padding: 9px 22px;
+  border-radius: 12px;
   border: none;
   background: linear-gradient(135deg, #059669 0%, #10b981 100%);
   color: #ffffff;
   font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
-  font-size: 1.05rem;
+  font-size: 0.98rem;
   font-weight: 800;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.5px;
   cursor: pointer;
-  box-shadow: 0 4px 18px rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
   transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 .sutz-intro-enter-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 6px 22px rgba(16, 185, 129, 0.5);
+  box-shadow: 0 6px 22px rgba(16, 185, 129, 0.55);
   background: linear-gradient(135deg, #047857 0%, #059669 100%);
 }
 
 .sutz-intro-enter-btn:active {
   transform: translateY(0);
+}
+
+.sutz-intro-enter-btn.ready-pulse {
+  animation: btnReadyPulse 2s infinite ease-in-out;
+}
+
+@keyframes btnReadyPulse {
+  0%, 100% {
+    box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+  }
+  50% {
+    box-shadow: 0 0 22px rgba(16, 185, 129, 0.8), 0 0 6px #34d399;
+    transform: scale(1.02);
+  }
+}
+
+/* ==========================================================================
+   ADAPTACIÓN MÓVIL (≤ 580px)
+   Mantiene estructura horizontal para ocupar mínimo espacio vertical
+   ========================================================================== */
+@media (max-width: 580px) {
+  .sutz-intro-modal-panel {
+    max-height: 88vh;
+    border-radius: 18px;
+  }
+  
+  .sutz-intro-header {
+    padding: 7px 12px;
+  }
+
+  .sutz-intro-body {
+    grid-template-columns: 88px 1fr;
+    gap: 10px;
+    padding: 10px 12px;
+  }
+
+  .sutz-intro-character-frame {
+    width: 84px;
+    height: 84px;
+    margin-bottom: 4px;
+  }
+
+  .sutz-intro-character-fallback .fallback-emoji {
+    font-size: 2.4rem;
+  }
+
+  .sutz-intro-char-name {
+    font-size: 0.82rem;
+    max-width: 88px;
+  }
+
+  .sutz-intro-char-badge {
+    font-size: 0.6rem;
+    padding: 1px 5px;
+    max-width: 86px;
+  }
+
+  .sutz-intro-speech-bubble {
+    padding: 9px 11px;
+  }
+
+  .sutz-intro-speech-tail {
+    top: 16px;
+    left: -6px;
+    border-top: 5px solid transparent;
+    border-bottom: 5px solid transparent;
+    border-right: 6px solid var(--sutz-elevation-2, #141c2e);
+  }
+
+  .sutz-intro-title {
+    font-size: 0.92rem;
+    margin-bottom: 3px;
+  }
+
+  .sutz-intro-description {
+    font-size: 0.78rem;
+    line-height: 1.35;
+    min-height: 2.5em;
+  }
+
+  .sutz-intro-destination-meta {
+    margin-top: 6px;
+    padding: 3px 8px;
+    font-size: 0.68rem;
+  }
+
+  .sutz-intro-footer {
+    padding: 8px 12px;
+  }
+
+  .sutz-intro-back-btn {
+    padding: 6px 12px;
+    font-size: 0.78rem;
+  }
+
+  .sutz-intro-enter-btn {
+    padding: 7px 16px;
+    font-size: 0.88rem;
+  }
 }

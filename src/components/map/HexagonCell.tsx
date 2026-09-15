@@ -63,15 +63,15 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
       clearTimeout(longPressTimerRef.current);
     }
 
-    // Sostener por 1 segundo (1000ms) en la versión móvil abre el modal
+    // Sostener por medio segundo (500ms) en la versión móvil abre el modal
     longPressTimerRef.current = setTimeout(() => {
       longPressTriggeredRef.current = true;
       setIsPressing(false);
-      suppressClickUntilRef.current = Date.now() + 800; // Bloquea clics fantasma en overlay
+      suppressClickUntilRef.current = Date.now() + 600; // Bloquea clics fantasma en overlay
 
       if (typeof navigator !== 'undefined' && navigator.vibrate) {
         try {
-          navigator.vibrate(50);
+          navigator.vibrate(40);
         } catch {
           // Ignorar si no está permitido
         }
@@ -81,7 +81,7 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
       if (triggerAction) {
         triggerAction();
       }
-    }, 1000);
+    }, 500);
   };
 
   const handleTouchMove = (e: React.TouchEvent) => {
@@ -174,7 +174,7 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
       {isPressing && (
         <div className="hex-holding-indicator">
           <div className="hex-holding-spinner"></div>
-          <span className="hex-holding-text">1s...</span>
+          <span className="hex-holding-text">0.5s</span>
         </div>
       )}
 

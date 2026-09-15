@@ -274,6 +274,37 @@ class SutzAudioManager {
     }
   }
 
+  // Sonido de diálogo / voz de personaje letra por letra estilo RPG
+  public playDialogueBlip(freq: number = 320) {
+    if (this.isMuted) return;
+    try {
+      this.initContext();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+
+      const jitter = (Math.random() - 0.5) * 30;
+      const finalFreq = Math.max(160, freq + jitter);
+
+      osc.type = 'triangle';
+      osc.frequency.setValueAtTime(finalFreq, now);
+      osc.frequency.exponentialRampToValueAtTime(finalFreq * 0.88, now + 0.032);
+
+      gain.gain.setValueAtTime(0.035, now);
+      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.032);
+
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.start(now);
+      osc.stop(now + 0.035);
+    } catch {
+      // Ignorar restricciones de audio
+    }
+  }
+
   // Sonido al cerrar panel
   public playCloseModal() {
     this.triggerHaptic([20]);
