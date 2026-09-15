@@ -18,6 +18,7 @@ interface CelestialBody {
   id: string;
   name: string;
   type: 'sol' | 'planeta_rocoso' | 'planeta_gaseoso' | 'cinturon' | 'sonda';
+  icon?: string;
   diameter: string;
   diameterKm: number;
   distanceFromSun: string;
@@ -469,6 +470,27 @@ const GRAVITATIONAL_EXPERIMENTS: GravitationalExperiment[] = [
     icon: '💎'
   }
 ];
+
+export const CELESTIAL_BODY_ICONS: Record<string, string> = {
+  sol: '☀️',
+  mercurio: '🌑',
+  venus: '🟡',
+  tierra: '🌍',
+  luna: '🌙',
+  marte: '🔴',
+  cinturon_asteroides: '☄️',
+  jupiter: '🟠',
+  saturno: '🪐',
+  urano: '❄️',
+  neptuno: '🌀',
+  cinturon_kuiper: '🧊',
+  jwst: '🔭',
+  hubble: '🛰️',
+  parker: '🚀',
+  newhorizons: '🛸',
+  voyager1: '📡',
+  voyager2: '📡'
+};
 
 const CELESTIAL_DATA: Record<string, CelestialBody> = {
   sol: {
@@ -1566,9 +1588,9 @@ export default function SolarSystem() {
             <div className="sim-info-panel animate-zoom-in">
               <div className="panel-inner-scroll">
                 <div className="body-header-row">
-                  <div className={`body-avatar-frame type-${selectedBody.type}`}>
-                    <span className="avatar-emoji">
-                      {selectedBody.type === 'sol' ? '☀️' : selectedBody.type === 'sonda' ? '🛰️' : selectedBody.type === 'cinturon' ? '🪐' : '🌍'}
+                  <div className={`body-avatar-frame type-${selectedBody.type} body-id-${selectedBody.id}`}>
+                    <span className="avatar-emoji" role="img" aria-label={selectedBody.name}>
+                      {CELESTIAL_BODY_ICONS[selectedBody.id] || selectedBody.icon || (selectedBody.type === 'sol' ? '☀️' : selectedBody.type === 'sonda' ? '🛰️' : selectedBody.type === 'cinturon' ? '☄️' : '🪐')}
                     </span>
                   </div>
                   <div>
@@ -1742,11 +1764,11 @@ export default function SolarSystem() {
                   )}
 
                   {activeCameraPreset === 'rocosos' && [
-                    { id: 'mercurio', label: '☿ Mercurio' },
-                    { id: 'venus', label: '♀ Venus' },
+                    { id: 'mercurio', label: '🌑 Mercurio' },
+                    { id: 'venus', label: '🟡 Venus' },
                     { id: 'tierra', label: '🌍 Tierra' },
                     { id: 'luna', label: '🌙 Luna' },
-                    { id: 'marte', label: '♂ Marte' }
+                    { id: 'marte', label: '🔴 Marte' }
                   ].map(item => (
                     <button 
                       key={item.id}
@@ -1759,10 +1781,10 @@ export default function SolarSystem() {
                   ))}
 
                   {activeCameraPreset === 'gigantes' && [
-                    { id: 'jupiter', label: '🪐 Júpiter' },
+                    { id: 'jupiter', label: '🟠 Júpiter' },
                     { id: 'saturno', label: '🪐 Saturno' },
                     { id: 'urano', label: '❄️ Urano' },
-                    { id: 'neptuno', label: '❄️ Neptuno' }
+                    { id: 'neptuno', label: '🌀 Neptuno' }
                   ].map(item => (
                     <button 
                       key={item.id}
@@ -1777,7 +1799,7 @@ export default function SolarSystem() {
                   {activeCameraPreset === 'sondas' && [
                     { id: 'jwst', label: '🔭 Webb (L2)' },
                     { id: 'hubble', label: '🛰️ Hubble (LEO)' },
-                    { id: 'parker', label: '☀️ Parker Solar' },
+                    { id: 'parker', label: '🚀 Parker Solar' },
                     { id: 'newhorizons', label: '🛸 New Horizons' },
                     { id: 'voyager1', label: '📡 Voyager 1' },
                     { id: 'voyager2', label: '📡 Voyager 2' }
