@@ -843,8 +843,9 @@ export default function SolarSystem() {
   const [panOffset, setPanOffset] = useState<{ x: number; y: number }>({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState<boolean>(false);
   const [showMobileLayerSettings, setShowMobileLayerSettings] = useState<boolean>(false);
+  const [activeCameraPreset, setActiveCameraPreset] = useState<string>('sistema');
   const dragStartRef = useRef<{ x: number; y: number; startPanX: number; startPanY: number }>({ x: 0, y: 0, startPanX: 0, startPanY: 0 });
-  const touchStartRef = useRef<{ x: number; y: number; dist: number }>({ x: 0, y: 0, dist: 0 });
+  const touchStartRef = useRef<{ dist: number; midX: number; midY: number; startPanX: number; startPanY: number }>({ dist: 0, midX: 0, midY: 0, startPanX: 0, startPanY: 0 });
 
   // Pestaña 2: Comparador de Escala e Inserción de Tránsito frente al Sol
   const [selectedScalePlanet, setSelectedScalePlanet] = useState<string>('tierra');
@@ -1124,32 +1125,60 @@ export default function SolarSystem() {
     setPanOffset({ x: 0, y: 0 });
     setIsTracking(false);
     setSelectedBody(CELESTIAL_DATA.sol);
+    setActiveCameraPreset('sistema');
   };
 
-  const setCameraPreset = (preset: 'sistema' | 'rocosos' | 'gigantes' | 'sol' | 'kuiper') => {
-    setIsTracking(false);
+  const setCameraPreset = (preset: 'sistema' | 'rocosos' | 'gigantes' | 'sol' | 'sondas') => {
+    setActiveCameraPreset(preset);
+    soundEffects.playSpacePulse();
     if (preset === 'sistema') {
+      setIsTracking(false);
       setZoomLevel(0.65);
       setPanOffset({ x: 0, y: 0 });
       setSelectedBody(CELESTIAL_DATA.sol);
     } else if (preset === 'rocosos') {
+      setIsTracking(false);
       setZoomLevel(1.85);
       setPanOffset({ x: 0, y: 0 });
+      setSelectedBody(CELESTIAL_DATA.tierra);
     } else if (preset === 'gigantes') {
-      setZoomLevel(0.95);
-      setPanOffset({ x: 0, y: 0 });
+      // Enfoque a los Gigantes Gaseosos y de Hielo (Júpiter, Saturno, Urano, Neptuno)
+      setIsTracking(true);
+      setZoomLevel(1.35);
+      // Alternar entre gigantes al pulsar sucesivamente para explorarlos todos
+      if (selectedBody.id === 'jupiter') {
+        setSelectedBody(CELESTIAL_DATA.saturno);
+      } else if (selectedBody.id === 'saturno') {
+        setSelectedBody(CELESTIAL_DATA.urano);
+      } else if (selectedBody.id === 'urano') {
+        setSelectedBody(CELESTIAL_DATA.neptuno);
+      } else {
+        setSelectedBody(CELESTIAL_DATA.jupiter);
+      }
     } else if (preset === 'sol') {
+      setIsTracking(true);
       setZoomLevel(3.2);
       setPanOffset({ x: 0, y: 0 });
       setSelectedBody(CELESTIAL_DATA.sol);
+    } else if (preset === 'sondas') {
+      // Activar capa de sondas espaciales con zoom óptimo y seguimiento
+      setShowProbes(true);
       setIsTracking(true);
-    } else if (preset === 'kuiper') {
-      setZoomLevel(0.42);
-      setPanOffset({ x: 0, y: 0 });
+      // Alternar entre las sondas clave (JWST -> Parker -> Voyager 1)
+      if (selectedBody.id === 'jwst') {
+        setSelectedBody(CELESTIAL_DATA.parker);
+        setZoomLevel(2.6);
+      } else if (selectedBody.id === 'parker') {
+        setSelectedBody(CELESTIAL_DATA.voyager1);
+        setZoomLevel(1.5);
+      } else {
+        setSelectedBody(CELESTIAL_DATA.jwst);
+        setZoomLevel(2.3);
+      }
     }
   };
 
-  // Manejadores de Arrastre Libre de Lienzo (Mouse y Touch)
+  // Manejadores de Arrastre Libre de Lienzo (Mouse y Touch con Soporte Multitáctil)
   const handleMouseDown = (e: React.MouseEvent) => {
     if (e.button !== 0) return;
     setIsDragging(true);
@@ -1181,10 +1210,11 @@ export default function SolarSystem() {
     setZoomLevel(prev => Math.min(8.0, Math.max(0.4, prev * factor)));
   };
 
+  // Soporte Táctil Móvil Fluido: Mover con 1 dedo y Expansión / Zoom + Desplazamiento Simultáneo con 2 dedos (Pinch-to-zoom)
   const handleTouchStart = (e: React.TouchEvent) => {
+    setIsTracking(false);
     if (e.touches.length === 1) {
       setIsDragging(true);
-      setIsTracking(false);
       dragStartRef.current = {
         x: e.touches[0].clientX,
         y: e.touches[0].clientY,
@@ -1192,11 +1222,19 @@ export default function SolarSystem() {
         startPanY: panOffset.y
       };
     } else if (e.touches.length === 2) {
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
-      touchStartRef.current = { dist, x: 0, y: 0 };
+      setIsDragging(false);
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      const midX = (t1.clientX + t2.clientX) / 2;
+      const midY = (t1.clientY + t2.clientY) / 2;
+      touchStartRef.current = {
+        dist,
+        midX,
+        midY,
+        startPanX: panOffset.x,
+        startPanY: panOffset.y
+      };
     }
   };
 
@@ -1209,20 +1247,44 @@ export default function SolarSystem() {
         y: Math.max(-1400, Math.min(1400, dragStartRef.current.startPanY + dy / zoomLevel))
       });
     } else if (e.touches.length === 2) {
-      const dist = Math.hypot(
-        e.touches[0].clientX - e.touches[1].clientX,
-        e.touches[0].clientY - e.touches[1].clientY
-      );
+      const t1 = e.touches[0];
+      const t2 = e.touches[1];
+      const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
+      const midX = (t1.clientX + t2.clientX) / 2;
+      const midY = (t1.clientY + t2.clientY) / 2;
+
+      // Pinch to Zoom (Expandir o Reducir con 2 dedos)
       if (touchStartRef.current.dist > 0) {
         const factor = dist / touchStartRef.current.dist;
         setZoomLevel(prev => Math.min(8.0, Math.max(0.4, prev * factor)));
       }
+
+      // Desplazamiento simultáneo del centro mientras se hace zoom
+      const dMidX = midX - touchStartRef.current.midX;
+      const dMidY = midY - touchStartRef.current.midY;
+      setPanOffset({
+        x: Math.max(-1400, Math.min(1400, touchStartRef.current.startPanX + dMidX / zoomLevel)),
+        y: Math.max(-1400, Math.min(1400, touchStartRef.current.startPanY + dMidY / zoomLevel))
+      });
+
       touchStartRef.current.dist = dist;
     }
   };
 
-  const handleTouchEnd = () => {
-    setIsDragging(false);
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    if (e.touches.length === 1) {
+      // Transición fluida de 2 dedos a 1 dedo sin salto de coordenadas
+      setIsDragging(true);
+      dragStartRef.current = {
+        x: e.touches[0].clientX,
+        y: e.touches[0].clientY,
+        startPanX: panOffset.x,
+        startPanY: panOffset.y
+      };
+    } else if (e.touches.length === 0) {
+      setIsDragging(false);
+      touchStartRef.current = { dist: 0, midX: 0, midY: 0, startPanX: 0, startPanY: 0 };
+    }
   };
 
   // Centro de Cámara Dinámico
@@ -1474,11 +1536,41 @@ export default function SolarSystem() {
                 {/* Presets de Enfoque Rápido / Ubicación */}
                 <div className="camera-presets-bar">
                   <span className="presets-label">🔭 Enfoque:</span>
-                  <button className="camera-preset-btn" onClick={() => setCameraPreset('sistema')} title="Ver todo el sistema solar hasta Kuiper">🌌 Todo</button>
-                  <button className="camera-preset-btn" onClick={() => setCameraPreset('rocosos')} title="Mercurio, Venus, Tierra y Marte">🪨 Rocosos</button>
-                  <button className="camera-preset-btn" onClick={() => setCameraPreset('gigantes')} title="Júpiter, Saturno, Urano y Neptuno">🪐 Gigantes</button>
-                  <button className="camera-preset-btn" onClick={() => setCameraPreset('sol')} title="Corona, fotosfera y manchas solares">☀️ Sol</button>
-                  <button className="camera-preset-btn" onClick={() => setCameraPreset('kuiper')} title="Cinturón de Kuiper y sonda Voyager 1">🛰️ Sondas</button>
+                  <button 
+                    className={`camera-preset-btn ${activeCameraPreset === 'sistema' ? 'active' : ''}`} 
+                    onClick={() => setCameraPreset('sistema')} 
+                    title="Ver todo el sistema solar completo"
+                  >
+                    🌌 Todo
+                  </button>
+                  <button 
+                    className={`camera-preset-btn ${activeCameraPreset === 'rocosos' ? 'active' : ''}`} 
+                    onClick={() => setCameraPreset('rocosos')} 
+                    title="Mercurio, Venus, Tierra y Marte"
+                  >
+                    🪨 Rocosos
+                  </button>
+                  <button 
+                    className={`camera-preset-btn ${activeCameraPreset === 'gigantes' ? 'active' : ''}`} 
+                    onClick={() => setCameraPreset('gigantes')} 
+                    title="Enfocar planetas gigantes: Júpiter, Saturno, Urano y Neptuno (haz clic para alternar)"
+                  >
+                    🪐 Gigantes{activeCameraPreset === 'gigantes' && ['jupiter', 'saturno', 'urano', 'neptuno'].includes(selectedBody.id) ? ` (${selectedBody.name})` : ''}
+                  </button>
+                  <button 
+                    className={`camera-preset-btn ${activeCameraPreset === 'sol' ? 'active' : ''}`} 
+                    onClick={() => setCameraPreset('sol')} 
+                    title="Corona, fotosfera y manchas solares"
+                  >
+                    ☀️ Sol
+                  </button>
+                  <button 
+                    className={`camera-preset-btn ${activeCameraPreset === 'sondas' ? 'active' : ''}`} 
+                    onClick={() => setCameraPreset('sondas')} 
+                    title="Sondas espaciales activas: James Webb, Parker Solar y Voyager 1 (haz clic para alternar)"
+                  >
+                    🛰️ Sondas{activeCameraPreset === 'sondas' && ['jwst', 'parker', 'voyager1'].includes(selectedBody.id) ? ` (${selectedBody.name})` : ''}
+                  </button>
                 </div>
 
                 {/* Botón Táctil Móvil para Alternar Capas Secundarias */}
@@ -1710,6 +1802,9 @@ export default function SolarSystem() {
                     {/* Dibujo de Órbitas Elípticas Realistas de Kepler */}
                     {showOrbits && Object.keys(semiMajorAxes).map((key) => {
                       const coords = getCoordinates(key);
+                      const isSelected = selectedBody.id === key;
+                      const isGiant = ['jupiter', 'saturno', 'urano', 'neptuno'].includes(key);
+                      const isHighlightedGiant = activeCameraPreset === 'gigantes' && isGiant;
                       return (
                         <ellipse 
                           key={key} 
@@ -1717,7 +1812,7 @@ export default function SolarSystem() {
                           cy={450} 
                           rx={coords.a} 
                           ry={coords.b} 
-                          className="svg-orbit-line" 
+                          className={`svg-orbit-line ${isSelected ? 'active-orbit' : ''} ${isHighlightedGiant ? 'giant-orbit-focus' : ''}`} 
                         />
                       );
                     })}
@@ -1776,21 +1871,46 @@ export default function SolarSystem() {
                       </g>
                     )}
 
-                    {/* Sondas Espaciales */}
+                    {/* Sondas Espaciales con Radar y Etiquetas Visuales Claras */}
                     {showProbes && (
                       <g className="probes-layer">
                         {/* JWST en L2 */}
-                        <g onClick={() => handleSelectBody(CELESTIAL_DATA.jwst)} style={{ cursor: 'pointer' }}>
-                          <line x1={coordsTierra.x} y1={coordsTierra.y} x2={coordsJWST.x} y2={coordsJWST.y} stroke="#f59e0b" strokeWidth="1" strokeDasharray="2 2" />
-                          <circle cx={coordsJWST.x} cy={coordsJWST.y} r="4" fill="#f59e0b" className={`solar-body ${selectedBody.id === 'jwst' ? 'active' : ''}`} />
+                        <g onClick={() => handleSelectBody(CELESTIAL_DATA.jwst)} style={{ cursor: 'pointer' }} className="probe-svg-group">
+                          <line x1={coordsTierra.x} y1={coordsTierra.y} x2={coordsJWST.x} y2={coordsJWST.y} stroke="#f59e0b" strokeWidth="1.2" strokeDasharray="3 3" opacity="0.85" />
+                          <circle cx={coordsJWST.x} cy={coordsJWST.y} r="14" className="probe-radar-pulse pulse-jwst" />
+                          <rect 
+                            x={coordsJWST.x - 5} y={coordsJWST.y - 5} 
+                            width="10" height="10" 
+                            transform={`rotate(45 ${coordsJWST.x} ${coordsJWST.y})`}
+                            fill="#fbbf24" stroke="#d97706" strokeWidth="1.2"
+                            className={`solar-body ${selectedBody.id === 'jwst' ? 'active' : ''}`} 
+                          />
+                          <circle cx={coordsJWST.x} cy={coordsJWST.y} r="2" fill="#ffffff" />
+                          <text x={coordsJWST.x + 9} y={coordsJWST.y - 5} className="probe-svg-tag">
+                            🛰️ Webb (L2)
+                          </text>
                         </g>
+
                         {/* Parker Solar Probe */}
-                        <g onClick={() => handleSelectBody(CELESTIAL_DATA.parker)} style={{ cursor: 'pointer' }}>
-                          <circle cx={coordsParker.x} cy={coordsParker.y} r="3.5" fill="#ef4444" className={`solar-body ${selectedBody.id === 'parker' ? 'active' : ''}`} />
+                        <g onClick={() => handleSelectBody(CELESTIAL_DATA.parker)} style={{ cursor: 'pointer' }} className="probe-svg-group">
+                          <line x1={450} y1={450} x2={coordsParker.x} y2={coordsParker.y} stroke="rgba(239, 68, 68, 0.45)" strokeWidth="1" strokeDasharray="2 3" />
+                          <circle cx={coordsParker.x} cy={coordsParker.y} r="14" className="probe-radar-pulse pulse-parker" />
+                          <circle cx={coordsParker.x} cy={coordsParker.y} r="5" fill="#ef4444" stroke="#ffffff" strokeWidth="1.2" className={`solar-body ${selectedBody.id === 'parker' ? 'active' : ''}`} />
+                          <circle cx={coordsParker.x} cy={coordsParker.y} r="2" fill="#fef08a" />
+                          <text x={coordsParker.x + 9} y={coordsParker.y + 4} className="probe-svg-tag">
+                            ☀️ Parker
+                          </text>
                         </g>
+
                         {/* Voyager 1 */}
-                        <g onClick={() => handleSelectBody(CELESTIAL_DATA.voyager1)} style={{ cursor: 'pointer' }}>
-                          <circle cx={coordsVoyager1.x} cy={coordsVoyager1.y} r="3" fill="#a855f7" className={`solar-body ${selectedBody.id === 'voyager1' ? 'active' : ''}`} />
+                        <g onClick={() => handleSelectBody(CELESTIAL_DATA.voyager1)} style={{ cursor: 'pointer' }} className="probe-svg-group">
+                          <line x1={450} y1={450} x2={coordsVoyager1.x} y2={coordsVoyager1.y} stroke="rgba(168, 85, 247, 0.4)" strokeWidth="1" strokeDasharray="4 4" />
+                          <circle cx={coordsVoyager1.x} cy={coordsVoyager1.y} r="14" className="probe-radar-pulse pulse-voyager" />
+                          <circle cx={coordsVoyager1.x} cy={coordsVoyager1.y} r="5" fill="#a855f7" stroke="#ffffff" strokeWidth="1.2" className={`solar-body ${selectedBody.id === 'voyager1' ? 'active' : ''}`} />
+                          <circle cx={coordsVoyager1.x} cy={coordsVoyager1.y} r="2" fill="#e9d5ff" />
+                          <text x={coordsVoyager1.x + 9} y={coordsVoyager1.y + 4} className="probe-svg-tag">
+                            📡 Voyager 1
+                          </text>
                         </g>
                       </g>
                     )}

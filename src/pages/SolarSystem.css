@@ -593,6 +593,9 @@
   border-radius: 16px;
   background: radial-gradient(circle at center, #0B0319 0%, #030107 100%);
   border: 1px solid rgba(255, 255, 255, 0.05);
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
 }
 
 .solar-system-svg {
@@ -600,18 +603,30 @@
   height: 100%;
 }
 
+/* Órbitas Planetarias Realistas Keplerianas - Claramente visibles al activar */
 .svg-orbit-line {
   fill: none;
-  stroke: rgba(255, 255, 255, 0.08);
-  stroke-width: 1;
-  stroke-dasharray: 4 4;
+  stroke: rgba(56, 189, 248, 0.38);
+  stroke-width: 1.35px;
+  stroke-dasharray: 6 5;
+  transition: stroke 0.3s ease, stroke-width 0.3s ease, filter 0.3s ease;
+  pointer-events: none;
 }
 
-.svg-sub-orbit {
-  fill: none;
-  stroke: rgba(255, 255, 255, 0.12);
-  stroke-width: 0.75;
-  stroke-dasharray: 2 2;
+/* Órbita del cuerpo celeste enfocado / seleccionado */
+.svg-orbit-line.active-orbit {
+  stroke: #38bdf8;
+  stroke-width: 2.6px;
+  stroke-dasharray: none;
+  filter: drop-shadow(0 0 8px rgba(56, 189, 248, 0.95));
+}
+
+/* Resalte de órbitas de gigantes gaseosos */
+.svg-orbit-line.giant-orbit-focus {
+  stroke: rgba(245, 158, 11, 0.65);
+  stroke-width: 1.9px;
+  stroke-dasharray: 8 4;
+  filter: drop-shadow(0 0 6px rgba(245, 158, 11, 0.5));
 }
 
 .svg-voyager-path {
@@ -692,6 +707,65 @@
   color: #ffffff;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(56, 189, 248, 0.25);
+}
+
+.camera-preset-btn.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.35), rgba(14, 165, 233, 0.2));
+  border-color: #38bdf8;
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.45), inset 0 0 8px rgba(56, 189, 248, 0.2);
+}
+
+/* Sondas Espaciales - Radares Pulsantes y Etiquetas Flotantes */
+.probe-radar-pulse {
+  fill: none;
+  stroke-width: 1.5;
+  transform-origin: center;
+  animation: probeRadarPulse 2.4s ease-out infinite;
+  pointer-events: none;
+}
+
+.probe-radar-pulse.pulse-jwst {
+  stroke: rgba(245, 158, 11, 0.7);
+}
+
+.probe-radar-pulse.pulse-parker {
+  stroke: rgba(239, 68, 68, 0.7);
+  animation-delay: 0.8s;
+}
+
+.probe-radar-pulse.pulse-voyager {
+  stroke: rgba(168, 85, 247, 0.7);
+  animation-delay: 1.6s;
+}
+
+@keyframes probeRadarPulse {
+  0% {
+    r: 5;
+    opacity: 1;
+  }
+  75% {
+    r: 20;
+    opacity: 0.3;
+  }
+  100% {
+    r: 26;
+    opacity: 0;
+  }
+}
+
+.probe-svg-tag {
+  font-size: 8.5px;
+  font-weight: 700;
+  fill: #ffffff;
+  paint-order: stroke fill;
+  stroke: rgba(6, 2, 16, 0.95);
+  stroke-width: 3.5px;
+  stroke-linejoin: round;
+  user-select: none;
+  pointer-events: none;
+  letter-spacing: 0.2px;
 }
 
 /* ==========================================================================
@@ -3642,6 +3716,12 @@
   .touch-btn-play.paused {
     border-color: #ef4444;
     color: #f87171;
+  }
+
+  /* Ocultar botones de zoom (+ y -) en móvil para usar gestos táctiles fluidos (pinch & pan) */
+  .mobile-touch-btn.touch-btn-zoom-in,
+  .mobile-touch-btn.touch-btn-zoom-out {
+    display: none !important;
   }
 
   /* Minimapa Radar Cósmico HUD Compacto en Móvil */
