@@ -1352,10 +1352,22 @@ export default function SolarSystem() {
     setIsDragging(false);
   };
 
-  const handleWheel = (e: React.WheelEvent) => {
-    const factor = e.deltaY < 0 ? 1.12 : 0.89;
-    setZoomLevel(prev => Math.min(8.0, Math.max(0.4, prev * factor)));
-  };
+  // Zoom con rueda del ratón exclusivo dentro del diagrama: bloquea scroll de página mientras el puntero está dentro
+  useEffect(() => {
+    const el = svgWrapperRef.current;
+    if (!el) return;
+
+    const onWheel = (e: WheelEvent) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.12 : 0.89;
+      setZoomLevel(prev => Math.min(8.0, Math.max(0.4, prev * factor)));
+    };
+
+    el.addEventListener('wheel', onWheel, { passive: false });
+    return () => {
+      el.removeEventListener('wheel', onWheel);
+    };
+  }, []);
 
   // Soporte Táctil Móvil Fluido: Mover con 1 dedo y Expansión / Zoom + Desplazamiento Simultáneo con 2 dedos (Pinch-to-zoom)
   const handleTouchStart = (e: React.TouchEvent) => {
@@ -1843,7 +1855,6 @@ export default function SolarSystem() {
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
                 onMouseLeave={handleMouseUp}
-                onWheel={handleWheel}
                 onTouchStart={handleTouchStart}
                 onTouchMove={handleTouchMove}
                 onTouchEnd={handleTouchEnd}
@@ -1960,6 +1971,10 @@ export default function SolarSystem() {
 
                 <svg viewBox="0 0 900 900" className="solar-system-svg">
                   <defs>
+                    <clipPath id="solar-system-viewport-clip">
+                      <rect x="0" y="0" width="900" height="900" />
+                    </clipPath>
+
                     <radialGradient id="grad-sol-visible" cx="50%" cy="50%" r="50%">
                       <stop offset="0%" stopColor="#FFFEE0" />
                       <stop offset="35%" stopColor="#FBE903" />
@@ -2011,14 +2026,15 @@ export default function SolarSystem() {
                     </radialGradient>
                   </defs>
 
-                  <g 
-                    style={{ 
-                      transform: transformStyle, 
-                      transformOrigin: '0 0',
-                      transition: isDragging ? 'none' : isTracking ? 'none' : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
-                      willChange: isDragging || isTracking ? 'transform' : 'auto'
-                    }}
-                  >
+                  <g clipPath="url(#solar-system-viewport-clip)">
+                    <g 
+                      style={{ 
+                        transform: transformStyle, 
+                        transformOrigin: '0 0',
+                        transition: isDragging ? 'none' : isTracking ? 'none' : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                        willChange: isDragging || isTracking ? 'transform' : 'auto'
+                      }}
+                    >
                     {/* Dibujo de Órbitas Elípticas Realistas de Kepler */}
                     {showOrbits && Object.keys(semiMajorAxes).map((key) => {
                       const coords = getCoordinates(key);
@@ -2417,6 +2433,7 @@ export default function SolarSystem() {
                       );
                     })()}
 
+                    </g>
                   </g>
                 </svg>
               </div>
@@ -2433,8 +2450,11 @@ export default function SolarSystem() {
                   </button>
                   <button 
                     className="btn-sim-control btn-sun-jump" 
-                    onClick={() => handleSelectBody(CELESTIAL_DATA.sol)}
-                    title="Enfocar la cámara en el Sol"
+                    onClick={() => {
+                      resetZoom();
+                      handleSelectBody(CELESTIAL_DATA.sol);
+                    }}
+                    title="Centrar y enfocar la vista en el Sol"
                   >
                     ☀️ Ir al Sol
                   </button>
@@ -2464,19 +2484,6 @@ export default function SolarSystem() {
                   >
                     <span className="zoom-symbol">➕</span>
                     <span className="zoom-text-label">Acercar</span>
-                  </button>
-                </div>
-
-                <div className="dock-divider" />
-
-                <div className="dock-action-group">
-                  <button 
-                    className="btn-zoom-reset-highlight" 
-                    onClick={resetZoom} 
-                    title="Centrar y restablecer la vista panorámica del Sistema Solar"
-                  >
-                    <span className="zoom-symbol">🎯</span>
-                    <span className="zoom-text-label">Centrar</span>
                   </button>
                 </div>
 
