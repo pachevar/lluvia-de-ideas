@@ -1657,41 +1657,8 @@ export default function SolarSystem() {
             {/* Lienzo del Simulador SVG Espacial */}
             <div className="sim-map-canvas">
               
-              {/* Controles de Simulación y Navegación Cósmica */}
+              {/* Selector de Categorías Cósmicas y Planetas */}
               <div className="canvas-controls-bar">
-                <div className="control-btn-group desktop-only-controls">
-                  <button 
-                    className={`btn-sim-control ${isPlaying ? 'paused' : 'playing'}`}
-                    onClick={() => setIsPlaying(!isPlaying)}
-                  >
-                    {isPlaying ? '⏸ Pausar' : '▶ Iniciar'}
-                  </button>
-                  <button className="btn-sim-control" onClick={() => handleSelectBody(CELESTIAL_DATA.sol)}>
-                    ☀️ Ir al Sol
-                  </button>
-                </div>
-
-                {/* Cluster de Zoom de Alto Impacto Visual (Destacado para Desktop) */}
-                <div className="zoom-controls-cluster">
-                  <span className="zoom-label-title">
-                    Zoom: {zoomLevel.toFixed(2)}x
-                  </span>
-                  <div className="zoom-buttons-row">
-                    <button className="btn-zoom-desktop-primary btn-zoom-out" onClick={zoomOut} title="Alejar vista del Sistema Solar (o rueda del ratón)">
-                      <span className="zoom-symbol">➖</span>
-                      <span className="zoom-text-label">Alejar</span>
-                    </button>
-                    <button className="btn-zoom-desktop-primary btn-zoom-in" onClick={zoomIn} title="Acercar vista del Sistema Solar (o rueda del ratón)">
-                      <span className="zoom-symbol">➕</span>
-                      <span className="zoom-text-label">Acercar</span>
-                    </button>
-                    <button className="btn-zoom-reset-highlight" onClick={resetZoom} title="Restablecer posición y escala completa">
-                      <span className="zoom-symbol">🔄</span>
-                      <span className="zoom-text-label">General</span>
-                    </button>
-                  </div>
-                </div>
-
                 {/* Presets de Enfoque Rápido / Ubicación */}
                 <div className="camera-presets-bar">
                   <span className="presets-label">🔭 Categoría:</span>
@@ -2452,6 +2419,70 @@ export default function SolarSystem() {
 
                   </g>
                 </svg>
+              </div>
+
+              {/* Consola de Control de Navegación, Pausa y Zoom (Exclusiva para Desktop / Web) */}
+              <div className="desktop-bottom-nav-dock">
+                <div className="dock-playback-group">
+                  <button 
+                    className={`btn-sim-control ${isPlaying ? 'paused' : 'playing'}`}
+                    onClick={() => setIsPlaying(!isPlaying)}
+                    title={isPlaying ? 'Pausar rotación y traslación planetaria' : 'Reanudar movimiento de los cuerpos celestes'}
+                  >
+                    {isPlaying ? '⏸ Pausar' : '▶ Iniciar'}
+                  </button>
+                  <button 
+                    className="btn-sim-control btn-sun-jump" 
+                    onClick={() => handleSelectBody(CELESTIAL_DATA.sol)}
+                    title="Enfocar la cámara en el Sol"
+                  >
+                    ☀️ Ir al Sol
+                  </button>
+                </div>
+
+                <div className="dock-divider" />
+
+                <div className="dock-zoom-group">
+                  <button 
+                    className="btn-zoom-desktop-primary btn-zoom-out" 
+                    onClick={zoomOut} 
+                    title="Alejar vista del Sistema Solar (o rueda del ratón hacia abajo)"
+                  >
+                    <span className="zoom-symbol">➖</span>
+                    <span className="zoom-text-label">Alejar</span>
+                  </button>
+
+                  <div className="dock-zoom-badge" title="Nivel de aumento óptico actual">
+                    <span className="zoom-badge-icon">🔍</span>
+                    <span className="zoom-badge-val">{zoomLevel.toFixed(2)}x</span>
+                  </div>
+
+                  <button 
+                    className="btn-zoom-desktop-primary btn-zoom-in" 
+                    onClick={zoomIn} 
+                    title="Acercar vista del Sistema Solar (o rueda del ratón hacia arriba)"
+                  >
+                    <span className="zoom-symbol">➕</span>
+                    <span className="zoom-text-label">Acercar</span>
+                  </button>
+                </div>
+
+                <div className="dock-divider" />
+
+                <div className="dock-action-group">
+                  <button 
+                    className="btn-zoom-reset-highlight" 
+                    onClick={resetZoom} 
+                    title="Centrar y restablecer la vista panorámica del Sistema Solar"
+                  >
+                    <span className="zoom-symbol">🎯</span>
+                    <span className="zoom-text-label">Centrar</span>
+                  </button>
+                </div>
+
+                <div className="dock-hint-text">
+                  <span>🖱️ Rueda del ratón para zoom • Arrastra para explorar</span>
+                </div>
               </div>
             </div>
           </div>
