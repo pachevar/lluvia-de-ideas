@@ -867,6 +867,27 @@ const SPEED_PRESETS = [
   { id: 'light', name: '⚡ Velocidad de la Luz (1,080,000,000 km/h)', speedKmH: 1080000000 }
 ];
 
+// Puntos Precalculados de Cinturón de Asteroides y Kuiper para Óptimo Rendimiento GPU
+const ASTEROID_BELT_DOTS = Array.from({ length: 80 }).map((_, idx) => {
+  const ang = (idx * 4.5 * Math.PI) / 180;
+  const ringRadius = 202 + (idx % 3) * 11;
+  return {
+    cx: Number((450 + ringRadius * Math.cos(ang)).toFixed(1)),
+    cy: Number((450 + ringRadius * Math.sin(ang)).toFixed(1)),
+    r: Number((1 + (idx % 2.5)).toFixed(1))
+  };
+});
+
+const KUIPER_BELT_DOTS = Array.from({ length: 90 }).map((_, idx) => {
+  const ang = (idx * 4 * Math.PI) / 180;
+  const ringRadius = 422 + (idx % 4) * 8;
+  return {
+    cx: Number((450 + ringRadius * Math.cos(ang)).toFixed(1)),
+    cy: Number((450 + ringRadius * Math.sin(ang)).toFixed(1)),
+    r: Number((0.8 + (idx % 2)).toFixed(1))
+  };
+});
+
 export default function SolarSystem() {
   // Pestañas Principales
   const [activeTab, setActiveTab] = useState<'explorer' | 'scale' | 'spectroscopy' | 'physics'>('explorer');
@@ -1311,7 +1332,7 @@ export default function SolarSystem() {
         startPanY: panOffset.y
       };
     } else if (e.touches.length === 2) {
-      setIsDragging(false);
+      setIsDragging(true);
       const t1 = e.touches[0];
       const t2 = e.touches[1];
       const dist = Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
@@ -1787,20 +1808,6 @@ export default function SolarSystem() {
                 </div>
               </div>
 
-              {selectedBody.id !== 'sol' && selectedBody.type !== 'cinturon' && (
-                <div className="tracking-toast-banner animate-bounce-in">
-                  <label className="switch-tracking-label">
-                    <input 
-                      type="checkbox" 
-                      checked={isTracking} 
-                      onChange={() => setIsTracking(!isTracking)} 
-                    />
-                    <span className="switch-custom-slider"></span>
-                    <span className="tracking-text-label">🎥 Seguir órbita de {selectedBody.name}</span>
-                  </label>
-                </div>
-              )}
-
               {/* Viewport Interactivo con Pan & Drag */}
               <div 
                 ref={svgWrapperRef}
@@ -1945,8 +1952,8 @@ export default function SolarSystem() {
                       <stop offset="100%" stopColor="#312e81" />
                     </radialGradient>
                     
-                    <filter id="glow-solar" x="-40%" y="-40%" width="180%" height="180%">
-                      <feGaussianBlur stdDeviation="12" result="blur" />
+                    <filter id="glow-solar" x="-30%" y="-30%" width="160%" height="160%">
+                      <feGaussianBlur stdDeviation="5" result="blur" />
                       <feComposite in="SourceGraphic" in2="blur" operator="over" />
                     </filter>
 
@@ -1981,7 +1988,8 @@ export default function SolarSystem() {
                     style={{ 
                       transform: transformStyle, 
                       transformOrigin: '0 0',
-                      transition: isDragging ? 'none' : isTracking ? 'none' : 'transform 0.4s cubic-bezier(0.16, 1, 0.3, 1)' 
+                      transition: isDragging ? 'none' : isTracking ? 'none' : 'transform 0.35s cubic-bezier(0.16, 1, 0.3, 1)',
+                      willChange: isDragging || isTracking ? 'transform' : 'auto'
                     }}
                   >
                     {/* Dibujo de Órbitas Elípticas Realistas de Kepler */}
@@ -2028,31 +2036,33 @@ export default function SolarSystem() {
                       </g>
                     )}
 
-                    {/* Cinturón Principal de Asteroides */}
+                    {/* Cinturón Principal de Asteroides (Acelerado por GPU) */}
                     {showAsteroids && (
-                      <g className="asteroid-belt-group" onClick={() => handleSelectBody(CELESTIAL_DATA.cinturon_asteroides)} style={{ cursor: 'pointer' }}>
+                      <g 
+                        className="asteroid-belt-group" 
+                        onClick={() => handleSelectBody(CELESTIAL_DATA.cinturon_asteroides)} 
+                        style={{ cursor: 'pointer' }}
+                        transform={`rotate(${(((angles.mercurio || 0) * 0.04) % 360).toFixed(2)} 450 450)`}
+                      >
                         <circle cx="450" cy="450" r="215" stroke="rgba(255,255,255,0.06)" strokeWidth="36" fill="none" />
-                        {Array.from({ length: 90 }).map((_, idx) => {
-                          const ang = (idx * 4 * Math.PI) / 180 + (angles.mercurio * 0.015);
-                          const ringRadius = 202 + (idx % 3) * 11;
-                          return (
-                            <circle key={idx} cx={450 + ringRadius * Math.cos(ang)} cy={450 + ringRadius * Math.sin(ang)} r={1 + (idx % 2.5)} fill="#A89EBC" opacity="0.6" />
-                          );
-                        })}
+                        {ASTEROID_BELT_DOTS.map((dot, idx) => (
+                          <circle key={idx} cx={dot.cx} cy={dot.cy} r={dot.r} fill="#A89EBC" opacity="0.6" />
+                        ))}
                       </g>
                     )}
 
-                    {/* Cinturón de Kuiper */}
+                    {/* Cinturón de Kuiper (Acelerado por GPU) */}
                     {showKuiper && (
-                      <g className="kuiper-belt-group" onClick={() => handleSelectBody(CELESTIAL_DATA.cinturon_kuiper)} style={{ cursor: 'pointer' }}>
+                      <g 
+                        className="kuiper-belt-group" 
+                        onClick={() => handleSelectBody(CELESTIAL_DATA.cinturon_kuiper)} 
+                        style={{ cursor: 'pointer' }}
+                        transform={`rotate(${(((angles.mercurio || 0) * 0.012) % 360).toFixed(2)} 450 450)`}
+                      >
                         <circle cx="450" cy="450" r="435" stroke="rgba(255,255,255,0.04)" strokeWidth="30" fill="none" />
-                        {Array.from({ length: 120 }).map((_, idx) => {
-                          const ang = (idx * 3 * Math.PI) / 180 + (angles.mercurio * 0.005);
-                          const ringRadius = 422 + (idx % 4) * 8;
-                          return (
-                            <circle key={idx} cx={450 + ringRadius * Math.cos(ang)} cy={450 + ringRadius * Math.sin(ang)} r={0.8 + (idx % 2)} fill="#8C9EB5" opacity="0.5" />
-                          );
-                        })}
+                        {KUIPER_BELT_DOTS.map((dot, idx) => (
+                          <circle key={idx} cx={dot.cx} cy={dot.cy} r={dot.r} fill="#8C9EB5" opacity="0.5" />
+                        ))}
                       </g>
                     )}
 
@@ -2350,25 +2360,34 @@ export default function SolarSystem() {
                       );
                     })()}
 
-                    {/* Anillo de Selección de Telemetría (Targeting Reticle) */}
+                    {/* Anillo de Seguimiento Cósmico: Círculo vacío sin sólido interno para apreciar el astro */}
                     {selectedBody.id !== 'sol' && selectedBody.type !== 'cinturon' && (() => {
                       let cx: number;
                       let cy: number;
-                      if (selectedBody.id === 'jwst') { cx = coordsJWST.x; cy = coordsJWST.y; }
-                      else if (selectedBody.id === 'hubble') { cx = coordsHubble.x; cy = coordsHubble.y; }
-                      else if (selectedBody.id === 'parker') { cx = coordsParker.x; cy = coordsParker.y; }
-                      else if (selectedBody.id === 'newhorizons') { cx = coordsNewHorizons.x; cy = coordsNewHorizons.y; }
-                      else if (selectedBody.id === 'voyager1') { cx = coordsVoyager1.x; cy = coordsVoyager1.y; }
-                      else if (selectedBody.id === 'voyager2') { cx = coordsVoyager2.x; cy = coordsVoyager2.y; }
-                      else { const c = getCoordinates(selectedBody.id); cx = c.x; cy = c.y; }
+                      let ringRadius = 24;
+                      if (selectedBody.id === 'jwst') { cx = coordsJWST.x; cy = coordsJWST.y; ringRadius = 14; }
+                      else if (selectedBody.id === 'hubble') { cx = coordsHubble.x; cy = coordsHubble.y; ringRadius = 13; }
+                      else if (selectedBody.id === 'parker') { cx = coordsParker.x; cy = coordsParker.y; ringRadius = 13; }
+                      else if (selectedBody.id === 'newhorizons') { cx = coordsNewHorizons.x; cy = coordsNewHorizons.y; ringRadius = 14; }
+                      else if (selectedBody.id === 'voyager1') { cx = coordsVoyager1.x; cy = coordsVoyager1.y; ringRadius = 15; }
+                      else if (selectedBody.id === 'voyager2') { cx = coordsVoyager2.x; cy = coordsVoyager2.y; ringRadius = 15; }
+                      else if (selectedBody.id === 'jupiter') { const c = getCoordinates(selectedBody.id); cx = c.x; cy = c.y; ringRadius = 32; }
+                      else if (selectedBody.id === 'saturno') { const c = getCoordinates(selectedBody.id); cx = c.x; cy = c.y; ringRadius = 36; }
+                      else if (selectedBody.id === 'urano' || selectedBody.id === 'neptuno') { const c = getCoordinates(selectedBody.id); cx = c.x; cy = c.y; ringRadius = 22; }
+                      else { const c = getCoordinates(selectedBody.id); cx = c.x; cy = c.y; ringRadius = 16; }
 
                       return (
-                        <g className="targeting-reticle-group">
-                          <circle cx={cx} cy={cy} r="26" fill="none" stroke="#38bdf8" strokeWidth="1.5" strokeDasharray="5 3" className="animated-target-ring" />
-                          <line x1={cx - 32} y1={cy} x2={cx - 24} y2={cy} stroke="#38bdf8" strokeWidth="1.5" />
-                          <line x1={cx + 24} y1={cy} x2={cx + 32} y2={cy} stroke="#38bdf8" strokeWidth="1.5" />
-                          <line x1={cx} y1={cy - 32} x2={cx} y2={cy - 24} stroke="#38bdf8" strokeWidth="1.5" />
-                          <line x1={cx} y1={cy + 24} x2={cx} y2={cy + 32} stroke="#38bdf8" strokeWidth="1.5" />
+                        <g className="tracking-hollow-group" pointerEvents="none">
+                          <circle 
+                            cx={cx} 
+                            cy={cy} 
+                            r={ringRadius} 
+                            fill="none" 
+                            stroke="#38bdf8" 
+                            strokeWidth="1.6" 
+                            strokeDasharray="4 3" 
+                            className="animated-target-ring" 
+                          />
                         </g>
                       );
                     })()}
