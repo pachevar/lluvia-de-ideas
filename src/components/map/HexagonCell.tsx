@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useRef } from 'react';
 import type { CustomHexagon } from '../../types';
 import { renderHexLayer } from './hexLayers';
 import './Hexagon.css';
@@ -11,6 +11,7 @@ interface HexagonCellProps {
   yOffset: number;
   onClick?: () => void;
   onDoubleClick?: () => void;
+  onLongPress?: () => void;
   showLabel?: boolean;
   isEditing?: boolean;
   isSelected?: boolean;
@@ -24,31 +25,126 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
   yOffset,
   onClick,
   onDoubleClick,
+  onLongPress,
   showLabel,
   isEditing,
   isSelected
 }) => {
-  const lastTapRef = React.useRef<number>(0);
+  const [isPressing, setIsPressing] = useState(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const touchStartPosRef = useRef<{ x: number; y: number }>({ x: 0, y: 0 });
+  const longPressTriggeredRef = useRef(false);
+  const suppressClickUntilRef = useRef<number>(0);
+
   const isUnexplored = data.id?.startsWith('unexplored-');
   const hasAction = Boolean(data.action && data.action.type !== 'none');
   const hasBgImage = Boolean(data.layerBg && data.layerBg.type !== 'none' && data.layerBg.value);
 
-  const handleTouchEnd = (e: React.TouchEvent) => {
-    const now = Date.now();
-    const DOUBLE_TAP_DELAY = 350;
-    if (now - lastTapRef.current < DOUBLE_TAP_DELAY) {
-      // Doble tap detectado
-      e.preventDefault();
-      if (onDoubleClick) {
-        onDoubleClick();
-      } else if (onClick) {
-        onClick();
-      }
-      lastTapRef.current = 0;
-    } else {
-      lastTapRef.current = now;
-      // Clic simple en touch se procesa normalmente por onClick
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
     }
+    setIsPressing(false);
+  };
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length !== 1) {
+      clearLongPressTimer();
+      return;
+    }
+
+    const touch = e.touches[0];
+    touchStartPosRef.current = { x: touch.clientX, y: touch.clientY };
+    longPressTriggeredRef.current = false;
+    setIsPressing(true);
+
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+
+    // Sostener por 1 segundo (1000ms) en la versión móvil abre el modal
+    longPressTimerRef.current = setTimeout(() => {
+      longPressTriggeredRef.current = true;
+      setIsPressing(false);
+      suppressClickUntilRef.current = Date.now() + 800; // Bloquea clics fantasma en overlay
+
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try {
+          navigator.vibrate(50);
+        } catch {
+          // Ignorar si no está permitido
+        }
+      }
+
+      const triggerAction = onLongPress || onDoubleClick;
+      if (triggerAction) {
+        triggerAction();
+      }
+    }, 1000);
+  };
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (!longPressTimerRef.current && !isPressing) return;
+
+    if (e.touches.length > 0) {
+      const touch = e.touches[0];
+      const dx = touch.clientX - touchStartPosRef.current.x;
+      const dy = touch.clientY - touchStartPosRef.current.y;
+      const dist = Math.hypot(dx, dy);
+
+      // Si el dedo se desplaza más de 10px, se cancela (el usuario está desplazando o paneando el mapa)
+      if (dist > 10) {
+        clearLongPressTimer();
+      }
+    }
+  };
+
+  const handleTouchEnd = (e: React.TouchEvent) => {
+    clearLongPressTimer();
+
+    if (longPressTriggeredRef.current) {
+      // El modal ya se abrió tras sostener 1 segundo; evitar clics adicionales
+      e.preventDefault();
+      e.stopPropagation();
+      longPressTriggeredRef.current = false;
+      return;
+    }
+
+    // Si está en ventana de bloqueo de eventos fantasma
+    if (Date.now() < suppressClickUntilRef.current) {
+      e.preventDefault();
+      return;
+    }
+
+    // Tap rápido simple en móvil: resalta el hexágono
+    if (onClick) {
+      e.preventDefault(); // Evita que se duplique un click sintético 300ms después
+      onClick();
+    }
+  };
+
+  const handleTouchCancel = () => {
+    clearLongPressTimer();
+    longPressTriggeredRef.current = false;
+  };
+
+  const handleClick = (e: React.MouseEvent) => {
+    if (Date.now() < suppressClickUntilRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    onClick?.();
+  };
+
+  const handleDoubleClick = (e: React.MouseEvent) => {
+    if (Date.now() < suppressClickUntilRef.current) {
+      e.preventDefault();
+      e.stopPropagation();
+      return;
+    }
+    onDoubleClick?.();
   };
 
   const baseStyle: React.CSSProperties = {
@@ -62,14 +158,26 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
 
   return (
     <div
-      className={`hex-cell-wrapper ${isSelected ? 'is-selected' : ''} ${isEditing ? 'is-editing' : ''} ${isUnexplored ? 'is-unexplored' : ''} ${hasAction ? 'has-action' : ''} ${hasBgImage ? 'has-bg-image' : ''}`}
+      className={`hex-cell-wrapper ${isSelected ? 'is-selected' : ''} ${isEditing ? 'is-editing' : ''} ${isUnexplored ? 'is-unexplored' : ''} ${hasAction ? 'has-action' : ''} ${hasBgImage ? 'has-bg-image' : ''} ${isPressing ? 'is-pressing' : ''}`}
       title={data.title}
       style={baseStyle}
-      onClick={onClick}
-      onDoubleClick={onDoubleClick}
+      onClick={handleClick}
+      onDoubleClick={handleDoubleClick}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
+      onTouchCancel={handleTouchCancel}
     >
       <div className="hex-inner-border"></div>
+      
+      {/* Indicador visual de carga al sostener presionado en móvil */}
+      {isPressing && (
+        <div className="hex-holding-indicator">
+          <div className="hex-holding-spinner"></div>
+          <span className="hex-holding-text">1s...</span>
+        </div>
+      )}
+
       <div className="hex-cell">
         {/* Capa 1: Fondo (Preserva imágenes de fondo y continuidad) */}
         {renderHexLayer(data.layerBg, 'hex-layer hex-layer-bg')}

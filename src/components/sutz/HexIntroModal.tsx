@@ -9,6 +9,7 @@ interface HexIntroModalProps {
 }
 
 export const HexIntroModal: React.FC<HexIntroModalProps> = ({ hexagon, onClose, onEnter }) => {
+  const mountTimeRef = React.useRef<number>(Date.now());
   const intro = hexagon.introModal;
 
   // Defaults inteligentes si el admin aún no ha personalizado algún campo
@@ -29,11 +30,36 @@ export const HexIntroModal: React.FC<HexIntroModalProps> = ({ hexagon, onClose, 
     if (e.key === 'Enter') onEnter(hexagon);
   };
 
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    if (e.target !== e.currentTarget) return;
+    // Guard contra clics fantasma en móvil tras abrir por long-press
+    if (Date.now() - mountTimeRef.current < 450) {
+      return;
+    }
+    onClose();
+  };
+
+  const handleOverlayTouchEnd = (e: React.TouchEvent) => {
+    if (e.target !== e.currentTarget) return;
+    if (Date.now() - mountTimeRef.current < 450) {
+      return;
+    }
+    e.preventDefault();
+    onClose();
+  };
+
   return (
-    <div className="sutz-modal-overlay" onClick={onClose} onKeyDown={handleKeyDown} tabIndex={-1}>
+    <div 
+      className="sutz-modal-overlay" 
+      onClick={handleOverlayClick} 
+      onTouchEnd={handleOverlayTouchEnd}
+      onKeyDown={handleKeyDown} 
+      tabIndex={-1}
+    >
       <div 
         className="sutz-intro-modal-panel" 
         onClick={(e) => e.stopPropagation()}
+        onTouchEnd={(e) => e.stopPropagation()}
         role="dialog"
         aria-modal="true"
         aria-labelledby="hex-intro-title"

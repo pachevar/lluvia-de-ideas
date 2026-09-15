@@ -16,17 +16,22 @@
   flex-direction: column;
   overflow: hidden;
   color: var(--sutz-text-normal, #e2e8f0);
-  animation: sutzIntroModalScale 0.24s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: sutzIntroModalScale 0.22s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  -webkit-transform: translate3d(0, 0, 0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 @keyframes sutzIntroModalScale {
   from {
     opacity: 0;
-    transform: scale(0.92) translateY(12px);
+    transform: translate3d(0, 8px, 0) scale(0.96);
   }
   to {
     opacity: 1;
-    transform: scale(1) translateY(0);
+    transform: translate3d(0, 0, 0) scale(1);
   }
 }
 
@@ -70,10 +75,30 @@
 }
 
 @media (max-width: 580px) {
+  .sutz-intro-modal-panel {
+    max-height: 92vh;
+    border-radius: 20px;
+  }
   .sutz-intro-body {
     grid-template-columns: 1fr;
-    gap: 16px;
-    padding: 18px;
+    gap: 14px;
+    padding: 16px;
+    overflow-y: auto;
+  }
+  .sutz-intro-character-frame {
+    width: 100px;
+    height: 100px;
+    margin-bottom: 8px;
+  }
+  .sutz-intro-character-fallback .fallback-emoji {
+    font-size: 2.8rem;
+  }
+  .sutz-intro-footer {
+    padding: 12px 16px;
+  }
+  .sutz-intro-enter-btn {
+    padding: 10px 18px;
+    font-size: 0.95rem;
   }
 }
 

@@ -226,8 +226,9 @@ export default function Sutz() {
     }
   };
 
-  // DOBLE CLIC: Abre el modal interactivo con el personaje y el botón de continuar
+  // DOBLE CLIC (Web) / SOSTENER 1 SEGUNDO (Móvil): Abre el modal interactivo con el personaje y el botón de continuar
   const handleHexDoubleClick = (hex: CustomHexagon) => {
+    if (activeIntroHex?.id === hex.id) return; // Guard para evitar parpadeo o re-ejecución si ya está activo
     sutzAudio.playClick();
     setSelectedHexId(hex.id);
     setCurrentHexCoord({ q: hex.col, r: hex.row, label: hex.title || hex.id });
@@ -563,6 +564,7 @@ export default function Sutz() {
         cells={cells} 
         onHexClick={handleHexClick}
         onHexDoubleClick={handleHexDoubleClick}
+        onHexLongPress={handleHexDoubleClick}
         selectedHexId={selectedHexId}
         onTransformReady={(controls) => {
           mapControlsRef.current = controls;

@@ -650,17 +650,22 @@
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: #080c16fa;
+  background: rgba(8, 12, 22, 0.96);
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 16px;
-  animation: fadeInModal 0.2s ease;
+  animation: fadeInModal 0.2s ease forwards;
+  will-change: opacity;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 @keyframes fadeInModal {
-  from { opacity: 0; transform: scale(0.98); }
-  to { opacity: 1; transform: scale(1); }
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 .sutz-game-card-modal {

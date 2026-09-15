@@ -10,6 +10,7 @@ interface HexagonGridProps {
   hexHeight?: number;
   onHexClick?: (hex: CustomHexagon) => void;
   onHexDoubleClick?: (hex: CustomHexagon) => void;
+  onHexLongPress?: (hex: CustomHexagon) => void;
   showLabels?: boolean;
   editingHexRow?: number | null;
   editingHexCol?: number | null;
@@ -42,6 +43,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   hexHeight = 180, // 180 * 1.1547 (flat-topped)
   onHexClick,
   onHexDoubleClick,
+  onHexLongPress,
   showLabels = false,
   editingHexRow = null,
   editingHexCol = null,
@@ -413,6 +415,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
                     yOffset={yOffset} 
                     onClick={onHexClick ? () => onHexClick(cell) : undefined}
                     onDoubleClick={onHexDoubleClick ? () => onHexDoubleClick(cell) : undefined}
+                    onLongPress={onHexLongPress ? () => onHexLongPress(cell) : (onHexDoubleClick ? () => onHexDoubleClick(cell) : undefined)}
                     showLabel={showLabels}
                     isEditing={editingHexRow === cell.row && editingHexCol === cell.col}
                     isSelected={selectedHexId === cell.id}
