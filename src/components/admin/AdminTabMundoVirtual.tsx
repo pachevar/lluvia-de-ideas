@@ -547,19 +547,19 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                   className={`inspector-tab-btn ${activeInspectorTab === 'id' ? 'active' : ''}`}
                   onClick={() => setActiveInspectorTab('id')}
                 >
-                  <span>📍</span> 1. Información & Aura Hover
+                  <span>📍</span> 1. Información & Hover
                 </button>
                 <button 
                   className={`inspector-tab-btn ${activeInspectorTab === 'l1' ? 'active' : ''}`}
                   onClick={() => setActiveInspectorTab('l1')}
                 >
-                  <span>🎨</span> 2. Capa 1: Fondo (Prediseñados & Degradados)
+                  <span>🎨</span> 2. Capa de Fondo
                 </button>
                 <button 
                   className={`inspector-tab-btn ${activeInspectorTab === 'l2' ? 'active' : ''}`}
                   onClick={() => setActiveInspectorTab('l2')}
                 >
-                  <span>🏰</span> 3. Capa 2: Decoración
+                  <span>🏰</span> 3. Capa de Decoración
                 </button>
                 <button 
                   className={`inspector-tab-btn ${activeInspectorTab === 'l3' ? 'active' : ''}`}
@@ -571,18 +571,35 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                   className={`inspector-tab-btn ${activeInspectorTab === 'intro' ? 'active' : ''}`}
                   onClick={() => setActiveInspectorTab('intro')}
                 >
-                  <span>🎭</span> 5. Personaje & Modal Previo (Doble Clic)
+                  <span>🎭</span> 5. Personajes & Modal Previo
                 </button>
               </div>
 
-              {/* CONTENIDO PESTAÑA 1: INFORMACIÓN & AURA */}
+              {/* CONTENIDO PESTAÑA 1: INFORMACIÓN & HOVER */}
               {activeInspectorTab === 'id' && (
-                <div className="inspector-grid-3col">
-                  {/* Tarjeta 1: Título e Identificación */}
-                  <div className="inspector-card-panel">
-                    <span className="inspector-panel-title">🏷️ Nombre del Hexágono</span>
-                    <div className="inspector-form-group">
-                      <label className="inspector-label">Título visible en pantalla:</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    {Boolean(editingHex.title || editingHex.glowColor) && (
+                      <button
+                        type="button"
+                        className="inspector-clear-submodule-btn"
+                        onClick={() => {
+                          const updated = { ...editingHex, title: '', glowColor: '' };
+                          setEditingHex(updated);
+                          updateHexInGlobalConfig(updated, true, true);
+                        }}
+                        title="Limpiar nombre y aura de este hexágono"
+                      >
+                        <span>🗑️</span> Limpiar Información & Hover
+                      </button>
+                    )}
+                  </div>
+                  <div className="inspector-grid-3col">
+                    {/* Tarjeta 1: Título e Identificación */}
+                    <div className="inspector-card-panel">
+                      <span className="inspector-panel-title">🏷️ Nombre del Hexágono</span>
+                      <div className="inspector-form-group">
+                        <label className="inspector-label">Título visible en pantalla:</label>
                       <input 
                         type="text" 
                         value={editingHex.title} 
@@ -666,11 +683,28 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     </div>
                   </div>
                 </div>
+              </div>
               )}
 
-              {/* CONTENIDO PESTAÑA 2: CAPA 1 FONDO */}
+              {/* CONTENIDO PESTAÑA 2: CAPA DE FONDO */}
               {activeInspectorTab === 'l1' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    {Boolean(editingHex.layerBg.value && editingHex.layerBg.type !== 'none') && (
+                      <button
+                        type="button"
+                        className="inspector-clear-submodule-btn"
+                        onClick={() => {
+                          const updated = { ...editingHex, layerBg: { type: 'none' as const, value: '' } };
+                          setEditingHex(updated);
+                          updateHexInGlobalConfig(updated, true, true);
+                        }}
+                        title="Limpiar y retirar cualquier fondo de este hexágono"
+                      >
+                        <span>🗑️</span> Limpiar Fondo
+                      </button>
+                    )}
+                  </div>
                   
                   {/* Bloque Superior: Galería de Fondos Prediseñados Popol Vuh y Naturaleza */}
                   <div className="inspector-card-panel">
@@ -870,12 +904,29 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                 </div>
               )}
 
-              {/* CONTENIDO PESTAÑA 3: CAPA 2 DECORATIVA */}
+              {/* CONTENIDO PESTAÑA 3: CAPA DE DECORACIÓN */}
               {activeInspectorTab === 'l2' && (
-                <div className="inspector-grid-2col">
-                  {/* Columna 1: Modo y Configuración */}
-                  <div className="inspector-card-panel">
-                    <span className="inspector-panel-title">🏰 Capa Decorativa</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    {Boolean(editingHex.layerDeco.type !== 'none' || editingHex.layerDeco.value) && (
+                      <button
+                        type="button"
+                        className="inspector-clear-submodule-btn"
+                        onClick={() => {
+                          const updated = { ...editingHex, layerDeco: { type: 'none' as const, value: '' } };
+                          setEditingHex(updated);
+                          updateHexInGlobalConfig(updated, true, true);
+                        }}
+                        title="Limpiar y desactivar la capa de decoración de este hexágono"
+                      >
+                        <span>🗑️</span> Limpiar Decoración
+                      </button>
+                    )}
+                  </div>
+                  <div className="inspector-grid-2col">
+                    {/* Columna 1: Modo y Configuración */}
+                    <div className="inspector-card-panel">
+                      <span className="inspector-panel-title">🏰 Capa Decorativa</span>
                     <div className="inspector-form-group">
                       <label className="inspector-label">Tipo de Decoración:</label>
                       <select 
@@ -970,14 +1021,56 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     )}
                   </div>
                 </div>
+              </div>
               )}
 
               {/* CONTENIDO PESTAÑA 4: ÍCONO & ACCIÓN INTERACTIVA */}
               {activeInspectorTab === 'l3' && (
-                <div className="inspector-grid-2col">
-                  {/* Tarjeta A: Ícono del Hexágono (Configuración, Catálogo & Subida Propia) */}
-                  <div className="inspector-card-panel">
-                    <span className="inspector-panel-title">💠 Ícono del Hexágono</span>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    {(Boolean(editingHex.layerInteractive.value) || editingHex.action.type !== 'none' || Boolean(editingHex.action.target)) && (
+                      <button
+                        type="button"
+                        className="inspector-clear-submodule-btn"
+                        onClick={() => {
+                          const updated = {
+                            ...editingHex,
+                            layerInteractive: { type: 'none' as const, value: '', color: undefined, size: 1.0 },
+                            action: { type: 'none' as const, target: '' }
+                          };
+                          setEditingHex(updated);
+                          updateHexInGlobalConfig(updated, true, true);
+                        }}
+                        title="Limpiar tanto el ícono como la acción interactiva de este hexágono"
+                      >
+                        <span>🗑️</span> Limpiar Ícono y Acción
+                      </button>
+                    )}
+                  </div>
+
+                  <div className="inspector-grid-2col">
+                    {/* Tarjeta A: Ícono del Hexágono (Configuración, Catálogo & Subida Propia) */}
+                    <div className="inspector-card-panel">
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <span className="inspector-panel-title" style={{ margin: 0 }}>💠 Ícono del Hexágono</span>
+                        {Boolean(editingHex.layerInteractive.value) && (
+                          <button
+                            type="button"
+                            className="inspector-clear-submodule-btn"
+                            onClick={() => {
+                              const updated = {
+                                ...editingHex,
+                                layerInteractive: { type: 'none' as const, value: '', color: undefined, size: 1.0 }
+                              };
+                              setEditingHex(updated);
+                              updateHexInGlobalConfig(updated, true, true);
+                            }}
+                            title="Quitar solo el ícono asignado"
+                          >
+                            <span>🗑️</span> Quitar Ícono
+                          </button>
+                        )}
+                      </div>
                     
                     {/* Visualización del Ícono Actual */}
                     <div className="inspector-icon-preview-row">
@@ -1083,7 +1176,26 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
 
                   {/* Tarjeta B: Acción al Clic & Rutas Rápidas (Independiente) */}
                   <div className="inspector-card-panel">
-                    <span className="inspector-panel-title">🎯 Acción al Clic (Independiente)</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="inspector-panel-title" style={{ margin: 0 }}>🎯 Acción al Clic</span>
+                      {(editingHex.action.type !== 'none' || Boolean(editingHex.action.target)) && (
+                        <button
+                          type="button"
+                          className="inspector-clear-submodule-btn"
+                          onClick={() => {
+                            const updated = {
+                              ...editingHex,
+                              action: { type: 'none' as const, target: '' }
+                            };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated, true, true);
+                          }}
+                          title="Quitar la acción asignada al clic"
+                        >
+                          <span>🗑️</span> Quitar Acción
+                        </button>
+                      )}
+                    </div>
                     <div className="inspector-form-group">
                       <label className="inspector-label">Tipo de Acción al Clic:</label>
                       <select 
@@ -1295,11 +1407,45 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
 
                   </div>
                 </div>
+              </div>
               )}
 
-              {/* CONTENIDO PESTAÑA 5: PERSONAJE & MODAL PREVIO (DOBLE CLIC) */}
+              {/* CONTENIDO PESTAÑA 5: PERSONAJES & MODAL PREVIO */}
               {activeInspectorTab === 'intro' && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
+                    {Boolean(
+                      editingHex.introModal?.characterImage || 
+                      editingHex.introModal?.characterName || 
+                      editingHex.introModal?.welcomeTitle || 
+                      editingHex.introModal?.description ||
+                      editingHex.introModal?.buttonText
+                    ) && (
+                      <button
+                        type="button"
+                        className="inspector-clear-submodule-btn"
+                        onClick={() => {
+                          const updated = {
+                            ...editingHex,
+                            introModal: {
+                              enabled: false,
+                              characterName: '',
+                              characterBadge: '',
+                              characterImage: '',
+                              welcomeTitle: '',
+                              description: '',
+                              buttonText: ''
+                            }
+                          };
+                          setEditingHex(updated);
+                          updateHexInGlobalConfig(updated, true, true);
+                        }}
+                        title="Limpiar datos del personaje, diálogos y desactivar modal previo"
+                      >
+                        <span>🗑️</span> Limpiar Personaje & Modal
+                      </button>
+                    )}
+                  </div>
                   
                   {/* Interruptor Principal de Activación */}
                   <div className="inspector-card-panel" style={{ background: 'linear-gradient(135deg, rgba(15, 23, 42, 0.9), rgba(30, 41, 59, 0.8))', border: '1.5px solid rgba(56, 189, 248, 0.3)' }}>
