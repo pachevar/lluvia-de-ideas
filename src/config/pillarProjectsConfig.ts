@@ -52,6 +52,7 @@ export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
 
   // 🛍️ Mercado (Tienda en Línea & Comercial)
   { id: 'mercado_tienda', label: '🛍️ Tienda de Libros & Cuentos', target: '/tienda', type: 'navigate', pillarId: 'mercado' },
+  { id: 'mercado_bingo_lobby', label: '🎲 Bingotenango (Lobby & Dinámica)', target: '/juegos/bingo', type: 'navigate', pillarId: 'mercado' },
   { id: 'mercado_bingo_boletos', label: '🎟️ Boletos Bingotenango', target: '/juegos/bingo/boletos', type: 'navigate', pillarId: 'mercado' },
   { id: 'mercado_cotizador', label: '💼 Cotizador Web', target: '/gerencia', type: 'navigate', pillarId: 'mercado' },
 
@@ -62,7 +63,6 @@ export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
   { id: 'sutz_mapa', label: '🗺️ Mundo Virtual Sutz', target: '/sutz', type: 'navigate', pillarId: 'sutz' },
   { id: 'sutz_juracan', label: '🌀 Universo de Juracán', target: '/universo-de-juracan', type: 'navigate', pillarId: 'sutz' },
   { id: 'sutz_neurociencia', label: '🧠 Neurociencia Educativa', target: '/neurociencia', type: 'navigate', pillarId: 'sutz' },
-  { id: 'sutz_bingo_lobby', label: '🎲 Bingotenango Lobby', target: '/juegos/bingo', type: 'navigate', pillarId: 'sutz' },
 
   // Popol Vuh (Modales dentro de Sutz)
   { id: 'pv_camazotz', label: '🦇 Popol Vuh: Camazotz', target: 'camazotz', type: 'modal', pillarId: 'sutz' },

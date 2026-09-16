@@ -40,7 +40,7 @@ function App() {
   // Sidebar Gamer State
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSidebarCreatikaOpen, setIsSidebarCreatikaOpen] = useState(true);
-  const [isSidebarJuegosOpen, setIsSidebarJuegosOpen] = useState(false);
+  const [isSidebarMercadoOpen, setIsSidebarMercadoOpen] = useState(false);
   const [isSidebar100tekOpen, setIsSidebar100tekOpen] = useState(false);
   const [isSidebarLaboratoriosOpen, setIsSidebarLaboratoriosOpen] = useState(false);
 
@@ -51,8 +51,8 @@ function App() {
   };
 
   const isCreatikaActive = currentPath.startsWith('/creatika') || currentPath.includes('codigo-docente') || currentPath.includes('codigo-estudiante');
-  const isJuegosActive = currentPath.startsWith('/juegos') && !currentPath.includes('maquina-de-cuentos');
-  const is100tekActive = currentPath.startsWith('/100tek') || currentPath.startsWith('/herramientas');
+  const isMercadoActive = currentPath.startsWith('/tienda') || currentPath.startsWith('/juegos/bingo') || currentPath.startsWith('/bingo');
+  const is100tekActive = currentPath.startsWith('/100tek') || currentPath.startsWith('/herramientas') || currentPath.includes('sistema-solar');
   const isLaboratoriosActive = currentPath.startsWith('/laboratorios');
   const isTabActive = (path: string) => currentPath === path;
 
@@ -158,20 +158,32 @@ function App() {
             </div>
           </div>
           
-          {/* Menú Juegos */}
-          <div className={`sidebar-group ${isSidebarJuegosOpen ? 'open' : ''}`}>
+          {/* Menú Mercado */}
+          <div className={`sidebar-group ${isSidebarMercadoOpen ? 'open' : ''}`}>
             <button 
-              className={`sidebar-group-trigger ${isJuegosActive ? 'active-parent' : ''}`}
-              onClick={() => setIsSidebarJuegosOpen(!isSidebarJuegosOpen)}
+              className={`sidebar-group-trigger ${isMercadoActive ? 'active-parent' : ''}`}
+              onClick={() => setIsSidebarMercadoOpen(!isSidebarMercadoOpen)}
             >
-              <span className="sidebar-icon" aria-hidden="true">🎮</span> Juegos {isSidebarJuegosOpen ? '▴' : '▾'}
+              <span className="sidebar-icon" aria-hidden="true">🛍️</span> Mercado {isSidebarMercadoOpen ? '▴' : '▾'}
             </button>
             <div className="sidebar-submenu">
               <button 
-                className={`sidebar-sublink ${isTabActive('/juegos/bingo') ? 'active' : ''}`}
+                className={`sidebar-sublink ${isTabActive('/tienda') ? 'active' : ''}`}
+                onClick={() => navigateTo('/tienda')}
+              >
+                🛍️ Catálogo de Cuentos
+              </button>
+              <button 
+                className={`sidebar-sublink ${isTabActive('/juegos/bingo') || isTabActive('/bingo') ? 'active' : ''}`}
                 onClick={() => navigateTo('/juegos/bingo')}
               >
-                🎲 Bingotenango
+                🎲 Bingotenango (Bingo)
+              </button>
+              <button 
+                className={`sidebar-sublink ${isTabActive('/juegos/bingo/boletos') || isTabActive('/bingo/boletos') ? 'active' : ''}`}
+                onClick={() => navigateTo('/juegos/bingo/boletos')}
+              >
+                🎟️ Boletos Bingotenango
               </button>
             </div>
           </div>
@@ -212,7 +224,7 @@ function App() {
               className={`sidebar-group-trigger ${isLaboratoriosActive ? 'active-parent' : ''}`}
               onClick={() => setIsSidebarLaboratoriosOpen(!isSidebarLaboratoriosOpen)}
             >
-              <span className="sidebar-icon" aria-hidden="true">🧪</span> Laboratorios {isSidebarLaboratoriosOpen ? '▴' : '▾'}
+              <span className="sidebar-icon" aria-hidden="true">🧪</span> LAB {isSidebarLaboratoriosOpen ? '▴' : '▾'}
             </button>
             <div className="sidebar-submenu">
               <button 

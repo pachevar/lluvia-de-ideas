@@ -7,6 +7,7 @@ export type AdminTabType =
   | 'techtree'
   | 'creatika' 
   | '100tek' 
+  | 'sistema_solar'
   | 'laboratorios'
   | 'bingo' 
   | 'tienda' 
@@ -253,13 +254,23 @@ export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
     items: [
       {
         id: '100tek',
-        label: '⚡ 100tek (Ciencia, Lógica & STEM)',
+        label: '⚡ 100tek (Secuencias Numéricas)',
         icon: '⚡',
-        description: 'Secuencias numéricas, Sistema Solar 3D interactivo y retos lógicos/matemáticos',
-        keywords: ['100tek', 'stem', 'matematica', 'secuencias', 'sistema solar', 'ciencia', 'astronomia', 'logica', 'calculo'],
+        description: 'Secuencias numéricas, sucesiones algebraicas y retos de lógica matemática',
+        keywords: ['100tek', 'stem', 'matematica', 'secuencias', 'algebra', 'ciencia', 'logica', 'calculo'],
         pillar: '100tek',
         publicRoute: '/100tek/secuencias-numericas',
-        roleDescription: 'Plataforma interactiva de ciencia, patrones numéricos y cosmos'
+        roleDescription: 'Plataforma interactiva de secuencias numéricas y razonamiento abstracto'
+      },
+      {
+        id: 'sistema_solar',
+        label: '🪐 Sistema Solar 3D',
+        icon: '🪐',
+        description: 'Simulador astronómico 3D: órbitas planetarias, satélites, magnitudes y exploración cósmica',
+        keywords: ['sistema solar', 'astronomia', 'planetas', 'sol', 'cosmos', '100tek', '3d', 'espacio', 'orbitas'],
+        pillar: '100tek',
+        publicRoute: '/100tek/sistema-solar',
+        roleDescription: 'Simulación 3D interactiva del cosmos y astronomía educativa'
       }
     ]
   },
@@ -289,7 +300,7 @@ export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
   // 5. 🛍️ MERCADO: Tienda en Línea
   {
     id: 'cat_mercado',
-    title: '🛍️ Mercado (Tienda en Línea)',
+    title: '🛍️ Mercado (Tienda en Línea & Boletos)',
     icon: '🛍️',
     projectPillar: 'mercado',
     badge: 'TIENDA & COMERCIO',
@@ -304,6 +315,16 @@ export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
         pillar: 'mercado',
         publicRoute: '/tienda',
         roleDescription: 'Vitrina comercial de cuentos y publicaciones infantiles'
+      },
+      {
+        id: 'bingo',
+        label: '🎲 Bingotenango (Bingo Digital, Tómbola & Boletos)',
+        icon: '🎲',
+        description: 'Control de tómbola 3D, cartones, códigos, patrocinadores y venta de boletos digitales',
+        keywords: ['bingotenango', 'bingo', 'juegos', 'cartones', 'bingo virtual', 'masivo', 'tombola', 'premios', 'boletos', 'mercado'],
+        pillar: 'mercado',
+        publicRoute: '/juegos/bingo',
+        roleDescription: 'Dinámica comercial y lúdica masiva con venta de boletos y tómbola virtual'
       },
       {
         id: 'cotizador',
@@ -343,23 +364,6 @@ export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
 // 🚀 CATEGORÍAS OPERATIVAS, PORTAL INSTITUCIONAL Y SISTEMA
 // =========================================================================
 export const OPERATIONAL_NAV_CATEGORIES: AdminCategory[] = [
-  {
-    id: 'cat_juegos',
-    title: '🎮 Dinámicas & Juegos Masivos',
-    icon: '🎮',
-    items: [
-      {
-        id: 'bingo',
-        label: '🎲 Bingotenango (Bingo Digital)',
-        icon: '🎲',
-        description: 'Control de tómbola 3D, cartones, códigos, patrocinadores y promotores',
-        keywords: ['bingotenango', 'bingo', 'juegos', 'cartones', 'bingo virtual', 'masivo', 'tombola', 'premios'],
-        pillar: 'soporte',
-        publicRoute: '/juegos/bingo',
-        roleDescription: 'Dinámica interactiva y lúdica masiva'
-      }
-    ]
-  },
   {
     id: 'cat_portal',
     title: '🌐 Portal Institucional',

@@ -424,6 +424,14 @@ export default function Gerencia() {
             />
           )}
 
+          {activeAdminTab === 'sistema_solar' && (
+            <AdminTab100tek 
+              localConfig={localConfig} 
+              updateField={updateField} 
+              mode="solar"
+            />
+          )}
+
           {activeAdminTab === 'mapa' && (
             <AdminTabMundoVirtual 
               localConfig={localConfig} 
