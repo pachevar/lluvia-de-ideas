@@ -189,6 +189,32 @@ export interface PortalConfig {
     customFunction?: string;
     image?: string;
   }>;
+  pozoIdeas?: PozoIdeasConfig;
+}
+
+export type PozoIdeaCategory = 'creatika' | '100tek' | 'lab' | 'mercado' | 'sutz';
+export type PozoIdeaStatus = 'semilla' | 'desarrollo' | 'publicado' | 'archivo';
+export type PozoIdeaPriority = 'alta' | 'media' | 'baja';
+
+export interface PozoIdeaItem {
+  id: string;
+  title: string;
+  description: string;
+  category: PozoIdeaCategory;
+  status: PozoIdeaStatus;
+  priority?: PozoIdeaPriority;
+  tags: string[];
+  targetAudience?: string;
+  targetAge?: string;
+  author?: string;
+  notes?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface PozoIdeasConfig {
+  intro: string;
+  ideas: PozoIdeaItem[];
 }
 
 export interface TechNode {

@@ -110,7 +110,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const allPillarRoutes = [...BUILTIN_PILLAR_ROUTES, ...customRoutes];
   const filteredRoutes = selectedPillar === 'todos'
     ? allPillarRoutes
-    : allPillarRoutes.filter(r => r.pillarId === selectedPillar || (selectedPillar === 'personalizados' && r.isCustom));
+    : allPillarRoutes.filter(r => r.pillarId === selectedPillar || (selectedPillar === 'personalizados' && r.isCustom) || (selectedPillar === 'lab' && r.pillarId === 'laboratorios'));
 
   const handleAddCustomRoute = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -1131,7 +1131,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                             ? allPillarRoutes.length
                             : cat.id === 'personalizados'
                               ? customRoutes.length
-                              : allPillarRoutes.filter(r => r.pillarId === cat.id).length;
+                              : allPillarRoutes.filter(r => r.pillarId === cat.id || (cat.id === 'lab' && r.pillarId === 'laboratorios')).length;
 
                           if (cat.id === 'personalizados' && customRoutes.length === 0) return null;
 

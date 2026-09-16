@@ -267,6 +267,66 @@ export const DEFAULT_CONFIG: PortalConfig = {
     }
   },
   techTreeNodes: generateDefaultTechTree(),
+  pozoIdeas: {
+    intro: "El Pozo de Ideas es el banco central de proyectos, retos y propuestas pedagógicas para el Ecosistema Sutz.",
+    ideas: [
+      {
+        id: "idea-1",
+        title: "Laboratorio de Códices y Tipografía K'iche'",
+        description: "Taller de diseño de glifos mayas vectoriales interactivos para la creación de cuentos ilustrados.",
+        category: "creatika",
+        status: "desarrollo",
+        tags: ["Arte", "Tipografía", "Glifos", "Cuentos"],
+        targetAudience: "Estudiantes de Primaria Alta y Básico",
+        targetAge: "10 a 14 años",
+        notes: "Integrar con el lienzo de Construyendo Personaje."
+      },
+      {
+        id: "idea-2",
+        title: "Simulador de Órbitas y Gravedad de Lunas Menores",
+        description: "Módulo complementario para el Observatorio Solar enfocado en satélites irregulares y sondas espaciales.",
+        category: "100tek",
+        status: "semilla",
+        tags: ["Astronomía", "Física", "Gravedad", "STEM"],
+        targetAudience: "Secundaria y Bachillerato",
+        targetAge: "12 a 17 años",
+        notes: "Aprovechar las trayectorias de New Horizons y Voyager 1."
+      },
+      {
+        id: "idea-3",
+        title: "Guía Práctica: Stop-Motion con Plastilina y Celular",
+        description: "Secuencia didáctica paso a paso para que los docentes elaboren cortometrajes con los alumnos en el aula.",
+        category: "lab",
+        status: "publicado",
+        tags: ["Animación", "Stop-Motion", "Manualidades", "Guía"],
+        targetAudience: "Docentes de Primaria y Preprimaria",
+        targetAge: "Docentes",
+        notes: "Enlazado al Módulo 1 de LAB Animación Educativa."
+      },
+      {
+        id: "idea-4",
+        title: "Kits de Lectura y Cajas de Regalo con Cuentos Ilustrados",
+        description: "Edición especial de paquetes de cuentos con figuras coleccionables de Camazotz y Juracán.",
+        category: "mercado",
+        status: "desarrollo",
+        tags: ["Tienda", "Libros", "Coleccionables", "Regalos"],
+        targetAudience: "Padres de familia e Instituciones",
+        targetAge: "General",
+        notes: "Vincular con la pasarela de WhatsApp y Tienda."
+      },
+      {
+        id: "idea-5",
+        title: "Nuevas Islas de Bioma Volcánico y Cavernas en Sutz",
+        description: "Expansión del mapa hexagonal con bioma de obsidiana y desafíos del inframundo Xibalbá.",
+        category: "sutz",
+        status: "semilla",
+        tags: ["Mapa", "Hexágonos", "Popol Vuh", "Xibalbá"],
+        targetAudience: "Todos los exploradores de Sutz",
+        targetAge: "Todas las edades",
+        notes: "Conectar con el árbol de habilidades tecnológicas."
+      }
+    ]
+  },
   map: [
 
     {

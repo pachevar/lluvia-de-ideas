@@ -243,11 +243,11 @@ export default function AdminSidebar({
             )}
           </div>
 
-          {/* 🌟 DOCK DE ACCESO RÁPIDO: LOS 4 PROYECTOS PILARES */}
+          {/* 🌟 DOCK DE ACCESO RÁPIDO: ECOSISTEMA SUTZ Y SUS PILARES */}
           <div className="admin-pillars-quick-dock">
             <div className="admin-pillars-header">
-              <span className="admin-pillars-label">Proyectos Pilares</span>
-              <span className="admin-pillars-count">4 Fundamentales</span>
+              <span className="admin-pillars-label">Ecosistema Sutz</span>
+              <span className="admin-pillars-count">6 Pilares & Ramas</span>
             </div>
             <div className="admin-pillars-grid">
               {PROJECT_PILLARS.map(pillar => {
@@ -307,14 +307,14 @@ export default function AdminSidebar({
                 onChange={(e) => setActiveAdminTab(e.target.value as AdminTabType)}
                 className="admin-nav-select"
               >
-                <optgroup label="🏛️ Proyectos Pilares">
+                <optgroup label="☁️ Ecosistema Sutz (Pilares & Ramas)">
                   {PILLAR_NAV_CATEGORIES.flatMap(c => c.items).map(item => (
                     <option key={item.id} value={item.id}>
                       {item.label}
                     </option>
                   ))}
                 </optgroup>
-                <optgroup label="🛠️ Operaciones & Gestión">
+                <optgroup label="🌐 Portal Institucional & Soporte">
                   {OPERATIONAL_NAV_CATEGORIES.flatMap(c => c.items).map(item => (
                     <option key={item.id} value={item.id}>
                       {item.label}
@@ -328,21 +328,21 @@ export default function AdminSidebar({
 
           {/* Menú por Categorías y Acordeón */}
           <nav className="admin-nav-menu">
-            {/* SECCIÓN 1: 🏛️ PROYECTOS PILARES (DESPLEGABLES) */}
+            {/* SECCIÓN 1: ☁️ ECOSISTEMA SUTZ (DESPLEGABLES) */}
             <div className="admin-nav-section-group admin-pillars-section">
               <div className="admin-nav-group-header">
-                <span className="group-header-badge">🏛️ PILARES EDUCATIVOS</span>
-                <span className="group-header-sub">4 Núcleos</span>
+                <span className="group-header-badge">☁️ ECOSISTEMA SUTZ</span>
+                <span className="group-header-sub">6 Ramas</span>
               </div>
               <div className="admin-categories-stack">
                 {PILLAR_NAV_CATEGORIES.map(cat => renderCategoryAccordion(cat, true))}
               </div>
             </div>
 
-            {/* SECCIÓN 2: 🛠️ OPERACIONES & GESTIÓN */}
+            {/* SECCIÓN 2: 🌐 OPERACIONES & PORTAL */}
             <div className="admin-nav-section-group admin-operations-section">
               <div className="admin-nav-group-header">
-                <span className="group-header-badge">🛠️ OPERACIONES & PORTAL</span>
+                <span className="group-header-badge">🌐 PORTAL INSTITUCIONAL & SISTEMA</span>
                 <span className="group-header-sub">Soporte</span>
               </div>
               <div className="admin-categories-stack">

@@ -14,11 +14,11 @@ export default function AdminTabLaboratorios({ localConfig, setLocalConfig, upda
 
   return (
     <div className="admin-card card-glass animate-fade-in">
-      <h3>🧪 Configuración del Laboratorio de Animación Educativa</h3>
-      <p className="tab-section-desc">Configura los textos introductorios, competencias y habilidades de los 10 módulos formativos del laboratorio de animación.</p>
+      <h3>🧪 LAB: Prácticas, Talleres y Guías de Ejercicios</h3>
+      <p className="tab-section-desc">Módulos formativos prácticos, talleres de animación, guías de ejercicios y proyectos aplicados del ecosistema Sutz.</p>
 
       <div className="admin-form-section">
-        <h4>Introducción del Laboratorio</h4>
+        <h4>Introducción de LAB</h4>
         <div className="admin-form-row">
           <div className="admin-form-group">
             <label>Párrafo Introductorio de Animación Educativa</label>

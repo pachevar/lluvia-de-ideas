@@ -22,6 +22,7 @@ import AdminTab100tek from './components/admin/AdminTab100tek';
 import AdminTabTienda from './components/admin/AdminTabTienda';
 import AdminTabTechTree from './components/admin/AdminTabTechTree';
 import AdminTabViajeDelHeroe from './components/admin/AdminTabViajeDelHeroe';
+import AdminTabPozoDeIdeas from './components/admin/AdminTabPozoDeIdeas';
 import { saveArchetypeAsset } from './services/archetypeAssetsService';
 
 export default function Gerencia() {
@@ -478,6 +479,13 @@ export default function Gerencia() {
 
           {activeAdminTab === 'bingo' && (
             <AdminBingoTab />
+          )}
+
+          {activeAdminTab === 'pozo_ideas' && localConfig && (
+            <AdminTabPozoDeIdeas 
+              localConfig={localConfig} 
+              setLocalConfig={setLocalConfig} 
+            />
           )}
         </div>
       </main>

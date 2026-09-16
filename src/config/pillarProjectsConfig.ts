@@ -20,50 +20,56 @@ export interface PillarCategory {
 }
 
 export const PILLAR_CATEGORIES: PillarCategory[] = [
-  { id: 'todos', name: 'Todos los Pilares', label: 'Todos', icon: '🌐' },
-  { id: '100tek', name: '100tek (Ciencia & Matemáticas)', label: '100tek', icon: '🪐' },
-  { id: 'creatika', name: 'Creatika (Literatura & Arte)', label: 'Creatika', icon: '🎭' },
-  { id: 'juegos', name: 'Lúdica & Bingo', label: 'Juegos', icon: '🎟️' },
-  { id: 'laboratorios', name: 'Laboratorios Pedagógicos', label: 'Laboratorios', icon: '🔬' },
-  { id: 'editorial', name: 'Editorial & Libros', label: 'Editorial', icon: '📚' },
-  { id: 'popolvuh', name: 'Popol Vuh (Relatos & Modales)', label: 'Popol Vuh', icon: '📜' },
-  { id: 'personalizados', name: 'Nuevas Apps & Páginas Propias', label: 'Personalizados', icon: '✨' },
+  { id: 'todos', name: 'Todos los Reinos & Rutas', label: 'Todos', icon: '🌐' },
+  { id: 'creatika', name: 'Creatika (Artes & Humanidades)', label: 'Creatika', icon: '✨' },
+  { id: '100tek', name: '100tek (Ciencia, Lógica & Tecnología)', label: '100tek', icon: '⚡' },
+  { id: 'lab', name: 'LAB (Prácticas, Talleres & Guías)', label: 'LAB', icon: '🧪' },
+  { id: 'mercado', name: 'Mercado (Tienda en Línea & Boletos)', label: 'Mercado', icon: '🛍️' },
+  { id: 'pozo_ideas', name: 'Pozo de Ideas (Proyectos & Sugerencias)', label: 'Pozo de Ideas', icon: '💡' },
+  { id: 'sutz', name: 'Sutz (Mundo Virtual, Árbol & Relatos)', label: 'Sutz', icon: '☁️' },
+  { id: 'personalizados', name: 'Nuevas Apps & Páginas Propias', label: 'Personalizados', icon: '⭐' },
 ];
 
 export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
-  // 100tek (Rutas actualizadas)
-  { id: '100tek_solar', label: '🪐 Sistema Solar', target: '/100tek/sistema-solar', type: 'navigate', pillarId: '100tek' },
-  { id: '100tek_secuencias', label: '🔢 Secuencias Numéricas', target: '/100tek/secuencias-numericas', type: 'navigate', pillarId: '100tek' },
-  { id: '100tek_color', label: '🎨 Teoría del Color', target: '/100tek/teoria-del-color', type: 'navigate', pillarId: '100tek' },
-
-  // Creatika
-  { id: 'creatika_cuentos', label: '📖 Máquina de Cuentos', target: '/creatika/maquina-de-cuentos', type: 'navigate', pillarId: 'creatika' },
+  // ✨ Creatika (Artes & Humanidades)
+  { id: 'creatika_cuentos', label: '🎰 Máquina de Cuentos', target: '/creatika/maquina-de-cuentos', type: 'navigate', pillarId: 'creatika' },
+  { id: 'creatika_color', label: '🎨 Teoría del Color', target: '/creatika/teoria-del-color', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_personaje', label: '🎭 Construyendo Personaje', target: '/creatika/construyendo-el-personaje', type: 'navigate', pillarId: 'creatika' },
+  { id: 'creatika_libros', label: '📖 Libros & Cuentos', target: '/libros', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_hub', label: '🎪 Hub Creatika', target: '/creatika', type: 'navigate', pillarId: 'creatika' },
-  { id: 'creatika_docente', label: '🔑 Código Docente', target: '/codigo-docente', type: 'navigate', pillarId: 'creatika' },
-  { id: 'creatika_estudiante', label: '🎒 Código Estudiante', target: '/codigo-estudiante', type: 'navigate', pillarId: 'creatika' },
+  { id: 'creatika_docente', label: '📜 Código Docente', target: '/codigo-docente', type: 'navigate', pillarId: 'creatika' },
+  { id: 'creatika_estudiante', label: '🎓 Código Estudiante', target: '/codigo-estudiante', type: 'navigate', pillarId: 'creatika' },
 
-  // Lúdica & Bingo
-  { id: 'juegos_bingo_hub', label: '🎟️ Bingotenango Lobby', target: '/juegos/bingo', type: 'navigate', pillarId: 'juegos' },
-  { id: 'juegos_bingo_boletos', label: '🎫 Venta Boletos Bingo', target: '/juegos/bingo/boletos', type: 'navigate', pillarId: 'juegos' },
+  // ⚡ 100tek (Ciencia, Lógica & Tecnología)
+  { id: '100tek_solar', label: '🪐 Sistema Solar 3D', target: '/100tek/sistema-solar', type: 'navigate', pillarId: '100tek' },
+  { id: '100tek_secuencias', label: '🔢 Secuencias Numéricas', target: '/100tek/secuencias-numericas', type: 'navigate', pillarId: '100tek' },
 
-  // Laboratorios Pedagógicos
-  { id: 'labs_home', label: '🔬 Todos los Laboratorios', target: '/laboratorios', type: 'navigate', pillarId: 'laboratorios' },
-  { id: 'labs_robotica', label: '🤖 Robótica Educativa', target: '/robotica-educativa', type: 'navigate', pillarId: 'laboratorios' },
-  { id: 'labs_animacion', label: '🎬 Animación Educativa', target: '/animacion-educativa', type: 'navigate', pillarId: 'laboratorios' },
-  { id: 'labs_cientifico', label: '💡 Pensamiento Científico', target: '/pensamiento-cientifico', type: 'navigate', pillarId: 'laboratorios' },
+  // 🧪 LAB (Prácticas, Talleres y Guías de Tareas)
+  { id: 'lab_home', label: '🧪 LAB: Todos los Módulos', target: '/laboratorios', type: 'navigate', pillarId: 'lab' },
+  { id: 'lab_animacion', label: '🎬 LAB Animación Educativa', target: '/animacion-educativa', type: 'navigate', pillarId: 'lab' },
+  { id: 'lab_robotica', label: '🤖 LAB Robótica Educativa', target: '/robotica-educativa', type: 'navigate', pillarId: 'lab' },
+  { id: 'lab_cientifico', label: '💡 LAB Pensamiento Científico', target: '/pensamiento-cientifico', type: 'navigate', pillarId: 'lab' },
 
-  // Editorial & Sabiduría
-  { id: 'editorial_libros', label: '📚 Catálogo de Libros', target: '/libros', type: 'navigate', pillarId: 'editorial' },
-  { id: 'editorial_neurociencia', label: '🧠 Neurociencia Educativa', target: '/neurociencia', type: 'navigate', pillarId: 'editorial' },
-  { id: 'editorial_juracan', label: '🌀 Universo de Juracán', target: '/universo-de-juracan', type: 'navigate', pillarId: 'editorial' },
+  // 🛍️ Mercado (Tienda en Línea & Comercial)
+  { id: 'mercado_tienda', label: '🛍️ Tienda de Libros & Cuentos', target: '/tienda', type: 'navigate', pillarId: 'mercado' },
+  { id: 'mercado_bingo_boletos', label: '🎟️ Boletos Bingotenango', target: '/juegos/bingo/boletos', type: 'navigate', pillarId: 'mercado' },
+  { id: 'mercado_cotizador', label: '💼 Cotizador Web', target: '/gerencia', type: 'navigate', pillarId: 'mercado' },
+
+  // 💡 Pozo de Ideas (Banco de Proyectos & Sugerencias)
+  { id: 'pozo_ideas_panel', label: '💡 Pozo de Ideas', target: '/gerencia', type: 'navigate', pillarId: 'pozo_ideas' },
+
+  // ☁️ Sutz (Mundo Virtual, Popol Vuh & Árbol Tecnológico)
+  { id: 'sutz_mapa', label: '🗺️ Mundo Virtual Sutz', target: '/sutz', type: 'navigate', pillarId: 'sutz' },
+  { id: 'sutz_juracan', label: '🌀 Universo de Juracán', target: '/universo-de-juracan', type: 'navigate', pillarId: 'sutz' },
+  { id: 'sutz_neurociencia', label: '🧠 Neurociencia Educativa', target: '/neurociencia', type: 'navigate', pillarId: 'sutz' },
+  { id: 'sutz_bingo_lobby', label: '🎲 Bingotenango Lobby', target: '/juegos/bingo', type: 'navigate', pillarId: 'sutz' },
 
   // Popol Vuh (Modales dentro de Sutz)
-  { id: 'pv_camazotz', label: '🦇 Popol Vuh: Camazotz', target: 'camazotz', type: 'modal', pillarId: 'popolvuh' },
-  { id: 'pv_ixkik', label: '🌸 Popol Vuh: Ixkik', target: 'ixkik', type: 'modal', pillarId: 'popolvuh' },
-  { id: 'pv_ixmukanne', label: '🌾 Popol Vuh: Ixmukané', target: 'ixmukanne', type: 'modal', pillarId: 'popolvuh' },
-  { id: 'pv_juracan', label: '⛈️ Popol Vuh: Juracán', target: 'juracan', type: 'modal', pillarId: 'popolvuh' },
-  { id: 'pv_ququmatz', label: '🐍 Popol Vuh: Q\'uq\'umatz', target: 'ququmatz', type: 'modal', pillarId: 'popolvuh' }
+  { id: 'pv_camazotz', label: '🦇 Popol Vuh: Camazotz', target: 'camazotz', type: 'modal', pillarId: 'sutz' },
+  { id: 'pv_ixkik', label: '🌸 Popol Vuh: Ixkik', target: 'ixkik', type: 'modal', pillarId: 'sutz' },
+  { id: 'pv_ixmukanne', label: '🌾 Popol Vuh: Ixmukané', target: 'ixmukanne', type: 'modal', pillarId: 'sutz' },
+  { id: 'pv_juracan', label: '⛈️ Popol Vuh: Juracán', target: 'juracan', type: 'modal', pillarId: 'sutz' },
+  { id: 'pv_ququmatz', label: '🐍 Popol Vuh: Q\'uq\'umatz', target: 'ququmatz', type: 'modal', pillarId: 'sutz' }
 ];
 
 const CUSTOM_ROUTES_DOC = 'sutz_custom_routes';
