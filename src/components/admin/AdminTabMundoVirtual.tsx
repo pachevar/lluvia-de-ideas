@@ -674,8 +674,62 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                   
                   {/* Bloque Superior: Galería de Fondos Prediseñados Popol Vuh y Naturaleza */}
                   <div className="inspector-card-panel">
-                    <span className="inspector-panel-title">🖼️ Fondos Prediseñados (Popol Vuh & Naturaleza)</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                      <span className="inspector-panel-title" style={{ margin: 0 }}>🖼️ Fondos Prediseñados (Popol Vuh & Naturaleza)</span>
+                      {Boolean(editingHex.layerBg.value && editingHex.layerBg.type !== 'none') && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const updated = { ...editingHex, layerBg: { type: 'none' as const, value: '' } };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated);
+                          }}
+                          style={{
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            color: '#fca5a5',
+                            padding: '3px 10px',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '4px'
+                          }}
+                          title="Quitar fondo actual"
+                        >
+                          <span>🗑️</span> Retirar Fondo
+                        </button>
+                      )}
+                    </div>
+
                     <div className="predesigned-gallery-grid">
+                      {/* Tarjeta de opción para retirar imagen / dejar sin fondo */}
+                      <button
+                        type="button"
+                        className={`predesigned-card-btn ${editingHex.layerBg.type === 'none' || !editingHex.layerBg.value ? 'active' : ''}`}
+                        onClick={() => {
+                          const updated = { ...editingHex, layerBg: { type: 'none' as const, value: '' } };
+                          setEditingHex(updated);
+                          updateHexInGlobalConfig(updated);
+                        }}
+                        style={{
+                          border: (editingHex.layerBg.type === 'none' || !editingHex.layerBg.value) 
+                            ? '1px solid #ef4444' 
+                            : '1px dashed rgba(239, 68, 68, 0.4)',
+                          background: (editingHex.layerBg.type === 'none' || !editingHex.layerBg.value) 
+                            ? 'rgba(239, 68, 68, 0.25)' 
+                            : 'rgba(239, 68, 68, 0.06)'
+                        }}
+                        title="Retirar cualquier imagen o fondo de este hexágono"
+                      >
+                        {(editingHex.layerBg.type === 'none' || !editingHex.layerBg.value) && (
+                          <span className="predesigned-active-badge" style={{ background: '#ef4444', color: '#fff' }}>✓ SIN FONDO</span>
+                        )}
+                        <span style={{ color: '#fca5a5', fontWeight: 700 }}>🚫 Sin Imagen de Fondo</span>
+                      </button>
+
                       {PREDESIGNED_BACKGROUNDS.map(bg => {
                         const isActive = editingHex.layerBg.value === bg.url;
                         return (
@@ -705,9 +759,13 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                       <div className="inspector-form-group">
                         <label className="inspector-label">Seleccionar Bioma:</label>
                         <select 
-                          value={BIOMES.find(b => b.value === editingHex.layerBg.value)?.id || 'custom'} 
+                          value={editingHex.layerBg.type === 'none' || !editingHex.layerBg.value ? 'none' : (BIOMES.find(b => b.value === editingHex.layerBg.value)?.id || 'custom')} 
                           onChange={e => {
-                            if (e.target.value !== 'custom') {
+                            if (e.target.value === 'none') {
+                              const updated = { ...editingHex, layerBg: { type: 'none' as const, value: '' } };
+                              setEditingHex(updated);
+                              updateHexInGlobalConfig(updated);
+                            } else if (e.target.value !== 'custom') {
                               const biome = BIOMES.find(b => b.id === e.target.value);
                               if (biome) {
                                 const updated = { ...editingHex, layerBg: { type: 'color' as const, value: biome.value } };
@@ -718,6 +776,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                           }}
                           className="inspector-select"
                         >
+                          <option value="none">🚫 Sin Fondo (Transparente / Limpio)</option>
                           <option value="custom">-- Seleccionar Bioma o Personalizado --</option>
                           {BIOMES.map(b => (
                             <option key={b.id} value={b.id}>{b.name}</option>
@@ -745,7 +804,15 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                           type="text" 
                           value={editingHex.layerBg.value} 
                           onChange={e => {
-                            const updated = { ...editingHex, layerBg: { ...editingHex.layerBg, value: e.target.value } };
+                            const val = e.target.value;
+                            const isNone = !val.trim();
+                            const updated = {
+                              ...editingHex,
+                              layerBg: {
+                                type: isNone ? ('none' as const) : (editingHex.layerBg.type === 'none' ? ('image' as const) : editingHex.layerBg.type),
+                                value: val
+                              }
+                            };
                             setEditingHex(updated);
                             updateHexInGlobalConfig(updated);
                           }}
@@ -764,6 +831,39 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                           disabled={uploadingLayer === 'layerBg'} 
                         />
                       </label>
+
+                      {/* Botón explícito para retirar la imagen de fondo en uso */}
+                      {Boolean(editingHex.layerBg.value && editingHex.layerBg.type !== 'none') && (
+                        <button
+                          type="button"
+                          className="btn btn-sm"
+                          onClick={() => {
+                            const updated = { ...editingHex, layerBg: { type: 'none' as const, value: '' } };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated);
+                          }}
+                          style={{
+                            marginTop: '10px',
+                            width: '100%',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '8px',
+                            padding: '9px 14px',
+                            borderRadius: '10px',
+                            background: 'rgba(239, 68, 68, 0.15)',
+                            border: '1px solid rgba(239, 68, 68, 0.4)',
+                            color: '#fca5a5',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            transition: 'all 0.2s ease'
+                          }}
+                          title="Eliminar la imagen o fondo actual de este hexágono"
+                        >
+                          <span>🗑️</span> Retirar Imagen de Fondo
+                        </button>
+                      )}
                     </div>
                   </div>
 
