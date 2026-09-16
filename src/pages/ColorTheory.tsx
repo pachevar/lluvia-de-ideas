@@ -9,6 +9,8 @@ import {
 } from '../utils/colorUtils';
 import type { GameColorTarget } from '../utils/colorUtils';
 import html2canvas from 'html2canvas';
+import { ColorRabbit } from '../components/color/ColorRabbit';
+import { soundEffects } from '../utils/soundEffects';
 import './ColorTheory.css';
 
 // Interfaz para conejos guardianes
@@ -146,110 +148,10 @@ const GUARDIANS: RabbitGuardian[] = [
   }
 ];
 
-// Componente SVG del Conejo - Ilustración Neón de Alta Precisión
-function ColorRabbit({ color, size = 100, animClass = '' }: { color: string; size?: number; animClass?: string }) {
-  const isWhite = color.toLowerCase() === '#ffffff';
-  const gradId = `rabbit-grad-${color.replace('#', '')}-${size}-${Math.random().toString(36).substr(2, 4)}`;
-  const isDark = color.toLowerCase() === '#1a082e';
-  const stopColorEnd = isWhite 
-    ? '#E2E8F0' 
-    : isDark 
-      ? '#090312' 
-      : `${color}BB`;
-
-  return (
-    <svg 
-      viewBox="0 0 100 100" 
-      width={size} 
-      height={size} 
-      className={`rabbit-svg ${animClass}`}
-      style={{ filter: `drop-shadow(0 0 10px ${color}66)` }}
-    >
-      <defs>
-        <linearGradient id={gradId} x1="0%" y1="0%" x2="100%" y2="100%">
-          <stop offset="0%" stopColor={color} />
-          <stop offset="100%" stopColor={stopColorEnd} />
-        </linearGradient>
-        <filter id="glow-light" x="-20%" y="-20%" width="140%" height="140%">
-          <feGaussianBlur stdDeviation="1.5" result="blur" />
-          <feComposite in="SourceGraphic" in2="blur" operator="over" />
-        </filter>
-      </defs>
-
-      {/* Sombra de apoyo */}
-      <ellipse cx="50" cy="88" rx="26" ry="5.5" fill="#000" opacity="0.25" />
-      
-      {/* Orejas largas */}
-      <path 
-        d="M36 38 C31 8 41 6 43 38 Z" 
-        fill="#FFFFFF" 
-        stroke="#1A082E" 
-        strokeWidth="2" 
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      <path 
-        d="M64 38 C69 8 59 6 57 38 Z" 
-        fill="#FFFFFF" 
-        stroke="#1A082E" 
-        strokeWidth="2" 
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      
-      {/* Interior Orejas */}
-      <path d="M37 36 C33 14 40 12 41 36 Z" fill={`url(#${gradId})`} opacity="0.9" />
-      <path d="M63 36 C67 14 60 12 59 36 Z" fill={`url(#${gradId})`} opacity="0.9" />
-      
-      {/* Cuerpo principal */}
-      <path 
-        d="M26 78 C26 58 74 58 74 78 C74 88 26 88 26 78 Z" 
-        fill="#FFFFFF" 
-        stroke="#1A082E" 
-        strokeWidth="2" 
-        strokeLinecap="round"
-        strokeLinejoin="round"
-      />
-      
-      {/* Gema brillante de color en el pecho */}
-      <circle cx="50" cy="74" r="10" fill={`url(#${gradId})`} stroke="#1A082E" strokeWidth="1.5" />
-      <circle cx="47.5" cy="71.5" r="2.5" fill="#FFFFFF" opacity="0.85" />
-
-      {/* Cabeza */}
-      <ellipse 
-        cx="50" 
-        cy="51" 
-        rx="18" 
-        ry="16.5" 
-        fill="#FFFFFF" 
-        stroke="#1A082E" 
-        strokeWidth="2" 
-      />
-      
-      {/* Ojos expresivos */}
-      <circle cx="43" cy="49" r="2.2" fill="#1A082E" />
-      <circle cx="57" cy="49" r="2.2" fill="#1A082E" />
-      
-      {/* Mejillas rosadas */}
-      <circle cx="37" cy="53.5" r="2.8" fill="#FFB6C1" opacity="0.6" />
-      <circle cx="63" cy="53.5" r="2.8" fill="#FFB6C1" opacity="0.6" />
-
-      {/* Hocico */}
-      <path d="M48.5 52.5 Q50 54 51.5 52.5" stroke="#1A082E" strokeWidth="1.2" strokeLinecap="round" fill="none" />
-      
-      {/* Bigotes */}
-      <line x1="25" y1="52" x2="20" y2="51.5" stroke="#1A082E" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="25" y1="54.5" x2="19.5" y2="55.5" stroke="#1A082E" strokeWidth="1.2" strokeLinecap="round" />
-      
-      <line x1="75" y1="52" x2="80" y2="51.5" stroke="#1A082E" strokeWidth="1.2" strokeLinecap="round" />
-      <line x1="75" y1="54.5" x2="80.5" y2="55.5" stroke="#1A082E" strokeWidth="1.2" strokeLinecap="round" />
-    </svg>
-  );
-}
-
 export default function ColorTheory() {
   // --- Estados de los Guardianes ---
   const [activeFilter, setActiveFilter] = useState<'todos' | 'primario' | 'secundario' | 'terciario' | 'neutro'>('todos');
+  const [tempFilter, setTempFilter] = useState<'todos' | 'cálido' | 'frío' | 'neutro'>('todos');
   const [selectedGuardian, setSelectedGuardian] = useState<RabbitGuardian>(GUARDIANS[0]);
   const [activeTabSection, setActiveTabSection] = useState<'guardianes' | 'mezcla' | 'tonos' | 'luz' | 'armonias'>('guardianes');
 
@@ -551,8 +453,9 @@ export default function ColorTheory() {
   };
 
   const filteredGuardians = GUARDIANS.filter(g => {
-    if (activeFilter === 'todos') return true;
-    return g.category === activeFilter;
+    const matchesCat = activeFilter === 'todos' || g.category === activeFilter;
+    const matchesTemp = tempFilter === 'todos' || g.temperature === tempFilter;
+    return matchesCat && matchesTemp;
   });
 
   return (
@@ -629,22 +532,54 @@ export default function ColorTheory() {
         {/* --- SECCIÓN 1: LOS GUARDIANES DEL COLOR --- */}
         <section className="colortheory-section-card" id="guardianes">
           <div className="section-header-box">
+            <div className="section-header-badge">Reino Sagrado de los Tonos</div>
             <h2 className="section-title">🐰 1. Los Guardianes del Color</h2>
             <p className="section-desc">
-              Cada conejo en la madriguera resguarda un tono sagrado. Selecciona un conejo para abrir su ficha y agrega dosis a la caldera de mezcla.
+              Cada conejo en la madriguera resguarda un tono sagrado y viste ornamentos en su tono complementario exacto. Selecciona un conejo para abrir su santuario y descubrir sus secretos alquímicos.
             </p>
           </div>
 
-          <div className="tabs-container">
-            {(['todos', 'primario', 'secundario', 'terciario', 'neutro'] as const).map(tab => (
-              <button
-                key={tab}
-                className={`tab-btn ${activeFilter === tab ? 'active' : ''}`}
-                onClick={() => setActiveFilter(tab)}
-              >
-                {tab.toUpperCase()}
-              </button>
-            ))}
+          {/* Filtros duales: Categoría y Temperatura */}
+          <div className="guardians-filters-wrapper">
+            <div className="filter-row">
+              <span className="filter-group-label">Familia:</span>
+              <div className="tabs-container">
+                {(['todos', 'primario', 'secundario', 'terciario', 'neutro'] as const).map(tab => (
+                  <button
+                    key={tab}
+                    className={`tab-btn ${activeFilter === tab ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setActiveFilter(tab);
+                    }}
+                  >
+                    {tab.toUpperCase()}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="filter-row">
+              <span className="filter-group-label">Sensación:</span>
+              <div className="tabs-container temp-container">
+                {(['todos', 'cálido', 'frío', 'neutro'] as const).map(temp => (
+                  <button
+                    key={temp}
+                    className={`tab-btn temp-btn ${tempFilter === temp ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setTempFilter(temp);
+                    }}
+                  >
+                    {temp === 'todos' ? 'TODAS' : temp === 'cálido' ? '🔥 CÁLIDOS' : temp === 'frío' ? '❄️ FRÍOS' : '☀️ NEUTROS'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <div className="filter-counter-tag">
+              Mostrando {filteredGuardians.length} de {GUARDIANS.length} Guardianes
+            </div>
           </div>
 
           <div className="classification-layout">
@@ -656,25 +591,43 @@ export default function ColorTheory() {
                   <div
                     key={guardian.id}
                     className={`guardian-card ${isSelected ? 'active' : ''} ${mixItem ? 'in-mix' : ''}`}
-                    onClick={() => setSelectedGuardian(guardian)}
-                    style={{ borderColor: isSelected ? guardian.hex : 'rgba(255,255,255,0.15)' }}
+                    onClick={() => {
+                      setSelectedGuardian(guardian);
+                      soundEffects.playClick();
+                    }}
+                    style={{
+                      borderColor: isSelected ? guardian.hex : 'rgba(255,255,255,0.15)',
+                      boxShadow: isSelected ? `0 0 22px ${guardian.hex}66` : undefined
+                    }}
                   >
                     <div className="guardian-rabbit-holder">
                       <ColorRabbit 
-                        color={guardian.hex} 
-                        size={80} 
+                        color={guardian.hex}
+                        complementaryColor={guardian.complementaryHex}
+                        size={86} 
                         animClass={isSelected ? 'jump-loop' : 'wiggle-hover'} 
                       />
                     </div>
                     <span className="guardian-card-name">{guardian.name}</span>
-                    <span className="guardian-card-badge" style={{ backgroundColor: guardian.hex, color: guardian.hex === '#FFFFFF' || guardian.hex === '#FBE903' ? '#000' : '#fff' }}>
-                      {guardian.category}
-                    </span>
+                    
+                    <div className="guardian-badges-stack">
+                      <span className="guardian-card-badge" style={{ backgroundColor: guardian.hex, color: guardian.hex === '#FFFFFF' || guardian.hex === '#FBE903' ? '#000' : '#fff' }}>
+                        {guardian.category}
+                      </span>
+                      <span 
+                        className="guardian-comp-badge" 
+                        title={`Adorno complementario: ${guardian.complementaryName}`}
+                      >
+                        <span className="comp-dot" style={{ backgroundColor: guardian.complementaryHex }} />
+                        <span className="comp-label">Adorno</span>
+                      </span>
+                    </div>
                     
                     <button
                       className="add-to-mix-btn"
                       onClick={(e) => {
                         e.stopPropagation();
+                        soundEffects.playBingoBall();
                         handleAddWeightForMix(guardian);
                       }}
                       disabled={weightedMix.length >= 4 && !mixItem}
@@ -686,17 +639,49 @@ export default function ColorTheory() {
               })}
             </div>
 
-            {/* Ficha Lateral Neón */}
-            <div className="color-info-panel animate-zoom-in" style={{ borderColor: selectedGuardian.hex, boxShadow: `0 0 25px ${selectedGuardian.hex}44` }}>
-              <div className="info-color-header">
-                <div className="info-rabbit-frame">
-                  <ColorRabbit color={selectedGuardian.hex} size={95} animClass="jump" />
+            {/* Ficha Lateral Neón: Santuario y Espejo Complementario */}
+            <div 
+              className="color-info-panel animate-zoom-in" 
+              style={{ 
+                borderColor: selectedGuardian.hex, 
+                boxShadow: `0 0 35px ${selectedGuardian.hex}44` 
+              }}
+            >
+              {/* Pedestal Mágico con Halo de Luz */}
+              <div 
+                className="shrine-pedestal-container" 
+                style={{ background: `radial-gradient(circle at 50% 55%, ${selectedGuardian.hex}2e 0%, transparent 70%)` }}
+              >
+                <div 
+                  className="shrine-halo" 
+                  style={{ borderColor: `${selectedGuardian.hex}66`, boxShadow: `0 0 30px ${selectedGuardian.hex}44` }}
+                >
+                  <ColorRabbit 
+                    color={selectedGuardian.hex} 
+                    complementaryColor={selectedGuardian.complementaryHex} 
+                    size={135} 
+                    animClass="jump-loop" 
+                  />
                 </div>
-                <div className="info-text-block">
-                  <h3 className="info-color-title">{selectedGuardian.name}</h3>
-                  <span className="hex-tag">
-                    Hexadecimal: <span className="monospace">{selectedGuardian.hex}</span>
-                  </span>
+                <div 
+                  className="shrine-base-plate" 
+                  style={{ background: `linear-gradient(90deg, transparent, ${selectedGuardian.hex}aa, transparent)` }} 
+                />
+              </div>
+
+              <div className="info-title-block">
+                <h3 className="info-color-title">{selectedGuardian.name}</h3>
+                <div 
+                  className="hex-copy-tag" 
+                  onClick={() => {
+                    navigator.clipboard.writeText(selectedGuardian.hex);
+                    soundEffects.playClick();
+                    alert(`¡Código ${selectedGuardian.hex} copiado!`);
+                  }}
+                  title="Haz clic para copiar el código HEX"
+                >
+                  <span>Hex: <strong>{selectedGuardian.hex}</strong></span>
+                  <span className="copy-icon">📋</span>
                 </div>
               </div>
 
@@ -704,32 +689,83 @@ export default function ColorTheory() {
                 <span className={`info-badge ${selectedGuardian.category}`}>
                   ★ {selectedGuardian.category}
                 </span>
-                <span className={`info-badge ${selectedGuardian.temperature === 'cálido' ? 'warm' : 'cold'}`}>
+                <span className={`info-badge ${selectedGuardian.temperature === 'cálido' ? 'warm' : selectedGuardian.temperature === 'frío' ? 'cold' : 'neutral'}`}>
                   {selectedGuardian.temperature === 'cálido' ? '🔥 cálido' : selectedGuardian.temperature === 'frío' ? '❄️ frío' : '☀️ neutro'}
                 </span>
               </div>
 
               <p className="info-text-desc">{selectedGuardian.desc}</p>
 
-              <div className="complementary-showcase">
-                <span className="complementary-label">🎨 Su Complementario Opuesto:</span>
-                <div className="complementary-colors-box">
-                  <div className="comp-rabbit-preview">
-                    <ColorRabbit color={selectedGuardian.complementaryHex} size={42} />
-                  </div>
-                  <span className="comp-name-text">
-                    {selectedGuardian.complementaryName}
-                  </span>
+              {/* Espejo de Armonía Complementaria */}
+              <div className="complementary-mirror-panel">
+                <div className="mirror-header">
+                  <span className="mirror-title">✨ Espejo de Armonía Complementaria</span>
+                  <span className="mirror-badge">Opuestos Sagrados</span>
                 </div>
+
+                <div className="mirror-rabbits-row">
+                  {/* Guardián Principal */}
+                  <div className="mirror-actor-card">
+                    <div className="mirror-rabbit-box" style={{ background: `${selectedGuardian.hex}18`, borderColor: `${selectedGuardian.hex}44` }}>
+                      <ColorRabbit 
+                        color={selectedGuardian.hex} 
+                        complementaryColor={selectedGuardian.complementaryHex} 
+                        size={72} 
+                        animClass="float-loop" 
+                      />
+                    </div>
+                    <span className="mirror-actor-name">{selectedGuardian.name}</span>
+                    <span className="mirror-role-caption">Pelaje: <b style={{ color: selectedGuardian.hex }}>{selectedGuardian.hex}</b></span>
+                  </div>
+
+                  {/* Conector de Intercambio */}
+                  <div className="mirror-connector-icon">
+                    <div className="connector-arrow">⇌</div>
+                    <span className="connector-label">Se adornan mutuamente</span>
+                  </div>
+
+                  {/* Guardián Complementario */}
+                  <div className="mirror-actor-card">
+                    <div className="mirror-rabbit-box" style={{ background: `${selectedGuardian.complementaryHex}18`, borderColor: `${selectedGuardian.complementaryHex}44` }}>
+                      <ColorRabbit 
+                        color={selectedGuardian.complementaryHex} 
+                        complementaryColor={selectedGuardian.hex} 
+                        size={72} 
+                        animClass="float-loop" 
+                      />
+                    </div>
+                    <span className="mirror-actor-name">{selectedGuardian.complementaryName}</span>
+                    <span className="mirror-role-caption">Adornos: <b style={{ color: selectedGuardian.complementaryHex }}>{selectedGuardian.complementaryHex}</b></span>
+                  </div>
+                </div>
+
+                <p className="mirror-insight-tip">
+                  💡 <strong>¡Armonía en sus ornamentos!</strong> El conejo <strong>{selectedGuardian.name}</strong> luce sus cintas y tiara en tono <strong>{selectedGuardian.complementaryName}</strong>, y viceversa. En la rueda del color, los polos opuestos potencian su brillo mutuo.
+                </p>
               </div>
 
-              <button 
-                className="btn-send-to-lab" 
-                style={{ background: `linear-gradient(135deg, ${selectedGuardian.hex} 0%, #3b82f6 100%)` }}
-                onClick={() => handleSendToLab(selectedGuardian.hex)}
-              >
-                🎨 Probar Tonalidades y Sombras ➔
-              </button>
+              <div className="panel-actions-row">
+                <button 
+                  className="btn-send-to-lab" 
+                  style={{ background: `linear-gradient(135deg, ${selectedGuardian.hex} 0%, #3b82f6 100%)` }}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    handleSendToLab(selectedGuardian.hex);
+                  }}
+                >
+                  🎨 Tonalidades y Sombras ➔
+                </button>
+                <button 
+                  className="btn-panel-add-mix"
+                  onClick={() => {
+                    soundEffects.playBingoBall();
+                    handleAddWeightForMix(selectedGuardian);
+                  }}
+                  disabled={weightedMix.length >= 4 && !weightedMix.find(m => m.guardian.id === selectedGuardian.id)}
+                >
+                  🧪 + Caldera
+                </button>
+              </div>
             </div>
           </div>
         </section>

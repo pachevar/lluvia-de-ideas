@@ -174,38 +174,80 @@
 .section-header-box {
   margin-bottom: 25px;
   border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-  padding-bottom: 16px;
+  padding-bottom: 18px;
+}
+
+.section-header-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #c084fc;
+  background: rgba(192, 132, 252, 0.12);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  border-radius: 9999px;
+  margin-bottom: 8px;
 }
 
 .section-title {
   font-family: var(--font-title);
-  font-size: 1.75rem;
+  font-size: 1.85rem;
   font-weight: 800;
   color: #FFFFFF;
   margin: 0 0 6px 0;
+  letter-spacing: -0.01em;
 }
 
 .section-desc {
   color: #94A3B8;
   font-size: 0.95rem;
   margin: 0;
-  line-height: 1.5;
+  line-height: 1.55;
 }
 
-/* Filtros de Pestañas */
-.tabs-container {
+/* Envoltorio de Filtros duales */
+.guardians-filters-wrapper {
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 18px;
+  padding: 16px 20px;
+  margin-bottom: 28px;
   display: flex;
-  justify-content: center;
-  gap: 8px;
-  margin-bottom: 30px;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.filter-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
   flex-wrap: wrap;
 }
 
+.filter-group-label {
+  font-family: var(--font-title);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #a855f7;
+  min-width: 82px;
+}
+
+.tabs-container {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 0;
+}
+
 .tab-btn {
-  padding: 8px 18px;
+  padding: 7px 15px;
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   color: #94A3B8;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -217,91 +259,147 @@
 .tab-btn:hover {
   color: #fff;
   background: rgba(255, 255, 255, 0.12);
+  transform: translateY(-1px);
 }
 
 .tab-btn.active {
-  color: #000;
+  color: #0b0414;
   background: #FBE903;
   border-color: #FBE903;
-  box-shadow: 0 0 15px rgba(251, 233, 3, 0.4);
+  font-weight: 800;
+  box-shadow: 0 0 14px rgba(251, 233, 3, 0.45);
+}
+
+.temp-btn.active {
+  background: linear-gradient(135deg, #a855f7 0%, #38bdf8 100%);
+  color: #fff;
+  border-color: #c084fc;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.4);
+}
+
+.filter-counter-tag {
+  font-size: 0.75rem;
+  color: #64748b;
+  font-weight: 600;
+  align-self: flex-end;
+  padding-top: 4px;
 }
 
 /* Clasificación y Cuadrícula */
 .classification-layout {
   display: flex;
-  gap: 25px;
-  align-items: flex-start;
+  gap: 28px;
+  align-items: stretch;
   flex-wrap: wrap;
 }
 
 .guardians-grid {
   flex: 2;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: 14px;
+  grid-template-columns: repeat(auto-fill, minmax(136px, 1fr));
+  gap: 16px;
   min-width: 320px;
 }
 
 .guardian-card {
   background: rgba(255, 255, 255, 0.04);
   border: 1.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 18px;
-  padding: 14px 10px;
+  border-radius: 20px;
+  padding: 16px 12px 14px;
   display: flex;
   flex-direction: column;
   align-items: center;
   cursor: pointer;
   position: relative;
-  transition: all 0.25s ease;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  backdrop-filter: blur(8px);
 }
 
 .guardian-card:hover {
   background: rgba(255, 255, 255, 0.08);
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.4);
+}
+
+.guardian-card:hover .wiggle-hover {
+  transform: rotate(-3deg) scale(1.05);
 }
 
 .guardian-card.active {
-  background: rgba(255, 255, 255, 0.12);
-  box-shadow: 0 0 20px currentColor;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.guardian-card.in-mix {
+  border-style: dashed;
 }
 
 .guardian-rabbit-holder {
-  width: 80px;
-  height: 80px;
+  width: 90px;
+  height: 90px;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
+  transition: transform 0.25s ease;
 }
 
 .guardian-card-name {
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 0.85rem;
+  font-size: 0.88rem;
   color: #FFFFFF;
   text-align: center;
-  margin-bottom: 4px;
+  margin-bottom: 8px;
+  line-height: 1.2;
+}
+
+.guardian-badges-stack {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 12px;
+  width: 100%;
 }
 
 .guardian-card-badge {
-  padding: 2px 8px;
+  padding: 2px 9px;
   font-size: 0.65rem;
-  font-weight: 700;
+  font-weight: 800;
   border-radius: 9999px;
   text-transform: uppercase;
-  margin-bottom: 10px;
+  letter-spacing: 0.04em;
+}
+
+.guardian-comp-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 2px 7px;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 9999px;
+  font-size: 0.62rem;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.guardian-comp-badge .comp-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  box-shadow: 0 0 5px currentColor;
 }
 
 .add-to-mix-btn {
   width: 100%;
-  padding: 6px 0;
+  padding: 7px 0;
   font-family: var(--font-title);
   font-weight: 700;
-  font-size: 0.72rem;
-  background: rgba(255, 255, 255, 0.1);
+  font-size: 0.74rem;
+  background: rgba(255, 255, 255, 0.08);
   color: #fff;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 9999px;
   cursor: pointer;
   transition: all 0.2s ease;
@@ -311,47 +409,105 @@
   background: #22C55E;
   color: white;
   border-color: #22C55E;
-  box-shadow: 0 0 10px rgba(34, 197, 94, 0.4);
+  box-shadow: 0 0 12px rgba(34, 197, 94, 0.45);
 }
 
-/* Ficha Info Lateral */
+.add-to-mix-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* Ficha Lateral Neón: Santuario y Espejo Complementario */
 .color-info-panel {
-  flex: 1.2;
-  min-width: 300px;
-  background: rgba(13, 6, 28, 0.85);
+  flex: 1.25;
+  min-width: 320px;
+  background: rgba(13, 6, 28, 0.88);
   border: 1.5px solid var(--cyber-cyan);
-  border-radius: 20px;
+  border-radius: 24px;
   padding: 24px;
-  backdrop-filter: blur(12px);
+  backdrop-filter: blur(14px);
+  display: flex;
+  flex-direction: column;
 }
 
-.info-color-header {
+/* Pedestal del Santuario con Halo Radiante */
+.shrine-pedestal-container {
+  width: 100%;
+  border-radius: 18px;
+  padding: 24px 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  overflow: hidden;
+  margin-bottom: 18px;
+}
+
+.shrine-halo {
   display: flex;
   align-items: center;
-  gap: 15px;
-  margin-bottom: 15px;
+  justify-content: center;
+  border-radius: 50%;
+  padding: 10px;
+  transition: all 0.4s ease;
+  z-index: 2;
+}
+
+.shrine-base-plate {
+  width: 75%;
+  height: 4px;
+  border-radius: 2px;
+  margin-top: 10px;
+  filter: blur(0.5px);
+  z-index: 1;
+}
+
+.info-title-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 
 .info-color-title {
   font-family: var(--font-title);
-  font-size: 1.35rem;
+  font-size: 1.45rem;
+  font-weight: 800;
   color: #fff;
-  margin: 0 0 4px 0;
+  margin: 0;
 }
 
-.hex-tag {
-  font-size: 0.75rem;
-  color: #94a3b8;
+.hex-copy-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.hex-copy-tag:hover {
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff;
+  border-color: rgba(255, 255, 255, 0.3);
 }
 
 .info-badge-row {
   display: flex;
   gap: 8px;
-  margin-bottom: 15px;
+  margin-bottom: 14px;
 }
 
 .info-badge {
-  padding: 4px 10px;
+  padding: 4px 11px;
   border-radius: 8px;
   font-size: 0.72rem;
   font-weight: 700;
@@ -360,49 +516,194 @@
   color: #fff;
 }
 
-.info-text-desc {
-  font-size: 0.88rem;
-  line-height: 1.5;
+.info-badge.warm {
+  background: rgba(249, 115, 22, 0.2);
+  color: #fb923c;
+  border: 1px solid rgba(249, 115, 22, 0.35);
+}
+
+.info-badge.cold {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.info-badge.neutral {
+  background: rgba(148, 163, 184, 0.2);
   color: #cbd5e1;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+}
+
+.info-text-desc {
+  font-size: 0.9rem;
+  line-height: 1.55;
+  color: #cbd5e1;
+  margin-bottom: 18px;
+}
+
+/* Espejo de Armonía Complementaria */
+.complementary-mirror-panel {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 16px;
   margin-bottom: 20px;
 }
 
-.complementary-showcase {
-  background: rgba(255, 255, 255, 0.05);
-  padding: 12px;
-  border-radius: 12px;
-  margin-bottom: 15px;
+.mirror-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 14px;
+  gap: 8px;
 }
 
-.complementary-label {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  display: block;
-  margin-bottom: 8px;
-  font-weight: bold;
+.mirror-title {
+  font-family: var(--font-title);
+  font-size: 0.82rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
-.complementary-colors-box {
+.mirror-badge {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  background: rgba(168, 85, 247, 0.2);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #c084fc;
+  font-weight: 700;
+}
+
+.mirror-rabbits-row {
   display: flex;
   align-items: center;
+  justify-content: space-around;
   gap: 10px;
+  margin-bottom: 12px;
+}
+
+.mirror-actor-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  flex: 1;
+}
+
+.mirror-rabbit-box {
+  width: 78px;
+  height: 78px;
+  border-radius: 16px;
+  border: 1px solid;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 6px;
+}
+
+.mirror-actor-name {
+  font-family: var(--font-title);
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #fff;
+  margin-bottom: 2px;
+}
+
+.mirror-role-caption {
+  font-size: 0.7rem;
+  color: #94a3b8;
+}
+
+.mirror-connector-icon {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+}
+
+.connector-arrow {
+  font-size: 1.4rem;
+  color: #FBE903;
+  line-height: 1;
+  text-shadow: 0 0 10px rgba(251, 233, 3, 0.6);
+  animation: pulseConnector 2s ease-in-out infinite;
+}
+
+@keyframes pulseConnector {
+  0%, 100% { transform: scale(1); opacity: 0.85; }
+  50% { transform: scale(1.15); opacity: 1; }
+}
+
+.connector-label {
+  font-size: 0.62rem;
+  color: #94a3b8;
+  text-align: center;
+  max-width: 75px;
+  margin-top: 4px;
+  line-height: 1.2;
+}
+
+.mirror-insight-tip {
+  font-size: 0.76rem;
+  color: #cbd5e1;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin: 0;
+  line-height: 1.45;
+}
+
+.panel-actions-row {
+  display: flex;
+  gap: 10px;
+  margin-top: auto;
 }
 
 .btn-send-to-lab {
-  width: 100%;
-  padding: 12px;
-  border-radius: 12px;
+  flex: 1.6;
+  padding: 12px 14px;
+  border-radius: 14px;
   border: none;
   color: #fff;
-  font-weight: 700;
+  font-weight: 800;
   font-size: 0.85rem;
   cursor: pointer;
-  transition: transform 0.2s;
+  transition: transform 0.2s, box-shadow 0.2s;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
 }
 
 .btn-send-to-lab:hover {
-  transform: scale(1.02);
+  transform: translateY(-2px);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+}
+
+.btn-panel-add-mix {
+  flex: 1;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #fff;
+  font-weight: 800;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-panel-add-mix:hover:not(:disabled) {
+  background: #22C55E;
+  border-color: #22C55E;
+  box-shadow: 0 0 14px rgba(34, 197, 94, 0.4);
+  transform: translateY(-2px);
+}
+
+.btn-panel-add-mix:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 /* --- SECCIÓN 2: CALDERA Y MEZCLA SUSTRACTIVA --- */
@@ -1044,12 +1345,23 @@
 }
 
 .jump-loop {
-  animation: jumpLoop 2s ease-in-out infinite;
+  animation: jumpLoop 2.2s ease-in-out infinite;
 }
 
 @keyframes jumpLoop {
   0%, 100% { transform: translateY(0); }
   50% { transform: translateY(-10px); }
+}
+
+.wiggle-hover {
+  transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.rabbit-svg {
+  display: block;
+  user-select: none;
+  overflow: visible;
+  shape-rendering: geometricPrecision;
 }
 
 /* Responsivo */
@@ -1067,6 +1379,28 @@
   }
 
   .guardians-grid {
-    grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+  }
+
+  .complementary-mirror-panel {
+    padding: 12px;
+  }
+
+  .mirror-rabbits-row {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .mirror-connector-icon {
+    transform: rotate(90deg);
+    margin: 4px 0;
+  }
+
+  .connector-label {
+    display: none;
+  }
+
+  .panel-actions-row {
+    flex-direction: column;
   }
 }
