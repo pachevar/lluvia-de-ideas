@@ -158,9 +158,17 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({ textItem, onClose, o
             className="gg-reader-article-content" 
             style={{ fontSize: `${fontSize}px`, lineHeight: 1.75 }}
           >
-            {textItem.content.split('\n\n').map((paragraph, idx) => (
-              <p key={idx}>{paragraph}</p>
-            ))}
+            {textItem.content.split('\n\n').map((paragraph, idx) => {
+              const trimmed = paragraph.trim();
+              if (trimmed === '✦ ✦ ✦' || trimmed === '~ ❖ ~') {
+                return (
+                  <div key={idx} style={{ textAlign: 'center', margin: '2rem 0', color: '#f59e0b', fontSize: '1.25rem', letterSpacing: '0.4em' }}>
+                    {trimmed}
+                  </div>
+                );
+              }
+              return <p key={idx}>{paragraph}</p>;
+            })}
           </article>
 
           {/* Pie de Lectura y Reacciones */}

@@ -284,7 +284,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           onClick={() => setActiveSubTab('wattpad')}
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <span>📜</span> Wattpad Estudiantil ({texts.length})
+          <span>📜</span> Pergamino del Escriba ({texts.length})
         </button>
         <button 
           type="button" 
@@ -321,12 +321,12 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
       </div>
 
       {/* ===================================================================
-          SUBTAB 1: WATTPAD ESTUDIANTIL
+          SUBTAB 1: EL PERGAMINO DEL ESCRIBA
           =================================================================== */}
       {activeSubTab === 'wattpad' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h4 style={{ margin: 0, color: '#f8fafc' }}>Textos y Novelas Estudiantiles (Wattpad)</h4>
+            <h4 style={{ margin: 0, color: '#f8fafc' }}>El Pergamino del Escriba (Relatos, Cuentos & Poemas)</h4>
             <button 
               type="button" 
               className="btn btn-primary"
@@ -445,7 +445,56 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
               </div>
 
               <div style={{ marginBottom: '10px' }}>
-                <label className="inspector-label">Contenido completo de la obra (Capítulos o texto continuo):</label>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
+                  <label className="inspector-label" style={{ margin: 0 }}>Contenido completo de la obra:</label>
+                  <div style={{ display: 'flex', gap: '5px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ padding: '2px 8px', fontSize: '0.78rem' }}
+                      onClick={() => setEditingText(prev => ({ ...prev, content: (prev?.content || '') + '\n— ' }))}
+                      title="Insertar raya de diálogo"
+                    >
+                      — Diálogo
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ padding: '2px 8px', fontSize: '0.78rem' }}
+                      onClick={() => setEditingText(prev => ({ ...prev, content: (prev?.content || '') + ' —acotación— ' }))}
+                      title="Insertar acotación del narrador"
+                    >
+                      —acotación—
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ padding: '2px 8px', fontSize: '0.78rem' }}
+                      onClick={() => setEditingText(prev => ({ ...prev, content: (prev?.content || '') + ' «cita» ' }))}
+                      title="Insertar comillas tipográficas latinas"
+                    >
+                      « »
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ padding: '2px 8px', fontSize: '0.78rem' }}
+                      onClick={() => setEditingText(prev => ({ ...prev, content: (prev?.content || '') + '\n\n✦ ✦ ✦\n\n' }))}
+                      title="Insertar separador ornamental de escena"
+                    >
+                      ✦ ✦ ✦
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      style={{ padding: '2px 8px', fontSize: '0.78rem' }}
+                      onClick={() => setEditingText(prev => ({ ...prev, content: (prev?.content || '') + '\n\n' }))}
+                      title="Separar estrofas"
+                    >
+                      Salto de Estrofa
+                    </button>
+                  </div>
+                </div>
                 <textarea 
                   rows={8}
                   className="inspector-input"

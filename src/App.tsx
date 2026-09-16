@@ -248,7 +248,7 @@ function App() {
             className={`sidebar-link ${isTabActive('/gran-galeria') || isTabActive('/galeria') ? 'active' : ''}`}
             onClick={() => navigateTo('/gran-galeria')}
           >
-            <span className="sidebar-icon" aria-hidden="true">💡</span> Gran Galería (Wattpad & Museo)
+            <span className="sidebar-icon" aria-hidden="true">💡</span> Gran Galería (Pergamino & Museo)
           </button>
 
           <button 

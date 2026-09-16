@@ -10,14 +10,15 @@ import type {
 import { ReadingModal } from '../components/galeria/ReadingModal';
 import { ArtPieceModal } from '../components/galeria/ArtPieceModal';
 import { VideoTheaterModal } from '../components/galeria/VideoTheaterModal';
+import { EscribaEditorModal } from '../components/galeria/EscribaEditorModal';
 import { soundEffects } from '../utils/soundEffects';
 import './GranGaleria.css';
 
-type GaleriaSection = 'wattpad' | 'museo' | 'cine' | 'concursos';
+type GaleriaSection = 'escriba' | 'museo' | 'cine' | 'concursos';
 
 export const GranGaleria: React.FC = () => {
   const navigate = useNavigate();
-  const { config } = usePortalConfig();
+  const { config, saveConfigToFirestore } = usePortalConfig();
 
   // Config data fallback
   const galeriaData = config.granGaleria || DEFAULT_GRAN_GALERIA;
@@ -27,7 +28,7 @@ export const GranGaleria: React.FC = () => {
   const contests = galeriaData.contests || [];
 
   // Active section tab
-  const [activeTab, setActiveTab] = useState<GaleriaSection>('wattpad');
+  const [activeTab, setActiveTab] = useState<GaleriaSection>('escriba');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   // Filters
@@ -40,6 +41,27 @@ export const GranGaleria: React.FC = () => {
   const [activeArtPiece, setActiveArtPiece] = useState<StudentArtItem | null>(null);
   const [activeVideo, setActiveVideo] = useState<StudentVideoItem | null>(null);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
+  const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
+
+  const handleSaveNewText = async (newText: StudentTextItem) => {
+    const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
+    const existingIndex = (currentGaleria.texts || []).findIndex(t => t.id === newText.id);
+    let updatedTexts: StudentTextItem[];
+    if (existingIndex >= 0) {
+      updatedTexts = [...(currentGaleria.texts || [])];
+      updatedTexts[existingIndex] = newText;
+    } else {
+      updatedTexts = [newText, ...(currentGaleria.texts || [])];
+    }
+    const updatedGaleria = {
+      ...currentGaleria,
+      texts: updatedTexts
+    };
+    await saveConfigToFirestore({
+      ...config,
+      granGaleria: updatedGaleria
+    });
+  };
 
   // Tab change handler with audio
   const handleTabChange = (tab: GaleriaSection) => {
@@ -100,16 +122,16 @@ export const GranGaleria: React.FC = () => {
           </h1>
 
           <p className="gg-hero-desc">
-            {galeriaData.bannerSubtitle || "Descubre los cuentos de nuestro Wattpad escolar, contempla las obras de arte en el Museo Virtual y reproduce los cortometrajes y reportajes de la juventud estudiantil."}
+            {galeriaData.bannerSubtitle || "Descubre los relatos en el Pergamino del Escriba, contempla las obras de arte en el Museo Virtual y reproduce los cortometrajes y reportajes de la juventud estudiantil."}
           </p>
 
           {/* Métricas del Ecosistema */}
           <div className="gg-stats-ribbon">
-            <div className="gg-stat-box" onClick={() => handleTabChange('wattpad')}>
+            <div className="gg-stat-box" onClick={() => handleTabChange('escriba')}>
               <span className="stat-icon">📜</span>
               <div className="stat-info">
                 <strong>{texts.length}</strong>
-                <span>Textos en Wattpad</span>
+                <span>Pergamino del Escriba</span>
               </div>
             </div>
             <div className="gg-stat-box" onClick={() => handleTabChange('museo')}>
@@ -141,11 +163,11 @@ export const GranGaleria: React.FC = () => {
               className="btn btn-primary gg-submit-work-btn"
               onClick={() => {
                 soundEffects.playClick();
-                setIsSubmitModalOpen(true);
+                setIsEditorOpen(true);
               }}
             >
-              <span>✨</span>
-              <span>Postular mi Obra o Concurso</span>
+              <span>✍️</span>
+              <span>Redactar en el Pergamino</span>
             </button>
             <button 
               type="button" 
@@ -167,13 +189,13 @@ export const GranGaleria: React.FC = () => {
         <div className="gg-tabs-container">
           <button 
             type="button" 
-            className={`gg-tab-btn ${activeTab === 'wattpad' ? 'active' : ''}`}
-            onClick={() => handleTabChange('wattpad')}
+            className={`gg-tab-btn ${activeTab === 'escriba' ? 'active' : ''}`}
+            onClick={() => handleTabChange('escriba')}
           >
             <span className="tab-icon">📜</span>
             <div className="tab-text-group">
-              <span className="tab-main-title">Wattpad Estudiantil</span>
-              <span className="tab-sub-title">Códice de Cuentos & Poesías</span>
+              <span className="tab-main-title">Pergamino del Escriba</span>
+              <span className="tab-sub-title">Códice Literario & Taller</span>
             </div>
           </button>
 
@@ -222,7 +244,7 @@ export const GranGaleria: React.FC = () => {
           <input 
             type="text" 
             placeholder={
-              activeTab === 'wattpad' ? "Buscar cuento por título, autor o colegio..." :
+              activeTab === 'escriba' ? "Buscar relato por título, autor o colegio..." :
               activeTab === 'museo' ? "Buscar obra por título, artista o técnica..." :
               activeTab === 'cine' ? "Buscar cortometraje o reportaje..." :
               "Buscar concursos o convocatorias..."
@@ -242,8 +264,8 @@ export const GranGaleria: React.FC = () => {
           )}
         </div>
 
-        {/* Filtros por Género Literario (Wattpad) */}
-        {activeTab === 'wattpad' && (
+        {/* Filtros por Género Literario (Pergamino del Escriba) */}
+        {activeTab === 'escriba' && (
           <div className="gg-chips-filter-list">
             {[
               { id: 'todos', label: 'Todos los Géneros' },
@@ -324,22 +346,35 @@ export const GranGaleria: React.FC = () => {
       {/* 4. CONTENIDOS DE CADA SECCIÓN */}
       <main className="gg-main-content-grid">
         {/* ===================================================================
-            PABELLÓN 1: WATTPAD ESTUDIANTIL (CÓDICE DE TEXTOS)
+            PABELLÓN 1: EL PERGAMINO DEL ESCRIBA (CÓDICE & TALLER LITERARIO)
             =================================================================== */}
-        {activeTab === 'wattpad' && (
+        {activeTab === 'escriba' && (
           <section className="gg-section-view animate-fade-in">
             <div className="gg-section-header">
               <div>
                 <h2 className="gg-section-title">
-                  <span>📜</span> Códice Literario Estudiantil
+                  <span>📜</span> El Pergamino del Escriba
                 </h2>
                 <p className="gg-section-subtitle">
-                  Historias originales, novelas cortas y poemas escritos por jóvenes creadores escolares. Haz clic en cualquier relato para abrir el visor inmersivo de lectura.
+                  Historias originales, novelas cortas y poemas escritos por jóvenes creadores escolares. Haz clic en cualquier relato para abrir el visor inmersivo o abre el taller para redactar el tuyo con reglas ortotipográficas.
                 </p>
               </div>
-              <span className="gg-results-counter">
-                Mostrando {filteredTexts.length} {filteredTexts.length === 1 ? 'relato' : 'relatos'}
-              </span>
+              <div className="gg-section-header-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary gg-escriba-create-btn"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setIsEditorOpen(true);
+                  }}
+                >
+                  <span>✍️</span>
+                  <span>Redactar en el Pergamino</span>
+                </button>
+                <span className="gg-results-counter">
+                  Mostrando {filteredTexts.length} {filteredTexts.length === 1 ? 'relato' : 'relatos'}
+                </span>
+              </div>
             </div>
 
             <div className="gg-texts-grid">
@@ -687,6 +722,13 @@ export const GranGaleria: React.FC = () => {
           </div>
         </div>
       )}
+
+      {/* Modal Taller del Pergamino del Escriba */}
+      <EscribaEditorModal
+        isOpen={isEditorOpen}
+        onClose={() => setIsEditorOpen(false)}
+        onSave={handleSaveNewText}
+      />
     </div>
   );
 };

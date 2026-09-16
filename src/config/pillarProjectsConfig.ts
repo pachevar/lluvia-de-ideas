@@ -60,8 +60,8 @@ export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
   { id: 'mercado_bingo_boletos', label: '🎟️ Boletos Bingotenango', target: '/juegos/bingo/boletos', type: 'navigate', pillarId: 'mercado' },
   { id: 'mercado_cotizador', label: '💼 Cotizador Web', target: '/gerencia', type: 'navigate', pillarId: 'mercado' },
 
-  // 💡 Gran Galería (Wattpad, Museo Virtual, Videos & Concursos)
-  { id: 'gran_galeria_hub', label: '💡 Gran Galería (Wattpad & Museo)', target: '/gran-galeria', type: 'navigate', pillarId: 'gran_galeria' },
+  // 💡 Gran Galería (Pergamino del Escriba, Museo Virtual, Videos & Concursos)
+  { id: 'gran_galeria_hub', label: '💡 Gran Galería (Pergamino & Museo)', target: '/gran-galeria', type: 'navigate', pillarId: 'gran_galeria' },
   { id: 'gran_galeria_panel', label: '⚙️ Gran Galería (Gestión & Banco)', target: '/gerencia', type: 'navigate', pillarId: 'gran_galeria' },
 
   // ☁️ Sutz (Mundo Virtual, Popol Vuh & Árbol Tecnológico)
