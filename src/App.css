@@ -337,7 +337,18 @@
 /* Responsive */
 @media (max-width: 768px) {
   .app-container {
-    padding-left: 20px; /* Reducir en móvil para dar más área */
+    padding: 8px 0 24px 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    max-width: 100vw !important;
+    width: 100% !important;
+    overflow-x: hidden;
+    gap: 12px;
+  }
+  .app-main {
+    width: 100% !important;
+    max-width: 100% !important;
+    padding: 0 !important;
   }
   .gamer-sidebar-trigger {
     top: 12px;
@@ -350,7 +361,14 @@
     border-radius: 12px 0 0 12px;
   }
   .app-header-compact {
-    padding: 10px 20px;
+    padding: 8px 12px;
+    margin: 0 8px;
+    border-radius: 14px;
+  }
+  .app-footer {
+    margin: 10px 8px 0 8px;
+    padding: 14px 10px;
+    border-radius: 14px;
   }
   .gamer-sidebar-trigger.hide-on-mobile-card,
   .gamer-sidebar.hide-on-mobile-card {

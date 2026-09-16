@@ -677,7 +677,10 @@
 /* MÓVIL RESPONSIVE */
 @media (max-width: 768px) {
   .seq-page-container {
-    padding: 20px 10px;
+    padding: 14px 4px;
+    width: 100%;
+    max-width: 100vw;
+    box-sizing: border-box;
   }
 
   .seq-title {
@@ -700,7 +703,8 @@
   }
 
   .seq-card {
-    padding: 16px 12px;
+    padding: 14px 8px;
+    border-radius: 16px;
   }
 
   .sieve-grid-container {
