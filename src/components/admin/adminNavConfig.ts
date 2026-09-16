@@ -152,7 +152,7 @@ export const PILLAR_REGISTRY: Record<EducationalPillar, PillarDefinition> = {
     color: '#8b5cf6',
     secondaryColor: '#a78bfa',
     badge: 'Gran Galería & Proyectos',
-    publicHubRoute: '/sutz'
+    publicHubRoute: '/gran-galeria'
   }
 };
 
@@ -353,6 +353,7 @@ export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
         icon: '💡',
         description: 'Banco de proyectos para nuevas funciones, talleres, ejercicios y desarrollos organizados por pilar de Sutz',
         keywords: ['gran', 'galeria', 'galería', 'proyectos', 'innovacion', 'incubadora', 'propuestas', 'futuro', 'sutz', 'pozo', 'ideas'],
+        publicRoute: '/gran-galeria',
         pillar: 'pozo_ideas',
         roleDescription: 'Gran Galería y banco de proyectos para el ecosistema educativo'
       }

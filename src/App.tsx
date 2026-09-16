@@ -30,6 +30,7 @@ const Neurociencia = React.lazy(() => import('./pages/Neurociencia'));
 const ConstruyendoPersonaje = React.lazy(() => import('./pages/ConstruyendoPersonaje'));
 const BingoBoletos = React.lazy(() => import('./pages/BingoBoletos'));
 const BingoBoletosConfirmacion = React.lazy(() => import('./pages/BingoBoletosConfirmacion'));
+const GranGaleria = React.lazy(() => import('./pages/GranGaleria'));
 
 function App() {
   const navigate = useNavigate();
@@ -244,6 +245,13 @@ function App() {
           </button>
 
           <button 
+            className={`sidebar-link ${isTabActive('/gran-galeria') || isTabActive('/galeria') ? 'active' : ''}`}
+            onClick={() => navigateTo('/gran-galeria')}
+          >
+            <span className="sidebar-icon" aria-hidden="true">💡</span> Gran Galería (Wattpad & Museo)
+          </button>
+
+          <button 
             className={`sidebar-link ${isTabActive('/neurociencia') ? 'active' : ''}`}
             onClick={() => navigateTo('/neurociencia')}
           >
@@ -315,7 +323,9 @@ function App() {
             <Route path="/100tek/teoria-del-color" element={<ColorTheory />} />
             <Route path="/100tek/sistema-solar" element={<SolarSystem />} />
             <Route path="/herramientas/teoria-del-color" element={<ColorTheory />} />
-            <Route path="/herramientas/sistema-solar" element={<SolarSystem />} />
+            <Route path="/gran-galeria" element={<GranGaleria />} />
+            <Route path="/galeria" element={<GranGaleria />} />
+            <Route path="/concursos-estudiantiles" element={<GranGaleria />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

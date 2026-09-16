@@ -1,0 +1,1599 @@
+/* ==========================================================================
+   LA GRAN GALERÍA - ESTILOS VISUALES & NEURODISEÑO COGNITIVO
+   Ecosistema Sutz - Editorial Lluvia de Ideas
+   ========================================================================== */
+
+.gran-galeria-page {
+  min-height: 100vh;
+  background-color: var(--sutz-bg-space-void, #060913);
+  color: var(--sutz-text-normal, #e0e0e0);
+  font-family: var(--sutz-font-tech, 'Rajdhani', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif);
+  padding-bottom: 5rem;
+  position: relative;
+  overflow-x: hidden;
+}
+
+/* 1. HERO BANNER CÓSMICO */
+.gg-hero-banner {
+  position: relative;
+  padding: 4.5rem 1.5rem 3.5rem;
+  background: radial-gradient(circle at 50% 20%, rgba(168, 85, 247, 0.15) 0%, rgba(6, 9, 19, 0.95) 75%);
+  border-bottom: 1px solid rgba(168, 85, 247, 0.25);
+  text-align: center;
+  overflow: hidden;
+}
+
+.gg-hero-ambient-glow {
+  position: absolute;
+  top: -150px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 700px;
+  height: 400px;
+  background: radial-gradient(ellipse, rgba(168, 85, 247, 0.28) 0%, transparent 70%);
+  filter: blur(80px);
+  pointer-events: none;
+}
+
+.gg-hero-content {
+  position: relative;
+  z-index: 2;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.gg-hero-badge-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 16px;
+  border-radius: 9999px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.45);
+  color: #d8b4fe;
+  font-size: 0.82rem;
+  font-weight: 700;
+  letter-spacing: 0.8px;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 0 16px rgba(168, 85, 247, 0.25);
+}
+
+.gg-hero-title {
+  font-size: clamp(2rem, 5vw, 3.4rem);
+  font-weight: 800;
+  line-height: 1.15;
+  color: #ffffff;
+  margin: 0 0 1rem;
+  letter-spacing: -0.5px;
+}
+
+.highlight-gradient {
+  background: linear-gradient(135deg, #c084fc 0%, #38bdf8 50%, #34d399 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gg-hero-desc {
+  font-size: 1.12rem;
+  color: #cbd5e1;
+  max-width: 760px;
+  margin: 0 auto 2rem;
+  line-height: 1.6;
+}
+
+/* Ribbons de Estadísticas */
+.gg-stats-ribbon {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 1rem;
+  max-width: 820px;
+  margin: 0 auto 2.25rem;
+}
+
+.gg-stat-box {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 10px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gg-stat-box:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: #a855f7;
+  transform: translateY(-3px);
+  box-shadow: 0 6px 18px rgba(168, 85, 247, 0.2);
+}
+
+.stat-icon {
+  font-size: 1.6rem;
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.stat-info strong {
+  font-size: 1.35rem;
+  color: #f8fafc;
+  line-height: 1;
+}
+
+.stat-info span {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.gg-hero-cta-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.gg-submit-work-btn {
+  background: linear-gradient(135deg, #a855f7 0%, #7c3aed 100%) !important;
+  color: #ffffff !important;
+  font-weight: 700;
+  border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  box-shadow: 0 0 18px rgba(168, 85, 247, 0.4);
+}
+
+.gg-explore-sutz-btn {
+  background: rgba(30, 41, 59, 0.7) !important;
+  color: #38bdf8 !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+}
+
+/* 2. PABELLONES / BARRA DE TABS */
+.gg-tabs-nav-wrapper {
+  position: sticky;
+  top: 0;
+  z-index: 20;
+  background: rgba(6, 9, 19, 0.94);
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0.75rem 1rem;
+}
+
+.gg-tabs-container {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.75rem;
+  max-width: 1100px;
+  margin: 0 auto;
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.gg-tab-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 8px 18px;
+  color: #94a3b8;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.25s ease;
+}
+
+.gg-tab-btn:hover {
+  background: rgba(30, 41, 59, 0.9);
+  color: #f8fafc;
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.gg-tab-btn.active {
+  background: linear-gradient(135deg, rgba(168, 85, 247, 0.25) 0%, rgba(56, 189, 248, 0.2) 100%);
+  border-color: #a855f7;
+  color: #ffffff;
+  box-shadow: 0 0 14px rgba(168, 85, 247, 0.35);
+}
+
+.tab-icon {
+  font-size: 1.4rem;
+}
+
+.tab-text-group {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.tab-main-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  letter-spacing: 0.3px;
+}
+
+.tab-sub-title {
+  font-size: 0.70rem;
+  opacity: 0.75;
+}
+
+/* 3. BÚSQUEDA Y FILTROS */
+.gg-search-filter-bar {
+  max-width: 1100px;
+  margin: 1.75rem auto 1.5rem;
+  padding: 0 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.gg-search-input-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.search-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #94a3b8;
+  font-size: 1.1rem;
+}
+
+.gg-search-input {
+  width: 100%;
+  padding: 12px 42px 12px 42px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 12px;
+  color: #f8fafc;
+  font-size: 0.95rem;
+  outline: none;
+  transition: border-color 0.25s ease;
+}
+
+.gg-search-input:focus {
+  border-color: #a855f7;
+  box-shadow: 0 0 12px rgba(168, 85, 247, 0.3);
+}
+
+.gg-search-clear {
+  position: absolute;
+  right: 12px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  font-size: 0.9rem;
+}
+
+.gg-chips-filter-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.gg-chip-btn {
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 9999px;
+  padding: 5px 14px;
+  color: #cbd5e1;
+  font-size: 0.82rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gg-chip-btn:hover {
+  background: rgba(30, 41, 59, 0.85);
+  color: #ffffff;
+}
+
+.gg-chip-btn.active {
+  background: #a855f7;
+  color: #ffffff;
+  border-color: #c084fc;
+  font-weight: 700;
+  box-shadow: 0 0 10px rgba(168, 85, 247, 0.4);
+}
+
+/* 4. CONTENIDO PRINCIPAL */
+.gg-main-content-grid {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 1.25rem;
+}
+
+.gg-section-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 1rem;
+}
+
+.gg-section-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 1.6rem;
+  color: #ffffff;
+  margin: 0;
+}
+
+.gg-section-subtitle {
+  font-size: 0.92rem;
+  color: #94a3b8;
+  max-width: 700px;
+  margin: 6px 0 0;
+  line-height: 1.5;
+}
+
+.gg-results-counter {
+  font-size: 0.82rem;
+  color: #a855f7;
+  font-weight: 600;
+  background: rgba(168, 85, 247, 0.12);
+  padding: 4px 10px;
+  border-radius: 8px;
+}
+
+/* 4.1 WATTPAD GRID (HISTORIAS) */
+.gg-texts-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.25rem;
+}
+
+.gg-story-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  padding: 1.25rem;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.gg-story-card:hover {
+  background: rgba(22, 32, 54, 0.9);
+  border-color: #a855f7;
+  transform: translateY(-4px);
+  box-shadow: 0 10px 24px rgba(168, 85, 247, 0.25);
+}
+
+.story-card-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 0.8rem;
+}
+
+.story-award-chip {
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.story-genre-badge {
+  background: rgba(168, 85, 247, 0.18);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #d8b4fe;
+  font-size: 0.70rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 8px;
+  border-radius: 6px;
+  margin-left: auto;
+}
+
+.story-title {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.6rem;
+  line-height: 1.25;
+}
+
+.story-author-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 0.8rem;
+}
+
+.author-icon {
+  font-size: 1.1rem;
+}
+
+.author-name {
+  display: block;
+  font-size: 0.90rem;
+  color: #e2e8f0;
+}
+
+.author-school {
+  display: block;
+  font-size: 0.74rem;
+  color: #94a3b8;
+}
+
+.story-synopsis-snippet {
+  font-size: 0.88rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin-bottom: 1.2rem;
+}
+
+.story-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 0.8rem;
+  margin-top: auto;
+}
+
+.story-stats {
+  display: flex;
+  gap: 12px;
+  font-size: 0.80rem;
+  color: #94a3b8;
+}
+
+.story-read-action-btn {
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.35);
+  color: #d8b4fe;
+  padding: 4px 12px;
+  border-radius: 8px;
+  font-size: 0.80rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gg-story-card:hover .story-read-action-btn {
+  background: #a855f7;
+  color: #ffffff;
+}
+
+/* 4.2 MUSEO VIRTUAL (OBRAS DE ARTE) */
+.gg-artworks-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 1.5rem;
+}
+
+.gg-art-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  display: flex;
+  flex-direction: column;
+}
+
+.gg-art-card:hover {
+  border-color: #38bdf8;
+  transform: translateY(-5px);
+  box-shadow: 0 12px 28px rgba(56, 189, 248, 0.25);
+}
+
+.art-card-img-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: #020617;
+  overflow: hidden;
+}
+
+.art-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.gg-art-card:hover .art-thumb-img {
+  transform: scale(1.06);
+}
+
+.art-overlay-glass {
+  position: absolute;
+  inset: 0;
+  background: rgba(6, 9, 19, 0.55);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.25s ease;
+  color: #38bdf8;
+  font-weight: 700;
+  font-size: 0.88rem;
+}
+
+.gg-art-card:hover .art-overlay-glass {
+  opacity: 1;
+}
+
+.art-award-badge {
+  position: absolute;
+  top: 10px;
+  left: 10px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 3px 8px;
+  border-radius: 6px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.5);
+}
+
+.art-card-details {
+  padding: 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.art-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.art-meta-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+}
+
+.art-artist {
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  font-weight: 600;
+}
+
+.art-tech-badge {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 5px;
+}
+
+.art-school {
+  font-size: 0.76rem;
+  color: #94a3b8;
+  margin: 2px 0 6px;
+}
+
+.art-footer-likes {
+  display: flex;
+  gap: 12px;
+  font-size: 0.78rem;
+  color: #94a3b8;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 6px;
+  margin-top: 4px;
+}
+
+/* 4.3 CINE Y MEDIATECA */
+.gg-videos-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1.5rem;
+}
+
+.gg-video-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 14px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.gg-video-card:hover {
+  border-color: #ef4444;
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(239, 68, 68, 0.25);
+}
+
+.video-thumb-container {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #020617;
+  overflow: hidden;
+}
+
+.video-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: transform 0.4s ease;
+}
+
+.gg-video-card:hover .video-thumb-img {
+  transform: scale(1.05);
+}
+
+.video-play-disc {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  background: rgba(239, 68, 68, 0.9);
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  box-shadow: 0 0 16px rgba(239, 68, 68, 0.6);
+  transition: transform 0.25s ease;
+}
+
+.gg-video-card:hover .video-play-disc {
+  transform: translate(-50%, -50%) scale(1.15);
+}
+
+.video-dur-pill {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.8);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 2px 6px;
+  border-radius: 4px;
+}
+
+.video-award-pill {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-size: 0.70rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+}
+
+.video-card-info {
+  padding: 1rem;
+}
+
+.video-cat-tag {
+  font-size: 0.70rem;
+  color: #ef4444;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.video-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 4px 0 6px;
+  line-height: 1.3;
+}
+
+.video-team {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  margin: 0;
+}
+
+.video-school {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  margin: 2px 0 6px;
+}
+
+.video-synopsis-line {
+  font-size: 0.84rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* 4.4 CONCURSOS & SALÓN DE LA FAMA */
+.gg-contests-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.gg-contest-card {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  padding: 1.5rem;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
+}
+
+.contest-status-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.8rem;
+}
+
+.contest-status-pill {
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.contest-status-pill.convocatoria {
+  background: rgba(16, 185, 129, 0.2);
+  color: #34d399;
+  border: 1px solid #10b981;
+}
+
+.contest-status-pill.evaluacion {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fbbf24;
+  border: 1px solid #f59e0b;
+}
+
+.contest-status-pill.galardonados {
+  background: rgba(168, 85, 247, 0.2);
+  color: #c084fc;
+  border: 1px solid #a855f7;
+}
+
+.contest-discipline {
+  font-size: 0.80rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.contest-title {
+  font-size: 1.45rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 0.6rem;
+}
+
+.contest-desc {
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+  margin-bottom: 1.2rem;
+}
+
+.contest-details-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1rem;
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+
+.detail-item {
+  display: flex;
+  flex-direction: column;
+}
+
+.detail-label {
+  font-size: 0.70rem;
+  color: #94a3b8;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  margin-bottom: 3px;
+}
+
+.detail-val {
+  font-size: 0.95rem;
+  color: #f8fafc;
+}
+
+.contest-guidelines-box {
+  background: rgba(255, 255, 255, 0.03);
+  border-radius: 10px;
+  padding: 1rem;
+  margin-bottom: 1.2rem;
+}
+
+.contest-guidelines-box h4 {
+  margin: 0 0 8px;
+  color: #38bdf8;
+  font-size: 0.90rem;
+}
+
+.contest-guidelines-box ul {
+  margin: 0;
+  padding-left: 1.25rem;
+  color: #cbd5e1;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.contest-card-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+/* ESTADOS VACÍOS */
+.gg-empty-state {
+  text-align: center;
+  padding: 4rem 1rem;
+  background: rgba(15, 23, 42, 0.4);
+  border: 1px dashed rgba(255, 255, 255, 0.15);
+  border-radius: 16px;
+  margin-top: 1rem;
+}
+
+.empty-icon {
+  font-size: 3rem;
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.gg-empty-state h3 {
+  color: #f8fafc;
+  margin: 0 0 6px;
+}
+
+.gg-empty-state p {
+  color: #94a3b8;
+  margin: 0;
+}
+
+/* ==========================================================================
+   MODALES DE LECTURA (WATTPAD), MUSEO & CINE
+   ========================================================================== */
+.gg-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(2, 6, 23, 0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+  animation: fadeIn 0.25s ease;
+}
+
+/* MODAL DE LECTURA WATTPAD */
+.gg-reader-modal {
+  width: 100%;
+  max-width: 820px;
+  max-height: 90vh;
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.85);
+  transition: background 0.3s ease, color 0.3s ease;
+}
+
+/* Temas de Lectura */
+.gg-reader-modal.theme-dark {
+  background: #0f172a;
+  color: #f1f5f9;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+}
+
+.gg-reader-modal.theme-sepia {
+  background: #fbf0d9;
+  color: #3e2723;
+  border: 1px solid #d7ccc8;
+}
+
+.gg-reader-modal.theme-light {
+  background: #ffffff;
+  color: #1e293b;
+  border: 1px solid #cbd5e1;
+}
+
+.gg-reader-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.theme-dark .gg-reader-toolbar {
+  border-bottom-color: rgba(255, 255, 255, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+}
+
+.gg-reader-genre-chip {
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  background: rgba(168, 85, 247, 0.2);
+  color: #a855f7;
+}
+
+.gg-reader-stats-chip {
+  font-size: 0.74rem;
+  opacity: 0.8;
+  margin-left: 8px;
+}
+
+.gg-reader-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.gg-reader-theme-toggle {
+  display: flex;
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+  padding: 2px;
+}
+
+.theme-btn {
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  padding: 3px 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.theme-btn.active {
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.gg-reader-font-controls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.gg-reader-font-controls button {
+  background: rgba(0, 0, 0, 0.1);
+  border: none;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 800;
+  font-size: 0.82rem;
+  cursor: pointer;
+  color: inherit;
+}
+
+.font-size-indicator {
+  font-size: 0.75rem;
+  opacity: 0.7;
+  min-width: 32px;
+  text-align: center;
+}
+
+.gg-reader-close-btn {
+  background: none;
+  border: none;
+  font-size: 1.1rem;
+  cursor: pointer;
+  color: inherit;
+  opacity: 0.7;
+  padding: 4px 8px;
+}
+
+.gg-reader-close-btn:hover {
+  opacity: 1;
+}
+
+.gg-reader-body {
+  overflow-y: auto;
+  padding: 2rem 2.5rem;
+  font-family: Georgia, Cambria, 'Times New Roman', Times, serif;
+}
+
+.gg-reader-award-banner {
+  display: inline-block;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 9999px;
+  margin-bottom: 0.8rem;
+  font-family: sans-serif;
+}
+
+.gg-reader-story-title {
+  font-size: 2.2rem;
+  font-weight: 800;
+  line-height: 1.2;
+  margin: 0 0 1rem;
+}
+
+.gg-reader-author-strip {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 1.25rem;
+  font-family: sans-serif;
+}
+
+.gg-reader-author-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: rgba(168, 85, 247, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+}
+
+.author-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+}
+
+.author-details {
+  font-size: 0.82rem;
+  opacity: 0.75;
+}
+
+.gg-reader-synopsis-box {
+  background: rgba(0, 0, 0, 0.05);
+  border-left: 3px solid #a855f7;
+  padding: 0.8rem 1rem;
+  border-radius: 0 8px 8px 0;
+  font-family: sans-serif;
+  font-size: 0.90rem;
+  margin-bottom: 1.5rem;
+}
+
+.gg-reader-divider {
+  border: none;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  margin: 1.5rem 0;
+}
+
+.theme-dark .gg-reader-divider {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.gg-reader-article-content p {
+  margin-bottom: 1.25rem;
+  text-align: justify;
+}
+
+.gg-reader-footer {
+  margin-top: 3rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+  text-align: center;
+  font-family: sans-serif;
+}
+
+.theme-dark .gg-reader-footer {
+  border-top-color: rgba(255, 255, 255, 0.1);
+}
+
+.gg-reader-congrats h4 {
+  margin: 0 0 4px;
+  font-size: 1.15rem;
+}
+
+.gg-reader-congrats p {
+  margin: 0 0 1.25rem;
+  opacity: 0.75;
+  font-size: 0.90rem;
+}
+
+.gg-reader-actions-bar {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.gg-reaction-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #a855f7;
+  color: #ffffff;
+  border: none;
+  border-radius: 9999px;
+  padding: 8px 18px;
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.gg-reaction-btn:hover {
+  transform: scale(1.04);
+}
+
+.gg-reaction-btn.liked {
+  background: #ef4444;
+}
+
+.gg-reaction-btn.secondary {
+  background: rgba(0, 0, 0, 0.2);
+  color: inherit;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+}
+
+.theme-dark .gg-reaction-btn.secondary {
+  background: rgba(255, 255, 255, 0.1);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* MODAL DE MUSEO VIRTUAL (ARTE) */
+.gg-art-modal {
+  width: 100%;
+  max-width: 1050px;
+  max-height: 92vh;
+  background: #090e1a;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 20px;
+  position: relative;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.9);
+}
+
+.gg-art-modal-close {
+  position: absolute;
+  top: 14px;
+  right: 16px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+}
+
+.gg-art-modal-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr;
+  height: 85vh;
+}
+
+@media (max-width: 800px) {
+  .gg-art-modal-grid {
+    grid-template-columns: 1fr;
+    height: auto;
+    max-height: 85vh;
+    overflow-y: auto;
+  }
+}
+
+.gg-museum-gallery-chamber {
+  position: relative;
+  background: radial-gradient(circle at 50% 40%, #1e293b 0%, #020617 80%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem;
+  overflow: hidden;
+}
+
+.museum-spotlight {
+  position: absolute;
+  top: -80px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 400px;
+  height: 500px;
+  background: radial-gradient(ellipse at top, rgba(255, 255, 255, 0.22) 0%, transparent 65%);
+  pointer-events: none;
+}
+
+.museum-frame {
+  position: relative;
+  z-index: 2;
+  border: 10px solid #2d241e;
+  outline: 2px solid #b45309;
+  border-radius: 4px;
+  box-shadow: 0 16px 35px rgba(0, 0, 0, 0.85), inset 0 0 12px rgba(0,0,0,0.8);
+  max-width: 90%;
+  max-height: 65vh;
+  cursor: zoom-in;
+  transition: transform 0.3s ease;
+}
+
+.museum-frame.zoomed {
+  transform: scale(1.18);
+  cursor: zoom-out;
+}
+
+.museum-artwork-img {
+  display: block;
+  max-width: 100%;
+  max-height: 60vh;
+  object-fit: contain;
+}
+
+.museum-zoom-hint {
+  position: absolute;
+  bottom: 12px;
+  color: #94a3b8;
+  font-size: 0.78rem;
+  background: rgba(0, 0, 0, 0.6);
+  padding: 3px 10px;
+  border-radius: 6px;
+}
+
+.gg-museum-placard {
+  padding: 2.25rem 2rem;
+  overflow-y: auto;
+  background: #0d1527;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.gg-art-award-tag {
+  display: inline-block;
+  background: linear-gradient(135deg, #f59e0b, #d97706);
+  color: #ffffff;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 6px;
+  margin-bottom: 0.75rem;
+}
+
+.placard-title {
+  font-size: 1.8rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0 0 1rem;
+  line-height: 1.2;
+}
+
+.placard-artist-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.placard-artist-avatar {
+  font-size: 1.6rem;
+}
+
+.placard-artist-name {
+  font-size: 1.1rem;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.placard-artist-school {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 2px 0 0;
+}
+
+.placard-specs-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px;
+  margin-bottom: 1.5rem;
+}
+
+.spec-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.spec-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+  letter-spacing: 0.5px;
+}
+
+.spec-val {
+  font-size: 0.88rem;
+  color: #38bdf8;
+}
+
+.placard-desc-box {
+  margin-bottom: 2rem;
+}
+
+.placard-desc-box h4 {
+  font-size: 0.90rem;
+  color: #cbd5e1;
+  margin: 0 0 6px;
+}
+
+.placard-desc-box p {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0;
+}
+
+.placard-actions {
+  display: flex;
+  gap: 10px;
+}
+
+/* MODAL DE CINE / MEDIATECA */
+.gg-theater-modal {
+  width: 100%;
+  max-width: 900px;
+  background: #060913;
+  border: 1px solid rgba(239, 68, 68, 0.4);
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.95);
+  position: relative;
+}
+
+.gg-theater-close-btn {
+  position: absolute;
+  top: 12px;
+  right: 14px;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.gg-theater-screen-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  background: #000000;
+}
+
+.gg-theater-iframe {
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.gg-theater-info {
+  padding: 1.5rem 2rem;
+}
+
+.gg-theater-header {
+  margin-bottom: 1rem;
+}
+
+.gg-theater-meta {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.gg-video-cat-badge {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.gg-video-dur-badge {
+  background: rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 0.72rem;
+  padding: 2px 8px;
+  border-radius: 4px;
+}
+
+.gg-theater-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  color: #ffffff;
+  margin: 0;
+}
+
+.gg-theater-credits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border-radius: 8px;
+  padding: 10px 14px;
+  margin-bottom: 1rem;
+}
+
+.credit-card {
+  display: flex;
+  flex-direction: column;
+}
+
+.credit-label {
+  font-size: 0.68rem;
+  color: #94a3b8;
+}
+
+.credit-val {
+  font-size: 0.88rem;
+  color: #f8fafc;
+}
+
+.gg-theater-synopsis h4 {
+  font-size: 0.90rem;
+  color: #cbd5e1;
+  margin: 0 0 4px;
+}
+
+.gg-theater-synopsis p {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+}
+
+/* MODAL GUÍA DE PARTICIPACIÓN */
+.gg-submit-guide-modal {
+  background: #0f172a;
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  border-radius: 18px;
+  max-width: 580px;
+  width: 100%;
+  padding: 2rem;
+  position: relative;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.9);
+}
+
+.guide-header {
+  text-align: center;
+  margin-bottom: 1.5rem;
+}
+
+.guide-icon {
+  font-size: 2.5rem;
+  display: block;
+  margin-bottom: 6px;
+}
+
+.guide-header h3 {
+  font-size: 1.35rem;
+  color: #ffffff;
+  margin: 0 0 4px;
+}
+
+.guide-header p {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  margin: 0;
+}
+
+.guide-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.guide-step {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  background: rgba(2, 6, 23, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.step-number {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #a855f7;
+  color: #ffffff;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.82rem;
+  flex-shrink: 0;
+}
+
+.guide-step strong {
+  display: block;
+  color: #f8fafc;
+  font-size: 0.90rem;
+  margin-bottom: 2px;
+}
+
+.guide-step p {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.guide-footer {
+  display: flex;
+  justify-content: center;
+}
+
+/* ANIMACIONES */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes bounceSubtle {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
+}
+
+.animate-fade-in {
+  animation: fadeIn 0.3s ease;
+}
+
+.animate-bounce-subtle {
+  animation: bounceSubtle 2.5s infinite;
+}

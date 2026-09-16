@@ -200,6 +200,121 @@ export interface PortalConfig {
     image?: string;
   }>;
   pozoIdeas?: PozoIdeasConfig;
+  granGaleria?: GranGaleriaConfig;
+}
+
+export type LiteraryGenre = 
+  | 'fantasia' 
+  | 'sci-fi' 
+  | 'popol_vuh' 
+  | 'poesia' 
+  | 'misterio' 
+  | 'cronica' 
+  | 'fabula' 
+  | 'ensayo' 
+  | 'otro';
+
+export type ArtTechnique = 
+  | 'digital' 
+  | 'acuarela' 
+  | 'oleo' 
+  | 'lapiz' 
+  | 'mixta' 
+  | 'escultura' 
+  | 'pastel' 
+  | 'grabado';
+
+export type VideoCategory = 
+  | 'cortometraje' 
+  | 'documental' 
+  | 'reportaje' 
+  | 'animacion';
+
+export type ContestStatus = 
+  | 'convocatoria' 
+  | 'evaluacion' 
+  | 'galardonados' 
+  | 'archivado';
+
+export interface StudentTextItem {
+  id: string;
+  title: string;
+  author: string;
+  authorGrade?: string;
+  authorSchool?: string;
+  authorAvatar?: string;
+  genre: LiteraryGenre;
+  synopsis: string;
+  content: string;
+  coverImage?: string;
+  concursoId?: string;
+  awardBadge?: string;
+  likes: number;
+  reads: number;
+  featured?: boolean;
+  publishedAt: string;
+}
+
+export interface StudentArtItem {
+  id: string;
+  title: string;
+  artist: string;
+  artistGrade?: string;
+  artistSchool?: string;
+  artistAvatar?: string;
+  technique: ArtTechnique;
+  dimensions?: string;
+  description: string;
+  imageUrl: string;
+  concursoId?: string;
+  awardBadge?: string;
+  likes: number;
+  views: number;
+  featured?: boolean;
+  publishedAt: string;
+}
+
+export interface StudentVideoItem {
+  id: string;
+  title: string;
+  team: string;
+  school?: string;
+  grade?: string;
+  category: VideoCategory;
+  synopsis: string;
+  videoUrl: string;
+  youtubeId?: string;
+  thumbnailUrl?: string;
+  duration?: string;
+  concursoId?: string;
+  awardBadge?: string;
+  views: number;
+  featured?: boolean;
+  publishedAt: string;
+}
+
+export interface ContestItem {
+  id: string;
+  title: string;
+  discipline: 'literatura' | 'arte' | 'video' | 'multidisciplinar';
+  genreOrCategory?: string;
+  description: string;
+  guidelines: string[];
+  deadline: string;
+  rewardDetails: string;
+  status: ContestStatus;
+  bannerImage?: string;
+  featured?: boolean;
+  winnerIds?: string[];
+}
+
+export interface GranGaleriaConfig {
+  intro: string;
+  bannerSubtitle?: string;
+  texts: StudentTextItem[];
+  artworks: StudentArtItem[];
+  videos: StudentVideoItem[];
+  contests: ContestItem[];
 }
 
 export type PozoIdeaCategory = 'creatika' | '100tek' | 'lab' | 'mercado' | 'sutz';

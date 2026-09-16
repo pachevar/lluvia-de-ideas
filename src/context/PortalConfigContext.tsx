@@ -5,6 +5,7 @@ import type { PortalConfig, TiendaConfig, CustomHexagon } from '../types';
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
 import { subscribeArchetypeAssets } from '../services/archetypeAssetsService';
+import { DEFAULT_GRAN_GALERIA } from '../data/defaultGranGaleriaData';
 
 interface PortalConfigContextProps {
   config: PortalConfig;
@@ -498,7 +499,8 @@ export const DEFAULT_CONFIG: PortalConfig = {
       layerInteractive: { type: "image", value: "/assets/Ququmatz%20titulo-DSHBqZmr.png" },
       action: { type: "modal", target: "story-ququmatz" }
     }
-  ]
+  ],
+  granGaleria: DEFAULT_GRAN_GALERIA
 };
 
 const PortalConfigContext = createContext<PortalConfigContextProps | undefined>(undefined);
@@ -573,6 +575,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
           creatika: { ...DEFAULT_CONFIG.creatika, ...(data.creatika || {}) },
           tek100: { ...DEFAULT_CONFIG.tek100, ...(data.tek100 || {}) },
           tiendaConfig: data.tiendaConfig || (data as unknown as { catalogoConfig?: TiendaConfig }).catalogoConfig || DEFAULT_CONFIG.tiendaConfig,
+          granGaleria: data.granGaleria || DEFAULT_CONFIG.granGaleria,
           archetypeImages: { ...(DEFAULT_CONFIG.archetypeImages || {}), ...(data.archetypeImages || {}) },
           journeyStageImages: { ...(DEFAULT_CONFIG.journeyStageImages || {}), ...(data.journeyStageImages || {}) }
         };
