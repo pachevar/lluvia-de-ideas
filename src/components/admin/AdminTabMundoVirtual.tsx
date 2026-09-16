@@ -15,6 +15,7 @@ import {
   removeCustomRoute, 
   type PillarAppRoute 
 } from '../../config/pillarProjectsConfig';
+import { HEX_PILLARS, normalizePillarId, type HexPillarId } from '../../utils/hexPillarUtils';
 import camazotzTitulo from '../../cuentos/Camazotz titulo.png';
 import ixkikTitulo from '../../cuentos/Ixkik titulo.png';
 import ixmukanneTitulo from '../../cuentos/Ixmukanne titulo.png';
@@ -110,7 +111,13 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const allPillarRoutes = [...BUILTIN_PILLAR_ROUTES, ...customRoutes];
   const filteredRoutes = selectedPillar === 'todos'
     ? allPillarRoutes
-    : allPillarRoutes.filter(r => r.pillarId === selectedPillar || (selectedPillar === 'personalizados' && r.isCustom) || (selectedPillar === 'lab' && r.pillarId === 'laboratorios'));
+    : allPillarRoutes.filter(r => 
+        r.pillarId === selectedPillar || 
+        (selectedPillar === 'personalizados' && r.isCustom) || 
+        (selectedPillar === 'lab' && (r.pillarId === 'laboratorios' || r.pillarId === 'lab')) ||
+        (selectedPillar === 'gran_galeria' && (r.pillarId === 'pozo_ideas' || r.pillarId === 'gran_galeria')) ||
+        (selectedPillar === 'pozo_ideas' && (r.pillarId === 'gran_galeria' || r.pillarId === 'pozo_ideas'))
+      );
 
   const handleAddCustomRoute = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -515,9 +522,40 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     <span className="inspector-title-badge-tag">
                       🏷️ TÍTULO DEL HEXÁGONO
                     </span>
-                    <span className="inspector-title-badge-hint">
-                      ✏️ Totalmente independiente de los enlaces y acciones
-                    </span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+                      <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600 }}>
+                        🏛️ Reino:
+                      </span>
+                      <select
+                        value={editingHex.pillar || 'auto'}
+                        onChange={e => {
+                          const val = e.target.value;
+                          const updated: CustomHexagon = {
+                            ...editingHex,
+                            pillar: (val === 'auto' ? undefined : val) as HexPillarId | undefined
+                          };
+                          setEditingHex(updated);
+                          updateHexInGlobalConfig(updated, true, true);
+                        }}
+                        style={{
+                          background: 'rgba(15, 23, 42, 0.90)',
+                          color: '#f8fafc',
+                          border: '1px solid rgba(255, 255, 255, 0.25)',
+                          borderRadius: '6px',
+                          padding: '3px 8px',
+                          fontSize: '0.78rem',
+                          cursor: 'pointer'
+                        }}
+                        title="Indicador de pertenencia al reino pedagógico"
+                      >
+                        <option value="auto">🌐 Automático (según enlace)</option>
+                        {Object.entries(HEX_PILLARS).map(([k, p]) => (
+                          <option key={k} value={k}>
+                            {p.icon} {p.label}
+                          </option>
+                        ))}
+                      </select>
+                    </div>
                   </div>
                   <input 
                     type="text" 
@@ -1343,7 +1381,12 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                             ? allPillarRoutes.length
                             : cat.id === 'personalizados'
                               ? customRoutes.length
-                              : allPillarRoutes.filter(r => r.pillarId === cat.id || (cat.id === 'lab' && r.pillarId === 'laboratorios')).length;
+                              : allPillarRoutes.filter(r => 
+                                  r.pillarId === cat.id || 
+                                  (cat.id === 'lab' && (r.pillarId === 'laboratorios' || r.pillarId === 'lab')) ||
+                                  (cat.id === 'gran_galeria' && (r.pillarId === 'pozo_ideas' || r.pillarId === 'gran_galeria')) ||
+                                  (cat.id === 'pozo_ideas' && (r.pillarId === 'gran_galeria' || r.pillarId === 'pozo_ideas'))
+                                ).length;
 
                           if (cat.id === 'personalizados' && customRoutes.length === 0) return null;
 
@@ -1375,9 +1418,11 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                                 className={`quick-pill-btn ${isMatch ? 'active' : ''}`}
                                 title={`Asignar acción a: ${qa.target}`}
                                 onClick={() => {
+                                  const routePillar = normalizePillarId(qa.pillarId);
                                   const updated = {
                                     ...editingHex,
-                                    action: { type: qa.type, target: qa.target }
+                                    action: { type: qa.type, target: qa.target },
+                                    pillar: editingHex.pillar || routePillar || undefined
                                   };
                                   setEditingHex(updated);
                                   updateHexInGlobalConfig(updated, true);

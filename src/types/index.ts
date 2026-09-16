@@ -43,6 +43,15 @@ export interface HexIntroModalConfig {
   buttonText?: string;          // Texto del botón de acción (ej. "¡Comenzar la Misión!", "Explorar")
 }
 
+export type HexPillarId = 
+  | 'creatika' 
+  | '100tek' 
+  | 'tienda' 
+  | 'lab' 
+  | 'mercado' 
+  | 'gran_galeria' 
+  | 'sutz';
+
 export interface CustomHexagon {
   id: string; // Formato de coordenada precisa: "row,col" ej: "0,0" o "-1,2"
   row: number;
@@ -54,6 +63,7 @@ export interface CustomHexagon {
   layerInteractive: HexLayer; // Capa 3: Interactiva (Ícono o texto)
   action: HexInteractiveAction; // Lógica de acción al hacer clic
   introModal?: HexIntroModalConfig; // Modal interactivo con personaje y bienvenida antes de entrar
+  pillar?: HexPillarId;       // Indicador de pertenencia al reino (Creatika, 100tek, Tienda, LAB, Mercado, Gran Galería)
 }
 
 export interface CreatikaConfig {

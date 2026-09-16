@@ -68,7 +68,7 @@ export const PILLAR_REGISTRY: Record<EducationalPillar, PillarDefinition> = {
     title: 'Sutz',
     tagline: 'El Gran Ecosistema que Aglutina Todo el Mundo Educativo',
     focusArea: 'Mundo Virtual Maya K\'iche\' & Conexión Universal',
-    description: 'Ecosistema central que articula Creatika, 100tek, LAB, Mercado y Pozo de Ideas mediante el mapa hexagonal y árbol tecnológico.',
+    description: 'Ecosistema central que articula Creatika, 100tek, LAB, Mercado, Tienda y Gran Galería mediante el mapa hexagonal y árbol tecnológico.',
     icon: '☁️',
     targetTab: 'mapa',
     color: '#10b981',
@@ -143,15 +143,15 @@ export const PILLAR_REGISTRY: Record<EducationalPillar, PillarDefinition> = {
   },
   pozo_ideas: {
     id: 'pozo_ideas',
-    title: 'Pozo de Ideas',
+    title: 'Gran Galería',
     tagline: 'Banco de Proyectos e Innovación',
-    focusArea: 'Incubadora de Ideas, Propuestas Pedagógicas & Futuras Funciones',
-    description: 'Espacio de ideación para registrar, incubar y priorizar proyectos futuros para Creatika, 100tek, LAB y Sutz.',
+    focusArea: 'Banco de Proyectos, Propuestas Pedagógicas & Futuras Funciones',
+    description: 'Espacio de ideación y banco central para registrar, incubar y priorizar proyectos futuros para Creatika, 100tek, LAB, Tienda y Sutz.',
     icon: '💡',
     targetTab: 'pozo_ideas',
     color: '#8b5cf6',
     secondaryColor: '#a78bfa',
-    badge: 'Incubadora & Proyectos',
+    badge: 'Gran Galería & Proyectos',
     publicHubRoute: '/sutz'
   }
 };
@@ -338,23 +338,23 @@ export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
     ]
   },
 
-  // 6. 💡 POZO DE IDEAS: Incubadora y proyectos futuros
+  // 6. 💡 GRAN GALERÍA: Banco de proyectos y propuestas futuras
   {
     id: 'cat_pozo_ideas',
-    title: '💡 Pozo de Ideas (Incubadora)',
+    title: '💡 Gran Galería (Banco de Proyectos)',
     icon: '💡',
     projectPillar: 'pozo_ideas',
-    badge: 'INNOVACIÓN & PROYECTOS',
+    badge: 'GRAN GALERÍA & PROYECTOS',
     badgeColor: '#8b5cf6',
     items: [
       {
         id: 'pozo_ideas',
-        label: '💡 Pozo de Ideas & Banco de Proyectos',
+        label: '💡 Gran Galería & Banco de Proyectos',
         icon: '💡',
-        description: 'Banco de ideas para nuevas funciones, talleres, ejercicios y desarrollos organizados por pilar de Sutz',
-        keywords: ['pozo', 'ideas', 'innovacion', 'proyectos', 'incubadora', 'propuestas', 'futuro', 'sutz'],
+        description: 'Banco de proyectos para nuevas funciones, talleres, ejercicios y desarrollos organizados por pilar de Sutz',
+        keywords: ['gran', 'galeria', 'galería', 'proyectos', 'innovacion', 'incubadora', 'propuestas', 'futuro', 'sutz', 'pozo', 'ideas'],
         pillar: 'pozo_ideas',
-        roleDescription: 'Incubadora y banco de ideas para el ecosistema educativo'
+        roleDescription: 'Gran Galería y banco de proyectos para el ecosistema educativo'
       }
     ]
   }

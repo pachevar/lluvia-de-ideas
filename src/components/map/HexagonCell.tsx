@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import type { CustomHexagon } from '../../types';
 import { renderHexLayer } from './hexLayers';
+import { getHexPillarInfo } from '../../utils/hexPillarUtils';
 import './Hexagon.css';
 
 interface HexagonCellProps {
@@ -39,6 +40,7 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
   const isUnexplored = data.id?.startsWith('unexplored-');
   const hasAction = Boolean(data.action && data.action.type !== 'none');
   const hasBgImage = Boolean(data.layerBg && data.layerBg.type !== 'none' && data.layerBg.value);
+  const pillarInfo = getHexPillarInfo(data);
 
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current) {
@@ -190,7 +192,22 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
           <div className="hex-content">
             {renderHexLayer(data.layerInteractive, 'hex-interactive-content', true)}
             {data.title && !showLabel && (
-              <div className="hex-title-badge">
+              <div className={`hex-title-badge ${pillarInfo ? `has-pillar pillar-${pillarInfo.id}` : ''}`}>
+                {pillarInfo && (
+                  <div 
+                    className="hex-pillar-tag"
+                    title={`Reino: ${pillarInfo.label}`}
+                    style={{
+                      '--pillar-color': pillarInfo.color,
+                      '--pillar-glow': pillarInfo.glow,
+                      '--pillar-bg': pillarInfo.bgTint,
+                      '--pillar-border': pillarInfo.borderTint
+                    } as React.CSSProperties}
+                  >
+                    <span className="hex-pillar-icon">{pillarInfo.icon}</span>
+                    <span className="hex-pillar-label">{pillarInfo.label}</span>
+                  </div>
+                )}
                 <span className="hex-title-text">{data.title}</span>
               </div>
             )}

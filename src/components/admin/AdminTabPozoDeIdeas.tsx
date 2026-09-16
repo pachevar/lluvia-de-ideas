@@ -163,7 +163,7 @@ export default function AdminTabPozoDeIdeas({ localConfig, setLocalConfig }: Adm
   };
 
   const handleDeleteIdea = (id: string) => {
-    if (!window.confirm('¿Seguro que deseas eliminar esta propuesta del Pozo de Ideas?')) return;
+    if (!window.confirm('¿Seguro que deseas eliminar esta propuesta de la Gran Galería?')) return;
     setLocalConfig(prev => {
       if (!prev || !prev.pozoIdeas) return prev;
       return {
@@ -198,10 +198,10 @@ export default function AdminTabPozoDeIdeas({ localConfig, setLocalConfig }: Adm
     <div className="admin-card card-glass animate-fade-in pozo-ideas-container">
       <div className="admin-section-header-banner" style={{ borderLeft: '4px solid #8b5cf6', paddingLeft: '1rem', marginBottom: '1.5rem' }}>
         <h3 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', margin: 0, color: '#f8fafc' }}>
-          <span>💡</span> Pozo de Ideas & Banco de Proyectos (Ecosistema Sutz)
+          <span>💡</span> Gran Galería & Banco de Proyectos (Ecosistema Sutz)
         </h3>
         <p className="tab-section-desc" style={{ marginTop: '0.4rem', color: '#94a3b8' }}>
-          Incubadora de innovación para registrar y organizar todas las propuestas, talleres, guías y funcionalidades futuras, asignadas a los pilares de Sutz: <strong>Creatika</strong>, <strong>100tek</strong>, <strong>LAB</strong>, <strong>Mercado</strong> o al <strong>Núcleo Sutz</strong>.
+          Gran Galería e incubadora de innovación para registrar y organizar todas las propuestas, proyectos, talleres, guías y funcionalidades futuras, asignadas a los pilares de Sutz: <strong>Creatika</strong>, <strong>100tek</strong>, <strong>Tienda</strong>, <strong>LAB</strong>, <strong>Mercado</strong> o al <strong>Núcleo Sutz</strong>.
         </p>
       </div>
 

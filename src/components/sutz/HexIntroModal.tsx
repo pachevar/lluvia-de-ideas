@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import type { CustomHexagon } from '../../types';
 import { sutzAudio } from '../../utils/sutzSoundEffects';
+import { getHexPillarInfo } from '../../utils/hexPillarUtils';
 import './HexIntroModal.css';
 
 interface HexIntroModalProps {
@@ -12,6 +13,7 @@ interface HexIntroModalProps {
 export const HexIntroModal: React.FC<HexIntroModalProps> = ({ hexagon, onClose, onEnter }) => {
   const mountTimeRef = useRef<number>(Date.now());
   const intro = hexagon.introModal;
+  const pillarInfo = getHexPillarInfo(hexagon);
 
   // Defaults inteligentes si el admin aún no ha personalizado algún campo
   const characterName = intro?.characterName?.trim() || 'Guardián de Sutz';
@@ -130,6 +132,26 @@ export const HexIntroModal: React.FC<HexIntroModalProps> = ({ hexagon, onClose, 
         <div className="sutz-intro-header">
           <div className="sutz-intro-tag">
             <span className="sutz-intro-tag-dot"></span>
+            {pillarInfo && (
+              <span 
+                style={{
+                  background: pillarInfo.bgTint,
+                  border: `1px solid ${pillarInfo.borderTint}`,
+                  color: pillarInfo.color,
+                  padding: '2px 7px',
+                  borderRadius: '6px',
+                  fontSize: '0.72rem',
+                  fontWeight: 700,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '4px',
+                  marginRight: '6px'
+                }}
+              >
+                <span>{pillarInfo.icon}</span>
+                <span>{pillarInfo.label}</span>
+              </span>
+            )}
             <span className="sutz-intro-tag-label">DESTINO:</span>
             <span className="sutz-intro-tag-title">{hexagon.title || 'EXPLORACIÓN'}</span>
           </div>

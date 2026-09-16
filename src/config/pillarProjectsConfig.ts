@@ -23,9 +23,10 @@ export const PILLAR_CATEGORIES: PillarCategory[] = [
   { id: 'todos', name: 'Todos los Reinos & Rutas', label: 'Todos', icon: '🌐' },
   { id: 'creatika', name: 'Creatika (Artes & Humanidades)', label: 'Creatika', icon: '✨' },
   { id: '100tek', name: '100tek (Ciencia, Lógica & Tecnología)', label: '100tek', icon: '⚡' },
+  { id: 'tienda', name: 'Tienda (Catálogo de Cuentos & Libros)', label: 'Tienda', icon: '📚' },
   { id: 'lab', name: 'LAB (Prácticas, Talleres & Guías)', label: 'LAB', icon: '🧪' },
-  { id: 'mercado', name: 'Mercado (Tienda en Línea & Boletos)', label: 'Mercado', icon: '🛍️' },
-  { id: 'pozo_ideas', name: 'Pozo de Ideas (Proyectos & Sugerencias)', label: 'Pozo de Ideas', icon: '💡' },
+  { id: 'mercado', name: 'Mercado (Bingotenango & Taquilla)', label: 'Mercado', icon: '🛍️' },
+  { id: 'gran_galeria', name: 'Gran Galería (Banco de Proyectos & Propuestas)', label: 'Gran Galería', icon: '💡' },
   { id: 'sutz', name: 'Sutz (Mundo Virtual, Árbol & Relatos)', label: 'Sutz', icon: '☁️' },
   { id: 'personalizados', name: 'Nuevas Apps & Páginas Propias', label: 'Personalizados', icon: '⭐' },
 ];
@@ -44,20 +45,23 @@ export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
   { id: '100tek_solar', label: '🪐 Sistema Solar 3D', target: '/100tek/sistema-solar', type: 'navigate', pillarId: '100tek' },
   { id: '100tek_secuencias', label: '🔢 Secuencias Numéricas', target: '/100tek/secuencias-numericas', type: 'navigate', pillarId: '100tek' },
 
+  // 📚 Tienda (Libros y Catálogo)
+  { id: 'tienda_principal', label: '📚 Tienda de Libros & Cuentos', target: '/tienda', type: 'navigate', pillarId: 'tienda' },
+  { id: 'tienda_catalogo', label: '📖 Catálogo Editorial de Libros', target: '/libros', type: 'navigate', pillarId: 'tienda' },
+
   // 🧪 LAB (Prácticas, Talleres y Guías de Tareas)
   { id: 'lab_home', label: '🧪 LAB: Todos los Módulos', target: '/laboratorios', type: 'navigate', pillarId: 'lab' },
   { id: 'lab_animacion', label: '🎬 LAB Animación Educativa', target: '/animacion-educativa', type: 'navigate', pillarId: 'lab' },
   { id: 'lab_robotica', label: '🤖 LAB Robótica Educativa', target: '/robotica-educativa', type: 'navigate', pillarId: 'lab' },
   { id: 'lab_cientifico', label: '💡 LAB Pensamiento Científico', target: '/pensamiento-cientifico', type: 'navigate', pillarId: 'lab' },
 
-  // 🛍️ Mercado (Tienda en Línea & Comercial)
-  { id: 'mercado_tienda', label: '🛍️ Tienda de Libros & Cuentos', target: '/tienda', type: 'navigate', pillarId: 'mercado' },
+  // 🛍️ Mercado (Bingotenango & Comercial)
   { id: 'mercado_bingo_lobby', label: '🎲 Bingotenango (Lobby & Dinámica)', target: '/juegos/bingo', type: 'navigate', pillarId: 'mercado' },
   { id: 'mercado_bingo_boletos', label: '🎟️ Boletos Bingotenango', target: '/juegos/bingo/boletos', type: 'navigate', pillarId: 'mercado' },
   { id: 'mercado_cotizador', label: '💼 Cotizador Web', target: '/gerencia', type: 'navigate', pillarId: 'mercado' },
 
-  // 💡 Pozo de Ideas (Banco de Proyectos & Sugerencias)
-  { id: 'pozo_ideas_panel', label: '💡 Pozo de Ideas', target: '/gerencia', type: 'navigate', pillarId: 'pozo_ideas' },
+  // 💡 Gran Galería (Banco de Proyectos & Sugerencias)
+  { id: 'gran_galeria_panel', label: '💡 Gran Galería (Banco de Proyectos)', target: '/gerencia', type: 'navigate', pillarId: 'gran_galeria' },
 
   // ☁️ Sutz (Mundo Virtual, Popol Vuh & Árbol Tecnológico)
   { id: 'sutz_mapa', label: '🗺️ Mundo Virtual Sutz', target: '/sutz', type: 'navigate', pillarId: 'sutz' },
