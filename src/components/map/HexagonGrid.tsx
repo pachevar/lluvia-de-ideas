@@ -84,22 +84,6 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   const [isVisibilityMenuOpen, setIsVisibilityMenuOpen] = useState(false);
   const visibilityMenuRef = React.useRef<HTMLDivElement>(null);
 
-  // Cerrar menú de visibilidad al hacer clic o tap fuera
-  React.useEffect(() => {
-    if (!isVisibilityMenuOpen) return;
-    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
-      if (visibilityMenuRef.current && !visibilityMenuRef.current.contains(e.target as Node)) {
-        setIsVisibilityMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    document.addEventListener('touchstart', handleClickOutside);
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-      document.removeEventListener('touchstart', handleClickOutside);
-    };
-  }, [isVisibilityMenuOpen]);
-
   const toggleTitles = () => {
     setShowTitles(prev => {
       const next = !prev;

@@ -65,7 +65,7 @@ function App() {
   const isSutzView = currentPath === '/sutz' || currentPath.startsWith('/sutz') || currentPath === '/mundo-virtual';
 
   return (
-    <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''}`}>
+    <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''} ${isSutzView ? 'sutz-view-full' : ''}`}>
       {/* Main Content Area */}
       <main className="main-content">
         <Suspense fallback={<PageLoader />}>
@@ -126,8 +126,8 @@ function App() {
         </Suspense>
       </main>
 
-      {/* Footer (oculto en el lobby y salas de bingo para experiencia gamer limpia) */}
-      {!currentPath.includes('/bingo') && currentPath !== '/juegos' && (
+      {/* Footer (oculto en el lobby/salas de bingo y en Sutz para experiencia inmersiva limpia) */}
+      {!currentPath.includes('/bingo') && currentPath !== '/juegos' && !isSutzView && (
         <footer className="app-footer card-glass">
           <p>© 2026 Editorial Lluvia de Ideas. Todos los derechos reservados.</p>
         </footer>

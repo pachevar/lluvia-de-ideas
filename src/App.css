@@ -12,8 +12,9 @@
   transition: padding-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Modo Full-Width para Tienda Oficial de Boletos (elimina contenedor negro restrictivo) */
-.app-container.boletos-view-full {
+/* Modo Full-Width para Tienda Oficial de Boletos y Mundo Virtual Sutz (elimina contenedor negro y espacios sobrantes) */
+.app-container.boletos-view-full,
+.app-container.sutz-view-full {
   max-width: 100% !important;
   width: 100% !important;
   margin: 0 !important;
@@ -23,14 +24,17 @@
   background: transparent !important;
 }
 
-.app-container.boletos-view-full .main-content {
+.app-container.boletos-view-full .main-content,
+.app-container.sutz-view-full .main-content {
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
 }
 
-.app-container.boletos-view-full .app-footer {
+.app-container.boletos-view-full .app-footer,
+.app-container.sutz-view-full .app-footer {
+  display: none !important;
   margin: 0 !important;
   border-radius: 0 !important;
 }
