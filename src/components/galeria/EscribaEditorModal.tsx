@@ -27,6 +27,43 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
   const [showPasteGuideModal, setShowPasteGuideModal] = useState<boolean>(false);
   const [pasteGuideReason, setPasteGuideReason] = useState<'paste' | 'copy'>('paste');
 
+  // Mobile Tools Drawer State & Long-Press Handler
+  const [showMobileTools, setShowMobileTools] = useState<boolean>(false);
+  const [isPressingTools, setIsPressingTools] = useState<boolean>(false);
+  const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const isLongPressTriggeredRef = useRef<boolean>(false);
+
+  const handleToolsTouchStart = () => {
+    setIsPressingTools(true);
+    isLongPressTriggeredRef.current = false;
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressTriggeredRef.current = true;
+      setIsPressingTools(false);
+      soundEffects.playSpacePulse();
+      setShowMobileTools(prev => !prev);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(40); } catch {}
+      }
+    }, 320);
+  };
+
+  const handleToolsTouchEnd = () => {
+    setIsPressingTools(false);
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+  };
+
+  const handleToolsClick = () => {
+    if (isLongPressTriggeredRef.current) {
+      isLongPressTriggeredRef.current = false;
+      return;
+    }
+    soundEffects.playClick();
+    setShowMobileTools(prev => !prev);
+  };
+
   // Form states
   const [title, setTitle] = useState(initialData?.title || '');
   const [genre, setGenre] = useState<LiteraryGenre>(initialData?.genre || 'fantasia');
@@ -198,6 +235,8 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
       if (e.key === 'Escape') {
         if (showPasteGuideModal) {
           setShowPasteGuideModal(false);
+        } else if (showMobileTools) {
+          setShowMobileTools(false);
         } else {
           onClose();
         }
@@ -205,7 +244,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose, showPasteGuideModal]);
+  }, [isOpen, onClose, showPasteGuideModal, showMobileTools]);
 
   // Ortotipographic Insertion Helper
   const insertTextAtCursor = (prefix: string, suffix: string = '', defaultPlaceholder: string = '') => {
@@ -411,14 +450,11 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                         <span className="pseudonym-toggle-title">
                           🎭 Publicar bajo un seudónimo literario
                         </span>
-                        <span className="pseudonym-toggle-desc">
-                          Firma con un alias artístico para proteger tu identidad. El registro de tu escuela y grado se vinculará internamente en la plataforma.
-                        </span>
                       </div>
                     </label>
                   </div>
 
-                  {usePseudonym ? (
+                  {usePseudonym && (
                     <div className="escriba-pseudonym-input-row animate-fade-in">
                       <div className="pseudonym-input-wrapper">
                         <span className="pseudonym-icon">🪶</span>
@@ -427,7 +463,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                           type="text"
                           value={pseudonym}
                           onChange={(e) => setPseudonym(e.target.value)}
-                          placeholder="Escribe tu seudónimo (ej: Pluma del Viento, Sombra de Jade...)"
+                          placeholder="Escribe tu seudónimo (ej: Pluma del Viento...)"
                           maxLength={40}
                         />
                       </div>
@@ -437,12 +473,8 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                         onClick={handleRandomPseudonym}
                         title="Generar un seudónimo literario aleatorio"
                       >
-                        <span>🎲</span> Seudónimo Aleatorio
+                        <span>🎲</span> Aleatorio
                       </button>
-                    </div>
-                  ) : (
-                    <div className="escriba-pseudonym-notice">
-                      <span>👤</span> Publicarás como <strong>Autor Estudiantil</strong> vinculado a tu cuenta escolar.
                     </div>
                   )}
                 </div>
@@ -459,8 +491,204 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                 </div>
               </div>
 
-              {/* ORTOTIPOGRAPHIC TOOLBAR & PEDAGOGICAL ASSISTANT */}
-              <div className="escriba-toolbar-wrapper">
+              {/* BARRA DE HERRAMIENTAS MÓVIL: UN SOLO BOTÓN DE ENTRADA CON DESPLIEGUE POR PULSACIÓN SOSTENIDA */}
+              <div className="escriba-toolbar-mobile">
+                <div className="escriba-mobile-bar-inner">
+                  {/* Deshacer y Rehacer al alcance inmediato */}
+                  <div className="escriba-mobile-history">
+                    <button
+                      type="button"
+                      className="escriba-history-btn"
+                      onClick={handleUndo}
+                      disabled={!canUndo}
+                      title="Deshacer último cambio (Ctrl+Z)"
+                      aria-label="Deshacer cambio"
+                    >
+                      <span>↩</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="escriba-history-btn"
+                      onClick={handleRedo}
+                      disabled={!canRedo}
+                      title="Rehacer cambio (Ctrl+Y)"
+                      aria-label="Rehacer cambio"
+                    >
+                      <span>↪</span>
+                    </button>
+                  </div>
+
+                  {/* Botón único de entrada con pulsación sostenida o toque */}
+                  <button
+                    type="button"
+                    className={`escriba-mobile-tools-trigger ${isPressingTools ? 'is-pressing' : ''} ${showMobileTools ? 'active' : ''}`}
+                    onTouchStart={handleToolsTouchStart}
+                    onTouchEnd={handleToolsTouchEnd}
+                    onTouchCancel={handleToolsTouchEnd}
+                    onMouseDown={handleToolsTouchStart}
+                    onMouseUp={handleToolsTouchEnd}
+                    onClick={handleToolsClick}
+                    title="Mantén presionado o toca para abrir herramientas ortotipográficas y estilo"
+                  >
+                    <span className="trigger-icon">🔤</span>
+                    <span className="trigger-label">Herramientas Ortotipográficas y Estilo</span>
+                    <span className={`trigger-chevron ${showMobileTools ? 'open' : ''}`}>▼</span>
+                    {isPressingTools && <span className="press-pulse-ring"></span>}
+                  </button>
+                </div>
+
+                {/* MENÚ / PANEL DESPLEGABLE DE OPCIONES EN MÓVIL */}
+                {showMobileTools && (
+                  <div className="escriba-mobile-tools-drawer animate-fade-in">
+                    <div className="drawer-header">
+                      <div className="drawer-title">
+                        <span>🔤</span> Herramientas Ortotipográficas y Estilo
+                      </div>
+                      <button
+                        type="button"
+                        className="drawer-close-btn"
+                        onClick={() => {
+                          soundEffects.playClick();
+                          setShowMobileTools(false);
+                        }}
+                        aria-label="Cerrar opciones"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <div className="drawer-section">
+                      <div className="drawer-section-label">⚡ DIÁLOGO Y NARRATIVA</div>
+                      <div className="drawer-tools-grid">
+                        <button
+                          type="button"
+                          className="drawer-tool-btn"
+                          onClick={() => {
+                            handleInsertRayaDialogo();
+                            setShowMobileTools(false);
+                          }}
+                        >
+                          <span className="tool-chip">—</span>
+                          <span className="tool-name">Diálogo (Raya)</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="drawer-tool-btn"
+                          onClick={() => {
+                            handleInsertAcotacion();
+                            setShowMobileTools(false);
+                          }}
+                        >
+                          <span className="tool-chip">—acotación—</span>
+                          <span className="tool-name">Narrador</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="drawer-tool-btn"
+                          onClick={() => {
+                            handleInsertComillasLatinas();
+                            setShowMobileTools(false);
+                          }}
+                        >
+                          <span className="tool-chip">« »</span>
+                          <span className="tool-name">Comillas Latinas</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="drawer-section">
+                      <div className="drawer-section-label">📜 ESTRUCTURA LITERARIA</div>
+                      <div className="drawer-tools-grid">
+                        <button
+                          type="button"
+                          className="drawer-tool-btn"
+                          onClick={() => {
+                            handleInsertSaltoEstrofa();
+                            setShowMobileTools(false);
+                          }}
+                        >
+                          <span className="tool-chip">🎶</span>
+                          <span className="tool-name">Salto de Estrofa</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="drawer-tool-btn"
+                          onClick={() => {
+                            handleInsertSeparadorEscena();
+                            setShowMobileTools(false);
+                          }}
+                        >
+                          <span className="tool-chip">✦ ✦ ✦</span>
+                          <span className="tool-name">Códice Escénico</span>
+                        </button>
+                        <button
+                          type="button"
+                          className="drawer-tool-btn"
+                          onClick={() => {
+                            handleInsertAcotacionTeatral();
+                            setShowMobileTools(false);
+                          }}
+                        >
+                          <span className="tool-chip">🎭</span>
+                          <span className="tool-name">Acotación Teatral</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="drawer-section">
+                      <div className="drawer-section-label">🎨 LIENZO DE ESCRITURA</div>
+                      <div className="drawer-themes-row">
+                        <button
+                          type="button"
+                          className={`drawer-theme-btn ${editorTheme === 'papiro' ? 'active' : ''}`}
+                          onClick={() => {
+                            soundEffects.playClick();
+                            setEditorTheme('papiro');
+                          }}
+                        >
+                          📜 Papiro
+                        </button>
+                        <button
+                          type="button"
+                          className={`drawer-theme-btn ${editorTheme === 'noche' ? 'active' : ''}`}
+                          onClick={() => {
+                            soundEffects.playClick();
+                            setEditorTheme('noche');
+                          }}
+                        >
+                          🌌 Tinta Cósmica
+                        </button>
+                        <button
+                          type="button"
+                          className={`drawer-theme-btn ${editorTheme === 'manuscrito' ? 'active' : ''}`}
+                          onClick={() => {
+                            soundEffects.playClick();
+                            setEditorTheme('manuscrito');
+                          }}
+                        >
+                          🕯️ Manuscrito
+                        </button>
+                      </div>
+                    </div>
+
+                    <div className="drawer-section drawer-help-section">
+                      <button
+                        type="button"
+                        className="drawer-help-btn"
+                        onClick={() => {
+                          soundEffects.playClick();
+                          setShowManual(!showManual);
+                        }}
+                      >
+                        <span>💡</span> {showManual ? 'Ocultar Manual del Escriba' : 'Ver Manual del Escriba (Reglas RAE)'}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* ORTOTIPOGRAPHIC TOOLBAR (DESKTOP) */}
+              <div className="escriba-toolbar-wrapper escriba-toolbar-desktop">
                 <div className="escriba-toolbar-header">
                   <span className="escriba-toolbar-title">
                     <span>🔤</span> Herramientas Ortotipográficas & Estilo
