@@ -277,32 +277,51 @@ export default function Sutz() {
   // =========================================================================
   // GESTIÓN DE SESIÓN ÚNICA Y PRESENCIA ESCOLAR EN SUTZ
   // =========================================================================
+  const isConflictRef = useRef(false);
+  isConflictRef.current = isSessionConflictOpen;
+
   useEffect(() => {
     if (!user?.uid) return;
 
     const studentName = userProfile?.displayName || user.displayName || (user.email ? user.email.split('@')[0] : 'Estudiante');
 
     // 1. Iniciar sesión única en Firestore para este UID
-    setIsSessionConflictOpen(false);
-    startSutzSession(user.uid, studentName, user.email).catch(err => {
+    startSutzSession(user.uid, studentName, user.email).then((result) => {
+      if (result.hasConflict && result.remoteSession) {
+        setRemoteSession(result.remoteSession);
+        setIsSessionConflictOpen(true);
+        sutzAudio.playError();
+      } else {
+        setIsSessionConflictOpen(false);
+      }
+    }).catch(err => {
       console.warn('Error iniciando sesión única en Sutz:', err);
     });
 
     // 2. Escuchar conflictos de sesión concurrente solo si hay otra pestaña activa reciente
-    const unsubSession = listenToSutzSession(user.uid, (remote) => {
-      setRemoteSession(remote);
-      setIsSessionConflictOpen(true);
-      sutzAudio.playError();
-    });
+    const unsubSession = listenToSutzSession(
+      user.uid, 
+      (remote) => {
+        setRemoteSession(remote);
+        setIsSessionConflictOpen(true);
+        sutzAudio.playError();
+      },
+      () => {
+        // Conflicto resuelto o este dispositivo retomó el control
+        setIsSessionConflictOpen(false);
+      }
+    );
 
     // 3. Escuchar conteo de compañeros en línea
     const unsubPeers = listenToOnlineStudents((peers) => {
       setOnlinePeersCount(peers.length);
     });
 
-    // 4. Heartbeat periódico cada 40 segundos
+    // 4. Heartbeat periódico cada 40 segundos (solo si este dispositivo está en control activo)
     const heartbeatInterval = setInterval(() => {
-      heartbeatSutzSession(user.uid);
+      if (!isConflictRef.current) {
+        heartbeatSutzSession(user.uid);
+      }
     }, 40000);
 
     return () => {

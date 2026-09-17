@@ -18,12 +18,14 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
 }) => {
   const { user, userProfile, logout } = useAuth();
   const navigate = useNavigate();
+  const [isReclaiming, setIsReclaiming] = React.useState(false);
 
   if (!isOpen) return null;
 
   const handleReclaim = async () => {
+    if (isReclaiming || !user) return;
+    setIsReclaiming(true);
     sutzAudio.playClick();
-    if (!user) return;
     try {
       const studentName = userProfile?.displayName || user.displayName || 'Estudiante Explorador';
       await reclaimSutzSession(user.uid, studentName, user.email);
@@ -31,6 +33,8 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
       onSessionReclaimed();
     } catch (err) {
       console.error('Error al reclamar la sesión de Sutz:', err);
+    } finally {
+      setIsReclaiming(false);
     }
   };
 
@@ -155,20 +159,25 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
             onClick={handleReclaim}
+            disabled={isReclaiming}
             style={{
               width: '100%',
               padding: '13px',
               borderRadius: '14px',
-              background: 'linear-gradient(135deg, #0284c7 0%, #0284c7 50%, #10b981 100%)',
+              background: isReclaiming 
+                ? 'rgba(2, 132, 199, 0.45)'
+                : 'linear-gradient(135deg, #0284c7 0%, #0284c7 50%, #10b981 100%)',
               border: '1px solid rgba(255, 255, 255, 0.3)',
               color: '#ffffff',
               fontSize: '0.92rem',
               fontWeight: 900,
-              cursor: 'pointer',
-              boxShadow: '0 6px 20px rgba(2, 132, 199, 0.4)'
+              cursor: isReclaiming ? 'wait' : 'pointer',
+              boxShadow: isReclaiming ? 'none' : '0 6px 20px rgba(2, 132, 199, 0.4)',
+              opacity: isReclaiming ? 0.75 : 1,
+              transition: 'all 0.2s ease'
             }}
           >
-            ⚡ Reclamar Control Aquí (Cerrar la otra sesión)
+            {isReclaiming ? '⏳ Reclamando control...' : '⚡ Reclamar Control Aquí (Cerrar la otra sesión)'}
           </button>
 
           <button
