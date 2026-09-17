@@ -168,12 +168,24 @@
 .gg-tabs-container {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-start;
   gap: 0.75rem;
   max-width: 1100px;
   margin: 0 auto;
   overflow-x: auto;
   padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.gg-tabs-container::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 960px) {
+  .gg-tabs-container {
+    justify-content: center;
+  }
 }
 
 .gg-tab-btn {
@@ -187,6 +199,7 @@
   color: #94a3b8;
   cursor: pointer;
   white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.25s ease;
 }
 
@@ -279,8 +292,24 @@
 
 .gg-chips-filter-list {
   display: flex;
-  flex-wrap: wrap;
+  align-items: center;
+  flex-wrap: nowrap;
+  overflow-x: auto;
   gap: 8px;
+  padding-bottom: 4px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+}
+
+.gg-chips-filter-list::-webkit-scrollbar {
+  display: none;
+}
+
+@media (min-width: 769px) {
+  .gg-chips-filter-list {
+    flex-wrap: wrap;
+    overflow-x: visible;
+  }
 }
 
 .gg-chip-btn {
@@ -291,6 +320,8 @@
   color: #cbd5e1;
   font-size: 0.82rem;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
   transition: all 0.2s ease;
 }
 
@@ -1625,4 +1656,331 @@
 
 .animate-bounce-subtle {
   animation: bounceSubtle 2.5s infinite;
+}
+
+/* ==========================================================================
+   OPTIMIZACIÓN RESPONSIVA COMPLETA: TABLETS & SMARTPHONES
+   Aprovechamiento máximo del ancho de pantalla, márgenes seguros y ergonomía táctil
+   ========================================================================== */
+
+/* 1. TABLETS (Hasta 1024px) */
+@media (max-width: 1024px) {
+  .gg-hero-banner {
+    padding: 3rem 1.25rem 2rem;
+  }
+
+  .gg-stats-ribbon {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 0.75rem;
+  }
+
+  .gg-texts-grid,
+  .gg-videos-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.15rem;
+  }
+
+  .gg-artworks-grid {
+    grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+    gap: 1.15rem;
+  }
+}
+
+/* 2. MÓVILES (Hasta 768px) */
+@media (max-width: 768px) {
+  /* Contenedor general sin desbordamientos */
+  .gran-galeria-page {
+    overflow-x: hidden;
+    width: 100%;
+  }
+
+  /* Hero Banner */
+  .gg-hero-banner {
+    padding: 2.25rem 0.85rem 1.5rem;
+  }
+
+  .gg-hero-badge-pill {
+    font-size: 0.74rem;
+    padding: 4px 12px;
+    margin-bottom: 0.85rem;
+  }
+
+  .gg-hero-title {
+    font-size: 1.85rem;
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+  }
+
+  .gg-hero-desc {
+    font-size: 0.94rem;
+    line-height: 1.5;
+    margin-bottom: 1.4rem;
+  }
+
+  /* Estadísticas Ribbon en 2 columnas */
+  .gg-stats-ribbon {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 0.6rem;
+    margin-bottom: 1.4rem;
+    width: 100%;
+  }
+
+  .gg-stat-box {
+    padding: 8px 10px;
+    gap: 8px;
+  }
+
+  .stat-icon {
+    font-size: 1.35rem;
+  }
+
+  .stat-info strong {
+    font-size: 1.15rem;
+  }
+
+  .stat-info span {
+    font-size: 0.68rem;
+  }
+
+  /* Botones del Hero a ancho completo */
+  .gg-hero-cta-row {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.6rem;
+  }
+
+  .gg-hero-cta-row button {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.95rem;
+  }
+
+  /* Tabs de Pabellones en móvil: desplazamiento horizontal fluido */
+  .gg-tabs-nav-wrapper {
+    padding: 0.45rem 0.5rem;
+  }
+
+  .gg-tabs-container {
+    gap: 0.5rem;
+    padding: 0 0.25rem 4px;
+  }
+
+  .gg-tab-btn {
+    padding: 7px 13px;
+    gap: 8px;
+  }
+
+  .tab-icon {
+    font-size: 1.2rem;
+  }
+
+  .tab-main-title {
+    font-size: 0.84rem;
+  }
+
+  .tab-sub-title {
+    font-size: 0.65rem;
+  }
+
+  /* Búsqueda y Chips */
+  .gg-search-filter-bar {
+    padding: 0 0.75rem;
+    margin: 1rem auto 0.75rem;
+    gap: 0.75rem;
+  }
+
+  .gg-search-input {
+    padding: 10px 36px 10px 36px;
+    font-size: 0.88rem;
+  }
+
+  /* Encabezado de Sección */
+  .gg-main-content-grid {
+    padding: 0 0.75rem;
+  }
+
+  .gg-section-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.75rem;
+    margin-bottom: 1.15rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .gg-section-title {
+    font-size: 1.25rem;
+  }
+
+  .gg-section-subtitle {
+    font-size: 0.82rem;
+    line-height: 1.45;
+  }
+
+  .gg-section-header-actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .gg-escriba-create-btn {
+    width: 100%;
+    justify-content: center;
+    padding: 0.75rem 1rem;
+    font-size: 0.92rem;
+  }
+
+  .gg-results-counter {
+    width: 100%;
+    text-align: center;
+    padding: 5px 8px;
+    font-size: 0.78rem;
+  }
+
+  /* Grids de Contenido: 1 columna en móvil para que las tarjetas aprovechen el 100% */
+  .gg-texts-grid,
+  .gg-artworks-grid,
+  .gg-videos-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .gg-story-card {
+    padding: 1.1rem;
+  }
+
+  .story-title {
+    font-size: 1.2rem;
+  }
+
+  .story-synopsis {
+    font-size: 0.86rem;
+  }
+
+  .story-card-footer {
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  .story-read-action-btn {
+    width: 100%;
+    text-align: center;
+    padding: 6px;
+  }
+
+  /* Concursos en móvil */
+  .gg-contest-card {
+    padding: 1.15rem;
+  }
+
+  .contest-title {
+    font-size: 1.2rem;
+  }
+
+  .contest-details-grid {
+    grid-template-columns: 1fr;
+    gap: 0.6rem;
+    padding: 0.75rem;
+  }
+
+  .contest-action-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  /* Modales de Lectura, Arte y Cine a pantalla completa o márgenes ajustados */
+  .gg-modal-overlay {
+    padding: 0.4rem;
+  }
+
+  .gg-reader-modal {
+    width: 100%;
+    max-width: 100%;
+    height: 94vh;
+    max-height: 94vh;
+    border-radius: 14px;
+  }
+
+  .gg-reader-toolbar {
+    padding: 0.6rem 0.85rem;
+    gap: 6px;
+  }
+
+  .gg-reader-body {
+    padding: 1.15rem 1rem;
+  }
+
+  .gg-reader-title {
+    font-size: 1.45rem;
+  }
+
+  .gg-reader-footer {
+    padding: 1rem 0.85rem;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .gg-reader-actions-bar {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .gg-theater-modal {
+    width: 100%;
+    border-radius: 12px;
+  }
+
+  .gg-theater-body {
+    padding: 1rem;
+  }
+
+  .gg-theater-meta-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+
+  .gg-submit-guide-modal {
+    padding: 1.25rem 1rem;
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .guide-step {
+    padding: 8px 10px;
+  }
+}
+
+/* 3. PANTALLAS PEQUEÑAS (Hasta 480px) */
+@media (max-width: 480px) {
+  .gg-hero-title {
+    font-size: 1.55rem;
+  }
+
+  .gg-tab-btn {
+    padding: 6px 11px;
+  }
+
+  .tab-main-title {
+    font-size: 0.78rem;
+  }
+
+  .tab-sub-title {
+    display: none;
+  }
+
+  .gg-stats-ribbon {
+    grid-template-columns: 1fr 1fr;
+    gap: 0.45rem;
+  }
+
+  .stat-info strong {
+    font-size: 1rem;
+  }
+
+  .art-meta-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
 }

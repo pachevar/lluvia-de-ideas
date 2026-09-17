@@ -835,26 +835,271 @@
   border-color: rgba(255, 255, 255, 0.3);
 }
 
-/* Responsive adjustments */
-@media (max-width: 768px) {
+/* ==========================================================================
+   OPTIMIZACIÓN RESPONSIVA: ESCRIBA EDITOR (TABLETS & SMARTPHONES)
+   ========================================================================== */
+
+/* 1. TABLETS (Hasta 1024px) */
+@media (max-width: 1024px) {
   .escriba-modal-container {
-    max-height: 96vh;
+    max-width: 95%;
+    max-height: 94vh;
   }
-  .escriba-modal-header,
-  .escriba-modal-body,
-  .escriba-modal-footer {
-    padding: 1rem;
+
+  .escriba-meta-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
+}
+
+/* 2. SMARTPHONES (Hasta 768px) */
+@media (max-width: 768px) {
+  .escriba-modal-backdrop {
+    padding: 0;
+    align-items: stretch;
+  }
+
+  .escriba-modal-container {
+    max-width: 100%;
+    width: 100%;
+    height: 100vh;
+    max-height: 100vh;
+    border-radius: 0;
+    border: none;
+  }
+
+  .escriba-modal-header {
+    padding: 0.75rem 0.85rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .escriba-header-title {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .escriba-header-icon {
+    font-size: 1.4rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .escriba-header-title h2 {
+    font-size: 1.05rem;
+  }
+
+  .escriba-header-title p {
+    display: none;
+  }
+
+  .escriba-header-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.35rem;
+  }
+
+  .escriba-tab-btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.78rem;
+    padding: 0.45rem 0.5rem;
+  }
+
+  .escriba-close-btn {
+    width: 32px;
+    height: 32px;
+    font-size: 0.95rem;
+  }
+
+  .escriba-modal-body {
+    padding: 0.85rem;
+    gap: 0.85rem;
+  }
+
+  /* Formulario a 1 columna y fuentes de 16px para evitar auto-zoom en iOS Safari */
   .escriba-meta-grid {
     grid-template-columns: 1fr;
+    padding: 0.85rem;
+    gap: 0.65rem;
   }
+
+  .escriba-field input,
+  .escriba-field select,
+  .escriba-field textarea {
+    font-size: 16px !important;
+    padding: 0.55rem 0.75rem;
+  }
+
+  /* Barra de herramientas móvil */
+  .escriba-toolbar-wrapper {
+    padding: 0.65rem 0.75rem;
+    gap: 0.45rem;
+  }
+
+  .escriba-toolbar-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+
+  .escriba-theme-selectors {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .escriba-theme-btn {
+    padding: 0.2rem 0.45rem;
+    font-size: 0.72rem;
+  }
+
+  .escriba-help-toggle-btn {
+    width: 100%;
+    justify-content: center;
+    margin-left: 0;
+    font-size: 0.78rem;
+    padding: 0.4rem;
+  }
+
+  /* Botones de estilo compactos y táctiles */
+  .escriba-tools-row {
+    gap: 0.35rem;
+  }
+
+  .escriba-history-group {
+    border: none;
+    margin-right: 0;
+    padding-right: 0;
+    width: 100%;
+    display: flex;
+    gap: 0.4rem;
+    margin-bottom: 0.25rem;
+  }
+
+  .escriba-history-btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.76rem;
+    padding: 0.35rem 0.45rem;
+  }
+
+  .escriba-tool-btn {
+    font-size: 0.76rem;
+    padding: 0.35rem 0.55rem;
+    flex-grow: 1;
+    justify-content: center;
+  }
+
+  .escriba-manual-grid {
+    grid-template-columns: 1fr;
+  }
+
+  /* Lienzo de escritura optimizado para teclados virtuales */
+  .escriba-textarea {
+    min-height: 280px;
+    font-size: 16px !important;
+    padding: 1rem 0.85rem;
+    line-height: 1.65;
+  }
+
+  /* Barra de métricas */
+  .escriba-stats-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+    padding: 0.6rem 0.75rem;
+    font-size: 0.75rem;
+  }
+
+  .escriba-stats-group {
+    flex-wrap: wrap;
+    gap: 0.65rem;
+    width: 100%;
+  }
+
+  /* Vista previa */
   .escriba-preview-parchment {
-    padding: 1.5rem;
+    padding: 1.25rem 0.85rem;
+    max-height: none;
+    border-radius: 10px;
   }
+
   .escriba-preview-title {
-    font-size: 1.5rem;
+    font-size: 1.4rem;
   }
+
+  .escriba-preview-synopsis {
+    padding: 0.65rem 0.85rem;
+    font-size: 0.88rem;
+  }
+
+  /* Footer en móvil */
+  .escriba-modal-footer {
+    flex-direction: column;
+    gap: 0.6rem;
+    padding: 0.75rem 0.85rem;
+  }
+
+  .escriba-footer-note {
+    font-size: 0.72rem;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .escriba-footer-buttons {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .escriba-btn-cancel {
+    flex: 1;
+    justify-content: center;
+    padding: 0.65rem 0.5rem;
+    font-size: 0.84rem;
+  }
+
+  .escriba-btn-submit {
+    flex: 2;
+    justify-content: center;
+    padding: 0.65rem 0.75rem;
+    font-size: 0.88rem;
+  }
+
+  /* Modal Guía del Personaje en móvil */
   .escriba-guide-modal {
-    padding: 1.5rem;
+    width: 95%;
+    max-width: 420px;
+    padding: 1.5rem 1.15rem;
+    border-radius: 18px;
+  }
+
+  .escriba-guide-avatar {
+    width: 70px;
+    height: 70px;
+    font-size: 2.25rem;
+  }
+
+  .escriba-guide-title {
+    font-size: 1.15rem;
+  }
+
+  .escriba-guide-message {
+    padding: 0.85rem;
+    font-size: 0.84rem;
+    line-height: 1.45;
+    margin-bottom: 1.15rem;
+  }
+
+  .escriba-guide-reason-item {
+    font-size: 0.80rem;
+  }
+
+  .escriba-guide-btn-primary {
+    font-size: 0.88rem;
+    padding: 0.7rem 1rem;
+  }
+
+  .escriba-guide-btn-secondary {
+    font-size: 0.80rem;
+    padding: 0.5rem 0.75rem;
   }
 }
