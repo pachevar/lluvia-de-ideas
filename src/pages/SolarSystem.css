@@ -48,6 +48,124 @@
   margin-bottom: 35px;
 }
 
+/* Barra Superior con botón Volver al Mapa */
+.solar-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.solar-top-spacer {
+  width: 140px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.solar-back-map-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  min-height: 42px;
+  background: rgba(15, 23, 42, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 9999px;
+  color: #E2E8F0;
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  text-decoration: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.solar-back-map-btn:hover {
+  background: rgba(30, 41, 59, 0.92);
+  border-color: #38BDF8;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(56, 189, 248, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.solar-back-map-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.solar-back-map-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.solar-back-map-btn:hover .solar-back-map-icon {
+  transform: scale(1.18) rotate(-6deg);
+}
+
+.solar-back-map-text {
+  letter-spacing: 0.02em;
+}
+
+/* Botón Flotante Permanente para Retorno al Mapa Sutz */
+.solar-floating-map-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  min-height: 44px;
+  background: rgba(11, 19, 43, 0.88);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(56, 189, 248, 0.45);
+  border-radius: 9999px;
+  color: #F8FAFC;
+  font-family: var(--font-title);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.55), 0 0 16px rgba(56, 189, 248, 0.25);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.solar-floating-map-btn:hover {
+  background: rgba(20, 35, 75, 0.95);
+  border-color: #38BDF8;
+  color: #FFFFFF;
+  transform: translateY(-3px) scale(1.03);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.65), 0 0 24px rgba(56, 189, 248, 0.45);
+}
+
+.solar-floating-map-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.solar-floating-map-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.solar-floating-map-btn:hover .solar-floating-map-icon {
+  transform: scale(1.2) rotate(-8deg);
+}
+
+.solar-floating-map-text {
+  letter-spacing: 0.02em;
+}
+
 .solarsystem-badge {
   display: inline-block;
   padding: 6px 18px;
@@ -58,8 +176,8 @@
   text-transform: uppercase;
   border-radius: 9999px;
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
-  margin-bottom: 15px;
   letter-spacing: 0.05em;
+  margin: 0;
 }
 
 .solarsystem-title {
@@ -3711,6 +3829,35 @@
     padding: 0 8px;
   }
 
+  .solar-top-bar {
+    display: flex;
+    flex-direction: column-reverse;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
+  }
+
+  .solar-top-spacer {
+    display: none;
+  }
+
+  .solar-back-map-btn {
+    width: 100%;
+    max-width: 200px;
+    justify-content: center;
+    min-height: 38px;
+    padding: 6px 16px;
+    font-size: 0.85rem;
+  }
+
+  .solar-floating-map-btn {
+    bottom: 16px;
+    left: 12px;
+    padding: 7px 14px;
+    min-height: 38px;
+    font-size: 0.82rem;
+  }
+
   .solarsystem-title {
     font-size: 1.55rem;
     padding: 0 4px;
@@ -5272,6 +5419,21 @@
    AJUSTES ULTRA-COMPACTOS PARA SMARTPHONES ESTÁNDAR (<= 480px)
    ========================================================================== */
 @media (max-width: 480px) {
+  .solar-back-map-btn {
+    max-width: 180px;
+    font-size: 0.8rem;
+    padding: 5px 12px;
+  }
+
+  .solar-floating-map-btn {
+    bottom: 12px;
+    left: 8px;
+    padding: 6px 12px;
+    min-height: 36px;
+    font-size: 0.78rem;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6), 0 0 12px rgba(56, 189, 248, 0.25);
+  }
+
   .solarsystem-title {
     font-size: 1.35rem;
   }

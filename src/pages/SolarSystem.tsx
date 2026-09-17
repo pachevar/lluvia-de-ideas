@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { soundEffects } from '../utils/soundEffects';
 import './SolarSystem.css';
 
@@ -938,6 +939,8 @@ const KUIPER_BELT_DOTS = Array.from({ length: 90 }).map((_, idx) => {
 });
 
 export default function SolarSystem() {
+  const navigate = useNavigate();
+
   // Pestañas Principales
   const [activeTab, setActiveTab] = useState<'explorer' | 'scale' | 'spectroscopy' | 'physics'>('explorer');
 
@@ -1534,11 +1537,45 @@ export default function SolarSystem() {
 
   return (
     <div className={`solarsystem-container spectrum-${spectrumMode}`}>
+      {/* Botón flotante permanente para volver al mapa desde cualquier altura de la página */}
+      <button 
+        type="button" 
+        className="solar-floating-map-btn"
+        onClick={() => {
+          soundEffects.playClick();
+          navigate('/sutz');
+        }}
+        title="Volver al Mapa Virtual Sutz"
+        aria-label="Ir al mapa Sutz"
+      >
+        <span className="solar-floating-map-icon">🗺️</span>
+        <span className="solar-floating-map-text">Ir al mapa</span>
+      </button>
+
       <div className="solarsystem-content">
         
         {/* Encabezado Principal */}
         <header className="solarsystem-header animate-zoom-in">
-          <div className="solarsystem-badge">📡 Observatorio de Astrofísica Avanzada</div>
+          <div className="solar-top-bar">
+            <button 
+              type="button" 
+              className="solar-back-map-btn"
+              onClick={() => {
+                soundEffects.playClick();
+                navigate('/sutz');
+              }}
+              title="Volver al Mapa Virtual Sutz"
+              aria-label="Ir al mapa"
+            >
+              <span className="solar-back-map-icon">🗺️</span>
+              <span className="solar-back-map-text">Ir al mapa</span>
+            </button>
+
+            <div className="solarsystem-badge">📡 Observatorio de Astrofísica Avanzada</div>
+
+            <div className="solar-top-spacer" aria-hidden="true" />
+          </div>
+
           <h1 className="solarsystem-title">El Sistema Solar Interactivo</h1>
           <p className="solarsystem-subtitle">
             Explora las órbitas elípticas de Kepler, analiza atmósferas espectroscópicas y descubre el equilibrio físico del vecindario cósmico.
