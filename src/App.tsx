@@ -1,6 +1,5 @@
-import React, { useState, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
-import logoEditorial from './assets/logo editorial.png';
 import './App.css';
 import { useCart } from './context/CartContext';
 import { CONTACT } from './constants';
@@ -38,24 +37,10 @@ function App() {
   const { cart } = useCart();
   const currentPath = location.pathname;
 
-  // Sidebar Gamer State
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isSidebarCreatikaOpen, setIsSidebarCreatikaOpen] = useState(true);
-  const [isSidebarMercadoOpen, setIsSidebarMercadoOpen] = useState(false);
-  const [isSidebar100tekOpen, setIsSidebar100tekOpen] = useState(false);
-  const [isSidebarLaboratoriosOpen, setIsSidebarLaboratoriosOpen] = useState(false);
-
   const navigateTo = (path: string) => {
     soundEffects.playClick();
     navigate(path);
-    setIsSidebarOpen(false);
   };
-
-  const isCreatikaActive = currentPath.startsWith('/creatika') || currentPath.includes('codigo-docente') || currentPath.includes('codigo-estudiante');
-  const isMercadoActive = currentPath.startsWith('/tienda') || currentPath.startsWith('/juegos/bingo') || currentPath.startsWith('/bingo');
-  const is100tekActive = currentPath.startsWith('/100tek') || currentPath.startsWith('/herramientas') || currentPath.includes('sistema-solar');
-  const isLaboratoriosActive = currentPath.startsWith('/laboratorios');
-  const isTabActive = (path: string) => currentPath === path;
 
   // Specific check for Gerencia and Cotizacion View
   if (currentPath === '/gerencia' || currentPath.startsWith('/gerencia/') || currentPath.startsWith('/gerencia?') || currentPath.startsWith('/gerencia#')) {
@@ -81,196 +66,6 @@ function App() {
 
   return (
     <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''}`}>
-      {/* Tirador del Menú Lateral (Gamer HUD Trigger) */}
-      <button 
-        className={`gamer-sidebar-trigger ${isSidebarOpen ? 'open' : ''} ${isBingoCardView || isBoletosView ? 'hide-on-mobile-card' : ''} ${isSutzView ? 'hide-on-sutz' : ''}`}
-        onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-        aria-label={isSidebarOpen ? 'Cerrar menú' : 'Abrir menú'}
-      >
-        <div className="trigger-glow"></div>
-        <span className="trigger-arrow">{isSidebarOpen ? '◀' : '▶'}</span>
-        <span className="trigger-text">{isSidebarOpen ? 'CERRAR' : 'MENU'}</span>
-      </button>
-
-      {/* Menú Lateral Vertical (Gamer Sidebar) */}
-      <aside className={`gamer-sidebar ${isSidebarOpen ? 'open' : ''} ${isBingoCardView || isBoletosView ? 'hide-on-mobile-card' : ''} ${isSutzView ? 'hide-on-sutz' : ''}`}>
-        <div className="sidebar-header" onClick={() => navigateTo('/')} style={{ cursor: 'pointer' }}>
-          <img src={logoEditorial} className="sidebar-logo" alt="Lluvia de Ideas" />
-          <div className="sidebar-brand-text">
-            <h3>Lluvia de Ideas</h3>
-            <p>Portal</p>
-          </div>
-        </div>
-
-        <nav className="sidebar-nav">
-          <button 
-            className={`sidebar-link ${isTabActive('/') ? 'active' : ''}`}
-            onClick={() => navigateTo('/')}
-          >
-            <span className="sidebar-icon" aria-hidden="true">🏠</span> Inicio
-          </button>
-
-          <button 
-            className={`sidebar-link ${isTabActive('/sutz') || isTabActive('/mundo-virtual') ? 'active' : ''}`}
-            onClick={() => navigateTo('/sutz')}
-          >
-            <span className="sidebar-icon" aria-hidden="true">☁️</span> Sutz (Mundo Virtual)
-          </button>
-
-          {/* Menú Creatika */}
-          <div className={`sidebar-group ${isSidebarCreatikaOpen ? 'open' : ''}`}>
-            <button 
-              className={`sidebar-group-trigger ${isCreatikaActive ? 'active-parent' : ''}`}
-              onClick={() => setIsSidebarCreatikaOpen(!isSidebarCreatikaOpen)}
-            >
-              <span className="sidebar-icon" aria-hidden="true">✨</span> Creatika {isSidebarCreatikaOpen ? '▴' : '▾'}
-            </button>
-            <div className="sidebar-submenu">
-              <button 
-                className={`sidebar-sublink ${isTabActive('/creatika/maquina-de-cuentos') || isTabActive('/juegos/maquina-de-cuentos') ? 'active' : ''}`}
-                onClick={() => navigateTo('/creatika/maquina-de-cuentos')}
-              >
-                🎰 Máquina de Cuentos
-              </button>
-              <button 
-                className={`sidebar-sublink ${isTabActive('/creatika/teoria-del-color') || isTabActive('/100tek/teoria-del-color') || isTabActive('/herramientas/teoria-del-color') ? 'active' : ''}`}
-                onClick={() => navigateTo('/creatika/teoria-del-color')}
-              >
-                🎨 Teoría del Color
-              </button>
-              <button 
-                className={`sidebar-sublink ${isTabActive('/creatika/construyendo-el-personaje') || isTabActive('/construyendo-el-personaje') || isTabActive('/personajes') ? 'active' : ''}`}
-                onClick={() => navigateTo('/creatika/construyendo-el-personaje')}
-              >
-                🎭 Construyendo el Personaje
-              </button>
-              <button 
-                className={`sidebar-sublink ${isTabActive('/creatika/codigo-docente') || isTabActive('/codigo-docente') ? 'active' : ''}`}
-                onClick={() => navigateTo('/creatika/codigo-docente')}
-              >
-                📜 Código Docente
-              </button>
-              <button 
-                className={`sidebar-sublink ${isTabActive('/creatika/codigo-estudiante') || isTabActive('/codigo-estudiante') ? 'active' : ''}`}
-                onClick={() => navigateTo('/creatika/codigo-estudiante')}
-              >
-                🎓 Código del Estudiante
-              </button>
-            </div>
-          </div>
-          
-          {/* Menú Mercado */}
-          <div className={`sidebar-group ${isSidebarMercadoOpen ? 'open' : ''}`}>
-            <button 
-              className={`sidebar-group-trigger ${isMercadoActive ? 'active-parent' : ''}`}
-              onClick={() => setIsSidebarMercadoOpen(!isSidebarMercadoOpen)}
-            >
-              <span className="sidebar-icon" aria-hidden="true">🛍️</span> Mercado {isSidebarMercadoOpen ? '▴' : '▾'}
-            </button>
-            <div className="sidebar-submenu">
-              <button 
-                className={`sidebar-sublink ${isTabActive('/tienda') ? 'active' : ''}`}
-                onClick={() => navigateTo('/tienda')}
-              >
-                🛍️ Catálogo de Cuentos
-              </button>
-              <button 
-                className={`sidebar-sublink ${isTabActive('/juegos/bingo') || isTabActive('/bingo') ? 'active' : ''}`}
-                onClick={() => navigateTo('/juegos/bingo')}
-              >
-                🎲 Bingotenango (Bingo)
-              </button>
-              <button 
-                className={`sidebar-sublink ${isTabActive('/juegos/bingo/boletos') || isTabActive('/bingo/boletos') ? 'active' : ''}`}
-                onClick={() => navigateTo('/juegos/bingo/boletos')}
-              >
-                🎟️ Boletos Bingotenango
-              </button>
-            </div>
-          </div>
-
-          {/* Menú 100tek */}
-          <div className={`sidebar-group ${isSidebar100tekOpen ? 'open' : ''}`}>
-            <button 
-              className={`sidebar-group-trigger ${is100tekActive ? 'active-parent' : ''}`}
-              onClick={() => setIsSidebar100tekOpen(!isSidebar100tekOpen)}
-            >
-              <span className="sidebar-icon" aria-hidden="true">⚡</span> 100tek {isSidebar100tekOpen ? '▴' : '▾'}
-            </button>
-            <div className="sidebar-submenu">
-              <button 
-                className={`sidebar-sublink ${isTabActive('/100tek/secuencias-numericas') ? 'active' : ''}`}
-                onClick={() => navigateTo('/100tek/secuencias-numericas')}
-              >
-                🔢 Secuencias Numéricas
-              </button>
-              <button 
-                className={`sidebar-sublink ${isTabActive('/100tek/sistema-solar') || isTabActive('/herramientas/sistema-solar') ? 'active' : ''}`}
-                onClick={() => navigateTo('/100tek/sistema-solar')}
-              >
-                🪐 Sistema Solar
-              </button>
-            </div>
-          </div>
-
-          <button 
-            className={`sidebar-link ${isTabActive('/universo-de-juracan') ? 'active' : ''}`}
-            onClick={() => navigateTo('/universo-de-juracan')}
-          >
-            <span className="sidebar-icon" aria-hidden="true">🌪️</span> Universo de Juracán
-          </button>
-
-          <div className={`sidebar-group ${isSidebarLaboratoriosOpen ? 'open' : ''}`}>
-            <button 
-              className={`sidebar-group-trigger ${isLaboratoriosActive ? 'active-parent' : ''}`}
-              onClick={() => setIsSidebarLaboratoriosOpen(!isSidebarLaboratoriosOpen)}
-            >
-              <span className="sidebar-icon" aria-hidden="true">🧪</span> LAB {isSidebarLaboratoriosOpen ? '▴' : '▾'}
-            </button>
-            <div className="sidebar-submenu">
-              <button 
-                className={`sidebar-sublink ${isTabActive('/laboratorios/animacion-educativa') || isTabActive('/laboratorios') ? 'active' : ''}`}
-                onClick={() => navigateTo('/laboratorios/animacion-educativa')}
-              >
-                🎬 Animación Educativa
-              </button>
-            </div>
-          </div>
-
-          <button 
-            className={`sidebar-link ${isTabActive('/libros') || isTabActive('/nuestros-libros') ? 'active' : ''}`}
-            onClick={() => navigateTo('/libros')}
-          >
-            <span className="sidebar-icon" aria-hidden="true">📖</span> Nuestros Libros
-          </button>
-
-          <button 
-            className={`sidebar-link ${isTabActive('/gran-galeria') || isTabActive('/galeria') ? 'active' : ''}`}
-            onClick={() => navigateTo('/gran-galeria')}
-          >
-            <span className="sidebar-icon" aria-hidden="true">💡</span> Gran Galería (Pergamino & Museo)
-          </button>
-
-          <button 
-            className={`sidebar-link ${isTabActive('/neurociencia') ? 'active' : ''}`}
-            onClick={() => navigateTo('/neurociencia')}
-          >
-            <span className="sidebar-icon" aria-hidden="true">🧠</span> Neurociencia Aula
-          </button>
-        </nav>
-
-        <div className="sidebar-footer">
-          <p>© 2026 Lluvia de Ideas</p>
-        </div>
-      </aside>
-
-      {/* Overlay para cerrar el menú en móviles o haciendo clic fuera */}
-      <div 
-        className={`gamer-sidebar-overlay ${isSidebarOpen ? 'open' : ''}`}
-        onClick={() => setIsSidebarOpen(false)}
-      />
-
-
       {/* Main Content Area */}
       <main className="main-content">
         <Suspense fallback={<PageLoader />}>
