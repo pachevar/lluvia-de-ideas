@@ -291,7 +291,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
                 📐
               </button>
 
-              {/* Botón y Menú Desplegable de Visibilidad de Capas (Texto, Icono, Categoría) */}
+              {/* Botón de Visibilidad de Capas (Texto, Icono, Categoría) */}
               <div className="map-visibility-control-wrap" ref={visibilityMenuRef}>
                 <button 
                   type="button"
@@ -302,92 +302,129 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
                 >
                   {allHidden ? '🏞️' : '👁️'}
                 </button>
+              </div>
+            </div>
 
-                {isVisibilityMenuOpen && (
-                  <div className="map-visibility-popover animate-zoom-in">
-                    <div className="visibility-popover-header">
-                      <div className="visibility-popover-title-row">
-                        <span className="visibility-popover-icon">👁️</span>
-                        <span className="visibility-popover-title">Capas de Hexágonos</span>
+            {/* Modal / Panel Centrado y Responsivo de Visibilidad de Capas */}
+            {isVisibilityMenuOpen && (
+              <div className="map-visibility-backdrop" onClick={() => setIsVisibilityMenuOpen(false)}>
+                <div 
+                  className="map-visibility-modal animate-zoom-in" 
+                  onClick={e => e.stopPropagation()}
+                >
+                  <div className="visibility-modal-header">
+                    <div className="visibility-modal-title-row">
+                      <div className="visibility-modal-icon-badge">
+                        <span>{allHidden ? '🏞️' : '👁️'}</span>
                       </div>
-                      <button 
-                        type="button" 
-                        className="visibility-popover-close" 
-                        onClick={() => setIsVisibilityMenuOpen(false)}
-                        aria-label="Cerrar menú de capas"
-                      >
-                        ✕
-                      </button>
+                      <div className="visibility-modal-title-group">
+                        <h3 className="visibility-modal-title">Capas de Hexágonos</h3>
+                        <span className="visibility-modal-subtitle">Personaliza la claridad visual del mapa</span>
+                      </div>
+                    </div>
+                    <button 
+                      type="button" 
+                      className="visibility-modal-close" 
+                      onClick={() => setIsVisibilityMenuOpen(false)}
+                      aria-label="Cerrar panel de capas"
+                    >
+                      ✕
+                    </button>
+                  </div>
+
+                  <div className="visibility-modal-body">
+                    {/* Botón Destacado: MODO PANORÁMICO LIMPIO */}
+                    <button 
+                      type="button" 
+                      className={`visibility-panoramic-card-btn ${allHidden ? 'active' : ''}`}
+                      onClick={toggleAll}
+                    >
+                      <div className="panoramic-btn-icon-box">
+                        <span>{allHidden ? '✨' : '🏞️'}</span>
+                      </div>
+                      <div className="panoramic-btn-texts">
+                        <span className="panoramic-btn-title">
+                          {allHidden ? 'Restaurar Todos los Elementos' : 'Vista Panorámica Limpia'}
+                        </span>
+                        <span className="panoramic-btn-sub">
+                          {allHidden ? 'Vuelve a mostrar textos, iconos y categorías' : 'Oculta todo para contemplar el arte y mapa sin distracciones'}
+                        </span>
+                      </div>
+                    </button>
+
+                    <div className="visibility-divider">
+                      <span>O AJUSTA CAPAS INDIVIDUALMENTE</span>
                     </div>
 
-                    <p className="visibility-popover-hint">
-                      Activa o desactiva elementos para contemplar el mapa con mayor claridad:
-                    </p>
-
-                    <div className="visibility-popover-options">
+                    <div className="visibility-modal-options-list">
                       {/* 1. TEXTO / TÍTULOS */}
                       <button 
                         type="button"
-                        className={`visibility-toggle-item ${showTitles ? 'is-on' : 'is-off'}`}
+                        className={`visibility-layer-card ${showTitles ? 'is-active' : 'is-inactive'}`}
                         onClick={toggleTitles}
                       >
-                        <span className="visibility-item-icon">🔤</span>
-                        <div className="visibility-item-info">
-                          <span className="visibility-item-label">Texto / Nombres</span>
-                          <span className="visibility-item-state">{showTitles ? 'Visible' : 'Oculto'}</span>
+                        <div className="layer-card-icon-disc">
+                          <span>🔤</span>
                         </div>
-                        <span className={`visibility-checkbox ${showTitles ? 'checked' : ''}`}>
-                          {showTitles ? '✓' : ''}
-                        </span>
+                        <div className="layer-card-details">
+                          <span className="layer-card-name">Texto y Títulos</span>
+                          <span className="layer-card-desc">Nombres de hexágonos y puntos clave</span>
+                        </div>
+                        <div className={`layer-toggle-switch ${showTitles ? 'checked' : ''}`}>
+                          <div className="switch-knob" />
+                        </div>
                       </button>
 
-                      {/* 2. ICONOS */}
+                      {/* 2. ICONOS INTERACTIVOS */}
                       <button 
                         type="button"
-                        className={`visibility-toggle-item ${showIcons ? 'is-on' : 'is-off'}`}
+                        className={`visibility-layer-card ${showIcons ? 'is-active' : 'is-inactive'}`}
                         onClick={toggleIcons}
                       >
-                        <span className="visibility-item-icon">🎨</span>
-                        <div className="visibility-item-info">
-                          <span className="visibility-item-label">Iconos</span>
-                          <span className="visibility-item-state">{showIcons ? 'Visible' : 'Oculto'}</span>
+                        <div className="layer-card-icon-disc">
+                          <span>🎨</span>
                         </div>
-                        <span className={`visibility-checkbox ${showIcons ? 'checked' : ''}`}>
-                          {showIcons ? '✓' : ''}
-                        </span>
+                        <div className="layer-card-details">
+                          <span className="layer-card-name">Iconos Interactivos</span>
+                          <span className="layer-card-desc">Pictogramas y medallas centrales</span>
+                        </div>
+                        <div className={`layer-toggle-switch ${showIcons ? 'checked' : ''}`}>
+                          <div className="switch-knob" />
+                        </div>
                       </button>
 
-                      {/* 3. CATEGORÍAS */}
+                      {/* 3. CATEGORÍAS (REINOS) */}
                       <button 
                         type="button"
-                        className={`visibility-toggle-item ${showCategories ? 'is-on' : 'is-off'}`}
+                        className={`visibility-layer-card ${showCategories ? 'is-active' : 'is-inactive'}`}
                         onClick={toggleCategories}
                       >
-                        <span className="visibility-item-icon">👑</span>
-                        <div className="visibility-item-info">
-                          <span className="visibility-item-label">Categorías (Reinos)</span>
-                          <span className="visibility-item-state">{showCategories ? 'Visible' : 'Oculto'}</span>
+                        <div className="layer-card-icon-disc">
+                          <span>👑</span>
                         </div>
-                        <span className={`visibility-checkbox ${showCategories ? 'checked' : ''}`}>
-                          {showCategories ? '✓' : ''}
-                        </span>
-                      </button>
-                    </div>
-
-                    {/* MODO PANORÁMICO LIMPIO */}
-                    <div className="visibility-popover-footer">
-                      <button 
-                        type="button" 
-                        className={`visibility-panoramic-btn ${allHidden ? 'active' : ''}`}
-                        onClick={toggleAll}
-                      >
-                        <span>{allHidden ? '✨ Restaurar Elementos' : '🏞️ Vista Panorámica Limpia'}</span>
+                        <div className="layer-card-details">
+                          <span className="layer-card-name">Categorías (Reinos)</span>
+                          <span className="layer-card-desc">Insignias temáticas de cada pilar</span>
+                        </div>
+                        <div className={`layer-toggle-switch ${showCategories ? 'checked' : ''}`}>
+                          <div className="switch-knob" />
+                        </div>
                       </button>
                     </div>
                   </div>
-                )}
+
+                  <div className="visibility-modal-footer">
+                    <button 
+                      type="button" 
+                      className="visibility-modal-done-btn"
+                      onClick={() => setIsVisibilityMenuOpen(false)}
+                    >
+                      Listo / Explorar Mapa
+                    </button>
+                  </div>
+                </div>
               </div>
-            </div>
+            )}
             
             <TransformComponent 
               wrapperStyle={{ 
