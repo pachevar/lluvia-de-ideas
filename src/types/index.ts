@@ -240,6 +240,7 @@ export interface StudentTextItem {
   id: string;
   title: string;
   author: string;
+  isPseudonym?: boolean;
   authorGrade?: string;
   authorSchool?: string;
   authorAvatar?: string;

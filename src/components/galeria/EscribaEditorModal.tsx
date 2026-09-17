@@ -29,12 +29,43 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
 
   // Form states
   const [title, setTitle] = useState(initialData?.title || '');
-  const [author, setAuthor] = useState(initialData?.author || '');
-  const [authorGrade, setAuthorGrade] = useState(initialData?.authorGrade || '3ro Primaria');
-  const [authorSchool, setAuthorSchool] = useState(initialData?.authorSchool || 'Colegio Sutz');
   const [genre, setGenre] = useState<LiteraryGenre>(initialData?.genre || 'fantasia');
   const [synopsis, setSynopsis] = useState(initialData?.synopsis || '');
   const [content, setContent] = useState(initialData?.content || '');
+
+  // Pseudonym state (reemplaza solicitud manual de nombre, grado y colegio)
+  const [usePseudonym, setUsePseudonym] = useState<boolean>(
+    initialData?.isPseudonym ?? (Boolean(initialData?.author) && initialData?.author !== 'Autor Estudiantil')
+  );
+  const [pseudonym, setPseudonym] = useState<string>(
+    initialData?.author && initialData.author !== 'Autor Estudiantil' ? initialData.author : ''
+  );
+
+  const handleRandomPseudonym = () => {
+    soundEffects.playClick();
+    const creativePseudonyms = [
+      'Pluma del Viento',
+      'Escriba de las Estrellas',
+      'Sombra de Jade',
+      'El Fénix Literario',
+      'Búho de Medianoche',
+      'Alquimista de Tinta',
+      'Voz del Horizonte',
+      'Guardián de Relatos',
+      'Navegante del Tiempo',
+      'Códice Errante',
+      'Centinela de Palabras',
+      'Eco de la Selva',
+      'Lira Cósmica',
+      'Viajero de la Niebla',
+      'Forjador de Mitos',
+      'Luz de Obsidiana',
+      'Arquero de Versos'
+    ];
+    const randomIndex = Math.floor(Math.random() * creativePseudonyms.length);
+    setPseudonym(creativePseudonyms[randomIndex]);
+    if (!usePseudonym) setUsePseudonym(true);
+  };
 
   // History stack for Undo (Ctrl+Z) and Redo (Ctrl+Y / Ctrl+Shift+Z)
   const historyRef = useRef<string[]>([initialData?.content || '']);
@@ -48,9 +79,9 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
   useEffect(() => {
     if (initialData) {
       setTitle(initialData.title || '');
-      setAuthor(initialData.author || '');
-      setAuthorGrade(initialData.authorGrade || '3ro Primaria');
-      setAuthorSchool(initialData.authorSchool || 'Colegio Sutz');
+      const hasPseudo = initialData.isPseudonym ?? (Boolean(initialData.author) && initialData.author !== 'Autor Estudiantil');
+      setUsePseudonym(hasPseudo);
+      setPseudonym(initialData.author && initialData.author !== 'Autor Estudiantil' ? initialData.author : '');
       setGenre(initialData.genre || 'fantasia');
       setSynopsis(initialData.synopsis || '');
       setContent(initialData.content || '');
@@ -246,19 +277,24 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
   // Submission
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!title.trim() || !author.trim() || !content.trim()) {
-      alert('Por favor completa el Título, Autor y el Contenido de tu texto.');
+    if (!title.trim() || !content.trim()) {
+      alert('Por favor completa el Título y el Contenido de tu obra antes de publicar.');
       return;
     }
+
+    const resolvedAuthor = usePseudonym
+      ? (pseudonym.trim() || 'Escriba Anónimo')
+      : (initialData?.author || 'Autor Estudiantil');
 
     setIsSaving(true);
     try {
       const newText: StudentTextItem = {
         id: initialData?.id || `text-${Date.now()}`,
         title: title.trim(),
-        author: author.trim(),
-        authorGrade: authorGrade.trim() || 'Primaria',
-        authorSchool: authorSchool.trim() || 'Colegio Sutz',
+        author: resolvedAuthor,
+        isPseudonym: usePseudonym,
+        authorGrade: initialData?.authorGrade || '',
+        authorSchool: usePseudonym ? 'Seudónimo Literario' : (initialData?.authorSchool || 'Códice Estudiantil'),
         genre,
         synopsis: synopsis.trim() || title.trim(),
         content: content.trim(),
@@ -327,7 +363,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
             <form id="escriba-form" onSubmit={handleSubmit} className="escriba-form-layout">
               {/* METADATA GRID */}
               <div className="escriba-meta-grid">
-                <div className="escriba-field escriba-field-full">
+                <div className="escriba-field escriba-field-title">
                   <label htmlFor="escriba-title">📌 Título de la Obra *</label>
                   <input
                     id="escriba-title"
@@ -339,41 +375,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                   />
                 </div>
 
-                <div className="escriba-field">
-                  <label htmlFor="escriba-author">👤 Nombre del Estudiante / Autor *</label>
-                  <input
-                    id="escriba-author"
-                    type="text"
-                    value={author}
-                    onChange={(e) => setAuthor(e.target.value)}
-                    placeholder="Tu nombre o seudónimo literario"
-                    required
-                  />
-                </div>
-
-                <div className="escriba-field">
-                  <label htmlFor="escriba-grade">🎓 Grado Escolar</label>
-                  <input
-                    id="escriba-grade"
-                    type="text"
-                    value={authorGrade}
-                    onChange={(e) => setAuthorGrade(e.target.value)}
-                    placeholder="Ej: 5to Primaria / 2do Básico"
-                  />
-                </div>
-
-                <div className="escriba-field">
-                  <label htmlFor="escriba-school">🏫 Escuela o Colegio</label>
-                  <input
-                    id="escriba-school"
-                    type="text"
-                    value={authorSchool}
-                    onChange={(e) => setAuthorSchool(e.target.value)}
-                    placeholder="Ej: Instituto Nacional de Guatemala"
-                  />
-                </div>
-
-                <div className="escriba-field">
+                <div className="escriba-field escriba-field-genre">
                   <label htmlFor="escriba-genre">🎭 Género Literario</label>
                   <select
                     id="escriba-genre"
@@ -389,6 +391,60 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                     <option value="cuento">Cuento Infantil & Fábulas</option>
                     <option value="ensayo">Ensayo & Reflexión</option>
                   </select>
+                </div>
+
+                {/* OPCIÓN: PUBLICAR BAJO UN SEUDÓNIMO */}
+                <div className="escriba-field escriba-field-full escriba-pseudonym-card">
+                  <div className="escriba-pseudonym-header">
+                    <label className="escriba-pseudonym-toggle-label">
+                      <input
+                        type="checkbox"
+                        checked={usePseudonym}
+                        onChange={(e) => {
+                          soundEffects.playClick();
+                          setUsePseudonym(e.target.checked);
+                        }}
+                        className="escriba-pseudonym-checkbox"
+                      />
+                      <span className="pseudonym-checkbox-custom"></span>
+                      <div className="pseudonym-toggle-text">
+                        <span className="pseudonym-toggle-title">
+                          🎭 Publicar bajo un seudónimo literario
+                        </span>
+                        <span className="pseudonym-toggle-desc">
+                          Firma con un alias artístico para proteger tu identidad. El registro de tu escuela y grado se vinculará internamente en la plataforma.
+                        </span>
+                      </div>
+                    </label>
+                  </div>
+
+                  {usePseudonym ? (
+                    <div className="escriba-pseudonym-input-row animate-fade-in">
+                      <div className="pseudonym-input-wrapper">
+                        <span className="pseudonym-icon">🪶</span>
+                        <input
+                          id="escriba-pseudonym"
+                          type="text"
+                          value={pseudonym}
+                          onChange={(e) => setPseudonym(e.target.value)}
+                          placeholder="Escribe tu seudónimo (ej: Pluma del Viento, Sombra de Jade...)"
+                          maxLength={40}
+                        />
+                      </div>
+                      <button
+                        type="button"
+                        className="escriba-pseudonym-random-btn"
+                        onClick={handleRandomPseudonym}
+                        title="Generar un seudónimo literario aleatorio"
+                      >
+                        <span>🎲</span> Seudónimo Aleatorio
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="escriba-pseudonym-notice">
+                      <span>👤</span> Publicarás como <strong>Autor Estudiantil</strong> vinculado a tu cuenta escolar.
+                    </div>
+                  )}
                 </div>
 
                 <div className="escriba-field escriba-field-full">
@@ -633,7 +689,8 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                 </span>
                 <h1 className="escriba-preview-title">{title || 'Título de tu Historia'}</h1>
                 <p className="escriba-preview-author">
-                  Por {author || 'Autor Estudiantil'} · {authorGrade} ({authorSchool})
+                  Por {usePseudonym ? (pseudonym.trim() || 'Escriba Anónimo') : 'Autor Estudiantil'}
+                  {usePseudonym ? ' · (Seudónimo Literario)' : ' · Códice Escolar Sutz'}
                 </p>
               </header>
 

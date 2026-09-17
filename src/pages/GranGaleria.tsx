@@ -397,10 +397,12 @@ export const GranGaleria: React.FC = () => {
                   <h3 className="story-title">{t.title}</h3>
 
                   <div className="story-author-row">
-                    <span className="author-icon">✍️</span>
+                    <span className="author-icon">{t.isPseudonym ? '🎭' : '✍️'}</span>
                     <div>
                       <strong className="author-name">{t.author}</strong>
-                      <span className="author-school">{t.authorSchool || 'Estudiante'}</span>
+                      <span className="author-school">
+                        {t.isPseudonym ? '🎭 Seudónimo Literario' : (t.authorSchool || 'Estudiante')}
+                      </span>
                     </div>
                   </div>
 

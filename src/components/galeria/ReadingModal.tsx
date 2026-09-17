@@ -138,8 +138,11 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({ textItem, onClose, o
               <div className="gg-reader-author-info">
                 <span className="author-name">{textItem.author}</span>
                 <span className="author-details">
-                  {textItem.authorGrade ? `${textItem.authorGrade} · ` : ''}
-                  {textItem.authorSchool || 'Estudiante'}
+                  {textItem.isPseudonym 
+                    ? '🎭 Seudónimo Literario · Códice Escolar' 
+                    : (textItem.authorGrade 
+                        ? `${textItem.authorGrade} · ${textItem.authorSchool || 'Estudiante'}` 
+                        : (textItem.authorSchool || 'Estudiante'))}
                 </span>
               </div>
             </div>

@@ -191,6 +191,179 @@
   grid-column: 1 / -1;
 }
 
+/* PSEUDONYM SELECTOR CARD */
+.escriba-pseudonym-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  border-radius: 12px;
+  padding: 0.95rem 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  transition: all 0.25s ease;
+}
+
+.escriba-pseudonym-card:hover {
+  border-color: rgba(245, 158, 11, 0.4);
+}
+
+.escriba-pseudonym-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.escriba-pseudonym-toggle-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.85rem;
+  cursor: pointer;
+  user-select: none;
+  width: 100%;
+}
+
+.escriba-pseudonym-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.pseudonym-checkbox-custom {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  border: 2px solid rgba(245, 158, 11, 0.5);
+  background: rgba(15, 23, 42, 0.8);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  margin-top: 2px;
+  transition: all 0.2s ease;
+}
+
+.escriba-pseudonym-checkbox:checked + .pseudonym-checkbox-custom {
+  background: #f59e0b;
+  border-color: #f59e0b;
+  box-shadow: 0 0 10px rgba(245, 158, 11, 0.4);
+}
+
+.escriba-pseudonym-checkbox:checked + .pseudonym-checkbox-custom::after {
+  content: '✓';
+  color: #0f172a;
+  font-size: 0.85rem;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.pseudonym-toggle-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.2rem;
+}
+
+.pseudonym-toggle-title {
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #fef08a;
+  letter-spacing: 0.01em;
+}
+
+.pseudonym-toggle-desc {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.35;
+}
+
+.escriba-pseudonym-input-row {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding-top: 0.35rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.pseudonym-input-wrapper {
+  flex: 1;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.pseudonym-icon {
+  position: absolute;
+  left: 0.85rem;
+  font-size: 1rem;
+  color: #f59e0b;
+  pointer-events: none;
+}
+
+.pseudonym-input-wrapper input {
+  width: 100%;
+  padding-left: 2.35rem !important;
+  background: rgba(3, 7, 18, 0.75) !important;
+  border: 1px solid rgba(245, 158, 11, 0.4) !important;
+  color: #fef08a !important;
+  font-weight: 600;
+  border-radius: 8px;
+}
+
+.pseudonym-input-wrapper input:focus {
+  border-color: #f59e0b !important;
+  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25) !important;
+}
+
+.escriba-pseudonym-random-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  background: rgba(245, 158, 11, 0.15);
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  color: #fbbf24;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.6rem 0.95rem;
+  border-radius: 8px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.escriba-pseudonym-random-btn:hover {
+  background: #f59e0b;
+  color: #0f172a;
+  box-shadow: 0 0 12px rgba(245, 158, 11, 0.35);
+  transform: translateY(-1px);
+}
+
+.escriba-pseudonym-notice {
+  font-size: 0.8rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  background: rgba(15, 23, 42, 0.5);
+  padding: 0.55rem 0.85rem;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.12);
+}
+
+.escriba-pseudonym-notice strong {
+  color: #38bdf8;
+}
+
+@media (max-width: 640px) {
+  .escriba-pseudonym-input-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .escriba-pseudonym-random-btn {
+    justify-content: center;
+  }
+}
+
+
 /* ORTOTIPOGRAPHIC TOOLBAR */
 .escriba-toolbar-wrapper {
   display: flex;
