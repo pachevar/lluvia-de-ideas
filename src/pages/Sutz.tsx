@@ -510,16 +510,8 @@ export default function Sutz() {
           </div>
         </div>
 
-        {/* Derecha: Estado de Mundo, Exploradores, Ajustes y Salir al Portal */}
+        {/* Derecha: Exploradores en Línea y Ajustes */}
         <div className="sutz-hud-right">
-          <div className="sutz-world-pill">
-            <span className="sutz-world-icon">☁️</span>
-            <div className="sutz-world-text">
-              <span className="sutz-world-title">Sutz Virtual</span>
-              <span className="sutz-world-sub">{mapCompletionPercent}% · Lluvia de Ideas</span>
-            </div>
-          </div>
-
           {/* Botón de Exploradores Conectados y Coordinación Escolar */}
           <button 
             className="sutz-hud-action-btn coord-btn"
@@ -541,19 +533,6 @@ export default function Sutz() {
             <span>⚙️</span>
             <span className="sutz-settings-btn-text">Ajustes</span>
           </button>
-
-          {/* Botón de Retorno al Portal Principal */}
-          <button 
-            className="sutz-hud-action-btn exit-portal-btn"
-            onClick={() => {
-              sutzAudio.playClick();
-              navigate('/');
-            }}
-            title="Volver al Portal Principal de Editorial Lluvia de Ideas"
-          >
-            <span style={{ fontSize: '0.9rem' }}>🏛️</span>
-            <span className="sutz-exit-portal-text">Portal</span>
-          </button>
         </div>
       </header>
 
@@ -570,6 +549,32 @@ export default function Sutz() {
           mapControlsRef.current = controls;
         }}
       />
+
+      {/* ==========================================================================
+          INDICADOR DE DESCUBRIMIENTO (ESQUINA INFERIOR IZQUIERDA)
+          ========================================================================== */}
+      <div 
+        className="sutz-discovery-hud-widget" 
+        title={`Progreso de Exploración: ${activeCells.length} de ${totalCellsCount} destinos explorados (${mapCompletionPercent}%)`}
+      >
+        <div className="sutz-discovery-icon-wrap">
+          <span className="sutz-discovery-icon">🧭</span>
+          <div className="sutz-discovery-aura"></div>
+        </div>
+        <div className="sutz-discovery-info">
+          <div className="sutz-discovery-title-row">
+            <span className="sutz-discovery-label">Descubrimiento</span>
+            <span className="sutz-discovery-percent">{mapCompletionPercent}%</span>
+          </div>
+          <div className="sutz-discovery-bar-track">
+            <div 
+              className="sutz-discovery-bar-fill" 
+              style={{ width: `${Math.min(100, Math.max(5, mapCompletionPercent))}%` }} 
+            />
+          </div>
+          <span className="sutz-discovery-sub">{activeCells.length} de {totalCellsCount} destinos</span>
+        </div>
+      </div>
 
       {/* ==========================================================================
           2. BARRA INFERIOR DE ACCIÓN GAMIFICADA (BOTTOM ACTION DOCK)

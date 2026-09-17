@@ -347,48 +347,124 @@
 
 /* --- ACCIONES DE CABECERA DERECHA --- */
 .sutz-hud-right {
-  gap: 10px;
+  gap: 12px;
 }
 
-.sutz-world-pill {
+/* ==========================================================================
+   INDICADOR DE DESCUBRIMIENTO (ESQUINA INFERIOR IZQUIERDA)
+   ========================================================================== */
+.sutz-discovery-hud-widget {
+  position: fixed;
+  bottom: 20px;
+  left: 20px;
+  z-index: 110;
   display: flex;
   align-items: center;
-  gap: 8px;
-  background: var(--sutz-elevation-1);
-  border: 1.5px solid var(--sutz-glass-border-muted);
-  border-radius: 18px;
-  padding: 6px 14px;
-  box-shadow: var(--sutz-shadow-md), var(--sutz-glass-bevel);
+  gap: 12px;
+  background: var(--sutz-elevation-1, rgba(15, 23, 42, 0.88));
+  border: 1.5px solid var(--sutz-glass-border-muted, rgba(56, 189, 248, 0.3));
+  border-radius: 20px;
+  padding: 8px 16px 8px 12px;
+  box-shadow: 
+    var(--sutz-shadow-stone), 
+    0 8px 25px rgba(0, 0, 0, 0.6), 
+    var(--sutz-glass-bevel);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  pointer-events: auto;
+  user-select: none;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.sutz-world-icon {
-  font-size: 1.25rem;
-  animation: floatCloud 4s ease-in-out infinite;
+.sutz-discovery-hud-widget:hover {
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.7), 0 0 20px rgba(56, 189, 248, 0.3);
 }
 
-.sutz-world-text {
+.sutz-discovery-icon-wrap {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 35%, rgba(56, 189, 248, 0.25) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1.5px solid #38bdf8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.35);
+}
+
+.sutz-discovery-icon {
+  font-size: 1.35rem;
+}
+
+.sutz-discovery-aura {
+  position: absolute;
+  inset: -4px;
+  border-radius: 50%;
+  border: 1px dashed rgba(56, 189, 248, 0.4);
+  animation: guideAuraSpin 18s linear infinite;
+  pointer-events: none;
+}
+
+.sutz-discovery-info {
   display: flex;
   flex-direction: column;
+  gap: 3px;
+  min-width: 140px;
 }
 
-.sutz-world-title {
-  font-size: 0.85rem;
-  font-weight: 900;
-  font-family: var(--sutz-font-display, 'Orbitron', monospace);
-  background: linear-gradient(90deg, var(--sutz-color-guide-light) 0%, var(--sutz-color-wisdom) 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  line-height: 1.1;
-  margin: 0;
-  letter-spacing: 0.5px;
+.sutz-discovery-title-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
 }
 
-.sutz-world-sub {
-  font-size: 0.72rem;
-  font-weight: 700;
+.sutz-discovery-label {
   font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
-  color: var(--sutz-color-success-light);
+  font-size: 0.75rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+  color: #94a3b8;
+}
+
+.sutz-discovery-percent {
+  font-family: var(--sutz-font-display, 'Orbitron', monospace);
+  font-size: 0.95rem;
+  font-weight: 900;
+  color: #38bdf8;
   letter-spacing: 0.5px;
+  text-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+}
+
+.sutz-discovery-bar-track {
+  width: 100%;
+  height: 5px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.6);
+}
+
+.sutz-discovery-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8 0%, #34d399 100%);
+  border-radius: 999px;
+  box-shadow: 0 0 8px #38bdf8;
+  transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sutz-discovery-sub {
+  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
+  font-size: 0.65rem;
+  font-weight: 700;
+  color: #64748b;
+  letter-spacing: 0.4px;
 }
 
 .sutz-hud-action-btn {
@@ -436,32 +512,6 @@
   border-color: #34d399;
   color: #ffffff;
   box-shadow: var(--sutz-shadow-lg), 0 0 20px rgba(16, 185, 129, 0.4);
-}
-
-.sutz-hud-action-btn.exit-portal-btn {
-  width: auto;
-  padding: 0 12px;
-  gap: 6px;
-  font-size: 0.8rem;
-  font-weight: 700;
-  font-family: var(--sutz-font-tech, 'Rajdhani', sans-serif);
-  background: rgba(15, 23, 42, 0.75);
-  border: 1.5px solid rgba(148, 163, 184, 0.35);
-  color: #cbd5e1;
-  box-shadow: var(--sutz-shadow-sm);
-}
-
-.sutz-hud-action-btn.exit-portal-btn:hover {
-  background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(245, 158, 11, 0.2) 100%);
-  border-color: rgba(245, 158, 11, 0.6);
-  color: #ffffff;
-  box-shadow: var(--sutz-shadow-md), 0 0 14px rgba(245, 158, 11, 0.3);
-}
-
-.sutz-exit-portal-text {
-  display: inline-block;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
 }
 
 .sutz-coord-live-dot {
@@ -1015,6 +1065,28 @@
     padding: 1px 5px;
   }
 
+  /* Indicador de descubrimiento en tablet */
+  .sutz-discovery-hud-widget {
+    bottom: 18px;
+    left: 16px;
+    padding: 6px 12px;
+    gap: 8px;
+    border-radius: 16px;
+  }
+
+  .sutz-discovery-icon-wrap {
+    width: 36px;
+    height: 36px;
+  }
+
+  .sutz-discovery-icon {
+    font-size: 1.15rem;
+  }
+
+  .sutz-discovery-info {
+    min-width: 110px;
+  }
+
   /* Plano Cartesiano badge ubicado limpiamente debajo del HUD */
   .sutz-game-container .cartesian-hud-badge {
     top: 72px;
@@ -1130,10 +1202,6 @@
     gap: 4px;
   }
 
-  .sutz-world-pill {
-    display: none !important; /* Ocultar emblema en móvil para que quepan los botones de control */
-  }
-
   .sutz-hud-action-btn {
     width: 32px;
     height: 32px;
@@ -1153,9 +1221,42 @@
   }
 
   .sutz-coord-btn-text,
-  .sutz-settings-btn-text,
-  .sutz-exit-portal-text {
+  .sutz-settings-btn-text {
     display: none !important; /* Solo iconos y números en móvil */
+  }
+
+  /* Indicador de descubrimiento en móvil */
+  .sutz-discovery-hud-widget {
+    bottom: 74px;
+    left: 10px;
+    padding: 4px 8px;
+    gap: 6px;
+    border-radius: 14px;
+  }
+
+  .sutz-discovery-icon-wrap {
+    width: 28px;
+    height: 28px;
+  }
+
+  .sutz-discovery-icon {
+    font-size: 0.9rem;
+  }
+
+  .sutz-discovery-info {
+    min-width: 90px;
+  }
+
+  .sutz-discovery-label {
+    font-size: 0.62rem;
+  }
+
+  .sutz-discovery-percent {
+    font-size: 0.78rem;
+  }
+
+  .sutz-discovery-sub {
+    display: none;
   }
 
   .sutz-coord-live-dot {
