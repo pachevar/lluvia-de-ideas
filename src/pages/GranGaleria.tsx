@@ -112,17 +112,12 @@ export const GranGaleria: React.FC = () => {
       <section className="gg-hero-banner">
         <div className="gg-hero-ambient-glow"></div>
         <div className="gg-hero-content">
-          <div className="gg-hero-badge-pill animate-fade-in">
-            <span className="badge-icon">💡</span>
-            <span className="badge-text">LA GRAN GALERÍA · TALENTO & PROCESOS ESCOLARES</span>
-          </div>
-          
           <h1 className="gg-hero-title animate-zoom-in">
-            El Escaparate de la <span className="highlight-gradient">Creatividad Estudiantil</span>
+            <span className="highlight-gradient">Gran Galería</span>
           </h1>
 
           <p className="gg-hero-desc">
-            {galeriaData.bannerSubtitle || "Descubre los relatos en el Pergamino del Escriba, contempla las obras de arte en el Museo Virtual y reproduce los cortometrajes y reportajes de la juventud estudiantil."}
+            Un espacio para desarrollar tu talento y creatividad
           </p>
 
           {/* Métricas del Ecosistema */}
@@ -160,25 +155,14 @@ export const GranGaleria: React.FC = () => {
           <div className="gg-hero-cta-row">
             <button 
               type="button" 
-              className="btn btn-primary gg-submit-work-btn"
-              onClick={() => {
-                soundEffects.playClick();
-                setIsEditorOpen(true);
-              }}
-            >
-              <span>✍️</span>
-              <span>Redactar en el Pergamino</span>
-            </button>
-            <button 
-              type="button" 
               className="btn btn-secondary gg-explore-sutz-btn"
               onClick={() => {
                 soundEffects.playClick();
                 navigate('/sutz');
               }}
             >
-              <span>☁️</span>
-              <span>Explorar Mapa Sutz</span>
+              <span>🗺️</span>
+              <span>Volver al mapa</span>
             </button>
           </div>
         </div>
@@ -369,7 +353,7 @@ export const GranGaleria: React.FC = () => {
                   }}
                 >
                   <span>✍️</span>
-                  <span>Redactar en el Pergamino</span>
+                  <span>Crear un códice nuevo</span>
                 </button>
                 <span className="gg-results-counter">
                   Mostrando {filteredTexts.length} {filteredTexts.length === 1 ? 'relato' : 'relatos'}
