@@ -5,9 +5,10 @@ import {
   calculateColorMatch, 
   generateRandomTargetColor, 
   rgbToHex,
-  generateColorShadesAndTints
+  generateColorShadesAndTints,
+  type GameColorTarget
 } from '../utils/colorUtils';
-import type { GameColorTarget } from '../utils/colorUtils';
+import { useNavigate } from 'react-router-dom';
 import html2canvas from 'html2canvas';
 import { ColorRabbit } from '../components/color/ColorRabbit';
 import { soundEffects } from '../utils/soundEffects';
@@ -149,6 +150,8 @@ const GUARDIANS: RabbitGuardian[] = [
 ];
 
 export default function ColorTheory() {
+  const navigate = useNavigate();
+
   // --- Estados de los Guardianes ---
   const [activeFilter, setActiveFilter] = useState<'todos' | 'primario' | 'secundario' | 'terciario' | 'neutro'>('todos');
   const [tempFilter, setTempFilter] = useState<'todos' | 'cálido' | 'frío' | 'neutro'>('todos');
@@ -460,6 +463,21 @@ export default function ColorTheory() {
 
   return (
     <div className="colortheory-container">
+      {/* Botón flotante permanente para volver al mapa desde cualquier altura de la página */}
+      <button 
+        type="button" 
+        className="colortheory-floating-map-btn"
+        onClick={() => {
+          soundEffects.playClick();
+          navigate('/sutz');
+        }}
+        title="Volver al Mapa Virtual Sutz"
+        aria-label="Ir al mapa Sutz"
+      >
+        <span className="colortheory-floating-map-icon">🗺️</span>
+        <span className="colortheory-floating-map-text">Volver al mapa</span>
+      </button>
+
       {/* Fondo de Destellos Mágicos */}
       <div className="magic-particles-bg">
         <div className="particle p1" />
@@ -472,7 +490,26 @@ export default function ColorTheory() {
         
         {/* Encabezado Principal */}
         <header className="colortheory-header">
-          <div className="colortheory-badge">✨ MADRIGUERA CROMÁTICA VIRTUAL</div>
+          <div className="colortheory-top-bar">
+            <button 
+              type="button" 
+              className="colortheory-back-map-btn"
+              onClick={() => {
+                soundEffects.playClick();
+                navigate('/sutz');
+              }}
+              title="Volver al Mapa Virtual Sutz"
+              aria-label="Volver al mapa"
+            >
+              <span className="colortheory-back-map-icon">🗺️</span>
+              <span className="colortheory-back-map-text">Volver al mapa</span>
+            </button>
+
+            <div className="colortheory-badge">✨ MADRIGUERA CROMÁTICA VIRTUAL</div>
+
+            <div className="colortheory-top-spacer" aria-hidden="true" />
+          </div>
+
           <h1 className="gradient-text colortheory-title">El Reino de los Guardianes del Color</h1>
           <p className="colortheory-subtitle">
             ¡Hola explorador! Adéntrate en el laboratorio cósmico de los conejos guardianes.

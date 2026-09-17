@@ -92,6 +92,124 @@
   margin-bottom: 45px;
 }
 
+/* Barra Superior con botón Volver al Mapa */
+.colortheory-top-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  margin-bottom: 20px;
+  gap: 16px;
+}
+
+.colortheory-top-spacer {
+  width: 140px;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.colortheory-back-map-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 18px;
+  min-height: 42px;
+  background: rgba(20, 10, 38, 0.75);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 1.5px solid rgba(168, 85, 247, 0.4);
+  border-radius: 9999px;
+  color: #E2DBF0;
+  font-family: var(--font-title);
+  font-size: 0.9rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+  text-decoration: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.colortheory-back-map-btn:hover {
+  background: rgba(45, 20, 80, 0.9);
+  border-color: #C084FC;
+  color: #FFFFFF;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(168, 85, 247, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.2);
+}
+
+.colortheory-back-map-btn:active {
+  transform: translateY(0) scale(0.98);
+}
+
+.colortheory-back-map-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.colortheory-back-map-btn:hover .colortheory-back-map-icon {
+  transform: scale(1.18) rotate(-6deg);
+}
+
+.colortheory-back-map-text {
+  letter-spacing: 0.02em;
+}
+
+/* Botón Flotante Permanente para Retorno al Mapa Sutz */
+.colortheory-floating-map-btn {
+  position: fixed;
+  bottom: 24px;
+  left: 24px;
+  z-index: 1200;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 18px;
+  min-height: 44px;
+  background: rgba(20, 10, 38, 0.92);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1.5px solid rgba(168, 85, 247, 0.5);
+  border-radius: 9999px;
+  color: #F8FAFC;
+  font-family: var(--font-title);
+  font-size: 0.88rem;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.6), 0 0 16px rgba(168, 85, 247, 0.35);
+  transition: all 0.25s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+  white-space: nowrap;
+}
+
+.colortheory-floating-map-btn:hover {
+  background: rgba(45, 20, 85, 0.95);
+  border-color: #C084FC;
+  color: #FFFFFF;
+  transform: translateY(-2px) scale(1.02);
+  box-shadow: 0 10px 32px rgba(0, 0, 0, 0.7), 0 0 24px rgba(168, 85, 247, 0.5);
+}
+
+.colortheory-floating-map-btn:active {
+  transform: translateY(0) scale(0.97);
+}
+
+.colortheory-floating-map-icon {
+  font-size: 1.15rem;
+  line-height: 1;
+  transition: transform 0.2s ease;
+}
+
+.colortheory-floating-map-btn:hover .colortheory-floating-map-icon {
+  transform: scale(1.18) rotate(-6deg);
+}
+
+.colortheory-floating-map-text {
+  letter-spacing: 0.02em;
+}
+
 .colortheory-badge {
   display: inline-block;
   padding: 6px 20px;
@@ -102,7 +220,6 @@
   text-transform: uppercase;
   border-radius: 9999px;
   box-shadow: 0 0 20px rgba(168, 85, 247, 0.4);
-  margin-bottom: 15px;
   letter-spacing: 0.08em;
 }
 
@@ -1410,6 +1527,31 @@
   .colortheory-header {
     margin-bottom: 20px;
     padding: 0 4px;
+  }
+
+  .colortheory-top-bar {
+    margin-bottom: 14px;
+    gap: 8px;
+  }
+
+  .colortheory-top-spacer {
+    display: none;
+  }
+
+  .colortheory-back-map-btn {
+    padding: 6px 12px;
+    min-height: 36px;
+    font-size: 0.8rem;
+    gap: 6px;
+  }
+
+  .colortheory-floating-map-btn {
+    bottom: 16px;
+    left: 14px;
+    padding: 8px 14px;
+    min-height: 40px;
+    font-size: 0.82rem;
+    gap: 6px;
   }
 
   .colortheory-title {
