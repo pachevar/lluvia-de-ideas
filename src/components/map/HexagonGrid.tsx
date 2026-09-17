@@ -53,6 +53,90 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
 }) => {
   const [internalShowAxes, setInternalShowAxes] = useState<boolean>(showCartesianAxes);
 
+  // Estados de Visibilidad de Capas en Hexágonos
+  const [showTitles, setShowTitles] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('sutz_hex_show_title');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [showIcons, setShowIcons] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('sutz_hex_show_icon');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [showCategories, setShowCategories] = useState<boolean>(() => {
+    try {
+      const saved = localStorage.getItem('sutz_hex_show_category');
+      return saved !== null ? saved === 'true' : true;
+    } catch {
+      return true;
+    }
+  });
+
+  const [isVisibilityMenuOpen, setIsVisibilityMenuOpen] = useState(false);
+  const visibilityMenuRef = React.useRef<HTMLDivElement>(null);
+
+  // Cerrar menú de visibilidad al hacer clic o tap fuera
+  React.useEffect(() => {
+    if (!isVisibilityMenuOpen) return;
+    const handleClickOutside = (e: MouseEvent | TouchEvent) => {
+      if (visibilityMenuRef.current && !visibilityMenuRef.current.contains(e.target as Node)) {
+        setIsVisibilityMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isVisibilityMenuOpen]);
+
+  const toggleTitles = () => {
+    setShowTitles(prev => {
+      const next = !prev;
+      try { localStorage.setItem('sutz_hex_show_title', String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const toggleIcons = () => {
+    setShowIcons(prev => {
+      const next = !prev;
+      try { localStorage.setItem('sutz_hex_show_icon', String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const toggleCategories = () => {
+    setShowCategories(prev => {
+      const next = !prev;
+      try { localStorage.setItem('sutz_hex_show_category', String(next)); } catch {}
+      return next;
+    });
+  };
+
+  const allHidden = !showTitles && !showIcons && !showCategories;
+  const toggleAll = () => {
+    const nextState = allHidden; // si estaban todos ocultos, ahora true; de lo contrario false
+    setShowTitles(nextState);
+    setShowIcons(nextState);
+    setShowCategories(nextState);
+    try {
+      localStorage.setItem('sutz_hex_show_title', String(nextState));
+      localStorage.setItem('sutz_hex_show_icon', String(nextState));
+      localStorage.setItem('sutz_hex_show_category', String(nextState));
+    } catch {}
+  };
+
   // Dynamic cell bounds calculation with generous padding
   const cols = cells.length > 0 ? cells.map(c => c.col) : [0];
   const rows = cells.length > 0 ? cells.map(c => c.row) : [0];
@@ -206,6 +290,103 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
               >
                 📐
               </button>
+
+              {/* Botón y Menú Desplegable de Visibilidad de Capas (Texto, Icono, Categoría) */}
+              <div className="map-visibility-control-wrap" ref={visibilityMenuRef}>
+                <button 
+                  type="button"
+                  className={`map-visibility-trigger-btn ${isVisibilityMenuOpen ? 'active' : ''} ${allHidden ? 'panoramic-active' : ''}`}
+                  onClick={() => setIsVisibilityMenuOpen(prev => !prev)} 
+                  title={allHidden ? "Modo Panorámico Activo (Todos los elementos ocultos)" : "Capas de Visibilidad: Texto, Iconos y Categorías"}
+                  aria-label="Alternar visibilidad de elementos en hexágonos"
+                >
+                  {allHidden ? '🏞️' : '👁️'}
+                </button>
+
+                {isVisibilityMenuOpen && (
+                  <div className="map-visibility-popover animate-zoom-in">
+                    <div className="visibility-popover-header">
+                      <div className="visibility-popover-title-row">
+                        <span className="visibility-popover-icon">👁️</span>
+                        <span className="visibility-popover-title">Capas de Hexágonos</span>
+                      </div>
+                      <button 
+                        type="button" 
+                        className="visibility-popover-close" 
+                        onClick={() => setIsVisibilityMenuOpen(false)}
+                        aria-label="Cerrar menú de capas"
+                      >
+                        ✕
+                      </button>
+                    </div>
+
+                    <p className="visibility-popover-hint">
+                      Activa o desactiva elementos para contemplar el mapa con mayor claridad:
+                    </p>
+
+                    <div className="visibility-popover-options">
+                      {/* 1. TEXTO / TÍTULOS */}
+                      <button 
+                        type="button"
+                        className={`visibility-toggle-item ${showTitles ? 'is-on' : 'is-off'}`}
+                        onClick={toggleTitles}
+                      >
+                        <span className="visibility-item-icon">🔤</span>
+                        <div className="visibility-item-info">
+                          <span className="visibility-item-label">Texto / Nombres</span>
+                          <span className="visibility-item-state">{showTitles ? 'Visible' : 'Oculto'}</span>
+                        </div>
+                        <span className={`visibility-checkbox ${showTitles ? 'checked' : ''}`}>
+                          {showTitles ? '✓' : ''}
+                        </span>
+                      </button>
+
+                      {/* 2. ICONOS */}
+                      <button 
+                        type="button"
+                        className={`visibility-toggle-item ${showIcons ? 'is-on' : 'is-off'}`}
+                        onClick={toggleIcons}
+                      >
+                        <span className="visibility-item-icon">🎨</span>
+                        <div className="visibility-item-info">
+                          <span className="visibility-item-label">Iconos</span>
+                          <span className="visibility-item-state">{showIcons ? 'Visible' : 'Oculto'}</span>
+                        </div>
+                        <span className={`visibility-checkbox ${showIcons ? 'checked' : ''}`}>
+                          {showIcons ? '✓' : ''}
+                        </span>
+                      </button>
+
+                      {/* 3. CATEGORÍAS */}
+                      <button 
+                        type="button"
+                        className={`visibility-toggle-item ${showCategories ? 'is-on' : 'is-off'}`}
+                        onClick={toggleCategories}
+                      >
+                        <span className="visibility-item-icon">👑</span>
+                        <div className="visibility-item-info">
+                          <span className="visibility-item-label">Categorías (Reinos)</span>
+                          <span className="visibility-item-state">{showCategories ? 'Visible' : 'Oculto'}</span>
+                        </div>
+                        <span className={`visibility-checkbox ${showCategories ? 'checked' : ''}`}>
+                          {showCategories ? '✓' : ''}
+                        </span>
+                      </button>
+                    </div>
+
+                    {/* MODO PANORÁMICO LIMPIO */}
+                    <div className="visibility-popover-footer">
+                      <button 
+                        type="button" 
+                        className={`visibility-panoramic-btn ${allHidden ? 'active' : ''}`}
+                        onClick={toggleAll}
+                      >
+                        <span>{allHidden ? '✨ Restaurar Elementos' : '🏞️ Vista Panorámica Limpia'}</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
             
             <TransformComponent 
@@ -442,6 +623,9 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
                     showLabel={showLabels}
                     isEditing={editingHexRow === cell.row && editingHexCol === cell.col}
                     isSelected={selectedHexId === cell.id}
+                    showIcon={showIcons}
+                    showTitle={showTitles}
+                    showCategory={showCategories}
                   />
                 ))}
               </div>

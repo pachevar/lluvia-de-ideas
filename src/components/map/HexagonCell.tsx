@@ -16,6 +16,9 @@ interface HexagonCellProps {
   showLabel?: boolean;
   isEditing?: boolean;
   isSelected?: boolean;
+  showIcon?: boolean;
+  showTitle?: boolean;
+  showCategory?: boolean;
 }
 
 const HexagonCellComponent: React.FC<HexagonCellProps> = ({
@@ -29,7 +32,10 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
   onLongPress,
   showLabel,
   isEditing,
-  isSelected
+  isSelected,
+  showIcon = true,
+  showTitle = true,
+  showCategory = true
 }) => {
   const [isPressing, setIsPressing] = useState(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -190,10 +196,10 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
         {/* Capa 3: Contenido e Iconografía Proporcionada */}
         <div className="hex-layer hex-layer-interactive">
           <div className="hex-content">
-            {renderHexLayer(data.layerInteractive, 'hex-interactive-content', true)}
-            {data.title && !showLabel && (
+            {showIcon && renderHexLayer(data.layerInteractive, 'hex-interactive-content', true)}
+            {data.title && !showLabel && (showTitle || (showCategory && pillarInfo)) && (
               <div className={`hex-title-badge ${pillarInfo ? `has-pillar pillar-${pillarInfo.id}` : ''}`}>
-                {pillarInfo && (
+                {showCategory && pillarInfo && (
                   <div 
                     className="hex-pillar-tag"
                     title={`Reino: ${pillarInfo.label}`}
@@ -208,14 +214,14 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
                     <span className="hex-pillar-label">{pillarInfo.label}</span>
                   </div>
                 )}
-                <span className="hex-title-text">{data.title}</span>
+                {showTitle && <span className="hex-title-text">{data.title}</span>}
               </div>
             )}
           </div>
         </div>
 
         {/* Indicador de acción interactiva */}
-        {hasAction && !showLabel && <div className="hex-action-pill" />}
+        {hasAction && !showLabel && showIcon && <div className="hex-action-pill" />}
 
         {/* Coordenadas Cartesianas (Eje X: Columna, Eje Y: Fila) */}
         {showLabel && (

@@ -603,6 +603,208 @@
   color: #e0f2fe;
 }
 
+/* --- Menú Desplegable de Visibilidad de Capas en Hexágonos --- */
+.map-visibility-control-wrap {
+  position: relative;
+  display: flex;
+}
+
+.map-controls button.map-visibility-trigger-btn.panoramic-active {
+  background: rgba(245, 158, 11, 0.28);
+  border-color: #fbbf24;
+  color: #fbbf24;
+  box-shadow: 0 0 16px rgba(245, 158, 11, 0.45);
+}
+
+.map-visibility-popover {
+  position: absolute;
+  top: 0;
+  right: calc(100% + 12px);
+  width: 255px;
+  background: rgba(15, 23, 42, 0.95);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  border-radius: 20px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.75), 0 0 20px rgba(56, 189, 248, 0.2);
+  padding: 14px;
+  color: #f8fafc;
+  z-index: 1050;
+  text-align: left;
+}
+
+.visibility-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.visibility-popover-title-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.visibility-popover-icon {
+  font-size: 1.1rem;
+}
+
+.visibility-popover-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.visibility-popover-close {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+  box-shadow: none !important;
+}
+
+.visibility-popover-close:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  transform: none !important;
+}
+
+.visibility-popover-hint {
+  font-size: 0.73rem;
+  color: #94a3b8;
+  line-height: 1.35;
+  margin: 0 0 10px 0;
+  text-align: left;
+}
+
+.visibility-popover-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.visibility-toggle-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  box-shadow: none !important;
+  height: auto !important;
+}
+
+.visibility-toggle-item:hover {
+  background: rgba(56, 189, 248, 0.12);
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateX(-2px);
+}
+
+.visibility-toggle-item.is-off {
+  opacity: 0.55;
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.visibility-item-icon {
+  font-size: 1.1rem;
+  line-height: 1;
+}
+
+.visibility-item-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.visibility-item-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.visibility-item-state {
+  font-size: 0.68rem;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.visibility-toggle-item.is-off .visibility-item-state {
+  color: #94a3b8;
+}
+
+.visibility-checkbox {
+  width: 20px;
+  height: 20px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 900;
+  color: #ffffff;
+  transition: all 0.2s ease;
+}
+
+.visibility-checkbox.checked {
+  background: linear-gradient(135deg, #0284c7, #10b981);
+  border-color: #38bdf8;
+}
+
+.visibility-popover-footer {
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  padding-top: 10px;
+}
+
+.visibility-panoramic-btn {
+  width: 100%;
+  padding: 8px 12px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.2), rgba(16, 185, 129, 0.2));
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: none !important;
+  height: auto !important;
+}
+
+.visibility-panoramic-btn:hover {
+  background: linear-gradient(135deg, #0284c7, #10b981);
+  color: #ffffff;
+  border-color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.visibility-panoramic-btn.active {
+  background: linear-gradient(135deg, #f59e0b, #ea580c);
+  color: #ffffff;
+  border-color: #fde68a;
+}
+
 /* --- Sostener 1 segundo en Móvil (Long-press Charging Feedback) --- */
 .hex-cell-wrapper.is-pressing {
   transform: scale(0.95);
@@ -752,6 +954,13 @@
     transform: scale(0.92);
     background: rgba(56, 189, 248, 0.35);
   }
+
+  .map-visibility-popover {
+    bottom: 0;
+    top: auto;
+    right: calc(100% + 12px);
+    width: 245px;
+  }
 }
 
 /* --- Mobile & Touch Anti-Flicker Optimizations (< 768px) --- */
@@ -829,6 +1038,15 @@
   .map-controls button:active {
     transform: scale(0.92);
     background: rgba(56, 189, 248, 0.3);
+  }
+
+  .map-visibility-popover {
+    bottom: 0;
+    top: auto;
+    right: calc(100% + 8px);
+    width: 228px;
+    padding: 10px;
+    border-radius: 16px;
   }
 
   .hex-icon-glyph {
