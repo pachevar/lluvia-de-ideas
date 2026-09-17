@@ -965,7 +965,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
 
       </div>
 
-      {/* MODAL GUÍA: EL SABIO ESCRIBA DE SUTZ & IXMUKANÉ (AVISO PEDAGÓGICO DE COPIADO/PEGADO) */}
+      {/* MODAL GUÍA: EL SABIO ESCRIBA DE SUTZ & IXMUKANÉ (AVISO PEDAGÓGICO DE COPIADO/PEGADO COMPACTO) */}
       {showPasteGuideModal && (
         <div 
           className="escriba-guide-backdrop"
@@ -974,56 +974,69 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
           aria-modal="true"
         >
           <div 
-            className="escriba-guide-modal"
+            className="escriba-guide-modal escriba-guide-modal-compact"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="escriba-guide-badge">
-              <span>🪶</span> MENSAJE DEL SABIO ESCRIBA DE SUTZ
-            </div>
-
-            <div className="escriba-guide-avatar-wrapper">
-              <div className="escriba-guide-avatar">
+            {/* Cabecera compacta con Avatar + Título + Cerrar */}
+            <div className="escriba-guide-header-compact">
+              <div className="escriba-guide-avatar-compact">
                 <span>🦉</span>
+                <div className="escriba-guide-aura-mini"></div>
               </div>
-              <div className="escriba-guide-aura"></div>
+              <div className="escriba-guide-header-info">
+                <span className="escriba-guide-badge-mini">🪶 EL SABIO ESCRIBA</span>
+                <h3 className="escriba-guide-title-compact">
+                  ¡Escribe con <span className="highlight">tu propia voz</span>!
+                </h3>
+              </div>
+              <button
+                type="button"
+                className="escriba-guide-close-btn"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setShowPasteGuideModal(false);
+                  setTimeout(() => textareaRef.current?.focus(), 50);
+                }}
+                aria-label="Cerrar modal"
+              >
+                ✕
+              </button>
             </div>
 
-            <h3 className="escriba-guide-title">
-              ¡Detén tu pluma un instante, <span className="highlight">joven creador</span>!
-            </h3>
-
-            <div className="escriba-guide-message">
-              <p style={{ margin: '0 0 0.6rem 0' }}>
+            {/* Mensaje pedagógico conciso y eficiente */}
+            <div className="escriba-guide-message-compact">
+              <p className="escriba-guide-intro-compact">
                 {pasteGuideReason === 'paste' 
-                  ? 'Has intentado pegar un texto en este pergamino. En nuestra academia editorial protegemos este espacio contra el copiado y pegado con una hermosa intención educativa:'
-                  : 'En El Pergamino del Escriba fomentamos el valor de escribir cada frase directamente sobre el lienzo:'}
+                  ? 'El copiado y pegado está bloqueado en este códice para que vivas el auténtico proceso creativo:' 
+                  : 'Fomentamos el valor de escribir cada frase directamente sobre el lienzo:'}
               </p>
 
-              <div className="escriba-guide-reasons">
-                <div className="escriba-guide-reason-item">
+              <div className="escriba-guide-reasons-compact">
+                <div className="escriba-guide-reason-compact">
                   <span className="reason-icon">🧠</span>
                   <div>
-                    <strong>Despierta tu propia voz:</strong> Escribir letra por letra activa conexiones cerebrales únicas, ejercita tu imaginación y despierta ideas que ningún texto copiado puede igualar.
+                    <strong>Tu propia voz:</strong> Escribir letra a letra activa tu imaginación y pensamiento crítico.
                   </div>
                 </div>
 
-                <div className="escriba-guide-reason-item">
+                <div className="escriba-guide-reason-compact">
                   <span className="reason-icon">✍️</span>
                   <div>
-                    <strong>Entrena tu maestría literaria:</strong> Usa nuestras herramientas para insertar rayas de diálogo reglamentarias (<code>—</code>), acotaciones y versos poéticos.
+                    <strong>Maestría literaria:</strong> Usa las herramientas de diálogos (<code>—</code>), versos y estilo.
                   </div>
                 </div>
 
-                <div className="escriba-guide-reason-item">
+                <div className="escriba-guide-reason-compact">
                   <span className="reason-icon">🏆</span>
                   <div>
-                    <strong>Orgullo y autoría 100% auténtica:</strong> Tu obra se exhibirá en el Códice Escolar oficial. ¡Nada supera la satisfacción de saber que cada línea nació de tu propio esfuerzo!
+                    <strong>Autoría auténtica:</strong> Tu relato en el Códice Escolar llevará tu firma y mérito real.
                   </div>
                 </div>
               </div>
             </div>
 
-            <div className="escriba-guide-actions">
+            {/* Botones de acción ergonómicos en fila */}
+            <div className="escriba-guide-actions-compact">
               <button
                 type="button"
                 className="escriba-guide-btn-primary"
@@ -1033,7 +1046,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                   setTimeout(() => textareaRef.current?.focus(), 50);
                 }}
               >
-                <span>✍️</span> ¡Acepto el reto, escribiré con mis propias palabras!
+                <span>✍️</span> ¡Escribiré con mis palabras!
               </button>
 
               <button
@@ -1046,7 +1059,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                   setTimeout(() => textareaRef.current?.focus(), 50);
                 }}
               >
-                📘 Ver el Manual del Escriba y Consejos de Estilo
+                📘 Ver Manual de Estilo
               </button>
             </div>
           </div>
