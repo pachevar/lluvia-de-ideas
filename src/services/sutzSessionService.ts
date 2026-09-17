@@ -1,12 +1,22 @@
 import { doc, getDoc, setDoc, updateDoc, onSnapshot, serverTimestamp, type Unsubscribe } from 'firebase/firestore';
 import { db } from '../firebase';
 
+export interface ParsedDeviceInfo {
+  browser: string;
+  os: string;
+  icon: string;
+  fullLabel: string;
+}
+
 export interface SutzSessionData {
   sessionId: string;
   deviceId?: string;
   uid: string;
   studentName: string;
   email?: string;
+  deviceLabel?: string;
+  browserName?: string;
+  osName?: string;
   userAgent?: string;
   startedAt?: unknown;
   lastHeartbeatAt?: unknown;
@@ -20,7 +30,73 @@ export interface StartSessionResult {
 }
 
 const DEVICE_STORAGE_KEY = 'sutz_persistent_device_id';
-const HEARTBEAT_STALE_MS = 90000; // 90 segundos para considerar una sesión inactiva o abandonada
+const HEARTBEAT_STALE_MS = 50000; // 50 segundos para considerar una sesión inactiva o abandonada
+
+/**
+ * Parsea el User-Agent técnico a una descripción limpia, comprensible y amigable.
+ * Evita la confusión común donde el User-Agent estándar de Chrome contiene 'Mozilla', 'AppleWebKit' y 'Safari'.
+ */
+export function parseSessionDeviceInfo(ua?: string): ParsedDeviceInfo {
+  if (!ua) {
+    return {
+      browser: 'Navegador Web',
+      os: 'Dispositivo',
+      icon: '🌐',
+      fullLabel: 'Navegador Web'
+    };
+  }
+
+  let browser = 'Navegador Web';
+  let icon = '🌐';
+
+  // Detección estricta y jerárquica de navegadores
+  if (/edg\//i.test(ua)) {
+    browser = 'Microsoft Edge';
+    icon = '🌐';
+  } else if (/opr\/|opera/i.test(ua)) {
+    browser = 'Opera';
+    icon = '🌐';
+  } else if (/brave/i.test(ua)) {
+    browser = 'Brave Browser';
+    icon = '🦁';
+  } else if (/chrome|crios/i.test(ua)) {
+    browser = 'Google Chrome';
+    icon = '🌐';
+  } else if (/firefox|fxios/i.test(ua)) {
+    browser = 'Mozilla Firefox';
+    icon = '🦊';
+  } else if (/safari/i.test(ua) && !/chrome|crios|android/i.test(ua)) {
+    browser = 'Apple Safari';
+    icon = '🧭';
+  }
+
+  let os = 'Dispositivo';
+  if (/windows/i.test(ua)) {
+    os = 'Windows';
+  } else if (/android/i.test(ua)) {
+    os = 'Android';
+    icon = '📱';
+  } else if (/iphone/i.test(ua)) {
+    os = 'iPhone';
+    icon = '📱';
+  } else if (/ipad/i.test(ua)) {
+    os = 'iPad';
+    icon = '📱';
+  } else if (/macintosh|mac os x/i.test(ua)) {
+    os = 'macOS';
+  } else if (/linux/i.test(ua)) {
+    os = 'Linux';
+  } else if (/cros/i.test(ua)) {
+    os = 'ChromeOS';
+  }
+
+  return {
+    browser,
+    os,
+    icon,
+    fullLabel: `${browser} (${os})`
+  };
+}
 
 /**
  * Genera o recupera el identificador único persistente de este dispositivo/navegador.
@@ -90,6 +166,8 @@ export async function startSutzSession(
 ): Promise<StartSessionResult> {
   const deviceId = getLocalDeviceId();
   const sessionRef = doc(db, 'sutz_sessions', uid);
+  const rawUa = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const parsed = parseSessionDeviceInfo(rawUa);
 
   try {
     const snap = await getDoc(sessionRef);
@@ -119,7 +197,10 @@ export async function startSutzSession(
       uid,
       studentName: studentName || 'Estudiante Explorador',
       email: email || '',
-      userAgent: typeof navigator !== 'undefined' ? navigator.userAgent.substring(0, 100) : 'Browser',
+      deviceLabel: parsed.fullLabel,
+      browserName: parsed.browser,
+      osName: parsed.os,
+      userAgent: rawUa.substring(0, 150),
       startedAt: serverTimestamp(),
       lastHeartbeatAt: serverTimestamp(),
       isActive: true,
@@ -141,6 +222,8 @@ export async function startSutzSession(
 export async function reclaimSutzSession(uid: string, studentName: string, email?: string | null): Promise<string> {
   const deviceId = getLocalDeviceId();
   const sessionRef = doc(db, 'sutz_sessions', uid);
+  const rawUa = typeof navigator !== 'undefined' ? navigator.userAgent : '';
+  const parsed = parseSessionDeviceInfo(rawUa);
 
   await setDoc(sessionRef, {
     sessionId: deviceId,
@@ -148,7 +231,10 @@ export async function reclaimSutzSession(uid: string, studentName: string, email
     uid,
     studentName: studentName || 'Estudiante Explorador',
     email: email || '',
-    userAgent: typeof navigator !== 'undefined' ? navigator.userAgent.substring(0, 100) : 'Browser',
+    deviceLabel: parsed.fullLabel,
+    browserName: parsed.browser,
+    osName: parsed.os,
+    userAgent: rawUa.substring(0, 150),
     startedAt: serverTimestamp(),
     lastHeartbeatAt: serverTimestamp(),
     isActive: true,
@@ -230,7 +316,7 @@ export function listenToSutzSession(
       return;
     }
 
-    // 3. Comprobar si la sesión remota está obsoleta (sin heartbeat en los últimos 90 segundos)
+    // 3. Comprobar si la sesión remota está obsoleta (sin heartbeat en los últimos 50 segundos)
     const lastHb = parseTimestampMs(remoteData.lastHeartbeatAt) || parseTimestampMs(remoteData.startedAt);
     if (lastHb && (Date.now() - lastHb > HEARTBEAT_STALE_MS)) {
       if (onResolved) onResolved();

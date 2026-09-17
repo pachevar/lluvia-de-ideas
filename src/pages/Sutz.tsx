@@ -317,14 +317,24 @@ export default function Sutz() {
       setOnlinePeersCount(peers.length);
     });
 
-    // 4. Heartbeat periódico cada 40 segundos (solo si este dispositivo está en control activo)
+    // 4. Heartbeat periódico cada 20 segundos (solo si este dispositivo está en control activo)
     const heartbeatInterval = setInterval(() => {
       if (!isConflictRef.current) {
         heartbeatSutzSession(user.uid);
       }
-    }, 40000);
+    }, 20000);
+
+    // 5. Cierre limpio e inmediato de sesión al cerrar pestaña o ventana
+    const handleTabClose = () => {
+      closeSutzSession(user.uid);
+      setStudentOffline(user.uid);
+    };
+    window.addEventListener('beforeunload', handleTabClose);
+    window.addEventListener('pagehide', handleTabClose);
 
     return () => {
+      window.removeEventListener('beforeunload', handleTabClose);
+      window.removeEventListener('pagehide', handleTabClose);
       clearInterval(heartbeatInterval);
       unsubSession();
       unsubPeers();

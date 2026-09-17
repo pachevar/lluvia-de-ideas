@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { reclaimSutzSession } from '../../services/sutzSessionService';
+import { reclaimSutzSession, parseSessionDeviceInfo } from '../../services/sutzSessionService';
 import { sutzAudio } from '../../utils/sutzSoundEffects';
 import type { SutzSessionData } from '../../services/sutzSessionService';
 
@@ -21,6 +21,10 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
   const [isReclaiming, setIsReclaiming] = React.useState(false);
 
   if (!isOpen) return null;
+
+  const remoteDevice = parseSessionDeviceInfo(remoteSession?.userAgent || remoteSession?.deviceLabel);
+  const currentDevice = parseSessionDeviceInfo(typeof navigator !== 'undefined' ? navigator.userAgent : '');
+  const isSameBrowser = remoteDevice.browser === currentDevice.browser;
 
   const handleReclaim = async () => {
     if (isReclaiming || !user) return;
@@ -123,37 +127,45 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
           lineHeight: 1.55,
           color: '#cbd5e1'
         }}>
-          La cuenta <strong style={{ color: '#ffffff' }}>{user?.email || remoteSession?.email || 'de estudiante'}</strong> ya tiene una sesión abierta en otra pestaña o dispositivo. Por integridad del progreso y seguridad escolar, <strong>solo se permite una sesión activa</strong> por cuenta.
+          La cuenta <strong style={{ color: '#ffffff' }}>{user?.email || remoteSession?.email || 'de estudiante'}</strong> tiene una sesión activa en otra ventana o dispositivo. Por integridad del progreso y seguridad escolar, <strong>solo se permite una sesión activa</strong> por cuenta.
         </p>
 
-        {remoteSession?.userAgent && (
-          <div style={{
-            background: 'var(--sutz-elevation-1, #151b27)',
-            border: '1px solid rgba(148, 163, 184, 0.2)',
-            borderRadius: '12px',
-            padding: '10px 14px',
-            marginBottom: '16px',
-            fontSize: '0.76rem',
-            color: '#94a3b8',
-            textAlign: 'left'
-          }}>
-            <div style={{ fontWeight: 800, color: '#e2e8f0', marginBottom: '2px' }}>Dispositivo conectado:</div>
-            <div style={{ wordBreak: 'break-all' }}>{remoteSession.userAgent}</div>
-          </div>
-        )}
-
+        {/* Tarjeta de Dispositivo en Lenguaje Natural Humano */}
         <div style={{
-          background: 'rgba(56, 189, 248, 0.08)',
-          border: '1px solid rgba(56, 189, 248, 0.25)',
-          borderRadius: '12px',
-          padding: '10px 14px',
+          background: 'rgba(15, 23, 42, 0.75)',
+          border: '1px solid rgba(56, 189, 248, 0.3)',
+          borderRadius: '16px',
+          padding: '14px 16px',
           marginBottom: '20px',
-          fontSize: '0.76rem',
-          color: '#bae6fd',
-          textAlign: 'left',
-          lineHeight: 1.45
+          textAlign: 'left'
         }}>
-          💡 <strong>Nota para pruebas:</strong> Si abres dos pestañas en el mismo navegador normal, ambas compartirán la misma cuenta. Para probar con dos correos diferentes a la vez, abre una de las cuentas en una <strong>Ventana de Incógnito</strong> o en otro navegador (Chrome / Firefox / Edge).
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Sesión detectada
+            </span>
+            <span style={{
+              fontSize: '0.68rem',
+              background: isSameBrowser ? 'rgba(56, 189, 248, 0.2)' : 'rgba(245, 158, 11, 0.2)',
+              color: isSameBrowser ? '#38bdf8' : '#fbbf24',
+              padding: '3px 10px',
+              borderRadius: '999px',
+              fontWeight: 800
+            }}>
+              {isSameBrowser ? 'Mismo Navegador' : 'Otro Dispositivo'}
+            </span>
+          </div>
+
+          <div style={{ fontSize: '1rem', fontWeight: 800, color: '#ffffff', display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '1.25rem' }}>{remoteDevice.icon}</span>
+            <span>{remoteDevice.fullLabel}</span>
+          </div>
+
+          <div style={{ fontSize: '0.76rem', color: '#94a3b8', lineHeight: 1.45 }}>
+            {isSameBrowser 
+              ? `Detectamos actividad reciente en otra ventana o perfil de ${remoteDevice.browser}. Al tomar el control, esta ventana será la autorizada.`
+              : `Hay una sesión abierta en un equipo o navegador externo (${remoteDevice.fullLabel}). Al tomar el control, se cerrará allí.`
+            }
+          </div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
@@ -177,7 +189,12 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
               transition: 'all 0.2s ease'
             }}
           >
-            {isReclaiming ? '⏳ Reclamando control...' : '⚡ Reclamar Control Aquí (Cerrar la otra sesión)'}
+            {isReclaiming 
+              ? '⏳ Tomando control...' 
+              : isSameBrowser 
+                ? `⚡ Tomar Control en esta ventana de ${currentDevice.browser}` 
+                : '⚡ Reclamar Control Aquí (Cerrar la otra sesión)'
+            }
           </button>
 
           <button
