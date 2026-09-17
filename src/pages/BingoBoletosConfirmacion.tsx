@@ -31,10 +31,14 @@ const BingoBoletosConfirmacion: React.FC = () => {
   const isSuccess = searchParams.get('status') === 'success' || searchParams.get('testMode') === 'true';
   const pkgId = searchParams.get('pkg');
   const tierId = searchParams.get('tier');
+  const tierNameParam = searchParams.get('tierName');
   const qtyParam = parseInt(searchParams.get('qty') || '1', 10);
   const playerNameParam = searchParams.get('playerName') || searchParams.get('name');
   const phoneParam = searchParams.get('phone');
   const modeParam = (searchParams.get('mode') as 'personal' | 'gift') || 'personal';
+  const priceParam = searchParams.get('price') || searchParams.get('totalPrice');
+  const unitPriceParam = searchParams.get('unitPrice');
+  const [activeGamePriceQ, setActiveGamePriceQ] = useState<number>(10);
 
   const [loading, setLoading] = useState(true);
   const [orderData, setOrderData] = useState<any>(null);
@@ -145,6 +149,27 @@ const BingoBoletosConfirmacion: React.FC = () => {
       let currentOrder: any = null;
 
       try {
+        // 1. Obtener la sesión activa de Bingo para vincular el token y conocer precio oficial
+        let activeGameId = 'juego-principal';
+        let sessionResetAt = Date.now();
+        let fetchedCardPriceQ = 10;
+        try {
+          const qGame = query(collection(db, 'bingo_games'), where('active', '==', true), limit(1));
+          const gameSnap = await getDocs(qGame);
+          if (!gameSnap.empty) {
+            activeGameId = gameSnap.docs[0].id;
+            const gData = gameSnap.docs[0].data();
+            sessionResetAt = gData.lastResetAt || gData.createdAt || Date.now();
+            if (gData.cardPriceQ !== undefined && gData.cardPriceQ !== null) {
+              fetchedCardPriceQ = Number(gData.cardPriceQ);
+              setActiveGamePriceQ(fetchedCardPriceQ);
+            }
+          }
+        } catch (gErr) {
+          console.warn("No se pudo obtener juego activo:", gErr);
+        }
+
+        // 2. Buscar la orden en Firestore
         if (orderId) {
           const ref = doc(db, 'bingo_orders', orderId);
           const snap = await getDoc(ref);
@@ -162,18 +187,47 @@ const BingoBoletosConfirmacion: React.FC = () => {
           }
         }
 
-        if (!currentOrder && playerNameParam) {
+        // 3. Si no se encontró en Firestore de inmediato, intentar recuperar de sessionStorage
+        if (!currentOrder) {
+          try {
+            const cachedOrderStr = sessionStorage.getItem('last_bingo_order');
+            if (cachedOrderStr) {
+              const cached = JSON.parse(cachedOrderStr);
+              if (!orderId || cached.orderId === orderId) {
+                currentOrder = cached;
+              }
+            }
+          } catch (cErr) {
+            console.warn("Aviso leyendo sessionStorage:", cErr);
+          }
+        }
+
+        // 4. Reconstrucción resiliente si aún no hay currentOrder
+        if (!currentOrder && (orderId || playerNameParam)) {
           const targetTier = tierId || pkgId;
-          const unitPrice = targetTier === 'tier-free' ? 0 : (targetTier === 'tier-10' || targetTier === 'pkg-10' ? 10 : targetTier === 'tier-50' || targetTier === 'pkg-50' ? 50 : targetTier === 'tier-100' || targetTier === 'pkg-100' ? 100 : 25);
-          const tierName = targetTier === 'tier-free' ? 'Cartón Gratuito (Prueba)' : (targetTier === 'tier-10' || targetTier === 'pkg-10' ? 'Cartón Bronce' : targetTier === 'tier-50' || targetTier === 'pkg-50' ? 'Cartón Oro' : targetTier === 'tier-100' || targetTier === 'pkg-100' ? 'Cartón Diamante VIP' : 'Cartón Plata');
-          const prizeLevel = targetTier === 'tier-free' ? 'Partida Gratuita / Demostración' : (targetTier === 'tier-10' ? 'Premios Estándar' : targetTier === 'tier-50' ? 'Grandes Premios' : targetTier === 'tier-100' ? 'Premio Mayor / Pozo VIP' : 'Premios Intermedios');
-          const totalQ = unitPrice * qtyParam;
+          const parsedPriceParam = priceParam ? Number(priceParam) : null;
+          const parsedUnitPriceParam = unitPriceParam ? Number(unitPriceParam) : null;
+
+          const unitPrice = parsedUnitPriceParam !== null
+            ? parsedUnitPriceParam
+            : (parsedPriceParam !== null && qtyParam
+                ? parsedPriceParam / qtyParam
+                : (targetTier === 'tier-free' ? 0
+                  : targetTier === 'tier-10' || targetTier === 'pkg-10' ? 10
+                  : targetTier === 'tier-50' || targetTier === 'pkg-50' ? 50
+                  : targetTier === 'tier-100' || targetTier === 'pkg-100' ? 100
+                  : fetchedCardPriceQ));
+
+          const totalQ = parsedPriceParam !== null ? parsedPriceParam : unitPrice * qtyParam;
+          const tierName = tierNameParam || (targetTier === 'tier-free' || unitPrice === 0 ? 'Cartón Gratuito (Prueba)' : (unitPrice === 10 ? 'Cartón Bronce' : unitPrice === 50 ? 'Cartón Oro' : unitPrice === 100 ? 'Cartón Diamante VIP' : 'Cartón Oficial'));
+          const prizeLevel = unitPrice === 0 ? 'Partida Gratuita / Demostración' : (unitPrice === 10 ? 'Premios Estándar' : unitPrice === 50 ? 'Grandes Premios' : unitPrice === 100 ? 'Premio Mayor / Pozo VIP' : 'Premios Oficiales');
           const isCashFromParam = searchParams.get('paymentMethod') === 'efectivo';
 
           currentOrder = {
-            playerName: decodeURIComponent(playerNameParam),
-            playerWhatsapp: phoneParam,
-            tierId: targetTier || (unitPrice === 0 ? 'tier-free' : 'tier-25'),
+            orderId: orderId || ('ord_' + Date.now()),
+            playerName: decodeURIComponent(playerNameParam || 'Jugador Bingotenango'),
+            playerWhatsapp: phoneParam || '',
+            tierId: targetTier || (unitPrice === 0 ? 'tier-free' : unitPrice === 10 ? 'tier-10' : unitPrice === 50 ? 'tier-50' : unitPrice === 100 ? 'tier-100' : 'tier-10'),
             tierName: tierName,
             prizeLevel: prizeLevel,
             packageName: `${tierName} (${qtyParam} ${qtyParam === 1 ? 'Cartón' : 'Cartones'})`,
@@ -181,11 +235,34 @@ const BingoBoletosConfirmacion: React.FC = () => {
             quantity: qtyParam,
             priceQ: totalQ,
             totalPriceQ: totalQ,
+            paidAmount: (!isCashFromParam && isSuccess) ? totalQ : 0,
             cartonesCount: qtyParam,
             purchaseMode: modeParam,
             paymentMethod: isCashFromParam ? 'efectivo' : 'online',
-            status: (!isCashFromParam && (isSuccess || unitPrice === 0)) ? 'completed' : 'pending'
+            status: (!isCashFromParam && (isSuccess || unitPrice === 0)) ? 'completed' : 'pending',
+            createdAt: Date.now()
           };
+
+          if (orderId) {
+            try {
+              await setDoc(doc(db, 'bingo_orders', orderId), currentOrder, { merge: true });
+            } catch (errSave) {
+              console.warn("Aviso guardando orden reconstruida en Firestore:", errSave);
+            }
+          }
+        }
+
+        // Asegurar que unitPriceQ y totalPriceQ estén normalizados y correctos
+        if (currentOrder) {
+          if (currentOrder.unitPriceQ === undefined || currentOrder.unitPriceQ === null) {
+            currentOrder.unitPriceQ = unitPriceParam ? Number(unitPriceParam) : (currentOrder.tierId === 'tier-10' ? 10 : currentOrder.tierId === 'tier-50' ? 50 : currentOrder.tierId === 'tier-100' ? 100 : fetchedCardPriceQ);
+          }
+          if (currentOrder.totalPriceQ === undefined || currentOrder.totalPriceQ === null) {
+            currentOrder.totalPriceQ = currentOrder.priceQ ?? (priceParam ? Number(priceParam) : (currentOrder.unitPriceQ * (currentOrder.quantity || 1)));
+          }
+          if (currentOrder.priceQ === undefined || currentOrder.priceQ === null) {
+            currentOrder.priceQ = currentOrder.totalPriceQ;
+          }
         }
 
         const isCash = currentOrder?.paymentMethod === 'efectivo';
@@ -194,23 +271,14 @@ const BingoBoletosConfirmacion: React.FC = () => {
         setIsOrderPending(!isPaid && (currentOrder?.status === 'pending' || !currentOrder?.status));
         setOrderData(currentOrder);
 
+        const currentOrderEffectivePaidQ = currentOrder?.paidAmount
+          ?? currentOrder?.totalPriceQ
+          ?? currentOrder?.priceQ
+          ?? (currentOrder?.unitPriceQ !== undefined && currentOrder?.quantity ? currentOrder.unitPriceQ * currentOrder.quantity : null)
+          ?? (priceParam ? Number(priceParam) : null)
+          ?? (isFree ? 0 : fetchedCardPriceQ);
 
-        // 2. Obtener la sesión activa de Bingo para vincular el token
-        let activeGameId = 'juego-principal';
-        let sessionResetAt = Date.now();
-        try {
-          const qGame = query(collection(db, 'bingo_games'), where('active', '==', true), limit(1));
-          const gameSnap = await getDocs(qGame);
-          if (!gameSnap.empty) {
-            activeGameId = gameSnap.docs[0].id;
-            const gData = gameSnap.docs[0].data();
-            sessionResetAt = gData.lastResetAt || gData.createdAt || Date.now();
-          }
-        } catch (gErr) {
-          console.warn("No se pudo obtener juego activo:", gErr);
-        }
-
-        // 3. Crear pases de acceso según el modo de compra
+        // 5. Crear pases de acceso según el modo de compra
         const effectiveOrderId = orderId || ('ord_sim_' + Date.now());
         const isGift = currentOrder?.purchaseMode === 'gift';
         const totalQty = currentOrder?.quantity || 1;
@@ -225,12 +293,13 @@ const BingoBoletosConfirmacion: React.FC = () => {
             try {
               const giftTokenSnap = await getDoc(giftTokenRef);
               if (!giftTokenSnap.exists()) {
+                const unitCost = currentOrder.unitPriceQ || (currentOrderEffectivePaidQ / totalQty) || 0;
                 const giftTokenObj: BingoAccessToken = {
                   id: giftTokenId,
                   orderId: effectiveOrderId,
                   playerName: `${currentOrder.playerName} (Contacto #${i})`,
                   playerWhatsapp: currentOrder.playerWhatsapp || '',
-                  tierId: currentOrder.tierId || 'tier-25',
+                  tierId: currentOrder.tierId || (isFree ? 'tier-free' : unitCost === 10 ? 'tier-10' : unitCost === 50 ? 'tier-50' : unitCost === 100 ? 'tier-100' : 'tier-10'),
                   tierName: currentOrder.tierName || 'Cartón Oficial',
                   prizeLevel: currentOrder.prizeLevel || 'Premios en vivo',
                   quantity: 1, // Cada amigo recibe 1 cartón independiente
@@ -241,8 +310,8 @@ const BingoBoletosConfirmacion: React.FC = () => {
                   status: isPaid ? 'active' : 'pending',
                   paymentStatus: isPaid ? 'paid' : 'pending',
                   paymentMethod: currentOrder.paymentMethod || 'efectivo',
-                  paidAmount: isPaid ? (currentOrder.unitPriceQ || 0) : 0,
-                  unitPriceQ: currentOrder.unitPriceQ || 0,
+                  paidAmount: isPaid ? unitCost : 0,
+                  unitPriceQ: unitCost,
                   usedByDevice: null,
                   linkSent: false,
                   linkSentAt: null,
@@ -285,7 +354,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
               orderId: effectiveOrderId,
               playerName: currentOrder.playerName,
               playerWhatsapp: currentOrder.playerWhatsapp || '',
-              tierId: currentOrder.tierId || (isFree ? 'tier-free' : 'tier-25'),
+              tierId: currentOrder.tierId || (isFree ? 'tier-free' : currentOrderEffectivePaidQ === 10 ? 'tier-10' : currentOrderEffectivePaidQ === 50 ? 'tier-50' : currentOrderEffectivePaidQ === 100 ? 'tier-100' : 'tier-10'),
               tierName: currentOrder.tierName || (isFree ? 'Cartón Gratuito' : 'Cartón Oficial'),
               prizeLevel: currentOrder.prizeLevel || 'Premios en vivo',
               quantity: currentOrder.quantity || 1,
@@ -326,7 +395,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
               phone: currentOrder.playerWhatsapp,
               name: currentOrder.playerName,
               email: currentOrder.playerEmail || '',
-              spentQ: currentOrder.totalPriceQ ?? currentOrder.priceQ ?? (isFree ? 0 : 25),
+              spentQ: currentOrderEffectivePaidQ,
               webPushEnabled: currentPermission === 'granted'
             });
           } catch (errCrm) {
@@ -372,7 +441,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
     };
 
     fetchOrderAndToken();
-  }, [orderId, isSuccess, pkgId, tierId, qtyParam, playerNameParam, phoneParam, modeParam]);
+  }, [orderId, isSuccess, pkgId, tierId, tierNameParam, qtyParam, playerNameParam, phoneParam, modeParam, priceParam, unitPriceParam]);
 
   // Escuchar en tiempo real la orden para cuando el promotor habilite el pago en efectivo
   useEffect(() => {
@@ -460,6 +529,16 @@ const BingoBoletosConfirmacion: React.FC = () => {
     return () => unsub();
   }, [orderId, accessToken?.id, accessToken?.usedByCardId, activeCardId, tierId, navigate]);
 
+  const isGiftMode = orderData?.purchaseMode === 'gift' && giftLinks.length > 0;
+  const effectivePaidQ = 
+    orderData?.paidAmount ??
+    orderData?.totalPriceQ ??
+    orderData?.priceQ ??
+    (orderData?.unitPriceQ !== undefined && orderData?.quantity ? orderData.unitPriceQ * orderData.quantity : null) ??
+    (priceParam ? Number(priceParam) : null) ??
+    (unitPriceParam ? Number(unitPriceParam) * qtyParam : null) ??
+    (tierId === 'tier-free' ? 0 : activeGamePriceQ);
+
   const handleEnableWebPush = async () => {
     setPushActivating(true);
     try {
@@ -481,7 +560,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
             phone: orderData.playerWhatsapp,
             name: orderData.playerName,
             email: orderData.playerEmail || '',
-            spentQ: orderData.totalPriceQ || orderData.priceQ || 25,
+            spentQ: effectivePaidQ,
             webPushEnabled: true
           }).catch(() => {});
         }
@@ -628,9 +707,6 @@ const BingoBoletosConfirmacion: React.FC = () => {
       </div>
     );
   }
-
-  const isGiftMode = orderData?.purchaseMode === 'gift' && giftLinks.length > 0;
-  const effectivePaidQ = orderData?.totalPriceQ ?? orderData?.priceQ ?? (tierId === 'tier-free' ? 0 : 25);
 
   return (
     <div className="bingo-boletos-page">
@@ -1444,7 +1520,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
                     href={`https://wa.me/${finalPhone}?text=${encodeURIComponent(
                       `¡Hola ${orderData?.playerName || 'Jugador'}! 🎟️ Comprobante de boletos de Bingotenango:\n\n` +
                       `Tipo: ${isGiftMode ? `${orderData?.quantity} Links para Contactos` : `${orderData?.quantity} Cartón(es) Personal`}\n` +
-                      `Total: Q${orderData?.totalPriceQ ?? orderData?.priceQ ?? (tierId === 'tier-free' ? 0 : 25)}.00\n\n` +
+                      `Total: Q${effectivePaidQ}.00\n\n` +
                       (accessToken ? `Enlace de acceso: ${window.location.origin}/juegos/bingo?access=${accessToken.id}\n\n` : '') +
                       `¡Buena suerte en la partida en vivo!`
                     )}`}

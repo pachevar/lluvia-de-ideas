@@ -186,8 +186,8 @@ const BingoBoletos: React.FC = () => {
       id: activeGame.id,
       title: activeGame.title || 'Gran Ronda Oficial de Bingotenango',
       scheduledAt: activeGame.nextRoundTime || Date.now(),
-      cardPriceQ: activeGame.cardPriceQ ?? (activeGame.gameType === 'tier-free' ? 0 : 25),
-      gameType: activeGame.gameType || (activeGame.cardPriceQ === 0 ? 'tier-free' : 'tier-25'),
+      cardPriceQ: activeGame.cardPriceQ ?? (activeGame.gameType === 'tier-free' ? 0 : 10),
+      gameType: activeGame.gameType || (activeGame.cardPriceQ === 0 ? 'tier-free' : 'tier-10'),
       status: 'live',
       prizeHighlight: activeGame.currentPrizeTitle || 'Premios en vivo',
       tierName: activeGame.cardPriceQ === 0 ? 'Partida Gratuita' : 'Cartón Oficial',
@@ -217,8 +217,8 @@ const BingoBoletos: React.FC = () => {
   // Determinar el tier y precio oficial fijado para esta partida
   const currentPriceQ = selectedScheduledGame?.cardPriceQ !== undefined 
     ? selectedScheduledGame.cardPriceQ 
-    : (activeGame?.cardPriceQ !== undefined ? activeGame.cardPriceQ : 25);
-  const currentTierId = selectedScheduledGame?.gameType || activeGame?.gameType || (currentPriceQ === 0 ? 'tier-free' : currentPriceQ === 10 ? 'tier-10' : currentPriceQ === 50 ? 'tier-50' : currentPriceQ === 100 ? 'tier-100' : 'tier-25');
+    : (activeGame?.cardPriceQ !== undefined ? activeGame.cardPriceQ : 10);
+  const currentTierId = selectedScheduledGame?.gameType || activeGame?.gameType || (currentPriceQ === 0 ? 'tier-free' : currentPriceQ === 10 ? 'tier-10' : currentPriceQ === 50 ? 'tier-50' : currentPriceQ === 100 ? 'tier-100' : currentPriceQ === 25 ? 'tier-25' : 'tier-10');
   const activeTier: CardTier = CARD_TIERS_MAP[currentTierId] || {
     id: currentTierId,
     name: currentPriceQ === 0 ? 'Cartón Gratuito (Prueba)' : `Cartón Oficial Bingotenango`,
@@ -440,7 +440,7 @@ const BingoBoletos: React.FC = () => {
       localStorage.setItem('my_bingo_player_name', playerName.trim());
 
       // Redirigir a confirmación en modo de espera presencial
-      navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tokenId=${newTokenId}&paymentMethod=efectivo&status=pending_cash&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=${activeTier.id}&qty=${quantity}&mode=${purchaseMode}`);
+      navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tokenId=${newTokenId}&paymentMethod=efectivo&status=pending_cash&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=${activeTier.id}&tierName=${encodeURIComponent(activeTier.name)}&qty=${quantity}&mode=${purchaseMode}&price=${totalPriceQ}&totalPrice=${totalPriceQ}&unitPrice=${currentPriceQ}`);
     } catch (cashErr) {
       console.error("Error al registrar orden en efectivo:", cashErr);
       setErrorMessage("No se pudo registrar la solicitud en efectivo. Intenta de nuevo o contáctanos por WhatsApp.");
@@ -574,7 +574,7 @@ const BingoBoletos: React.FC = () => {
             });
           }
         }
-        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=tier-free&qty=${quantity}&mode=${purchaseMode}`);
+        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=tier-free&tierName=${encodeURIComponent('Cartón Gratuito')}&qty=${quantity}&mode=${purchaseMode}&price=0&totalPrice=0&unitPrice=0`);
         return;
       }
     } catch (fsErr) {
@@ -582,6 +582,51 @@ const BingoBoletos: React.FC = () => {
     }
 
     try {
+      // Guardar copia local de la orden en sessionStorage para resiliencia absoluta
+      try {
+        sessionStorage.setItem('last_bingo_order', JSON.stringify({
+          orderId,
+          playerName: playerName.trim(),
+          playerWhatsapp: cleanPhone,
+          playerEmail: playerEmail.trim() || null,
+          tierId: activeTier.id,
+          tierName: activeTier.name,
+          prizeLevel: activeTier.prizeLevel,
+          unitPriceQ: currentPriceQ,
+          quantity,
+          priceQ: totalPriceQ,
+          totalPriceQ: totalPriceQ,
+          cartonesCount: quantity,
+          purchaseMode,
+          packageName: purchaseMode === 'personal' 
+            ? `${activeTier.name} (${quantity} ${quantity === 1 ? 'Cartón Personal' : 'Cartones Personales'})`
+            : `${activeTier.name} (${quantity} ${quantity === 1 ? 'Link para Contacto' : 'Links para Contactos'})`,
+          gameId: activeGame?.id || 'default_game',
+          scheduledGameId: selectedScheduledGame?.id || null,
+          scheduledGameTitle: selectedScheduledGame?.title || null,
+          createdAt: Date.now()
+        }));
+      } catch (cacheErr) {
+        console.warn("Aviso guardando orden en sessionStorage:", cacheErr);
+      }
+
+      const successParams = new URLSearchParams({
+        orderId: orderId,
+        status: 'success',
+        tier: activeTier.id,
+        tierName: activeTier.name,
+        price: String(totalPriceQ),
+        totalPrice: String(totalPriceQ),
+        unitPrice: String(currentPriceQ),
+        qty: String(quantity),
+        mode: purchaseMode,
+        name: playerName.trim(),
+        playerName: playerName.trim(),
+        phone: cleanPhone,
+        gameId: activeGame?.id || '',
+        scheduledGameId: selectedScheduledGame?.id || ''
+      }).toString();
+
       // 2. Checkout dinámico con Recurrente
       const apiKey = recurrenteSecretKey || (import.meta as any).env?.VITE_RECURRENTE_SECRET_KEY || '';
 
@@ -605,7 +650,7 @@ const BingoBoletos: React.FC = () => {
                   quantity: 1
                 }
               ],
-              success_url: `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`,
+              success_url: `${window.location.origin}/juegos/bingo/boletos/confirmacion?${successParams}`,
               cancel_url: `${window.location.origin}/juegos/bingo/boletos`,
               metadata: {
                 orderId: orderId,
@@ -653,11 +698,11 @@ const BingoBoletos: React.FC = () => {
           if (playerEmail.trim()) {
             linkObj.searchParams.set('customer_email', playerEmail.trim());
           }
-          linkObj.searchParams.set('redirect_url', `${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
+          linkObj.searchParams.set('redirect_url', `${window.location.origin}/juegos/bingo/boletos/confirmacion?${successParams}`);
           window.location.href = linkObj.toString();
         } catch {
           const separator = configuredLink.includes('?') ? '&' : '?';
-          const returnUrl = encodeURIComponent(`${window.location.origin}/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success`);
+          const returnUrl = encodeURIComponent(`${window.location.origin}/juegos/bingo/boletos/confirmacion?${successParams}`);
           let finalUrl = `${configuredLink}${separator}locale=es&lang=es&customer_name=${encodeURIComponent(playerName)}&customer_phone=${encodeURIComponent(cleanPhone)}&redirect_url=${returnUrl}`;
           if (playerEmail.trim()) {
             finalUrl += `&customer_email=${encodeURIComponent(playerEmail.trim())}`;
@@ -666,7 +711,7 @@ const BingoBoletos: React.FC = () => {
         }
         return;
       } else {
-        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tier=${activeTier.id}&qty=${quantity}&name=${encodeURIComponent(playerName)}&phone=${cleanPhone}&mode=${purchaseMode}&testMode=true`);
+        navigate(`/juegos/bingo/boletos/confirmacion?${successParams}&testMode=true`);
       }
     } catch (err) {
       console.error("Error al iniciar orden:", err);
@@ -776,7 +821,7 @@ const BingoBoletos: React.FC = () => {
 
                           <div className={`partida-price-badge ${isFree ? 'free' : ''}`}>
                             <span className="price-val">
-                              {isFree ? 'Q0.00' : `Q${game.cardPriceQ || 25}.00`}
+                              {isFree ? 'Q0.00' : `Q${game.cardPriceQ ?? (activeGame?.cardPriceQ ?? 10)}.00`}
                             </span>
                             <span className="price-unit">
                               {isFree ? '¡GRATIS!' : '/ cartón'}
