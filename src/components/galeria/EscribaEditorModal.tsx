@@ -23,6 +23,10 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
   const [showManual, setShowManual] = useState<boolean>(false);
   const [isSaving, setIsSaving] = useState<boolean>(false);
 
+  // Guide Character Modal State (Pedagógica anti-copiado/pegado)
+  const [showPasteGuideModal, setShowPasteGuideModal] = useState<boolean>(false);
+  const [pasteGuideReason, setPasteGuideReason] = useState<'paste' | 'copy'>('paste');
+
   // Form states
   const [title, setTitle] = useState(initialData?.title || '');
   const [author, setAuthor] = useState(initialData?.author || '');
@@ -31,6 +35,13 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
   const [genre, setGenre] = useState<LiteraryGenre>(initialData?.genre || 'fantasia');
   const [synopsis, setSynopsis] = useState(initialData?.synopsis || '');
   const [content, setContent] = useState(initialData?.content || '');
+
+  // History stack for Undo (Ctrl+Z) and Redo (Ctrl+Y / Ctrl+Shift+Z)
+  const historyRef = useRef<string[]>([initialData?.content || '']);
+  const historyIndexRef = useRef<number>(0);
+  const [canUndo, setCanUndo] = useState<boolean>(false);
+  const [canRedo, setCanRedo] = useState<boolean>(false);
+  const lastChangeTimeRef = useRef<number>(Date.now());
 
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -43,18 +54,127 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
       setGenre(initialData.genre || 'fantasia');
       setSynopsis(initialData.synopsis || '');
       setContent(initialData.content || '');
+      historyRef.current = [initialData.content || ''];
+      historyIndexRef.current = 0;
+      setCanUndo(false);
+      setCanRedo(false);
     }
   }, [initialData]);
+
+  // Update history indicators
+  const updateHistoryState = () => {
+    setCanUndo(historyIndexRef.current > 0);
+    setCanRedo(historyIndexRef.current < historyRef.current.length - 1);
+  };
+
+  const pushToHistory = (newVal: string, immediate: boolean = false) => {
+    const now = Date.now();
+    const currentVal = historyRef.current[historyIndexRef.current];
+    if (newVal === currentVal) return;
+
+    // Discard any redo states ahead of current index
+    const newHistory = historyRef.current.slice(0, historyIndexRef.current + 1);
+
+    // Group rapid typing unless it's a word break, punctuation, tool insertion, or paused for >650ms
+    const isWordBreak = newVal.endsWith(' ') || newVal.endsWith('\n') || newVal.endsWith('.') || newVal.endsWith('—');
+    const shouldGroup = !immediate && (now - lastChangeTimeRef.current < 650) && !isWordBreak && newHistory.length > 1;
+
+    if (shouldGroup) {
+      newHistory[newHistory.length - 1] = newVal;
+    } else {
+      newHistory.push(newVal);
+      if (newHistory.length > 100) newHistory.shift();
+    }
+
+    historyRef.current = newHistory;
+    historyIndexRef.current = newHistory.length - 1;
+    lastChangeTimeRef.current = now;
+    updateHistoryState();
+  };
+
+  const handleUndo = () => {
+    if (historyIndexRef.current > 0) {
+      soundEffects.playClick();
+      historyIndexRef.current -= 1;
+      const prevVal = historyRef.current[historyIndexRef.current];
+      setContent(prevVal);
+      updateHistoryState();
+      setTimeout(() => textareaRef.current?.focus(), 20);
+    }
+  };
+
+  const handleRedo = () => {
+    if (historyIndexRef.current < historyRef.current.length - 1) {
+      soundEffects.playClick();
+      historyIndexRef.current += 1;
+      const nextVal = historyRef.current[historyIndexRef.current];
+      setContent(nextVal);
+      updateHistoryState();
+      setTimeout(() => textareaRef.current?.focus(), 20);
+    }
+  };
+
+  const triggerPasteGuide = (reason: 'paste' | 'copy' = 'paste') => {
+    soundEffects.playSpacePulse();
+    setPasteGuideReason(reason);
+    setShowPasteGuideModal(true);
+  };
+
+  // Keyboard Shortcuts for Textarea: Undo/Redo & Blocking Copy/Paste
+  const handleTextareaKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+    const isCtrlOrCmd = e.ctrlKey || e.metaKey;
+
+    // 1. Bloqueo de Pegado (Ctrl+V / Cmd+V)
+    if (isCtrlOrCmd && (e.key === 'v' || e.key === 'V')) {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerPasteGuide('paste');
+      return;
+    }
+
+    // 2. Bloqueo de Copiado (Ctrl+C / Cmd+C)
+    if (isCtrlOrCmd && (e.key === 'c' || e.key === 'C')) {
+      e.preventDefault();
+      e.stopPropagation();
+      triggerPasteGuide('copy');
+      return;
+    }
+
+    // 3. Deshacer: Ctrl+Z / Cmd+Z (sin Shift)
+    if (isCtrlOrCmd && !e.shiftKey && (e.key === 'z' || e.key === 'Z')) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleUndo();
+      return;
+    }
+
+    // 4. Rehacer: Ctrl+Y / Cmd+Y  O  Ctrl+Shift+Z / Cmd+Shift+Z
+    if (
+      (isCtrlOrCmd && (e.key === 'y' || e.key === 'Y')) ||
+      (isCtrlOrCmd && e.shiftKey && (e.key === 'z' || e.key === 'Z'))
+    ) {
+      e.preventDefault();
+      e.stopPropagation();
+      handleRedo();
+      return;
+    }
+  };
 
   // Handle ESC key
   useEffect(() => {
     if (!isOpen) return;
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') onClose();
+      if (e.key === 'Escape') {
+        if (showPasteGuideModal) {
+          setShowPasteGuideModal(false);
+        } else {
+          onClose();
+        }
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isOpen, onClose]);
+  }, [isOpen, onClose, showPasteGuideModal]);
 
   // Ortotipographic Insertion Helper
   const insertTextAtCursor = (prefix: string, suffix: string = '', defaultPlaceholder: string = '') => {
@@ -70,6 +190,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
     const newContent = textarea.value.substring(0, start) + replacement + textarea.value.substring(end);
 
     setContent(newContent);
+    pushToHistory(newContent, true);
 
     // Reposition cursor right after inserted text or inside placeholder
     setTimeout(() => {
@@ -326,8 +447,30 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                   </button>
                 </div>
 
-                {/* BOTONES DE HERRAMIENTAS DE ESTILO */}
+                {/* BOTONES DE HERRAMIENTAS DE ESTILO & HISTORIAL */}
                 <div className="escriba-tools-row">
+                  {/* Deshacer y Rehacer (Ctrl+Z y Ctrl+Y) */}
+                  <div className="escriba-history-group">
+                    <button
+                      type="button"
+                      className="escriba-history-btn"
+                      onClick={handleUndo}
+                      disabled={!canUndo}
+                      title="Deshacer último cambio (Ctrl+Z)"
+                    >
+                      <span>↩</span> Deshacer <span className="kbd-hint">Ctrl+Z</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="escriba-history-btn"
+                      onClick={handleRedo}
+                      disabled={!canRedo}
+                      title="Rehacer cambio (Ctrl+Y / Ctrl+Shift+Z)"
+                    >
+                      <span>↪</span> Rehacer <span className="kbd-hint">Ctrl+Y</span>
+                    </button>
+                  </div>
+
                   <button
                     type="button"
                     className="escriba-tool-btn"
@@ -424,7 +567,31 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                   id="escriba-content"
                   className="escriba-textarea"
                   value={content}
-                  onChange={(e) => setContent(e.target.value)}
+                  onChange={(e) => {
+                    const val = e.target.value;
+                    setContent(val);
+                    pushToHistory(val, false);
+                  }}
+                  onKeyDown={handleTextareaKeyDown}
+                  onPaste={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    triggerPasteGuide('paste');
+                  }}
+                  onCopy={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    triggerPasteGuide('copy');
+                  }}
+                  onCut={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                  }}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    triggerPasteGuide('paste');
+                  }}
                   placeholder="Comienza a escribir tu pergamino aquí... Usa los botones superiores para insertar diálogos (—), versos o separadores de escena."
                   required
                 />
@@ -512,6 +679,94 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
         </footer>
 
       </div>
+
+      {/* MODAL GUÍA: EL SABIO ESCRIBA DE SUTZ & IXMUKANÉ (AVISO PEDAGÓGICO DE COPIADO/PEGADO) */}
+      {showPasteGuideModal && (
+        <div 
+          className="escriba-guide-backdrop"
+          onClick={() => setShowPasteGuideModal(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div 
+            className="escriba-guide-modal"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="escriba-guide-badge">
+              <span>🪶</span> MENSAJE DEL SABIO ESCRIBA DE SUTZ
+            </div>
+
+            <div className="escriba-guide-avatar-wrapper">
+              <div className="escriba-guide-avatar">
+                <span>🦉</span>
+              </div>
+              <div className="escriba-guide-aura"></div>
+            </div>
+
+            <h3 className="escriba-guide-title">
+              ¡Detén tu pluma un instante, <span className="highlight">joven creador</span>!
+            </h3>
+
+            <div className="escriba-guide-message">
+              <p style={{ margin: '0 0 0.6rem 0' }}>
+                {pasteGuideReason === 'paste' 
+                  ? 'Has intentado pegar un texto en este pergamino. En nuestra academia editorial protegemos este espacio contra el copiado y pegado con una hermosa intención educativa:'
+                  : 'En El Pergamino del Escriba fomentamos el valor de escribir cada frase directamente sobre el lienzo:'}
+              </p>
+
+              <div className="escriba-guide-reasons">
+                <div className="escriba-guide-reason-item">
+                  <span className="reason-icon">🧠</span>
+                  <div>
+                    <strong>Despierta tu propia voz:</strong> Escribir letra por letra activa conexiones cerebrales únicas, ejercita tu imaginación y despierta ideas que ningún texto copiado puede igualar.
+                  </div>
+                </div>
+
+                <div className="escriba-guide-reason-item">
+                  <span className="reason-icon">✍️</span>
+                  <div>
+                    <strong>Entrena tu maestría literaria:</strong> Usa nuestras herramientas para insertar rayas de diálogo reglamentarias (<code>—</code>), acotaciones y versos poéticos.
+                  </div>
+                </div>
+
+                <div className="escriba-guide-reason-item">
+                  <span className="reason-icon">🏆</span>
+                  <div>
+                    <strong>Orgullo y autoría 100% auténtica:</strong> Tu obra se exhibirá en el Códice Escolar oficial. ¡Nada supera la satisfacción de saber que cada línea nació de tu propio esfuerzo!
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="escriba-guide-actions">
+              <button
+                type="button"
+                className="escriba-guide-btn-primary"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setShowPasteGuideModal(false);
+                  setTimeout(() => textareaRef.current?.focus(), 50);
+                }}
+              >
+                <span>✍️</span> ¡Acepto el reto, escribiré con mis propias palabras!
+              </button>
+
+              <button
+                type="button"
+                className="escriba-guide-btn-secondary"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setShowPasteGuideModal(false);
+                  setShowManual(true);
+                  setTimeout(() => textareaRef.current?.focus(), 50);
+                }}
+              >
+                📘 Ver el Manual del Escriba y Consejos de Estilo
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
