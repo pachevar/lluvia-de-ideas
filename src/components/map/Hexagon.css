@@ -672,8 +672,90 @@
   white-space: nowrap;
 }
 
-/* --- Mobile & Touch Anti-Flicker Optimizations --- */
-@media (max-width: 768px) {
+/* --- Tablet Optimizations (768px to 1024px) --- */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .map-viewport {
+    height: 100vh;
+    min-height: 100vh;
+    border-radius: 0;
+  }
+
+  .hex-cell {
+    transform: translate3d(0, 0, 0);
+    -webkit-transform: translate3d(0, 0, 0);
+    backface-visibility: hidden;
+  }
+
+  .hex-title-badge {
+    padding: 3px 8px;
+    border-radius: 9px;
+    max-width: 88%;
+  }
+
+  .hex-title-text {
+    font-size: 0.82rem;
+    line-height: 1.15;
+  }
+
+  .hex-pillar-tag {
+    font-size: 0.64rem;
+    padding: 1.5px 6px;
+  }
+
+  .hex-icon-disc {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    min-height: 44px;
+  }
+
+  .hex-icon-glyph {
+    font-size: 1.35rem;
+  }
+
+  .hex-icon-img {
+    max-width: 24px;
+    max-height: 24px;
+  }
+
+  /* Controles ergonómicos en tablet al alcance del pulgar */
+  .map-controls {
+    bottom: 24px;
+    top: auto;
+    right: 18px;
+    padding: 6px;
+    gap: 8px;
+    border-radius: 18px;
+    background: rgba(15, 23, 42, 0.88);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+  }
+
+  .map-controls .map-zoom-btn {
+    display: flex !important;
+  }
+
+  .map-controls button {
+    width: 44px;
+    height: 44px;
+    font-size: 1.2rem;
+    border-radius: 12px;
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.4);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5);
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+
+  .map-controls button:active {
+    transform: scale(0.92);
+    background: rgba(56, 189, 248, 0.35);
+  }
+}
+
+/* --- Mobile & Touch Anti-Flicker Optimizations (< 768px) --- */
+@media (max-width: 767px) {
   .map-viewport {
     height: 100vh; /* Full mobile screen height */
     min-height: 100vh;

@@ -914,9 +914,120 @@
 }
 
 /* ==========================================================================
+   TABLET RESPONSIVENESS (768px to 1024px)
+   Ajuste ergonómico para iPad, Galaxy Tab y tabletas en vertical y horizontal
+   ========================================================================== */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .sutz-top-game-hud {
+    padding: 8px 14px;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  /* 1. Izquierda: Perfil de héroe balanceado */
+  .sutz-hud-left {
+    flex-shrink: 0;
+  }
+
+  .sutz-hero-capsule {
+    padding: 4px 10px 4px 4px;
+    gap: 8px;
+    border-radius: 18px;
+  }
+
+  .sutz-hero-avatar-wrap {
+    width: 38px;
+    height: 38px;
+  }
+
+  .sutz-hero-avatar-frame {
+    font-size: 1.15rem;
+  }
+
+  .sutz-hero-name {
+    font-size: 0.82rem;
+    max-width: 95px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .sutz-hero-rank-tag {
+    font-size: 0.62rem;
+    padding: 1px 6px;
+  }
+
+  .sutz-hero-bars {
+    width: 75px;
+  }
+
+  /* 2. Centro: Cápsulas de recursos proporcionadas con scroll suave si es necesario */
+  .sutz-hud-center {
+    flex: 1 1 auto;
+    gap: 6px;
+    justify-content: center;
+    overflow-x: auto;
+    padding: 0 4px;
+    scrollbar-width: none;
+  }
+
+  .sutz-hud-center::-webkit-scrollbar {
+    display: none;
+  }
+
+  .sutz-res-pod {
+    padding: 4px 8px;
+    gap: 6px;
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .sutz-res-icon-circle {
+    width: 24px;
+    height: 24px;
+    font-size: 0.9rem;
+  }
+
+  .sutz-res-val {
+    font-size: 0.85rem;
+  }
+
+  .sutz-res-lbl {
+    font-size: 0.58rem;
+  }
+
+  /* 3. Derecha: Botones de acción táctiles de 40px */
+  .sutz-hud-right {
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .sutz-hud-action-btn,
+  .sutz-hud-exit-btn {
+    width: 40px;
+    height: 40px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+  }
+
+  .sutz-backpack-badge {
+    font-size: 0.55rem;
+    padding: 1px 5px;
+  }
+
+  /* Plano Cartesiano badge ubicado limpiamente debajo del HUD */
+  .sutz-game-container .cartesian-hud-badge {
+    top: 72px;
+    left: 14px;
+    padding: 5px 10px;
+    font-size: 0.72rem;
+  }
+}
+
+/* ==========================================================================
    4. RESPONSIVIDAD MÓVIL TOTAL (< 768px y < 480px)
    ========================================================================== */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
   .sutz-top-game-hud {
     padding: 6px 8px;
     gap: 6px;

@@ -68,7 +68,21 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   const centerCol = (minCol + maxCol) / 2;
   const centerRow = (minRow + maxRow) / 2;
 
-  const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+  const [viewportWidth, setViewportWidth] = useState<number>(() => 
+    typeof window !== 'undefined' ? window.innerWidth : 1024
+  );
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setViewportWidth(window.innerWidth);
+    };
+    window.addEventListener('resize', handleResize);
+    window.addEventListener('orientationchange', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('orientationchange', handleResize);
+    };
+  }, []);
 
   // Generous canvas bounds so hexes are never clipped when panning in any direction
   const mapWidth = Math.max(3400, widthSpan + 1400);
@@ -102,8 +116,17 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
     return ticks;
   }, [minRow, maxRow, yOffset, hexHeight]);
 
-  const base = isMobile ? 0.65 : 0.92;
-  const initialScale = base;
+  // Adaptive initial scale:
+  // - Mobile (<768px): 0.65
+  // - Tablet Portrait (768px - 899px): 0.74
+  // - Tablet Landscape (900px - 1024px): 0.82
+  // - Desktop (>1024px): 0.92
+  const initialScale = useMemo(() => {
+    if (viewportWidth < 768) return 0.65;
+    if (viewportWidth < 900) return 0.74;
+    if (viewportWidth <= 1024) return 0.82;
+    return 0.92;
+  }, [viewportWidth]);
 
   return (
     <div className="map-viewport">

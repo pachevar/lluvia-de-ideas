@@ -1676,8 +1676,8 @@
   }
 }
 
-/* 2. MÓVILES (Hasta 768px) */
-@media (max-width: 768px) {
+/* 2. MÓVILES (Menor a 768px) */
+@media (max-width: 767px) {
   /* Contenedor general sin desbordamientos */
   .gran-galeria-page {
     overflow-x: hidden;

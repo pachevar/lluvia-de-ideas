@@ -177,8 +177,39 @@
   transform: scale(1.02);
 }
 
-@media (max-width: 768px) {
+/* Tablet Optimization (768px - 1024px) */
+@media (min-width: 768px) and (max-width: 1024px) {
+  .creatika-hub-content {
+    padding: 2rem 1.25rem;
+  }
+
+  .creatika-hub-header {
+    margin-bottom: 2.5rem;
+  }
+
+  .creatika-cards-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+  }
+
+  .creatika-card {
+    padding: 1.6rem 1.4rem;
+    border-radius: 18px;
+  }
+
+  .creatika-card-title {
+    font-size: 1.35rem;
+  }
+
+  .creatika-card-desc {
+    font-size: 0.90rem;
+  }
+}
+
+/* Mobile Optimization (< 768px) */
+@media (max-width: 767px) {
   .creatika-cards-grid {
     grid-template-columns: 1fr;
+    gap: 1.15rem;
   }
 }
