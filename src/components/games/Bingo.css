@@ -1934,6 +1934,20 @@
    HANDHELD MOBILE BINGO CARD THEMES
    ========================================== */
 
+/* Base Bingo Cell touch optimizations */
+.bingo-cell,
+.gamer-cell {
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+}
+
+.bingo-cell.free-space {
+  cursor: default !important;
+  user-select: none;
+  border-color: #f59e0b !important;
+}
+
 /* Cyberpunk Card Theme */
 .card-theme-cyberpunk {
   background: transparent !important;

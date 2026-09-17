@@ -120,7 +120,7 @@ const BingoBoletos: React.FC = () => {
 
   // Cargar juego activo
   useEffect(() => {
-    const q = query(collection(db, 'bingo_games'), limit(1));
+    const q = query(collection(db, 'bingo_games'), where('active', '==', true), limit(1));
     const unsubscribe = onSnapshot(q, (snapshot) => {
       if (!snapshot.empty) {
         const gameData = { id: snapshot.docs[0].id, ...snapshot.docs[0].data() } as BingoGame;

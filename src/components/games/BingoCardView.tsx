@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { doc, onSnapshot, collection, query, where, getDocs } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, limit } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { BingoCard, BingoGame, BingoPrize, Sponsor } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
@@ -427,11 +427,22 @@ export default function BingoCardView() {
 
           // Suscribirse a la partida si no está configurada
           if (!unsubscribeGame) {
-            unsubscribeGame = onSnapshot(doc(db, 'bingo_games', cData.gameId), (gameSnap) => {
+            const targetGameId = cData.gameId || 'juego-principal';
+            unsubscribeGame = onSnapshot(doc(db, 'bingo_games', targetGameId), (gameSnap) => {
               if (gameSnap.exists()) {
                 setGameData({ id: gameSnap.id, ...gameSnap.data() } as BingoGame);
+                setLoading(false);
+              } else {
+                // Fallback de resiliencia: si el ID específico no existe, escuchar la partida activa global
+                const qActive = query(collection(db, 'bingo_games'), where('active', '==', true), limit(1));
+                getDocs(qActive).then((activeSnap) => {
+                  if (!activeSnap.empty) {
+                    const fallbackDoc = activeSnap.docs[0];
+                    setGameData({ id: fallbackDoc.id, ...fallbackDoc.data() } as BingoGame);
+                  }
+                  setLoading(false);
+                }).catch(() => setLoading(false));
               }
-              setLoading(false);
             }, (err) => {
               console.error(err);
               setError("Error al conectar con la partida en vivo.");
@@ -512,7 +523,7 @@ export default function BingoCardView() {
     // eslint-disable-next-line react-hooks/exhaustive-deps -- playFeedbackSound is a stable-by-convention closure; gameData tracked via drawnNumbers
   }, [gameData?.drawnNumbers, voiceMode, cardData]);
 
-  // Limpiar marcas y almacenamiento únicamente si el Host reinicia explícitamente la partida
+  // Limpiar marcas y almacenamiento si el Host reinicia explícitamente la partida
   const lastResetRef = useRef<number | null>(null);
 
   useEffect(() => {
@@ -520,8 +531,28 @@ export default function BingoCardView() {
 
     const currentReset = gameData.lastResetAt || 0;
 
-    // Solo si el host ejecutó un nuevo reinicio durante esta sesión activa
-    if (lastResetRef.current !== null && currentReset > lastResetRef.current) {
+    // 1. Si es la primera carga o cambio de partida, verificar si los datos guardados en localStorage son de un ciclo anterior
+    if (lastResetRef.current === null) {
+      lastResetRef.current = currentReset;
+      if (currentReset > 0) {
+        const stored = localStorage.getItem(`bingo_marks_${cartonId}`);
+        if (stored) {
+          try {
+            const parsed = JSON.parse(stored);
+            if (parsed && typeof parsed === 'object' && parsed.lastResetAt && parsed.lastResetAt < currentReset) {
+              const clearedMarks = Array(5).fill(null).map(() => Array(5).fill(false));
+              clearedMarks[2][2] = true;
+              setMarkedSlots(clearedMarks);
+              localStorage.removeItem(`bingo_marks_${cartonId}`);
+            }
+          } catch {}
+        }
+      }
+      return;
+    }
+
+    // 2. Si el host ejecutó un nuevo reinicio en tiempo real durante la sesión activa
+    if (currentReset > lastResetRef.current) {
       // Limpiar marcas locales (dejar solo el comodín central en true)
       const clearedMarks = Array(5).fill(null).map(() => Array(5).fill(false));
       clearedMarks[2][2] = true;
@@ -1598,15 +1629,20 @@ export default function BingoCardView() {
                     key={`${row}-${col}`}
                     onClick={() => toggleMark(row, col)}
                     disabled={isFree}
-                    className={`bingo-cell ${isMarked ? 'marked' : ''} ${isDrawn ? 'drawn' : ''} ${assistMode && isDrawn && !isMarked ? 'unmarked-drawn' : ''} ${isMarkedUndrawnAssist ? 'marked-undrawn-assist' : ''} ${isMarkedDrawnAssist ? 'marked-drawn-assist' : ''}`}
+                    className={`bingo-cell ${isFree ? 'free-space marked' : ''} ${isMarked ? 'marked' : ''} ${isDrawn ? 'drawn' : ''} ${assistMode && isDrawn && !isMarked ? 'unmarked-drawn' : ''} ${isMarkedUndrawnAssist ? 'marked-undrawn-assist' : ''} ${isMarkedDrawnAssist ? 'marked-drawn-assist' : ''}`}
                     style={{
                       aspectRatio: '1/1',
                       borderRadius: '10px',
                       cursor: isFree ? 'default' : 'pointer',
+                      touchAction: 'manipulation',
                       transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                       position: 'relative',
                       padding: '4px',
-                      ...(isMarkedUndrawnAssist ? {
+                      ...(isFree ? {
+                        background: 'radial-gradient(circle at center, rgba(245, 158, 11, 0.22) 0%, rgba(168, 85, 247, 0.15) 75%)',
+                        border: '2px solid #f59e0b',
+                        boxShadow: '0 0 12px rgba(245, 158, 11, 0.4), inset 0 0 8px rgba(245, 158, 11, 0.2)'
+                      } : isMarkedUndrawnAssist ? {
                         border: '2.5px solid #ef4444',
                         boxShadow: '0 0 18px rgba(239, 68, 68, 0.85), inset 0 0 10px rgba(239, 68, 68, 0.3)',
                         background: 'rgba(239, 68, 68, 0.15)',
@@ -1624,7 +1660,10 @@ export default function BingoCardView() {
                     }}
                   >
                     {isFree ? (
-                      <span style={{ fontSize: '1.5rem' }}>⭐</span>
+                      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', lineHeight: 1 }}>
+                        <span style={{ fontSize: '1.4rem', filter: 'drop-shadow(0 2px 4px rgba(245, 158, 11, 0.5))' }}>⭐</span>
+                        <span style={{ fontSize: '0.62rem', fontWeight: 900, color: '#f59e0b', letterSpacing: '0.5px', marginTop: '2px' }}>LIBRE</span>
+                      </div>
                     ) : map ? (
                       // Render Map
                       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', width: '100%', height: '100%' }}>
