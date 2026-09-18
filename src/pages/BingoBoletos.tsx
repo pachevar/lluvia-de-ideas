@@ -221,8 +221,8 @@ const BingoBoletos: React.FC = () => {
     // 1. Mostrar partidas oficiales disponibles para compra
     allAvailableGames.push(...officialScheduledGames);
 
-    // 2. Si la más próxima está a más de 8 horas, ofrecer también la partida de prueba para practicar
-    if (!isWithin8HoursOfOfficial) {
+    // 2. Si la más próxima está a más de 8 horas, ofrecer también la partida de prueba (o si viene invitado por link directo)
+    if (!isWithin8HoursOfOfficial || urlScheduledGameId === 'demo-practice-game') {
       allAvailableGames.push(demoPracticeGame);
     }
   } else if (activeGame && activeGame.status === 'playing') {

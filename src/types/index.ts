@@ -446,6 +446,10 @@ export interface BingoGame {
   winningPattern: string; // e.g., 'full', 'line', 'four_corners'
   createdAt: number;
   active: boolean;
+  currentBall?: number | null;
+  lastBallDrawnAt?: number;
+  isDemo?: boolean;
+  winnerDeclared?: boolean;
   customization?: BingoCustomization;
   currentPrizeId?: string;
   currentPrizeTitle?: string;

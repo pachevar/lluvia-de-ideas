@@ -1,12 +1,13 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { doc, onSnapshot, collection, query, where, getDocs, limit } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, limit, setDoc, runTransaction } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { BingoCard, BingoGame, BingoPrize, Sponsor } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
 import { soundEffects } from '../../utils/soundEffects';
 import html2canvas from 'html2canvas';
+import { BingoDemoInviteModal } from './BingoDemoInviteModal';
 import './Bingo.css';
 
 type StoredCardMatrix = {
@@ -99,6 +100,18 @@ export default function BingoCardView() {
   const ticketRef = useRef<HTMLDivElement>(null);
   const [isDownloading, setIsDownloading] = useState(false);
   const [playerSiblings, setPlayerSiblings] = useState<Array<{ id: string; cardNumber?: number }>>([]);
+
+  // Demo Mode States & Detection
+  const [showDemoInviteModal, setShowDemoInviteModal] = useState(false);
+  const [demoPlayersCount, setDemoPlayersCount] = useState(1);
+  const [isStartingDemo, setIsStartingDemo] = useState(false);
+
+  const isDemoCard = Boolean(
+    cardData?.tierId === 'tier-free' || 
+    cardData?.gameId === 'demo-practice-game' || 
+    cardData?.prizeLevel?.toLowerCase().includes('demostración') || 
+    cardData?.prizeLevel?.toLowerCase().includes('práctica')
+  );
 
   // Mobile UX Enhancements: Drawer, Pocket Ball Alert & Waiting Test
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
@@ -427,10 +440,31 @@ export default function BingoCardView() {
 
           // Suscribirse a la partida si no está configurada
           if (!unsubscribeGame) {
-            const targetGameId = cData.gameId || 'juego-principal';
+            const isDemo = Boolean(
+              cData.tierId === 'tier-free' || 
+              cData.gameId === 'demo-practice-game' || 
+              cData.prizeLevel?.toLowerCase().includes('demostración') || 
+              cData.prizeLevel?.toLowerCase().includes('práctica')
+            );
+            const targetGameId = isDemo ? 'demo-practice-game' : (cData.gameId || 'juego-principal');
             unsubscribeGame = onSnapshot(doc(db, 'bingo_games', targetGameId), (gameSnap) => {
               if (gameSnap.exists()) {
                 setGameData({ id: gameSnap.id, ...gameSnap.data() } as BingoGame);
+                setLoading(false);
+              } else if (isDemo) {
+                // Si la partida de prueba no existe aún en Firestore, la inicializamos automáticamente
+                const initialDemo: Partial<BingoGame> = {
+                  title: 'Bingo de Demostración y Práctica',
+                  status: 'waiting',
+                  winningPattern: 'line',
+                  drawnNumbers: [],
+                  currentBall: null,
+                  active: true,
+                  isDemo: true,
+                  createdAt: Date.now()
+                };
+                setDoc(doc(db, 'bingo_games', 'demo-practice-game'), initialDemo).catch(console.error);
+                setGameData({ id: 'demo-practice-game', ...initialDemo } as BingoGame);
                 setLoading(false);
               } else {
                 // Fallback de resiliencia: si el ID específico no existe, escuchar la partida activa global
@@ -469,6 +503,156 @@ export default function BingoCardView() {
       if (unsubscribeGame) unsubscribeGame();
     };
   }, [cartonId]);
+
+  // Apertura automática del modal de invitación la primera vez que entra al cartón de prueba
+  useEffect(() => {
+    if (!cardData || !cartonId || !isDemoCard) return;
+    const sessionKey = `demo_invite_prompted_${cartonId}`;
+    if (!sessionStorage.getItem(sessionKey)) {
+      setShowDemoInviteModal(true);
+      sessionStorage.setItem(sessionKey, 'true');
+    }
+  }, [cardData, cartonId, isDemoCard]);
+
+  // Escuchar jugadores en sala de prueba para actualizar el conteo en tiempo real
+  useEffect(() => {
+    if (!isDemoCard) return;
+    const qDemoCards = query(
+      collection(db, 'bingo_cards'),
+      where('gameId', '==', 'demo-practice-game')
+    );
+    const unsubDemo = onSnapshot(qDemoCards, (snap) => {
+      setDemoPlayersCount(Math.max(snap.size, 1));
+    }, (err) => {
+      console.warn("Aviso al contar jugadores demo por gameId:", err);
+      const qTier = query(
+        collection(db, 'bingo_cards'),
+        where('tierId', '==', 'tier-free')
+      );
+      getDocs(qTier).then(snapTier => {
+        setDemoPlayersCount(Math.max(snapTier.size, 1));
+      }).catch(() => setDemoPlayersCount(1));
+    });
+
+    return () => unsubDemo();
+  }, [isDemoCard]);
+
+  // Motor Autónomo de Tómbola de Prueba:
+  // Corre directamente entre los dispositivos de los jugadores sin necesidad de host/anfitrión humano
+  useEffect(() => {
+    if (!isDemoCard || gameData?.id !== 'demo-practice-game' || gameData?.status !== 'playing' || gameData?.winnerDeclared) {
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      const drawn = gameData.drawnNumbers || [];
+      if (drawn.length >= 75) {
+        clearInterval(interval);
+        return;
+      }
+
+      const now = Date.now();
+      const lastDrawn = gameData.lastBallDrawnAt || 0;
+      // Intervalo de 4.5 segundos entre cada extracción
+      if (now - lastDrawn < 4500) {
+        return;
+      }
+
+      try {
+        const gameRef = doc(db, 'bingo_games', 'demo-practice-game');
+        await runTransaction(db, async (transaction) => {
+          const gSnap = await transaction.get(gameRef);
+          if (!gSnap.exists()) return;
+          const g = gSnap.data() as BingoGame;
+          if (g.status !== 'playing' || g.winnerDeclared) return;
+          const curDrawn = g.drawnNumbers || [];
+          if (curDrawn.length >= 75) return;
+
+          const elapsed = Date.now() - (g.lastBallDrawnAt || 0);
+          if (elapsed < 4200) return; // Otro dispositivo acaba de sacar bola de forma sincronizada
+
+          const drawnSet = new Set(curDrawn);
+          const available: number[] = [];
+          for (let i = 1; i <= 75; i++) {
+            if (!drawnSet.has(i)) available.push(i);
+          }
+          if (available.length === 0) return;
+
+          const nextBall = available[Math.floor(Math.random() * available.length)];
+          const newDrawn = [...curDrawn, nextBall];
+
+          transaction.update(gameRef, {
+            currentBall: nextBall,
+            drawnNumbers: newDrawn,
+            lastBallDrawnAt: Date.now()
+          });
+        });
+      } catch (err) {
+        console.warn("Aviso en extracción autónoma de bola demo:", err);
+      }
+    }, 1800);
+
+    return () => clearInterval(interval);
+  }, [isDemoCard, gameData?.id, gameData?.status, gameData?.winnerDeclared, gameData?.lastBallDrawnAt, gameData?.drawnNumbers?.length]);
+
+  // Iniciar partida demo (manual o al llegar a 5 jugadores)
+  const handleStartDemoGame = async () => {
+    setIsStartingDemo(true);
+    try {
+      const gameRef = doc(db, 'bingo_games', 'demo-practice-game');
+      await setDoc(gameRef, {
+        title: 'Bingo de Demostración y Práctica',
+        status: 'playing',
+        winningPattern: 'line',
+        drawnNumbers: [],
+        currentBall: null,
+        active: true,
+        isDemo: true,
+        winnerDeclared: false,
+        activeClaim: null,
+        lastBallDrawnAt: Date.now() - 3000,
+        createdAt: Date.now()
+      }, { merge: true });
+      setShowDemoInviteModal(false);
+    } catch (err) {
+      console.error("Error al iniciar partida demo:", err);
+    } finally {
+      setIsStartingDemo(false);
+    }
+  };
+
+  // Reiniciar partida demo para jugar una nueva ronda de prueba
+  const handleResetDemoGame = async () => {
+    if (!window.confirm("¿Deseas reiniciar la tómbola de prueba para comenzar una nueva ronda?")) return;
+    try {
+      const gameRef = doc(db, 'bingo_games', 'demo-practice-game');
+      await setDoc(gameRef, {
+        status: 'playing',
+        drawnNumbers: [],
+        currentBall: null,
+        winnerDeclared: false,
+        activeClaim: null,
+        lastBallDrawnAt: Date.now() - 3000
+      }, { merge: true });
+      // Reset local marks
+      const freshMarks = Array(5).fill(null).map(() => Array(5).fill(false));
+      freshMarks[2][2] = true;
+      setMarkedSlots(freshMarks);
+      if (cartonId) {
+        localStorage.removeItem(`bingo_marks_${cartonId}`);
+      }
+    } catch (err) {
+      console.error("Error al reiniciar partida demo:", err);
+    }
+  };
+
+  // Auto-iniciar al llegar a 5 jugadores si aún está en espera
+  useEffect(() => {
+    if (!isDemoCard || gameData?.id !== 'demo-practice-game') return;
+    if (demoPlayersCount >= 5 && gameData?.status === 'waiting') {
+      handleStartDemoGame();
+    }
+  }, [isDemoCard, demoPlayersCount, gameData?.id, gameData?.status]);
 
   // Test interactivo de sonido y respuesta háptica en sala de espera
   const testSoundAndHaptics = () => {
@@ -773,17 +957,34 @@ export default function BingoCardView() {
         }
 
         // Este jugador es el primero y único:
-        transaction.update(gameRef, {
-          lastBingoShoutAt: Date.now(),
-          activeClaim: {
-            cardId: cartonId,
-            playerName: cardData.playerName || 'Jugador',
-            phone: cardData.phone || '',
-            claimedAt: Date.now(),
-            serverClaimedAt: serverTimestamp(),
-            status: 'pending'
-          }
-        });
+        if (isDemoCard) {
+          // En modo prueba se valida automáticamente sin requerir anfitrión
+          transaction.update(gameRef, {
+            lastBingoShoutAt: Date.now(),
+            status: 'paused',
+            winnerDeclared: true,
+            activeClaim: {
+              cardId: cartonId,
+              playerName: cardData.playerName || 'Jugador',
+              phone: cardData.phone || '',
+              claimedAt: Date.now(),
+              serverClaimedAt: serverTimestamp(),
+              status: 'verified'
+            }
+          });
+        } else {
+          transaction.update(gameRef, {
+            lastBingoShoutAt: Date.now(),
+            activeClaim: {
+              cardId: cartonId,
+              playerName: cardData.playerName || 'Jugador',
+              phone: cardData.phone || '',
+              claimedAt: Date.now(),
+              serverClaimedAt: serverTimestamp(),
+              status: 'pending'
+            }
+          });
+        }
 
         transaction.update(cardRef, {
           shoutedBingo: true,
@@ -1301,25 +1502,95 @@ export default function BingoCardView() {
         </div>
       </div>
 
-      {/* DISTINTIVO AMISTOSO DE MODO DEMOSTRACIÓN / PRÁCTICA */}
-      {(cardData?.tierId === 'tier-free' || cardData?.gameId === 'demo-practice-game' || cardData?.prizeLevel?.toLowerCase().includes('demostración') || cardData?.prizeLevel?.toLowerCase().includes('práctica')) && (
+      {/* FRANJA INTERACTIVA DE MODO DEMOSTRACIÓN / PRÁCTICA */}
+      {isDemoCard && (
         <div style={{
-          background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
-          border: '1px solid rgba(56, 189, 248, 0.4)',
-          borderRadius: '10px',
-          padding: '6px 12px',
-          margin: '6px auto 10px',
+          background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.18) 0%, rgba(30, 27, 75, 0.8) 100%)',
+          border: '1px solid rgba(56, 189, 248, 0.5)',
+          borderRadius: '12px',
+          padding: '8px 12px',
+          margin: '6px auto 12px',
           display: 'flex',
+          flexWrap: 'wrap',
           alignItems: 'center',
-          justifyContent: 'center',
+          justifyContent: 'space-between',
           gap: '8px',
-          color: '#38bdf8',
-          fontSize: '0.74rem',
-          fontFamily: 'var(--font-gamer)',
-          letterSpacing: '0.5px'
+          boxShadow: '0 4px 15px rgba(14, 165, 233, 0.15)'
         }}>
-          <span>🎮</span>
-          <span>MODO PRÁCTICA LIBRE (SIN PREMIOS EN EFECTIVO)</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.15rem' }}>🎮</span>
+            <div style={{ textAlign: 'left' }}>
+              <div style={{ color: '#38bdf8', fontSize: '0.75rem', fontWeight: 800, fontFamily: 'var(--font-gamer)', letterSpacing: '0.5px' }}>
+                SALA DE PRUEBA LIBRE (TÓMBOLA AUTOMÁTICA)
+              </div>
+              <div style={{ color: '#94a3b8', fontSize: '0.68rem' }}>
+                {gameData?.status === 'playing' ? `🟢 Tómbola en vivo (${(gameData?.drawnNumbers || []).length}/75 bolas)` : '⏳ Esperando inicio'}
+              </div>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <button
+              type="button"
+              onClick={() => setShowDemoInviteModal(true)}
+              style={{
+                background: 'rgba(56, 189, 248, 0.15)',
+                border: '1px solid rgba(56, 189, 248, 0.4)',
+                color: '#38bdf8',
+                borderRadius: '8px',
+                padding: '5px 10px',
+                fontSize: '0.72rem',
+                fontWeight: 700,
+                cursor: 'pointer',
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '4px'
+              }}
+              title="Invitar amigos a la prueba"
+            >
+              👥 <span>{demoPlayersCount}/5</span> Invitar
+            </button>
+
+            {gameData?.status !== 'playing' ? (
+              <button
+                type="button"
+                onClick={handleStartDemoGame}
+                disabled={isStartingDemo}
+                style={{
+                  background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                  border: 'none',
+                  color: '#ffffff',
+                  borderRadius: '8px',
+                  padding: '5px 12px',
+                  fontSize: '0.72rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  fontFamily: 'var(--font-gamer)',
+                  boxShadow: '0 0 10px rgba(16, 185, 129, 0.4)'
+                }}
+              >
+                {isStartingDemo ? 'Iniciando...' : '▶ Iniciar Tómbola'}
+              </button>
+            ) : (
+              <button
+                type="button"
+                onClick={handleResetDemoGame}
+                style={{
+                  background: 'rgba(239, 68, 68, 0.15)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#fca5a5',
+                  borderRadius: '8px',
+                  padding: '5px 8px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  cursor: 'pointer'
+                }}
+                title="Reiniciar ronda de prueba"
+              >
+                🔄 Reiniciar
+              </button>
+            )}
+          </div>
         </div>
       )}
 
@@ -1748,6 +2019,49 @@ export default function BingoCardView() {
                   ? 'El organizador tiene tu cartón en pantalla para validarlo. Por favor no cierres esta ventana.'
                   : 'El Host está verificando si el cartón es válido. Si se descarta, la partida continuará al instante.'}
               </span>
+            </div>
+          )}
+
+          {/* BANNER DE GANADOR VALIDADO EN MODO PRUEBA / EN VIVO */}
+          {gameData?.activeClaim && gameData.activeClaim.status === 'verified' && (
+            <div 
+              style={{
+                background: 'linear-gradient(135deg, rgba(34, 197, 94, 0.25) 0%, rgba(22, 101, 52, 0.5) 100%)',
+                border: '2px solid #22c55e',
+                borderRadius: '14px',
+                padding: '14px 16px',
+                marginBottom: '8px',
+                textAlign: 'center',
+                boxShadow: '0 0 20px rgba(34, 197, 94, 0.35)'
+              }}
+            >
+              <strong style={{ display: 'block', color: '#4ade80', fontSize: '1.15rem', fontFamily: 'var(--font-gamer)' }}>
+                🏆 ¡BINGO GANADOR CONFIRMADO!
+              </strong>
+              <p style={{ margin: '6px 0 10px', color: '#f0fdf4', fontSize: '0.88rem' }}>
+                {gameData.activeClaim.cardId === cartonId 
+                  ? '¡Felicidades! Has ganado esta ronda de prueba.' 
+                  : `¡El participante "${gameData.activeClaim.playerName || 'Jugador'}" cantó Bingo y ganó esta ronda de prueba!`}
+              </p>
+              {isDemoCard && (
+                <button
+                  type="button"
+                  onClick={handleResetDemoGame}
+                  style={{
+                    background: 'linear-gradient(135deg, #38bdf8 0%, #0284c7 100%)',
+                    color: '#ffffff',
+                    border: 'none',
+                    borderRadius: '10px',
+                    padding: '8px 18px',
+                    fontWeight: 800,
+                    cursor: 'pointer',
+                    fontFamily: 'var(--font-gamer)',
+                    fontSize: '0.85rem'
+                  }}
+                >
+                  🔄 Jugar Otra Ronda de Prueba
+                </button>
+              )}
             </div>
           )}
 
@@ -2511,6 +2825,17 @@ export default function BingoCardView() {
           </div>
         </div>,
         document.body
+      )}
+
+      {/* Modal de Invitación y Compartir para Modo Prueba */}
+      {isDemoCard && (
+        <BingoDemoInviteModal
+          isOpen={showDemoInviteModal}
+          onClose={() => setShowDemoInviteModal(false)}
+          playersCount={demoPlayersCount}
+          onStartNow={handleStartDemoGame}
+          isStarting={isStartingDemo}
+        />
       )}
 
     </div>
