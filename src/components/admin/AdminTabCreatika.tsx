@@ -145,6 +145,17 @@ export default function AdminTabCreatika({ localConfig, updateField }: AdminTabC
           </a>
 
           <a 
+            href="/gran-galeria" 
+            target="_blank" 
+            rel="noopener noreferrer"
+            className="btn btn-secondary"
+            style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
+          >
+            <span>🏛️ Gran Galería (Relatos & Museo)</span>
+            <span style={{ opacity: 0.7 }}>↗</span>
+          </a>
+
+          <a 
             href="/nuestros-libros" 
             target="_blank" 
             rel="noopener noreferrer"

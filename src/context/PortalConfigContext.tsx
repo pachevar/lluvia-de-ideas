@@ -332,6 +332,18 @@ export const DEFAULT_CONFIG: PortalConfig = {
       action: { type: "none", target: "" }
     },
     {
+      id: "0,-2",
+      row: 0,
+      col: -2,
+      title: "Gran Galería",
+      glowColor: "rgba(236, 72, 153, 0.85)",
+      pillar: "creatika",
+      layerBg: { type: "none", value: "" },
+      layerDeco: { type: "none", value: "" },
+      layerInteractive: { type: "icon", value: "🏛️" },
+      action: { type: "navigate", target: "/gran-galeria" }
+    },
+    {
       id: "-1,-1",
       row: -1,
       col: -1,
@@ -629,10 +641,24 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
       if (snap.exists()) {
         const data = snap.data();
         if (Array.isArray(data.map) && data.map.length > 0) {
+          let hasUpdated = false;
+          const normalizedMap = data.map.map((hex: CustomHexagon) => {
+            const isGaleria = (hex.title || '').toLowerCase().includes('galer') || (hex.action?.target || '').toLowerCase().includes('galeria');
+            if (isGaleria && hex.pillar !== 'creatika') {
+              hasUpdated = true;
+              return { ...hex, pillar: 'creatika' as const };
+            }
+            return hex;
+          });
           setConfig(prev => ({
             ...prev,
-            map: data.map
+            map: normalizedMap
           }));
+          if (hasUpdated) {
+            setDoc(sutzMapDocRef, { map: normalizedMap }, { merge: true }).catch(err => {
+              console.warn('[PortalConfigContext] Auto-update Gran Galería pilar:', err);
+            });
+          }
         }
       }
     }, (err) => {

@@ -51,6 +51,17 @@ const CREATIKA_APPS: CreatikaApp[] = [
     gradient: 'linear-gradient(135deg, rgba(168,85,247,0.2) 0%, rgba(126,34,206,0.05) 100%)'
   },
   {
+    id: 'gran-galeria',
+    title: 'Gran Galería',
+    badge: 'Pergamino & Museo',
+    tag: 'ARTE & LITERATURA',
+    desc: 'Exhibición de honor con el Códice del Escriba, relatos estudiantiles, pinacoteca virtual y mediateca escolar.',
+    icon: '🏛️',
+    path: '/gran-galeria',
+    accentColor: '#ec4899',
+    gradient: 'linear-gradient(135deg, rgba(236,72,153,0.2) 0%, rgba(168,85,247,0.05) 100%)'
+  },
+  {
     id: 'codigo-docente',
     title: 'Código Docente',
     badge: 'Competencias Pedagógicas',

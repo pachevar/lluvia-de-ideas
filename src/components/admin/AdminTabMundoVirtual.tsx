@@ -115,7 +115,8 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
         r.pillarId === selectedPillar || 
         (selectedPillar === 'personalizados' && r.isCustom) || 
         (selectedPillar === 'lab' && (r.pillarId === 'laboratorios' || r.pillarId === 'lab')) ||
-        (selectedPillar === 'gran_galeria' && (r.pillarId === 'pozo_ideas' || r.pillarId === 'gran_galeria')) ||
+        (selectedPillar === 'creatika' && (r.pillarId === 'creatika' || r.target.includes('galeria'))) ||
+        (selectedPillar === 'gran_galeria' && (r.pillarId === 'pozo_ideas' || r.pillarId === 'gran_galeria' || r.target.includes('galeria'))) ||
         (selectedPillar === 'pozo_ideas' && (r.pillarId === 'gran_galeria' || r.pillarId === 'pozo_ideas'))
       );
 
@@ -1389,7 +1390,8 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                               : allPillarRoutes.filter(r => 
                                   r.pillarId === cat.id || 
                                   (cat.id === 'lab' && (r.pillarId === 'laboratorios' || r.pillarId === 'lab')) ||
-                                  (cat.id === 'gran_galeria' && (r.pillarId === 'pozo_ideas' || r.pillarId === 'gran_galeria')) ||
+                                  (cat.id === 'creatika' && (r.pillarId === 'creatika' || r.target.includes('galeria'))) ||
+                                  (cat.id === 'gran_galeria' && (r.pillarId === 'pozo_ideas' || r.pillarId === 'gran_galeria' || r.target.includes('galeria'))) ||
                                   (cat.id === 'pozo_ideas' && (r.pillarId === 'gran_galeria' || r.pillarId === 'pozo_ideas'))
                                 ).length;
 
@@ -1415,7 +1417,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                       {/* Lista de Aplicaciones y Enlaces del Pilar Seleccionado */}
                       <div className="quick-suggestions-pills">
                         {filteredRoutes.map(qa => {
-                          const isMatch = editingHex.action.target === qa.target;
+                          const isMatch = editingHex.action?.target === qa.target;
                           return (
                             <div key={qa.id || qa.label} style={{ display: 'inline-flex', position: 'relative' }}>
                               <button
@@ -1424,10 +1426,11 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                                 title={`Asignar acción a: ${qa.target}`}
                                 onClick={() => {
                                   const routePillar = normalizePillarId(qa.pillarId);
+                                  const isGaleria = qa.target.toLowerCase().includes('galeria');
                                   const updated = {
                                     ...editingHex,
                                     action: { type: qa.type, target: qa.target },
-                                    pillar: editingHex.pillar || routePillar || undefined
+                                    pillar: (isGaleria ? 'creatika' : (editingHex.pillar || routePillar || undefined)) as HexPillarId | undefined
                                   };
                                   setEditingHex(updated);
                                   updateHexInGlobalConfig(updated, true);

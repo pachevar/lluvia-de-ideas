@@ -92,8 +92,8 @@ export const HEX_PILLARS: Record<HexPillarId, HexPillarInfo> = {
 export function normalizePillarId(raw?: string | null): HexPillarId | null {
   if (!raw) return null;
   const lower = raw.trim().toLowerCase();
-  if (lower === 'pozo_ideas' || lower === 'pozo' || lower === 'gran_galeria' || lower === 'grangaleria') {
-    return 'gran_galeria';
+  if (lower === 'pozo_ideas' || lower === 'pozo' || lower === 'gran_galeria' || lower === 'grangaleria' || lower === 'galeria' || lower === 'galería') {
+    return 'creatika';
   }
   if (lower === 'laboratorio' || lower === 'laboratorios' || lower === 'lab') {
     return 'lab';
@@ -128,8 +128,14 @@ export function getHexPillarInfo(hex: CustomHexagon): HexPillarInfo | null {
   if (target) {
     const targetLower = target.toLowerCase();
 
-    // Creatika
-    if (targetLower.includes('/creatika')) {
+    // Creatika (incluye artes, cuentos, color y Gran Galería de talento)
+    if (
+      targetLower.includes('/creatika') || 
+      targetLower.includes('galeria') || 
+      targetLower.includes('gran-galeria') ||
+      targetLower.includes('banco-proyectos') ||
+      targetLower.includes('pozo')
+    ) {
       return HEX_PILLARS.creatika;
     }
 
@@ -162,15 +168,6 @@ export function getHexPillarInfo(hex: CustomHexagon): HexPillarInfo | null {
       return HEX_PILLARS.mercado;
     }
 
-    // Gran Galería
-    if (
-      targetLower.includes('pozo') || 
-      targetLower.includes('galeria') || 
-      targetLower.includes('banco-proyectos')
-    ) {
-      return HEX_PILLARS.gran_galeria;
-    }
-
     // Sutz / Popol Vuh / Leyendas
     if (
       targetLower === '/sutz' ||
@@ -186,11 +183,21 @@ export function getHexPillarInfo(hex: CustomHexagon): HexPillarInfo | null {
   // 3. Deducción contextual por título del hexágono
   const title = (hex.title || '').toLowerCase();
   if (title) {
+    if (
+      title.includes('creatika') || 
+      title.includes('cuento') || 
+      title.includes('color') || 
+      title.includes('personaje') ||
+      title.includes('galería') || 
+      title.includes('galeria') ||
+      title.includes('gran galería') || 
+      title.includes('gran galeria') ||
+      title.includes('pozo')
+    ) {
+      return HEX_PILLARS.creatika;
+    }
     if (title.includes('tienda') || title.includes('libros')) {
       return HEX_PILLARS.tienda;
-    }
-    if (title.includes('creatika') || title.includes('cuento') || title.includes('color') || title.includes('personaje')) {
-      return HEX_PILLARS.creatika;
     }
     if (title.includes('100tek') || title.includes('secuencia') || title.includes('solar')) {
       return HEX_PILLARS['100tek'];
@@ -200,9 +207,6 @@ export function getHexPillarInfo(hex: CustomHexagon): HexPillarInfo | null {
     }
     if (title.includes('bingo') || title.includes('mercado') || title.includes('boleto')) {
       return HEX_PILLARS.mercado;
-    }
-    if (title.includes('pozo') || title.includes('galería') || title.includes('galeria')) {
-      return HEX_PILLARS.gran_galeria;
     }
     if (title.includes('juracán') || title.includes('juracan') || title.includes('sutz') || title.includes('camazotz') || title.includes('ixkik') || title.includes('ixmukané') || title.includes('ququmatz')) {
       return HEX_PILLARS.sutz;
@@ -238,9 +242,11 @@ export function getHexActionTargetLabel(hex: CustomHexagon): HexActionTargetDisp
   // 1. Coincidencia en rutas predeterminadas de proyectos pilares
   const matched = BUILTIN_PILLAR_ROUTES.find(r => r.target.toLowerCase() === target.toLowerCase());
   if (matched) {
+    const emojiMatch = matched.label.match(/^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF])+/u);
+    const icon = emojiMatch ? emojiMatch[0] : '🚀';
     return {
-      icon: '🚀',
-      label: matched.label.replace(/^[^\w\s]+\s*/, ''),
+      icon,
+      label: matched.label.replace(/^(\p{Extended_Pictographic}|\p{Emoji_Presentation}|[\u2600-\u27BF]|\W)+\s*/u, ''),
       tooltip: `Dirigido a: ${matched.label} (${matched.target})`,
       hasTarget: true
     };

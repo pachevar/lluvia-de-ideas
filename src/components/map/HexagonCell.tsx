@@ -207,6 +207,22 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
                 onMouseDown={(e) => e.stopPropagation()}
                 onTouchStart={(e) => e.stopPropagation()}
               >
+                {pillarInfo && (
+                  <div 
+                    className="hex-pillar-tag"
+                    title={`Reino: ${pillarInfo.label}`}
+                    style={{
+                      '--pillar-color': pillarInfo.color,
+                      '--pillar-glow': pillarInfo.glow,
+                      '--pillar-bg': pillarInfo.bgTint,
+                      '--pillar-border': pillarInfo.borderTint,
+                      marginBottom: '4px'
+                    } as React.CSSProperties}
+                  >
+                    <span className="hex-pillar-icon">{pillarInfo.icon}</span>
+                    <span className="hex-pillar-label">{pillarInfo.label}</span>
+                  </div>
+                )}
                 <input
                   type="text"
                   value={data.title}

@@ -36,6 +36,7 @@ export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
   { id: 'creatika_cuentos', label: '🎰 Máquina de Cuentos', target: '/creatika/maquina-de-cuentos', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_color', label: '🎨 Teoría del Color', target: '/creatika/teoria-del-color', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_personaje', label: '🎭 Construyendo Personaje', target: '/creatika/construyendo-el-personaje', type: 'navigate', pillarId: 'creatika' },
+  { id: 'creatika_gran_galeria', label: '🏛️ Gran Galería', target: '/gran-galeria', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_libros', label: '📖 Libros & Cuentos', target: '/libros', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_hub', label: '🎪 Hub Creatika', target: '/creatika', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_docente', label: '📜 Código Docente', target: '/codigo-docente', type: 'navigate', pillarId: 'creatika' },
@@ -60,9 +61,9 @@ export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
   { id: 'mercado_bingo_boletos', label: '🎟️ Boletos Bingotenango', target: '/juegos/bingo/boletos', type: 'navigate', pillarId: 'mercado' },
   { id: 'mercado_cotizador', label: '💼 Cotizador Web', target: '/gerencia', type: 'navigate', pillarId: 'mercado' },
 
-  // 💡 Gran Galería (Pergamino del Escriba, Museo Virtual, Videos & Concursos)
-  { id: 'gran_galeria_hub', label: '💡 Gran Galería (Pergamino & Museo)', target: '/gran-galeria', type: 'navigate', pillarId: 'gran_galeria' },
-  { id: 'gran_galeria_panel', label: '⚙️ Gran Galería (Gestión & Banco)', target: '/gerencia', type: 'navigate', pillarId: 'gran_galeria' },
+  // 🏛️ Gran Galería (Pergamino del Escriba, Museo Virtual, Videos & Concursos)
+  { id: 'gran_galeria_hub', label: '🏛️ Gran Galería (Pergamino & Museo)', target: '/gran-galeria', type: 'navigate', pillarId: 'creatika' },
+  { id: 'gran_galeria_panel', label: '⚙️ Gran Galería (Gestión & Banco)', target: '/gerencia', type: 'navigate', pillarId: 'creatika' },
 
   // ☁️ Sutz (Mundo Virtual, Popol Vuh & Árbol Tecnológico)
   { id: 'sutz_mapa', label: '🗺️ Mundo Virtual Sutz', target: '/sutz', type: 'navigate', pillarId: 'sutz' },
