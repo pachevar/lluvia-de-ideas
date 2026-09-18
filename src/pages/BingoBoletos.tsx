@@ -981,42 +981,6 @@ const BingoBoletos: React.FC = () => {
               </div>
             </div>
 
-            {/* AVISO EXPLICATIVO SI SELECCIONÓ LA PARTIDA DE PRUEBA */}
-            {selectedScheduledGame?.cardPriceQ === 0 && (
-              <div className="demo-disclaimer-banner animate-fade-in" style={{
-                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
-                border: '1.5px solid rgba(56, 189, 248, 0.45)',
-                borderRadius: '16px',
-                padding: '14px 18px',
-                margin: '16px 0 10px',
-                display: 'flex',
-                alignItems: 'flex-start',
-                gap: '14px',
-                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.35)'
-              }}>
-                <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>🎮</span>
-                <div style={{ textAlign: 'left' }}>
-                  <h4 style={{ 
-                    fontFamily: 'var(--font-gamer)', 
-                    color: '#38bdf8', 
-                    fontSize: '0.92rem', 
-                    margin: '0 0 4px',
-                    letterSpacing: '0.5px' 
-                  }}>
-                    MODO DEMOSTRACIÓN LIBRE (SIN PREMIOS)
-                  </h4>
-                  <p style={{ 
-                    color: '#cbd5e1', 
-                    fontSize: '0.8rem', 
-                    lineHeight: 1.45, 
-                    margin: 0 
-                  }}>
-                    Este cartón es <strong>100% gratuito</strong> y te permite conocer todas las funciones interactivas: el auto-marcado, el audio de las bolas y cómo cantar BINGO. <em>No otorga premios en efectivo ni acumulados.</em>
-                  </p>
-                </div>
-              </div>
-            )}
-
             {/* BOTÓN CONTINUAR PASO 1 */}
             <div className="step-actions-footer single-action">
               <button
