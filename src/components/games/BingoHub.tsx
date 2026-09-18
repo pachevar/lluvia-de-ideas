@@ -2600,7 +2600,8 @@ export default function BingoHub() {
               <img 
                 src="/bingotenango-logo.svg" 
                 alt="Bingotenango" 
-                style={{ maxHeight: '120px', width: 'auto', filter: 'drop-shadow(0 0 25px rgba(88, 205, 238, 0.55))' }} 
+                className="bingotenango-animated-logo"
+                style={{ maxHeight: '120px', width: 'auto' }} 
               />
             </div>
             <h3 style={{ fontFamily: 'var(--font-gamer)', color: '#fff', marginTop: '5px' }}>BINGOTENANGO OFFLINE</h3>
@@ -2624,7 +2625,8 @@ export default function BingoHub() {
                   <img 
                     src="/bingotenango-logo.svg" 
                     alt="Bingotenango" 
-                    style={{ maxHeight: '48px', width: 'auto', filter: 'drop-shadow(0 0 10px rgba(0, 240, 255, 0.45))' }} 
+                    className="bingotenango-animated-logo"
+                    style={{ maxHeight: '48px', width: 'auto' }} 
                   />
                 </div>
                 <h1 style={{ fontSize: '1.45rem', marginBottom: '2px', letterSpacing: '1px' }}>{cust?.title || 'Bingotenango'}</h1>
@@ -3045,7 +3047,7 @@ export default function BingoHub() {
                 <img 
                   src="/bingotenango-logo.svg" 
                   alt="Bingotenango Logo Oficial" 
-                  className="bingotenango-tombola-logo"
+                  className="bingotenango-tombola-logo bingotenango-animated-logo"
                   title="Bingotenango - Bingo Digital Oficial"
                 />
                 <span className="bingotenango-tombola-tagline">
@@ -5913,7 +5915,7 @@ export default function BingoHub() {
                     {/* INSIGNIA OFICIAL DE TRANSMISIÓN BINGOTENANGO */}
                     <div style={{ display: 'flex', justifyContent: 'center', width: '100%', marginBottom: '8px' }}>
                       <div className="bingotenango-stage-badge animate-fade-in">
-                        <img src="/bingotenango-logo.svg" alt="Bingotenango" />
+                        <img src="/bingotenango-logo.svg" alt="Bingotenango" className="bingotenango-animated-logo" />
                         <span>SALA OFICIAL BINGOTENANGO</span>
                       </div>
                     </div>

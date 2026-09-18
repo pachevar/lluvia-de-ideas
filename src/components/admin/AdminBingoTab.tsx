@@ -1067,7 +1067,8 @@ export default function AdminBingoTab() {
           <img 
             src="/bingotenango-logo.svg" 
             alt="Bingotenango" 
-            style={{ maxHeight: '44px', width: 'auto', filter: 'drop-shadow(0 0 10px rgba(88, 205, 238, 0.45))' }} 
+            className="bingotenango-animated-logo"
+            style={{ maxHeight: '44px', width: 'auto' }} 
           />
           <div className="bingo-monitor-info">
           {activeGame ? (

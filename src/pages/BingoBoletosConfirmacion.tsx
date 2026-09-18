@@ -722,6 +722,16 @@ const BingoBoletosConfirmacion: React.FC = () => {
           animation: 'fadeInDown 0.5s ease-out'
         }}>
           
+          {/* Logo Oficial Animado de Bingotenango */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+            <img 
+              src="/bingotenango-logo.svg" 
+              alt="Bingotenango" 
+              className="bingotenango-animated-logo" 
+              style={{ maxHeight: '48px', width: 'auto' }} 
+            />
+          </div>
+
           <div style={{
             display: 'inline-flex',
             alignItems: 'center',

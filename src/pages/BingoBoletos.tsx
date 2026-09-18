@@ -727,7 +727,7 @@ const BingoBoletos: React.FC = () => {
         {/* CABECERA MINIMALISTA */}
         <header className="boletos-header">
           <div className="boletos-logo-badge">
-            <img src="/bingotenango-logo.svg" alt="Bingotenango" className="boletos-logo-img" />
+            <img src="/bingotenango-logo.svg" alt="Bingotenango" className="boletos-logo-img bingotenango-animated-logo" />
             <span className="boletos-badge-text">
               BINGOTENANGO EN VIVO
             </span>

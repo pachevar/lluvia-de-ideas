@@ -1194,7 +1194,8 @@ export default function BingoCardView() {
           <img 
             src="/bingotenango-logo.svg" 
             alt="Bingotenango" 
-            style={{ maxHeight: '46px', width: 'auto', filter: 'drop-shadow(0 0 12px rgba(88, 205, 238, 0.45))' }} 
+            className="bingotenango-animated-logo"
+            style={{ maxHeight: '46px', width: 'auto' }} 
           />
         </div>
         {/* Solo mostrar título secundario si es distinto a 'Bingotenango' para evitar duplicados */}

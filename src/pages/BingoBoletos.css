@@ -44,7 +44,15 @@
 .boletos-logo-img {
   height: 38px;
   width: auto;
-  filter: drop-shadow(0 0 8px rgba(0, 240, 255, 0.5));
+  animation: bingotenangoGlowFloat 4s ease-in-out infinite;
+  will-change: transform, filter;
+  transition: transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), filter 0.3s ease;
+}
+
+.boletos-logo-img:hover {
+  animation-play-state: paused;
+  transform: scale(1.08) translateY(-4px);
+  filter: drop-shadow(0 0 16px rgba(0, 240, 255, 0.85)) drop-shadow(0 0 28px rgba(223, 21, 180, 0.6));
 }
 
 .boletos-badge-text {
