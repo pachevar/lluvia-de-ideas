@@ -17,6 +17,7 @@ interface HexagonGridProps {
   selectedHexId?: string | null;
   onTransformReady?: (controls: { zoomIn: () => void; zoomOut: () => void; centerView: () => void }) => void;
   showCartesianAxes?: boolean;
+  onHexTitleChange?: (hex: CustomHexagon, newTitle: string) => void;
 }
 
 interface TransformBridgeProps {
@@ -49,7 +50,8 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
   editingHexCol = null,
   selectedHexId = null,
   onTransformReady,
-  showCartesianAxes = true
+  showCartesianAxes = true,
+  onHexTitleChange
 }) => {
   const [internalShowAxes, setInternalShowAxes] = useState<boolean>(showCartesianAxes);
 
@@ -647,6 +649,7 @@ export const HexagonGrid: React.FC<HexagonGridProps> = ({
                     showIcon={showIcons}
                     showTitle={showTitles}
                     showCategory={showCategories}
+                    onTitleChange={onHexTitleChange ? (newTitle) => onHexTitleChange(cell, newTitle) : undefined}
                   />
                 ))}
               </div>

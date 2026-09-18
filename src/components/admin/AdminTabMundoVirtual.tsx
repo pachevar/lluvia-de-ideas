@@ -296,11 +296,6 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     } else {
       setEditingHex({ ...hex });
     }
-
-    // Desplazar suavemente hacia las opciones de edición abajo
-    setTimeout(() => {
-      inspectorSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }, 80);
   };
 
   const handleSaveHexagon = async () => {
@@ -444,13 +439,23 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
               showCartesianAxes={showCartesianAxes}
               editingHexRow={editingHex?.row}
               editingHexCol={editingHex?.col}
+              onHexTitleChange={(hex, newTitle) => {
+                const updated: CustomHexagon = {
+                  ...hex,
+                  title: newTitle
+                };
+                setEditingHex(updated);
+                updateHexInGlobalConfig(updated, true);
+              }}
             />
           </div>
 
           <div className="map-canvas-hint">
-            <span>💡 Haz clic en una celda para abrir sus opciones abajo</span>
+            <span>✏️ Escribe directamente en el hexágono seleccionado para editar su título</span>
             <span>·</span>
-            <span>Haz clic en ➕ para expandir el mapa con nuevos hexágonos</span>
+            <span>🎯 Mira la aplicación o página asignada abajo de cada celda</span>
+            <span>·</span>
+            <span>Haz clic en ➕ para agregar nuevos hexágonos</span>
           </div>
         </div>
 

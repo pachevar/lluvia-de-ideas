@@ -1,4 +1,5 @@
 import type { CustomHexagon } from '../types';
+import { BUILTIN_PILLAR_ROUTES } from '../config/pillarProjectsConfig';
 
 export type HexPillarId = 
   | 'creatika' 
@@ -209,4 +210,73 @@ export function getHexPillarInfo(hex: CustomHexagon): HexPillarInfo | null {
   }
 
   return null;
+}
+
+export interface HexActionTargetDisplay {
+  icon: string;
+  label: string;
+  tooltip: string;
+  hasTarget: boolean;
+}
+
+/**
+ * Obtiene el ícono y nombre amigable de la aplicación o página a la que está dirigido el hexágono.
+ */
+export function getHexActionTargetLabel(hex: CustomHexagon): HexActionTargetDisplay {
+  const action = hex?.action;
+  if (!action || action.type === 'none' || !action.target?.trim()) {
+    return {
+      icon: '⚪',
+      label: 'Sin Enlace',
+      tooltip: 'Esta celda no tiene ninguna aplicación o página asignada',
+      hasTarget: false
+    };
+  }
+
+  const target = action.target.trim();
+
+  // 1. Coincidencia en rutas predeterminadas de proyectos pilares
+  const matched = BUILTIN_PILLAR_ROUTES.find(r => r.target.toLowerCase() === target.toLowerCase());
+  if (matched) {
+    return {
+      icon: '🚀',
+      label: matched.label.replace(/^[^\w\s]+\s*/, ''),
+      tooltip: `Dirigido a: ${matched.label} (${matched.target})`,
+      hasTarget: true
+    };
+  }
+
+  // 2. Enlace externo web
+  if (action.type === 'external' || target.startsWith('http://') || target.startsWith('https://')) {
+    let clean = target.replace(/^https?:\/\//, '').replace(/\/$/, '');
+    if (clean.length > 18) clean = clean.substring(0, 16) + '…';
+    return {
+      icon: '🌐',
+      label: clean,
+      tooltip: `Enlace web externo: ${target}`,
+      hasTarget: true
+    };
+  }
+
+  // 3. Ventana modal
+  if (action.type === 'modal') {
+    return {
+      icon: '💬',
+      label: `Modal: ${target}`,
+      tooltip: `Abre ventana modal: ${target}`,
+      hasTarget: true
+    };
+  }
+
+  // 4. Ruta interna personalizada
+  let shortPath = target;
+  if (shortPath.length > 20) {
+    shortPath = shortPath.substring(0, 18) + '…';
+  }
+  return {
+    icon: '🔗',
+    label: shortPath,
+    tooltip: `Ruta interna: ${target}`,
+    hasTarget: true
+  };
 }

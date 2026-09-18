@@ -1,7 +1,7 @@
 import React, { useState, useRef } from 'react';
 import type { CustomHexagon } from '../../types';
 import { renderHexLayer } from './hexLayers';
-import { getHexPillarInfo } from '../../utils/hexPillarUtils';
+import { getHexPillarInfo, getHexActionTargetLabel } from '../../utils/hexPillarUtils';
 import './Hexagon.css';
 
 interface HexagonCellProps {
@@ -19,6 +19,7 @@ interface HexagonCellProps {
   showIcon?: boolean;
   showTitle?: boolean;
   showCategory?: boolean;
+  onTitleChange?: (newTitle: string) => void;
 }
 
 const HexagonCellComponent: React.FC<HexagonCellProps> = ({
@@ -35,7 +36,8 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
   isSelected,
   showIcon = true,
   showTitle = true,
-  showCategory = true
+  showCategory = true,
+  onTitleChange
 }) => {
   const [isPressing, setIsPressing] = useState(false);
   const longPressTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -47,6 +49,7 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
   const hasAction = Boolean(data.action && data.action.type !== 'none');
   const hasBgImage = Boolean(data.layerBg && data.layerBg.type !== 'none' && data.layerBg.value);
   const pillarInfo = getHexPillarInfo(data);
+  const targetInfo = getHexActionTargetLabel(data);
 
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current) {
@@ -197,38 +200,73 @@ const HexagonCellComponent: React.FC<HexagonCellProps> = ({
         <div className="hex-layer hex-layer-interactive">
           <div className="hex-content">
             {showIcon && renderHexLayer(data.layerInteractive, 'hex-interactive-content', true)}
-            {data.title && !showLabel && (showTitle || (showCategory && pillarInfo)) && (
-              <div className={`hex-title-badge ${pillarInfo ? `has-pillar pillar-${pillarInfo.id}` : ''}`}>
-                {showCategory && pillarInfo && (
-                  <div 
-                    className="hex-pillar-tag"
-                    title={`Reino: ${pillarInfo.label}`}
-                    style={{
-                      '--pillar-color': pillarInfo.color,
-                      '--pillar-glow': pillarInfo.glow,
-                      '--pillar-bg': pillarInfo.bgTint,
-                      '--pillar-border': pillarInfo.borderTint
-                    } as React.CSSProperties}
-                  >
-                    <span className="hex-pillar-icon">{pillarInfo.icon}</span>
-                    <span className="hex-pillar-label">{pillarInfo.label}</span>
-                  </div>
-                )}
-                {showTitle && <span className="hex-title-text">{data.title}</span>}
+            {showLabel && isEditing && onTitleChange ? (
+              <div 
+                className="hex-title-edit-wrap"
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+                onTouchStart={(e) => e.stopPropagation()}
+              >
+                <input
+                  type="text"
+                  value={data.title}
+                  placeholder="Título..."
+                  onChange={(e) => onTitleChange(e.target.value)}
+                  className="hex-inline-title-input"
+                  autoFocus
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      (e.target as HTMLInputElement).blur();
+                    }
+                  }}
+                />
               </div>
+            ) : (
+              (data.title || showLabel) && (showTitle || (showCategory && pillarInfo) || showLabel) && (
+                <div className={`hex-title-badge ${pillarInfo ? `has-pillar pillar-${pillarInfo.id}` : ''}`}>
+                  {showCategory && pillarInfo && (
+                    <div 
+                      className="hex-pillar-tag"
+                      title={`Reino: ${pillarInfo.label}`}
+                      style={{
+                        '--pillar-color': pillarInfo.color,
+                        '--pillar-glow': pillarInfo.glow,
+                        '--pillar-bg': pillarInfo.bgTint,
+                        '--pillar-border': pillarInfo.borderTint
+                      } as React.CSSProperties}
+                    >
+                      <span className="hex-pillar-icon">{pillarInfo.icon}</span>
+                      <span className="hex-pillar-label">{pillarInfo.label}</span>
+                    </div>
+                  )}
+                  {(showTitle || showLabel) && (
+                    <span 
+                      className="hex-title-text"
+                      style={{
+                        fontStyle: !data.title && showLabel ? 'italic' : 'normal',
+                        opacity: !data.title && showLabel ? 0.7 : 1
+                      }}
+                    >
+                      {data.title || (showLabel ? 'Sin Título' : '')}
+                    </span>
+                  )}
+                </div>
+              )
             )}
           </div>
         </div>
 
-        {/* Indicador de acción interactiva */}
+        {/* Indicador de acción interactiva en modo juego */}
         {hasAction && !showLabel && showIcon && <div className="hex-action-pill" />}
 
-        {/* Coordenadas Cartesianas (Eje X: Columna, Eje Y: Fila) */}
+        {/* Indicador de Destino (Aplicación o Página asignada) en el Editor */}
         {showLabel && (
-          <div className="hex-admin-label" title={`Coordenadas Cartesianas: X = ${data.col}, Y = ${data.row}`}>
-            <span style={{ color: 'var(--sutz-axis-x-color, #38bdf8)', fontWeight: 800 }}>X:</span>{data.col}
-            <span style={{ color: 'var(--sutz-text-muted, #94a3b8)', margin: '0 2px' }}>·</span>
-            <span style={{ color: 'var(--sutz-axis-y-color, #34d399)', fontWeight: 800 }}>Y:</span>{data.row}
+          <div 
+            className={`hex-target-badge ${targetInfo.hasTarget ? 'has-target' : 'no-target'}`}
+            title={targetInfo.tooltip}
+          >
+            <span className="hex-target-icon">{targetInfo.icon}</span>
+            <span className="hex-target-label">{targetInfo.label}</span>
           </div>
         )}
       </div>
