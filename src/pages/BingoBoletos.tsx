@@ -20,14 +20,14 @@ interface CardTier {
 const CARD_TIERS_MAP: Record<string, CardTier> = {
   'tier-free': {
     id: 'tier-free',
-    name: 'Cartón Gratuito (Prueba)',
+    name: 'Cartón de Prueba (Demostración)',
     unitPriceQ: 0,
-    prizeLevel: 'Partida de Demostración / Prueba',
-    badge: 'GRATIS / PRUEBA',
+    prizeLevel: 'Modo Práctica (Sin Premios)',
+    badge: 'PRUEBA GRATIS',
     badgeClass: 'bronce',
-    description: 'Cartón oficial sin costo para participar en la partida de demostración y pruebas.',
-    prizeHighlight: 'Acceso libre para toda la comunidad.',
-    icon: '🎁'
+    description: 'Cartón interactivo sin costo para explorar la mecánica del juego y aprender a jugar.',
+    prizeHighlight: 'Sin premios reales — Práctica libre para explorar y aprender.',
+    icon: '🎮'
   },
   'tier-10': {
     id: 'tier-10',
@@ -179,22 +179,71 @@ const BingoBoletos: React.FC = () => {
   }, []);
 
 
-  // Lista unificada de todas las partidas disponibles (programadas + juego activo si no está duplicado)
-  const allAvailableGames: BingoScheduledGame[] = [...scheduledGames];
-  if (activeGame && !scheduledGames.some(g => g.id === activeGame.id || (activeGame.scheduledGameId && g.id === activeGame.scheduledGameId))) {
-    allAvailableGames.unshift({
+  // Ticker de tiempo en vivo para recalcular dinámicamente si se cruza el umbral de las 8 horas
+  const [currentTime, setCurrentTime] = useState(Date.now());
+  useEffect(() => {
+    const timer = setInterval(() => setCurrentTime(Date.now()), 60000);
+    return () => clearInterval(timer);
+  }, []);
+
+  // Partidas oficiales calendarizadas (con precio real > 0)
+  const officialScheduledGames = scheduledGames
+    .filter(g => (g.status === 'scheduled' || g.status === 'live') && (g.cardPriceQ === undefined || g.cardPriceQ > 0))
+    .sort((a, b) => a.scheduledAt - b.scheduledAt);
+
+  const nextOfficialGame = officialScheduledGames[0] || null;
+  const EIGHT_HOURS_MS = 8 * 60 * 60 * 1000;
+
+  // ¿La partida oficial más próxima inicia en 8 horas o menos, o ya está en vivo?
+  const isWithin8HoursOfOfficial = nextOfficialGame
+    ? (nextOfficialGame.status === 'live' || (nextOfficialGame.scheduledAt - currentTime <= EIGHT_HOURS_MS))
+    : false;
+
+  // Definición de la Partida de Prueba Libre (Q0, sin premios)
+  const demoPracticeGame: BingoScheduledGame = {
+    id: 'demo-practice-game',
+    title: 'Bingo de Prueba (Demostración Libre)',
+    scheduledAt: currentTime,
+    cardPriceQ: 0,
+    gameType: 'tier-free',
+    status: 'scheduled',
+    prizeHighlight: 'Sin premios reales — Práctica libre para aprender la mecánica del juego',
+    tierName: 'Prueba Gratuita',
+    totalCardsLimit: 9999,
+    soldCardsCount: 0,
+    createdAt: currentTime
+  } as BingoScheduledGame;
+
+  // Lista unificada de todas las partidas disponibles según las reglas comerciales y de horario
+  const allAvailableGames: BingoScheduledGame[] = [];
+
+  if (officialScheduledGames.length > 0) {
+    // 1. Mostrar partidas oficiales disponibles para compra
+    allAvailableGames.push(...officialScheduledGames);
+
+    // 2. Si la más próxima está a más de 8 horas, ofrecer también la partida de prueba para practicar
+    if (!isWithin8HoursOfOfficial) {
+      allAvailableGames.push(demoPracticeGame);
+    }
+  } else if (activeGame && activeGame.status === 'playing') {
+    // Si la tómbola oficial está activamente en directo cantando bolas en este momento
+    allAvailableGames.push({
       id: activeGame.id,
       title: activeGame.title || 'Gran Ronda Oficial de Bingotenango',
-      scheduledAt: activeGame.nextRoundTime || Date.now(),
-      cardPriceQ: activeGame.cardPriceQ ?? (activeGame.gameType === 'tier-free' ? 0 : 10),
-      gameType: activeGame.gameType || (activeGame.cardPriceQ === 0 ? 'tier-free' : 'tier-10'),
+      scheduledAt: activeGame.nextRoundTime || currentTime,
+      cardPriceQ: activeGame.cardPriceQ ?? 10,
+      gameType: activeGame.gameType || 'tier-10',
       status: 'live',
       prizeHighlight: activeGame.currentPrizeTitle || 'Premios en vivo',
-      tierName: activeGame.cardPriceQ === 0 ? 'Partida Gratuita' : 'Cartón Oficial',
+      tierName: 'Cartón Oficial',
       totalCardsLimit: 100,
       soldCardsCount: 0,
-      createdAt: Date.now()
+      createdAt: currentTime
     } as BingoScheduledGame);
+  } else {
+    // NO hay partidas programadas (o se eliminaron todas en el registro) y la sala está en espera:
+    // Mostrar la partida de prueba libre (Q0)
+    allAvailableGames.push(demoPracticeGame);
   }
 
   // Sincronizar selección de partida por URL o primera opción disponible
@@ -546,6 +595,33 @@ const BingoBoletos: React.FC = () => {
 
       // Si el costo es 0 (Gratis/Prueba), confirmamos de inmediato sin pasarela bancaria
       if (currentPriceQ === 0) {
+        const freeTokenId = `tkn_free_${orderId}`;
+        const targetGame = selectedScheduledGame?.id || activeGame?.id || 'demo-practice-game';
+
+        await setDoc(doc(db, 'bingo_access_tokens', freeTokenId), {
+          id: freeTokenId,
+          orderId: orderId,
+          playerName: playerName.trim(),
+          playerWhatsapp: cleanPhone,
+          tierId: 'tier-free',
+          tierName: 'Cartón de Prueba (Demostración)',
+          prizeLevel: 'Modo Práctica (Sin Premios)',
+          quantity: 1,
+          purchaseMode: purchaseMode,
+          gameId: targetGame,
+          scheduledGameId: selectedScheduledGame?.id || null,
+          sessionResetAt: Date.now(),
+          status: 'active',
+          paymentStatus: 'paid',
+          paymentMethod: 'gratis',
+          paidAmount: 0,
+          unitPriceQ: 0,
+          usedByDevice: null,
+          linkSent: false,
+          linkSentAt: null,
+          createdAt: Date.now()
+        });
+
         if (purchaseMode === 'gift') {
           for (let i = 1; i <= quantity; i++) {
             const giftTokenId = `tkn_gift_${orderId}_c${i}`;
@@ -555,13 +631,13 @@ const BingoBoletos: React.FC = () => {
               playerName: `${playerName.trim()} (Contacto #${i})`,
               playerWhatsapp: cleanPhone,
               tierId: 'tier-free',
-              tierName: 'Cartón Gratuito',
-              prizeLevel: 'Partida Gratuita',
+              tierName: 'Cartón de Prueba (Demostración)',
+              prizeLevel: 'Modo Práctica (Sin Premios)',
               quantity: 1,
               purchaseMode: 'gift',
-              gameId: activeGame?.id || 'default_game',
+              gameId: targetGame,
               scheduledGameId: selectedScheduledGame?.id || null,
-              sessionResetAt: activeGame?.lastResetAt || Date.now(),
+              sessionResetAt: Date.now(),
               status: 'active',
               paymentStatus: 'paid',
               paymentMethod: 'gratis',
@@ -574,7 +650,7 @@ const BingoBoletos: React.FC = () => {
             });
           }
         }
-        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&status=success&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=tier-free&tierName=${encodeURIComponent('Cartón Gratuito')}&qty=${quantity}&mode=${purchaseMode}&price=0&totalPrice=0&unitPrice=0`);
+        navigate(`/juegos/bingo/boletos/confirmacion?orderId=${orderId}&tokenId=${freeTokenId}&status=success&playerName=${encodeURIComponent(playerName.trim())}&phone=${cleanPhone}&tier=tier-free&tierName=${encodeURIComponent('Cartón de Prueba')}&qty=${quantity}&mode=${purchaseMode}&price=0&totalPrice=0&unitPrice=0`);
         return;
       }
     } catch (fsErr) {
@@ -815,7 +891,7 @@ const BingoBoletos: React.FC = () => {
                           <div className="partida-radio-wrap">
                             <span className={`partida-radio ${isSelected ? 'checked' : ''}`} />
                             <span className={`partida-status-chip ${isLive ? 'live' : isFree ? 'free' : 'scheduled'}`}>
-                              {isLive ? '🔴 EN VIVO AHORA' : isFree ? '🎁 GRATIS / PRUEBA' : '📅 PROGRAMADA'}
+                              {isLive ? '🔴 EN VIVO AHORA' : isFree ? '🎮 PRUEBA GRATUITA' : '📅 PROGRAMADA'}
                             </span>
                           </div>
 
@@ -835,15 +911,19 @@ const BingoBoletos: React.FC = () => {
 
                         <div className="partida-card-meta">
                           <div className="meta-row">
-                            <span className="meta-icon">⏰</span>
+                            <span className="meta-icon">{isFree ? '🎮' : '⏰'}</span>
                             <span className="meta-text">
-                              {new Date(game.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' })}
+                              {isFree 
+                                ? 'Disponible ahora para explorar' 
+                                : new Date(game.scheduledAt).toLocaleString('es-GT', { dateStyle: 'full', timeStyle: 'short' })}
                             </span>
                           </div>
                           <div className="meta-row">
-                            <span className="meta-icon">🏆</span>
-                            <span className="meta-text highlight">
-                              {game.prizeHighlight || 'Premios en efectivo, combos y sorpresas.'}
+                            <span className="meta-icon">{isFree ? 'ℹ️' : '🏆'}</span>
+                            <span className={`meta-text ${isFree ? '' : 'highlight'}`} style={isFree ? { color: '#94a3b8' } : undefined}>
+                              {isFree 
+                                ? 'Sin premios reales — Práctica libre para aprender' 
+                                : (game.prizeHighlight || 'Premios en efectivo, combos y sorpresas.')}
                             </span>
                           </div>
                         </div>
@@ -862,33 +942,33 @@ const BingoBoletos: React.FC = () => {
                     <div className="partida-card-top">
                       <div className="partida-radio-wrap">
                         <span className="partida-radio checked" />
-                        <span className="partida-status-chip live">
-                          🔴 EN VIVO / ACTIVA
+                        <span className="partida-status-chip free">
+                          🎮 PRUEBA GRATUITA
                         </span>
                       </div>
-                      <div className={`partida-price-badge ${currentPriceQ === 0 ? 'free' : ''}`}>
+                      <div className="partida-price-badge free">
                         <span className="price-val">
-                          {currentPriceQ === 0 ? 'Q0.00' : `Q${currentPriceQ}.00`}
+                          Q0.00
                         </span>
                         <span className="price-unit">
-                          {currentPriceQ === 0 ? '¡GRATIS!' : '/ cartón'}
+                          ¡GRATIS!
                         </span>
                       </div>
                     </div>
 
                     <h3 className="partida-card-title">
-                      {activeGame?.title || 'Gran Ronda Oficial de Bingotenango'}
+                      Bingo de Prueba (Demostración Libre)
                     </h3>
 
                     <div className="partida-card-meta">
                       <div className="meta-row">
-                        <span className="meta-icon">📅</span>
-                        <span className="meta-text">Transmisión interactiva en vivo por el canal</span>
+                        <span className="meta-icon">🎮</span>
+                        <span className="meta-text">Disponible ahora para explorar</span>
                       </div>
                       <div className="meta-row">
-                        <span className="meta-icon">🏆</span>
-                        <span className="meta-text highlight">
-                          {activeGame?.currentPrizeTitle || 'Premios en efectivo, combos y sorpresas en vivo.'}
+                        <span className="meta-icon">ℹ️</span>
+                        <span className="meta-text" style={{ color: '#94a3b8' }}>
+                          Sin premios reales — Práctica libre para aprender
                         </span>
                       </div>
                     </div>
@@ -900,6 +980,42 @@ const BingoBoletos: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* AVISO EXPLICATIVO SI SELECCIONÓ LA PARTIDA DE PRUEBA */}
+            {selectedScheduledGame?.cardPriceQ === 0 && (
+              <div className="demo-disclaimer-banner animate-fade-in" style={{
+                background: 'linear-gradient(135deg, rgba(30, 41, 59, 0.95) 0%, rgba(15, 23, 42, 0.98) 100%)',
+                border: '1.5px solid rgba(56, 189, 248, 0.45)',
+                borderRadius: '16px',
+                padding: '14px 18px',
+                margin: '16px 0 10px',
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '14px',
+                boxShadow: '0 8px 25px rgba(0, 0, 0, 0.35)'
+              }}>
+                <span style={{ fontSize: '1.8rem', lineHeight: 1 }}>🎮</span>
+                <div style={{ textAlign: 'left' }}>
+                  <h4 style={{ 
+                    fontFamily: 'var(--font-gamer)', 
+                    color: '#38bdf8', 
+                    fontSize: '0.92rem', 
+                    margin: '0 0 4px',
+                    letterSpacing: '0.5px' 
+                  }}>
+                    MODO DEMOSTRACIÓN LIBRE (SIN PREMIOS)
+                  </h4>
+                  <p style={{ 
+                    color: '#cbd5e1', 
+                    fontSize: '0.8rem', 
+                    lineHeight: 1.45, 
+                    margin: 0 
+                  }}>
+                    Este cartón es <strong>100% gratuito</strong> y te permite conocer todas las funciones interactivas: el auto-marcado, el audio de las bolas y cómo cantar BINGO. <em>No otorga premios en efectivo ni acumulados.</em>
+                  </p>
+                </div>
+              </div>
+            )}
 
             {/* BOTÓN CONTINUAR PASO 1 */}
             <div className="step-actions-footer single-action">
@@ -1232,6 +1348,34 @@ const BingoBoletos: React.FC = () => {
 
             {/* FORMULARIO Y SELECTOR DE PAGO */}
             <form onSubmit={handleProceedToPayment} className="checkout-guided-form" noValidate>
+              {/* MENSAJE EXPLICATIVO SI ES MODO DEMOSTRACIÓN (Q0) */}
+              {currentPriceQ === 0 && (
+                <div style={{
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(6, 78, 59, 0.3) 100%)',
+                  border: '1.5px solid rgba(16, 185, 129, 0.45)',
+                  borderRadius: '16px',
+                  padding: '16px 20px',
+                  marginBottom: '20px',
+                  textAlign: 'center',
+                  boxShadow: '0 4px 20px rgba(16, 185, 129, 0.2)'
+                }}>
+                  <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🎉</span>
+                  <strong style={{
+                    fontFamily: 'var(--font-gamer)',
+                    color: '#34d399',
+                    fontSize: '0.98rem',
+                    display: 'block',
+                    letterSpacing: '0.5px',
+                    marginBottom: '4px'
+                  }}>
+                    PARTIDA DE PRUEBA 100% GRATUITA
+                  </strong>
+                  <span style={{ color: '#e2e8f0', fontSize: '0.82rem', lineHeight: '1.4', display: 'block' }}>
+                    Esta demostración no tiene costo ni requiere tarjetas bancarias. Al presionar el botón inferior, se creará tu cartón digital y entrarás a la sala interactiva de práctica para explorar el juego.
+                  </span>
+                </div>
+              )}
+
               {/* OPCIONES DE PAGO SI TIENE COSTO (TARJETA/TRANSFERENCIA O EFECTIVO) */}
               {currentPriceQ > 0 && (
                 <div className="payment-method-selector-section">
@@ -1282,9 +1426,8 @@ const BingoBoletos: React.FC = () => {
                     <div className="cash-promoter-warning">
                       <span className="warning-symbol">⚠️</span>
                       <div className="warning-content">
-                        <p>
-                          <strong>Pago presencial:</strong> Un promotor o encargado debe estar cerca para cobrar tu dinero y habilitar tu cartón en el registro.
-                        </p>
+                        <strong>Cobro Presencial Requerido:</strong>
+                        <p>Tu cartón se habilitará únicamente cuando el promotor reciba el efectivo y valide la orden en el sistema antes de iniciar la partida.</p>
                       </div>
                     </div>
                   )}
@@ -1319,7 +1462,7 @@ const BingoBoletos: React.FC = () => {
                       boxShadow: '0 4px 25px rgba(16, 185, 129, 0.45)'
                     }}
                   >
-                    {isProcessing ? 'Generando...' : '🎁 Confirmar y Obtener Boleto Gratis'}
+                    {isProcessing ? 'Generando...' : '🎮 Obtener Cartón de Prueba Gratis (Q0.00)'}
                   </button>
                 ) : paymentMethodChoice === 'recurrente' ? (
                   <button 

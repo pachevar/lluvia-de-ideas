@@ -763,7 +763,9 @@ const BingoBoletosConfirmacion: React.FC = () => {
           }}>
             {isOrderPending 
               ? (orderData?.paymentMethod === 'efectivo' ? 'SOLICITUD EN EFECTIVO - ESPERANDO PROMOTOR' : 'EN PROCESO DE VERIFICACIÓN') 
-              : isGiftMode ? '¡ENLACES GENERADOS CON ÉXITO!' : '¡COMPRA CONFIRMADA!'}
+              : effectivePaidQ === 0
+                ? '🎮 ¡CARTÓN DE DEMOSTRACIÓN HABILITADO!'
+                : isGiftMode ? '¡ENLACES GENERADOS CON ÉXITO!' : '¡COMPRA CONFIRMADA!'}
           </span>
 
           <h1 style={{
@@ -775,7 +777,9 @@ const BingoBoletosConfirmacion: React.FC = () => {
           }}>
             {isOrderPending 
               ? (orderData?.paymentMethod === 'efectivo' ? 'Esperando Cobro en Efectivo' : 'Verificando tu Pago') 
-              : isGiftMode ? 'Tus Links para Contactos están Listos' : '¡Tu Cartón está Listo!'}
+              : effectivePaidQ === 0
+                ? '¡Tu Cartón de Prueba está Listo!'
+                : isGiftMode ? 'Tus Links para Contactos están Listos' : '¡Tu Cartón está Listo!'}
           </h1>
 
           <p style={{ color: '#cbd5e1', fontSize: '0.92rem', margin: '0 auto 24px', maxWidth: '520px', lineHeight: 1.5 }}>
@@ -783,7 +787,9 @@ const BingoBoletosConfirmacion: React.FC = () => {
               ? (orderData?.paymentMethod === 'efectivo'
                   ? `Hola ${orderData?.playerName || 'Jugador'}, tu solicitud de boleto en efectivo está registrada. Un promotor debe cobrar tus Q${effectivePaidQ}.00 para habilitar tu cartón.`
                   : `Hola ${orderData?.playerName || 'Jugador'}, estamos a la espera de la acreditación bancaria para habilitar tu cartón.`)
-              : `Felicidades ${orderData?.playerName || 'Jugador'}, tu orden ha sido procesada. ${isGiftMode ? 'A continuación tienes cada uno de los enlaces independientes para repartir a tus contactos.' : 'Ya puedes entrar directo a tu cartón de juego en pantalla.'}`}
+              : effectivePaidQ === 0
+                ? `Hola ${orderData?.playerName || 'Jugador'}, tu cartón de práctica ya está disponible sin costo. Explora todas las funciones interactivas y practica cantar BINGO. (Modo demostración sin premios en efectivo).`
+                : `Felicidades ${orderData?.playerName || 'Jugador'}, tu orden ha sido procesada. ${isGiftMode ? 'A continuación tienes cada uno de los enlaces independientes para repartir a tus contactos.' : 'Ya puedes entrar directo a tu cartón de juego en pantalla.'}`}
           </p>
 
 

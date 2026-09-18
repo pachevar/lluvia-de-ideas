@@ -1301,6 +1301,28 @@ export default function BingoCardView() {
         </div>
       </div>
 
+      {/* DISTINTIVO AMISTOSO DE MODO DEMOSTRACIÓN / PRÁCTICA */}
+      {(cardData?.tierId === 'tier-free' || cardData?.gameId === 'demo-practice-game' || cardData?.prizeLevel?.toLowerCase().includes('demostración') || cardData?.prizeLevel?.toLowerCase().includes('práctica')) && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
+          border: '1px solid rgba(56, 189, 248, 0.4)',
+          borderRadius: '10px',
+          padding: '6px 12px',
+          margin: '6px auto 10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: '8px',
+          color: '#38bdf8',
+          fontSize: '0.74rem',
+          fontFamily: 'var(--font-gamer)',
+          letterSpacing: '0.5px'
+        }}>
+          <span>🎮</span>
+          <span>MODO PRÁCTICA LIBRE (SIN PREMIOS EN EFECTIVO)</span>
+        </div>
+      )}
+
       {/* DRAWER DESPLEGABLE DE AJUSTES (NO CONSUME ESPACIO FIJO) */}
       {showSettingsDrawer && (
         <div className="compact-settings-drawer animate-fade-in">
