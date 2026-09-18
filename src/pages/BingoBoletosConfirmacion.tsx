@@ -1168,7 +1168,8 @@ const BingoBoletosConfirmacion: React.FC = () => {
           ) : (
             /* CASO B: MODO PERSONAL (PAGADO/HABILITADO) */
             <>
-              {accessToken && (
+              {/* Ocultar cuadro de pase de sesión en vivo en modo de prueba/gratuito para optimizar verticalmente */}
+              {accessToken && effectivePaidQ > 0 && (
                 <div style={{
                   background: 'linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(30, 27, 75, 0.6) 100%)',
                   border: '1.5px solid rgba(56, 189, 248, 0.4)',
@@ -1258,7 +1259,7 @@ const BingoBoletosConfirmacion: React.FC = () => {
                   marginBottom: '16px'
                 }}
               >
-                {isActivatingCard ? '🎮 PREPARANDO CARTÓN...' : '🎮 ENTRAR DIRECTO A MI CARTÓN'}
+                {isActivatingCard ? '🎮 PREPARANDO CARTÓN...' : (effectivePaidQ === 0 ? '🎮 ENTRAR A MI CARTÓN DE PRUEBA' : '🎮 ENTRAR DIRECTO A MI CARTÓN')}
               </button>
             </>
           )}
