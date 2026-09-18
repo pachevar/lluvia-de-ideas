@@ -63,6 +63,7 @@ function App() {
   const isBoletosView = currentPath.includes('/boletos');
   const isBingoCardView = currentPath.includes('/juegos/bingo') || currentPath.includes('/bingo');
   const isSutzView = currentPath === '/sutz' || currentPath.startsWith('/sutz') || currentPath === '/mundo-virtual';
+  const isCartonView = currentPath.includes('/carton');
 
   return (
     <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''} ${isSutzView ? 'sutz-view-full' : ''}`}>
@@ -133,8 +134,8 @@ function App() {
         </footer>
       )}
 
-      {/* Floating Action Buttons (Audio & WhatsApp - Ocultos en el Mundo Virtual Sutz) */}
-      {!isSutzView && (
+      {/* Floating Action Buttons (Audio & WhatsApp - Ocultos en Sutz y en el Cartón de Bingo para no tapar los números) */}
+      {!isSutzView && !isCartonView && (
         <div className="floating-action-buttons">
           {/* Floating Sound Toggle */}
           <SoundToggle />
