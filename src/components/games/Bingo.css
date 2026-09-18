@@ -72,7 +72,8 @@
 
 /* Responsive visibility utilities */
 @media (max-width: 991.98px) {
-  .desktop-only {
+  .desktop-only,
+  .host-controls-panel {
     display: none !important;
   }
 }

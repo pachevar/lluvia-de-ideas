@@ -3150,7 +3150,7 @@ export default function BingoHub() {
               {/* Panel de Controles del Host (Vistas verticales a la izq, Sacar Bola al centro, Reiniciar a la derecha) */}
               {isAdmin && (
                 <div 
-                  className="host-controls-panel card-glass animate-fade-in" 
+                  className="host-controls-panel card-glass animate-fade-in desktop-only" 
                   style={{ 
                     width: '100%', 
                     display: 'flex', 
