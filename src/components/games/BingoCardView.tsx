@@ -913,66 +913,6 @@ export default function BingoCardView() {
     }, 5000);
   };
 
-  const checkHasWinningPattern = (slots: boolean[][], pattern: string): boolean => {
-    if (!slots || slots.length < 5) return false;
-
-    const isMarked = (r: number, c: number) => {
-      if (r === 2 && c === 2) return true; // Casilla central FREE
-      return Boolean(slots[r]?.[c]);
-    };
-
-    if (pattern === 'full') {
-      for (let r = 0; r < 5; r++) {
-        for (let c = 0; c < 5; c++) {
-          if (!isMarked(r, c)) return false;
-        }
-      }
-      return true;
-    }
-
-    if (pattern === 'four_corners') {
-      return isMarked(0, 0) && isMarked(0, 4) && isMarked(4, 0) && isMarked(4, 4);
-    }
-
-    if (pattern === 'diagonal') {
-      let diag1 = true;
-      for (let i = 0; i < 5; i++) {
-        if (!isMarked(i, i)) diag1 = false;
-      }
-      let diag2 = true;
-      for (let i = 0; i < 5; i++) {
-        if (!isMarked(i, 4 - i)) diag2 = false;
-      }
-      return diag1 || diag2;
-    }
-
-    if (pattern === 'line') {
-      for (let r = 0; r < 5; r++) {
-        let rowMarked = true;
-        for (let c = 0; c < 5; c++) {
-          if (!isMarked(r, c)) rowMarked = false;
-        }
-        if (rowMarked) return true;
-      }
-      for (let c = 0; c < 5; c++) {
-        let colMarked = true;
-        for (let r = 0; r < 5; r++) {
-          if (!isMarked(r, c)) colMarked = false;
-        }
-        if (colMarked) return true;
-      }
-      return false;
-    }
-
-    // Default fallback: require full house
-    for (let r = 0; r < 5; r++) {
-      for (let c = 0; c < 5; c++) {
-        if (!isMarked(r, c)) return false;
-      }
-    }
-    return true;
-  };
-
   const shoutBingo = async () => {
     if (!cardData || !gameData || !cartonId) return;
 
