@@ -2109,7 +2109,7 @@ export default function BingoCardView() {
             style={{
               background: (gameData?.activeClaim && gameData.activeClaim.status === 'pending' && gameData.activeClaim.cardId !== cartonId)
                 ? '#475569'
-                : (getProximityStatus() === 0 ? 'linear-gradient(135deg, #22c55e, #16a34a)' : primaryColor)
+                : (getProximityStatus() === 0 ? 'linear-gradient(135deg, #10b981, #059669)' : 'linear-gradient(135deg, #f59e0b, #ea580c)')
             }}
           >
             {gameData?.activeClaim && gameData.activeClaim.status === 'pending'

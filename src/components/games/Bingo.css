@@ -1,21 +1,22 @@
 /* Cyber Gamer Theme for Bingo Virtual */
 
 :root {
-  --cyber-bg: #06020f;
-  --cyber-darker: #030107;
-  --cyber-panel: rgba(13, 6, 28, 0.75);
+  --cyber-bg: var(--sutz-bg-space-void, #060913);
+  --cyber-darker: var(--sutz-elevation-0, #0d111a);
+  --cyber-panel: var(--sutz-elevation-1, #151b27);
+  --cyber-surface: var(--sutz-elevation-2, #1e2536);
   --cyber-primary: #a855f7;      /* Neon Purple */
   --cyber-primary-rgb: 168, 85, 247;
   --cyber-accent: #ec4899;       /* Cyber Pink */
   --cyber-accent-rgb: 236, 72, 153;
-  --cyber-cyan: #00f0ff;         /* Hologram Cyan */
-  --cyber-cyan-rgb: 0, 240, 255;
-  --cyber-green: #39ff14;        /* Matrix Green */
-  --cyber-yellow: #ffd700;       /* Gold/Warning Yellow */
-  --cyber-text: #e2dbf0;
+  --cyber-cyan: var(--sutz-color-guide, #0ea5e9);         /* Hologram Cyan */
+  --cyber-cyan-rgb: 14, 165, 233;
+  --cyber-green: var(--sutz-color-success, #10b981);       /* Semantic Success */
+  --cyber-yellow: var(--sutz-color-challenge, #f59e0b);    /* Gold/Amber Challenge */
+  --cyber-text: var(--sutz-text-normal, #e0e0e0);
   --cyber-glow: 0 0 15px rgba(168, 85, 247, 0.35);
   --cyber-accent-glow: 0 0 15px rgba(236, 72, 153, 0.35);
-  --cyber-cyan-glow: 0 0 15px rgba(0, 240, 255, 0.35);
+  --cyber-cyan-glow: 0 0 15px rgba(14, 165, 233, 0.35);
   --font-gamer: 'Orbitron', sans-serif;
   --font-console: 'Share Tech Mono', monospace;
   --border-radius-gamer: 16px;
@@ -1956,30 +1957,30 @@
 .card-theme-cyberpunk.bingo-personal-header,
 .card-theme-cyberpunk .bingo-personal-header,
 .card-theme-cyberpunk .bingo-card-board {
-  background: rgba(13, 6, 28, 0.8) !important;
+  background: linear-gradient(145deg, hsl(220, 38%, 10%) 0%, hsl(222, 47%, 6%) 100%) !important;
   border: 2px solid var(--cyber-cyan) !important;
-  box-shadow: 0 0 20px rgba(0, 240, 255, 0.25), inset 0 0 15px rgba(0, 0, 0, 0.8) !important;
-  backdrop-filter: blur(10px);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.7), inset 0 0 15px rgba(0, 0, 0, 0.8) !important;
 }
 
 .card-theme-cyberpunk .bingo-cell {
-  background: rgba(255, 255, 255, 0.03) !important;
-  border: 1px solid rgba(0, 240, 255, 0.25) !important;
+  background: rgba(255, 255, 255, 0.04) !important;
+  border: 1px solid rgba(14, 165, 233, 0.3) !important;
   color: #fff !important;
   font-family: var(--font-gamer);
-  text-shadow: 0 0 5px rgba(0, 240, 255, 0.5);
+  text-shadow: 0 0 5px rgba(14, 165, 233, 0.5);
   box-shadow: inset 0 0 5px rgba(0,0,0,0.6);
 }
 
 .card-theme-cyberpunk .bingo-cell:hover {
   border-color: var(--cyber-cyan) !important;
-  box-shadow: 0 0 10px rgba(0, 240, 255, 0.3) !important;
+  box-shadow: 0 0 10px rgba(14, 165, 233, 0.4) !important;
 }
 
 .card-theme-cyberpunk .bingo-cell.marked {
-  background: rgba(168, 85, 247, 0.2) !important;
-  border-color: var(--cyber-primary) !important;
-  color: #fff !important;
+  background: rgba(16, 185, 129, 0.22) !important;
+  border-color: var(--cyber-green) !important;
+  color: #ffffff !important;
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4), inset 0 0 8px rgba(16, 185, 129, 0.2) !important;
 }
 
 /* Dark Card Theme */
@@ -3865,8 +3866,8 @@ div .bingo-cell.marked-drawn-assist {
   justify-content: space-between;
   align-items: center;
   padding: 10px 14px;
-  background: rgba(13, 6, 28, 0.95);
-  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  background: linear-gradient(135deg, hsl(220, 38%, 10%) 0%, hsl(222, 47%, 7%) 100%);
+  border: 1.5px solid hsla(215, 25%, 35%, 0.4);
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.5);
   margin-bottom: 10px;
@@ -4361,10 +4362,10 @@ div .bingo-cell.marked-drawn-assist {
 .waiting-lobby-card-compact {
   padding: 10px 14px;
   border-radius: 16px;
-  background: linear-gradient(135deg, rgba(24, 12, 44, 0.94) 0%, rgba(12, 6, 24, 0.98) 100%);
+  background: linear-gradient(135deg, hsl(220, 38%, 11%) 0%, hsl(222, 47%, 6%) 100%);
   border: 1.5px solid rgba(245, 158, 11, 0.45);
   margin: 6px 0 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.12);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6), 0 0 16px rgba(245, 158, 11, 0.15);
   display: flex;
   flex-direction: column;
   gap: 7px;

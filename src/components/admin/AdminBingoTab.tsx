@@ -958,6 +958,105 @@ export default function AdminBingoTab() {
     );
   }, [mainTokensList]);
 
+  // Exportar Cartera de Jugadores (CRM) a CSV con UTF-8 BOM para compatibilidad con Excel
+  const exportPlayersToCSV = () => {
+    if (playersList.length === 0) {
+      showAlert("No hay jugadores registrados en la cartera para exportar.", "Aviso", "ℹ️");
+      return;
+    }
+    const headers = [
+      'Nombre Completo',
+      'Telefono / ID',
+      'Correo Electronico',
+      'Ordenes Totales',
+      'Total Gastado (Q)',
+      'Telegram Vinculado',
+      'Usuario Telegram',
+      'Web Push Activo',
+      'Ultima Compra',
+      'Fecha Registro',
+      'Notas'
+    ];
+
+    const rows = playersList.map(p => [
+      `"${(p.name || '').replace(/"/g, '""')}"`,
+      `"${(p.phone || p.id || '').replace(/"/g, '""')}"`,
+      `"${(p.email || '').replace(/"/g, '""')}"`,
+      `"${p.totalOrdersCount || 0}"`,
+      `"${p.totalSpentQ || 0}"`,
+      `"${p.telegramChatId ? 'SI' : 'NO'}"`,
+      `"${(p.telegramUsername || '').replace(/"/g, '""')}"`,
+      `"${p.webPushEnabled ? 'SI' : 'NO'}"`,
+      `"${p.lastPurchaseAt ? new Date(p.lastPurchaseAt).toLocaleString('es-GT') : ''}"`,
+      `"${p.createdAt ? new Date(p.createdAt).toLocaleString('es-GT') : ''}"`,
+      `"${(p.notes || '').replace(/"/g, '""')}"`
+    ]);
+
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `crm_jugadores_bingotenango_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Exportar Registro de Pases & Ventas a CSV con UTF-8 BOM para compatibilidad con Excel
+  const exportTokensToCSV = () => {
+    if (mainTokensList.length === 0) {
+      showAlert("No hay pases ni ventas para exportar.", "Aviso", "ℹ️");
+      return;
+    }
+    const headers = [
+      'Token ID',
+      'Orden ID',
+      'Jugador',
+      'WhatsApp',
+      'Categoria / Paquete',
+      'Cantidad Cartones',
+      'Modalidad',
+      'Monto (Q)',
+      'Estado de Pago',
+      'Metodo de Pago',
+      'Enlace Despachado',
+      'Fecha Emision'
+    ];
+
+    const rows = mainTokensList.map(t => {
+      const isPaid = t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0;
+      const isGift = t.purchaseMode === 'gift';
+      const priceAmount = t.paidAmount || (t.quantity * (t.unitPriceQ || 10));
+      return [
+        `"${(t.id || '').replace(/"/g, '""')}"`,
+        `"${(t.orderId || '').replace(/"/g, '""')}"`,
+        `"${(t.playerName || '').replace(/"/g, '""')}"`,
+        `"${(t.playerWhatsapp || '').replace(/"/g, '""')}"`,
+        `"${(t.tierName || t.tierId || 'Oficial').replace(/"/g, '""')}"`,
+        `"${t.quantity || 1}"`,
+        `"${isGift ? 'Regalo / Contactos' : 'Personal'}"`,
+        `"${priceAmount}"`,
+        `"${isPaid ? 'COBRADO' : 'PENDIENTE'}"`,
+        `"${(t.paymentMethod || 'online').replace(/"/g, '""')}"`,
+        `"${t.linkSent ? 'SI' : 'NO'}"`,
+        `"${t.createdAt ? new Date(t.createdAt).toLocaleString('es-GT') : ''}"`
+      ];
+    });
+
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', `ventas_y_pases_bingotenango_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
   // --------------------------------------------------------------------------
   // Lógica de Promotores de Venta
   // --------------------------------------------------------------------------
@@ -2397,14 +2496,38 @@ export default function AdminBingoTab() {
                 ))}
               </div>
 
-              <input
-                type="text"
-                className="bingo-input"
-                placeholder="Buscar por jugador, teléfono o ID de pase..."
-                value={tokenSearchQuery}
-                onChange={e => setTokenSearchQuery(e.target.value)}
-                style={{ width: '280px', fontSize: '0.82rem' }}
-              />
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <input
+                  type="text"
+                  className="bingo-input"
+                  placeholder="Buscar por jugador, teléfono o ID de pase..."
+                  value={tokenSearchQuery}
+                  onChange={e => setTokenSearchQuery(e.target.value)}
+                  style={{ width: '240px', fontSize: '0.82rem' }}
+                />
+                <button
+                  type="button"
+                  onClick={exportTokensToCSV}
+                  disabled={mainTokensList.length === 0}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    background: '#16a34a',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '0.78rem',
+                    cursor: mainTokensList.length === 0 ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)'
+                  }}
+                  title="Descargar registro de ventas y pases en archivo CSV compatible con Excel"
+                >
+                  📥 Exportar Ventas (CSV/Excel)
+                </button>
+              </div>
             </div>
 
             {/* Tabla de Pases de Taquilla */}
@@ -2768,7 +2891,7 @@ export default function AdminBingoTab() {
               <h3 className="bingo-card-title">
                 <span>👥</span> Cartera de Jugadores (CRM) & Canales Activos ({playersList.length})
               </h3>
-              <div style={{ display: 'flex', gap: '8px' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <input
                   type="text"
                   placeholder="🔍 Buscar por nombre, teléfono o email..."
@@ -2779,9 +2902,31 @@ export default function AdminBingoTab() {
                     borderRadius: '8px',
                     border: '1px solid #cbd5e1',
                     fontSize: '0.8rem',
-                    width: '260px'
+                    width: '240px'
                   }}
                 />
+                <button
+                  type="button"
+                  onClick={exportPlayersToCSV}
+                  disabled={playersList.length === 0}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '0.78rem',
+                    cursor: playersList.length === 0 ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
+                  }}
+                  title="Descargar base de datos de jugadores CRM en archivo CSV compatible con Excel"
+                >
+                  📥 Exportar Jugadores CRM (CSV/Excel)
+                </button>
               </div>
             </div>
 
