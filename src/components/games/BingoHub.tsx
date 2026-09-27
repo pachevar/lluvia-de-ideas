@@ -218,6 +218,7 @@ export default function BingoHub() {
   const [newScheduleDateTime, setNewScheduleDateTime] = useState('');
   const [newScheduleTier, setNewScheduleTier] = useState<'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
   const [newSchedulePrize, setNewSchedulePrize] = useState('');
+  const [newScheduleProMode, setNewScheduleProMode] = useState<boolean>(false);
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
 
   // Formulario para Editar Ficha de Juego Programado
@@ -227,6 +228,7 @@ export default function BingoHub() {
   const [editScheduleTier, setEditScheduleTier] = useState<'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
   const [editSchedulePrice, setEditSchedulePrice] = useState<number>(25);
   const [editSchedulePrize, setEditSchedulePrize] = useState('');
+  const [editScheduleProMode, setEditScheduleProMode] = useState<boolean>(false);
   const [isSavingEditSchedule, setIsSavingEditSchedule] = useState(false);
 
   // Filtros de la lista de jugadores de la partida programada
@@ -1595,17 +1597,19 @@ export default function BingoHub() {
         tierName: tierMap[newScheduleTier] || 'Cartón Estándar',
         cardPriceQ: cardPrice,
         prizeHighlight: newSchedulePrize.trim() || undefined,
+        isProMode: Boolean(newScheduleProMode),
         status: 'scheduled',
         createdAt: Date.now()
       };
 
       await setDoc(doc(db, 'bingo_scheduled_games', schedId), newGame);
-      addLog(`HOST: Partida programada creada: "${newScheduleTitle.trim()}" con valor de Q${cardPrice}.`);
-      await showAlert("¡Partida programada con éxito! Ya puedes verla en la lista y admitir jugadores.", "Juego Programado", "📅");
+      addLog(`HOST: Partida programada creada: "${newScheduleTitle.trim()}" con valor de Q${cardPrice}${newScheduleProMode ? ' [MODO PRO]' : ''}.`);
+      await showAlert(`¡Partida programada con éxito! Ya puedes verla en la lista y admitir jugadores.${newScheduleProMode ? ' (Modo Pro activado: Sin asistencias visuales)' : ''}`, "Juego Programado", "📅");
       
       setNewScheduleTitle('');
       setNewScheduleDateTime('');
       setNewSchedulePrize('');
+      setNewScheduleProMode(false);
       setShowCreateScheduleModal(false);
       setSelectedScheduledGame(newGame);
     } catch (err) {
@@ -1619,8 +1623,9 @@ export default function BingoHub() {
   const handleActivateScheduledGame = async (game: BingoScheduledGame) => {
     if (!activeGame) return;
     const priceDisplay = game.cardPriceQ === 0 ? 'GRATIS / PRUEBA (Q0)' : `Q${game.cardPriceQ || 25}`;
+    const proDisplay = game.isProMode ? '\n\n⚡ Modo Pro: ACTIVADO (Sin asistencias visuales en cartones).' : '';
     const confirm = await showConfirm(
-      `¿Deseas ACTIVAR la partida "${game.title}" en la Tómbola ahora?\n\nEsto sincronizará el temporizador de la sala de espera y actualizará el título, valor del cartón (${priceDisplay}) y premios activos en vivo.`,
+      `¿Deseas ACTIVAR la partida "${game.title}" en la Tómbola ahora?\n\nEsto sincronizará el temporizador de la sala de espera y actualizará el título, valor del cartón (${priceDisplay}) y premios activos en vivo.${proDisplay}`,
       "Activar Partida en Vivo",
       "🚀",
       "SÍ, ACTIVAR AHORA",
@@ -1646,6 +1651,7 @@ export default function BingoHub() {
         scheduledGameId: game.id,
         cardPriceQ: cardPrice,
         gameType: game.gameType,
+        isProMode: Boolean(game.isProMode),
         status: 'waiting'
       });
 
@@ -1710,6 +1716,7 @@ export default function BingoHub() {
     setEditScheduleTier(game.gameType || 'tier-25');
     setEditSchedulePrice(game.cardPriceQ !== undefined ? game.cardPriceQ : (game.gameType === 'tier-free' ? 0 : game.gameType === 'tier-10' ? 10 : game.gameType === 'tier-50' ? 50 : game.gameType === 'tier-100' ? 100 : 25));
     setEditSchedulePrize(game.prizeHighlight || '');
+    setEditScheduleProMode(Boolean(game.isProMode));
   };
 
   const handleSaveEditSchedule = async (e: React.FormEvent) => {
@@ -1747,7 +1754,8 @@ export default function BingoHub() {
         gameType: editScheduleTier,
         tierName: tierMap[editScheduleTier] || 'Cartón Estándar',
         cardPriceQ: safePrice,
-        prizeHighlight: editSchedulePrize.trim() || null
+        prizeHighlight: editSchedulePrize.trim() || null,
+        isProMode: Boolean(editScheduleProMode)
       };
 
       await updateDoc(doc(db, 'bingo_scheduled_games', editingScheduleGame.id), updatedFields);
@@ -1759,7 +1767,8 @@ export default function BingoHub() {
           nextRoundTime: scheduledTimestamp,
           currentPrizeTitle: editSchedulePrize.trim() || activeGame.currentPrizeTitle || '',
           cardPriceQ: safePrice,
-          gameType: editScheduleTier
+          gameType: editScheduleTier,
+          isProMode: Boolean(editScheduleProMode)
         });
       }
 
@@ -1768,8 +1777,8 @@ export default function BingoHub() {
         setSelectedScheduledGame(prev => prev ? ({ ...prev, ...updatedFields } as BingoScheduledGame) : null);
       }
 
-      addLog(`HOST: Ficha de partida "${editScheduleTitle.trim()}" (Q${editSchedulePrice}/cartón) actualizada.`);
-      await showAlert("¡Ficha de partida actualizada con éxito! Los cambios se reflejarán de inmediato en la tienda y la tómbola.", "Ficha Guardada", "✅");
+      addLog(`HOST: Ficha de partida "${editScheduleTitle.trim()}" (Q${editSchedulePrice}/cartón) actualizada${editScheduleProMode ? ' [MODO PRO]' : ''}.`);
+      await showAlert(`¡Ficha de partida actualizada con éxito!${editScheduleProMode ? ' (Modo Pro: Asistencias visuales desactivadas)' : ''}`, "Ficha Guardada", "✅");
       setEditingScheduleGame(null);
     } catch (err) {
       console.error("Error al actualizar partida programada:", err);
@@ -2740,6 +2749,65 @@ export default function BingoHub() {
                         </option>
                       ))}
                     </select>
+                  </div>
+
+                  {/* Interruptor Modo Pro (Host) */}
+                  <div className="host-sidebar-section" style={{
+                    background: activeGame.isProMode ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+                    border: activeGame.isProMode ? '1.5px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '12px',
+                    padding: '10px 14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '10px'
+                  }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span style={{ fontSize: '1rem' }}>⚡</span>
+                        <strong style={{ fontSize: '0.8rem', color: activeGame.isProMode ? '#fca5a5' : '#ffffff' }}>
+                          MODO PRO
+                        </strong>
+                        <span style={{
+                          fontSize: '0.62rem',
+                          fontWeight: 'bold',
+                          padding: '2px 6px',
+                          borderRadius: '4px',
+                          background: activeGame.isProMode ? 'rgba(239, 68, 68, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                          color: activeGame.isProMode ? '#fca5a5' : '#94a3b8',
+                          border: activeGame.isProMode ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.2)'
+                        }}>
+                          {activeGame.isProMode ? 'SIN ASISTENCIAS' : 'ASISTIDO'}
+                        </span>
+                      </div>
+                      <p style={{ margin: '2px 0 0 0', fontSize: '0.68rem', color: '#94a3b8', lineHeight: 1.2 }}>
+                        {activeGame.isProMode ? 'Asistencias visuales desactivadas en cartones' : 'Asistencias visuales permitidas'}
+                      </p>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={async () => {
+                        const newPro = !activeGame.isProMode;
+                        await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+                          isProMode: newPro
+                        });
+                        addLog(`HOST: Modo Pro ${newPro ? 'ACTIVADO (sin asistencias)' : 'DESACTIVADO'}`, 'system');
+                      }}
+                      style={{
+                        padding: '5px 10px',
+                        borderRadius: '8px',
+                        background: activeGame.isProMode ? 'linear-gradient(135deg, #ef4444, #b91c1c)' : 'rgba(255, 255, 255, 0.1)',
+                        border: activeGame.isProMode ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.2)',
+                        color: '#ffffff',
+                        fontSize: '0.72rem',
+                        fontWeight: 'bold',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {activeGame.isProMode ? '⚡ Desactivar' : 'Activar Pro'}
+                    </button>
                   </div>
 
 
@@ -5214,6 +5282,71 @@ export default function BingoHub() {
                               }}
                             />
                           </div>
+
+                          {/* ACTIVADOR MODO PRO (SIN ASISTENCIAS VISUALES) */}
+                          <div style={{
+                            gridColumn: '1 / -1',
+                            background: newScheduleProMode 
+                              ? 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(168, 85, 247, 0.15) 100%)' 
+                              : 'rgba(255, 255, 255, 0.03)',
+                            border: newScheduleProMode ? '1.5px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px',
+                            padding: '12px 16px',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '14px',
+                            transition: 'all 0.2s ease',
+                            boxShadow: newScheduleProMode ? '0 0 18px rgba(239, 68, 68, 0.2)' : 'none'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                              <div style={{
+                                width: '38px',
+                                height: '38px',
+                                borderRadius: '10px',
+                                background: newScheduleProMode ? 'rgba(239, 68, 68, 0.25)' : 'rgba(255, 255, 255, 0.06)',
+                                border: newScheduleProMode ? '1px solid #ef4444' : '1px solid rgba(255, 255, 255, 0.15)',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'center',
+                                fontSize: '1.3rem'
+                              }}>
+                                ⚡
+                              </div>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <strong style={{ fontSize: '0.9rem', color: newScheduleProMode ? '#fca5a5' : '#fff' }}>
+                                    MODO PRO (Sin Asistencias)
+                                  </strong>
+                                  {newScheduleProMode && (
+                                    <span style={{
+                                      background: 'rgba(239, 68, 68, 0.3)',
+                                      color: '#fca5a5',
+                                      fontSize: '0.65rem',
+                                      padding: '2px 7px',
+                                      borderRadius: '6px',
+                                      fontWeight: 'bold',
+                                      border: '1px solid #ef4444'
+                                    }}>
+                                      ACTIVO
+                                    </span>
+                                  )}
+                                </div>
+                                <p style={{ margin: '2px 0 0 0', fontSize: '0.74rem', color: '#94a3b8' }}>
+                                  Desactiva las ayudas visuales en los cartones para forzar máxima atención y mayor dificultad.
+                                </p>
+                              </div>
+                            </div>
+
+                            <label className="cyber-switch" style={{ transform: 'scale(0.9)', margin: 0, flexShrink: 0 }}>
+                              <input
+                                type="checkbox"
+                                checked={newScheduleProMode}
+                                onChange={(e) => setNewScheduleProMode(e.target.checked)}
+                              />
+                              <span className="cyber-slider" style={{ background: newScheduleProMode ? '#ef4444' : undefined }} />
+                            </label>
+                          </div>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -5420,6 +5553,55 @@ export default function BingoHub() {
                               }}
                             />
                           </div>
+
+                          {/* Activador Modo Pro (Sin Asistencias) */}
+                          <div style={{
+                            gridColumn: '1 / -1',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            background: editScheduleProMode ? 'rgba(239, 68, 68, 0.12)' : 'rgba(0, 0, 0, 0.35)',
+                            border: editScheduleProMode ? '1.5px solid rgba(239, 68, 68, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px',
+                            padding: '12px 16px',
+                            transition: 'all 0.2s ease'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                              <span style={{ fontSize: '1.5rem' }}>⚡</span>
+                              <div>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <strong style={{ fontSize: '0.9rem', color: editScheduleProMode ? '#fca5a5' : '#ffffff' }}>
+                                    MODO PRO (Sin Asistencias)
+                                  </strong>
+                                  {editScheduleProMode && (
+                                    <span style={{
+                                      background: 'rgba(239, 68, 68, 0.3)',
+                                      color: '#fca5a5',
+                                      fontSize: '0.65rem',
+                                      padding: '2px 7px',
+                                      borderRadius: '6px',
+                                      fontWeight: 'bold',
+                                      border: '1px solid #ef4444'
+                                    }}>
+                                      ACTIVO
+                                    </span>
+                                  )}
+                                </div>
+                                <p style={{ margin: '2px 0 0 0', fontSize: '0.74rem', color: '#94a3b8' }}>
+                                  Desactiva las ayudas visuales en los cartones para forzar máxima atención y mayor dificultad.
+                                </p>
+                              </div>
+                            </div>
+
+                            <label className="cyber-switch" style={{ transform: 'scale(0.9)', margin: 0, flexShrink: 0 }}>
+                              <input
+                                type="checkbox"
+                                checked={editScheduleProMode}
+                                onChange={(e) => setEditScheduleProMode(e.target.checked)}
+                              />
+                              <span className="cyber-slider" style={{ background: editScheduleProMode ? '#ef4444' : undefined }} />
+                            </label>
+                          </div>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -5543,7 +5725,7 @@ export default function BingoHub() {
                               >
                                 {/* Badge de Estado Superior */}
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '12px' }}>
-                                  <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
                                     {isLive ? (
                                       <span style={{
                                         background: 'rgba(34, 197, 94, 0.2)',
@@ -5571,6 +5753,22 @@ export default function BingoHub() {
                                         letterSpacing: '0.5px'
                                       }}>
                                         📅 PROGRAMADO
+                                      </span>
+                                    )}
+
+                                    {game.isProMode && (
+                                      <span style={{
+                                        background: 'rgba(239, 68, 68, 0.2)',
+                                        border: '1px solid #ef4444',
+                                        color: '#fca5a5',
+                                        fontSize: '0.68rem',
+                                        fontWeight: 'bold',
+                                        padding: '3px 8px',
+                                        borderRadius: '6px',
+                                        textTransform: 'uppercase',
+                                        letterSpacing: '0.5px'
+                                      }}>
+                                        ⚡ MODO PRO
                                       </span>
                                     )}
                                   </div>

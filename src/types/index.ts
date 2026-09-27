@@ -472,6 +472,7 @@ export interface BingoGame {
   scheduledGameId?: string | null;
   cardPriceQ?: number; // Precio oficial por cartón fijado para el juego (ej. Q0 gratis, Q10, Q25, Q50, Q100)
   gameType?: 'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi';
+  isProMode?: boolean; // Modo Pro: desactiva asistencias visuales en los cartones
 }
 
 export interface BingoCard {
@@ -479,6 +480,7 @@ export interface BingoCard {
   gameId: string;
   scheduledGameId?: string | null;
   scheduledGameTitle?: string | null;
+  isProMode?: boolean;
   playerName: string;
   matrix: (number | null)[][]; // 5x5 matrix, center is null
   hash: string;
@@ -552,6 +554,7 @@ export interface BingoScheduledGame {
   cardPriceQ?: number; // Precio oficial por cartón fijado para la partida
   prizeHighlight?: string;
   status: 'scheduled' | 'live' | 'finished' | 'cancelled';
+  isProMode?: boolean; // Modo Pro: desactiva asistencias visuales en los cartones
   createdAt: number;
   createdBy?: string;
   notes?: string;

@@ -200,6 +200,7 @@ export default function AdminBingoTab() {
   const [selectedHeightType, setSelectedHeightType] = useState<'preset' | 'custom'>('preset');
   const [soundTheme, setSoundTheme] = useState<BingoCustomization['soundTheme']>('classic');
   const [winningPattern, setWinningPattern] = useState('full');
+  const [isProMode, setIsProMode] = useState(false);
 
   // Mappings (Figures) States
   const [numberToImageMap, setNumberToImageMap] = useState<BingoCustomization['numberToImageMap']>({});
@@ -284,6 +285,7 @@ export default function AdminBingoTab() {
           lastActiveGameIdRef.current = gData.id;
           setGameTitle(gData.title || 'Gran Bingo Familiar');
           setWinningPattern(gData.winningPattern || 'full');
+          setIsProMode(Boolean(gData.isProMode));
 
           if (gData.customization) {
             setHeaderImage(gData.customization.headerImage || '');
@@ -527,6 +529,7 @@ export default function AdminBingoTab() {
       await updateDoc(doc(db, 'bingo_games', activeGame.id), {
         title: gameTitle.trim() || 'Gran Bingo Familiar',
         winningPattern: winningPattern,
+        isProMode: Boolean(isProMode),
         cardPriceQ: typeof cardPriceQ === 'number' && !isNaN(cardPriceQ) ? Math.max(0, cardPriceQ) : 25,
         customization: getCustomizationObject()
       });
@@ -1733,6 +1736,54 @@ export default function AdminBingoTab() {
                     🔊 Probar Voz
                   </button>
                 </div>
+              </div>
+
+              {/* Activador Modo Pro (Sin Asistencias Visuales) */}
+              <div style={{
+                marginTop: '16px',
+                padding: '14px 16px',
+                borderRadius: '14px',
+                background: isProMode ? 'rgba(239, 68, 68, 0.08)' : '#f8fafc',
+                border: isProMode ? '1.5px solid #ef4444' : '1px solid #e2e8f0',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'space-between',
+                gap: '14px',
+                transition: 'all 0.2s ease'
+              }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '1.25rem' }}>⚡</span>
+                    <strong style={{ fontSize: '0.95rem', color: isProMode ? '#dc2626' : '#1e293b' }}>
+                      Modo Pro (Desactivar Asistencias Visuales)
+                    </strong>
+                    {isProMode && (
+                      <span style={{
+                        background: '#fee2e2',
+                        color: '#ef4444',
+                        fontSize: '0.68rem',
+                        fontWeight: 'bold',
+                        padding: '2px 8px',
+                        borderRadius: '6px',
+                        border: '1px solid #fca5a5'
+                      }}>
+                        PRO ACTIVO
+                      </span>
+                    )}
+                  </div>
+                  <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                    Al activarlo, los cartones de los jugadores no resaltarán si los números fueron cantados ni mostrarán bordes de ayuda visual, forzando la atención total de los jugadores.
+                  </p>
+                </div>
+
+                <label className="bingo-switch" style={{ margin: 0, flexShrink: 0 }}>
+                  <input
+                    type="checkbox"
+                    checked={isProMode}
+                    onChange={e => setIsProMode(e.target.checked)}
+                  />
+                  <span className="bingo-slider" style={{ background: isProMode ? '#ef4444' : undefined }} />
+                </label>
               </div>
             </div>
 

@@ -113,6 +113,9 @@ export default function BingoCardView() {
     cardData?.prizeLevel?.toLowerCase().includes('práctica')
   );
 
+  // Modo Pro Activado: elimina asistencias visuales
+  const isProMode = Boolean(gameData?.isProMode || (cardData as any)?.isProMode);
+
   // Mobile UX Enhancements: Drawer, Pocket Ball Alert & Waiting Test
   const [showSettingsDrawer, setShowSettingsDrawer] = useState(false);
   const [cardHasLastBall, setCardHasLastBall] = useState(false);
@@ -840,12 +843,12 @@ export default function BingoCardView() {
     const isCurrentlyMarked = markedSlots[row][col];
     const isDrawn = gameData.drawnNumbers.includes(value);
 
-    // Play synthesized sound y respuesta háptica reforzada
+    // Play synthesized sound y respuesta háptica reforzada (neutral en Modo Pro)
     if (!isCurrentlyMarked) {
-      playFeedbackSound(isDrawn);
+      playFeedbackSound(isProMode ? false : isDrawn);
       if (typeof navigator !== 'undefined' && 'vibrate' in navigator) {
         try { 
-          if (isDrawn) {
+          if (!isProMode && isDrawn) {
             navigator.vibrate([25, 40, 25]); // doble pulso si acertó bola
           } else {
             navigator.vibrate(15); // clic táctil sutil
@@ -1510,6 +1513,24 @@ export default function BingoCardView() {
         </div>
 
         <div className="player-meta-right">
+          {isProMode && (
+            <span style={{
+              background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(185, 28, 28, 0.3) 100%)',
+              border: '1px solid #ef4444',
+              color: '#fca5a5',
+              fontSize: '0.65rem',
+              fontWeight: 900,
+              padding: '2px 7px',
+              borderRadius: '6px',
+              letterSpacing: '0.5px',
+              boxShadow: '0 0 10px rgba(239, 68, 68, 0.35)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}>
+              ⚡ PRO
+            </span>
+          )}
           <code className="compact-card-id">#{cartonId && cartonId.length > 8 ? `${cartonId.slice(0, 4)}...${cartonId.slice(-3)}` : cartonId}</code>
           <button 
             className="btn-settings-toggle"
@@ -1520,6 +1541,46 @@ export default function BingoCardView() {
           </button>
         </div>
       </div>
+
+      {/* BANNER INFORMATIVO MODO PRO */}
+      {isProMode && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(20, 10, 30, 0.9) 100%)',
+          border: '1px solid rgba(239, 68, 68, 0.45)',
+          borderRadius: '10px',
+          padding: '7px 12px',
+          margin: '6px auto 10px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '8px',
+          maxWidth: '480px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <span style={{ fontSize: '1.1rem' }}>⚡</span>
+            <div>
+              <span style={{ color: '#fca5a5', fontSize: '0.74rem', fontWeight: 800, display: 'block', letterSpacing: '0.5px' }}>
+                PARTIDA EN MODO PRO
+              </span>
+              <span style={{ color: '#94a3b8', fontSize: '0.66rem', display: 'block' }}>
+                Asistencias visuales desactivadas. ¡Atento a cada número cantado!
+              </span>
+            </div>
+          </div>
+          <span style={{
+            fontSize: '0.62rem',
+            background: 'rgba(239, 68, 68, 0.25)',
+            border: '1px solid #ef4444',
+            color: '#fca5a5',
+            fontWeight: 'bold',
+            padding: '2px 6px',
+            borderRadius: '4px',
+            whiteSpace: 'nowrap'
+          }}>
+            SIN AYUDAS
+          </span>
+        </div>
+      )}
 
       {/* FRANJA INTERACTIVA DE MODO DEMOSTRACIÓN / PRÁCTICA */}
       {isDemoCard && (
@@ -1616,19 +1677,28 @@ export default function BingoCardView() {
       {/* DRAWER DESPLEGABLE DE AJUSTES (NO CONSUME ESPACIO FIJO) */}
       {showSettingsDrawer && (
         <div className="compact-settings-drawer animate-fade-in">
-          <div className="drawer-row">
-            <span>🤖 Modo Asistido (Ayuda visual)</span>
-            <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0 }}>
+          <div className="drawer-row" style={{ opacity: isProMode ? 0.6 : 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column' }}>
+              <span>🤖 Modo Asistido (Ayuda visual)</span>
+              {isProMode && (
+                <span style={{ fontSize: '0.65rem', color: '#fca5a5', fontWeight: 'bold' }}>
+                  🔒 Desactivado: Partida en Modo Pro
+                </span>
+              )}
+            </div>
+            <label className="cyber-switch" style={{ transform: 'scale(0.85)', margin: 0, cursor: isProMode ? 'not-allowed' : 'pointer' }}>
               <input 
                 type="checkbox" 
-                checked={assistMode}
+                disabled={isProMode}
+                checked={!isProMode && assistMode}
                 onChange={(e) => {
+                  if (isProMode) return;
                   initAudio();
                   setAssistMode(e.target.checked);
                   playFeedbackSound(false, true);
                 }}
               />
-              <span className="cyber-slider" />
+              <span className="cyber-slider" style={{ cursor: isProMode ? 'not-allowed' : 'pointer' }} />
             </label>
           </div>
           <div className="drawer-row">
@@ -1930,9 +2000,11 @@ export default function BingoCardView() {
                 const isMarked = markedSlots[row][col];
                 const isDrawn = !isFree && value !== null && gameData.drawnNumbers.includes(value);
 
-                // Flags para el Modo Ayuda Visual
-                const isMarkedUndrawnAssist = assistMode && isMarked && !isDrawn && !isFree;
-                const isMarkedDrawnAssist = assistMode && isMarked && isDrawn && !isFree;
+                // Flags para el Modo Ayuda Visual (desactivadas completamente en Modo Pro)
+                const isMarkedUndrawnAssist = !isProMode && assistMode && isMarked && !isDrawn && !isFree;
+                const isMarkedDrawnAssist = !isProMode && assistMode && isMarked && isDrawn && !isFree;
+                const showDrawnClass = !isProMode && isDrawn;
+                const showUnmarkedDrawnAssist = !isProMode && assistMode && isDrawn && !isMarked;
 
                 // Check mapping for the number
                 const map = value !== null ? cust?.numberToImageMap?.[value] : null;
@@ -1942,7 +2014,7 @@ export default function BingoCardView() {
                     key={`${row}-${col}`}
                     onClick={() => toggleMark(row, col)}
                     disabled={isFree}
-                    className={`bingo-cell ${isFree ? 'free-space marked' : ''} ${isMarked ? 'marked' : ''} ${isDrawn ? 'drawn' : ''} ${assistMode && isDrawn && !isMarked ? 'unmarked-drawn' : ''} ${isMarkedUndrawnAssist ? 'marked-undrawn-assist' : ''} ${isMarkedDrawnAssist ? 'marked-drawn-assist' : ''}`}
+                    className={`bingo-cell ${isFree ? 'free-space marked' : ''} ${isMarked ? 'marked' : ''} ${showDrawnClass ? 'drawn' : ''} ${showUnmarkedDrawnAssist ? 'unmarked-drawn' : ''} ${isMarkedUndrawnAssist ? 'marked-undrawn-assist' : ''} ${isMarkedDrawnAssist ? 'marked-drawn-assist' : ''}`}
                     style={{
                       aspectRatio: '1/1',
                       borderRadius: '10px',
@@ -1966,7 +2038,7 @@ export default function BingoCardView() {
                         background: 'rgba(34, 197, 94, 0.15)',
                         color: '#4ade80'
                       } : (cust?.cardTheme === 'classic' || !cust?.cardTheme) ? {
-                        border: isDrawn ? `2px solid #22c55e` : '1px solid var(--border-color)',
+                        border: (!isProMode && isDrawn) ? `2px solid #22c55e` : '1px solid var(--border-color)',
                         background: isMarked ? `rgba(168, 85, 247, 0.08)` : 'white',
                         color: 'var(--text-title)',
                       } : {})
