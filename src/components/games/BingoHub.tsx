@@ -1196,11 +1196,13 @@ export default function BingoHub() {
     
     // Búsqueda inteligente de voz en español para evitar locuciones con acento inglés
     const voices = window.speechSynthesis.getVoices();
-    const spanishVoice = voices.find(v => v.lang.startsWith('es'));
+    const spanishVoice = voices.find(v => v.lang === 'es-MX' || v.lang === 'es-419') ||
+                         voices.find(v => v.lang.startsWith('es'));
     if (spanishVoice) {
       utterance.voice = spanishVoice;
+      utterance.lang = spanishVoice.lang;
     } else {
-      utterance.lang = 'es-GT';
+      utterance.lang = 'es-ES';
     }
     
     if (cust?.soundTheme === 'cyberpunk') {
@@ -2135,7 +2137,12 @@ export default function BingoHub() {
 
     try {
       const ac = activeGame?.customization?.accessConfig;
-      const maxOverlapThreshold = ac?.maxOverlapThreshold || (ac?.massiveMode ? 10 : 8);
+      const baseOverlap = ac?.maxOverlapThreshold || (ac?.massiveMode ? 10 : 8);
+      // Adaptación inteligente del umbral según la densidad de la sala para evitar bloqueos del hilo principal
+      const maxOverlapThreshold = registeredCards.length > 25
+        ? Math.min(13, baseOverlap + Math.floor(registeredCards.length / 15))
+        : baseOverlap;
+      const cardsToCompare = registeredCards.length > 35 ? registeredCards.slice(-35) : registeredCards;
       const quantityToGenerate = accessTokenData.quantity && accessTokenData.quantity > 1 ? accessTokenData.quantity : 1;
       const generatedCardIds: string[] = [];
 
@@ -2145,9 +2152,9 @@ export default function BingoHub() {
         let acceptable = false;
         let attemptsCount = 0;
 
-        while (!acceptable && attemptsCount < 500) {
+        while (!acceptable && attemptsCount < 50) {
           attemptsCount++;
-          const collision = registeredCards.some(otherCard => {
+          const collision = cardsToCompare.some(otherCard => {
             if (otherCard.hash && otherCard.hash === currentHash) return true;
             if (!otherCard.matrix) return false;
             let otherMatrix: (number | null)[][];
@@ -2172,13 +2179,20 @@ export default function BingoHub() {
 
         let currentShortId = '';
         let unique = false;
-        while (!unique) {
+        let idAttempts = 0;
+        while (!unique && idAttempts < 10) {
+          idAttempts++;
           currentShortId = Math.floor(1000000 + Math.random() * 9000000).toString();
-          const cardRef = doc(db, 'bingo_cards', currentShortId);
-          const cardSnap = await getDoc(cardRef);
-          if (!cardSnap.exists() && !generatedCardIds.includes(currentShortId)) {
-            unique = true;
+          if (!generatedCardIds.includes(currentShortId)) {
+            const cardRef = doc(db, 'bingo_cards', currentShortId);
+            const cardSnap = await getDoc(cardRef);
+            if (!cardSnap.exists()) {
+              unique = true;
+            }
           }
+        }
+        if (!unique) {
+          currentShortId = 'c' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
         }
 
         generatedCardIds.push(currentShortId);
@@ -2255,16 +2269,20 @@ export default function BingoHub() {
 
     try {
       const ac = activeGame?.customization?.accessConfig;
-      const maxOverlapThreshold = ac?.maxOverlapThreshold || (ac?.massiveMode ? 10 : 8);
+      const baseOverlap = ac?.maxOverlapThreshold || (ac?.massiveMode ? 10 : 8);
+      const maxOverlapThreshold = registeredCards.length > 25
+        ? Math.min(13, baseOverlap + Math.floor(registeredCards.length / 15))
+        : baseOverlap;
+      const cardsToCompare = registeredCards.length > 35 ? registeredCards.slice(-35) : registeredCards;
 
       let currentMatrix = generateBingoMatrix();
       let currentHash = hashBingoMatrix(currentMatrix);
       let acceptable = false;
       let attemptsCount = 0;
 
-      while (!acceptable && attemptsCount < 500) {
+      while (!acceptable && attemptsCount < 50) {
         attemptsCount++;
-        const collision = registeredCards.some(otherCard => {
+        const collision = cardsToCompare.some(otherCard => {
           if (otherCard.hash && otherCard.hash === currentHash) return true;
           if (!otherCard.matrix) return false;
           let otherMatrix: (number | null)[][];
@@ -2289,13 +2307,18 @@ export default function BingoHub() {
 
       let currentShortId = '';
       let unique = false;
-      while (!unique) {
+      let idAttempts = 0;
+      while (!unique && idAttempts < 10) {
+        idAttempts++;
         currentShortId = Math.floor(1000000 + Math.random() * 9000000).toString();
         const cardRef = doc(db, 'bingo_cards', currentShortId);
         const cardSnap = await getDoc(cardRef);
         if (!cardSnap.exists()) {
           unique = true;
         }
+      }
+      if (!unique) {
+        currentShortId = 'c' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
       }
 
       await setDoc(doc(db, 'bingo_cards', currentShortId), {

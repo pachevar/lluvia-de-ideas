@@ -8,7 +8,7 @@ import { doc, getDoc, setDoc, collection, getDocs, query, orderBy, limit } from 
 import { db } from '../firebase';
 import type { BingoPlayerProfile } from '../types';
 
-const TELEGRAM_BOT_TOKEN = '8871378697:AAHbLJumNh9FhiRIzROq_g2QjbaPLlzuUj4';
+const TELEGRAM_BOT_TOKEN = (import.meta as any).env?.VITE_TELEGRAM_BOT_TOKEN || '8871378697:AAHbLJumNh9FhiRIzROq_g2QjbaPLlzuUj4';
 
 /**
  * Normaliza cualquier formato de teléfono de Guatemala a formato estándar numérico (ej: 50236135616)

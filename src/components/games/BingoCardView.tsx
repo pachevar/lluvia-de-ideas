@@ -290,45 +290,56 @@ export default function BingoCardView() {
     return validation.missingNumbers.length;
   };
 
+  const getBestSpanishVoice = (): SpeechSynthesisVoice | null => {
+    if (!('speechSynthesis' in window)) return null;
+    const voices = window.speechSynthesis.getVoices();
+    return voices.find(v => v.lang === 'es-MX' || v.lang === 'es-419') ||
+           voices.find(v => v.lang.startsWith('es')) ||
+           null;
+  };
+
   const speakBall = (ball: number) => {
     if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    let letter = 'B';
-    if (ball > 15 && ball <= 30) letter = 'I';
-    if (ball > 30 && ball <= 45) letter = 'N';
-    if (ball > 45 && ball <= 60) letter = 'G';
-    if (ball > 60 && ball <= 75) letter = 'O';
+    try {
+      window.speechSynthesis.cancel();
+      let letter = 'B';
+      if (ball > 15 && ball <= 30) letter = 'I';
+      if (ball > 30 && ball <= 45) letter = 'N';
+      if (ball > 45 && ball <= 60) letter = 'G';
+      if (ball > 60 && ball <= 75) letter = 'O';
 
-    const utterance = new SpeechSynthesisUtterance(`Letra ${letter}... número ${ball}`);
-    
-    // Búsqueda inteligente de voz en español
-    const voices = window.speechSynthesis.getVoices();
-    const spanishVoice = voices.find(v => v.lang.startsWith('es'));
-    if (spanishVoice) {
-      utterance.voice = spanishVoice;
-    } else {
-      utterance.lang = 'es-GT';
-    }
-    utterance.pitch = 1.0;
-    utterance.rate = 0.9;
-    window.speechSynthesis.speak(utterance);
+      const utterance = new SpeechSynthesisUtterance(`Letra ${letter}... número ${ball}`);
+      
+      const spanishVoice = getBestSpanishVoice();
+      if (spanishVoice) {
+        utterance.voice = spanishVoice;
+        utterance.lang = spanishVoice.lang;
+      } else {
+        utterance.lang = 'es-ES';
+      }
+      utterance.pitch = 1.0;
+      utterance.rate = 0.92;
+      window.speechSynthesis.speak(utterance);
+    } catch (_e) {}
   };
 
   const speakConfirmation = () => {
     if (!('speechSynthesis' in window)) return;
-    window.speechSynthesis.cancel();
-    const utterance = new SpeechSynthesisUtterance("Cantar bolas activado");
-    
-    const voices = window.speechSynthesis.getVoices();
-    const spanishVoice = voices.find(v => v.lang.startsWith('es'));
-    if (spanishVoice) {
-      utterance.voice = spanishVoice;
-    } else {
-      utterance.lang = 'es-GT';
-    }
-    utterance.pitch = 1.0;
-    utterance.rate = 1.0;
-    window.speechSynthesis.speak(utterance);
+    try {
+      window.speechSynthesis.cancel();
+      const utterance = new SpeechSynthesisUtterance("Cantar bolas activado");
+      
+      const spanishVoice = getBestSpanishVoice();
+      if (spanishVoice) {
+        utterance.voice = spanishVoice;
+        utterance.lang = spanishVoice.lang;
+      } else {
+        utterance.lang = 'es-ES';
+      }
+      utterance.pitch = 1.0;
+      utterance.rate = 1.0;
+      window.speechSynthesis.speak(utterance);
+    } catch (_e) {}
   };
 
   // Desbloqueo universal de audio y SpeechSynthesis al primer gesto táctil en móviles
@@ -387,28 +398,69 @@ export default function BingoCardView() {
             return cData;
           });
 
-          // Cargar cartones hermanos si el jugador cuenta con un paquete múltiple
-          if (cData.tokenId) {
-            getDocs(query(collection(db, 'bingo_cards'), where('tokenId', '==', cData.tokenId))).then((snap) => {
-              if (snap.size > 1) {
-                const siblings = snap.docs.map(d => ({
-                  id: d.id,
-                  cardNumber: d.data().cardNumber || 1
-                })).sort((a, b) => (a.cardNumber || 0) - (b.cardNumber || 0));
-                setPlayerSiblings(siblings);
-              }
-            }).catch(() => {});
-          } else {
+          // Cargar cartones hermanos si el jugador cuenta con un paquete múltiple o compras adicionales
+          const loadSiblings = async () => {
+            const allSiblingIds = new Set<string>([cData.id]);
+            const siblingsList: Array<{ id: string; cardNumber?: number }> = [
+              { id: cData.id, cardNumber: cData.cardNumber || 1 }
+            ];
+
+            // 1. Desde el token si existe
+            if (cData.tokenId) {
+              try {
+                const tokenCardsSnap = await getDocs(query(collection(db, 'bingo_cards'), where('tokenId', '==', cData.tokenId)));
+                tokenCardsSnap.forEach(d => {
+                  if (!allSiblingIds.has(d.id)) {
+                    allSiblingIds.add(d.id);
+                    siblingsList.push({ id: d.id, cardNumber: d.data().cardNumber || (siblingsList.length + 1) });
+                  }
+                });
+              } catch {}
+            }
+
+            // 2. Por teléfono si existe en la misma partida
+            if (cData.phone) {
+              try {
+                const phoneCardsSnap = await getDocs(query(
+                  collection(db, 'bingo_cards'),
+                  where('phone', '==', cData.phone),
+                  where('gameId', '==', cData.gameId)
+                ));
+                phoneCardsSnap.forEach(d => {
+                  if (!allSiblingIds.has(d.id)) {
+                    allSiblingIds.add(d.id);
+                    siblingsList.push({ id: d.id, cardNumber: d.data().cardNumber || (siblingsList.length + 1) });
+                  }
+                });
+              } catch {}
+            }
+
+            // 3. Desde localStorage
             try {
               const localIds = localStorage.getItem('my_bingo_card_ids');
               if (localIds) {
                 const parsed = JSON.parse(localIds);
-                if (Array.isArray(parsed) && parsed.length > 1) {
-                  setPlayerSiblings(parsed.map((id: string, idx: number) => ({ id, cardNumber: idx + 1 })));
+                if (Array.isArray(parsed)) {
+                  parsed.forEach((id: string, idx: number) => {
+                    if (!allSiblingIds.has(id)) {
+                      allSiblingIds.add(id);
+                      siblingsList.push({ id, cardNumber: idx + 1 });
+                    }
+                  });
                 }
               }
             } catch {}
-          }
+
+            if (siblingsList.length > 1) {
+              siblingsList.sort((a, b) => (a.cardNumber || 0) - (b.cardNumber || 0));
+              setPlayerSiblings(siblingsList);
+              try {
+                localStorage.setItem('my_bingo_card_ids', JSON.stringify(siblingsList.map(s => s.id)));
+              } catch {}
+            }
+          };
+
+          loadSiblings();
 
           // Inicializar las marcas desde localStorage si están disponibles
           setMarkedSlots(prev => {
@@ -539,22 +591,31 @@ export default function BingoCardView() {
 
   // Motor Autónomo de Tómbola de Prueba:
   // Corre directamente entre los dispositivos de los jugadores sin necesidad de host/anfitrión humano
+  const demoGameDataRef = useRef<BingoGame | null>(gameData);
+  useEffect(() => {
+    demoGameDataRef.current = gameData;
+  }, [gameData]);
+
   useEffect(() => {
     if (!isDemoCard || gameData?.id !== 'demo-practice-game' || gameData?.status !== 'playing' || gameData?.winnerDeclared) {
       return;
     }
 
     const interval = setInterval(async () => {
-      const drawn = gameData.drawnNumbers || [];
+      const currentG = demoGameDataRef.current;
+      if (!currentG || currentG.status !== 'playing' || currentG.winnerDeclared) return;
+
+      const drawn = currentG.drawnNumbers || [];
       if (drawn.length >= 75) {
         clearInterval(interval);
         return;
       }
 
       const now = Date.now();
-      const lastDrawn = gameData.lastBallDrawnAt || 0;
-      // Intervalo de 4.5 segundos entre cada extracción
-      if (now - lastDrawn < 4500) {
+      const lastDrawn = currentG.lastBallDrawnAt || 0;
+      // Intervalo con ligero jitter aleatorio para desincronizar clientes concurrentes
+      const minInterval = 4200 + Math.floor(Math.random() * 800);
+      if (now - lastDrawn < minInterval) {
         return;
       }
 
@@ -569,7 +630,7 @@ export default function BingoCardView() {
           if (curDrawn.length >= 75) return;
 
           const elapsed = Date.now() - (g.lastBallDrawnAt || 0);
-          if (elapsed < 4200) return; // Otro dispositivo acaba de sacar bola de forma sincronizada
+          if (elapsed < 3900) return; // Ya otro dispositivo extrajo bola
 
           const drawnSet = new Set(curDrawn);
           const available: number[] = [];
@@ -587,13 +648,13 @@ export default function BingoCardView() {
             lastBallDrawnAt: Date.now()
           });
         });
-      } catch (err) {
-        console.warn("Aviso en extracción autónoma de bola demo:", err);
+      } catch (_err) {
+        // En concurrencia demo entre múltiples navegadores, si otro cliente ganó el turno es normal
       }
-    }, 1800);
+    }, 2000);
 
     return () => clearInterval(interval);
-  }, [isDemoCard, gameData?.id, gameData?.status, gameData?.winnerDeclared, gameData?.lastBallDrawnAt, gameData?.drawnNumbers?.length]);
+  }, [isDemoCard, gameData?.id, gameData?.status, gameData?.winnerDeclared]);
 
   // Iniciar partida demo (manual o al llegar a 5 jugadores)
   const handleStartDemoGame = async () => {
@@ -916,8 +977,26 @@ export default function BingoCardView() {
     if (!cardData || !gameData || !cartonId) return;
 
     const pattern = gameData.winningPattern || 'full';
-    if (!checkHasWinningPattern(markedSlots, pattern)) {
-      alert("⚠️ Para cantar Bingo debes haber marcado en tu cartón todas las casillas requeridas según el patrón activo de la partida.");
+
+    // 1. Verificación en cliente: comprobar que el patrón esté completo con números cantados Y marcados
+    const validation = validateBingoCard(
+      cardData.matrix,
+      gameData.drawnNumbers || [],
+      pattern,
+      markedSlots
+    );
+
+    if (!validation.isWinner) {
+      soundEffects.playMathChime(false);
+      const patternLabels: Record<string, string> = {
+        full: 'Cartón Lleno (24 números)',
+        four_corners: 'Cuatro Esquinas',
+        diagonal: 'Diagonales en X',
+        line: 'Cualquier Línea'
+      };
+      const label = patternLabels[pattern] || pattern;
+      const missingCount = validation.missingNumbers.length;
+      alert(`⚠️ Aún no has completado el patrón activo (${label}).\n\nTe ${missingCount === 1 ? 'falta 1 número' : `faltan ${missingCount} números`} por salir en la tómbola o marcar:\n👉 ${validation.missingNumbers.join(', ')}\n\nRevisa las casillas cantadas e inténtalo cuando completes la figura requerida.`);
       return;
     }
 

@@ -54,51 +54,66 @@ const BingoBoletosConfirmacion: React.FC = () => {
   const [pushPermission, setPushPermission] = useState<NotificationPermission | 'unsupported'>(getNotificationPermission());
   const [pushActivating, setPushActivating] = useState(false);
 
-  // Función para generar y asignar cartón en Firestore directamente (evitando duplicados por teléfono)
+  // Función para generar y asignar cartón en Firestore directamente
   const generateAndAssignCard = async (
     tknId: string | null,
     ord: any,
     targetGameId: string
   ): Promise<string | null> => {
     try {
-      // 1. Si el jugador ya tiene un número de teléfono, verificar si ya existe un cartón activo para esta partida
+      // 1. Si el pase/token ya tiene asignado un cartón previo, reutilizarlo
+      if (tknId) {
+        try {
+          const tknSnap = await getDoc(doc(db, 'bingo_access_tokens', tknId));
+          if (tknSnap.exists() && tknSnap.data().usedByCardId) {
+            const assignedId = tknSnap.data().usedByCardId;
+            // Asegurar que esté registrado en el navegador del jugador
+            try {
+              const currentLocalStr = localStorage.getItem('my_bingo_card_ids');
+              const localList: string[] = currentLocalStr ? JSON.parse(currentLocalStr) : [];
+              if (!localList.includes(assignedId)) {
+                localList.push(assignedId);
+                localStorage.setItem('my_bingo_card_ids', JSON.stringify(localList));
+              }
+              localStorage.setItem('my_bingo_card_id', assignedId);
+            } catch {}
+            return assignedId;
+          }
+        } catch (tknErr) {
+          console.warn("Aviso al verificar token existente:", tknErr);
+        }
+      }
+
+      // 2. Determinar el número de cartón correlativo del jugador (Cartón #1, #2, #3...)
+      let playerCardNumber = 1;
       if (ord?.playerWhatsapp) {
         try {
-          const qExisting = query(
+          const qCount = query(
             collection(db, 'bingo_cards'),
             where('phone', '==', ord.playerWhatsapp),
-            where('gameId', '==', targetGameId),
-            limit(1)
+            where('gameId', '==', targetGameId)
           );
-          const existingSnap = await getDocs(qExisting);
-          if (!existingSnap.empty) {
-            const existingId = existingSnap.docs[0].id;
-            if (tknId) {
-              await updateDoc(doc(db, 'bingo_access_tokens', tknId), {
-                usedByCardId: existingId,
-                cardIds: [existingId],
-                status: 'used',
-                firstUsedAt: Date.now()
-              });
-            }
-            return existingId;
-          }
-        } catch (checkErr) {
-          console.warn("Aviso al verificar cartón previo por teléfono en confirmación:", checkErr);
-        }
+          const countSnap = await getDocs(qCount);
+          playerCardNumber = countSnap.size + 1;
+        } catch {}
       }
 
       const currentMatrix = generateBingoMatrix();
       const currentHash = hashBingoMatrix(currentMatrix);
       let currentShortId = '';
       let unique = false;
-      while (!unique) {
+      let idAttempts = 0;
+      while (!unique && idAttempts < 10) {
+        idAttempts++;
         currentShortId = Math.floor(1000000 + Math.random() * 9000000).toString();
         const cardRef = doc(db, 'bingo_cards', currentShortId);
         const cardSnap = await getDoc(cardRef);
         if (!cardSnap.exists()) {
           unique = true;
         }
+      }
+      if (!unique) {
+        currentShortId = 'c' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
       }
 
       await setDoc(doc(db, 'bingo_cards', currentShortId), {
@@ -110,8 +125,8 @@ const BingoBoletosConfirmacion: React.FC = () => {
         tierName: ord?.tierName || null,
         prizeLevel: ord?.prizeLevel || null,
         tokenId: tknId || null,
-        cardNumber: 1,
-        totalCards: 1,
+        cardNumber: playerCardNumber,
+        totalCards: playerCardNumber,
         matrix: {
           r0: currentMatrix[0],
           r1: currentMatrix[1],
@@ -131,6 +146,17 @@ const BingoBoletosConfirmacion: React.FC = () => {
           firstUsedAt: Date.now()
         });
       }
+
+      // Guardar e integrar en la lista de cartones del dispositivo
+      try {
+        const currentLocalStr = localStorage.getItem('my_bingo_card_ids');
+        const localList: string[] = currentLocalStr ? JSON.parse(currentLocalStr) : [];
+        if (!localList.includes(currentShortId)) {
+          localList.push(currentShortId);
+          localStorage.setItem('my_bingo_card_ids', JSON.stringify(localList));
+        }
+        localStorage.setItem('my_bingo_card_id', currentShortId);
+      } catch {}
 
       return currentShortId;
     } catch (e) {
