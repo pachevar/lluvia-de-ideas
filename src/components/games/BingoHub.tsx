@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useMemo, Fragment } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, Fragment } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { collection, query, where, onSnapshot, limit, updateDoc, doc, setDoc, getDoc, addDoc, deleteDoc, getDocs } from 'firebase/firestore';
@@ -206,6 +206,11 @@ export default function BingoHub() {
   const [selectedScheduledGame, setSelectedScheduledGame] = useState<BingoScheduledGame | null>(null);
   const [allAccessTokens, setAllAccessTokens] = useState<BingoAccessToken[]>([]);
   const [allBingoOrders, setAllBingoOrders] = useState<any[]>([]);
+
+  // Filtro de Partida / Sala para el Directorio de Jugadores ('live' | 'all' | scheduledGameId)
+  const [sessionGameFilter, setSessionGameFilter] = useState<string>('live');
+  // Modo de visualización en detalle de juego programado: 'tokens' (boletos/ventas) | 'cards' (cartones en sala)
+  const [scheduledDetailViewMode, setScheduledDetailViewMode] = useState<'tokens' | 'cards'>('tokens');
 
   // Formulario para Crear Juego Programado
   const [showCreateScheduleModal, setShowCreateScheduleModal] = useState(false);
@@ -792,27 +797,45 @@ export default function BingoHub() {
     return () => unsubGlobalShouts();
   }, []);
 
-  // Listen to cards registered for the active game session in real-time
+  // Helper para identificar con precisión quirúrgica a qué partida pertenece cada cartón emitido
+  const getCardPartidaId = useCallback((card: BingoCard): string => {
+    if (card.scheduledGameId) return card.scheduledGameId;
+    if (card.tokenId) {
+      const matchedToken = allAccessTokens.find(t => t.id === card.tokenId);
+      if (matchedToken?.scheduledGameId) return matchedToken.scheduledGameId;
+    }
+    return 'live';
+  }, [allAccessTokens]);
+
+  // Listen to cards registered in real-time (para el Host escucha todas las partidas para poder aislarlas por filtro)
   useEffect(() => {
-    if (!activeGame?.id) {
+    if (!isAdmin && !activeGame?.id) {
       setRegisteredCards([]);
       setShoutedCards([]);
       return;
     }
 
-    const qCards = query(collection(db, 'bingo_cards'), where('gameId', '==', activeGame.id));
+    const qCards = isAdmin
+      ? collection(db, 'bingo_cards')
+      : query(collection(db, 'bingo_cards'), where('gameId', '==', activeGame?.id || 'juego-principal'));
+
     const unsubscribeCards = onSnapshot(qCards, (snapshot) => {
       const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BingoCard));
       setRegisteredCards(cards);
-      // Filter shouting cards directly
-      const shouting = cards.filter((c) => c.shoutedBingo);
+      
+      // Filtrar gritos de bingo aislando estrictamente a la partida activa actual en la tómbola
+      const currentActivePartidaId = activeGame?.scheduledGameId || 'live';
+      const shouting = cards.filter((c) => {
+        if (!c.shoutedBingo) return false;
+        return getCardPartidaId(c) === currentActivePartidaId;
+      });
       setShoutedCards(shouting);
     }, (error) => {
       console.error("Error loading cards:", error);
     });
 
     return () => unsubscribeCards();
-  }, [activeGame?.id]);
+  }, [activeGame?.id, activeGame?.scheduledGameId, isAdmin, getCardPartidaId]);
 
   // Gestión del Reloj Regresivo de Próxima Ronda para el Host (soporta Minutos o Fecha y Hora Específica)
   const [customCountdownMinutes, setCustomCountdownMinutes] = useState<string>('5');
@@ -2197,6 +2220,8 @@ export default function BingoHub() {
 
         await setDoc(doc(db, 'bingo_cards', currentShortId), {
           gameId: activeGame.id,
+          scheduledGameId: accessTokenData.scheduledGameId || activeGame.scheduledGameId || null,
+          scheduledGameTitle: activeGame.title || null,
           playerName: accessTokenData.playerName || 'Jugador Bingotenango',
           phone: accessTokenData.playerWhatsapp || null,
           promoterCode: null,
@@ -2321,6 +2346,8 @@ export default function BingoHub() {
 
       await setDoc(doc(db, 'bingo_cards', currentShortId), {
         gameId: activeGame.id,
+        scheduledGameId: activeGame.scheduledGameId || null,
+        scheduledGameTitle: activeGame.title || null,
         playerName: trimmedName,
         phone: freePlayerPhone.trim() || null,
         promoterCode: null,
@@ -2760,63 +2787,78 @@ export default function BingoHub() {
                       </div>
 
                       {/* Lista de jugadores conectados en tiempo real */}
-                      <div style={{ marginTop: '15px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                          <span className="host-sidebar-section-title" style={{ margin: 0 }}>Jugadores Inscritos ({registeredCards.length})</span>
-                          {registeredCards.length > 0 && (
-                            <button 
-                              onClick={handleClearAllPlayers}
-                              style={{
-                                background: 'rgba(239, 68, 68, 0.15)',
-                                border: '1px solid rgba(239, 68, 68, 0.4)',
-                                color: '#ef4444',
-                                borderRadius: '4px',
-                                padding: '2px 8px',
-                                fontSize: '0.65rem',
-                                cursor: 'pointer',
-                                fontWeight: 'bold',
-                                textTransform: 'uppercase',
-                                transition: 'all 0.2s'
-                              }}
-                              className="btn-clear-players"
-                            >
-                              🧹 Limpiar Todo
-                            </button>
-                          )}
-                        </div>
-                        <div className="registered-players-list">
-                          {registeredCards.map((card) => (
-                            <span key={card.id} className="player-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
-                              👤 {card.playerName}
-                              <button
-                                onClick={() => handleDeletePlayer(card.id, card.playerName)}
-                                style={{
-                                  background: 'none',
-                                  border: 'none',
-                                  color: 'rgba(239, 68, 68, 0.8)',
-                                  cursor: 'pointer',
-                                  padding: '0 2px',
-                                  fontSize: '0.95rem',
-                                  fontWeight: 'bold',
-                                  lineHeight: 1,
-                                  display: 'inline-flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center',
-                                  marginLeft: '4px'
-                                }}
-                                title={`Eliminar a ${card.playerName}`}
-                              >
-                                ×
-                              </button>
-                            </span>
-                          ))}
-                          {registeredCards.length === 0 && (
-                            <div style={{ fontSize: '0.75rem', opacity: 0.6, textAlign: 'center', padding: '10px', color: '#8c7e9f' }}>
-                              Esperando jugadores...
+                      {(() => {
+                        const currentActivePartidaId = activeGame?.scheduledGameId || 'live';
+                        const currentActivePartidaTitle = activeGame?.scheduledGameId
+                          ? (scheduledGamesList.find(g => g.id === activeGame.scheduledGameId)?.title || activeGame?.title || 'Partida Programada')
+                          : 'Partida en Vivo / Principal';
+                        const drawerPlayers = registeredCards.filter(c => getCardPartidaId(c) === currentActivePartidaId);
+
+                        return (
+                          <div style={{ marginTop: '15px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                              <span className="host-sidebar-section-title" style={{ margin: 0 }}>
+                                Jugadores en Partida ({drawerPlayers.length})
+                              </span>
+                              {drawerPlayers.length > 0 && (
+                                <button 
+                                  onClick={handleClearAllPlayers}
+                                  style={{
+                                    background: 'rgba(239, 68, 68, 0.15)',
+                                    border: '1px solid rgba(239, 68, 68, 0.4)',
+                                    color: '#ef4444',
+                                    borderRadius: '4px',
+                                    padding: '2px 8px',
+                                    fontSize: '0.65rem',
+                                    cursor: 'pointer',
+                                    fontWeight: 'bold',
+                                    textTransform: 'uppercase',
+                                    transition: 'all 0.2s'
+                                  }}
+                                  className="btn-clear-players"
+                                >
+                                  🧹 Limpiar Todo
+                                </button>
+                              )}
                             </div>
-                          )}
-                        </div>
-                      </div>
+                            <div style={{ fontSize: '0.68rem', color: '#94a3b8', marginBottom: '8px' }}>
+                              Sala activa: <strong style={{ color: activeGame?.scheduledGameId ? '#c084fc' : '#4ade80' }}>{currentActivePartidaTitle}</strong>
+                            </div>
+                            <div className="registered-players-list">
+                              {drawerPlayers.map((card) => (
+                                <span key={card.id} className="player-chip" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                  👤 {card.playerName}
+                                  <button
+                                    onClick={() => handleDeletePlayer(card.id, card.playerName)}
+                                    style={{
+                                      background: 'none',
+                                      border: 'none',
+                                      color: 'rgba(239, 68, 68, 0.8)',
+                                      cursor: 'pointer',
+                                      padding: '0 2px',
+                                      fontSize: '0.95rem',
+                                      fontWeight: 'bold',
+                                      lineHeight: 1,
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      marginLeft: '4px'
+                                    }}
+                                    title={`Eliminar a ${card.playerName}`}
+                                  >
+                                    ×
+                                  </button>
+                                </span>
+                              ))}
+                              {drawerPlayers.length === 0 && (
+                                <div style={{ fontSize: '0.75rem', opacity: 0.6, textAlign: 'center', padding: '10px', color: '#8c7e9f' }}>
+                                  Esperando jugadores para esta partida...
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })()}
                     </div>
                   ) : (
                     <div className="host-sidebar-section">
@@ -3523,8 +3565,47 @@ export default function BingoHub() {
                     </div>
 
                     {/* VISTA 1: DIRECTORIO DE SESIÓN ACTIVA */}
-                    {waitingSubTab === 'session_directory' && (
-                      <div className="animate-fade-in">
+                    {waitingSubTab === 'session_directory' && (() => {
+                      const counts: Record<string, number> = { live: 0, all: registeredCards.length };
+                      scheduledGamesList.forEach(g => { counts[g.id] = 0; });
+                      registeredCards.forEach(c => {
+                        const pid = getCardPartidaId(c);
+                        if (counts[pid] !== undefined) {
+                          counts[pid]++;
+                        } else {
+                          counts.live = (counts.live || 0) + 1;
+                        }
+                      });
+
+                      const filteredCards = registeredCards.filter(card => {
+                        if (sessionGameFilter !== 'all') {
+                          const pid = getCardPartidaId(card);
+                          if (pid !== sessionGameFilter) return false;
+                        }
+
+                        if (selectedPromoterFilter !== 'ALL') {
+                          if (selectedPromoterFilter === 'WITH_PROMOTER') {
+                            if (!card.promoterCode) return false;
+                          } else if (selectedPromoterFilter === 'NO_PROMOTER') {
+                            if (card.promoterCode) return false;
+                          } else {
+                            if (card.promoterCode !== selectedPromoterFilter) return false;
+                          }
+                        }
+
+                        if (!playerSearchQuery.trim()) return true;
+                        const q = playerSearchQuery.toLowerCase();
+                        return (
+                          card.playerName.toLowerCase().includes(q) ||
+                          (card.phone && card.phone.toLowerCase().includes(q)) ||
+                          card.id.toLowerCase().includes(q) ||
+                          (card.promoterCode && card.promoterCode.toLowerCase().includes(q)) ||
+                          (card.scheduledGameTitle && card.scheduledGameTitle.toLowerCase().includes(q))
+                        );
+                      });
+
+                      return (
+                        <div className="animate-fade-in">
                     {/* CONTROLADOR DE RELOJ REGRESIVO DE PRÓXIMA RONDA - DISEÑO UNIFICADO */}
                     <div className="host-round-timer-controller animate-fade-in" style={{
                       background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.95) 0%, rgba(10, 8, 22, 0.98) 100%)',
@@ -3916,15 +3997,136 @@ export default function BingoHub() {
                       </div>
                     </div>
 
+                    {/* BARRA SELECTORA DE PARTIDA / SALA INDEPENDIENTE */}
+                    <div style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      flexWrap: 'wrap',
+                      padding: '12px 16px',
+                      background: 'linear-gradient(135deg, rgba(20, 15, 38, 0.9) 0%, rgba(10, 8, 22, 0.95) 100%)',
+                      borderRadius: '14px',
+                      border: '1.5px solid rgba(168, 85, 247, 0.35)',
+                      marginBottom: '18px',
+                      boxShadow: '0 4px 20px rgba(0,0,0,0.4)'
+                    }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginRight: '6px' }}>
+                        <span style={{ fontSize: '1.1rem' }}>🎯</span>
+                        <span style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: '0.6px' }}>
+                          Partida / Sala:
+                        </span>
+                      </div>
+
+                      {/* Chip Partida en Vivo */}
+                      <button
+                        type="button"
+                        onClick={() => setSessionGameFilter('live')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '0.78rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: sessionGameFilter === 'live' ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'rgba(239, 68, 68, 0.12)',
+                          color: sessionGameFilter === 'live' ? '#fff' : '#fca5a5',
+                          border: sessionGameFilter === 'live' ? '1.5px solid #ef4444' : '1px solid rgba(239, 68, 68, 0.3)',
+                          boxShadow: sessionGameFilter === 'live' ? '0 0 14px rgba(239, 68, 68, 0.4)' : 'none'
+                        }}
+                      >
+                        <span>🔴</span> En Vivo / Principal
+                        <span style={{
+                          background: sessionGameFilter === 'live' ? 'rgba(0,0,0,0.3)' : 'rgba(239, 68, 68, 0.25)',
+                          padding: '2px 7px',
+                          borderRadius: '10px',
+                          fontSize: '0.72rem'
+                        }}>
+                          {counts['live'] || 0}
+                        </span>
+                      </button>
+
+                      {/* Chips para Juegos Programados */}
+                      {scheduledGamesList.map(sg => {
+                        const isSelected = sessionGameFilter === sg.id;
+                        const count = counts[sg.id] || 0;
+                        return (
+                          <button
+                            key={sg.id}
+                            type="button"
+                            onClick={() => setSessionGameFilter(sg.id)}
+                            style={{
+                              padding: '6px 14px',
+                              borderRadius: '20px',
+                              fontSize: '0.78rem',
+                              fontWeight: 'bold',
+                              cursor: 'pointer',
+                              transition: 'all 0.2s',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              background: isSelected ? 'linear-gradient(135deg, #a855f7 0%, #7c3aed 100%)' : 'rgba(168, 85, 247, 0.12)',
+                              color: isSelected ? '#fff' : '#d8b4fe',
+                              border: isSelected ? '1.5px solid #a855f7' : '1px solid rgba(168, 85, 247, 0.3)',
+                              boxShadow: isSelected ? '0 0 14px rgba(168, 85, 247, 0.4)' : 'none'
+                            }}
+                          >
+                            <span>📅</span> {sg.title}
+                            <span style={{
+                              background: isSelected ? 'rgba(0,0,0,0.3)' : 'rgba(168, 85, 247, 0.25)',
+                              padding: '2px 7px',
+                              borderRadius: '10px',
+                              fontSize: '0.72rem'
+                            }}>
+                              {count}
+                            </span>
+                          </button>
+                        );
+                      })}
+
+                      {/* Chip Ver Todas las Partidas */}
+                      <button
+                        type="button"
+                        onClick={() => setSessionGameFilter('all')}
+                        style={{
+                          padding: '6px 14px',
+                          borderRadius: '20px',
+                          fontSize: '0.78rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s',
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          background: sessionGameFilter === 'all' ? 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)' : 'rgba(2, 132, 199, 0.12)',
+                          color: sessionGameFilter === 'all' ? '#fff' : '#7dd3fc',
+                          border: sessionGameFilter === 'all' ? '1.5px solid #0284c7' : '1px solid rgba(2, 132, 199, 0.3)',
+                          boxShadow: sessionGameFilter === 'all' ? '0 0 14px rgba(2, 132, 199, 0.4)' : 'none'
+                        }}
+                      >
+                        <span>🌐</span> Todas las Partidas
+                        <span style={{
+                          background: sessionGameFilter === 'all' ? 'rgba(0,0,0,0.3)' : 'rgba(2, 132, 199, 0.25)',
+                          padding: '2px 7px',
+                          borderRadius: '10px',
+                          fontSize: '0.72rem'
+                        }}>
+                          {counts['all'] || 0}
+                        </span>
+                      </button>
+                    </div>
+
                     {/* Tarjetas de Métricas Estadísticas */}
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '12px', marginBottom: '20px' }}>
                       
                       {/* Metric 1: Total Jugadores en Región/Sesión */}
                       <div style={{ background: 'rgba(168, 85, 247, 0.12)', border: '1px solid rgba(168, 85, 247, 0.3)', borderRadius: '14px', padding: '12px 14px', textAlign: 'center' }}>
                         <span style={{ fontSize: '1.4rem', display: 'block', marginBottom: '2px' }}>👥</span>
-                        <span style={{ fontSize: '0.68rem', color: '#cbd5e1', textTransform: 'uppercase', fontWeight: 'bold' }}>Jugadores en Sesión</span>
+                        <span style={{ fontSize: '0.68rem', color: '#cbd5e1', textTransform: 'uppercase', fontWeight: 'bold' }}>Jugadores en Sala</span>
                         <strong style={{ fontSize: '1.5rem', color: '#ffffff', display: 'block', fontFamily: 'var(--font-gamer)' }}>
-                          {registeredCards.length}
+                          {filteredCards.length}
                         </strong>
                       </div>
 
@@ -3933,7 +4135,7 @@ export default function BingoHub() {
                         <span style={{ fontSize: '1.4rem', display: 'block', marginBottom: '2px' }}>⚡</span>
                         <span style={{ fontSize: '0.68rem', color: '#cbd5e1', textTransform: 'uppercase', fontWeight: 'bold' }}>Jugadores Activos</span>
                         <strong style={{ fontSize: '1.5rem', color: '#4ade80', display: 'block', fontFamily: 'var(--font-gamer)' }}>
-                          {registeredCards.filter(c => c.gameId === activeGame.id).length}
+                          {filteredCards.filter(c => c.gameId === activeGame.id).length}
                         </strong>
                       </div>
 
@@ -3942,7 +4144,7 @@ export default function BingoHub() {
                         <span style={{ fontSize: '1.4rem', display: 'block', marginBottom: '2px' }}>🏆</span>
                         <span style={{ fontSize: '0.68rem', color: '#cbd5e1', textTransform: 'uppercase', fontWeight: 'bold' }}>Ganadores de Ronda</span>
                         <strong style={{ fontSize: '1.5rem', color: '#fbbf24', display: 'block', fontFamily: 'var(--font-gamer)' }}>
-                          {registeredCards.filter(c => c.winnerConfirmed || winnersHistory.some(w => w.cardId === c.id || w.playerName === c.playerName)).length}
+                          {filteredCards.filter(c => c.winnerConfirmed || winnersHistory.some(w => w.cardId === c.id || w.playerName === c.playerName)).length}
                         </strong>
                       </div>
 
@@ -4085,6 +4287,7 @@ export default function BingoHub() {
                         <thead>
                           <tr style={{ background: 'rgba(168, 85, 247, 0.2)', borderBottom: '1px solid rgba(168, 85, 247, 0.4)', color: '#fff' }}>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Jugador (Nickname)</th>
+                            <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Partida</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>ID Cartón</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Teléfono</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Promotor</th>
@@ -4094,45 +4297,66 @@ export default function BingoHub() {
                           </tr>
                         </thead>
                         <tbody>
-                          {registeredCards
-                            .filter(card => {
-                              // 1. Filtro por Promotor Seleccionado
-                              if (selectedPromoterFilter !== 'ALL') {
-                                if (selectedPromoterFilter === 'WITH_PROMOTER') {
-                                  if (!card.promoterCode) return false;
-                                } else if (selectedPromoterFilter === 'NO_PROMOTER') {
-                                  if (card.promoterCode) return false;
-                                } else {
-                                  if (card.promoterCode !== selectedPromoterFilter) return false;
-                                }
-                              }
+                          {filteredCards.map((card) => {
+                            const isIdRevealed = showAllIds || revealedIds[card.id];
+                            const isPhoneRevealed = showAllPhones || revealedPhones[card.id];
+                            const isPaid = card.paymentStatus === 'paid';
+                            const playUrl = `${window.location.origin}/juegos/bingo/carton/${card.id}`;
 
-                              // 2. Filtro por Búsqueda de Texto
-                              if (!playerSearchQuery.trim()) return true;
-                              const q = playerSearchQuery.toLowerCase();
-                              return (
-                                card.playerName.toLowerCase().includes(q) ||
-                                (card.phone && card.phone.toLowerCase().includes(q)) ||
-                                card.id.toLowerCase().includes(q) ||
-                                (card.promoterCode && card.promoterCode.toLowerCase().includes(q))
-                              );
-                            })
-                            .map((card) => {
-                              const isIdRevealed = showAllIds || revealedIds[card.id];
-                              const isPhoneRevealed = showAllPhones || revealedPhones[card.id];
-                              const isPaid = card.paymentStatus === 'paid';
-                              const playUrl = `${window.location.origin}/juegos/bingo/carton/${card.id}`;
+                            return (
+                              <tr key={card.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
+                                
+                                {/* Nickname */}
+                                <td style={{ padding: '12px 14px', fontWeight: 'bold', color: '#fff' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '1.1rem' }}>👤</span>
+                                    <span>{card.playerName}</span>
+                                  </div>
+                                </td>
 
-                              return (
-                                <tr key={card.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
-                                  
-                                  {/* Nickname */}
-                                  <td style={{ padding: '12px 14px', fontWeight: 'bold', color: '#fff' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                      <span style={{ fontSize: '1.1rem' }}>👤</span>
-                                      <span>{card.playerName}</span>
-                                    </div>
-                                  </td>
+                                {/* Partida / Sala */}
+                                <td style={{ padding: '12px 14px' }}>
+                                  {(() => {
+                                    const pid = getCardPartidaId(card);
+                                    if (pid === 'live') {
+                                      return (
+                                        <span style={{
+                                          background: 'rgba(239, 68, 68, 0.15)',
+                                          border: '1px solid rgba(239, 68, 68, 0.4)',
+                                          color: '#fca5a5',
+                                          fontSize: '0.7rem',
+                                          padding: '2px 8px',
+                                          borderRadius: '6px',
+                                          fontWeight: 'bold',
+                                          whiteSpace: 'nowrap'
+                                        }}>
+                                          🔴 En Vivo
+                                        </span>
+                                      );
+                                    }
+                                    const sg = scheduledGamesList.find(g => g.id === pid);
+                                    return (
+                                      <span style={{
+                                        background: 'rgba(168, 85, 247, 0.15)',
+                                        border: '1px solid rgba(168, 85, 247, 0.4)',
+                                        color: '#d8b4fe',
+                                        fontSize: '0.7rem',
+                                        padding: '2px 8px',
+                                        borderRadius: '6px',
+                                        fontWeight: 'bold',
+                                        display: 'inline-flex',
+                                        alignItems: 'center',
+                                        gap: '4px',
+                                        maxWidth: '180px',
+                                        overflow: 'hidden',
+                                        textOverflow: 'ellipsis',
+                                        whiteSpace: 'nowrap'
+                                      }} title={sg ? sg.title : card.scheduledGameTitle || 'Partida Programada'}>
+                                        📅 {sg ? sg.title : card.scheduledGameTitle || 'Programada'}
+                                      </span>
+                                    );
+                                  })()}
+                                </td>
 
                                   {/* ID Cartón con Toggle Reveal */}
                                   <td style={{ padding: '12px 14px' }}>
@@ -4338,11 +4562,16 @@ export default function BingoHub() {
                               );
                             })}
 
-                          {registeredCards.length === 0 && (
+                          {filteredCards.length === 0 && (
                             <tr>
-                              <td colSpan={6} style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
+                              <td colSpan={8} style={{ textAlign: 'center', padding: '36px 20px', color: '#94a3b8' }}>
                                 <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🛋️</span>
-                                No hay jugadores inscritos en esta sesión de registro aún. Escanea el código QR o comparte el enlace para registrarte.
+                                <strong style={{ color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>
+                                  No hay jugadores en sala para esta partida
+                                </strong>
+                                {sessionGameFilter !== 'all' 
+                                  ? 'No se encontraron cartones emitidos para la partida seleccionada. Cambia de partida arriba o comparte el enlace de inscripción.'
+                                  : 'No hay jugadores inscritos en ninguna partida aún. Escanea el código QR o comparte el enlace para registrarse.'}
                               </td>
                             </tr>
                           )}
@@ -4351,7 +4580,8 @@ export default function BingoHub() {
                     </div>
 
                   </div>
-                )}
+                );
+              })()}
 
                 {/* VISTA INTERMEDIA: SOLICITUDES DE PAGO EN EFECTIVO (TAQUILLA PRESENCIAL) */}
                 {waitingSubTab === 'cash_requests' && (
@@ -5488,6 +5718,7 @@ export default function BingoHub() {
                       const isMatchActive = (activeGame?.scheduledGameId === selectedScheduledGame.id) || (selectedScheduledGame.id.includes(activeGame?.id || ''));
                       const currentTokens = allAccessTokens.filter(t => (t.scheduledGameId === selectedScheduledGame.id || (!t.scheduledGameId && isMatchActive)) && !t.id.startsWith('tkn_gift_'));
                       const currentOrders = allBingoOrders.filter(o => o.scheduledGameId === selectedScheduledGame.id || (!o.scheduledGameId && isMatchActive));
+                      const scheduledCards = registeredCards.filter(c => getCardPartidaId(c) === selectedScheduledGame.id);
 
                       const filteredTokens = currentTokens.filter(t => {
                         const order = currentOrders.find(o => o.id === t.orderId);
@@ -5587,8 +5818,54 @@ export default function BingoHub() {
                             </div>
                           </div>
 
-                          {/* Filtros de Jugadores */}
-                          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                          {/* Selector de Modo de Vista: Boletos/Ventas vs Cartones en Sala */}
+                          <div style={{ display: 'flex', gap: '8px', marginBottom: '16px', borderBottom: '1px solid rgba(255,255,255,0.08)', paddingBottom: '12px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setScheduledDetailViewMode('tokens')}
+                              style={{
+                                padding: '7px 16px',
+                                borderRadius: '10px',
+                                background: scheduledDetailViewMode === 'tokens' ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255,255,255,0.05)',
+                                border: scheduledDetailViewMode === 'tokens' ? '1.5px solid #38bdf8' : '1px solid rgba(255,255,255,0.1)',
+                                color: scheduledDetailViewMode === 'tokens' ? '#38bdf8' : '#94a3b8',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <span>🎟️</span> Boletos y Ventas ({currentTokens.length})
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setScheduledDetailViewMode('cards')}
+                              style={{
+                                padding: '7px 16px',
+                                borderRadius: '10px',
+                                background: scheduledDetailViewMode === 'cards' ? 'rgba(168, 85, 247, 0.25)' : 'rgba(255,255,255,0.05)',
+                                border: scheduledDetailViewMode === 'cards' ? '1.5px solid #a855f7' : '1px solid rgba(255,255,255,0.1)',
+                                color: scheduledDetailViewMode === 'cards' ? '#c084fc' : '#94a3b8',
+                                fontSize: '0.8rem',
+                                fontWeight: 'bold',
+                                cursor: 'pointer',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px'
+                              }}
+                            >
+                              <span>👥</span> Cartones en Sala ({scheduledCards.length})
+                            </button>
+                          </div>
+
+                          {/* VISTA A: BOLETOS Y VENTAS */}
+                          {scheduledDetailViewMode === 'tokens' && (
+                            <>
+                              {/* Filtros de Jugadores */}
+                              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '14px' }}>
                             {[
                               { key: 'all', label: `Todos (${currentTokens.length})` },
                               { key: 'paid', label: `🟢 Pagados (${currentOrders.filter(o => o.status === 'paid').length})` },
@@ -5904,6 +6181,171 @@ export default function BingoHub() {
                               </tbody>
                             </table>
                           </div>
+                        </>
+                      )}
+
+                      {/* VISTA B: CARTONES EN SALA / JUGADORES REGISTRADOS */}
+                      {scheduledDetailViewMode === 'cards' && (
+                        <div style={{ overflowX: 'auto', borderRadius: '12px', border: '1px solid rgba(255,255,255,0.08)', background: 'rgba(0,0,0,0.35)' }}>
+                          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
+                            <thead>
+                              <tr style={{ background: 'rgba(168, 85, 247, 0.2)', borderBottom: '1px solid rgba(168, 85, 247, 0.4)', color: '#fff' }}>
+                                <th style={{ padding: '10px 14px' }}>JUGADOR (NICKNAME)</th>
+                                <th style={{ padding: '10px 14px' }}>ID CARTÓN</th>
+                                <th style={{ padding: '10px 14px' }}>TELÉFONO</th>
+                                <th style={{ padding: '10px 14px' }}>PROMOTOR</th>
+                                <th style={{ padding: '10px 14px' }}>ESTADO PAGO</th>
+                                <th style={{ padding: '10px 14px' }}>ENLACE DE CARTÓN</th>
+                                <th style={{ padding: '10px 14px', textAlign: 'right' }}>ACCIONES</th>
+                              </tr>
+                            </thead>
+                            <tbody>
+                              {scheduledCards.length === 0 ? (
+                                <tr>
+                                  <td colSpan={7} style={{ textAlign: 'center', padding: '36px 20px', color: '#94a3b8' }}>
+                                    <span style={{ fontSize: '2rem', display: 'block', marginBottom: '8px' }}>🎟️</span>
+                                    <strong style={{ color: '#cbd5e1', display: 'block', marginBottom: '4px' }}>
+                                      Aún no hay cartones generados en sala para esta partida
+                                    </strong>
+                                    Los jugadores recibirán su cartón automáticamente cuando abran el enlace de su boleto de acceso.
+                                  </td>
+                                </tr>
+                              ) : (
+                                scheduledCards.map((card) => {
+                                  const isIdRevealed = showAllIds || revealedIds[card.id];
+                                  const isPhoneRevealed = showAllPhones || revealedPhones[card.id];
+                                  const isPaid = card.paymentStatus === 'paid';
+                                  const playUrl = `${window.location.origin}/juegos/bingo/carton/${card.id}`;
+
+                                  return (
+                                    <tr key={card.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)' }}>
+                                      {/* Jugador */}
+                                      <td style={{ padding: '10px 14px', fontWeight: 'bold', color: '#fff' }}>
+                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                          <span style={{ fontSize: '1.1rem' }}>👤</span>
+                                          <span>{card.playerName}</span>
+                                        </div>
+                                      </td>
+
+                                      {/* ID Cartón */}
+                                      <td style={{ padding: '10px 14px' }}>
+                                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.4)', padding: '3px 8px', borderRadius: '6px', border: '1px solid rgba(168, 85, 247, 0.3)' }}>
+                                          <code style={{ fontFamily: 'monospace', color: isIdRevealed ? '#c084fc' : '#94a3b8', fontSize: '0.82rem' }}>
+                                            {isIdRevealed ? card.id : `••••${card.id.slice(-3)}`}
+                                          </code>
+                                          <button 
+                                            onClick={() => toggleRevealId(card.id)}
+                                            style={{ background: 'none', border: 'none', color: isIdRevealed ? '#c084fc' : '#64748b', cursor: 'pointer', padding: '0 2px' }}
+                                            title={isIdRevealed ? 'Ocultar ID' : 'Ver ID'}
+                                          >
+                                            {isIdRevealed ? '🙈' : '👁️'}
+                                          </button>
+                                        </div>
+                                      </td>
+
+                                      {/* Teléfono */}
+                                      <td style={{ padding: '10px 14px' }}>
+                                        {card.phone ? (
+                                          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                            <span style={{ color: '#fff', fontSize: '0.8rem' }}>
+                                              {isPhoneRevealed ? card.phone : `••••${card.phone.slice(-4)}`}
+                                            </span>
+                                            <button
+                                              onClick={() => toggleRevealPhone(card.id)}
+                                              style={{ background: 'none', border: 'none', color: '#ec4899', cursor: 'pointer', padding: '0 2px' }}
+                                            >
+                                              {isPhoneRevealed ? '🙈' : '👁️'}
+                                            </button>
+                                          </div>
+                                        ) : (
+                                          <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Sin teléfono</span>
+                                        )}
+                                      </td>
+
+                                      {/* Promotor */}
+                                      <td style={{ padding: '10px 14px' }}>
+                                        {card.promoterCode ? (
+                                          <span style={{ background: 'rgba(59, 130, 246, 0.15)', border: '1px solid rgba(59, 130, 246, 0.4)', color: '#60a5fa', padding: '2px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                                            📢 {card.promoterCode}
+                                          </span>
+                                        ) : (
+                                          <span style={{ color: '#64748b', fontSize: '0.72rem' }}>Directo</span>
+                                        )}
+                                      </td>
+
+                                      {/* Estado Pago */}
+                                      <td style={{ padding: '10px 14px' }}>
+                                        {isPaid ? (
+                                          <span style={{ background: 'rgba(34, 197, 94, 0.15)', border: '1px solid rgba(34, 197, 94, 0.4)', color: '#4ade80', padding: '2px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                                            🟢 PAGADO
+                                          </span>
+                                        ) : (
+                                          <span style={{ background: 'rgba(245, 158, 11, 0.15)', border: '1px solid rgba(245, 158, 11, 0.4)', color: '#fbbf24', padding: '2px 8px', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 'bold' }}>
+                                            🟡 Pendiente
+                                          </span>
+                                        )}
+                                      </td>
+
+                                      {/* Enlace Cartón */}
+                                      <td style={{ padding: '10px 14px' }}>
+                                        <a
+                                          href={playUrl}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          style={{ color: '#a855f7', textDecoration: 'none', fontSize: '0.75rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}
+                                        >
+                                          Abrir Cartón ↗
+                                        </a>
+                                      </td>
+
+                                      {/* Acciones */}
+                                      <td style={{ padding: '10px 14px', textAlign: 'right' }}>
+                                        <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                          <button
+                                            type="button"
+                                            onClick={() => {
+                                              navigator.clipboard.writeText(playUrl);
+                                              alert("¡Enlace del cartón copiado al portapapeles!");
+                                            }}
+                                            style={{
+                                              background: 'rgba(255,255,255,0.06)',
+                                              border: '1px solid rgba(255,255,255,0.15)',
+                                              color: '#cbd5e1',
+                                              borderRadius: '6px',
+                                              padding: '4px 7px',
+                                              fontSize: '0.72rem',
+                                              cursor: 'pointer'
+                                            }}
+                                            title="Copiar enlace directo del cartón"
+                                          >
+                                            📋
+                                          </button>
+                                          <button
+                                            type="button"
+                                            onClick={() => handleDeletePlayer(card.id, card.playerName)}
+                                            style={{
+                                              background: 'rgba(239, 68, 68, 0.15)',
+                                              border: '1px solid rgba(239, 68, 68, 0.4)',
+                                              color: '#ef4444',
+                                              borderRadius: '6px',
+                                              padding: '4px 8px',
+                                              fontSize: '0.72rem',
+                                              cursor: 'pointer'
+                                            }}
+                                            title="Eliminar cartón"
+                                          >
+                                            🗑️
+                                          </button>
+                                        </div>
+                                      </td>
+                                    </tr>
+                                  );
+                                })
+                              )}
+                            </tbody>
+                          </table>
+                        </div>
+                      )}
 
                         </div>
                       );

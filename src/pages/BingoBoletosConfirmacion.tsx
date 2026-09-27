@@ -116,8 +116,13 @@ const BingoBoletosConfirmacion: React.FC = () => {
         currentShortId = 'c' + Date.now().toString(36) + Math.random().toString(36).substring(2, 6);
       }
 
+      const finalSchedId = ord?.scheduledGameId || (accessToken?.scheduledGameId) || null;
+      const finalSchedTitle = ord?.scheduledGameTitle || null;
+
       await setDoc(doc(db, 'bingo_cards', currentShortId), {
         gameId: targetGameId,
+        scheduledGameId: finalSchedId,
+        scheduledGameTitle: finalSchedTitle,
         playerName: ord?.playerName || 'Jugador Bingotenango',
         phone: ord?.playerWhatsapp || null,
         promoterCode: null,

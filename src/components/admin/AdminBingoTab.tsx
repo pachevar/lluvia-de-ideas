@@ -7,7 +7,7 @@ import {
 import { db } from '../../firebase';
 import type { 
   BingoGame, BingoCustomization, BingoPrize, BingoPromoter, 
-  Sponsor, BingoCard, BingoAccessToken, BingoPlayerProfile 
+  Sponsor, BingoCard, BingoAccessToken, BingoPlayerProfile, BingoScheduledGame 
 } from '../../types';
 import { compressImageWebP, blobToDataURL } from '../../utils/imageUpload';
 import { recordPlayerPurchase, autoDispatchPurchaseToTelegramIfLinked } from '../../services/bingoPlayerService';
@@ -243,6 +243,11 @@ export default function AdminBingoTab() {
   const [tokenSearchQuery, setTokenSearchQuery] = useState('');
   const [expandedGiftTokenId, setExpandedGiftTokenId] = useState<string | null>(null);
 
+  // Partidas Programadas & Filtro de Partida / Sala
+  const [scheduledGamesList, setScheduledGamesList] = useState<BingoScheduledGame[]>([]);
+  const [selectedGameFilter, setSelectedGameFilter] = useState<string>('all'); // 'all' | 'live' | scheduledGameId
+  const [cardSearchQuery, setCardSearchQuery] = useState('');
+
   // Cartera de Jugadores (CRM - bingo_players)
   const [playersList, setPlayersList] = useState<BingoPlayerProfile[]>([]);
   const [playerSearchQuery, setPlayerSearchQuery] = useState('');
@@ -381,6 +386,19 @@ export default function AdminBingoTab() {
       console.warn("Aviso leyendo cartera bingo_players:", err);
     });
     return () => unsubPlayers();
+  }, []);
+
+  // 3.2. Escuchar Partidas Programadas (bingo_scheduled_games)
+  useEffect(() => {
+    const qSched = query(collection(db, 'bingo_scheduled_games'));
+    const unsubSched = onSnapshot(qSched, (snap) => {
+      const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as BingoScheduledGame));
+      list.sort((a, b) => (b.scheduledAt || 0) - (a.scheduledAt || 0));
+      setScheduledGamesList(list);
+    }, (err) => {
+      console.warn("Aviso leyendo bingo_scheduled_games en Admin:", err);
+    });
+    return () => unsubSched();
   }, []);
 
   // 4. Cargar configuración de Links de Recurrente (Boletos)
@@ -929,14 +947,56 @@ export default function AdminBingoTab() {
     showAlert(`¡Enlace exclusivo del pase copiado al portapapeles! 📋\n\n${playUrl}`, "Enlace Copiado", "🔗");
   };
 
+  // Partida seleccionada actualmente
+  const selectedGameInfo = useMemo(() => {
+    if (selectedGameFilter === 'all') return null;
+    if (selectedGameFilter === 'live' || (activeGame && selectedGameFilter === activeGame.id)) {
+      return { id: activeGame?.id || 'live', title: activeGame?.title || 'Partida en Vivo / Activa', isLive: true };
+    }
+    const sched = scheduledGamesList.find(s => s.id === selectedGameFilter);
+    if (sched) return { id: sched.id, title: sched.title, isLive: sched.status === 'live', sched };
+    return null;
+  }, [selectedGameFilter, activeGame, scheduledGamesList]);
+
   // Lista de pases principales (oculta tokens hijos individuales tkn_gift_ para no saturar Taquilla)
   const mainTokensList = useMemo(() => {
     return accessTokensList.filter(t => !t.id.startsWith('tkn_gift_'));
   }, [accessTokensList]);
 
-  // Filtrado de pases de acceso
-  const filteredTokensList = useMemo(() => {
+  // Pases de la partida seleccionada
+  const partidaTokensList = useMemo(() => {
     return mainTokensList.filter(t => {
+      if (selectedGameFilter === 'all') return true;
+      if (selectedGameFilter === 'live' || (activeGame && selectedGameFilter === activeGame.id)) {
+        if (activeGame?.scheduledGameId && t.scheduledGameId === activeGame.scheduledGameId) return true;
+        if (t.gameId === activeGame?.id) return true;
+        if (!t.scheduledGameId && !activeGame?.scheduledGameId) return true;
+        return false;
+      }
+      return t.scheduledGameId === selectedGameFilter || t.gameId === selectedGameFilter;
+    });
+  }, [mainTokensList, selectedGameFilter, activeGame]);
+
+  // Cartones y Jugadores en Sala de la partida seleccionada
+  const partidaCardsList = useMemo(() => {
+    return registeredCardsList.filter(c => {
+      const token = c.tokenId ? accessTokensList.find(t => t.id === c.tokenId || t.orderId === c.tokenId) : null;
+      const cardSchedId = c.scheduledGameId || token?.scheduledGameId || null;
+
+      if (selectedGameFilter === 'all') return true;
+      if (selectedGameFilter === 'live' || (activeGame && selectedGameFilter === activeGame.id)) {
+        if (activeGame?.scheduledGameId && cardSchedId === activeGame.scheduledGameId) return true;
+        if (c.gameId === activeGame?.id) return true;
+        if (!cardSchedId && !activeGame?.scheduledGameId) return true;
+        return false;
+      }
+      return cardSchedId === selectedGameFilter || c.gameId === selectedGameFilter;
+    });
+  }, [registeredCardsList, selectedGameFilter, activeGame, accessTokensList]);
+
+  // Filtrado de pases de acceso de la partida seleccionada
+  const filteredTokensList = useMemo(() => {
+    return partidaTokensList.filter(t => {
       const isPaid = t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0;
       if (tokenStatusFilter === 'paid' && !isPaid) return false;
       if (tokenStatusFilter === 'pending' && isPaid) return false;
@@ -949,14 +1009,26 @@ export default function AdminBingoTab() {
       }
       return true;
     });
-  }, [mainTokensList, tokenStatusFilter, tokenSearchQuery]);
+  }, [partidaTokensList, tokenStatusFilter, tokenSearchQuery]);
+
+  // Filtrado de cartones en sala de la partida seleccionada
+  const filteredCardsList = useMemo(() => {
+    return partidaCardsList.filter(c => {
+      if (!cardSearchQuery.trim()) return true;
+      const q = cardSearchQuery.toLowerCase();
+      return (c.playerName || '').toLowerCase().includes(q) ||
+        (c.phone || '').includes(q) ||
+        c.id.toLowerCase().includes(q) ||
+        (c.promoterCode || '').toLowerCase().includes(q);
+    });
+  }, [partidaCardsList, cardSearchQuery]);
 
   const pendingCashTokensList = useMemo(() => {
-    return mainTokensList.filter(t => 
+    return partidaTokensList.filter(t => 
       t.paymentMethod === 'efectivo' && 
       (t.paymentStatus === 'pending' || t.status === 'pending' || (!t.paidAmount && t.paymentStatus !== 'paid'))
     );
-  }, [mainTokensList]);
+  }, [partidaTokensList]);
 
   // Exportar Cartera de Jugadores (CRM) a CSV con UTF-8 BOM para compatibilidad con Excel
   const exportPlayersToCSV = () => {
@@ -1004,10 +1076,10 @@ export default function AdminBingoTab() {
     URL.revokeObjectURL(url);
   };
 
-  // Exportar Registro de Pases & Ventas a CSV con UTF-8 BOM para compatibilidad con Excel
+  // Exportar Registro de Pases & Ventas de la Partida a CSV con UTF-8 BOM
   const exportTokensToCSV = () => {
-    if (mainTokensList.length === 0) {
-      showAlert("No hay pases ni ventas para exportar.", "Aviso", "ℹ️");
+    if (partidaTokensList.length === 0) {
+      showAlert("No hay pases ni ventas para exportar en esta selección.", "Aviso", "ℹ️");
       return;
     }
     const headers = [
@@ -1015,6 +1087,7 @@ export default function AdminBingoTab() {
       'Orden ID',
       'Jugador',
       'WhatsApp',
+      'Partida Vinculada',
       'Categoria / Paquete',
       'Cantidad Cartones',
       'Modalidad',
@@ -1025,15 +1098,19 @@ export default function AdminBingoTab() {
       'Fecha Emision'
     ];
 
-    const rows = mainTokensList.map(t => {
+    const rows = partidaTokensList.map(t => {
       const isPaid = t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0;
       const isGift = t.purchaseMode === 'gift';
       const priceAmount = t.paidAmount || (t.quantity * (t.unitPriceQ || 10));
+      const sched = scheduledGamesList.find(s => s.id === t.scheduledGameId);
+      const partTitle = sched?.title || (t.gameId === activeGame?.id ? (activeGame?.title || 'Partida Activa') : (t.scheduledGameId || t.gameId));
+
       return [
         `"${(t.id || '').replace(/"/g, '""')}"`,
         `"${(t.orderId || '').replace(/"/g, '""')}"`,
         `"${(t.playerName || '').replace(/"/g, '""')}"`,
         `"${(t.playerWhatsapp || '').replace(/"/g, '""')}"`,
+        `"${(partTitle || '').replace(/"/g, '""')}"`,
         `"${(t.tierName || t.tierId || 'Oficial').replace(/"/g, '""')}"`,
         `"${t.quantity || 1}"`,
         `"${isGift ? 'Regalo / Contactos' : 'Personal'}"`,
@@ -1050,7 +1127,61 @@ export default function AdminBingoTab() {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', `ventas_y_pases_bingotenango_${new Date().toISOString().split('T')[0]}.csv`);
+    const safePartTitle = selectedGameInfo ? selectedGameInfo.title.replace(/[^a-zA-Z0-9_-]/g, '_') : 'todas_las_partidas';
+    link.setAttribute('download', `ventas_y_pases_${safePartTitle}_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    URL.revokeObjectURL(url);
+  };
+
+  // Exportar Jugadores en Sala / Cartones Registrados de la Partida a CSV
+  const exportCardsToCSV = () => {
+    if (partidaCardsList.length === 0) {
+      showAlert("No hay cartones ni jugadores en sala para exportar en esta partida.", "Aviso", "ℹ️");
+      return;
+    }
+    const headers = [
+      'ID Carton',
+      'Jugador / Nickname',
+      'Telefono / WhatsApp',
+      'Partida Vinculada',
+      'Categoria / Nivel',
+      'Numero Carton',
+      'Estado en Sala',
+      'Canto Bingo',
+      'Ganador Confirmado',
+      'Fecha Emision',
+      'Enlace al Carton'
+    ];
+
+    const rows = partidaCardsList.map(c => {
+      const sched = scheduledGamesList.find(s => s.id === c.scheduledGameId);
+      const partTitle = c.scheduledGameTitle || sched?.title || (c.gameId === activeGame?.id ? (activeGame?.title || 'Partida Activa') : c.gameId);
+      const playUrl = `${window.location.origin}/juegos/bingo/carton/${c.id}`;
+
+      return [
+        `"${(c.id || '').replace(/"/g, '""')}"`,
+        `"${(c.playerName || '').replace(/"/g, '""')}"`,
+        `"${(c.phone || '').replace(/"/g, '""')}"`,
+        `"${(partTitle || '').replace(/"/g, '""')}"`,
+        `"${(c.tierName || 'Carton Oficial').replace(/"/g, '""')}"`,
+        `"${c.cardNumber || 1} de ${c.totalCards || 1}"`,
+        `"${c.winnerConfirmed ? 'VICTORIA' : c.shoutedBingo ? 'CANTO BINGO' : 'EN SALA'}"`,
+        `"${c.shoutedBingo ? 'SI' : 'NO'}"`,
+        `"${c.winnerConfirmed ? 'SI' : 'NO'}"`,
+        `"${c.createdAt ? new Date(c.createdAt).toLocaleString('es-GT') : ''}"`,
+        `"${playUrl}"`
+      ];
+    });
+
+    const csvContent = [headers.join(','), ...rows.map(e => e.join(','))].join('\n');
+    const blob = new Blob([new Uint8Array([0xEF, 0xBB, 0xBF]), csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    const safePartTitle = selectedGameInfo ? selectedGameInfo.title.replace(/[^a-zA-Z0-9_-]/g, '_') : 'todas_las_partidas';
+    link.setAttribute('download', `jugadores_en_sala_${safePartTitle}_${new Date().toISOString().split('T')[0]}.csv`);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -2168,6 +2299,130 @@ export default function AdminBingoTab() {
       {activeTab === 'acceso' && (
         <div className="bingo-section-pane">
           
+          {/* BARRA SELECTORA DE PARTIDA / SALA INDEPENDIENTE */}
+          <div style={{
+            background: 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)',
+            border: '2px solid #38bdf8',
+            borderRadius: '16px',
+            padding: '16px 20px',
+            marginBottom: '24px',
+            boxShadow: '0 8px 24px rgba(0,0,0,0.4)',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: '12px'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.6rem' }}>🎮</span>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#fff', fontWeight: 800 }}>
+                    Gestión Aislada por Partida / Sala
+                  </h3>
+                  <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                    Selecciona una partida para auditar sus propios inscritos y jugadores en sala sin mezclar registros.
+                  </span>
+                </div>
+              </div>
+              {selectedGameInfo && (
+                <span style={{
+                  background: selectedGameInfo.isLive ? 'rgba(34, 197, 94, 0.2)' : 'rgba(56, 189, 248, 0.2)',
+                  border: `1.5px solid ${selectedGameInfo.isLive ? '#22c55e' : '#38bdf8'}`,
+                  color: selectedGameInfo.isLive ? '#4ade80' : '#7dd3fc',
+                  padding: '5px 14px',
+                  borderRadius: '20px',
+                  fontSize: '0.78rem',
+                  fontWeight: 'bold',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}>
+                  {selectedGameInfo.isLive ? '🔴 Partida En Vivo Activa' : '📅 Partida Programada'}: {selectedGameInfo.title}
+                </span>
+              )}
+            </div>
+
+            {/* Chips de selección de partida */}
+            <div style={{ display: 'flex', gap: '8px', overflowX: 'auto', paddingBottom: '4px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => setSelectedGameFilter('all')}
+                style={{
+                  padding: '8px 16px',
+                  borderRadius: '12px',
+                  border: selectedGameFilter === 'all' ? '2px solid #a855f7' : '1px solid rgba(255,255,255,0.15)',
+                  background: selectedGameFilter === 'all' ? 'linear-gradient(135deg, rgba(168,85,247,0.3) 0%, rgba(236,72,153,0.3) 100%)' : 'rgba(255,255,255,0.05)',
+                  color: selectedGameFilter === 'all' ? '#fff' : '#cbd5e1',
+                  fontWeight: 'bold',
+                  fontSize: '0.82rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  transition: 'all 0.2s'
+                }}
+              >
+                🌐 Todas las Partidas ({mainTokensList.length} Pases · {registeredCardsList.length} Cartones)
+              </button>
+
+              {activeGame && (
+                <button
+                  type="button"
+                  onClick={() => setSelectedGameFilter(activeGame.id)}
+                  style={{
+                    padding: '8px 16px',
+                    borderRadius: '12px',
+                    border: selectedGameFilter === activeGame.id ? '2px solid #22c55e' : '1px solid rgba(34,197,94,0.3)',
+                    background: selectedGameFilter === activeGame.id ? 'rgba(34,197,94,0.25)' : 'rgba(34,197,94,0.08)',
+                    color: selectedGameFilter === activeGame.id ? '#fff' : '#86efac',
+                    fontWeight: 'bold',
+                    fontSize: '0.82rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    transition: 'all 0.2s'
+                  }}
+                >
+                  🔴 En Vivo: {activeGame.title || 'Partida Actual'}
+                </button>
+              )}
+
+              {scheduledGamesList.map(sched => {
+                const isSel = selectedGameFilter === sched.id;
+                const schedTokensCount = mainTokensList.filter(t => t.scheduledGameId === sched.id || t.gameId === sched.id).length;
+                const schedCardsCount = registeredCardsList.filter(c => {
+                  const token = c.tokenId ? accessTokensList.find(t => t.id === c.tokenId || t.orderId === c.tokenId) : null;
+                  const cardSchedId = c.scheduledGameId || token?.scheduledGameId || null;
+                  return cardSchedId === sched.id || c.gameId === sched.id;
+                }).length;
+                const dateStr = sched.scheduledAt ? new Date(sched.scheduledAt).toLocaleDateString('es-GT', { weekday: 'short', day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }) : '';
+                return (
+                  <button
+                    key={sched.id}
+                    type="button"
+                    onClick={() => setSelectedGameFilter(sched.id)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '12px',
+                      border: isSel ? '2px solid #38bdf8' : '1px solid rgba(56,189,248,0.25)',
+                      background: isSel ? 'rgba(56,189,248,0.25)' : 'rgba(255,255,255,0.05)',
+                      color: isSel ? '#fff' : '#cbd5e1',
+                      fontWeight: 'bold',
+                      fontSize: '0.82rem',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <span>📅</span> {sched.title} {dateStr && `(${dateStr})`} — <strong style={{ color: isSel ? '#fff' : '#38bdf8' }}>{schedTokensCount} pases · {schedCardsCount} en sala</strong>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          
           {/* Fila Superior: Reglas de Entrada + Datos Bancarios de Guatemala */}
           <div className="bingo-grid-2" style={{ marginBottom: '24px' }}>
             
@@ -2461,19 +2716,19 @@ export default function AdminBingoTab() {
             <div className="bingo-card-header" style={{ flexWrap: 'wrap', gap: '10px' }}>
               <div>
                 <h3 className="bingo-card-title">
-                  <span>🎟️</span> Monitor de Pases & Taquilla en Vivo ({mainTokensList.length})
+                  <span>🎟️</span> Monitor de Pases & Taquilla {selectedGameInfo ? `— ${selectedGameInfo.title}` : 'en Vivo'} ({partidaTokensList.length})
                 </h3>
                 <p className="bingo-card-subtitle" style={{ margin: 0 }}>
-                  Todos los pases únicos emitidos para jugar. Puedes registrar cobros en efectivo y despachar enlaces por WhatsApp o Telegram.
+                  {selectedGameInfo ? `Pases únicos emitidos exclusivamente para: ${selectedGameInfo.title}` : 'Todos los pases únicos emitidos para jugar en las distintas partidas.'}
                 </p>
               </div>
 
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.75rem', color: '#16a34a', background: '#dcfce7', padding: '4px 10px', borderRadius: '20px', fontWeight: 'bold' }}>
-                  ✓ {mainTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length} Cobrados
+                  ✓ {partidaTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length} Cobrados
                 </span>
                 <span style={{ fontSize: '0.75rem', color: '#d97706', background: '#fef3c7', padding: '4px 10px', borderRadius: '20px', fontWeight: 'bold' }}>
-                  ⏳ {mainTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length} Pendientes
+                  ⏳ {partidaTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length} Pendientes
                 </span>
               </div>
             </div>
@@ -2489,9 +2744,9 @@ export default function AdminBingoTab() {
                     className={`bingo-col-btn ${tokenStatusFilter === f ? 'active' : ''}`}
                     style={{ fontSize: '0.78rem' }}
                   >
-                    {f === 'all' && `Todos (${mainTokensList.length})`}
-                    {f === 'paid' && `Cobrados (${mainTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length})`}
-                    {f === 'pending' && `💵 Efectivo Pendiente (${mainTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length})`}
+                    {f === 'all' && `Todos (${partidaTokensList.length})`}
+                    {f === 'paid' && `Cobrados (${partidaTokensList.filter(t => t.paymentStatus === 'paid' || (t.status === 'active' && !!t.paidAmount && t.paymentStatus !== 'pending') || t.unitPriceQ === 0).length})`}
+                    {f === 'pending' && `💵 Efectivo Pendiente (${partidaTokensList.filter(t => t.paymentStatus !== 'paid' && (!t.paidAmount || t.status !== 'active' || t.paymentStatus === 'pending') && t.unitPriceQ !== 0).length})`}
                   </button>
                 ))}
               </div>
@@ -2508,7 +2763,7 @@ export default function AdminBingoTab() {
                 <button
                   type="button"
                   onClick={exportTokensToCSV}
-                  disabled={mainTokensList.length === 0}
+                  disabled={partidaTokensList.length === 0}
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -2520,12 +2775,12 @@ export default function AdminBingoTab() {
                     border: 'none',
                     fontWeight: 'bold',
                     fontSize: '0.78rem',
-                    cursor: mainTokensList.length === 0 ? 'not-allowed' : 'pointer',
+                    cursor: partidaTokensList.length === 0 ? 'not-allowed' : 'pointer',
                     boxShadow: '0 2px 8px rgba(22, 163, 74, 0.3)'
                   }}
-                  title="Descargar registro de ventas y pases en archivo CSV compatible con Excel"
+                  title="Descargar registro de ventas y pases de esta partida en archivo CSV compatible con Excel"
                 >
-                  📥 Exportar Ventas (CSV/Excel)
+                  📥 Exportar Ventas ({selectedGameInfo ? (selectedGameInfo.title.length > 15 ? `${selectedGameInfo.title.slice(0, 15)}...` : selectedGameInfo.title) : 'Todas'})
                 </button>
               </div>
             </div>
@@ -2883,6 +3138,219 @@ export default function AdminBingoTab() {
               </table>
             </div>
 
+          </div>
+
+          {/* SECCIÓN 2.5: CARTONES & JUGADORES EN SALA DE ESTA PARTIDA */}
+          <div className="bingo-card" style={{ width: '100%', boxSizing: 'border-box', marginTop: '24px' }}>
+            <div className="bingo-card-header" style={{ flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <h3 className="bingo-card-title">
+                  <span>👤</span> Jugadores en Sala & Cartones Emitidos {selectedGameInfo ? `— ${selectedGameInfo.title}` : 'General'} ({partidaCardsList.length})
+                </h3>
+                <p className="bingo-card-subtitle" style={{ margin: 0 }}>
+                  {selectedGameInfo 
+                    ? `Cartones generados y listos en sala exclusivamente para: ${selectedGameInfo.title}` 
+                    : 'Todos los cartones activos generados en el sistema organizados por partida.'}
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <button
+                  type="button"
+                  onClick={exportCardsToCSV}
+                  disabled={partidaCardsList.length === 0}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '8px 14px',
+                    borderRadius: '8px',
+                    background: '#0284c7',
+                    color: '#ffffff',
+                    border: 'none',
+                    fontWeight: 'bold',
+                    fontSize: '0.78rem',
+                    cursor: partidaCardsList.length === 0 ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 8px rgba(2, 132, 199, 0.3)'
+                  }}
+                  title="Descargar lista de jugadores en sala de esta partida en CSV/Excel"
+                >
+                  📥 Exportar Jugadores en Sala ({selectedGameInfo ? (selectedGameInfo.title.length > 15 ? `${selectedGameInfo.title.slice(0, 15)}...` : selectedGameInfo.title) : 'Todas'})
+                </button>
+              </div>
+            </div>
+
+            {/* Buscador de Cartones */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '10px', marginBottom: '14px', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                className="bingo-input"
+                placeholder="🔍 Buscar por nombre, teléfono o ID de cartón..."
+                value={cardSearchQuery}
+                onChange={e => setCardSearchQuery(e.target.value)}
+                style={{ width: '280px', fontSize: '0.82rem' }}
+              />
+              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                Mostrando <strong>{filteredCardsList.length}</strong> de <strong>{partidaCardsList.length}</strong> cartones
+              </span>
+            </div>
+
+            {/* Tabla de Cartones en Sala */}
+            <div className="bingo-table-wrapper" style={{ maxHeight: '420px', overflowY: 'auto' }}>
+              <table className="bingo-table" style={{ fontSize: '0.82rem' }}>
+                <thead>
+                  <tr>
+                    <th>ID CARTÓN</th>
+                    <th>JUGADOR / NICKNAME</th>
+                    <th>TELÉFONO</th>
+                    <th>PARTIDA VINCULADA</th>
+                    <th>CATEGORÍA / CARTÓN</th>
+                    <th>ESTADO EN SALA</th>
+                    <th style={{ textAlign: 'right' }}>ACCIONES & ENLACE</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredCardsList.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ textAlign: 'center', padding: '30px', color: '#94a3b8' }}>
+                        No hay cartones ni jugadores en sala registrados para los filtros seleccionados.
+                      </td>
+                    </tr>
+                  ) : (
+                    filteredCardsList.map(card => {
+                      const playUrl = `${window.location.origin}/juegos/bingo/carton/${card.id}`;
+                      const schedGame = scheduledGamesList.find(s => s.id === card.scheduledGameId);
+                      const partTitle = card.scheduledGameTitle || schedGame?.title || (card.gameId === activeGame?.id ? (activeGame?.title || 'Partida Activa') : card.gameId);
+                      return (
+                        <tr key={card.id}>
+                          <td>
+                            <code style={{ fontWeight: 'bold', color: '#0284c7', background: '#f0f9ff', padding: '3px 8px', borderRadius: '6px', border: '1px solid #bae6fd' }}>
+                              #{card.id}
+                            </code>
+                          </td>
+                          <td>
+                            <strong style={{ color: '#0f172a' }}>👤 {card.playerName}</strong>
+                            {card.winnerConfirmed && (
+                              <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: '#16a34a', background: '#dcfce7', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
+                                🏆 Ganador
+                              </span>
+                            )}
+                            {card.shoutedBingo && !card.winnerConfirmed && (
+                              <span style={{ marginLeft: '6px', fontSize: '0.7rem', color: '#d97706', background: '#fef3c7', padding: '2px 6px', borderRadius: '10px', fontWeight: 'bold' }}>
+                                📢 ¡Cantó Bingo!
+                              </span>
+                            )}
+                          </td>
+                          <td>
+                            {card.phone ? (
+                              <a
+                                href={`https://wa.me/${card.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{ fontSize: '0.74rem', color: '#16a34a', textDecoration: 'none', fontWeight: 'bold' }}
+                              >
+                                📱 {card.phone}
+                              </a>
+                            ) : (
+                              <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Sin registrar</span>
+                            )}
+                          </td>
+                          <td>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 600, color: '#4338ca' }}>
+                              🎮 {partTitle}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{ fontSize: '0.74rem', color: '#334155' }}>
+                              {card.tierName || 'Cartón Oficial'} {card.totalCards && card.totalCards > 1 ? `(#${card.cardNumber} de ${card.totalCards})` : ''}
+                            </span>
+                          </td>
+                          <td>
+                            <span style={{
+                              fontSize: '0.7rem',
+                              fontWeight: 700,
+                              padding: '3px 8px',
+                              borderRadius: '12px',
+                              background: card.winnerConfirmed ? '#dcfce7' : card.shoutedBingo ? '#fef3c7' : '#e0f2fe',
+                              color: card.winnerConfirmed ? '#15803d' : card.shoutedBingo ? '#b45309' : '#0369a1'
+                            }}>
+                              {card.winnerConfirmed ? '✓ Victoria Confirmada' : card.shoutedBingo ? '⏳ Revisando Victoria' : '🟢 Listo en Sala'}
+                            </span>
+                          </td>
+                          <td style={{ textAlign: 'right' }}>
+                            <div style={{ display: 'inline-flex', gap: '6px', alignItems: 'center' }}>
+                              <a
+                                href={playUrl}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '6px',
+                                  background: '#f1f5f9',
+                                  border: '1px solid #cbd5e1',
+                                  color: '#0f172a',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 'bold',
+                                  textDecoration: 'none',
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px'
+                                }}
+                                title="Abrir este cartón en una pestaña nueva"
+                              >
+                                👁️ Abrir
+                              </a>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(playUrl);
+                                  showAlert(`Enlace copiado al portapapeles:\n${playUrl}`, "Enlace Copiado", "📋");
+                                }}
+                                style={{
+                                  padding: '4px 10px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(2, 132, 199, 0.1)',
+                                  border: '1px solid rgba(2, 132, 199, 0.3)',
+                                  color: '#0284c7',
+                                  fontSize: '0.72rem',
+                                  fontWeight: 'bold',
+                                  cursor: 'pointer'
+                                }}
+                                title="Copiar enlace de juego del jugador"
+                              >
+                                📋 Copiar
+                              </button>
+                              <button
+                                type="button"
+                                onClick={async () => {
+                                  const confirm = await showConfirm(`¿Deseas retirar el cartón #${card.id} de ${card.playerName} de esta partida?`, "Retirar Cartón", "🗑️", "Sí, Retirar", "Cancelar");
+                                  if (confirm) {
+                                    await deleteDoc(doc(db, 'bingo_cards', card.id));
+                                    showAlert(`Cartón #${card.id} eliminado de la partida.`, "Eliminado", "✅");
+                                  }
+                                }}
+                                style={{
+                                  padding: '4px 8px',
+                                  borderRadius: '6px',
+                                  background: 'rgba(239, 68, 68, 0.1)',
+                                  border: '1px solid rgba(239, 68, 68, 0.3)',
+                                  color: '#ef4444',
+                                  fontSize: '0.72rem',
+                                  cursor: 'pointer'
+                                }}
+                                title="Eliminar este cartón de la partida"
+                              >
+                                ✕
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
           {/* SECCIÓN 3: CARTERA DE JUGADORES (CRM) & CANALES MULTICANAL */}

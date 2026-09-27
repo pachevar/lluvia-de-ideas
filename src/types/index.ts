@@ -477,6 +477,8 @@ export interface BingoGame {
 export interface BingoCard {
   id: string;
   gameId: string;
+  scheduledGameId?: string | null;
+  scheduledGameTitle?: string | null;
   playerName: string;
   matrix: (number | null)[][]; // 5x5 matrix, center is null
   hash: string;
