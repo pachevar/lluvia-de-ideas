@@ -132,6 +132,12 @@ const BingoBoletosConfirmacion: React.FC = () => {
         tokenId: tknId || null,
         cardNumber: playerCardNumber,
         totalCards: playerCardNumber,
+        paymentStatus: (ord?.status === 'paid' || ord?.paymentStatus === 'paid' || Boolean(tknId) || Boolean(accessToken)) ? 'paid' : (ord?.status === 'pending' ? 'pending' : 'paid'),
+        paymentMethod: ord?.paymentMethod || (accessToken?.paymentMethod) || 'online',
+        paidAmount: ord?.amount || ord?.totalPriceQ || (accessToken?.paidAmount) || 10,
+        paidAt: ord?.paidAt || Date.now(),
+        isOnline: true,
+        lastActiveAt: Date.now(),
         matrix: {
           r0: currentMatrix[0],
           r1: currentMatrix[1],
@@ -542,6 +548,18 @@ const BingoBoletosConfirmacion: React.FC = () => {
             localStorage.setItem('my_bingo_card_id', cardIdToUse);
             localStorage.setItem('my_bingo_card_ids', JSON.stringify([cardIdToUse]));
             localStorage.setItem('my_bingo_player_name', updated.playerName);
+
+            // Sincronizar estado de cobro y en línea en el cartón oficial
+            try {
+              await updateDoc(doc(db, 'bingo_cards', cardIdToUse), {
+                paymentStatus: 'paid',
+                paymentMethod: updated.paymentMethod || 'online',
+                paidAmount: updated.amount || updated.totalPriceQ || 10,
+                paidAt: updated.paidAt || Date.now(),
+                isOnline: true,
+                lastActiveAt: Date.now()
+              });
+            } catch {}
 
             // Si vino por pago en efectivo y es modo personal, celebrar y entrar automáticamente
             if (updated.paymentMethod === 'efectivo') {

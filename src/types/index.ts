@@ -504,6 +504,8 @@ export interface BingoCard {
   linkSent?: boolean;
   linkSentAt?: number | null;
   linkSentCount?: number;
+  isOnline?: boolean;
+  lastActiveAt?: number;
 }
 
 export interface BingoPromoter {

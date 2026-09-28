@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { createPortal } from 'react-dom';
-import { doc, onSnapshot, collection, query, where, getDocs, limit, setDoc, runTransaction } from 'firebase/firestore';
+import { doc, onSnapshot, collection, query, where, getDocs, limit, setDoc, updateDoc, runTransaction } from 'firebase/firestore';
 import { db } from '../../firebase';
 import type { BingoCard, BingoGame, BingoPrize, Sponsor } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
@@ -401,6 +401,12 @@ export default function BingoCardView() {
             return cData;
           });
 
+          // Marcar jugador en línea y activo en Firestore
+          updateDoc(doc(db, 'bingo_cards', cData.id), {
+            isOnline: true,
+            lastActiveAt: Date.now()
+          }).catch(() => {});
+
           // Cargar cartones hermanos si el jugador cuenta con un paquete múltiple o compras adicionales
           const loadSiblings = async () => {
             const allSiblingIds = new Set<string>([cData.id]);
@@ -556,7 +562,25 @@ export default function BingoCardView() {
     return () => {
       if (unsubscribeCard) unsubscribeCard();
       if (unsubscribeGame) unsubscribeGame();
+      if (cartonId) {
+        updateDoc(doc(db, 'bingo_cards', cartonId), {
+          isOnline: false,
+          lastActiveAt: Date.now()
+        }).catch(() => {});
+      }
     };
+  }, [cartonId]);
+
+  // Heartbeat para mantener el estado "En Línea" activo en el panel del Host
+  useEffect(() => {
+    if (!cartonId) return;
+    const interval = setInterval(() => {
+      updateDoc(doc(db, 'bingo_cards', cartonId), {
+        isOnline: true,
+        lastActiveAt: Date.now()
+      }).catch(() => {});
+    }, 35000);
+    return () => clearInterval(interval);
   }, [cartonId]);
 
   // Apertura automática del modal de invitación la primera vez que entra al cartón de prueba

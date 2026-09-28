@@ -18,6 +18,8 @@ interface BingoCashPaymentModalProps {
   setScheduledGameId: (id: string) => void;
   scheduledGamesList: BingoScheduledGame[];
   isSaving: boolean;
+  sendWhatsApp: boolean;
+  setSendWhatsApp: (val: boolean) => void;
   onConfirm: (e: React.FormEvent) => void;
 }
 
@@ -37,6 +39,8 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
   setScheduledGameId,
   scheduledGamesList,
   isSaving,
+  sendWhatsApp,
+  setSendWhatsApp,
   onConfirm,
 }) => {
   if (!isOpen) return null;
@@ -96,10 +100,10 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
                   letterSpacing: '0.5px',
                 }}
               >
-                {targetCard ? 'COBRO EN EFECTIVO Y ENVÍO DE LINK' : 'NUEVO COBRO EN EFECTIVO (TAQUILLA)'}
+                {targetCard ? 'CONFIRMAR COBRO DE CARTÓN' : 'NUEVO COBRO EN EFECTIVO (TAQUILLA)'}
               </h3>
               <span style={{ fontSize: '0.74rem', color: '#4ade80', fontWeight: 'bold' }}>
-                {targetCard ? `Cartón ID #${targetCard.id}` : 'Emisión de Pase Único Oficial'}
+                {targetCard ? `Cartón ID #${targetCard.id} • Acceso Inmediato` : 'Emisión de Pase Único Oficial'}
               </span>
             </div>
           </div>
@@ -127,7 +131,7 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
           </button>
         </div>
 
-        {/* Aviso Informativo de Seguridad */}
+        {/* Aviso Informativo */}
         <div
           style={{
             background: 'rgba(34, 197, 94, 0.08)',
@@ -142,7 +146,7 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
         >
           <span style={{ fontSize: '1.1rem' }}>🛡️</span>
           <p style={{ margin: 0, fontSize: '0.76rem', color: '#cbd5e1', lineHeight: '1.4' }}>
-            <strong style={{ color: '#4ade80' }}>Regla de Taquilla:</strong> Solo se emitirá un enlace oficial por cobro confirmado. Al registrar este pago, el enlace único se abrirá automáticamente en WhatsApp para entregarse al jugador.
+            <strong style={{ color: '#4ade80' }}>Acceso Automático:</strong> Al registrar el cobro, el cartón del jugador se activará de inmediato y figurará como cobrado y en línea. El envío por WhatsApp es opcional para jugadores a distancia.
           </p>
         </div>
 
@@ -167,7 +171,7 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
               required
               value={playerName}
               onChange={(e) => setPlayerName(e.target.value)}
-              placeholder="Ej. Neto / Carlos Méndez"
+              placeholder="Ej. Ernesto / Carlos Méndez"
               style={{
                 width: '100%',
                 padding: '10px 14px',
@@ -193,7 +197,7 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
                 letterSpacing: '0.5px',
               }}
             >
-              📱 WhatsApp del Jugador (8 dígitos) *
+              📱 WhatsApp del Jugador {sendWhatsApp ? '*' : '(Opcional si es presencial)'}
             </label>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
               <span
@@ -211,7 +215,7 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
               </span>
               <input
                 type="tel"
-                required
+                required={sendWhatsApp}
                 value={playerPhone}
                 onChange={(e) => setPlayerPhone(e.target.value)}
                 placeholder="36135616"
@@ -229,7 +233,15 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
             </div>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
+          {/* Opciones de Cobro */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+              gap: '12px',
+              marginBottom: '14px',
+            }}
+          >
             <div>
               <label
                 style={{
@@ -242,26 +254,28 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
                   letterSpacing: '0.5px',
                 }}
               >
-                🎟️ Categoría del Cartón
+                🏆 Categoría del Cartón
               </label>
               <select
                 value={tierId}
                 onChange={(e) => {
-                  const val = e.target.value as any;
-                  setTierId(val);
-                  const tierDefaultPrices: Record<string, number> = {
-                    'tier-10': 10,
-                    'tier-25': 25,
-                    'tier-50': 50,
-                    'tier-100': 100,
-                  };
-                  setAmountQ(tierDefaultPrices[val] || 10);
+                  const newTier = e.target.value as 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100';
+                  setTierId(newTier);
+                  if (!targetCard) {
+                    const priceMap: Record<string, number> = {
+                      'tier-10': 10,
+                      'tier-25': 25,
+                      'tier-50': 50,
+                      'tier-100': 100,
+                    };
+                    setAmountQ(priceMap[newTier] || 10);
+                  }
                 }}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
+                  padding: '10px 14px',
                   borderRadius: '10px',
-                  border: '1px solid rgba(34, 197, 94, 0.4)',
+                  border: '1px solid rgba(168, 85, 247, 0.4)',
                   background: 'rgba(10, 5, 20, 0.95)',
                   color: '#fff',
                   fontSize: '0.82rem',
@@ -269,10 +283,10 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
                   cursor: 'pointer',
                 }}
               >
-                <option value="tier-10">🥉 Bronce — 1 Cartón (Q10)</option>
-                <option value="tier-25">🥈 Plata — 3 Cartones (Q25)</option>
-                <option value="tier-50">🥇 Oro — 7 Cartones (Q50)</option>
-                <option value="tier-100">💎 Diamante VIP — 15 Cartones (Q100)</option>
+                <option value="tier-10">🥉 Bronce - Q10 (1 Cartón)</option>
+                <option value="tier-25">🥈 Plata - Q25 (3 Cartones)</option>
+                <option value="tier-50">🥇 Oro - Q50 (7 Cartones)</option>
+                <option value="tier-100">💎 Diamante VIP - Q100 (15 Cartones)</option>
               </select>
             </div>
 
@@ -288,45 +302,31 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
                   letterSpacing: '0.5px',
                 }}
               >
-                💵 Monto Cobrado (Q) *
+                💵 Monto en Efectivo (Q) *
               </label>
-              <div style={{ position: 'relative' }}>
-                <span
-                  style={{
-                    position: 'absolute',
-                    left: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    color: '#4ade80',
-                    fontWeight: 'bold',
-                  }}
-                >
-                  Q
-                </span>
-                <input
-                  type="number"
-                  required
-                  min={1}
-                  value={amountQ}
-                  onChange={(e) => setAmountQ(Number(e.target.value))}
-                  style={{
-                    width: '100%',
-                    padding: '10px 14px 10px 30px',
-                    borderRadius: '10px',
-                    border: '1px solid rgba(34, 197, 94, 0.4)',
-                    background: 'rgba(0, 0, 0, 0.5)',
-                    color: '#4ade80',
-                    fontWeight: 'bold',
-                    fontSize: '0.95rem',
-                    outline: 'none',
-                  }}
-                />
-              </div>
+              <input
+                type="number"
+                min={0}
+                required
+                value={amountQ}
+                onChange={(e) => setAmountQ(Number(e.target.value))}
+                style={{
+                  width: '100%',
+                  padding: '10px 14px',
+                  borderRadius: '10px',
+                  border: '1px solid #22c55e',
+                  background: 'rgba(0, 0, 0, 0.5)',
+                  color: '#4ade80',
+                  fontSize: '1rem',
+                  fontWeight: 'bold',
+                  outline: 'none',
+                }}
+              />
             </div>
           </div>
 
-          {!targetCard && scheduledGamesList.length > 0 && (
-            <div style={{ marginBottom: '18px' }}>
+          {!targetCard && (
+            <div style={{ marginBottom: '16px' }}>
               <label
                 style={{
                   display: 'block',
@@ -338,14 +338,14 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
                   letterSpacing: '0.5px',
                 }}
               >
-                📅 Partida Asignada
+                🗓️ Partida a la que se inscribe
               </label>
               <select
                 value={scheduledGameId}
                 onChange={(e) => setScheduledGameId(e.target.value)}
                 style={{
                   width: '100%',
-                  padding: '10px 12px',
+                  padding: '10px 14px',
                   borderRadius: '10px',
                   border: '1px solid rgba(168, 85, 247, 0.4)',
                   background: 'rgba(10, 5, 20, 0.95)',
@@ -365,7 +365,44 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+          {/* Opción Separada: Enviar WhatsApp solo si se necesita */}
+          <div
+            onClick={() => setSendWhatsApp(!sendWhatsApp)}
+            style={{
+              padding: '12px 14px',
+              borderRadius: '12px',
+              background: sendWhatsApp ? 'rgba(37, 211, 102, 0.12)' : 'rgba(255, 255, 255, 0.04)',
+              border: sendWhatsApp ? '1.5px solid rgba(37, 211, 102, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              cursor: 'pointer',
+              marginBottom: '18px',
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <span style={{ fontSize: '1.3rem' }}>📲</span>
+              <div>
+                <strong style={{ fontSize: '0.85rem', color: sendWhatsApp ? '#4ade80' : '#ffffff', display: 'block' }}>
+                  Abrir enlace en WhatsApp al confirmar
+                </strong>
+                <span style={{ fontSize: '0.72rem', color: '#94a3b8', display: 'block' }}>
+                  Solo necesario para cobros a distancia o si el jugador pide el link en su chat.
+                </span>
+              </div>
+            </div>
+            <input
+              type="checkbox"
+              checked={sendWhatsApp}
+              onChange={(e) => setSendWhatsApp(e.target.checked)}
+              style={{ width: '18px', height: '18px', cursor: 'pointer', accentColor: '#22c55e' }}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '10px' }}>
             <button
               type="button"
               onClick={onClose}
@@ -404,7 +441,7 @@ export const BingoCashPaymentModal: React.FC<BingoCashPaymentModalProps> = ({
                 boxShadow: '0 4px 20px rgba(34, 197, 94, 0.4)',
               }}
             >
-              {isSaving ? 'Registrando...' : '✅ Confirmar Cobro y Abrir WhatsApp'}
+              {isSaving ? 'Registrando...' : sendWhatsApp ? '✅ Confirmar Cobro y Abrir WhatsApp' : '✅ Confirmar Cobro (Acceso Inmediato)'}
             </button>
           </div>
         </form>

@@ -300,6 +300,7 @@ export default function BingoHub() {
   const [cashPaymentAmount, setCashPaymentAmount] = useState<number>(10);
   const [cashScheduledGameId, setCashScheduledGameId] = useState<string>('');
   const [isSavingCashPayment, setIsSavingCashPayment] = useState(false);
+  const [cashSendWhatsApp, setCashSendWhatsApp] = useState(false);
   const [expandedCashGiftOrderId, setExpandedCashGiftOrderId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -1937,14 +1938,46 @@ export default function BingoHub() {
     } catch {}
   };
 
-  // Abrir modal de cobro en efectivo para un cartón existente en la sesión (ej. Neto)
+  // Abrir modal de cobro en efectivo para un cartón existente en la sesión (ej. Ernesto)
   const handleOpenCashPaymentForCard = (card: BingoCard) => {
     setCashPaymentTargetCard(card);
     setCashPlayerName(card.playerName || '');
     setCashPlayerPhone(card.phone || '');
     setCashPaymentTierId((card.tierId as any) || 'tier-10');
     setCashPaymentAmount(card.paidAmount || (card.tierId === 'tier-25' ? 25 : card.tierId === 'tier-50' ? 50 : card.tierId === 'tier-100' ? 100 : 10));
+    setCashSendWhatsApp(false);
     setShowCashPaymentModal(true);
+  };
+
+  // Confirmar cobro rápido de 1 clic (activa acceso inmediato y marca en línea sin abrir WhatsApp)
+  const handleQuickConfirmCashPayment = async (card: BingoCard) => {
+    const amount = card.paidAmount || (card.tierId === 'tier-25' ? 25 : card.tierId === 'tier-50' ? 50 : card.tierId === 'tier-100' ? 100 : 10);
+    try {
+      await updateDoc(doc(db, 'bingo_cards', card.id), {
+        paymentStatus: 'paid',
+        paymentMethod: 'efectivo',
+        paidAmount: amount,
+        paidAt: Date.now(),
+        isOnline: true,
+        lastActiveAt: Date.now()
+      });
+
+      if (card.tokenId) {
+        try {
+          await updateDoc(doc(db, 'bingo_access_tokens', card.tokenId), {
+            paymentStatus: 'paid',
+            status: 'used',
+            paidAt: Date.now()
+          });
+        } catch {}
+      }
+
+      addLog(`HOST: Cobro de Q${amount} confirmado para ${card.playerName} (Cartón #${card.id}). Acceso habilitado.`);
+      await showAlert(`¡Cobro de Q${amount} confirmado exitosamente! ${card.playerName} ahora tiene acceso a su cartón y figura en línea.`, "Cobro Confirmado", "✅");
+    } catch (err) {
+      console.error("Error confirmando cobro rápido:", err);
+      await showAlert("Error al registrar el cobro.", "Error", "❌");
+    }
   };
 
   // Abrir modal para registrar un nuevo cobro en efectivo independiente
@@ -1955,52 +1988,44 @@ export default function BingoHub() {
     setCashPaymentTierId('tier-10');
     setCashPaymentAmount(10);
     setCashScheduledGameId(selectedScheduledGame?.id || '');
+    setCashSendWhatsApp(false);
     setShowCashPaymentModal(true);
   };
 
-  // Envío directo de link de cartón con verificación de cobro realizado y regla de un solo link
+  // Envío directo de link de cartón por WhatsApp (opcional para jugadores a distancia o quienes necesitan compartirlo)
   const handleSendCardWhatsApp = async (card: BingoCard) => {
-    // 1. Verificar si el cobro fue confirmado
-    const isPaid = card.paymentStatus === 'paid';
+    let cleanPhone = (card.phone || '').replace(/\D/g, '');
 
-    if (!isPaid) {
-      const confirmRegisterCash = await showConfirm(
-        `El jugador "${card.playerName}" figura con cobro PENDIENTE.\n\nPara enviarle su enlace de juego por WhatsApp, primero debes registrar y confirmar el cobro en efectivo.\n\n¿Deseas registrar el cobro en efectivo ahora?`,
-        "Cobro Pendiente",
-        "💵",
-        "REGISTRAR COBRO Y ENVIAR",
-        "CANCELAR"
-      );
-      if (confirmRegisterCash) {
-        handleOpenCashPaymentForCard(card);
+    if (cleanPhone.length < 8) {
+      const enteredPhone = prompt(`Ingresa el número de WhatsApp de ${card.playerName} (8 dígitos) para compartirle su enlace:`, card.phone || '');
+      if (!enteredPhone) return;
+      cleanPhone = enteredPhone.replace(/\D/g, '');
+      if (cleanPhone.length < 8) {
+        await showAlert("El número ingresado no es válido.", "Teléfono Inválido", "⚠️");
+        return;
       }
-      return;
+      try {
+        await updateDoc(doc(db, 'bingo_cards', card.id), { phone: cleanPhone });
+      } catch {}
     }
 
-    // 2. Verificar que solo se pueda enviar un link por cobro realizado
     if (card.linkSent) {
       const sentDateStr = card.linkSentAt ? new Date(card.linkSentAt).toLocaleString('es-GT') : 'previamente';
       const confirmResend = await showConfirm(
-        `⚠️ ATENCIÓN: Ya se despachó un enlace a ${card.playerName} el ${sentDateStr} para este cobro realizado.\n\nPor seguridad del juego, solo se debe emitir un link por cobro realizado.\n\n¿Deseas reenviar el enlace a su WhatsApp (+502 ${card.phone || ''})?`,
-        "Enlace Ya Despachado",
-        "⚠️",
+        `Ya se despachó un enlace a ${card.playerName} el ${sentDateStr}.\n\n¿Deseas reenviar el enlace a su WhatsApp (+502 ${cleanPhone})?`,
+        "Reenviar Enlace",
+        "📲",
         "SÍ, REENVIAR",
         "CANCELAR"
       );
       if (!confirmResend) return;
     }
 
-    const cleanPhone = (card.phone || '').replace(/\D/g, '');
-    if (cleanPhone.length < 8) {
-      await showAlert("Este jugador no tiene un número de WhatsApp registrado válido para enviarle el link.", "Sin WhatsApp", "⚠️");
-      return;
-    }
-
     const playUrl = `${window.location.origin}/juegos/bingo/carton/${card.id}`;
     const text = encodeURIComponent(
       `¡Hola ${card.playerName}! 🎟️ Te compartimos el enlace directo a tu Cartón Oficial de Bingotenango:\n\n` +
       `🆔 ID de Cartón: #${card.id}\n` +
-      `💵 Estado: Cobro en efectivo confirmado (Q${card.paidAmount || '10'})\n\n` +
+      `💵 Estado: Cobro confirmado (Q${card.paidAmount || '10'})\n\n` +
       `🎮 ENLACE DIRECTO A TU CARTÓN:\n${playUrl}\n\n` +
       `Ábrelo en tu teléfono para jugar en tiempo real junto con la tómbola en vivo. ¡Muchos éxitos!`
     );
@@ -2015,13 +2040,13 @@ export default function BingoHub() {
         linkSentAt: Date.now(),
         linkSentCount: nextCount
       });
-      addLog(`HOST: Enlace directo de juego enviado por WhatsApp a ${card.playerName} (${card.phone}) para el cartón #${card.id}.`);
+      addLog(`HOST: Enlace directo de juego enviado por WhatsApp a ${card.playerName} (+502 ${cleanPhone}) para el cartón #${card.id}.`);
     } catch (err) {
       console.error("Error actualizando linkSent en bingo_cards:", err);
     }
   };
 
-  // Guardar confirmación de cobro en efectivo y despachar enlace
+  // Guardar confirmación de cobro en efectivo y opcionalmente despachar enlace
   const handleConfirmCashPayment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!cashPlayerName.trim()) {
@@ -2029,7 +2054,7 @@ export default function BingoHub() {
       return;
     }
     const cleanPhone = cashPlayerPhone.replace(/\D/g, '');
-    if (cleanPhone.length < 8) {
+    if (cashSendWhatsApp && cleanPhone.length < 8) {
       await showAlert("Ingresa un número de WhatsApp válido (mínimo 8 dígitos) para enviar el enlace de juego.", "Teléfono Requerido", "⚠️");
       return;
     }
@@ -2037,35 +2062,53 @@ export default function BingoHub() {
     setIsSavingCashPayment(true);
     try {
       if (cashPaymentTargetCard) {
-        // CASO A: Actualizar jugador existente con cartón (ej. Neto)
-        const nextCount = 1;
+        // CASO A: Actualizar jugador existente con cartón (ej. Ernesto)
+        const nextCount = (cashPaymentTargetCard.linkSentCount || 0) + (cashSendWhatsApp ? 1 : 0);
         await updateDoc(doc(db, 'bingo_cards', cashPaymentTargetCard.id), {
           playerName: cashPlayerName.trim(),
-          phone: cleanPhone,
+          phone: cleanPhone || cashPaymentTargetCard.phone || null,
           paymentStatus: 'paid',
           paymentMethod: 'efectivo',
           paidAmount: Number(cashPaymentAmount) || 10,
           paidAt: Date.now(),
           tierId: cashPaymentTierId,
-          linkSent: true,
-          linkSentAt: Date.now(),
-          linkSentCount: nextCount
+          isOnline: true,
+          lastActiveAt: Date.now(),
+          ...(cashSendWhatsApp ? {
+            linkSent: true,
+            linkSentAt: Date.now(),
+            linkSentCount: nextCount
+          } : {})
         });
+
+        // Sincronizar token u orden si existen
+        if (cashPaymentTargetCard.tokenId) {
+          try {
+            await updateDoc(doc(db, 'bingo_access_tokens', cashPaymentTargetCard.tokenId), {
+              paymentStatus: 'paid',
+              status: 'used',
+              paidAt: Date.now()
+            });
+          } catch {}
+        }
 
         addLog(`HOST: Cobro en efectivo de Q${cashPaymentAmount} confirmado para ${cashPlayerName.trim()} (Cartón #${cashPaymentTargetCard.id}).`);
 
-        // Despachar WhatsApp de inmediato
-        const playUrl = `${window.location.origin}/juegos/bingo/carton/${cashPaymentTargetCard.id}`;
-        const text = encodeURIComponent(
-          `¡Hola ${cashPlayerName.trim()}! 🎟️ Tu pago en efectivo ha sido confirmado con éxito para Bingotenango:\n\n` +
-          `🆔 ID de Cartón: #${cashPaymentTargetCard.id}\n` +
-          `💵 Monto Recibido: Q${cashPaymentAmount}\n\n` +
-          `🎮 ENLACE OFICIAL DE TU CARTÓN:\n${playUrl}\n\n` +
-          `Ábrelo en tu teléfono para ingresar y marcar tus números en vivo durante la partida. ¡Mucha suerte!`
-        );
-        const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
-    window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');
-        await showAlert(`¡Cobro en efectivo de Q${cashPaymentAmount} confirmado exitosamente y enlace enviado a ${cashPlayerName.trim()} por WhatsApp! 🚀`, "Cobro Confirmado", "✅");
+        if (cashSendWhatsApp && cleanPhone.length >= 8) {
+          const playUrl = `${window.location.origin}/juegos/bingo/carton/${cashPaymentTargetCard.id}`;
+          const text = encodeURIComponent(
+            `¡Hola ${cashPlayerName.trim()}! 🎟️ Tu pago en efectivo ha sido confirmado con éxito para Bingotenango:\n\n` +
+            `🆔 ID de Cartón: #${cashPaymentTargetCard.id}\n` +
+            `💵 Monto Recibido: Q${cashPaymentAmount}\n\n` +
+            `🎮 ENLACE OFICIAL DE TU CARTÓN:\n${playUrl}\n\n` +
+            `Ábrelo en tu teléfono para ingresar y marcar tus números en vivo durante la partida. ¡Mucha suerte!`
+          );
+          const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+          window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');
+          await showAlert(`¡Cobro en efectivo de Q${cashPaymentAmount} confirmado exitosamente y enlace enviado a ${cashPlayerName.trim()} por WhatsApp! 🚀`, "Cobro Confirmado", "✅");
+        } else {
+          await showAlert(`¡Cobro en efectivo de Q${cashPaymentAmount} confirmado para ${cashPlayerName.trim()}! El cartón ahora está habilitado y el jugador figura en línea.`, "Cobro Confirmado", "✅");
+        }
       } else {
         // CASO B: Registrar nuevo cliente que paga en efectivo en taquilla/mesa
         const orderId = 'ord_cash_' + Date.now();
@@ -2091,7 +2134,7 @@ export default function BingoHub() {
         // 1. Crear Orden pagada en efectivo
         await setDoc(doc(db, 'bingo_orders', orderId), {
           playerName: cashPlayerName.trim(),
-          playerWhatsapp: cleanPhone,
+          playerWhatsapp: cleanPhone || null,
           tierId: cashPaymentTierId,
           tierName: selectedTierName,
           prizeLevel: 'En vivo',
@@ -2101,9 +2144,9 @@ export default function BingoHub() {
           paymentMethod: 'efectivo',
           status: 'paid',
           paidAt: Date.now(),
-          linkSent: true,
-          linkSentAt: Date.now(),
-          linkSentCount: 1,
+          linkSent: Boolean(cashSendWhatsApp),
+          linkSentAt: cashSendWhatsApp ? Date.now() : null,
+          linkSentCount: cashSendWhatsApp ? 1 : 0,
           gameId: activeGame?.id || 'default',
           scheduledGameId: cashScheduledGameId || activeGame?.scheduledGameId || null,
           createdAt: Date.now()
@@ -2123,10 +2166,11 @@ export default function BingoHub() {
           scheduledGameId: cashScheduledGameId || activeGame?.scheduledGameId || undefined,
           sessionResetAt: activeGame?.lastResetAt || Date.now(),
           status: 'active',
+          paymentStatus: 'paid',
           usedByDevice: null,
-          linkSent: true,
-          linkSentAt: Date.now(),
-          linkSentCount: 1,
+          linkSent: Boolean(cashSendWhatsApp),
+          linkSentAt: cashSendWhatsApp ? Date.now() : null,
+          linkSentCount: cashSendWhatsApp ? 1 : 0,
           paymentMethod: 'efectivo',
           paidAmount: Number(cashPaymentAmount) || 10,
           createdAt: Date.now()
@@ -2135,18 +2179,21 @@ export default function BingoHub() {
 
         addLog(`HOST: Nuevo cobro en efectivo de Q${cashPaymentAmount} registrado para ${cashPlayerName.trim()} (${selectedQty} cartones).`);
 
-        // Despachar WhatsApp con el Pase Único oficial
-        const playUrl = `${window.location.origin}/juegos/bingo?access=${tokenId}`;
-        const text = encodeURIComponent(
-          `¡Hola ${cashPlayerName.trim()}! 🎟️ Tu pago en efectivo (Q${cashPaymentAmount}) ha sido confirmado para Bingotenango:\n\n` +
-          `🏆 Categoría: ${selectedTierName}\n` +
-          `🎟️ Cartones Incluidos: ${selectedQty}\n\n` +
-          `🔑 ENLACE EXCLUSIVO DE ACCESO:\n${playUrl}\n\n` +
-          `Ábrelo en tu teléfono para ingresar a la sala y activar tus cartones oficiales. ¡Mucha suerte!`
-        );
-        const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
-    window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');
-        await showAlert(`¡Pase Único (${selectedQty} cartones) generado y enviado exitosamente por WhatsApp a ${cashPlayerName.trim()}! 🚀`, "Pase Despachado", "✅");
+        if (cashSendWhatsApp && cleanPhone.length >= 8) {
+          const playUrl = `${window.location.origin}/juegos/bingo?access=${tokenId}`;
+          const text = encodeURIComponent(
+            `¡Hola ${cashPlayerName.trim()}! 🎟️ Tu pago en efectivo (Q${cashPaymentAmount}) ha sido confirmado para Bingotenango:\n\n` +
+            `🏆 Categoría: ${selectedTierName}\n` +
+            `🎟️ Cartones Incluidos: ${selectedQty}\n\n` +
+            `🔑 ENLACE EXCLUSIVO DE ACCESO:\n${playUrl}\n\n` +
+            `Ábrelo en tu teléfono para ingresar a la sala y activar tus cartones oficiales. ¡Mucha suerte!`
+          );
+          const finalTargetPhone = cleanPhone.startsWith('502') ? cleanPhone : `502${cleanPhone}`;
+          window.open(`https://wa.me/${finalTargetPhone}?text=${text}`, '_blank');
+          await showAlert(`¡Pase Único (${selectedQty} cartones) generado y enviado exitosamente por WhatsApp a ${cashPlayerName.trim()}! 🚀`, "Pase Despachado", "✅");
+        } else {
+          await showAlert(`¡Pase Único (${selectedQty} cartones) emitido para ${cashPlayerName.trim()} con cobro confirmado! El jugador ya puede acceder.`, "Cobro Confirmado", "✅");
+        }
       }
 
       setShowCashPaymentModal(false);
@@ -4354,13 +4401,13 @@ export default function BingoHub() {
                       <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.82rem' }}>
                         <thead>
                           <tr style={{ background: 'rgba(168, 85, 247, 0.2)', borderBottom: '1px solid rgba(168, 85, 247, 0.4)', color: '#fff' }}>
-                            <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Jugador (Nickname)</th>
+                            <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Jugador</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Partida</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>ID Cartón</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Teléfono</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Promotor</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Cobro / Taquilla</th>
-                            <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Enlace de Juego</th>
+                            <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px' }}>Enlace / WhatsApp</th>
                             <th style={{ padding: '12px 14px', textTransform: 'uppercase', fontSize: '0.68rem', letterSpacing: '0.8px', textAlign: 'right' }}>Acciones</th>
                           </tr>
                         </thead>
@@ -4368,17 +4415,76 @@ export default function BingoHub() {
                           {filteredCards.map((card) => {
                             const isIdRevealed = showAllIds || revealedIds[card.id];
                             const isPhoneRevealed = showAllPhones || revealedPhones[card.id];
-                            const isPaid = card.paymentStatus === 'paid';
+
+                            // Detección robusta de cobro y token vinculado
+                            const matchedToken = card.tokenId ? allAccessTokens.find(t => t.id === card.tokenId) : undefined;
+                            const isTokenPaid = matchedToken ? (matchedToken.paymentStatus === 'paid' || matchedToken.status === 'used' || matchedToken.status === 'active' || Boolean(matchedToken.paidAt)) : false;
+                            const isPlayerOnline = Boolean(card.isOnline || (card.lastActiveAt && (Date.now() - card.lastActiveAt < 180000)));
+                            const isPaid = card.paymentStatus === 'paid' || card.paymentStatus === 'cortesia' || Boolean(card.paidAt) || (Number(card.paidAmount || 0) > 0) || isTokenPaid || isPlayerOnline;
+                            const amountQ = card.paidAmount || (matchedToken?.paidAmount) || (card.tierId === 'tier-25' ? 25 : card.tierId === 'tier-50' ? 50 : card.tierId === 'tier-100' ? 100 : 10);
                             const playUrl = `${window.location.origin}/juegos/bingo/carton/${card.id}`;
 
                             return (
                               <tr key={card.id} style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', transition: 'background 0.2s' }}>
                                 
-                                {/* Nickname */}
+                                {/* Nickname y Estado en Línea */}
                                 <td style={{ padding: '12px 14px', fontWeight: 'bold', color: '#fff' }}>
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                    <span style={{ fontSize: '1.1rem' }}>👤</span>
-                                    <span>{card.playerName}</span>
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                      <span style={{ fontSize: '1.1rem' }}>👤</span>
+                                      <span style={{ fontSize: '0.9rem', color: '#fff' }}>{card.playerName}</span>
+                                    </div>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      {isPlayerOnline ? (
+                                        <span style={{
+                                          background: 'rgba(34, 197, 94, 0.2)',
+                                          border: '1px solid rgba(34, 197, 94, 0.5)',
+                                          color: '#4ade80',
+                                          fontSize: '0.65rem',
+                                          padding: '2px 7px',
+                                          borderRadius: '10px',
+                                          fontWeight: 'bold',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                          letterSpacing: '0.3px',
+                                          boxShadow: '0 0 8px rgba(34, 197, 94, 0.25)'
+                                        }}>
+                                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#22c55e', display: 'inline-block' }}></span>
+                                          🟢 EN LÍNEA
+                                        </span>
+                                      ) : isPaid ? (
+                                        <span style={{
+                                          background: 'rgba(56, 189, 248, 0.15)',
+                                          border: '1px solid rgba(56, 189, 248, 0.35)',
+                                          color: '#38bdf8',
+                                          fontSize: '0.65rem',
+                                          padding: '2px 7px',
+                                          borderRadius: '10px',
+                                          fontWeight: 'bold',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px'
+                                        }}>
+                                          ● EN SALA
+                                        </span>
+                                      ) : (
+                                        <span style={{
+                                          background: 'rgba(245, 158, 11, 0.15)',
+                                          border: '1px solid rgba(245, 158, 11, 0.35)',
+                                          color: '#fbbf24',
+                                          fontSize: '0.65rem',
+                                          padding: '2px 7px',
+                                          borderRadius: '10px',
+                                          fontWeight: 'bold',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px'
+                                        }}>
+                                          ○ PENDIENTE
+                                        </span>
+                                      )}
+                                    </div>
                                   </div>
                                 </td>
 
@@ -4426,56 +4532,57 @@ export default function BingoHub() {
                                   })()}
                                 </td>
 
-                                  {/* ID Cartón con Toggle Reveal */}
-                                  <td style={{ padding: '12px 14px' }}>
-                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
-                                      <code style={{ fontFamily: 'monospace', color: isIdRevealed ? '#00f0ff' : '#94a3b8', fontSize: '0.85rem' }}>
-                                        {isIdRevealed ? card.id : `••••${card.id.slice(-3)}`}
+                                {/* ID Cartón con Toggle Reveal */}
+                                <td style={{ padding: '12px 14px' }}>
+                                  <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(0, 240, 255, 0.2)' }}>
+                                    <code style={{ fontFamily: 'monospace', color: isIdRevealed ? '#00f0ff' : '#94a3b8', fontSize: '0.85rem' }}>
+                                      {isIdRevealed ? card.id : `••••${card.id.slice(-3)}`}
+                                    </code>
+                                    <button 
+                                      onClick={() => toggleRevealId(card.id)}
+                                      style={{ background: 'none', border: 'none', color: isIdRevealed ? '#00f0ff' : '#64748b', cursor: 'pointer', padding: '0 2px', fontSize: '0.85rem' }}
+                                      title={isIdRevealed ? 'Ocultar ID' : 'Ver ID'}
+                                    >
+                                      {isIdRevealed ? '👁️' : '🔒'}
+                                    </button>
+                                  </div>
+                                </td>
+
+                                {/* Teléfono con Toggle Reveal */}
+                                <td style={{ padding: '12px 14px' }}>
+                                  {card.phone ? (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(236, 72, 153, 0.2)' }}>
+                                      <code style={{ fontFamily: 'monospace', color: isPhoneRevealed ? '#ec4899' : '#94a3b8', fontSize: '0.85rem' }}>
+                                        {isPhoneRevealed ? card.phone : `••••-${card.phone.slice(-4)}`}
                                       </code>
                                       <button 
-                                        onClick={() => toggleRevealId(card.id)}
-                                        style={{ background: 'none', border: 'none', color: isIdRevealed ? '#00f0ff' : '#64748b', cursor: 'pointer', padding: '0 2px', fontSize: '0.85rem' }}
-                                        title={isIdRevealed ? 'Ocultar ID' : 'Ver ID'}
+                                        onClick={() => toggleRevealPhone(card.id)}
+                                        style={{ background: 'none', border: 'none', color: isPhoneRevealed ? '#ec4899' : '#64748b', cursor: 'pointer', padding: '0 2px', fontSize: '0.85rem' }}
+                                        title={isPhoneRevealed ? 'Ocultar Teléfono' : 'Ver Teléfono'}
                                       >
-                                        {isIdRevealed ? '👁️' : '🔒'}
+                                        {isPhoneRevealed ? '👁️' : '🔒'}
                                       </button>
                                     </div>
-                                  </td>
+                                  ) : (
+                                    <span style={{ opacity: 0.4, fontStyle: 'italic', fontSize: '0.75rem' }}>Sin teléfono</span>
+                                  )}
+                                </td>
 
-                                  {/* Teléfono con Toggle Reveal */}
-                                  <td style={{ padding: '12px 14px' }}>
-                                    {card.phone ? (
-                                      <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'rgba(0,0,0,0.4)', padding: '4px 10px', borderRadius: '8px', border: '1px solid rgba(236, 72, 153, 0.2)' }}>
-                                        <code style={{ fontFamily: 'monospace', color: isPhoneRevealed ? '#ec4899' : '#94a3b8', fontSize: '0.85rem' }}>
-                                          {isPhoneRevealed ? card.phone : `••••-${card.phone.slice(-4)}`}
-                                        </code>
-                                        <button 
-                                          onClick={() => toggleRevealPhone(card.id)}
-                                          style={{ background: 'none', border: 'none', color: isPhoneRevealed ? '#ec4899' : '#64748b', cursor: 'pointer', padding: '0 2px', fontSize: '0.85rem' }}
-                                          title={isPhoneRevealed ? 'Ocultar Teléfono' : 'Ver Teléfono'}
-                                        >
-                                          {isPhoneRevealed ? '👁️' : '🔒'}
-                                        </button>
-                                      </div>
-                                    ) : (
-                                      <span style={{ opacity: 0.4, fontStyle: 'italic', fontSize: '0.75rem' }}>Sin teléfono</span>
-                                    )}
-                                  </td>
+                                {/* Promotor */}
+                                <td style={{ padding: '12px 14px' }}>
+                                  {card.promoterCode ? (
+                                    <span className="cyber-badge" style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', fontWeight: 'bold' }}>
+                                      📢 {card.promoterCode}
+                                    </span>
+                                  ) : (
+                                    <span style={{ opacity: 0.4, fontStyle: 'italic', fontSize: '0.75rem' }}>Sin Promotor</span>
+                                  )}
+                                </td>
 
-                                  {/* Promotor */}
-                                  <td style={{ padding: '12px 14px' }}>
-                                    {card.promoterCode ? (
-                                      <span className="cyber-badge" style={{ background: 'rgba(59, 130, 246, 0.2)', color: '#60a5fa', border: '1px solid rgba(59, 130, 246, 0.4)', fontWeight: 'bold' }}>
-                                        📢 {card.promoterCode}
-                                      </span>
-                                    ) : (
-                                      <span style={{ opacity: 0.4, fontStyle: 'italic', fontSize: '0.75rem' }}>Sin Promotor</span>
-                                    )}
-                                  </td>
-
-                                  {/* Cobro / Taquilla */}
-                                  <td style={{ padding: '12px 14px' }}>
-                                    {isPaid ? (
+                                {/* Cobro / Taquilla */}
+                                <td style={{ padding: '12px 14px' }}>
+                                  {isPaid ? (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
                                       <span style={{
                                         background: 'rgba(34, 197, 94, 0.15)',
                                         border: '1px solid rgba(34, 197, 94, 0.4)',
@@ -4488,9 +4595,48 @@ export default function BingoHub() {
                                         alignItems: 'center',
                                         gap: '4px'
                                       }}>
-                                        🟢 Cobrado Q{card.paidAmount || 10}
+                                        🟢 Cobrado Q{amountQ}
                                       </span>
-                                    ) : (
+                                      <button
+                                        type="button"
+                                        onClick={() => handleOpenCashPaymentForCard(card)}
+                                        style={{
+                                          background: 'rgba(255,255,255,0.06)',
+                                          border: '1px solid rgba(255,255,255,0.15)',
+                                          color: '#cbd5e1',
+                                          borderRadius: '6px',
+                                          padding: '3px 6px',
+                                          fontSize: '0.7rem',
+                                          cursor: 'pointer'
+                                        }}
+                                        title="Opciones avanzadas o modificar cobro"
+                                      >
+                                        ⚙️
+                                      </button>
+                                    </div>
+                                  ) : (
+                                    <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleQuickConfirmCashPayment(card)}
+                                        style={{
+                                          background: 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
+                                          border: 'none',
+                                          color: '#fff',
+                                          padding: '5px 10px',
+                                          borderRadius: '8px',
+                                          fontWeight: 'bold',
+                                          fontSize: '0.74rem',
+                                          cursor: 'pointer',
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '4px',
+                                          boxShadow: '0 2px 8px rgba(34, 197, 94, 0.3)'
+                                        }}
+                                        title="Confirmar cobro de inmediato (habilita acceso y marca en línea sin abrir WhatsApp)"
+                                      >
+                                        💵 Cobrar Q{amountQ}
+                                      </button>
                                       <button
                                         type="button"
                                         onClick={() => handleOpenCashPaymentForCard(card)}
@@ -4498,97 +4644,59 @@ export default function BingoHub() {
                                           background: 'rgba(245, 158, 11, 0.15)',
                                           border: '1px solid rgba(245, 158, 11, 0.4)',
                                           color: '#fbbf24',
-                                          padding: '4px 10px',
-                                          borderRadius: '8px',
-                                          fontWeight: 'bold',
-                                          fontSize: '0.72rem',
+                                          borderRadius: '6px',
+                                          padding: '4px 6px',
+                                          fontSize: '0.7rem',
                                           cursor: 'pointer'
                                         }}
-                                        title="Hacer clic para confirmar cobro en efectivo"
+                                        title="Opciones avanzadas de cobro"
                                       >
-                                        🟡 Cobro Pendiente
+                                        ⚙️
                                       </button>
-                                    )}
-                                  </td>
+                                    </div>
+                                  )}
+                                </td>
 
-                                  {/* Estado de Enlace de Juego */}
-                                  <td style={{ padding: '12px 14px' }}>
-                                    {card.linkSent ? (
-                                      <span style={{
-                                        background: 'rgba(56, 189, 248, 0.15)',
-                                        border: '1px solid rgba(56, 189, 248, 0.35)',
-                                        color: '#38bdf8',
-                                        padding: '4px 8px',
-                                        borderRadius: '6px',
+                                {/* Enlace / WhatsApp (Opción separada para cobros a distancia o compartir) */}
+                                <td style={{ padding: '12px 14px' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSendCardWhatsApp(card)}
+                                      style={{
+                                        background: card.linkSent 
+                                          ? 'rgba(56, 189, 248, 0.15)'
+                                          : 'rgba(34, 197, 94, 0.15)',
+                                        border: card.linkSent
+                                          ? '1px solid rgba(56, 189, 248, 0.4)'
+                                          : '1px solid rgba(34, 197, 94, 0.4)',
+                                        color: card.linkSent ? '#38bdf8' : '#4ade80',
+                                        borderRadius: '7px',
+                                        padding: '4px 9px',
                                         fontSize: '0.72rem',
                                         fontWeight: 'bold',
+                                        cursor: 'pointer',
                                         display: 'inline-flex',
                                         alignItems: 'center',
                                         gap: '4px'
-                                      }}>
-                                        ✅ Enviado ({card.linkSentCount || 1}x)
-                                      </span>
-                                    ) : (
-                                      <span style={{ color: '#94a3b8', fontSize: '0.72rem' }}>
-                                        ○ Sin enviar
+                                      }}
+                                      title={card.linkSent ? "Enlace ya enviado. Clic para reenviar por WhatsApp." : "Compartir enlace por WhatsApp (para cobros a distancia o compartir)"}
+                                    >
+                                      📲 {card.linkSent ? `WhatsApp (${card.linkSentCount || 1}x)` : 'WhatsApp'}
+                                    </button>
+                                    {!card.linkSent && (
+                                      <span style={{ color: '#94a3b8', fontSize: '0.68rem', opacity: 0.7 }}>
+                                        (Opcional)
                                       </span>
                                     )}
-                                  </td>
+                                  </div>
+                                </td>
 
-                                  {/* Acciones */}
-                                  <td style={{ padding: '12px 14px', textAlign: 'right' }}>
-                                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
-                                      {/* Botón WhatsApp con Verificación Estricta */}
-                                      {isPaid ? (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleSendCardWhatsApp(card)}
-                                          style={{
-                                            background: card.linkSent 
-                                              ? 'linear-gradient(135deg, #0284c7 0%, #0ea5e9 100%)' 
-                                              : 'linear-gradient(135deg, #16a34a 0%, #22c55e 100%)',
-                                            border: 'none',
-                                            color: '#fff',
-                                            borderRadius: '8px',
-                                            padding: '5px 10px',
-                                            fontSize: '0.74rem',
-                                            fontWeight: 'bold',
-                                            cursor: 'pointer',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                            boxShadow: card.linkSent ? 'none' : '0 2px 10px rgba(34, 197, 94, 0.3)'
-                                          }}
-                                          title={card.linkSent ? "Enlace ya despachado. Clic para reenviar con confirmación de cobro único." : "Enviar enlace directo por WhatsApp"}
-                                        >
-                                          {card.linkSent ? '✅ Link Enviado 📲' : '📲 Enviar Link'}
-                                        </button>
-                                      ) : (
-                                        <button
-                                          type="button"
-                                          onClick={() => handleOpenCashPaymentForCard(card)}
-                                          style={{
-                                            background: 'linear-gradient(135deg, #d97706 0%, #f59e0b 100%)',
-                                            border: 'none',
-                                            color: '#fff',
-                                            borderRadius: '8px',
-                                            padding: '5px 10px',
-                                            fontSize: '0.74rem',
-                                            fontWeight: 'bold',
-                                            cursor: 'pointer',
-                                            display: 'inline-flex',
-                                            alignItems: 'center',
-                                            gap: '4px',
-                                            boxShadow: '0 2px 10px rgba(245, 158, 11, 0.3)'
-                                          }}
-                                          title="Registrar cobro en efectivo y enviar link de juego"
-                                        >
-                                          💵 Cobro y Enviar Link
-                                        </button>
-                                      )}
-
-                                      {/* Copiar Link */}
-                                      <button
+                                {/* Acciones */}
+                                <td style={{ padding: '12px 14px', textAlign: 'right' }}>
+                                  <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end', alignItems: 'center' }}>
+                                    {/* Copiar Link */}
+                                    <button
                                         type="button"
                                         onClick={() => {
                                           navigator.clipboard.writeText(playUrl);
@@ -7349,6 +7457,8 @@ export default function BingoHub() {
         setScheduledGameId={setCashScheduledGameId}
         scheduledGamesList={scheduledGamesList}
         isSaving={isSavingCashPayment}
+        sendWhatsApp={cashSendWhatsApp}
+        setSendWhatsApp={setCashSendWhatsApp}
         onConfirm={handleConfirmCashPayment}
       />
 
