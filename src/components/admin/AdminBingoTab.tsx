@@ -201,6 +201,8 @@ export default function AdminBingoTab() {
   const [soundTheme, setSoundTheme] = useState<BingoCustomization['soundTheme']>('classic');
   const [winningPattern, setWinningPattern] = useState('full');
   const [isProMode, setIsProMode] = useState(false);
+  const [isAutoDraw, setIsAutoDraw] = useState(false);
+  const [autoDrawInterval, setAutoDrawInterval] = useState(8);
 
   // Mappings (Figures) States
   const [numberToImageMap, setNumberToImageMap] = useState<BingoCustomization['numberToImageMap']>({});
@@ -286,6 +288,8 @@ export default function AdminBingoTab() {
           setGameTitle(gData.title || 'Gran Bingo Familiar');
           setWinningPattern(gData.winningPattern || 'full');
           setIsProMode(Boolean(gData.isProMode));
+          setIsAutoDraw(Boolean(gData.autoDraw));
+          if (gData.autoDrawInterval) setAutoDrawInterval(gData.autoDrawInterval);
 
           if (gData.customization) {
             setHeaderImage(gData.customization.headerImage || '');
@@ -530,6 +534,8 @@ export default function AdminBingoTab() {
         title: gameTitle.trim() || 'Gran Bingo Familiar',
         winningPattern: winningPattern,
         isProMode: Boolean(isProMode),
+        autoDraw: Boolean(isAutoDraw),
+        autoDrawInterval: Number(autoDrawInterval) || 8,
         cardPriceQ: typeof cardPriceQ === 'number' && !isNaN(cardPriceQ) ? Math.max(0, cardPriceQ) : 25,
         customization: getCustomizationObject()
       });
@@ -1784,6 +1790,101 @@ export default function AdminBingoTab() {
                   />
                   <span className="bingo-slider" style={{ background: isProMode ? '#ef4444' : undefined }} />
                 </label>
+              </div>
+
+              {/* Activador Canto Automático (Auto-Caller) */}
+              <div style={{
+                marginTop: '16px',
+                padding: '14px 16px',
+                borderRadius: '14px',
+                background: isAutoDraw ? 'rgba(16, 185, 129, 0.08)' : '#f8fafc',
+                border: isAutoDraw ? '1.5px solid #10b981' : '1px solid #e2e8f0',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '12px',
+                transition: 'all 0.2s ease'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  gap: '14px'
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ fontSize: '1.25rem' }}>⚡</span>
+                      <strong style={{ fontSize: '0.95rem', color: isAutoDraw ? '#047857' : '#1e293b' }}>
+                        Canto Automático (Auto-Caller)
+                      </strong>
+                      {isAutoDraw && (
+                        <span style={{
+                          background: '#d1fae5',
+                          color: '#059669',
+                          fontSize: '0.68rem',
+                          fontWeight: 'bold',
+                          padding: '2px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid #a7f3d0'
+                        }}>
+                          AUTO ACTIVO ({autoDrawInterval}s)
+                        </span>
+                      )}
+                    </div>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                      Extrae y canta bolas periódicamente a un ritmo constante sin requerir pulsaciones manuales. Se pausa de inmediato si hay un grito de Bingo en verificación.
+                    </p>
+                  </div>
+
+                  <label className="bingo-switch" style={{ margin: 0, flexShrink: 0 }}>
+                    <input
+                      type="checkbox"
+                      checked={isAutoDraw}
+                      onChange={e => setIsAutoDraw(e.target.checked)}
+                    />
+                    <span className="bingo-slider" style={{ background: isAutoDraw ? '#10b981' : undefined }} />
+                  </label>
+                </div>
+
+                {/* Selector de Intervalo / Velocidad */}
+                <div style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '10px',
+                  paddingTop: '8px',
+                  borderTop: '1px solid rgba(0, 0, 0, 0.06)'
+                }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 600, color: '#475569' }}>
+                    ⏱️ Intervalo entre bolas:
+                  </span>
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    {[
+                      { sec: 4, label: '4s (Turbo)' },
+                      { sec: 6, label: '6s (Rápido)' },
+                      { sec: 8, label: '8s (Normal)' },
+                      { sec: 10, label: '10s (Calma)' },
+                      { sec: 15, label: '15s (Pausado)' }
+                    ].map(opt => (
+                      <button
+                        key={opt.sec}
+                        type="button"
+                        onClick={() => setAutoDrawInterval(opt.sec)}
+                        style={{
+                          padding: '4px 9px',
+                          borderRadius: '7px',
+                          fontSize: '0.72rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          border: autoDrawInterval === opt.sec ? '1.5px solid #10b981' : '1px solid #cbd5e1',
+                          background: autoDrawInterval === opt.sec ? '#10b981' : '#ffffff',
+                          color: autoDrawInterval === opt.sec ? '#ffffff' : '#475569',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
             </div>
 

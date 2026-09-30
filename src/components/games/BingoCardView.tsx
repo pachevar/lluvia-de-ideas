@@ -1955,9 +1955,29 @@ export default function BingoCardView() {
                           ✨ ¡ESTÁ EN TU CARTÓN!
                         </span>
                       ) : (
-                        <span style={{ fontSize: '0.72rem', color: '#94a3b8', marginTop: '2px' }}>
-                          Total: {gameData.drawnNumbers.length} de 75
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '2px' }}>
+                          <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>
+                            Total: {gameData.drawnNumbers.length} de 75
+                          </span>
+                          {gameData.autoDraw && (
+                            <span style={{
+                              fontSize: '0.65rem',
+                              fontWeight: 800,
+                              color: gameData.activeClaim && gameData.activeClaim.status === 'pending' ? '#fca5a5' : '#00f0ff',
+                              background: gameData.activeClaim && gameData.activeClaim.status === 'pending' ? 'rgba(239, 68, 68, 0.2)' : 'rgba(0, 240, 255, 0.15)',
+                              border: gameData.activeClaim && gameData.activeClaim.status === 'pending' ? '1px solid #ef4444' : '1px solid rgba(0, 240, 255, 0.4)',
+                              padding: '1px 6px',
+                              borderRadius: '8px',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}>
+                              {gameData.activeClaim && gameData.activeClaim.status === 'pending' 
+                                ? '⏸️ Tómbola en Pausa' 
+                                : `⚡ Auto: cada ${gameData.autoDrawInterval || 8}s`}
+                            </span>
+                          )}
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1969,7 +1989,22 @@ export default function BingoCardView() {
                   <span style={{ fontSize: '1.2rem', color: '#94a3b8' }}>🎲</span>
                 </div>
                 <div className="pocket-ball-info">
-                  <span className="pocket-ball-tag">TÓMBOLA EN VIVO</span>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span className="pocket-ball-tag">TÓMBOLA EN VIVO</span>
+                    {gameData.autoDraw && (
+                      <span style={{
+                        fontSize: '0.65rem',
+                        fontWeight: 800,
+                        color: '#00f0ff',
+                        background: 'rgba(0, 240, 255, 0.15)',
+                        border: '1px solid rgba(0, 240, 255, 0.4)',
+                        padding: '1px 6px',
+                        borderRadius: '8px'
+                      }}>
+                        ⚡ Auto: {gameData.autoDrawInterval || 8}s
+                      </span>
+                    )}
+                  </div>
                   <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>Esperando primera bola...</span>
                 </div>
               </div>

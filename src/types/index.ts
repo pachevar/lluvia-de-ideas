@@ -473,6 +473,9 @@ export interface BingoGame {
   cardPriceQ?: number; // Precio oficial por cartón fijado para el juego (ej. Q0 gratis, Q10, Q25, Q50, Q100)
   gameType?: 'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi';
   isProMode?: boolean; // Modo Pro: desactiva asistencias visuales en los cartones
+  autoDraw?: boolean; // Canto automático de bolas activado
+  autoDrawInterval?: number; // Segundos entre cada extracción automática (ej. 4, 6, 8, 10, 12, 15)
+  autoDrawPausedByShout?: boolean; // Indicador de pausa automática por verificación de Bingo en vivo
 }
 
 export interface BingoCard {
@@ -557,6 +560,8 @@ export interface BingoScheduledGame {
   prizeHighlight?: string;
   status: 'scheduled' | 'live' | 'finished' | 'cancelled';
   isProMode?: boolean; // Modo Pro: desactiva asistencias visuales en los cartones
+  autoDraw?: boolean; // Canto automático preconfigurado para la partida
+  autoDrawInterval?: number; // Segundos entre bolas (ej. 4, 6, 8, 10, 12, 15)
   createdAt: number;
   createdBy?: string;
   notes?: string;

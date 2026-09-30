@@ -219,6 +219,8 @@ export default function BingoHub() {
   const [newScheduleTier, setNewScheduleTier] = useState<'tier-free' | 'tier-10' | 'tier-25' | 'tier-50' | 'tier-100' | 'multi'>('tier-25');
   const [newSchedulePrize, setNewSchedulePrize] = useState('');
   const [newScheduleProMode, setNewScheduleProMode] = useState<boolean>(false);
+  const [newScheduleAutoDraw, setNewScheduleAutoDraw] = useState<boolean>(false);
+  const [newScheduleAutoDrawInterval, setNewScheduleAutoDrawInterval] = useState<number>(8);
   const [isSavingSchedule, setIsSavingSchedule] = useState(false);
 
   // Formulario para Editar Ficha de Juego Programado
@@ -229,6 +231,8 @@ export default function BingoHub() {
   const [editSchedulePrice, setEditSchedulePrice] = useState<number>(25);
   const [editSchedulePrize, setEditSchedulePrize] = useState('');
   const [editScheduleProMode, setEditScheduleProMode] = useState<boolean>(false);
+  const [editScheduleAutoDraw, setEditScheduleAutoDraw] = useState<boolean>(false);
+  const [editScheduleAutoDrawInterval, setEditScheduleAutoDrawInterval] = useState<number>(8);
   const [isSavingEditSchedule, setIsSavingEditSchedule] = useState(false);
 
   // Filtros de la lista de jugadores de la partida programada
@@ -302,6 +306,12 @@ export default function BingoHub() {
   const [isSavingCashPayment, setIsSavingCashPayment] = useState(false);
   const [cashSendWhatsApp, setCashSendWhatsApp] = useState(false);
   const [expandedCashGiftOrderId, setExpandedCashGiftOrderId] = useState<string | null>(null);
+
+  // Estados de Canto Automático (Auto-Caller)
+  const [isAutoDrawActive, setIsAutoDrawActive] = useState<boolean>(false);
+  const [autoDrawSeconds, setAutoDrawSeconds] = useState<number>(8);
+  const [autoDrawCountdown, setAutoDrawCountdown] = useState<number>(8);
+  const isAutoDrawingRef = useRef<boolean>(false);
 
   useEffect(() => {
     const qPromos = query(collection(db, 'bingo_promoters'));
@@ -1040,6 +1050,12 @@ export default function BingoHub() {
     return acc;
   }, []);
 
+  // Indicador reactivo de grito de Bingo o reclamación activa en verificación
+  const hasActiveShoutOrClaim = Boolean(
+    (activeGame?.activeClaim && activeGame.activeClaim.status === 'pending') || 
+    activeBingoShouts.length > 0
+  );
+
   // Auto-validación forense instantánea cuando un cartón canta Bingo
   useEffect(() => {
     if (!activeGame || activeBingoShouts.length === 0) return;
@@ -1298,9 +1314,9 @@ export default function BingoHub() {
     }, 80);
   };
 
-  // Host Controls
-  const drawRandomBall = async () => {
-    if (!activeGame) return;
+  // Host Controls: Extracción de bola (manual o por Canto Automático)
+  const drawRandomBall = async (isAuto = false): Promise<boolean> => {
+    if (!activeGame) return false;
 
     // Pausa Automática: Si hay un grito de Bingo en verificación, bloquear extracción
     const hasPendingClaim = Boolean(
@@ -1308,18 +1324,22 @@ export default function BingoHub() {
       activeBingoShouts.length > 0
     );
     if (hasPendingClaim) {
-      await showAlert(
-        "La tómbola se encuentra en PAUSA AUTOMÁTICA porque hay una reclamación de Bingo en verificación en vivo. Revisa y confirma o descarta el grito en pantalla antes de sacar más bolas.", 
-        "Tómbola en Pausa", 
-        "⏸️"
-      );
-      return;
+      if (!isAuto) {
+        await showAlert(
+          "La tómbola se encuentra en PAUSA AUTOMÁTICA porque hay una reclamación de Bingo en verificación en vivo. Revisa y confirma o descarta el grito en pantalla antes de sacar más bolas.", 
+          "Tómbola en Pausa", 
+          "⏸️"
+        );
+      }
+      return false;
     }
 
     const maxBalls = 75;
     if (activeGame.drawnNumbers.length >= maxBalls) {
-      await showAlert("¡Ya se sacaron todas las bolas!", "Juego Completado", "🎱");
-      return;
+      if (!isAuto) {
+        await showAlert("¡Ya se sacaron todas las bolas!", "Juego Completado", "🎱");
+      }
+      return false;
     }
 
     let newBall;
@@ -1329,9 +1349,113 @@ export default function BingoHub() {
 
     const updatedNumbers = [...activeGame.drawnNumbers, newBall];
     await updateDoc(doc(db, 'bingo_games', activeGame.id), {
-      drawnNumbers: updatedNumbers
+      drawnNumbers: updatedNumbers,
+      currentBall: newBall,
+      lastBallDrawnAt: Date.now()
     });
+    return true;
   };
+
+  // Alternar Canto Automático (Iniciar / Detener)
+  const handleToggleAutoDraw = async (forceState?: boolean) => {
+    const nextState = forceState !== undefined ? forceState : !isAutoDrawActive;
+    if (nextState) {
+      if (!activeGame || activeGame.status !== 'playing') {
+        await showAlert("Debes cambiar el estado de la partida a 'Jugar' para activar el canto automático.", "Partida en Espera", "⚠️");
+        return;
+      }
+      if (activeGame.drawnNumbers.length >= 75) {
+        await showAlert("Ya se han extraído todas las 75 bolas de la tómbola.", "Juego Completado", "🎱");
+        return;
+      }
+      const hasPendingClaim = Boolean(
+        (activeGame.activeClaim && activeGame.activeClaim.status === 'pending') || 
+        activeBingoShouts.length > 0
+      );
+      if (hasPendingClaim) {
+        await showAlert("No puedes iniciar el auto-canto mientras haya un grito de Bingo en verificación.", "Tómbola en Pausa", "⏸️");
+        return;
+      }
+      setAutoDrawCountdown(autoDrawSeconds);
+      setIsAutoDrawActive(true);
+      if (activeGame?.id) {
+        try {
+          await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+            autoDraw: true,
+            autoDrawInterval: autoDrawSeconds
+          });
+        } catch {}
+      }
+      addLog(`HOST: ⚡ Canto Automático ACTIVADO (ritmo: cada ${autoDrawSeconds} segundos).`, "success");
+    } else {
+      setIsAutoDrawActive(false);
+      if (activeGame?.id) {
+        try {
+          await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+            autoDraw: false
+          });
+        } catch {}
+      }
+      addLog("HOST: ⏹️ Canto Automático DETENIDO.", "warning");
+    }
+  };
+
+  // Ajustar ritmo / velocidad de Canto Automático
+  const handleChangeAutoDrawSeconds = async (seconds: number) => {
+    setAutoDrawSeconds(seconds);
+    setAutoDrawCountdown(seconds);
+    if (activeGame?.id) {
+      try {
+        await updateDoc(doc(db, 'bingo_games', activeGame.id), {
+          autoDrawInterval: seconds
+        });
+      } catch {}
+    }
+    addLog(`HOST: Ritmo de Canto Automático ajustado a ${seconds}s por bola.`, "system");
+  };
+
+  // Bucle de temporizador para el Canto Automático
+  useEffect(() => {
+    if (!isAutoDrawActive || !activeGame || activeGame.status !== 'playing') {
+      return;
+    }
+
+    if (activeGame.drawnNumbers.length >= 75) {
+      setIsAutoDrawActive(false);
+      if (activeGame.id) {
+        updateDoc(doc(db, 'bingo_games', activeGame.id), { autoDraw: false }).catch(() => {});
+      }
+      addLog("AUTO-CANTO: Finalizado. Se han extraído las 75 bolas.", "success");
+      return;
+    }
+
+    const interval = setInterval(async () => {
+      const hasPendingClaim = Boolean(
+        (activeGame.activeClaim && activeGame.activeClaim.status === 'pending') || 
+        activeBingoShouts.length > 0
+      );
+
+      // Si hay un grito en verificación en vivo, suspender el conteo temporalmente
+      if (hasPendingClaim) {
+        return;
+      }
+
+      setAutoDrawCountdown((prev) => {
+        if (prev <= 1) {
+          if (!isAutoDrawingRef.current) {
+            isAutoDrawingRef.current = true;
+            drawRandomBall(true).finally(() => {
+              isAutoDrawingRef.current = false;
+            });
+          }
+          return autoDrawSeconds;
+        }
+        return prev - 1;
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isAutoDrawActive, activeGame?.status, activeGame?.drawnNumbers?.length, activeBingoShouts.length, activeGame?.activeClaim?.status, autoDrawSeconds]);
 
   const changeGameStatus = async (status: 'waiting' | 'playing' | 'finished') => {
     if (!activeGame) return;
@@ -1599,18 +1723,22 @@ export default function BingoHub() {
         cardPriceQ: cardPrice,
         prizeHighlight: newSchedulePrize.trim() || undefined,
         isProMode: Boolean(newScheduleProMode),
+        autoDraw: Boolean(newScheduleAutoDraw),
+        autoDrawInterval: newScheduleAutoDrawInterval || 8,
         status: 'scheduled',
         createdAt: Date.now()
       };
 
       await setDoc(doc(db, 'bingo_scheduled_games', schedId), newGame);
-      addLog(`HOST: Partida programada creada: "${newScheduleTitle.trim()}" con valor de Q${cardPrice}${newScheduleProMode ? ' [MODO PRO]' : ''}.`);
-      await showAlert(`¡Partida programada con éxito! Ya puedes verla en la lista y admitir jugadores.${newScheduleProMode ? ' (Modo Pro activado: Sin asistencias visuales)' : ''}`, "Juego Programado", "📅");
+      addLog(`HOST: Partida programada creada: "${newScheduleTitle.trim()}" con valor de Q${cardPrice}${newScheduleProMode ? ' [MODO PRO]' : ''}${newScheduleAutoDraw ? ` [AUTO-CANTO ${newScheduleAutoDrawInterval}s]` : ''}.`);
+      await showAlert(`¡Partida programada con éxito! Ya puedes verla en la lista y admitir jugadores.${newScheduleProMode ? ' (Modo Pro: Sin asistencias visuales)' : ''}${newScheduleAutoDraw ? ` (Canto Automático activado cada ${newScheduleAutoDrawInterval}s)` : ''}`, "Juego Programado", "📅");
       
       setNewScheduleTitle('');
       setNewScheduleDateTime('');
       setNewSchedulePrize('');
       setNewScheduleProMode(false);
+      setNewScheduleAutoDraw(false);
+      setNewScheduleAutoDrawInterval(8);
       setShowCreateScheduleModal(false);
       setSelectedScheduledGame(newGame);
     } catch (err) {
@@ -1653,8 +1781,15 @@ export default function BingoHub() {
         cardPriceQ: cardPrice,
         gameType: game.gameType,
         isProMode: Boolean(game.isProMode),
+        autoDraw: Boolean(game.autoDraw),
+        autoDrawInterval: game.autoDrawInterval || 8,
         status: 'waiting'
       });
+
+      if (game.autoDraw) {
+        setAutoDrawSeconds(game.autoDrawInterval || 8);
+        setAutoDrawCountdown(game.autoDrawInterval || 8);
+      }
 
       await updateDoc(doc(db, 'bingo_scheduled_games', game.id), {
         status: 'live'
@@ -1718,6 +1853,8 @@ export default function BingoHub() {
     setEditSchedulePrice(game.cardPriceQ !== undefined ? game.cardPriceQ : (game.gameType === 'tier-free' ? 0 : game.gameType === 'tier-10' ? 10 : game.gameType === 'tier-50' ? 50 : game.gameType === 'tier-100' ? 100 : 25));
     setEditSchedulePrize(game.prizeHighlight || '');
     setEditScheduleProMode(Boolean(game.isProMode));
+    setEditScheduleAutoDraw(Boolean(game.autoDraw));
+    setEditScheduleAutoDrawInterval(game.autoDrawInterval || 8);
   };
 
   const handleSaveEditSchedule = async (e: React.FormEvent) => {
@@ -1756,7 +1893,9 @@ export default function BingoHub() {
         tierName: tierMap[editScheduleTier] || 'Cartón Estándar',
         cardPriceQ: safePrice,
         prizeHighlight: editSchedulePrize.trim() || null,
-        isProMode: Boolean(editScheduleProMode)
+        isProMode: Boolean(editScheduleProMode),
+        autoDraw: Boolean(editScheduleAutoDraw),
+        autoDrawInterval: editScheduleAutoDrawInterval || 8
       };
 
       await updateDoc(doc(db, 'bingo_scheduled_games', editingScheduleGame.id), updatedFields);
@@ -1769,8 +1908,14 @@ export default function BingoHub() {
           currentPrizeTitle: editSchedulePrize.trim() || activeGame.currentPrizeTitle || '',
           cardPriceQ: safePrice,
           gameType: editScheduleTier,
-          isProMode: Boolean(editScheduleProMode)
+          isProMode: Boolean(editScheduleProMode),
+          autoDraw: Boolean(editScheduleAutoDraw),
+          autoDrawInterval: editScheduleAutoDrawInterval || 8
         });
+        if (editScheduleAutoDraw) {
+          setAutoDrawSeconds(editScheduleAutoDrawInterval || 8);
+          setAutoDrawCountdown(editScheduleAutoDrawInterval || 8);
+        }
       }
 
       // Si está seleccionada en la vista detallada, actualizar selectedScheduledGame
@@ -2857,6 +3002,83 @@ export default function BingoHub() {
                     </button>
                   </div>
 
+                  {/* Interruptor Canto Automático (Host) */}
+                  <div className="host-sidebar-section" style={{
+                    background: isAutoDrawActive ? 'rgba(16, 185, 129, 0.12)' : 'rgba(0, 0, 0, 0.4)',
+                    border: isAutoDrawActive ? '1.5px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                    borderRadius: '12px',
+                    padding: '10px 14px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px'
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                          <span style={{ fontSize: '1rem' }}>⚡</span>
+                          <strong style={{ fontSize: '0.8rem', color: isAutoDrawActive ? '#6ee7b7' : '#ffffff' }}>
+                            CANTO AUTOMÁTICO
+                          </strong>
+                          <span style={{
+                            fontSize: '0.62rem',
+                            fontWeight: 'bold',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            background: isAutoDrawActive ? 'rgba(16, 185, 129, 0.3)' : 'rgba(255, 255, 255, 0.1)',
+                            color: isAutoDrawActive ? '#6ee7b7' : '#94a3b8',
+                            border: isAutoDrawActive ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.2)'
+                          }}>
+                            {isAutoDrawActive ? (hasActiveShoutOrClaim ? 'PAUSADO' : `${autoDrawSeconds}s`) : 'INACTIVO'}
+                          </span>
+                        </div>
+                        <p style={{ margin: '2px 0 0 0', fontSize: '0.68rem', color: '#94a3b8', lineHeight: 1.2 }}>
+                          {isAutoDrawActive 
+                            ? (hasActiveShoutOrClaim ? 'En pausa mientras se verifica reclamo de Bingo' : `Cantando bolas cada ${autoDrawSeconds}s`)
+                            : 'Extrae bolas periódicamente sin clic manual'}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleAutoDraw()}
+                        style={{
+                          padding: '5px 10px',
+                          borderRadius: '8px',
+                          background: isAutoDrawActive 
+                            ? 'linear-gradient(135deg, #10b981, #047857)' 
+                            : 'linear-gradient(135deg, #f59e0b, #d97706)',
+                          border: 'none',
+                          color: '#ffffff',
+                          fontSize: '0.72rem',
+                          fontWeight: 'bold',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                          boxShadow: isAutoDrawActive ? '0 0 12px rgba(16, 185, 129, 0.4)' : 'none'
+                        }}
+                      >
+                        {isAutoDrawActive ? '⏹️ Detener' : '⚡ Iniciar'}
+                      </button>
+                    </div>
+
+                    {/* Selector de Intervalo en Sidebar */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', paddingTop: '4px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <span style={{ fontSize: '0.65rem', color: '#94a3b8' }}>Intervalo:</span>
+                      <div style={{ display: 'flex', gap: '4px' }}>
+                        {[4, 6, 8, 10, 15].map((sec) => (
+                          <button
+                            key={sec}
+                            type="button"
+                            className={`autodraw-speed-chip ${autoDrawSeconds === sec ? 'active' : ''}`}
+                            onClick={() => handleChangeAutoDrawSeconds(sec)}
+                            style={{ padding: '2px 6px', fontSize: '0.65rem' }}
+                          >
+                            {sec}s
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
 
 
                   {/* Invitación QR / Mapa de Tómbola */}
@@ -3411,59 +3633,158 @@ export default function BingoHub() {
                   {/* DIVISOR VERTICAL ELEGANTE */}
                   <div style={{ width: '1px', height: '75px', background: 'rgba(255,255,255,0.12)', display: 'block' }}></div>
 
-                  {/* SECCIÓN 2: Acción Principal Tómbola (SACAR BOLA - Prominente en el Centro) */}
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '180px' }}>
+                  {/* SECCIÓN 2: Acción Principal Tómbola (SACAR BOLA + CANTO AUTOMÁTICO) */}
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minWidth: '280px', padding: '0 10px' }}>
                     {activeGame.status === 'playing' ? (
                       <>
-                        <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold', marginBottom: '6px' }}>
-                          🎲 ACCIÓN PRINCIPAL DE JUEGO
-                        </span>
-                        {activeBingoShouts.length > 0 || (activeGame.activeClaim && activeGame.activeClaim.status === 'pending') ? (
-                          <button 
-                            className="cyber-btn-primary gamer-btn-host-draw paused animate-pulse" 
-                            onClick={drawRandomBall}
-                            style={{
-                              height: '46px',
-                              padding: '0 20px',
-                              fontSize: '0.84rem',
-                              fontWeight: 900,
-                              letterSpacing: '0.5px',
-                              background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                              border: '1.5px solid #fca5a5',
-                              borderRadius: '14px',
-                              boxShadow: '0 0 25px rgba(239, 68, 68, 0.75)',
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%', maxWidth: '420px', marginBottom: '6px' }}>
+                          <span style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '1px', fontWeight: 'bold' }}>
+                            🎲 ACCIONES DE TÓMBOLA
+                          </span>
+                          {isAutoDrawActive && (
+                            <span style={{
+                              fontSize: '0.62rem',
+                              fontWeight: 800,
+                              color: hasActiveShoutOrClaim ? '#fca5a5' : '#4ade80',
+                              background: hasActiveShoutOrClaim ? 'rgba(239, 68, 68, 0.2)' : 'rgba(34, 197, 94, 0.2)',
+                              border: hasActiveShoutOrClaim ? '1px solid #ef4444' : '1px solid #22c55e',
+                              padding: '1px 6px',
+                              borderRadius: '6px',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '8px',
-                              cursor: 'pointer',
-                              color: '#fff'
-                            }}
-                          >
-                            <span style={{ fontSize: '1.2rem' }}>⏸️</span> TÓMBOLA EN PAUSA (VERIFICANDO)
-                          </button>
-                        ) : (
-                          <button 
-                            className="cyber-btn-primary gamer-btn-host-draw animate-pulse" 
-                            onClick={drawRandomBall}
+                              gap: '4px'
+                            }}>
+                              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: hasActiveShoutOrClaim ? '#ef4444' : '#22c55e', display: 'inline-block' }}></span>
+                              {hasActiveShoutOrClaim ? 'PAUSADO POR RECLAMO' : `AUTO: ${autoDrawSeconds}s`}
+                            </span>
+                          )}
+                        </div>
+
+                        {/* Fila de Botones: Sacar Manual + Canto Automático */}
+                        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
+                          {/* Botón Sacar Bola Manual */}
+                          {hasActiveShoutOrClaim ? (
+                            <button 
+                              className="cyber-btn-primary gamer-btn-host-draw paused animate-pulse" 
+                              onClick={() => drawRandomBall(false)}
+                              style={{
+                                height: '44px',
+                                padding: '0 16px',
+                                fontSize: '0.82rem',
+                                fontWeight: 900,
+                                letterSpacing: '0.5px',
+                                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                                border: '1.5px solid #fca5a5',
+                                borderRadius: '12px',
+                                boxShadow: '0 0 20px rgba(239, 68, 68, 0.65)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                cursor: 'pointer',
+                                color: '#fff'
+                              }}
+                            >
+                              <span style={{ fontSize: '1.1rem' }}>⏸️</span> EN PAUSA
+                            </button>
+                          ) : (
+                            <button 
+                              className="cyber-btn-primary gamer-btn-host-draw animate-pulse" 
+                              onClick={() => drawRandomBall(false)}
+                              style={{
+                                height: '44px',
+                                padding: '0 20px',
+                                fontSize: '0.88rem',
+                                fontWeight: 900,
+                                letterSpacing: '0.5px',
+                                background: 'linear-gradient(135deg, #00f0ff 0%, #3b82f6 100%)',
+                                border: 'none',
+                                borderRadius: '12px',
+                                boxShadow: '0 0 16px rgba(0, 240, 255, 0.45)',
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                cursor: 'pointer'
+                              }}
+                              title="Extraer una bola inmediatamente de forma manual"
+                            >
+                              <span style={{ fontSize: '1.2rem' }}>🔮</span> SACAR BOLA
+                            </button>
+                          )}
+
+                          {/* Botón Canto Automático (Toggle) */}
+                          <button
+                            type="button"
+                            className={`cyber-btn-primary gamer-btn-host-autodraw ${isAutoDrawActive ? (hasActiveShoutOrClaim ? 'paused' : 'active') : ''}`}
+                            onClick={() => handleToggleAutoDraw()}
                             style={{
-                              height: '46px',
-                              padding: '0 28px',
-                              fontSize: '0.92rem',
+                              height: '44px',
+                              padding: '0 16px',
+                              fontSize: '0.82rem',
                               fontWeight: 900,
                               letterSpacing: '0.5px',
-                              background: 'linear-gradient(135deg, #00f0ff 0%, #3b82f6 100%)',
-                              border: 'none',
-                              borderRadius: '14px',
-                              boxShadow: '0 0 20px rgba(0, 240, 255, 0.5)',
+                              borderRadius: '12px',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '8px',
+                              gap: '6px',
                               cursor: 'pointer'
                             }}
+                            title={isAutoDrawActive ? "Detener Canto Automático" : `Iniciar Canto Automático (cada ${autoDrawSeconds}s)`}
                           >
-                            <span style={{ fontSize: '1.3rem' }}>🔮</span> SACAR BOLA
+                            <span style={{ fontSize: '1.1rem' }}>{isAutoDrawActive ? (hasActiveShoutOrClaim ? '⏸️' : '⏹️') : '⚡'}</span>
+                            <span>{isAutoDrawActive ? (hasActiveShoutOrClaim ? 'AUTO PAUSADO' : 'DETENER AUTO') : 'CANTO AUTOMÁTICO'}</span>
                           </button>
-                        )}
+                        </div>
+
+                        {/* Barra de Cuenta Regresiva y Selectores de Velocidad */}
+                        <div style={{ marginTop: '8px', width: '100%', maxWidth: '420px', display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                          {isAutoDrawActive && (
+                            <>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.7rem' }}>
+                                <span style={{ color: hasActiveShoutOrClaim ? '#fca5a5' : '#38bdf8', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                                  {hasActiveShoutOrClaim ? '⏸️ En pausa por verificación de Bingo...' : `⏱️ Próxima bola en: ${autoDrawCountdown}s`}
+                                </span>
+                                <span style={{ color: '#94a3b8', fontSize: '0.65rem' }}>
+                                  Ritmo: {autoDrawSeconds}s/bola
+                                </span>
+                              </div>
+                              <div className="autodraw-progress-track">
+                                <div
+                                  className="autodraw-progress-fill"
+                                  style={{
+                                    width: hasActiveShoutOrClaim 
+                                      ? '100%' 
+                                      : `${Math.max(5, (autoDrawCountdown / autoDrawSeconds) * 100)}%`,
+                                    background: hasActiveShoutOrClaim 
+                                      ? 'linear-gradient(90deg, #ef4444, #f59e0b)' 
+                                      : 'linear-gradient(90deg, #00f0ff, #10b981)'
+                                  }}
+                                />
+                              </div>
+                            </>
+                          )}
+
+                          {/* Chips de Velocidad Rápida */}
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px', marginTop: isAutoDrawActive ? '2px' : '4px' }}>
+                            <span style={{ fontSize: '0.62rem', color: '#64748b', textTransform: 'uppercase', marginRight: '4px' }}>Velocidad:</span>
+                            {[
+                              { label: '4s', sec: 4, tip: 'Turbo' },
+                              { label: '6s', sec: 6, tip: 'Rápido' },
+                              { label: '8s', sec: 8, tip: 'Normal' },
+                              { label: '10s', sec: 10, tip: 'Calma' },
+                              { label: '15s', sec: 15, tip: 'Pausado' }
+                            ].map((s) => (
+                              <button
+                                key={s.sec}
+                                type="button"
+                                className={`autodraw-speed-chip ${autoDrawSeconds === s.sec ? 'active' : ''}`}
+                                onClick={() => handleChangeAutoDrawSeconds(s.sec)}
+                                title={`${s.sec} segundos por bola (${s.tip})`}
+                              >
+                                {s.label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
                       </>
                     ) : (
                       <div style={{ textAlign: 'center', padding: '10px' }}>
@@ -5455,6 +5776,90 @@ export default function BingoHub() {
                               <span className="cyber-slider" style={{ background: newScheduleProMode ? '#ef4444' : undefined }} />
                             </label>
                           </div>
+
+                          {/* ACTIVADOR CANTO AUTOMÁTICO */}
+                          <div style={{
+                            gridColumn: '1 / -1',
+                            background: newScheduleAutoDraw 
+                              ? 'linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(14, 165, 233, 0.15) 100%)' 
+                              : 'rgba(255, 255, 255, 0.03)',
+                            border: newScheduleAutoDraw ? '1.5px solid #10b981' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px',
+                            padding: '12px 16px',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px',
+                            transition: 'all 0.2s ease',
+                            boxShadow: newScheduleAutoDraw ? '0 0 18px rgba(16, 185, 129, 0.2)' : 'none'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <div style={{
+                                  width: '38px',
+                                  height: '38px',
+                                  borderRadius: '10px',
+                                  background: newScheduleAutoDraw ? 'rgba(16, 185, 129, 0.25)' : 'rgba(255, 255, 255, 0.06)',
+                                  border: newScheduleAutoDraw ? '1px solid #10b981' : '1px solid rgba(255, 255, 255, 0.15)',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center',
+                                  fontSize: '1.3rem'
+                                }}>
+                                  🎲
+                                </div>
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <strong style={{ fontSize: '0.9rem', color: newScheduleAutoDraw ? '#6ee7b7' : '#fff' }}>
+                                      CANTO AUTOMÁTICO (Auto-Caller)
+                                    </strong>
+                                    {newScheduleAutoDraw && (
+                                      <span style={{
+                                        background: 'rgba(16, 185, 129, 0.3)',
+                                        color: '#6ee7b7',
+                                        fontSize: '0.65rem',
+                                        padding: '2px 7px',
+                                        borderRadius: '6px',
+                                        fontWeight: 'bold',
+                                        border: '1px solid #10b981'
+                                      }}>
+                                        AUTO {newScheduleAutoDrawInterval}s
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p style={{ margin: '2px 0 0 0', fontSize: '0.74rem', color: '#94a3b8' }}>
+                                    Extrae y canta bolas periódicamente sin clic manual al iniciar la partida.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <label className="cyber-switch" style={{ transform: 'scale(0.9)', margin: 0, flexShrink: 0 }}>
+                                <input
+                                  type="checkbox"
+                                  checked={newScheduleAutoDraw}
+                                  onChange={(e) => setNewScheduleAutoDraw(e.target.checked)}
+                                />
+                                <span className="cyber-slider" style={{ background: newScheduleAutoDraw ? '#10b981' : undefined }} />
+                              </label>
+                            </div>
+
+                            {newScheduleAutoDraw && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Ritmo por bola:</span>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  {[4, 6, 8, 10, 15].map((sec) => (
+                                    <button
+                                      key={sec}
+                                      type="button"
+                                      className={`autodraw-speed-chip ${newScheduleAutoDrawInterval === sec ? 'active' : ''}`}
+                                      onClick={() => setNewScheduleAutoDrawInterval(sec)}
+                                    >
+                                      {sec}s
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         </div>
 
                         <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
@@ -5709,6 +6114,74 @@ export default function BingoHub() {
                               />
                               <span className="cyber-slider" style={{ background: editScheduleProMode ? '#ef4444' : undefined }} />
                             </label>
+                          </div>
+
+                          {/* ACTIVADOR CANTO AUTOMÁTICO (EDICIÓN) */}
+                          <div style={{
+                            display: 'flex',
+                            flexDirection: 'column',
+                            gap: '10px',
+                            background: editScheduleAutoDraw ? 'rgba(16, 185, 129, 0.12)' : 'rgba(0, 0, 0, 0.35)',
+                            border: editScheduleAutoDraw ? '1.5px solid rgba(16, 185, 129, 0.5)' : '1px solid rgba(255, 255, 255, 0.1)',
+                            borderRadius: '12px',
+                            padding: '12px 16px',
+                            transition: 'all 0.2s ease'
+                          }}>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <span style={{ fontSize: '1.5rem' }}>🎲</span>
+                                <div>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <strong style={{ fontSize: '0.9rem', color: editScheduleAutoDraw ? '#6ee7b7' : '#ffffff' }}>
+                                      CANTO AUTOMÁTICO (Auto-Caller)
+                                    </strong>
+                                    {editScheduleAutoDraw && (
+                                      <span style={{
+                                        background: 'rgba(16, 185, 129, 0.3)',
+                                        color: '#6ee7b7',
+                                        fontSize: '0.65rem',
+                                        padding: '2px 7px',
+                                        borderRadius: '6px',
+                                        fontWeight: 'bold',
+                                        border: '1px solid #10b981'
+                                      }}>
+                                        AUTO {editScheduleAutoDrawInterval}s
+                                      </span>
+                                    )}
+                                  </div>
+                                  <p style={{ margin: '2px 0 0 0', fontSize: '0.74rem', color: '#94a3b8' }}>
+                                    Extrae y canta bolas periódicamente sin clic manual al iniciar la partida.
+                                  </p>
+                                </div>
+                              </div>
+
+                              <label className="cyber-switch" style={{ transform: 'scale(0.9)', margin: 0, flexShrink: 0 }}>
+                                <input
+                                  type="checkbox"
+                                  checked={editScheduleAutoDraw}
+                                  onChange={(e) => setEditScheduleAutoDraw(e.target.checked)}
+                                />
+                                <span className="cyber-slider" style={{ background: editScheduleAutoDraw ? '#10b981' : undefined }} />
+                              </label>
+                            </div>
+
+                            {editScheduleAutoDraw && (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', paddingTop: '6px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                                <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Ritmo por bola:</span>
+                                <div style={{ display: 'flex', gap: '6px' }}>
+                                  {[4, 6, 8, 10, 15].map((sec) => (
+                                    <button
+                                      key={sec}
+                                      type="button"
+                                      className={`autodraw-speed-chip ${editScheduleAutoDrawInterval === sec ? 'active' : ''}`}
+                                      onClick={() => setEditScheduleAutoDrawInterval(sec)}
+                                    >
+                                      {sec}s
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
 
