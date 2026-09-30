@@ -847,15 +847,33 @@ export default function BingoCardView() {
     }
   }, [gameData?.drawnNumbers?.length]);
 
-  // Auto-dismiss sponsor spotlight modal after 6 seconds
+  // Duración del anuncio: si está en Canto Automático, cerrar antes de que caiga la próxima bola
+  const sponsorModalDurationMs = (() => {
+    if (gameData?.autoDraw) {
+      const intervalSec = gameData.autoDrawInterval || 8;
+      // Cerrar antes de que caiga la siguiente bola para no tapar el número (mínimo 2.5s)
+      return Math.max(2500, Math.min((intervalSec * 1000) - 1200, (intervalSec * 1000) - 800));
+    }
+    return 5500;
+  })();
+
+  // Auto-dismiss sponsor spotlight modal
   useEffect(() => {
     if (activeSponsorModal) {
       const timer = setTimeout(() => {
         setActiveSponsorModal(null);
-      }, 6000);
+      }, sponsorModalDurationMs);
       return () => clearTimeout(timer);
     }
-  }, [activeSponsorModal]);
+  }, [activeSponsorModal, sponsorModalDurationMs]);
+
+  // Si cae una nueva bola de la tómbola, cerrar inmediatamente el anuncio para no tapar el número
+  useEffect(() => {
+    if (activeSponsorModal) {
+      setActiveSponsorModal(null);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [gameData?.drawnNumbers?.length]);
 
   const toggleMark = (row: number, col: number) => {
     if (row === 2 && col === 2) return;
@@ -2330,9 +2348,19 @@ export default function BingoCardView() {
           >
             {/* Botón rápido cerrar X en la esquina */}
             <button 
+              type="button"
               className="sponsor-btn-close-corner"
-              onClick={() => setActiveSponsorModal(null)}
-              title="Cerrar patrocinador"
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveSponsorModal(null);
+              }}
+              onTouchEnd={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveSponsorModal(null);
+              }}
+              title="Cerrar anuncio"
             >
               ✕
             </button>
@@ -2380,14 +2408,21 @@ export default function BingoCardView() {
             <button 
               type="button" 
               className="sponsor-btn-continue"
-              onClick={() => setActiveSponsorModal(null)}
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                setActiveSponsorModal(null);
+              }}
             >
               Continuar Partida ➔
             </button>
 
-            {/* Barra de progreso de autocierre */}
+            {/* Barra de progreso de autocierre sincronizada */}
             <div className="sponsor-countdown-track">
-              <div className="sponsor-countdown-bar" />
+              <div 
+                className="sponsor-countdown-bar" 
+                style={{ animationDuration: `${sponsorModalDurationMs}ms` }}
+              />
             </div>
           </div>
         </div>,
