@@ -64,7 +64,7 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
                 title="Explorar el mundo virtual Sutz"
               >
                 <span className="top-btn-icon">☁️</span>
-                <span className="btn-text-full">Probar Sutz</span>
+                <span className="btn-text-full">Mundo Virtual Sutz</span>
                 <span className="btn-text-short">Sutz</span>
               </button>
 
@@ -156,7 +156,7 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
                     className="top-btn top-btn-sutz"
                     onClick={() => go('/sutz')}
                   >
-                    <span className="top-btn-icon">☁️</span> Probar Sutz
+                    <span className="top-btn-icon">☁️</span> Mundo Virtual Sutz
                   </button>
 
                   <button

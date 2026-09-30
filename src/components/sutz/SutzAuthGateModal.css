@@ -7,7 +7,9 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20px;
+  padding: 20px 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
   animation: sutzGateFadeIn 0.25s ease-out;
 }
 
@@ -19,6 +21,8 @@
 .sutz-auth-gate-card {
   width: 100%;
   max-width: 480px;
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
   background: var(--sutz-elevation-2);
   border: 1.5px solid rgba(255, 255, 255, 0.12);
   box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 30px rgba(0, 0, 0, 0.5);
@@ -26,7 +30,7 @@
   padding: 32px;
   color: var(--sutz-text-bright);
   position: relative;
-  overflow: hidden;
+  box-sizing: border-box;
 }
 
 .sutz-auth-gate-card::before {
@@ -291,4 +295,25 @@
 .sutz-gate-exit-btn:hover {
   color: #f8fafc;
   text-decoration: underline;
+}
+
+@media (max-width: 480px) {
+  .sutz-auth-gate-card {
+    padding: 22px 18px;
+    border-radius: 18px;
+  }
+
+  .sutz-auth-gate-title {
+    font-size: 1.25rem;
+  }
+
+  .sutz-gate-tab {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .sutz-gate-submit-btn {
+    padding: 11px;
+    font-size: 0.86rem;
+  }
 }

@@ -56,9 +56,11 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
       if (code === 'auth/wrong-password' || code === 'auth/invalid-credential' || code === 'auth/user-not-found') {
         setError('Correo o contraseña incorrectos.');
       } else if (code === 'auth/email-already-in-use') {
-        setError('Este correo ya está registrado. Selecciona "Ya tengo cuenta".');
+        setError('Este correo ya está registrado. Selecciona "Iniciar Sesión".');
       } else if (code === 'auth/weak-password') {
         setError('La contraseña debe ser de al menos 6 caracteres.');
+      } else if (code === 'auth/too-many-requests') {
+        setError('Demasiados intentos fallidos. Por seguridad de tu cuenta escolar, el acceso se ha pausado temporalmente. Intenta más tarde o recupera tu contraseña.');
       } else {
         setError(msg || 'Ocurrió un error al procesar tu acceso.');
       }
@@ -154,6 +156,7 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
                 placeholder="Ej. Balam Quitzé" 
                 value={name} 
                 onChange={(e) => setName(e.target.value)} 
+                autoComplete="name"
                 required 
               />
             </div>
@@ -166,6 +169,7 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
               placeholder="estudiante@escuela.edu" 
               value={email} 
               onChange={(e) => setEmail(e.target.value)} 
+              autoComplete="email"
               required 
             />
           </div>
@@ -190,6 +194,7 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
                   placeholder="Mínimo 6 caracteres" 
                   value={password} 
                   onChange={(e) => setPassword(e.target.value)} 
+                  autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                   required 
                 />
                 <button 
@@ -211,6 +216,7 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
                 placeholder="Repite tu contraseña" 
                 value={confirmPassword} 
                 onChange={(e) => setConfirmPassword(e.target.value)} 
+                autoComplete="new-password"
                 required 
               />
             </div>

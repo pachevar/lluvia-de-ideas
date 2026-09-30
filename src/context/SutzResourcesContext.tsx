@@ -40,8 +40,8 @@ interface SutzResourcesContextValue {
 
 const SutzResourcesContext = createContext<SutzResourcesContextValue | undefined>(undefined);
 
-const STORAGE_KEY = 'sutz_resources_v1';
-const STORIES_KEY = 'sutz_completed_stories_v1';
+const getUserStorageKey = (uid: string) => `sutz_resources_v1_${uid}`;
+const getUserStoriesKey = (uid: string) => `sutz_completed_stories_v1_${uid}`;
 
 function readStored<T>(key: string, fallback: T): T {
   try {
@@ -64,29 +64,48 @@ function writeStored(key: string, value: unknown) {
 export const SutzResourcesProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { user } = useAuth();
 
-  const [resources, setResources] = useState<SutzResources>(() => ({
-    ...DEFAULT_SUTZ_RESOURCES,
-    ...readStored<SutzResources>(STORAGE_KEY, DEFAULT_SUTZ_RESOURCES)
-  }));
+  const [resources, setResources] = useState<SutzResources>(DEFAULT_SUTZ_RESOURCES);
+  const [completedStories, setCompletedStories] = useState<string[]>([]);
 
-  const [completedStories, setCompletedStories] = useState<string[]>(() =>
-    readStored<string[]>(STORIES_KEY, [])
-  );
-
-  // Synchronize from Firestore when user logs in
+  // Sincronizar y particionar recursos por usuario al iniciar/cambiar sesión
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      // Si no hay usuario activo, resetear a los valores iniciales para evitar fuga de datos
+      setResources(DEFAULT_SUTZ_RESOURCES);
+      setCompletedStories([]);
+      return;
+    }
+
+    // 1. Cargar caché local particionado para este UID específico
+    const userResKey = getUserStorageKey(user.uid);
+    const userStoriesKey = getUserStoriesKey(user.uid);
+    const cachedRes = readStored<SutzResources>(userResKey, DEFAULT_SUTZ_RESOURCES);
+    const cachedStories = readStored<string[]>(userStoriesKey, []);
+
+    setResources(cachedRes);
+    setCompletedStories(cachedStories);
+
+    // 2. Cargar datos actualizados desde Firestore
+    let isCancelled = false;
     const loadFromFirestore = async () => {
       try {
         const docRef = doc(db, 'users', user.uid, 'sutz_progress', 'data');
         const snap = await getDoc(docRef);
-        if (snap.exists()) {
+        if (snap.exists() && !isCancelled) {
           const data = snap.data();
           if (data.resources) {
-            setResources(prev => ({ ...prev, ...data.resources }));
+            setResources(prev => {
+              const updated = { ...prev, ...data.resources };
+              writeStored(userResKey, updated);
+              return updated;
+            });
           }
           if (Array.isArray(data.completedStories)) {
-            setCompletedStories(prev => Array.from(new Set([...prev, ...data.completedStories])));
+            setCompletedStories(prev => {
+              const updated = Array.from(new Set([...prev, ...data.completedStories]));
+              writeStored(userStoriesKey, updated);
+              return updated;
+            });
           }
         }
       } catch (err) {
@@ -94,20 +113,28 @@ export const SutzResourcesProvider: React.FC<{ children: React.ReactNode }> = ({
       }
     };
     loadFromFirestore();
+
+    return () => {
+      isCancelled = true;
+    };
   }, [user]);
 
-  // Save to localStorage
+  // Persistir en localStorage únicamente con la clave del usuario autenticado
   useEffect(() => {
-    writeStored(STORAGE_KEY, resources);
-  }, [resources]);
+    if (user?.uid) {
+      writeStored(getUserStorageKey(user.uid), resources);
+    }
+  }, [resources, user?.uid]);
 
   useEffect(() => {
-    writeStored(STORIES_KEY, completedStories);
-  }, [completedStories]);
+    if (user?.uid) {
+      writeStored(getUserStoriesKey(user.uid), completedStories);
+    }
+  }, [completedStories, user?.uid]);
 
-  // Sync to Firestore when resources or stories change
+  // Sincronizar con Firestore cuando los recursos o historias cambian
   const saveToFirestore = async (newRes: SutzResources, newStories: string[]) => {
-    if (!user) return;
+    if (!user?.uid) return;
     try {
       const docRef = doc(db, 'users', user.uid, 'sutz_progress', 'data');
       await setDoc(docRef, {

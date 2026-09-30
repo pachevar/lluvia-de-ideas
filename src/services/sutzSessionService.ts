@@ -206,6 +206,8 @@ export async function startSutzSession(
       isActive: true,
     }, { merge: true });
 
+    activeSessionsByUid.set(uid, true);
+
     return {
       deviceId,
       hasConflict: false,
@@ -240,8 +242,12 @@ export async function reclaimSutzSession(uid: string, studentName: string, email
     isActive: true,
   }, { merge: true });
 
+  activeSessionsByUid.set(uid, true);
   return deviceId;
 }
+
+// Rastreo en memoria del estado activo de sesión local por UID para evitar getDoc redundante en cada heartbeat
+const activeSessionsByUid = new Map<string, boolean>();
 
 /**
  * Envía pulso de vida (heartbeat) para mantener la sesión activa en Firestore.
@@ -249,18 +255,13 @@ export async function reclaimSutzSession(uid: string, studentName: string, email
  */
 export async function heartbeatSutzSession(uid: string): Promise<void> {
   try {
-    const deviceId = getLocalDeviceId();
+    // Si la sesión local fue invalidada o transferida, omitir llamada de red
+    if (activeSessionsByUid.get(uid) === false) return;
+
     const sessionRef = doc(db, 'sutz_sessions', uid);
-    
-    const snap = await getDoc(sessionRef);
-    if (snap.exists()) {
-      const data = snap.data() as SutzSessionData;
-      if ((data.sessionId === deviceId || data.deviceId === deviceId) && data.isActive) {
-        await updateDoc(sessionRef, {
-          lastHeartbeatAt: serverTimestamp(),
-        });
-      }
-    }
+    await updateDoc(sessionRef, {
+      lastHeartbeatAt: serverTimestamp(),
+    });
   } catch (err) {
     console.warn('Error enviando heartbeat de sesión en Sutz:', err);
   }
@@ -272,6 +273,7 @@ export async function heartbeatSutzSession(uid: string): Promise<void> {
  */
 export async function closeSutzSession(uid: string): Promise<void> {
   try {
+    activeSessionsByUid.set(uid, false);
     const deviceId = getLocalDeviceId();
     const sessionRef = doc(db, 'sutz_sessions', uid);
     const snap = await getDoc(sessionRef);
@@ -306,12 +308,14 @@ export function listenToSutzSession(
 
     // 1. Si coincide con nuestro dispositivo actual: cero conflicto
     if (remoteData.sessionId === currentDeviceId || remoteData.deviceId === currentDeviceId) {
+      activeSessionsByUid.set(uid, true);
       if (onResolved) onResolved();
       return;
     }
 
     // 2. Si la sesión no está activa en Firestore: cero conflicto
     if (!remoteData.isActive) {
+      activeSessionsByUid.set(uid, true);
       if (onResolved) onResolved();
       return;
     }
@@ -319,11 +323,13 @@ export function listenToSutzSession(
     // 3. Comprobar si la sesión remota está obsoleta (sin heartbeat en los últimos 50 segundos)
     const lastHb = parseTimestampMs(remoteData.lastHeartbeatAt) || parseTimestampMs(remoteData.startedAt);
     if (lastHb && (Date.now() - lastHb > HEARTBEAT_STALE_MS)) {
+      activeSessionsByUid.set(uid, true);
       if (onResolved) onResolved();
       return;
     }
 
     // 4. Conflicto verificado con otra sesión remota activa
+    activeSessionsByUid.set(uid, false);
     onConflict(remoteData);
   }, (err) => {
     console.warn('Error en listener de sesión única de Sutz:', err);

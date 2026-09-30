@@ -42,7 +42,12 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
     }
   };
 
-  const handleExit = async () => {
+  const handleExit = () => {
+    sutzAudio.playClick();
+    navigate('/');
+  };
+
+  const handleLogout = async () => {
     sutzAudio.playClick();
     await logout();
     navigate('/');
@@ -203,15 +208,32 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
               width: '100%',
               padding: '11px',
               borderRadius: '14px',
-              background: 'transparent',
+              background: 'rgba(255, 255, 255, 0.05)',
               border: '1px solid rgba(148, 163, 184, 0.3)',
-              color: '#94a3b8',
+              color: '#cbd5e1',
               fontSize: '0.86rem',
               fontWeight: 800,
-              cursor: 'pointer'
+              cursor: 'pointer',
+              transition: 'background 0.2s ease'
             }}
           >
-            🚪 Salir de Sutz
+            🏠 Volver al Portal (Mantener sesión en el otro equipo)
+          </button>
+
+          <button
+            onClick={handleLogout}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: '#94a3b8',
+              fontSize: '0.78rem',
+              fontWeight: 700,
+              cursor: 'pointer',
+              textDecoration: 'underline',
+              marginTop: '4px'
+            }}
+          >
+            Cerrar Sesión de esta Cuenta
           </button>
         </div>
       </div>
