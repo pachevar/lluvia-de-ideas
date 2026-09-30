@@ -282,6 +282,61 @@
   text-align: center;
 }
 
+.sutz-gate-role-toggle {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.sutz-role-pill {
+  flex: 1;
+  padding: 10px;
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  color: var(--sutz-text-muted);
+  font-weight: 800;
+  font-size: 0.84rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.sutz-role-pill:hover {
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #ffffff;
+}
+
+.sutz-role-pill.active {
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.25) 0%, rgba(16, 185, 129, 0.25) 100%);
+  border: 1.5px solid var(--sutz-color-guide);
+  color: #ffffff;
+  box-shadow: 0 4px 14px rgba(56, 189, 248, 0.25);
+}
+
+.sutz-gate-guest-btn {
+  width: 100%;
+  padding: 10px 14px;
+  background: rgba(56, 189, 248, 0.08);
+  border: 1px dashed rgba(56, 189, 248, 0.35);
+  border-radius: 12px;
+  color: #38bdf8;
+  font-size: 0.82rem;
+  font-weight: 800;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.2s ease;
+}
+
+.sutz-gate-guest-btn:hover {
+  background: rgba(56, 189, 248, 0.16);
+  border-color: #38bdf8;
+  color: #ffffff;
+}
+
 .sutz-gate-exit-btn {
   background: none;
   border: none;

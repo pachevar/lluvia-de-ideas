@@ -36,9 +36,9 @@ export default function Home() {
       targetId: 'section-sutz',
       route: '/sutz',
       title: cardsConf.sutz?.title || 'Sutz Descubre',
-      badge: cardsConf.sutz?.badge || 'Mundo Virtual',
+      badge: cardsConf.sutz?.badge || 'Mundo Virtual · Comunidad Escolar',
       kicheTag: cardsConf.sutz?.kicheTag || "Nube en K'iche'",
-      desc: cardsConf.sutz?.desc || 'Un mundo virtual que evoluciona con el estudiante y su aprendizaje.',
+      desc: cardsConf.sutz?.desc || 'Un mundo virtual que evoluciona con el aprendizaje interactivo de estudiantes y docentes.',
       icon: '☁️',
       colorClass: 'card-gradient-blue',
       accentColor: '#38bdf8'
@@ -286,7 +286,7 @@ export default function Home() {
                 onClick={() => handleNavigate('/sutz')}
                 style={{ background: 'linear-gradient(90deg, #38bdf8, #0284c7)', color: '#fff', fontWeight: 800, padding: '12px 24px', borderRadius: '12px' }}
               >
-                ☁️ Abrir Mapa Sutz ➔
+                ☁️ Explorar Mundo Virtual Sutz ➔
               </button>
               <button
                 className="btn btn-glass"

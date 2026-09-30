@@ -19,6 +19,15 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
   const { user, userProfile, logout } = useAuth();
   const navigate = useNavigate();
   const [isReclaiming, setIsReclaiming] = React.useState(false);
+  const [cooldown, setCooldown] = React.useState<number>(0);
+
+  React.useEffect(() => {
+    if (cooldown <= 0) return;
+    const timer = setInterval(() => {
+      setCooldown(c => Math.max(0, c - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, [cooldown]);
 
   if (!isOpen) return null;
 
@@ -27,12 +36,13 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
   const isSameBrowser = remoteDevice.browser === currentDevice.browser;
 
   const handleReclaim = async () => {
-    if (isReclaiming || !user) return;
+    if (isReclaiming || cooldown > 0 || !user) return;
     setIsReclaiming(true);
     sutzAudio.playClick();
     try {
       const studentName = userProfile?.displayName || user.displayName || 'Estudiante Explorador';
       await reclaimSutzSession(user.uid, studentName, user.email);
+      setCooldown(8); // 8 segundos de enfriamiento para prevenir bucles de rebote
       sutzAudio.playSuccess();
       onSessionReclaimed();
     } catch (err) {
@@ -176,29 +186,31 @@ export const SutzSessionConflictModal: React.FC<SutzSessionConflictModalProps> =
         <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <button
             onClick={handleReclaim}
-            disabled={isReclaiming}
+            disabled={isReclaiming || cooldown > 0}
             style={{
               width: '100%',
               padding: '13px',
               borderRadius: '14px',
-              background: isReclaiming 
-                ? 'rgba(2, 132, 199, 0.45)'
+              background: (isReclaiming || cooldown > 0)
+                ? 'rgba(2, 132, 199, 0.35)'
                 : 'linear-gradient(135deg, #0284c7 0%, #0284c7 50%, #10b981 100%)',
               border: '1px solid rgba(255, 255, 255, 0.3)',
               color: '#ffffff',
               fontSize: '0.92rem',
               fontWeight: 900,
-              cursor: isReclaiming ? 'wait' : 'pointer',
-              boxShadow: isReclaiming ? 'none' : '0 6px 20px rgba(2, 132, 199, 0.4)',
-              opacity: isReclaiming ? 0.75 : 1,
+              cursor: (isReclaiming || cooldown > 0) ? 'not-allowed' : 'pointer',
+              boxShadow: (isReclaiming || cooldown > 0) ? 'none' : '0 6px 20px rgba(2, 132, 199, 0.4)',
+              opacity: (isReclaiming || cooldown > 0) ? 0.75 : 1,
               transition: 'all 0.2s ease'
             }}
           >
             {isReclaiming 
               ? '⏳ Tomando control...' 
-              : isSameBrowser 
-                ? `⚡ Tomar Control en esta ventana de ${currentDevice.browser}` 
-                : '⚡ Reclamar Control Aquí (Cerrar la otra sesión)'
+              : cooldown > 0
+                ? `⏳ Espera ${cooldown}s para volver a reclamar`
+                : isSameBrowser 
+                  ? `⚡ Tomar Control en esta ventana de ${currentDevice.browser}` 
+                  : '⚡ Reclamar Control Aquí (Cerrar la otra sesión)'
             }
           </button>
 

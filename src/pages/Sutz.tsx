@@ -180,6 +180,7 @@ export default function Sutz() {
   const [selectedRelic, setSelectedRelic] = useState<MayanRelic | null>(null);
   const [selectedHexId, setSelectedHexId] = useState<string | null>(null);
   const [activeIntroHex, setActiveIntroHex] = useState<CustomHexagon | null>(null);
+  const [isGuestMode, setIsGuestMode] = useState<boolean>(false);
 
   // Controles de mapa para botón de Centrar/Radar
   const mapControlsRef = useRef<{ zoomIn: () => void; zoomOut: () => void; centerView: () => void } | null>(null);
@@ -263,10 +264,13 @@ export default function Sutz() {
   const cells = [...activeCells, ...unexploredCells];
   const totalCellsCount = activeCells.length + candidateCoords.length;
   const mapCompletionPercent = totalCellsCount > 0 ? Math.round((activeCells.length / totalCellsCount) * 100) : 0;
-  const studentNickname = userProfile?.displayName || (user?.email ? user.email.split('@')[0] : 'Estudiante Explorador');
+  const studentNickname = user 
+    ? (userProfile?.displayName || (user.email ? user.email.split('@')[0] : 'Estudiante Explorador'))
+    : 'Explorador Invitado';
 
   // Determinar rango del estudiante según nivel
   const getRankTitle = (lvl: number) => {
+    if (!user) return 'Modo Visitante 🧭';
     if (lvl >= 10) return 'Gran Maestro de Sutz 👑';
     if (lvl >= 7) return 'Sacerdote del Tiempo 🏛️';
     if (lvl >= 5) return 'Guardián del Códice 🛡️';
@@ -421,6 +425,22 @@ export default function Sutz() {
     );
   }
 
+  // Si el usuario no está autenticado y no ha seleccionado el modo visitante,
+  // mostrar el Gate de forma ligera y aislada sin cargar el mapa pesado detrás
+  if (!user && !isGuestMode) {
+    return (
+      <div style={{ position: 'fixed', inset: 0, background: '#050814', zIndex: 99999 }}>
+        <SutzAuthGateModal 
+          isOpen={true} 
+          onContinueAsGuest={() => {
+            sutzAudio.playClick();
+            setIsGuestMode(true);
+          }}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="sutz-game-container">
       
@@ -541,6 +561,27 @@ export default function Sutz() {
 
         {/* Derecha: Exploradores en Línea y Ajustes */}
         <div className="sutz-hud-right">
+          {!user && isGuestMode && (
+            <button 
+              className="sutz-hud-action-btn guest-login-btn"
+              onClick={() => {
+                sutzAudio.playClick();
+                setIsGuestMode(false);
+              }}
+              style={{
+                background: 'linear-gradient(135deg, #0284c7 0%, #10b981 100%)',
+                color: '#ffffff',
+                fontWeight: 900,
+                border: '1px solid rgba(255, 255, 255, 0.4)',
+                boxShadow: '0 4px 15px rgba(2, 132, 199, 0.4)'
+              }}
+              title="Identifícate como estudiante o docente para guardar tu progreso de Jade y reliquias"
+            >
+              <span>👤</span>
+              <span className="sutz-settings-btn-text">Iniciar Sesión</span>
+            </button>
+          )}
+
           {/* Botón de Exploradores Conectados y Coordinación Escolar */}
           <button 
             className="sutz-hud-action-btn coord-btn"
@@ -1125,7 +1166,13 @@ export default function Sutz() {
       />
 
       {/* Gate de Autenticación Obligatoria de Estudiantes */}
-      <SutzAuthGateModal isOpen={!user && !authLoading} />
+      <SutzAuthGateModal 
+        isOpen={!user && !authLoading && !isGuestMode} 
+        onContinueAsGuest={() => {
+          sutzAudio.playClick();
+          setIsGuestMode(true);
+        }}
+      />
 
       {/* Modal de Conflicto de Sesión Única */}
       <SutzSessionConflictModal 

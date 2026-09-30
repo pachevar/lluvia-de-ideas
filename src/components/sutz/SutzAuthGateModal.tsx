@@ -6,13 +6,15 @@ import './SutzAuthGateModal.css';
 
 interface SutzAuthGateModalProps {
   isOpen: boolean;
+  onContinueAsGuest?: () => void;
 }
 
-export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) => {
+export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen, onContinueAsGuest }) => {
   const { login, register, loginWithGoogle, resetPassword } = useAuth();
   const navigate = useNavigate();
 
   const [mode, setMode] = useState<'login' | 'register' | 'forgot'>('login');
+  const [role, setRole] = useState<'student' | 'teacher'>('student');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -41,7 +43,7 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
         if (!email || !password || !name) throw new Error('Completa tu nombre y datos de acceso.');
         if (password !== confirmPassword) throw new Error('Las contraseñas no coinciden.');
         if (password.length < 6) throw new Error('La contraseña debe tener al menos 6 caracteres.');
-        await register(email, password, name, 'student');
+        await register(email, password, name, role);
         sutzAudio.playSuccess();
       } else if (mode === 'forgot') {
         if (!email) throw new Error('Ingresa tu correo para recuperar tu contraseña.');
@@ -110,10 +112,10 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
       <div className="sutz-auth-gate-card">
         {/* Banner de Cabecera Gamer */}
         <div className="sutz-auth-gate-header">
-          <div className="sutz-auth-gate-badge">PORTAL DEL ESTUDIANTE MAYA</div>
+          <div className="sutz-auth-gate-badge">PORTAL EDUCATIVO MAYA · EXPEDICIÓN VIRTUAL</div>
           <h2 className="sutz-auth-gate-title">🌌 Sutz: Mundo Virtual</h2>
           <p className="sutz-auth-gate-desc">
-            Para explorar los códices ancestrales, sincronizar tu Jade y coordinar misiones con tus compañeros, debes identificarte con tu sesión única de estudiante.
+            Para explorar los códices ancestrales, sincronizar tu Jade y coordinar misiones escolares, identifícate con tu cuenta de estudiante o docente.
           </p>
         </div>
 
@@ -131,7 +133,7 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
             className={`sutz-gate-tab ${mode === 'register' ? 'active' : ''}`}
             onClick={() => { setMode('register'); setError(null); }}
           >
-            Registrar Estudiante
+            Crear Cuenta
           </button>
         </div>
 
@@ -149,17 +151,45 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
 
         <form onSubmit={handleSubmit} className="sutz-gate-form">
           {mode === 'register' && (
-            <div className="sutz-gate-field">
-              <label>Nombre Completo o Alias de Estudiante</label>
-              <input 
-                type="text" 
-                placeholder="Ej. Balam Quitzé" 
-                value={name} 
-                onChange={(e) => setName(e.target.value)} 
-                autoComplete="name"
-                required 
-              />
-            </div>
+            <>
+              <div className="sutz-gate-field">
+                <label>Tipo de Cuenta</label>
+                <div className="sutz-gate-role-toggle">
+                  <button
+                    type="button"
+                    className={`sutz-role-pill ${role === 'student' ? 'active' : ''}`}
+                    onClick={() => {
+                      sutzAudio.playClick();
+                      setRole('student');
+                    }}
+                  >
+                    🎓 Estudiante
+                  </button>
+                  <button
+                    type="button"
+                    className={`sutz-role-pill ${role === 'teacher' ? 'active' : ''}`}
+                    onClick={() => {
+                      sutzAudio.playClick();
+                      setRole('teacher');
+                    }}
+                  >
+                    🍎 Docente / Guía
+                  </button>
+                </div>
+              </div>
+
+              <div className="sutz-gate-field">
+                <label>Nombre Completo o Alias</label>
+                <input 
+                  type="text" 
+                  placeholder={role === 'teacher' ? 'Ej. Prof. María Morales' : 'Ej. Balam Quitzé'} 
+                  value={name} 
+                  onChange={(e) => setName(e.target.value)} 
+                  autoComplete="name"
+                  required 
+                />
+              </div>
+            </>
           )}
 
           <div className="sutz-gate-field">
@@ -265,6 +295,16 @@ export const SutzAuthGateModal: React.FC<SutzAuthGateModalProps> = ({ isOpen }) 
         )}
 
         <div className="sutz-gate-footer">
+          {onContinueAsGuest && (
+            <button 
+              type="button" 
+              className="sutz-gate-guest-btn" 
+              onClick={onContinueAsGuest}
+            >
+              🧭 Explorar en Modo Visitante (Demostración Guiada)
+            </button>
+          )}
+
           <button 
             type="button" 
             className="sutz-gate-exit-btn" 
