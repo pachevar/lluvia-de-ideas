@@ -492,10 +492,10 @@ export default function Laboratorios() {
                             </div>
                           </div>
                           <div className="lab-desc-pillar">
-                            <span className="lab-desc-pillar-icon">🎬</span>
+                            <span className="lab-desc-pillar-icon">🎭</span>
                             <div>
-                              <strong>Producción Audiovisual Accesible</strong>
-                              <p>Stop-motion en el aula con materiales de bajo costo y dispositivos móviles.</p>
+                              <strong>Movimiento Corporal y Herramientas Escénicas</strong>
+                              <p>Presencia escénica, modulación de la voz y expresión corporal como catalizadores del aprendizaje en el aula.</p>
                             </div>
                           </div>
                         </div>
