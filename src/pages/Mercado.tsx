@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { createPortal } from 'react-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
@@ -65,6 +65,23 @@ export default function Mercado() {
   });
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState<boolean>(false);
   const [addedNotice, setAddedNotice] = useState<string | null>(null);
+  const [isCatDropdownOpen, setIsCatDropdownOpen] = useState<boolean>(false);
+  const deptDropdownRef = useRef<HTMLDivElement>(null);
+
+  // Cerrar menú desplegable al hacer clic fuera
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (deptDropdownRef.current && !deptDropdownRef.current.contains(event.target as Node)) {
+        setIsCatDropdownOpen(false);
+      }
+    };
+    if (isCatDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isCatDropdownOpen]);
 
   // Guardar carrito
   useEffect(() => {
@@ -81,6 +98,7 @@ export default function Mercado() {
       if (e.key === 'Escape') {
         setSelectedProduct(null);
         setIsCartDrawerOpen(false);
+        setIsCatDropdownOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -228,6 +246,24 @@ export default function Mercado() {
     });
     return counts;
   }, [allProducts]);
+
+  const currentCatObj = useMemo(() => {
+    return MERCADO_CATEGORIES.find(c => c.id === selectedCategory);
+  }, [selectedCategory]);
+
+  const isCollectionsActive = selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones';
+
+  const activeCategoryDisplayLabel = isCollectionsActive
+    ? 'Colecciones de Libros'
+    : (currentCatObj?.label || 'Todo el Catálogo');
+
+  const activeCategoryDisplayIcon = isCollectionsActive
+    ? '📦'
+    : (currentCatObj?.icon || '✨');
+
+  const activeCategoryItemCount = isCollectionsActive
+    ? DEFAULT_BOOK_COLLECTIONS.length
+    : (categoryCounts[selectedCategory] || allProducts.length);
 
   // Filtrado y ordenamiento de productos
   const filteredProducts = useMemo(() => {
@@ -398,45 +434,220 @@ export default function Mercado() {
       </header>
 
       {/* Barra de Categorías Horizontal Exclusiva para Móvil */}
-      <nav className="mercado-mobile-categories-bar">
-        <div className="mobile-categories-scroll">
-          {MERCADO_CATEGORIES.map(cat => {
-            const isActive = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
-            const count = categoryCounts[cat.id] || 0;
+      {/* Barra Superior Universal de Departamentos y Categorías con Menú Desplegable */}
+      <nav className="mercado-department-bar" ref={deptDropdownRef}>
+        <div className="dept-bar-inner">
+          {/* Botón Principal Desplegable de Departamentos */}
+          <div className="dept-dropdown-wrapper">
+            <button
+              type="button"
+              className={`btn-dept-dropdown-trigger ${isCatDropdownOpen ? 'active' : ''}`}
+              onClick={() => {
+                soundEffects.playClick();
+                setIsCatDropdownOpen(prev => !prev);
+              }}
+              aria-expanded={isCatDropdownOpen}
+              title="Abrir menú desplegable de departamentos y categorías"
+            >
+              <span className="dept-trigger-icon">{activeCategoryDisplayIcon}</span>
+              <div className="dept-trigger-texts">
+                <span className="dept-trigger-pre">Departamento:</span>
+                <span className="dept-trigger-name">{activeCategoryDisplayLabel}</span>
+              </div>
+              <span className="dept-trigger-badge">{activeCategoryItemCount}</span>
+              <span className={`dept-trigger-chevron ${isCatDropdownOpen ? 'open' : ''}`}>▾</span>
+            </button>
 
-            return (
-              <button
-                key={cat.id}
-                type="button"
-                className={`mobile-cat-pill ${isActive ? 'active' : ''}`}
-                onClick={() => {
-                  soundEffects.playClick();
-                  setSelectedCategory(cat.id);
-                  if (cat.id === 'cuentos') {
-                    setCuentosSubCategory('todos');
-                  }
-                }}
-              >
-                <span className="mobile-cat-icon">{cat.icon}</span>
-                <span className="mobile-cat-label">{cat.label}</span>
-                <span className="mobile-cat-count">{count}</span>
-              </button>
-            );
-          })}
-          {/* Píldora de Subcategoría Colecciones */}
-          <button
-            type="button"
-            className={`mobile-cat-pill mobile-col-pill ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
-            onClick={() => {
-              soundEffects.playClick();
-              setSelectedCategory('cuentos');
-              setCuentosSubCategory('colecciones');
-            }}
-          >
-            <span className="mobile-cat-icon">📦</span>
-            <span className="mobile-cat-label">Colecciones</span>
-            <span className="mobile-cat-count">{DEFAULT_BOOK_COLLECTIONS.length}</span>
-          </button>
+            {/* Menú Desplegable Flotante de Categorías */}
+            {isCatDropdownOpen && (
+              <div className="dept-dropdown-menu animate-fade-in" role="menu">
+                <div className="dept-menu-header">
+                  <div className="dept-menu-title-row">
+                    <span className="dept-menu-icon">📂</span>
+                    <div>
+                      <h4 className="dept-menu-title">Departamentos & Categorías</h4>
+                      <p className="dept-menu-subtitle">Navega directamente a cualquier sección sin scroll vertical</p>
+                    </div>
+                  </div>
+                  <button 
+                    type="button" 
+                    className="dept-menu-close-btn"
+                    onClick={() => setIsCatDropdownOpen(false)}
+                    title="Cerrar menú"
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className="dept-menu-list">
+                  {MERCADO_CATEGORIES.map(cat => {
+                    const isSelected = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
+                    const count = categoryCounts[cat.id] || 0;
+
+                    return (
+                      <div key={cat.id} className="dept-menu-item-group">
+                        <button
+                          type="button"
+                          className={`dept-menu-item ${isSelected ? 'selected' : ''}`}
+                          onClick={() => {
+                            soundEffects.playClick();
+                            setSelectedCategory(cat.id);
+                            if (cat.id === 'cuentos') {
+                              setCuentosSubCategory('todos');
+                            }
+                            setIsCatDropdownOpen(false);
+                          }}
+                        >
+                          <span className="dept-item-icon">{cat.icon}</span>
+                          <div className="dept-item-info">
+                            <span className="dept-item-label">{cat.label}</span>
+                            <span className="dept-item-hint">
+                              {cat.id === 'todos' ? 'Catálogo pedagógico completo' :
+                               cat.id === 'cuentos' ? 'Obras ilustradas formato Kindle' :
+                               cat.id === 'juegos' ? 'Loterías, dominós y dinámicas' :
+                               cat.id === 'personajes' ? 'Títeres didácticos y teatro' :
+                               cat.id === 'tarjetas' ? 'Barajas y flashcards educativas' :
+                               cat.id === 'proyectos' ? 'Astronomía, kits y ciencia' :
+                               'Cuadernos pedagógicos y arte'}
+                            </span>
+                          </div>
+                          <span className="dept-item-count">{count}</span>
+                        </button>
+
+                        {/* Subopción de Colecciones dentro del departamento Cuentos */}
+                        {cat.id === 'cuentos' && (
+                          <div className="dept-menu-subitems">
+                            <button
+                              type="button"
+                              className={`dept-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'selected' : ''}`}
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setSelectedCategory('cuentos');
+                                setCuentosSubCategory('colecciones');
+                                setIsCatDropdownOpen(false);
+                              }}
+                            >
+                              <span className="dept-sub-icon">📦</span>
+                              <div className="dept-sub-info">
+                                <span className="dept-sub-label">Colecciones y Sagas Literarias</span>
+                                <span className="dept-sub-badge-promo">Packs con Ahorro</span>
+                              </div>
+                              <span className="dept-sub-count">{DEFAULT_BOOK_COLLECTIONS.length} packs</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className={`dept-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'todos' ? 'selected' : ''}`}
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setSelectedCategory('cuentos');
+                                setCuentosSubCategory('todos');
+                                setIsCatDropdownOpen(false);
+                              }}
+                            >
+                              <span className="dept-sub-icon">📖</span>
+                              <span className="dept-sub-label">Todos los Libros individuales</span>
+                              <span className="dept-sub-count">{categoryCounts['cuentos'] || 9}</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Filtros Rápidos Inferiores en el Menú */}
+                <div className="dept-menu-footer">
+                  <span className="dept-footer-label">Filtros directos:</span>
+                  <div className="dept-footer-chips">
+                    <button
+                      type="button"
+                      className={`dept-footer-chip ${filterBadge === 'offers' ? 'active' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setFilterBadge(prev => prev === 'offers' ? 'all' : 'offers');
+                        setIsCatDropdownOpen(false);
+                      }}
+                    >
+                      🔥 Con Descuento
+                    </button>
+                    <button
+                      type="button"
+                      className={`dept-footer-chip ${filterBadge === 'bestsellers' ? 'active' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setFilterBadge(prev => prev === 'bestsellers' ? 'all' : 'bestsellers');
+                        setIsCatDropdownOpen(false);
+                      }}
+                    >
+                      ⭐ Más Vendidos
+                    </button>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Píldoras de Acceso Rápido (Desplazamiento horizontal fluido sin scroll vertical) */}
+          <div className="dept-quick-scroll">
+            {MERCADO_CATEGORIES.map(cat => {
+              const isActive = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
+              const count = categoryCounts[cat.id] || 0;
+
+              return (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`dept-quick-pill ${isActive ? 'active' : ''}`}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setSelectedCategory(cat.id);
+                    if (cat.id === 'cuentos') {
+                      setCuentosSubCategory('todos');
+                    }
+                  }}
+                >
+                  <span className="pill-icon">{cat.icon}</span>
+                  <span className="pill-text">{cat.label}</span>
+                  <span className="pill-count">{count}</span>
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              className={`dept-quick-pill pill-colecciones ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
+              onClick={() => {
+                soundEffects.playClick();
+                setSelectedCategory('cuentos');
+                setCuentosSubCategory('colecciones');
+              }}
+            >
+              <span className="pill-icon">📦</span>
+              <span className="pill-text">Colecciones</span>
+              <span className="pill-count">{DEFAULT_BOOK_COLLECTIONS.length}</span>
+            </button>
+          </div>
+
+          {/* Selector de Ordenación Rápida */}
+          <div className="dept-sort-box">
+            <label htmlFor="dept-sort-select" className="dept-sort-label">Ordenar:</label>
+            <select
+              id="dept-sort-select"
+              value={sortBy}
+              onChange={(e) => {
+                soundEffects.playClick();
+                setSortBy(e.target.value as any);
+              }}
+              className="dept-sort-select"
+            >
+              <option value="featured">★ Destacados</option>
+              <option value="price-asc">↑ Menor Precio</option>
+              <option value="price-desc">↓ Mayor Precio</option>
+              <option value="rating">★ Calificación</option>
+              <option value="sold">🔥 Más Vendidos</option>
+            </select>
+          </div>
         </div>
       </nav>
 
@@ -463,163 +674,7 @@ export default function Mercado() {
       {/* Contenido Principal con Layout de Barra Lateral Vertical + Catálogo */}
       <main className="mercado-amazon-main">
         <div className="mercado-columns-layout">
-          {/* ==============================================================
-              BARRA LATERAL VERTICAL (Filtros Limpios y Despejados)
-              ============================================================== */}
-          <aside className="mercado-vertical-sidebar">
-            {/* 1. Bloque de Categorías / Departamentos Verticales */}
-            <div className="sidebar-filter-block">
-              <h4 className="sidebar-filter-title">
-                <span>📚</span> Departamentos
-              </h4>
-              <div className="sidebar-categories-vertical-list">
-                {MERCADO_CATEGORIES.map(cat => {
-                  const isCatSelected = selectedCategory === cat.id;
-                  const isActive = isCatSelected && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
-                  const count = categoryCounts[cat.id] || 0;
 
-                  return (
-                    <div key={cat.id} className="sidebar-cat-group">
-                      <button
-                        type="button"
-                        className={`sidebar-vertical-cat-item ${isActive ? 'active' : ''}`}
-                        onClick={() => {
-                          soundEffects.playClick();
-                          setSelectedCategory(cat.id);
-                          if (cat.id === 'cuentos') {
-                            setCuentosSubCategory('todos');
-                          }
-                        }}
-                      >
-                        <div className="sidebar-cat-left">
-                          <span className="sidebar-cat-emoji">{cat.icon}</span>
-                          <span className="sidebar-cat-text">{cat.label}</span>
-                        </div>
-                        <span className="sidebar-cat-number">{count}</span>
-                      </button>
-
-                      {/* Submenú de Cuentos y Libros con Subcategoría Colecciones */}
-                      {cat.id === 'cuentos' && (
-                        <div className="sidebar-cuentos-sub-menu">
-                          <button
-                            type="button"
-                            className={`sidebar-sub-item ${selectedCategory === 'cuentos' && cuentosSubCategory === 'todos' ? 'active' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              soundEffects.playClick();
-                              setSelectedCategory('cuentos');
-                              setCuentosSubCategory('todos');
-                            }}
-                          >
-                            <span className="sub-bullet">▸</span>
-                            <span>📚 Todos los Libros</span>
-                          </button>
-
-                          <button
-                            type="button"
-                            className={`sidebar-sub-item sub-colecciones ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              soundEffects.playClick();
-                              setSelectedCategory('cuentos');
-                              setCuentosSubCategory('colecciones');
-                            }}
-                          >
-                            <span className="sub-bullet">▸</span>
-                            <span>📦 Colecciones</span>
-                            <span className="sub-badge-mini">Packs</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 2. Bloque de Ordenamiento Compacto */}
-            <div className="sidebar-filter-block">
-              <label htmlFor="sidebar-sort-select" className="sidebar-filter-title">
-                <span>⚡</span> Ordenar Por
-              </label>
-              <div className="sidebar-sort-select-wrapper">
-                <select
-                  id="sidebar-sort-select"
-                  value={sortBy}
-                  onChange={(e) => {
-                    soundEffects.playClick();
-                    setSortBy(e.target.value as any);
-                  }}
-                  className="sidebar-sort-dropdown"
-                >
-                  <option value="featured">⭐ Destacados Editorial</option>
-                  <option value="sold">🔥 Más Populares</option>
-                  <option value="price-asc">📈 Menor a Mayor Precio</option>
-                  <option value="price-desc">📉 Mayor a Menor Precio</option>
-                  <option value="rating">🌟 Mejor Calificados</option>
-                </select>
-                <span className="dropdown-arrow">▾</span>
-              </div>
-            </div>
-
-            {/* 3. Bloque de Filtros Rápidos */}
-            <div className="sidebar-filter-block">
-              <h4 className="sidebar-filter-title">
-                <span>🏷️</span> Vista Rápida
-              </h4>
-              <div className="sidebar-badge-filter-group">
-                <button
-                  type="button"
-                  className={`sidebar-badge-pill ${filterBadge === 'all' ? 'active' : ''}`}
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setFilterBadge('all');
-                  }}
-                >
-                  Todos los Productos
-                </button>
-                <button
-                  type="button"
-                  className={`sidebar-badge-pill ${filterBadge === 'offers' ? 'active' : ''}`}
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setFilterBadge('offers');
-                  }}
-                >
-                  🏷️ En Oferta
-                </button>
-                <button
-                  type="button"
-                  className={`sidebar-badge-pill ${filterBadge === 'bestsellers' ? 'active' : ''}`}
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setFilterBadge('bestsellers');
-                  }}
-                >
-                  ⭐ Populares
-                </button>
-              </div>
-            </div>
-
-            {/* 4. Tarjeta de Contacto Directo WhatsApp */}
-            <div className="sidebar-whatsapp-card">
-              <div className="whatsapp-card-head">
-                <span className="whatsapp-card-icon">💬</span>
-                <strong>¿Pedidos para Colegios?</strong>
-              </div>
-              <p>
-                Atención personalizada, cotizaciones formales y descuentos por volumen.
-              </p>
-              <a
-                href={`https://wa.me/${mercadoConfig.whatsappPhone || '50246741239'}?text=${encodeURIComponent('¡Hola Editorial Lluvia de Ideas! Me gustaría cotizar materiales y cuentos para una institución educativa.')}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="sidebar-whatsapp-btn"
-              >
-                <span>Cotizar por WhatsApp</span>
-              </a>
-            </div>
-          </aside>
 
           {/* ==============================================================
               ÁREA PRINCIPAL DE PRODUCTOS (4 Columnas en Web)
@@ -665,23 +720,6 @@ export default function Mercado() {
                     </button>
                   </span>
                 )}
-              </div>
-
-              {/* Selector de Orden para Móvil / Tablet */}
-              <div className="mobile-sort-row">
-                <label htmlFor="mobile-sort">Ordenar:</label>
-                <select
-                  id="mobile-sort"
-                  value={sortBy}
-                  onChange={(e) => setSortBy(e.target.value as any)}
-                  className="mobile-sort-select"
-                >
-                  <option value="featured">⭐ Destacados</option>
-                  <option value="sold">🔥 Más Vendidos</option>
-                  <option value="price-asc">📈 Menor Precio</option>
-                  <option value="price-desc">📉 Mayor Precio</option>
-                  <option value="rating">🌟 Calificación</option>
-                </select>
               </div>
             </div>
 
@@ -945,6 +983,28 @@ export default function Mercado() {
                 </div>
               )
             )}
+
+            {/* Banner Institucional de Cotizaciones para Colegios (Discreto y Elegante) */}
+            <div className="mercado-institutional-banner">
+              <div className="inst-banner-content">
+                <span className="inst-banner-icon">💬</span>
+                <div className="inst-banner-text">
+                  <h4 className="inst-banner-title">¿Pedidos o Cotizaciones para Instituciones Educativas?</h4>
+                  <p className="inst-banner-desc">
+                    Atención personalizada, cotizaciones formales, facturación contable y descuentos especiales por volumen para docentes y colegios.
+                  </p>
+                </div>
+              </div>
+              <a
+                href={`https://wa.me/${mercadoConfig.whatsappPhone || '50246741239'}?text=${encodeURIComponent('¡Hola Editorial Lluvia de Ideas! Me gustaría cotizar materiales y cuentos para una institución educativa.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inst-banner-btn"
+                title="Contactar con un asesor pedagógico"
+              >
+                <span>Cotizar por WhatsApp</span>
+              </a>
+            </div>
           </section>
         </div>
       </main>

@@ -16,13 +16,14 @@
 .app-container.boletos-view-full,
 .app-container.sutz-view-full,
 .app-container.mercado-view-full {
-  max-width: 100% !important;
+  max-width: 100vw !important;
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   padding-left: 0 !important;
   gap: 0 !important;
   background: #ffffff !important;
+  overflow-x: hidden !important;
 }
 
 .app-container.boletos-view-full .main-content,
