@@ -144,30 +144,64 @@ export default function Mercado() {
     }, 2400);
   };
 
-  // Agregar colección completa al carrito con fanfarria de éxito
+  // Leer parámetros URL para enlace directo desde el Home
+  useEffect(() => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const cat = params.get('cat');
+      const sub = params.get('sub');
+      if (cat) setSelectedCategory(cat);
+      if (sub && (sub === 'colecciones' || sub === 'steam' || sub === 'popol-vuh' || sub === 'todos')) {
+        setCuentosSubCategory(sub);
+      }
+    } catch {
+      // Ignorar errores de URL
+    }
+  }, []);
+
+  // Agregar colección completa al carrito con fanfarria de éxito y precio de paquete con descuento
   const handleAddCollectionToCart = (collection: BookCollection, books: MercadoProduct[]) => {
     soundEffects.playSuccessFanfare();
+    const bundleProduct: MercadoProduct = {
+      id: `bundle-${collection.id}`,
+      title: `Colección: ${collection.title} (${books.length} Libros)`,
+      category: 'cuentos',
+      categoryLabel: 'Colección de Libros',
+      price: collection.price,
+      originalPrice: collection.originalPrice,
+      currency: collection.currency || 'Q',
+      rating: collection.rating,
+      reviewsCount: collection.reviewsCount,
+      soldCount: collection.soldCount,
+      deliveryTime: 'Entrega 24-48 hrs en caja de colección',
+      description: collection.description,
+      longDescription: `${collection.subtitle}. Incluye los ${books.length} títulos de la saga: ${books.map(b => b.title).join(', ')}.`,
+      badge: collection.badge || 'PACK COLECCIÓN',
+      icon: '📦',
+      image: books[0]?.image,
+      gradeOrAge: collection.gradeOrAge,
+      features: collection.features,
+      contents: books.map(b => `1x ${b.title}`),
+      featured: true,
+      inStock: true
+    };
+
     setCartItems(prev => {
-      let updated = [...prev];
-      books.forEach(b => {
-        const existing = updated.find(item => item.product.id === b.id);
-        if (existing) {
-          updated = updated.map(item =>
-            item.product.id === b.id
-              ? { ...item, quantity: item.quantity + 1 }
-              : item
-          );
-        } else {
-          updated.push({ product: b, quantity: 1 });
-        }
-      });
-      return updated;
+      const existing = prev.find(item => item.product.id === bundleProduct.id);
+      if (existing) {
+        return prev.map(item =>
+          item.product.id === bundleProduct.id
+            ? { ...item, quantity: item.quantity + 1 }
+            : item
+        );
+      }
+      return [...prev, { product: bundleProduct, quantity: 1 }];
     });
 
-    setAddedNotice(`¡Colección "${collection.title}" (${books.length} libros) añadida al carrito!`);
+    setAddedNotice(`¡Colección "${collection.title}" añadida con precio especial de Q ${collection.price.toFixed(2)} (Ahorras Q ${(collection.originalPrice - collection.price).toFixed(2)})!`);
     setTimeout(() => {
       setAddedNotice(null);
-    }, 3200);
+    }, 3500);
   };
 
   // Modificar cantidad en carrito
@@ -1075,11 +1109,25 @@ export default function Mercado() {
                     </div>
 
                     <div className="sidebar-item-details">
-                      <h4 className="sidebar-item-title">{product.title}</h4>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <h4 className="sidebar-item-title">{product.title}</h4>
+                        {product.badge && (
+                          <span style={{ fontSize: '0.68rem', fontWeight: 800, padding: '2px 6px', borderRadius: '4px', background: 'rgba(2, 132, 199, 0.15)', color: '#0284c7' }}>
+                            {product.badge}
+                          </span>
+                        )}
+                      </div>
                       <span className="sidebar-item-category">{product.categoryLabel}</span>
                       
                       <div className="sidebar-item-price-row">
-                        <span className="sidebar-unit-price">Q {product.price.toFixed(2)} c/u</span>
+                        <span className="sidebar-unit-price">
+                          Q {product.price.toFixed(2)} c/u
+                          {product.originalPrice && product.originalPrice > product.price && (
+                            <span style={{ textDecoration: 'line-through', color: '#94a3b8', marginLeft: '6px', fontSize: '0.78rem' }}>
+                              Q {product.originalPrice.toFixed(2)}
+                            </span>
+                          )}
+                        </span>
                         <span className="sidebar-subtotal-price">Q {(product.price * quantity).toFixed(2)}</span>
                       </div>
 

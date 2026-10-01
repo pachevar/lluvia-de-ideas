@@ -186,12 +186,14 @@ export interface LandingConfig {
     creatika?: LandingCardConfig;
     tek100?: LandingCardConfig;
     lab?: LandingCardConfig;
+    mercado?: LandingCardConfig;
   };
   sections?: {
     sutz?: LandingSectionConfig;
     creatika?: LandingSectionConfig;
     tek100?: LandingSectionConfig;
     lab?: LandingSectionConfig;
+    mercado?: LandingSectionConfig;
   };
   promoVideos?: {
     mainShortId?: string;

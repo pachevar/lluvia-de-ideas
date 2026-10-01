@@ -5469,6 +5469,15 @@ body.home-page-active .app-footer {
   box-shadow: 0 20px 40px rgba(251, 146, 60, 0.5);
 }
 
+.card-gradient-amber {
+  background: linear-gradient(145deg, #b45309 0%, #0f172a 60%, #d97706 100%);
+  box-shadow: 0 12px 30px rgba(217, 119, 6, 0.3);
+}
+.card-gradient-amber:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 20px 40px rgba(245, 158, 11, 0.5);
+}
+
 .prime-card-icon-container {
   display: flex;
   justify-content: space-between;
@@ -5592,6 +5601,12 @@ body.home-page-active .app-footer {
 
 .gradient-text-orange {
   background: linear-gradient(90deg, #f97316, #fbbf24);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.gradient-text-amber {
+  background: linear-gradient(90deg, #f59e0b, #fbbf24);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
 }

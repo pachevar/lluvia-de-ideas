@@ -78,6 +78,18 @@ export default function Home() {
       icon: '🧪',
       colorClass: 'card-gradient-orange',
       accentColor: '#fb923c'
+    },
+    {
+      id: 'mercado',
+      targetId: 'section-mercado',
+      route: '/mercado',
+      title: cardsConf.mercado?.title || 'Mercado Pedagógico',
+      badge: cardsConf.mercado?.badge || 'Tienda Editorial · Libros & Kits',
+      kicheTag: cardsConf.mercado?.kicheTag || "Kʼaybʼal (Mercado)",
+      desc: cardsConf.mercado?.desc || 'Cuentos ilustrados formato Kindle, sagas del Popol Vuh, proyectos STEAM, útiles y juegos didácticos.',
+      icon: '🛍️',
+      colorClass: 'card-gradient-amber',
+      accentColor: '#f59e0b'
     }
   ];
 
@@ -99,6 +111,7 @@ export default function Home() {
   const creatikaSec = sectionsConf.creatika || {};
   const tek100Sec = sectionsConf.tek100 || {};
   const labSec = sectionsConf.lab || {};
+  const mercadoSec = sectionsConf.mercado || {};
 
   return (
     <div className="landing-page-wrapper animate-fade-in">
@@ -563,6 +576,86 @@ export default function Home() {
                   <div className="hex-mini hex-4">💡</div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* SECCIÓN DESCRIPTIVA 5: MERCADO PEDAGÓGICO */}
+      <section id="section-mercado" className="landing-feature-section feature-mercado" style={{ background: '#090d16' }}>
+        <div className="feature-container">
+          <div className="feature-card-left card-glass" onClick={() => handleNavigate('/mercado')} style={{ cursor: 'pointer' }} title="Clic para entrar al Mercado Pedagógico">
+            <div 
+              className="sutz-illustration-box section-img-interactive" 
+              style={{ 
+                background: mercadoSec.bgImage ? undefined : 'radial-gradient(circle at 50% 50%, #78350f 0%, #0f172a 100%)',
+                borderColor: 'rgba(245, 158, 11, 0.4)' 
+              }}
+            >
+              {mercadoSec.bgImage && (
+                <div 
+                  className="section-img-bg" 
+                  style={{ backgroundImage: `url("${mercadoSec.bgImage}")` }}
+                />
+              )}
+              {mercadoSec.bgImage && <div className="section-img-overlay"></div>}
+
+              <div className="section-box-content">
+                <div className="cloud-glow-effect">🛍️</div>
+                <div className="sutz-badge-floating" style={{ borderColor: 'rgba(245, 158, 11, 0.4)' }}>
+                  <span style={{ color: '#f59e0b' }}>Tienda & Colecciones</span>
+                  <strong>Mercado Educativo</strong>
+                </div>
+                <div className="hex-map-preview">
+                  <div className="hex-mini hex-1" title="Cuentos Popol Vuh">📚</div>
+                  <div className="hex-mini hex-2" title="Proyectos STEAM">⚡</div>
+                  <div className="hex-mini hex-3" title="Juegos de Mesa">🎲</div>
+                  <div className="hex-mini hex-4" title="Útiles y Arte">🎨</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="feature-info-right">
+            <span className="feature-tag" style={{ color: '#f59e0b' }}>{mercadoSec.badge || 'TIENDA EDITORIAL & COLECCIONES'}</span>
+            <h2 className="feature-title">
+              <span className="gradient-text-amber">{mercadoSec.title || 'Mercado Pedagógico'}</span>
+            </h2>
+            <p className="feature-body">
+              {mercadoSec.body || 'Explora sagas literarias en pasta dura e ilustraciones a todo color formato Kindle, proyectos prácticos de robótica y STEAM, barajas temáticas y juegos de mesa con rigor pedagógico.'}
+            </p>
+            <ul className="feature-bullets">
+              {(mercadoSec.bullets && mercadoSec.bullets.length > 0 ? mercadoSec.bullets : [
+                'Sagas Popol Vuh & STEAM: Obras ilustradas formato Kindle con mapas y desafíos.',
+                'Kits de Robótica y Ciencia: Materiales didácticos certificados directos de la editorial.',
+                'Juegos de Mesa & Cartas: Dinámicas pedagógicas para el aula y la familia.'
+              ]).map((bullet: string, idx: number) => (
+                <li key={idx}>🛍️ {bullet}</li>
+              ))}
+            </ul>
+            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => handleNavigate('/mercado')}
+                style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)', color: '#0f172a', fontWeight: 800, padding: '12px 24px', borderRadius: '12px' }}
+              >
+                🛍️ Entrar a la Tienda ➔
+              </button>
+              <button
+                className="btn btn-glass"
+                onClick={() => handleNavigate('/mercado?cat=cuentos&sub=colecciones')}
+                style={{ 
+                  padding: '12px 22px', 
+                  borderRadius: '12px',
+                  background: 'rgba(245, 158, 11, 0.12)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  color: '#fef3c7',
+                  fontWeight: 700,
+                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
+                }}
+              >
+                📚 Ver Colecciones Popol Vuh
+              </button>
             </div>
           </div>
         </div>
