@@ -83,14 +83,50 @@ export default function Laboratorios() {
     }));
   };
 
-  const handleToggleAllAccordions = (open: boolean) => {
-    soundEffects.playClick();
-    setOpenAccordions({
-      desc: open,
-      features: open,
-      modules: open,
-      schedule: open
-    });
+  // Gestos táctiles para dispositivos móviles (deslizar a la izquierda o derecha)
+  const [touchStartX, setTouchStartX] = useState<number | null>(null);
+  const [touchStartY, setTouchStartY] = useState<number | null>(null);
+
+  const handleTouchStart = (e: React.TouchEvent) => {
+    setTouchStartX(e.targetTouches[0].clientX);
+    setTouchStartY(e.targetTouches[0].clientY);
+  };
+
+  const handleTouchEndModule = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffX = touchStartX - touchEndX;
+    const diffY = touchStartY - touchEndY;
+
+    // Solo activamos swipe horizontal si el desplazamiento horizontal es superior al vertical
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 35) {
+      if (diffX > 0) {
+        handleNextModule();
+      } else {
+        handlePrevModule();
+      }
+    }
+    setTouchStartX(null);
+    setTouchStartY(null);
+  };
+
+  const handleTouchEndSchedule = (e: React.TouchEvent) => {
+    if (touchStartX === null || touchStartY === null) return;
+    const touchEndX = e.changedTouches[0].clientX;
+    const touchEndY = e.changedTouches[0].clientY;
+    const diffX = touchStartX - touchEndX;
+    const diffY = touchStartY - touchEndY;
+
+    if (Math.abs(diffX) > Math.abs(diffY) && Math.abs(diffX) > 35) {
+      if (diffX > 0) {
+        handleNextSchedule();
+      } else {
+        handlePrevSchedule();
+      }
+    }
+    setTouchStartX(null);
+    setTouchStartY(null);
   };
 
   // Estados del modal de inscripción
@@ -403,32 +439,6 @@ export default function Laboratorios() {
                   <span>🎬</span> Taller Activo 2026 · Formación Presencial
                 </span>
                 <h1 className="lab-hero-title">Laboratorio de Animación Educativa</h1>
-                <p className="lab-hero-lead">
-                  {config.laboratorios?.intro || 'Transforma tu práctica docente mediante experiencias de aprendizaje basadas en la narrativa, el juego y la producción de animación en el aula.'}
-                </p>
-
-                {/* Controles de expansión rápida */}
-                <div className="lab-accordions-toolbar">
-                  <span className="lab-toolbar-hint">Navegación compacta por secciones:</span>
-                  <div className="lab-toolbar-btns">
-                    <button 
-                      type="button" 
-                      className="lab-toolbar-btn"
-                      onClick={() => handleToggleAllAccordions(true)}
-                      title="Abrir todas las secciones"
-                    >
-                      <span>📂 Expandir todo</span>
-                    </button>
-                    <button 
-                      type="button" 
-                      className="lab-toolbar-btn"
-                      onClick={() => handleToggleAllAccordions(false)}
-                      title="Cerrar todas las secciones para máximo espacio"
-                    >
-                      <span>📁 Colapsar todo</span>
-                    </button>
-                  </div>
-                </div>
               </header>
 
               <div className="lab-accordions-container">
@@ -464,12 +474,6 @@ export default function Laboratorios() {
                         <div className="lab-desc-text-col">
                           <p className="lab-desc-p">
                             {config.laboratorios?.intro || 'Transforma tu práctica docente mediante experiencias de aprendizaje basadas en la narrativa, el juego y la producción de animación en el aula.'}
-                          </p>
-                          <p className="lab-desc-p">
-                            El <strong>Laboratorio de Animación Educativa</strong> es un espacio formativo presencial y vivencial de 30 horas donde los maestros descubren cómo utilizar la técnica de animación cuadro a cuadro (*stop-motion*) como una herramienta transversal para la lectoescritura, la resolución pacífica de conflictos y la integración curricular STEAM.
-                          </p>
-                          <p className="lab-desc-p">
-                            No requieres experiencia artística previa: a lo largo de 10 módulos prácticos, aprenderás técnicas accesibles con plastilina, papel, teléfonos inteligentes y materiales reciclables, culminando con un cortometraje listo para proyectar con tus estudiantes en la escuela.
                           </p>
                         </div>
                         <div className="lab-desc-pillars-col">
@@ -577,7 +581,7 @@ export default function Laboratorios() {
 
                 {/* ==============================================================
                     DESPLEGABLE 3: RUTA DE FORMACIÓN Y COMPETENCIAS
-                    (Navegación con botones y texto "Módulo X", título abajo y columnas horizontales)
+                    (Navegación con botones y texto "Módulo X", título abajo, columnas horizontales y gestos táctiles)
                     ============================================================== */}
                 <div className="lab-accordion-item">
                   <button
@@ -604,7 +608,14 @@ export default function Laboratorios() {
                   </button>
 
                   {openAccordions.modules && currentMod && (
-                    <div className="lab-accordion-body animate-fade-in">
+                    <div 
+                      className="lab-accordion-body animate-fade-in"
+                      onTouchStart={handleTouchStart}
+                      onTouchEnd={handleTouchEndModule}
+                    >
+                      <div className="lab-mobile-swipe-hint">
+                        <span>👈 Desliza horizontalmente para cambiar de módulo 👉</span>
+                      </div>
 
                       {/* 1. Botones Anterior / Siguiente con texto "Módulo X" en medio */}
                       <div className="lab-mod-nav-bar">
@@ -757,7 +768,14 @@ export default function Laboratorios() {
                   </button>
 
                   {openAccordions.schedule && scheduleMod && (
-                    <div className="lab-accordion-body animate-fade-in">
+                    <div 
+                      className="lab-accordion-body animate-fade-in"
+                      onTouchStart={handleTouchStart}
+                      onTouchEnd={handleTouchEndSchedule}
+                    >
+                      <div className="lab-mobile-swipe-hint">
+                        <span>👈 Desliza horizontalmente para cambiar de fecha 👉</span>
+                      </div>
 
                       {/* 1. Botones Anterior / Siguiente con texto "Sesión X" en medio */}
                       <div className="lab-mod-nav-bar">
