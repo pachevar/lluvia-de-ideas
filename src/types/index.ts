@@ -8,6 +8,9 @@ export interface LabModuleConfig {
   time?: string;
   location?: string;
   type?: string;
+  phase?: string;
+  duration?: string;
+  deliverable?: string;
 }
 
 export interface StoryConfig {

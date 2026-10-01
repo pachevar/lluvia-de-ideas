@@ -647,13 +647,8 @@ export default function Laboratorios() {
 
                       {/* Contenido animado al cambiar de módulo */}
                       <div className="lab-module-content-animated" key={activeLabModule}>
-                        {/* 2. Título del módulo abajo de los botones */}
+                        {/* 2. Título del módulo abajo de los botones (Limpio: solo icono y título) */}
                         <div className="lab-active-mod-header">
-                          <div className="lab-mod-tags-row">
-                            <span className="lab-mod-phase-tag">{currentExtras?.phase || 'Fase Formativa'}</span>
-                            <span className="lab-mod-dur-tag">⏱️ {currentExtras?.duration || '3 Horas'}</span>
-                            <span className="lab-mod-date-tag">📅 {formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}</span>
-                          </div>
                           <h3 className="lab-active-mod-title">
                             <span className="lab-active-mod-icon">{currentMod.icon}</span>
                             <span>{currentMod.title}</span>
@@ -696,7 +691,7 @@ export default function Laboratorios() {
                               <h4 className="lab-col-title">Producto de Aula</h4>
                             </div>
                             <p className="lab-col-text">
-                              {currentExtras?.deliverable || "Secuencia didáctica y artefactos aplicables directamente a tus alumnos."}
+                              {currentMod.deliverable || currentExtras?.deliverable || "Secuencia didáctica y artefactos aplicables directamente a tus alumnos."}
                             </p>
                           </div>
 
@@ -710,7 +705,7 @@ export default function Laboratorios() {
                               {formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}
                             </div>
                             <div className="lab-col-time-text">
-                              ⏰ 2:00 PM a 5:00 PM · Presencial
+                              ⏰ {currentMod.time || "2:00 PM a 5:00 PM"} · {currentMod.type || "Presencial"}
                             </div>
                             <button
                               type="button"
@@ -810,13 +805,8 @@ export default function Laboratorios() {
 
                       {/* Contenido animado al cambiar de sesión */}
                       <div className="lab-module-content-animated" key={activeScheduleModule}>
-                        {/* 2. Título de la sesión abajo de los botones */}
+                        {/* 2. Título de la sesión abajo de los botones (Limpio: solo icono y título) */}
                         <div className="lab-active-mod-header">
-                          <div className="lab-mod-tags-row">
-                            <span className="lab-mod-phase-tag">{scheduleModExtras?.phase || 'Fase Formativa'}</span>
-                            <span className="lab-mod-dur-tag">Modalidad Presencial</span>
-                            <span className="lab-mod-date-tag">Sesión Oficial 2026</span>
-                          </div>
                           <h3 className="lab-active-mod-title">
                             <span className="lab-active-mod-icon">{scheduleMod.icon}</span>
                             <span>Módulo {scheduleMod.id}: {scheduleMod.title}</span>
@@ -850,7 +840,7 @@ export default function Laboratorios() {
                             {scheduleMod.time || (scheduleMod.id > 8 ? "Por acordar con el grupo" : "2:00 PM a 5:00 PM")}
                           </div>
                           <p className="lab-col-text" style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '6px' }}>
-                            3 horas prácticas presenciales de producción en aula.
+                            {scheduleMod.duration || scheduleModExtras?.duration || "3 horas prácticas"} · {scheduleMod.type || "Presencial"}
                           </p>
                         </div>
 
