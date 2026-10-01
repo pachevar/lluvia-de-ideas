@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import { usePortalConfig } from '../context/PortalConfigContext';
@@ -129,7 +129,8 @@ export default function Laboratorios() {
     setTouchStartY(null);
   };
 
-  // Estados del modal de inscripción
+  // Estados de modales
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
   const [regName, setRegName] = useState('');
   const [regPhone, setRegPhone] = useState('');
@@ -138,6 +139,18 @@ export default function Laboratorios() {
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
   const [regError, setRegError] = useState('');
+
+  // Cerrar modales con tecla Escape
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        if (isPromoModalOpen) setIsPromoModalOpen(false);
+        if (isRegisterModalOpen) setIsRegisterModalOpen(false);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isPromoModalOpen, isRegisterModalOpen]);
 
   const currentMod = modulesList.find(m => m.id === activeLabModule) || modulesList[0];
   const currentExtras = currentMod ? MODULE_EXTRAS[currentMod.id] : undefined;
@@ -440,6 +453,28 @@ export default function Laboratorios() {
                 </span>
                 <h1 className="lab-hero-title">Laboratorio de Animación Educativa</h1>
               </header>
+
+              {/* Botón Ver Promocional Profesional */}
+              <div className="lab-promo-hero-banner">
+                <button
+                  type="button"
+                  className="lab-hero-promo-btn"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setIsPromoModalOpen(true);
+                  }}
+                  title="Ver video promocional del laboratorio"
+                >
+                  <span className="lab-hero-promo-icon-wrap">
+                    <span className="lab-hero-promo-play">▶</span>
+                  </span>
+                  <div className="lab-hero-promo-texts">
+                    <span className="lab-hero-promo-title">Ver Video Promocional</span>
+                    <span className="lab-hero-promo-desc">Conoce la experiencia vivencial del laboratorio en 60 segundos</span>
+                  </div>
+                  <span className="lab-hero-promo-badge">Shorts 🎬</span>
+                </button>
+              </div>
 
               <div className="lab-accordions-container">
 
@@ -1161,6 +1196,73 @@ export default function Laboratorios() {
                 {regLoading ? 'Enviando Inscripción...' : 'Confirmar Mi Inscripción 🚀'}
               </button>
             </form>
+          </div>
+        </div>
+      , document.body)}
+
+      {/* Modal de Video Promocional */}
+      {isPromoModalOpen && createPortal(
+        <div 
+          className="lab-modal-overlay animate-fade-in" 
+          onClick={() => setIsPromoModalOpen(false)}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div 
+            className="lab-promo-modal-card animate-scale-up" 
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="lab-promo-modal-header">
+              <div className="lab-promo-header-info">
+                <span className="lab-promo-header-badge">🎬 Video Promocional</span>
+                <h3 className="lab-promo-modal-title">Laboratorio de Animación Educativa</h3>
+              </div>
+              <button 
+                type="button" 
+                className="lab-modal-close-btn"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setIsPromoModalOpen(false);
+                }}
+                aria-label="Cerrar video promocional"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Reproductor de YouTube Shorts 9:16 */}
+            <div className="lab-promo-video-wrapper">
+              <iframe
+                src="https://www.youtube.com/embed/O0mEirXHoRo?autoplay=1&rel=0&modestbranding=1&playsinline=1"
+                title="Promocional Laboratorio de Animación Educativa"
+                className="lab-promo-iframe"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
+                allowFullScreen
+              />
+            </div>
+
+            <div className="lab-promo-modal-footer">
+              <a
+                href="https://youtube.com/shorts/O0mEirXHoRo?feature=share"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="lab-promo-yt-link"
+              >
+                <span>Abrir en YouTube Shorts ↗</span>
+              </a>
+              <button
+                type="button"
+                className="btn-register-highlight"
+                style={{ padding: '8px 18px', fontSize: '0.88rem' }}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setIsPromoModalOpen(false);
+                  setIsRegisterModalOpen(true);
+                }}
+              >
+                <span>📝 Inscribirme al Taller</span>
+              </button>
+            </div>
           </div>
         </div>
       , document.body)}

@@ -2019,3 +2019,216 @@
   animation: labModuleSlideIn 0.32s cubic-bezier(0.16, 1, 0.3, 1) forwards;
   will-change: transform, opacity, filter;
 }
+
+/* ==========================================================================
+   11. BANNER Y BOTÓN DE VIDEO PROMOCIONAL (YOUTUBE SHORTS)
+   ========================================================================== */
+.lab-promo-hero-banner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 24px auto;
+  width: 100%;
+  max-width: 720px;
+}
+
+.lab-hero-promo-btn {
+  width: 100%;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.15) 0%, rgba(249, 115, 22, 0.15) 50%, rgba(56, 189, 248, 0.15) 100%);
+  border: 1.5px solid rgba(249, 115, 22, 0.4);
+  border-radius: 20px;
+  padding: 14px 22px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 8px 24px rgba(239, 68, 68, 0.18), inset 0 1px 1px rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(12px);
+  text-align: left;
+  outline: none;
+}
+
+.lab-hero-promo-btn:hover {
+  transform: translateY(-2px) scale(1.01);
+  border-color: #f97316;
+  background: linear-gradient(135deg, rgba(239, 68, 68, 0.25) 0%, rgba(249, 115, 22, 0.25) 50%, rgba(56, 189, 248, 0.25) 100%);
+  box-shadow: 0 12px 32px rgba(249, 115, 22, 0.35), inset 0 1px 2px rgba(255, 255, 255, 0.3);
+}
+
+.lab-hero-promo-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #ef4444 0%, #f97316 100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 0 4px 16px rgba(239, 68, 68, 0.5);
+  transition: transform 0.3s ease;
+}
+
+.lab-hero-promo-btn:hover .lab-hero-promo-icon-wrap {
+  transform: scale(1.08);
+}
+
+.lab-hero-promo-play {
+  color: #ffffff;
+  font-size: 1.15rem;
+  margin-left: 3px;
+}
+
+.lab-hero-promo-texts {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+
+.lab-hero-promo-title {
+  font-size: 1.08rem;
+  font-weight: 900;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.lab-hero-promo-desc {
+  font-size: 0.82rem;
+  color: #fed7aa;
+  font-weight: 500;
+  line-height: 1.35;
+}
+
+.lab-hero-promo-badge {
+  font-size: 0.74rem;
+  font-weight: 850;
+  background: rgba(239, 68, 68, 0.25);
+  border: 1px solid rgba(239, 68, 68, 0.6);
+  color: #fca5a5;
+  padding: 5px 12px;
+  border-radius: 999px;
+  flex-shrink: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+/* Modal de Video Promocional (Optimizado para YouTube Shorts 9:16) */
+.lab-promo-modal-card {
+  background: linear-gradient(180deg, #0f172a 0%, #020617 100%);
+  border: 1.5px solid rgba(249, 115, 22, 0.35);
+  border-radius: 24px;
+  width: 100%;
+  max-width: 440px;
+  padding: 20px;
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 40px rgba(249, 115, 22, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  position: relative;
+  z-index: 10;
+}
+
+.lab-promo-modal-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lab-promo-header-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lab-promo-header-badge {
+  font-size: 0.74rem;
+  font-weight: 850;
+  color: #f97316;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+.lab-promo-modal-title {
+  margin: 0;
+  font-size: 1.18rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+.lab-promo-video-wrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 9 / 16;
+  max-height: 64vh;
+  border-radius: 18px;
+  overflow: hidden;
+  background: #000000;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.lab-promo-iframe {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: none;
+}
+
+.lab-promo-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lab-promo-yt-link {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #fca5a5;
+  text-decoration: none;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  padding: 8px 14px;
+  border-radius: 10px;
+  transition: all 0.2s ease;
+}
+
+.lab-promo-yt-link:hover {
+  background: rgba(239, 68, 68, 0.25);
+  color: #ffffff;
+  border-color: #ef4444;
+}
+
+@media (max-width: 640px) {
+  .lab-hero-promo-btn {
+    padding: 12px 14px;
+    gap: 12px;
+  }
+  .lab-hero-promo-icon-wrap {
+    width: 40px;
+    height: 40px;
+  }
+  .lab-hero-promo-title {
+    font-size: 0.98rem;
+  }
+  .lab-hero-promo-desc {
+    font-size: 0.76rem;
+  }
+  .lab-hero-promo-badge {
+    display: none;
+  }
+  .lab-promo-modal-card {
+    max-width: 95vw;
+    padding: 16px 14px;
+  }
+  .lab-promo-video-wrapper {
+    max-height: 58vh;
+  }
+}
+
