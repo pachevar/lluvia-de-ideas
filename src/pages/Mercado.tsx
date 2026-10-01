@@ -176,6 +176,19 @@ export default function Mercado() {
     return `https://wa.me/${phone}?text=${message}`;
   };
 
+  const [filterBadge, setFilterBadge] = useState<'all' | 'offers' | 'bestsellers'>('all');
+
+  // Conteo de productos por categoría
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { todos: allProducts.length };
+    MERCADO_CATEGORIES.forEach(cat => {
+      if (cat.id !== 'todos') {
+        counts[cat.id] = allProducts.filter(p => p.category === cat.id).length;
+      }
+    });
+    return counts;
+  }, [allProducts]);
+
   // Filtrado y ordenamiento de productos
   const filteredProducts = useMemo(() => {
     let list = allProducts;
@@ -183,6 +196,13 @@ export default function Mercado() {
     // Filtro por categoría
     if (selectedCategory !== 'todos') {
       list = list.filter(p => p.category === selectedCategory);
+    }
+
+    // Filtro por insignias / ofertas rápidas
+    if (filterBadge === 'offers') {
+      list = list.filter(p => p.originalPrice && p.originalPrice > p.price);
+    } else if (filterBadge === 'bestsellers') {
+      list = list.filter(p => p.badge?.includes('MÁS VENDIDO') || (p.soldCount && p.soldCount > 100));
     }
 
     // Filtro por búsqueda
@@ -206,7 +226,7 @@ export default function Mercado() {
       // 'featured'
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
-  }, [allProducts, selectedCategory, searchQuery, sortBy]);
+  }, [allProducts, selectedCategory, filterBadge, searchQuery, sortBy]);
 
   return (
     <div className="mercado-amazon-container animate-fade-in">
@@ -311,33 +331,29 @@ export default function Mercado() {
         </div>
       </header>
 
-      {/* Barra de Navegación de Categorías (Temu / Amazon Style) */}
-      <nav className="mercado-subnav-categories">
-        <div className="subnav-container">
-          <div className="categories-pills-scroll">
-            {MERCADO_CATEGORIES.map(cat => {
-              const isActive = selectedCategory === cat.id;
-              const count = cat.id === 'todos' 
-                ? allProducts.length 
-                : allProducts.filter(p => p.category === cat.id).length;
+      {/* Barra de Categorías Horizontal Exclusiva para Móvil */}
+      <nav className="mercado-mobile-categories-bar">
+        <div className="mobile-categories-scroll">
+          {MERCADO_CATEGORIES.map(cat => {
+            const isActive = selectedCategory === cat.id;
+            const count = categoryCounts[cat.id] || 0;
 
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`amazon-cat-tab ${isActive ? 'active' : ''}`}
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setSelectedCategory(cat.id);
-                  }}
-                >
-                  <span className="cat-tab-icon">{cat.icon}</span>
-                  <span className="cat-tab-label">{cat.label}</span>
-                  <span className="cat-tab-badge">{count}</span>
-                </button>
-              );
-            })}
-          </div>
+            return (
+              <button
+                key={cat.id}
+                type="button"
+                className={`mobile-cat-pill ${isActive ? 'active' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setSelectedCategory(cat.id);
+                }}
+              >
+                <span className="mobile-cat-icon">{cat.icon}</span>
+                <span className="mobile-cat-label">{cat.label}</span>
+                <span className="mobile-cat-count">{count}</span>
+              </button>
+            );
+          })}
         </div>
       </nav>
 
@@ -370,172 +386,358 @@ export default function Mercado() {
         </div>
       )}
 
-      {/* Contenido Principal / Catálogo */}
+      {/* Contenido Principal con Layout de Barra Lateral Vertical + 4 Columnas */}
       <main className="mercado-amazon-main">
-        <div className="main-content-wrapper">
-          
-          {/* Barra de Filtro y Ordenamiento Superior */}
-          <div className="products-filter-header">
-            <div className="filter-summary-text">
-              Mostrando <strong>{filteredProducts.length} resultados</strong>
-              {selectedCategory !== 'todos' && ` en "${MERCADO_CATEGORIES.find(c => c.id === selectedCategory)?.label}"`}
-              {searchQuery && ` para "${searchQuery}"`}
+        <div className="mercado-columns-layout">
+          {/* ==============================================================
+              BARRA LATERAL VERTICAL (Filtros, Búsqueda y Opciones en Web)
+              ============================================================== */}
+          <aside className="mercado-vertical-sidebar">
+            {/* 1. Bloque de Búsqueda Vertical */}
+            <div className="sidebar-filter-block">
+              <h4 className="sidebar-filter-title">
+                <span>🔍</span> Búsqueda en Tienda
+              </h4>
+              <div className="sidebar-vertical-search">
+                <input
+                  type="text"
+                  placeholder="Ej: Cuentos, bingos, plastilinas..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                />
+                {searchQuery && (
+                  <button 
+                    type="button" 
+                    onClick={() => setSearchQuery('')}
+                    className="sidebar-clear-btn"
+                    title="Borrar búsqueda"
+                  >
+                    ✕
+                  </button>
+                )}
+              </div>
             </div>
 
-            <div className="filter-sort-controls">
-              <label htmlFor="sort-dropdown">Ordenar por:</label>
-              <select
-                id="sort-dropdown"
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="amazon-sort-select"
-              >
-                <option value="featured">Destacados</option>
-                <option value="sold">Más Vendidos 🔥</option>
-                <option value="price-asc">Precio: de menor a mayor</option>
-                <option value="price-desc">Precio: de mayor a menor</option>
-                <option value="rating">Opiniones de clientes</option>
-              </select>
-            </div>
-          </div>
+            {/* 2. Bloque de Categorías / Departamentos Verticales */}
+            <div className="sidebar-filter-block">
+              <h4 className="sidebar-filter-title">
+                <span>📚</span> Departamentos
+              </h4>
+              <div className="sidebar-categories-vertical-list">
+                {MERCADO_CATEGORIES.map(cat => {
+                  const isActive = selectedCategory === cat.id;
+                  const count = categoryCounts[cat.id] || 0;
 
-          {/* Grilla de Tarjetas de Producto Estilo Amazon / Temu */}
-          {filteredProducts.length > 0 ? (
-            <div className="amazon-products-grid">
-              {filteredProducts.map(product => {
-                const discountPercent = product.originalPrice 
-                  ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-                  : 0;
-
-                return (
-                  <article key={product.id} className="amazon-product-card">
-                    {/* Badge de Oferta / Destacado */}
-                    <div className="card-top-badges">
-                      {product.badge && (
-                        <span className={`temu-badge ${product.badge.includes('MÁS VENDIDO') || product.badge.includes('SUPERVENTAS') ? 'badge-orange' : 'badge-red'}`}>
-                          {product.badge}
-                        </span>
-                      )}
-                      {discountPercent > 0 && (
-                        <span className="temu-discount-tag">-{discountPercent}%</span>
-                      )}
-                    </div>
-
-                    {/* Ilustración / Imagen del producto */}
-                    <div 
-                      className="card-image-box"
+                  return (
+                    <button
+                      key={cat.id}
+                      type="button"
+                      className={`sidebar-vertical-cat-item ${isActive ? 'active' : ''}`}
                       onClick={() => {
                         soundEffects.playClick();
-                        setSelectedProduct(product);
-                        setDetailQuantity(1);
+                        setSelectedCategory(cat.id);
                       }}
-                      title="Ver detalle del producto"
                     >
-                      {product.image ? (
-                        <img src={product.image} alt={product.title} className="card-product-img" />
-                      ) : (
-                        <span className="card-product-icon">{product.icon}</span>
-                      )}
-                    </div>
+                      <div className="sidebar-cat-left">
+                        <span className="sidebar-cat-emoji">{cat.icon}</span>
+                        <span className="sidebar-cat-text">{cat.label}</span>
+                      </div>
+                      <span className="sidebar-cat-number">{count}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
 
-                    {/* Cuerpo de la Tarjeta */}
-                    <div className="card-details-box">
-                      <span className="card-category-label">{product.categoryLabel}</span>
-                      
-                      <h3 
-                        className="card-product-title"
+            {/* 3. Bloque de Ordenamiento Vertical */}
+            <div className="sidebar-filter-block">
+              <h4 className="sidebar-filter-title">
+                <span>⚡</span> Ordenar Catálogo
+              </h4>
+              <div className="sidebar-sort-vertical-list">
+                {[
+                  { id: 'featured', label: '⭐ Destacados Editorial' },
+                  { id: 'sold', label: '🔥 Más Vendidos (+ Popular)' },
+                  { id: 'price-asc', label: '📈 Menor a Mayor Precio' },
+                  { id: 'price-desc', label: '📉 Mayor a Menor Precio' },
+                  { id: 'rating', label: '🌟 Mejor Calificados' }
+                ].map(opt => (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    className={`sidebar-sort-option ${sortBy === opt.id ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setSortBy(opt.id as any);
+                    }}
+                  >
+                    <span className="sort-radio-indicator">{sortBy === opt.id ? '●' : '○'}</span>
+                    <span>{opt.label}</span>
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* 4. Bloque de Filtros Rápidos (Ofertas y Destacados) */}
+            <div className="sidebar-filter-block">
+              <h4 className="sidebar-filter-title">
+                <span>🏷️</span> Filtros Especiales
+              </h4>
+              <div className="sidebar-badge-filter-group">
+                <button
+                  type="button"
+                  className={`sidebar-badge-pill ${filterBadge === 'all' ? 'active' : ''}`}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setFilterBadge('all');
+                  }}
+                >
+                  Todos los Productos
+                </button>
+                <button
+                  type="button"
+                  className={`sidebar-badge-pill ${filterBadge === 'offers' ? 'active' : ''}`}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setFilterBadge('offers');
+                  }}
+                >
+                  🔥 Solo con Descuento
+                </button>
+                <button
+                  type="button"
+                  className={`sidebar-badge-pill ${filterBadge === 'bestsellers' ? 'active' : ''}`}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setFilterBadge('bestsellers');
+                  }}
+                >
+                  ⭐ Solo Más Vendidos
+                </button>
+              </div>
+            </div>
+
+            {/* 5. Tarjeta de Contacto Directo WhatsApp */}
+            <div className="sidebar-whatsapp-card">
+              <div className="whatsapp-card-head">
+                <span className="whatsapp-card-icon">💬</span>
+                <strong>¿Pedidos para Colegios?</strong>
+              </div>
+              <p>
+                Atención personalizada, cotizaciones formales y descuentos por volumen institucional.
+              </p>
+              <a
+                href={`https://wa.me/${mercadoConfig.whatsappPhone || '50246741239'}?text=${encodeURIComponent('¡Hola Editorial Lluvia de Ideas! Me gustaría cotizar materiales y cuentos para una institución educativa.')}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="sidebar-whatsapp-btn"
+              >
+                <span>Cotizar por WhatsApp</span>
+              </a>
+            </div>
+          </aside>
+
+          {/* ==============================================================
+              ÁREA PRINCIPAL DE PRODUCTOS (4 Columnas en Web)
+              ============================================================== */}
+          <section className="mercado-catalog-content">
+            {/* Header de Resultados Superior */}
+            <div className="catalog-results-header">
+              <div className="results-count-text">
+                Mostrando <strong>{filteredProducts.length}</strong> de <strong>{allProducts.length}</strong> productos
+                {selectedCategory !== 'todos' && (
+                  <span className="active-filter-badge">
+                    {MERCADO_CATEGORIES.find(c => c.id === selectedCategory)?.label}
+                    <button 
+                      type="button" 
+                      onClick={() => setSelectedCategory('todos')}
+                      title="Quitar filtro"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
+                {filterBadge !== 'all' && (
+                  <span className="active-filter-badge">
+                    {filterBadge === 'offers' ? '🔥 Con Descuento' : '⭐ Más Vendidos'}
+                    <button 
+                      type="button" 
+                      onClick={() => setFilterBadge('all')}
+                      title="Quitar filtro"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
+                {searchQuery && (
+                  <span className="active-filter-badge">
+                    "{searchQuery}"
+                    <button 
+                      type="button" 
+                      onClick={() => setSearchQuery('')}
+                      title="Quitar búsqueda"
+                    >
+                      ✕
+                    </button>
+                  </span>
+                )}
+              </div>
+
+              {/* Selector de Orden para Móvil / Tablet */}
+              <div className="mobile-sort-row">
+                <label htmlFor="mobile-sort">Ordenar:</label>
+                <select
+                  id="mobile-sort"
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as any)}
+                  className="mobile-sort-select"
+                >
+                  <option value="featured">⭐ Destacados</option>
+                  <option value="sold">🔥 Más Vendidos</option>
+                  <option value="price-asc">📈 Menor Precio</option>
+                  <option value="price-desc">📉 Mayor Precio</option>
+                  <option value="rating">🌟 Calificación</option>
+                </select>
+              </div>
+            </div>
+
+            {/* Grilla de 4 Columnas de Productos */}
+            {filteredProducts.length > 0 ? (
+              <div className="amazon-products-grid">
+                {filteredProducts.map(product => {
+                  const discountPercent = product.originalPrice 
+                    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                    : 0;
+
+                  return (
+                    <article key={product.id} className="amazon-product-card">
+                      {/* Badge de Oferta / Destacado */}
+                      <div className="card-top-badges">
+                        {product.badge && (
+                          <span className={`temu-badge ${product.badge.includes('MÁS VENDIDO') || product.badge.includes('SUPERVENTAS') ? 'badge-orange' : 'badge-red'}`}>
+                            {product.badge}
+                          </span>
+                        )}
+                        {discountPercent > 0 && (
+                          <span className="temu-discount-tag">-{discountPercent}%</span>
+                        )}
+                      </div>
+
+                      {/* Ilustración / Imagen del producto */}
+                      <div 
+                        className="card-image-box"
                         onClick={() => {
                           soundEffects.playClick();
                           setSelectedProduct(product);
                           setDetailQuantity(1);
                         }}
+                        title="Ver detalle del producto"
                       >
-                        {product.title}
-                      </h3>
-
-                      {/* Estrellas y Ventas */}
-                      <div className="card-rating-row">
-                        <div className="stars-row">
-                          {'★'.repeat(Math.floor(product.rating))}
-                        </div>
-                        <span className="rating-score">{product.rating.toFixed(1)}</span>
-                        <span className="reviews-count">({product.reviewsCount})</span>
-                        {product.soldCount && (
-                          <span className="sold-count">· +{product.soldCount} vendidos</span>
+                        {product.image ? (
+                          <img src={product.image} alt={product.title} className="card-product-img" />
+                        ) : (
+                          <span className="card-product-icon">{product.icon}</span>
                         )}
                       </div>
 
-                      {/* Etiqueta de Grado / Nivel */}
-                      <div className="card-grade-pill">
-                        🎯 {product.gradeOrAge}
-                      </div>
-
-                      {/* Fila de Precios Temu / Amazon Style */}
-                      <div className="card-pricing-block">
-                        <div className="main-price-row">
-                          <span className="price-symbol">{product.currency}</span>
-                          <span className="price-amount">{product.price.toFixed(2)}</span>
-                          {product.originalPrice && (
-                            <span className="price-original">
-                              Q {product.originalPrice.toFixed(2)}
-                            </span>
-                          )}
-                        </div>
-
-                        {product.deliveryTime && (
-                          <div className="card-delivery-badge">
-                            {product.deliveryTime}
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Botón de Acción Temu / Amazon */}
-                      <div className="card-actions-row">
-                        <button
-                          type="button"
-                          className="amazon-add-btn"
-                          onClick={() => handleAddToCart(product, 1)}
-                        >
-                          <span>🛒 Agregar al Carrito</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          className="amazon-quick-view-btn"
+                      {/* Cuerpo de la Tarjeta */}
+                      <div className="card-details-box">
+                        <span className="card-category-label">{product.categoryLabel}</span>
+                        
+                        <h3 
+                          className="card-product-title"
                           onClick={() => {
                             soundEffects.playClick();
                             setSelectedProduct(product);
                             setDetailQuantity(1);
                           }}
-                          title="Ver detalles completos"
                         >
-                          👁️
-                        </button>
+                          {product.title}
+                        </h3>
+
+                        {/* Estrellas y Ventas */}
+                        <div className="card-rating-row">
+                          <div className="stars-row">
+                            {'★'.repeat(Math.floor(product.rating))}
+                          </div>
+                          <span className="rating-score">{product.rating.toFixed(1)}</span>
+                          <span className="reviews-count">({product.reviewsCount})</span>
+                          {product.soldCount && (
+                            <span className="sold-count">· +{product.soldCount} vendidos</span>
+                          )}
+                        </div>
+
+                        {/* Etiqueta de Grado / Nivel */}
+                        <div className="card-grade-pill">
+                          🎯 {product.gradeOrAge}
+                        </div>
+
+                        {/* Fila de Precios Temu / Amazon Style */}
+                        <div className="card-pricing-block">
+                          <div className="main-price-row">
+                            <span className="price-symbol">{product.currency}</span>
+                            <span className="price-amount">{product.price.toFixed(2)}</span>
+                            {product.originalPrice && product.originalPrice > product.price && (
+                              <span className="price-original">
+                                Q {product.originalPrice.toFixed(2)}
+                              </span>
+                            )}
+                          </div>
+                          {product.deliveryTime && (
+                            <div className="card-delivery-badge">
+                              ⚡ {product.deliveryTime}
+                            </div>
+                          )}
+                        </div>
+
+                        {/* Botones de Acción */}
+                        <div className="card-actions-row">
+                          <button
+                            type="button"
+                            className="amazon-add-btn"
+                            onClick={() => handleAddToCart(product, 1)}
+                            title="Agregar al Carrito"
+                          >
+                            🛒 Agregar
+                          </button>
+                          
+                          <button
+                            type="button"
+                            className="amazon-quick-view-btn"
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setSelectedProduct(product);
+                              setDetailQuantity(1);
+                            }}
+                            title="Vista Rápida"
+                          >
+                            👁️
+                          </button>
+                        </div>
                       </div>
-
-                    </div>
-                  </article>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="amazon-empty-results">
-              <span className="empty-icon-box">🔍</span>
-              <h3>No encontramos productos que coincidan con tu búsqueda</h3>
-              <p>Revisa la ortografía o intenta buscar por categorías generales como cuentos, lotería, plastilinas o kits.</p>
-              <button 
-                type="button" 
-                className="btn-reset-filters"
-                onClick={() => {
-                  setSelectedCategory('todos');
-                  setSearchQuery('');
-                }}
-              >
-                Ver Todo el Catálogo
-              </button>
-            </div>
-          )}
-
+                    </article>
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="amazon-empty-results">
+                <span className="empty-icon-box">🔍</span>
+                <h3>No se encontraron productos</h3>
+                <p>Intenta con otros términos de búsqueda o cambia la categoría seleccionada.</p>
+                <button 
+                  type="button" 
+                  className="btn-reset-filters"
+                  onClick={() => {
+                    setSelectedCategory('todos');
+                    setSearchQuery('');
+                    setFilterBadge('all');
+                  }}
+                >
+                  Ver Todo el Catálogo
+                </button>
+              </div>
+            )}
+          </section>
         </div>
       </main>
 
