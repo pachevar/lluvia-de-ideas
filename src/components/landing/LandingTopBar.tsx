@@ -78,6 +78,16 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
                 <span className="btn-text-short">Neuro</span>
               </button>
 
+              <button
+                className="top-btn top-btn-mercado"
+                onClick={() => go('/mercado')}
+                title="Mercado Pedagógico: Cuentos, juegos de mesa, personajes, tarjetas, proyectos y útiles"
+              >
+                <span className="top-btn-icon">🛍️</span>
+                <span className="btn-text-full">Mercado</span>
+                <span className="btn-text-short">Mercado</span>
+              </button>
+
               {user ? (
                 <div className="top-user-menu">
                   <button
@@ -164,6 +174,13 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
                     onClick={() => go('/neurociencia')}
                   >
                     <span className="top-btn-icon">🧠</span> Neurociencia Aula
+                  </button>
+
+                  <button
+                    className="top-btn top-btn-mercado"
+                    onClick={() => go('/mercado')}
+                  >
+                    <span className="top-btn-icon">🛍️</span> Mercado
                   </button>
 
                   {user ? (

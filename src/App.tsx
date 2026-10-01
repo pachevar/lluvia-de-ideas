@@ -30,6 +30,7 @@ const ConstruyendoPersonaje = React.lazy(() => import('./pages/ConstruyendoPerso
 const BingoBoletos = React.lazy(() => import('./pages/BingoBoletos'));
 const BingoBoletosConfirmacion = React.lazy(() => import('./pages/BingoBoletosConfirmacion'));
 const GranGaleria = React.lazy(() => import('./pages/GranGaleria'));
+const Mercado = React.lazy(() => import('./pages/Mercado'));
 
 function App() {
   const navigate = useNavigate();
@@ -122,6 +123,9 @@ function App() {
             <Route path="/gran-galeria" element={<GranGaleria />} />
             <Route path="/galeria" element={<GranGaleria />} />
             <Route path="/concursos-estudiantiles" element={<GranGaleria />} />
+            <Route path="/mercado" element={<Mercado />} />
+            <Route path="/tienda" element={<Mercado />} />
+            <Route path="/catalogo" element={<Mercado />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
