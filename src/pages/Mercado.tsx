@@ -2,7 +2,17 @@ import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
-import { DEFAULT_MERCADO_PRODUCTS, MERCADO_CATEGORIES, type MercadoProduct } from '../data/mercadoData';
+import { 
+  DEFAULT_MERCADO_PRODUCTS, 
+  MERCADO_CATEGORIES, 
+  DEFAULT_BOOK_COLLECTIONS,
+  getCollectionBooks,
+  type MercadoProduct,
+  type BookCollection
+} from '../data/mercadoData';
+import KindleBookCover from '../components/mercado/KindleBookCover';
+import KindleBookCard from '../components/mercado/KindleBookCard';
+import KindleCollectionsView from '../components/mercado/KindleCollectionsView';
 import { soundEffects } from '../utils/soundEffects';
 import { CONTACT } from '../constants';
 import './Mercado.css';
@@ -19,7 +29,10 @@ export default function Mercado() {
 
   const allProducts: MercadoProduct[] = useMemo(() => {
     if (config?.mercadoProducts && Array.isArray(config.mercadoProducts) && config.mercadoProducts.length > 0) {
-      return config.mercadoProducts as MercadoProduct[];
+      // Garantizar que los nuevos títulos enriquecidos (Popol Vuh c-5 a c-9) se incorporen si no existen en la copia previa
+      const configIds = new Set(config.mercadoProducts.map((p: any) => p.id));
+      const missingDefaults = DEFAULT_MERCADO_PRODUCTS.filter(p => !configIds.has(p.id));
+      return [...(config.mercadoProducts as MercadoProduct[]), ...missingDefaults];
     }
     return DEFAULT_MERCADO_PRODUCTS;
   }, [config?.mercadoProducts]);
@@ -33,6 +46,7 @@ export default function Mercado() {
   };
 
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
+  const [cuentosSubCategory, setCuentosSubCategory] = useState<'todos' | 'colecciones' | 'steam' | 'popol-vuh'>('todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'sold'>('featured');
   
@@ -110,6 +124,32 @@ export default function Mercado() {
     setTimeout(() => {
       setAddedNotice(null);
     }, 2400);
+  };
+
+  // Agregar colección completa al carrito con fanfarria de éxito
+  const handleAddCollectionToCart = (collection: BookCollection, books: MercadoProduct[]) => {
+    soundEffects.playSuccessFanfare();
+    setCartItems(prev => {
+      let updated = [...prev];
+      books.forEach(b => {
+        const existing = updated.find(item => item.product.id === b.id);
+        if (existing) {
+          updated = updated.map(item =>
+            item.product.id === b.id
+              ? { ...item, quantity: item.quantity + 1 }
+              : item
+          );
+        } else {
+          updated.push({ product: b, quantity: 1 });
+        }
+      });
+      return updated;
+    });
+
+    setAddedNotice(`¡Colección "${collection.title}" (${books.length} libros) añadida al carrito!`);
+    setTimeout(() => {
+      setAddedNotice(null);
+    }, 3200);
   };
 
   // Modificar cantidad en carrito
@@ -198,6 +238,15 @@ export default function Mercado() {
       list = list.filter(p => p.category === selectedCategory);
     }
 
+    // Filtro por subcategoría específica de Cuentos y Libros
+    if (selectedCategory === 'cuentos') {
+      if (cuentosSubCategory === 'steam') {
+        list = list.filter(p => p.collectionId === 'col-steam');
+      } else if (cuentosSubCategory === 'popol-vuh') {
+        list = list.filter(p => p.collectionId === 'col-popol-vuh');
+      }
+    }
+
     // Filtro por insignias / ofertas rápidas
     if (filterBadge === 'offers') {
       list = list.filter(p => p.originalPrice && p.originalPrice > p.price);
@@ -262,19 +311,29 @@ export default function Mercado() {
           <div className="mercado-amazon-search-box">
             <div className="search-category-select">
               <select 
-                value={selectedCategory}
+                value={selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'colecciones' : selectedCategory}
                 onChange={(e) => {
                   soundEffects.playClick();
-                  setSelectedCategory(e.target.value);
+                  const val = e.target.value;
+                  if (val === 'colecciones') {
+                    setSelectedCategory('cuentos');
+                    setCuentosSubCategory('colecciones');
+                  } else {
+                    setSelectedCategory(val);
+                    if (val === 'cuentos') {
+                      setCuentosSubCategory('todos');
+                    }
+                  }
                 }}
               >
-                <option value="todos">Todos</option>
-                <option value="cuentos">Cuentos</option>
-                <option value="juegos">Juegos</option>
-                <option value="personajes">Personajes</option>
-                <option value="tarjetas">Tarjetas</option>
-                <option value="proyectos">Proyectos</option>
-                <option value="utiles">Útiles</option>
+                <option value="todos">Todos los Departamentos</option>
+                <option value="cuentos">📚 Cuentos y Libros (Kindle)</option>
+                <option value="colecciones">📦 Colecciones de Libros</option>
+                <option value="juegos">🎲 Juegos de Mesa</option>
+                <option value="personajes">🎭 Personajes y Títeres</option>
+                <option value="tarjetas">🎴 Tarjetas y Barajas</option>
+                <option value="proyectos">🚀 Proyectos STEAM</option>
+                <option value="utiles">🎨 Útiles y Arte</option>
               </select>
               <span className="select-arrow">▾</span>
             </div>
@@ -335,7 +394,7 @@ export default function Mercado() {
       <nav className="mercado-mobile-categories-bar">
         <div className="mobile-categories-scroll">
           {MERCADO_CATEGORIES.map(cat => {
-            const isActive = selectedCategory === cat.id;
+            const isActive = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
             const count = categoryCounts[cat.id] || 0;
 
             return (
@@ -346,6 +405,9 @@ export default function Mercado() {
                 onClick={() => {
                   soundEffects.playClick();
                   setSelectedCategory(cat.id);
+                  if (cat.id === 'cuentos') {
+                    setCuentosSubCategory('todos');
+                  }
                 }}
               >
                 <span className="mobile-cat-icon">{cat.icon}</span>
@@ -354,6 +416,20 @@ export default function Mercado() {
               </button>
             );
           })}
+          {/* Píldora de Subcategoría Colecciones */}
+          <button
+            type="button"
+            className={`mobile-cat-pill mobile-col-pill ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
+            onClick={() => {
+              soundEffects.playClick();
+              setSelectedCategory('cuentos');
+              setCuentosSubCategory('colecciones');
+            }}
+          >
+            <span className="mobile-cat-icon">📦</span>
+            <span className="mobile-cat-label">Colecciones</span>
+            <span className="mobile-cat-count">{DEFAULT_BOOK_COLLECTIONS.length}</span>
+          </button>
         </div>
       </nav>
 
@@ -425,25 +501,64 @@ export default function Mercado() {
               </h4>
               <div className="sidebar-categories-vertical-list">
                 {MERCADO_CATEGORIES.map(cat => {
-                  const isActive = selectedCategory === cat.id;
+                  const isCatSelected = selectedCategory === cat.id;
+                  const isActive = isCatSelected && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
                   const count = categoryCounts[cat.id] || 0;
 
                   return (
-                    <button
-                      key={cat.id}
-                      type="button"
-                      className={`sidebar-vertical-cat-item ${isActive ? 'active' : ''}`}
-                      onClick={() => {
-                        soundEffects.playClick();
-                        setSelectedCategory(cat.id);
-                      }}
-                    >
-                      <div className="sidebar-cat-left">
-                        <span className="sidebar-cat-emoji">{cat.icon}</span>
-                        <span className="sidebar-cat-text">{cat.label}</span>
-                      </div>
-                      <span className="sidebar-cat-number">{count}</span>
-                    </button>
+                    <div key={cat.id} className="sidebar-cat-group">
+                      <button
+                        type="button"
+                        className={`sidebar-vertical-cat-item ${isActive ? 'active' : ''}`}
+                        onClick={() => {
+                          soundEffects.playClick();
+                          setSelectedCategory(cat.id);
+                          if (cat.id === 'cuentos') {
+                            setCuentosSubCategory('todos');
+                          }
+                        }}
+                      >
+                        <div className="sidebar-cat-left">
+                          <span className="sidebar-cat-emoji">{cat.icon}</span>
+                          <span className="sidebar-cat-text">{cat.label}</span>
+                        </div>
+                        <span className="sidebar-cat-number">{count}</span>
+                      </button>
+
+                      {/* Submenú de Cuentos y Libros con Subcategoría Colecciones */}
+                      {cat.id === 'cuentos' && (
+                        <div className="sidebar-cuentos-sub-menu">
+                          <button
+                            type="button"
+                            className={`sidebar-sub-item ${selectedCategory === 'cuentos' && cuentosSubCategory === 'todos' ? 'active' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundEffects.playClick();
+                              setSelectedCategory('cuentos');
+                              setCuentosSubCategory('todos');
+                            }}
+                          >
+                            <span className="sub-bullet">▸</span>
+                            <span>📚 Todos los Libros</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            className={`sidebar-sub-item sub-colecciones ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundEffects.playClick();
+                              setSelectedCategory('cuentos');
+                              setCuentosSubCategory('colecciones');
+                            }}
+                          >
+                            <span className="sub-bullet">▸</span>
+                            <span>📦 Colecciones</span>
+                            <span className="sub-badge-mini">Packs</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
                   );
                 })}
               </div>
@@ -601,141 +716,257 @@ export default function Mercado() {
               </div>
             </div>
 
-            {/* Grilla de 4 Columnas de Productos */}
-            {filteredProducts.length > 0 ? (
-              <div className="amazon-products-grid">
-                {filteredProducts.map(product => {
-                  const discountPercent = product.originalPrice 
-                    ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
-                    : 0;
+            {/* Si está en la categoría Cuentos y Libros: Barra de Subcategorías Kindle */}
+            {selectedCategory === 'cuentos' && (
+              <div className="kindle-cuentos-subnav">
+                <div className="kindle-subnav-left">
+                  <span className="kindle-subnav-title">
+                    <span className="kindle-icon">📖</span> Kindle Bookshelf
+                  </span>
+                  <button
+                    type="button"
+                    className={`kindle-subnav-pill ${cuentosSubCategory === 'todos' ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setCuentosSubCategory('todos');
+                    }}
+                  >
+                    📚 Todos los Libros ({allProducts.filter(p => p.category === 'cuentos').length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`kindle-subnav-pill subnav-collections-pill ${cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setCuentosSubCategory('colecciones');
+                    }}
+                  >
+                    <span className="sparkle">✨</span> 📦 Colecciones ({DEFAULT_BOOK_COLLECTIONS.length})
+                  </button>
+                  <button
+                    type="button"
+                    className={`kindle-subnav-pill ${cuentosSubCategory === 'popol-vuh' ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setCuentosSubCategory('popol-vuh');
+                    }}
+                  >
+                    ⛈️ Saga Popol Vuh (5)
+                  </button>
+                  <button
+                    type="button"
+                    className={`kindle-subnav-pill ${cuentosSubCategory === 'steam' ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setCuentosSubCategory('steam');
+                    }}
+                  >
+                    🧬 Serie STEAM (4)
+                  </button>
+                </div>
 
-                  return (
-                    <article key={product.id} className="amazon-product-card">
-                      {/* Badge de Oferta / Destacado */}
-                      <div className="card-top-badges">
-                        {product.badge && (
-                          <span className={`temu-badge ${product.badge.includes('MÁS VENDIDO') || product.badge.includes('SUPERVENTAS') ? 'badge-orange' : 'badge-red'}`}>
-                            {product.badge}
-                          </span>
-                        )}
-                        {discountPercent > 0 && (
-                          <span className="temu-discount-tag">-{discountPercent}%</span>
-                        )}
-                      </div>
+                <div className="kindle-subnav-right">
+                  <span className="kindle-badge-format-info">
+                    ✨ Formato Amazon Kindle · Portadas 3D & Lecturas Pedagógicas
+                  </span>
+                </div>
+              </div>
+            )}
 
-                      {/* Ilustración / Imagen del producto */}
-                      <div 
-                        className="card-image-box"
-                        onClick={() => {
-                          soundEffects.playClick();
-                          setSelectedProduct(product);
-                          setDetailQuantity(1);
-                        }}
-                        title="Ver detalle del producto"
-                      >
-                        {product.image ? (
-                          <img src={product.image} alt={product.title} className="card-product-img" />
-                        ) : (
-                          <span className="card-product-icon">{product.icon}</span>
-                        )}
-                      </div>
+            {/* Si se seleccionó la subcategoría Colecciones dentro de Cuentos */}
+            {selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? (
+              <KindleCollectionsView
+                allProducts={allProducts}
+                onAddToCart={handleAddToCart}
+                onAddCollectionToCart={handleAddCollectionToCart}
+                onQuickView={(p) => {
+                  soundEffects.playClick();
+                  setSelectedProduct(p);
+                  setDetailQuantity(1);
+                }}
+                whatsappPhone={mercadoConfig.whatsappPhone || CONTACT.whatsappPhone}
+              />
+            ) : selectedCategory === 'cuentos' ? (
+              /* Libros en Formato Amazon Kindle (Portadas 3D) */
+              filteredProducts.length > 0 ? (
+                <div className="kindle-books-grid">
+                  {filteredProducts.map(product => (
+                    <KindleBookCard
+                      key={product.id}
+                      product={product}
+                      onAddToCart={handleAddToCart}
+                      onQuickView={(p) => {
+                        soundEffects.playClick();
+                        setSelectedProduct(p);
+                        setDetailQuantity(1);
+                      }}
+                      onSelectCollection={(colId) => {
+                        soundEffects.playClick();
+                        setCuentosSubCategory('colecciones');
+                        setTimeout(() => {
+                          const el = document.getElementById(`collection-${colId}`);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 120);
+                      }}
+                      getSingleProductWhatsAppUrl={getSingleProductWhatsAppUrl}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <div className="amazon-empty-results">
+                  <span className="empty-icon-box">🔍</span>
+                  <h3>No se encontraron libros</h3>
+                  <p>Intenta con otros términos de búsqueda o cambia la subcategoría seleccionada.</p>
+                  <button 
+                    type="button" 
+                    className="btn-reset-filters"
+                    onClick={() => {
+                      setCuentosSubCategory('todos');
+                      setSearchQuery('');
+                      setFilterBadge('all');
+                    }}
+                  >
+                    Ver Todos los Libros
+                  </button>
+                </div>
+              )
+            ) : (
+              /* Demás categorías de la tienda: Juegos, Personajes, etc. (Mantienen diseño retail estándar) */
+              filteredProducts.length > 0 ? (
+                <div className="amazon-products-grid">
+                  {filteredProducts.map(product => {
+                    const discountPercent = product.originalPrice 
+                      ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                      : 0;
 
-                      {/* Cuerpo de la Tarjeta */}
-                      <div className="card-details-box">
-                        <span className="card-category-label">{product.categoryLabel}</span>
-                        
-                        <h3 
-                          className="card-product-title"
+                    return (
+                      <article key={product.id} className="amazon-product-card">
+                        {/* Badge de Oferta / Destacado */}
+                        <div className="card-top-badges">
+                          {product.badge && (
+                            <span className={`temu-badge ${product.badge.includes('MÁS VENDIDO') || product.badge.includes('SUPERVENTAS') ? 'badge-orange' : 'badge-red'}`}>
+                              {product.badge}
+                            </span>
+                          )}
+                          {discountPercent > 0 && (
+                            <span className="temu-discount-tag">-{discountPercent}%</span>
+                          )}
+                        </div>
+
+                        {/* Ilustración / Imagen del producto */}
+                        <div 
+                          className="card-image-box"
                           onClick={() => {
                             soundEffects.playClick();
                             setSelectedProduct(product);
                             setDetailQuantity(1);
                           }}
+                          title="Ver detalle del producto"
                         >
-                          {product.title}
-                        </h3>
-
-                        {/* Estrellas y Ventas */}
-                        <div className="card-rating-row">
-                          <div className="stars-row">
-                            {'★'.repeat(Math.floor(product.rating))}
-                          </div>
-                          <span className="rating-score">{product.rating.toFixed(1)}</span>
-                          <span className="reviews-count">({product.reviewsCount})</span>
-                          {product.soldCount && (
-                            <span className="sold-count">· +{product.soldCount} vendidos</span>
+                          {product.image ? (
+                            <img src={product.image} alt={product.title} className="card-product-img" />
+                          ) : (
+                            <span className="card-product-icon">{product.icon}</span>
                           )}
                         </div>
 
-                        {/* Etiqueta de Grado / Nivel */}
-                        <div className="card-grade-pill">
-                          🎯 {product.gradeOrAge}
-                        </div>
-
-                        {/* Fila de Precios Temu / Amazon Style */}
-                        <div className="card-pricing-block">
-                          <div className="main-price-row">
-                            <span className="price-symbol">{product.currency}</span>
-                            <span className="price-amount">{product.price.toFixed(2)}</span>
-                            {product.originalPrice && product.originalPrice > product.price && (
-                              <span className="price-original">
-                                Q {product.originalPrice.toFixed(2)}
-                              </span>
-                            )}
-                          </div>
-                          {product.deliveryTime && (
-                            <div className="card-delivery-badge">
-                              ⚡ {product.deliveryTime}
-                            </div>
-                          )}
-                        </div>
-
-                        {/* Botones de Acción */}
-                        <div className="card-actions-row">
-                          <button
-                            type="button"
-                            className="amazon-add-btn"
-                            onClick={() => handleAddToCart(product, 1)}
-                            title="Agregar al Carrito"
-                          >
-                            🛒 Agregar
-                          </button>
+                        {/* Cuerpo de la Tarjeta */}
+                        <div className="card-details-box">
+                          <span className="card-category-label">{product.categoryLabel}</span>
                           
-                          <button
-                            type="button"
-                            className="amazon-quick-view-btn"
+                          <h3 
+                            className="card-product-title"
                             onClick={() => {
                               soundEffects.playClick();
                               setSelectedProduct(product);
                               setDetailQuantity(1);
                             }}
-                            title="Vista Rápida"
                           >
-                            👁️
-                          </button>
+                            {product.title}
+                          </h3>
+
+                          {/* Estrellas y Ventas */}
+                          <div className="card-rating-row">
+                            <div className="stars-row">
+                              {'★'.repeat(Math.floor(product.rating))}
+                            </div>
+                            <span className="rating-score">{product.rating.toFixed(1)}</span>
+                            <span className="reviews-count">({product.reviewsCount})</span>
+                            {product.soldCount && (
+                              <span className="sold-count">· +{product.soldCount} vendidos</span>
+                            )}
+                          </div>
+
+                          {/* Etiqueta de Grado / Nivel */}
+                          <div className="card-grade-pill">
+                            🎯 {product.gradeOrAge}
+                          </div>
+
+                          {/* Fila de Precios Temu / Amazon Style */}
+                          <div className="card-pricing-block">
+                            <div className="main-price-row">
+                              <span className="price-symbol">{product.currency}</span>
+                              <span className="price-amount">{product.price.toFixed(2)}</span>
+                              {product.originalPrice && product.originalPrice > product.price && (
+                                <span className="price-original">
+                                  Q {product.originalPrice.toFixed(2)}
+                                </span>
+                              )}
+                            </div>
+                            {product.deliveryTime && (
+                              <div className="card-delivery-badge">
+                                ⚡ {product.deliveryTime}
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Botones de Acción */}
+                          <div className="card-actions-row">
+                            <button
+                              type="button"
+                              className="amazon-add-btn"
+                              onClick={() => handleAddToCart(product, 1)}
+                              title="Agregar al Carrito"
+                            >
+                              🛒 Agregar
+                            </button>
+                            
+                            <button
+                              type="button"
+                              className="amazon-quick-view-btn"
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setSelectedProduct(product);
+                                setDetailQuantity(1);
+                              }}
+                              title="Vista Rápida"
+                            >
+                              👁️
+                            </button>
+                          </div>
                         </div>
-                      </div>
-                    </article>
-                  );
-                })}
-              </div>
-            ) : (
-              <div className="amazon-empty-results">
-                <span className="empty-icon-box">🔍</span>
-                <h3>No se encontraron productos</h3>
-                <p>Intenta con otros términos de búsqueda o cambia la categoría seleccionada.</p>
-                <button 
-                  type="button" 
-                  className="btn-reset-filters"
-                  onClick={() => {
-                    setSelectedCategory('todos');
-                    setSearchQuery('');
-                    setFilterBadge('all');
-                  }}
-                >
-                  Ver Todo el Catálogo
-                </button>
-              </div>
+                      </article>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="amazon-empty-results">
+                  <span className="empty-icon-box">🔍</span>
+                  <h3>No se encontraron productos</h3>
+                  <p>Intenta con otros términos de búsqueda o cambia la categoría seleccionada.</p>
+                  <button 
+                    type="button" 
+                    className="btn-reset-filters"
+                    onClick={() => {
+                      setSelectedCategory('todos');
+                      setSearchQuery('');
+                      setFilterBadge('all');
+                    }}
+                  >
+                    Ver Todo el Catálogo
+                  </button>
+                </div>
+              )
             )}
           </section>
         </div>
@@ -931,13 +1162,26 @@ export default function Mercado() {
             <div className="modal-two-columns">
               {/* Columna Izquierda: Imagen y Garantías */}
               <div className="modal-left-column">
-                <div className="modal-image-display">
-                  {selectedProduct.image ? (
-                    <img src={selectedProduct.image} alt={selectedProduct.title} className="modal-hero-img" />
-                  ) : (
-                    <span className="modal-hero-icon">{selectedProduct.icon}</span>
-                  )}
-                </div>
+                {selectedProduct.category === 'cuentos' ? (
+                  <div className="modal-kindle-cover-stage">
+                    <KindleBookCover 
+                      product={selectedProduct} 
+                      size="lg" 
+                      showLookInsideBadge={false} 
+                    />
+                    <div className="kindle-modal-format-badge">
+                      <span>📖 {selectedProduct.formatType || 'Formato Físico de Lujo + Versión Digital'}</span>
+                    </div>
+                  </div>
+                ) : (
+                  <div className="modal-image-display">
+                    {selectedProduct.image ? (
+                      <img src={selectedProduct.image} alt={selectedProduct.title} className="modal-hero-img" />
+                    ) : (
+                      <span className="modal-hero-icon">{selectedProduct.icon}</span>
+                    )}
+                  </div>
+                )}
 
                 <div className="modal-quick-badges">
                   <div className="modal-badge-item">
@@ -960,6 +1204,15 @@ export default function Mercado() {
               {/* Columna Derecha: Información, Precio y Compra */}
               <div className="modal-right-column">
                 <h2 className="modal-full-title">{selectedProduct.title}</h2>
+
+                {selectedProduct.category === 'cuentos' && (
+                  <div className="modal-kindle-byline">
+                    <span>de <strong>{selectedProduct.author || 'Editorial Lluvia de Ideas'}</strong> (Editorial & Autores)</span>
+                    {selectedProduct.pages && (
+                      <span className="modal-kindle-pages-tag">· {selectedProduct.pages} páginas</span>
+                    )}
+                  </div>
+                )}
 
                 <div className="modal-ratings-strip">
                   <div className="stars-gold">
@@ -987,6 +1240,67 @@ export default function Mercado() {
                   </div>
                   <span className="modal-tax-note">Impuestos incluidos · Factura disponible</span>
                 </div>
+
+                {/* Si pertenece a una colección (Subcategoría interactiva) */}
+                {selectedProduct.collectionName && selectedProduct.collectionId && (
+                  <div className="modal-kindle-collection-card">
+                    <div className="col-card-text">
+                      <span className="col-tag-small">📦 COLECCIÓN EDITORIAL</span>
+                      <h4 className="col-name-h4">
+                        Este libro forma parte de: <strong>{selectedProduct.collectionName}</strong>
+                      </h4>
+                      <p className="col-expl-p">
+                        Puedes adquirir la colección completa con descuento de pack especial o explorar los otros títulos que la componen.
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      className="btn-modal-open-collection"
+                      onClick={() => {
+                        soundEffects.playClick();
+                        const targetCol = selectedProduct.collectionId;
+                        setSelectedProduct(null);
+                        setSelectedCategory('cuentos');
+                        setCuentosSubCategory('colecciones');
+                        setTimeout(() => {
+                          const el = document.getElementById(`collection-${targetCol}`);
+                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }, 150);
+                      }}
+                    >
+                      <span>Ver Colección Completa ▸</span>
+                    </button>
+                  </div>
+                )}
+
+                {/* Estante de Libros Compañeros de la misma Colección */}
+                {selectedProduct.collectionId && (
+                  <div className="modal-companion-books-rack">
+                    <h4 className="companion-rack-title">Otros libros en esta misma colección:</h4>
+                    <div className="companion-mini-shelf">
+                      {getCollectionBooks(selectedProduct.collectionId, allProducts)
+                        .filter(b => b.id !== selectedProduct.id)
+                        .map(cb => (
+                          <div 
+                            key={cb.id} 
+                            className="companion-shelf-item"
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setSelectedProduct(cb);
+                              setDetailQuantity(1);
+                            }}
+                            title={cb.title}
+                          >
+                            <div className="companion-shelf-cover">
+                              <KindleBookCover product={cb} size="sm" showLookInsideBadge={false} />
+                            </div>
+                            <span className="companion-shelf-title">{cb.title}</span>
+                            <span className="companion-shelf-price">Q {cb.price.toFixed(2)}</span>
+                          </div>
+                        ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="modal-grade-target">
                   <strong>🎯 Nivel / Edad recomendada:</strong> {selectedProduct.gradeOrAge}

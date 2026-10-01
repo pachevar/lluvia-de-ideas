@@ -108,6 +108,13 @@ export interface MercadoProductConfig {
   contents?: string[];
   featured?: boolean;
   inStock?: boolean;
+  collectionId?: string;
+  collectionName?: string;
+  author?: string;
+  pages?: number;
+  formatType?: string;
+  isbn?: string;
+  coverTheme?: 'amber' | 'cyan' | 'emerald' | 'purple' | 'ruby';
 }
 
 export interface MercadoConfig {

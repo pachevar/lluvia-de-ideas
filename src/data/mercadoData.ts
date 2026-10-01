@@ -1,3 +1,9 @@
+import camazotzTitulo from '../cuentos/Camazotz titulo.png';
+import ixkikTitulo from '../cuentos/Ixkik titulo.png';
+import ixmukanneTitulo from '../cuentos/Ixmukanne titulo.png';
+import juracanTitulo from '../cuentos/Juracan titulo.png';
+import ququmatzTitulo from '../cuentos/Ququmatz titulo.png';
+
 export interface MercadoProduct {
   id: string;
   title: string;
@@ -20,7 +26,102 @@ export interface MercadoProduct {
   contents?: string[];
   featured?: boolean;
   inStock?: boolean;
+  collectionId?: string;
+  collectionName?: string;
+  author?: string;
+  pages?: number;
+  formatType?: string;
+  isbn?: string;
+  coverTheme?: 'amber' | 'cyan' | 'emerald' | 'purple' | 'ruby';
 }
+
+export interface BookCollection {
+  id: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  description: string;
+  price: number;
+  originalPrice: number;
+  currency: string;
+  gradeOrAge: string;
+  rating: number;
+  reviewsCount: number;
+  soldCount: number;
+  bookIds: string[];
+  themeColor: string;
+  accentGradient: string;
+  features: string[];
+}
+
+export const DEFAULT_BOOK_COLLECTIONS: BookCollection[] = [
+  {
+    id: 'col-popol-vuh',
+    title: 'Saga Mítica Popol Vuh: Dioses & Creación',
+    subtitle: 'Colección de 5 Obras Maestras Ilustradas',
+    badge: 'COLECCIÓN ESTRELLA',
+    description: 'La gesta cosmogónica y mítica maya narrada con rigor pedagógico, poesía viva y arte visual contemporáneo. Reúne las historias épicas de Juracán, Camazotz, Ixkik, Ixmukané y Ququmatz.',
+    price: 440.00,
+    originalPrice: 550.00,
+    currency: 'Q',
+    gradeOrAge: 'Primaria & Ciclo Básico',
+    rating: 5.0,
+    reviewsCount: 164,
+    soldCount: 310,
+    bookIds: ['c-5', 'c-6', 'c-7', 'c-8', 'c-9'],
+    themeColor: '#0284c7',
+    accentGradient: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%)',
+    features: [
+      '5 Libros en pasta dura e ilustraciones a todo color formato Kindle',
+      'Glosario etimológico Kʼicheʼ y mapa cosmológico desplegable',
+      'Guías pedagógicas transversales de literatura y cosmovisión'
+    ]
+  },
+  {
+    id: 'col-steam',
+    title: 'Colección STEAM: Sabiduría Ancestral & Algoritmos',
+    subtitle: 'Colección de 4 Libros de Ciencia, Lógica y Arte',
+    badge: 'INNOVACIÓN EDUCATIVA',
+    description: 'Aventuras narrativas que articulan biotecnología, matemática fractal en textiles, inteligencia artificial ética y pensamiento computacional, dialogando con las raíces culturales.',
+    price: 320.00,
+    originalPrice: 400.00,
+    currency: 'Q',
+    gradeOrAge: '4to Primaria a Diversificado',
+    rating: 4.9,
+    reviewsCount: 215,
+    soldCount: 450,
+    bookIds: ['c-1', 'c-2', 'c-3', 'c-4'],
+    themeColor: '#d97706',
+    accentGradient: 'linear-gradient(135deg, #78350f 0%, #b45309 50%, #d97706 100%)',
+    features: [
+      '4 Libros con desafíos prácticos STEAM y acertijos integrados',
+      'Enfoque en pensamiento crítico, lógica binaria y ética digital',
+      'Acceso digital complementario a guías y fichas didácticas'
+    ]
+  },
+  {
+    id: 'col-magna',
+    title: 'Gran Biblioteca Escolar: Antología Completa',
+    subtitle: 'Pack Integral de 9 Títulos de la Editorial',
+    badge: 'BOX SET COMPLETO',
+    description: 'El catálogo literario integral de Editorial Lluvia de Ideas. La solución definitiva para bibliotecas escolares, centros de recursos para el aprendizaje y familias apasionadas por la lectura.',
+    price: 699.00,
+    originalPrice: 950.00,
+    currency: 'Q',
+    gradeOrAge: 'Todos los Grados (Primaria, Básico y Diversificado)',
+    rating: 5.0,
+    reviewsCount: 320,
+    soldCount: 190,
+    bookIds: ['c-1', 'c-2', 'c-3', 'c-4', 'c-5', 'c-6', 'c-7', 'c-8', 'c-9'],
+    themeColor: '#059669',
+    accentGradient: 'linear-gradient(135deg, #064e3b 0%, #047857 50%, #059669 100%)',
+    features: [
+      'Los 9 libros editoriales en caja estuche coleccionable de lujo',
+      'Separadores de lectura exclusivos y láminas de arte coleccionables',
+      'Membresía digital para recursos pedagógicos de aula y proyectos'
+    ]
+  }
+];
 
 export const MERCADO_CATEGORIES = [
   { id: 'todos', label: 'Todo el Catálogo', icon: '⚡' },
@@ -34,7 +135,7 @@ export const MERCADO_CATEGORIES = [
 
 export const DEFAULT_MERCADO_PRODUCTS: MercadoProduct[] = [
   // ==========================================
-  // 1. CUENTOS
+  // 1. CUENTOS Y LIBROS (Formato Amazon Kindle)
   // ==========================================
   {
     id: 'c-1',
@@ -51,6 +152,12 @@ export const DEFAULT_MERCADO_PRODUCTS: MercadoProduct[] = [
     badge: 'MÁS VENDIDO',
     icon: '🌽',
     gradeOrAge: '4to a 6to Primaria',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 64,
+    formatType: 'Kindle eBook & Tapa Dura',
+    collectionId: 'col-steam',
+    collectionName: 'Colección STEAM: Sabiduría Ancestral',
+    coverTheme: 'amber',
     description: 'Aventura STEAM donde la biotecnología ancestral y la cosmovisión maya protegen los cultivos del futuro.',
     longDescription: 'Este libro ilustrado transporta a los estudiantes a través de una aventura épica donde descifran el mapa genético del grano sagrado. Incluye glosario en Kʼicheʼ, desafíos de comprensión lectora y actividades transversales STEAM.',
     features: [
@@ -76,6 +183,12 @@ export const DEFAULT_MERCADO_PRODUCTS: MercadoProduct[] = [
     badge: 'NUEVO',
     icon: '🌊',
     gradeOrAge: '1ro a 3ro Básico',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 88,
+    formatType: 'Novela Gráfica & Kindle',
+    collectionId: 'col-steam',
+    collectionName: 'Colección STEAM: Sabiduría Ancestral',
+    coverTheme: 'cyan',
     description: 'Novela gráfica juvenil sobre exploradores que descubren glifos informáticos y registros ocultos.',
     longDescription: 'Una historia trepidante de ciencia ficción y patrimonio cultural donde un equipo de jóvenes investigadores resuelve acertijos binarios en templos inundados, enseñando fundamentos de pensamiento lógico y ciberseguridad escolar.',
     features: [
@@ -101,6 +214,12 @@ export const DEFAULT_MERCADO_PRODUCTS: MercadoProduct[] = [
     badge: 'TOP RATED',
     icon: '🐆',
     gradeOrAge: 'Diversificado y Docentes',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 72,
+    formatType: 'Kindle eBook & Libro Filosófico',
+    collectionId: 'col-steam',
+    collectionName: 'Colección STEAM: Sabiduría Ancestral',
+    coverTheme: 'purple',
     description: 'El felino mítico protege el umbral de la inteligencia artificial y enseña el valor del criterio y la empatía.',
     longDescription: 'Obra reflexiva y narrativa diseñada para debatir en el aula sobre el impacto de los algoritmos y la tecnología en la sociedad moderna, guiados por la sabiduría de las tradiciones mesoamericanas.',
     features: [
@@ -126,6 +245,12 @@ export const DEFAULT_MERCADO_PRODUCTS: MercadoProduct[] = [
     badge: 'ARTE & CIENCIA',
     icon: '🧶',
     gradeOrAge: '3ro a 6to Primaria',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 56,
+    formatType: 'Kindle eBook & Libro de Arte',
+    collectionId: 'col-steam',
+    collectionName: 'Colección STEAM: Sabiduría Ancestral',
+    coverTheme: 'emerald',
     description: 'Los textiles tradicionales mayas revelan geometrías fractales y algoritmos cíclicos en una historia conmovedora.',
     longDescription: 'Sigue a dos niñas que descubren cómo los hilos y telares de cintura de sus abuelas esconden fórmulas matemáticas complejas para predecir los ciclos lunares y las temporadas de siembra.',
     features: [
@@ -135,6 +260,166 @@ export const DEFAULT_MERCADO_PRODUCTS: MercadoProduct[] = [
     ],
     contents: ['1 Libro ilustrado de 56 páginas', 'Plantilla de patrones geométricos desmontable'],
     featured: false
+  },
+  {
+    id: 'c-5',
+    title: 'Juracán: Corazón del Cielo y Origen de los Vientos',
+    category: 'cuentos',
+    categoryLabel: 'Cuentos y Libros',
+    price: 115.00,
+    originalPrice: 140.00,
+    currency: 'Q',
+    rating: 5.0,
+    reviewsCount: 178,
+    soldCount: 460,
+    deliveryTime: 'Entrega 24-48 hrs',
+    badge: 'SAGA POPOL VUH',
+    icon: '🌪️',
+    image: juracanTitulo,
+    gradeOrAge: 'Primaria & Básicos',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 96,
+    formatType: 'Kindle eBook & Edición de Lujo',
+    collectionId: 'col-popol-vuh',
+    collectionName: 'Saga Mítica Popol Vuh: Dioses & Creación',
+    coverTheme: 'cyan',
+    description: 'El rugido de los vientos primordiales y la tormenta cósmica que da inicio a la creación de los mundos.',
+    longDescription: 'Una adaptación épica y visual del mito kʼicheʼ de Juracán (Huracán), narrando el despertar de los tres relámpagos creadores y el origen del aliento de vida sobre la faz de las aguas primigenias.',
+    features: [
+      'Ilustraciones originales de gran formato a todo color',
+      'Guía pedagógica de mitología mesoamericana y cosmovisión kʼicheʼ',
+      'Actividades de comprensión y respeto a las fuerzas de la naturaleza'
+    ],
+    contents: ['1 Libro ilustrado de 96 páginas en tapa dura', '1 Mapa cósmico plegable', 'Acceso a narración sonora'],
+    featured: true
+  },
+  {
+    id: 'c-6',
+    title: 'Camazotz: Guardián de la Noche y Sombras de Xibalbá',
+    category: 'cuentos',
+    categoryLabel: 'Cuentos y Libros',
+    price: 110.00,
+    originalPrice: 135.00,
+    currency: 'Q',
+    rating: 4.9,
+    reviewsCount: 154,
+    soldCount: 380,
+    deliveryTime: 'Entrega 24-48 hrs',
+    badge: 'SAGA POPOL VUH',
+    icon: '🦇',
+    image: camazotzTitulo,
+    gradeOrAge: 'Primaria & Básicos',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 80,
+    formatType: 'Kindle eBook & Edición de Lujo',
+    collectionId: 'col-popol-vuh',
+    collectionName: 'Saga Mítica Popol Vuh: Dioses & Creación',
+    coverTheme: 'purple',
+    description: 'El mítico murciélago de la noche y las pruebas de valor, templanza e ingenio en las cavernas.',
+    longDescription: 'Acompaña la prueba de la Casa de los Murciélagos donde los héroes deben mantener la serenidad frente a las sombras y aprender a transformar el miedo en sabiduría y estrategia.',
+    features: [
+      'Narrativa inmersiva sobre valentía y autorregulación emocional',
+      'Ilustraciones nocturnas de alto contraste artístico',
+      'Preguntas de debate para el aula y el hogar'
+    ],
+    contents: ['1 Libro ilustrado de 80 páginas', 'Sticker holográfico de Camazotz'],
+    featured: true
+  },
+  {
+    id: 'c-7',
+    title: 'Ixkik: La Semilla Rebelde y el Árbol de Jícara',
+    category: 'cuentos',
+    categoryLabel: 'Cuentos y Libros',
+    price: 105.00,
+    originalPrice: 130.00,
+    currency: 'Q',
+    rating: 5.0,
+    reviewsCount: 139,
+    soldCount: 340,
+    deliveryTime: 'Entrega 24-48 hrs',
+    badge: 'SAGA POPOL VUH',
+    icon: '🌱',
+    image: ixkikTitulo,
+    gradeOrAge: 'Primaria & Básicos',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 76,
+    formatType: 'Kindle eBook & Edición de Lujo',
+    collectionId: 'col-popol-vuh',
+    collectionName: 'Saga Mítica Popol Vuh: Dioses & Creación',
+    coverTheme: 'emerald',
+    description: 'La doncella valiente que desafía los mandatos de la oscuridad para dar vida al nuevo linaje solar.',
+    longDescription: 'Una historia conmovedora sobre el coraje femenino, la justicia y la fertilidad de la tierra, mostrando cómo la determinación de Ixkik logra florecer la esperanza incluso ante las adversidades más oscuras.',
+    features: [
+      'Enfoque en liderazgo femenino ancestral y perseverancia',
+      'Glosario botánico de plantas y frutos tradicionales',
+      'Ficha didáctica de valores para primaria'
+    ],
+    contents: ['1 Libro de 76 páginas en encuadernación cosida', '1 Marcapáginas temático'],
+    featured: false
+  },
+  {
+    id: 'c-8',
+    title: 'Ixmukané: La Abuela de la Luz y Creadora del Maíz',
+    category: 'cuentos',
+    categoryLabel: 'Cuentos y Libros',
+    price: 110.00,
+    originalPrice: 135.00,
+    currency: 'Q',
+    rating: 4.9,
+    reviewsCount: 162,
+    soldCount: 410,
+    deliveryTime: 'Entrega 24-48 hrs',
+    badge: 'SAGA POPOL VUH',
+    icon: '🌾',
+    image: ixmukanneTitulo,
+    gradeOrAge: 'Primaria & Básicos',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 84,
+    formatType: 'Kindle eBook & Edición de Lujo',
+    collectionId: 'col-popol-vuh',
+    collectionName: 'Saga Mítica Popol Vuh: Dioses & Creación',
+    coverTheme: 'amber',
+    description: 'La sabia anciana que muele los nueve granos de maíz sagrado para formar la carne y el espíritu humano.',
+    longDescription: 'Homenaje a la memoria de las abuelas, la tradición oral y las raíces alimentarias de Mesoamérica, mostrando el valor del cuidado mutuo, la paciencia y el conocimiento intergeneracional.',
+    features: [
+      'Relato poético con énfasis en respeto intergeneracional',
+      'Infografía sobre el ciclo agrícola ancestral del maíz',
+      'Actividad de escritura creativa para los estudiantes'
+    ],
+    contents: ['1 Libro ilustrado de 84 páginas', 'Guía docente de comprensión lectora'],
+    featured: false
+  },
+  {
+    id: 'c-9',
+    title: 'Ququmatz: La Serpiente Emplumada y Señor de las Aguas',
+    category: 'cuentos',
+    categoryLabel: 'Cuentos y Libros',
+    price: 115.00,
+    originalPrice: 140.00,
+    currency: 'Q',
+    rating: 5.0,
+    reviewsCount: 185,
+    soldCount: 470,
+    deliveryTime: 'Entrega 24-48 hrs',
+    badge: 'SAGA POPOL VUH',
+    icon: '🐉',
+    image: ququmatzTitulo,
+    gradeOrAge: 'Primaria & Básicos',
+    author: 'Editorial Lluvia de Ideas',
+    pages: 92,
+    formatType: 'Kindle eBook & Edición de Lujo',
+    collectionId: 'col-popol-vuh',
+    collectionName: 'Saga Mítica Popol Vuh: Dioses & Creación',
+    coverTheme: 'cyan',
+    description: 'La deidad celeste de plumaje esmeralda que danza sobre los ríos tejiendo los horizontes del mundo.',
+    longDescription: 'Un viaje deslumbrante por las corrientes fluviales y celestes de la cosmovisión maya, donde Ququmatz personifica el agua vivificadora, el equilibrio ecológico y la creatividad cósmica.',
+    features: [
+      'Ilustraciones a doble página con paleta esmeralda y oro',
+      'Conexión con contenidos de ciencias naturales y ecología de cuencas',
+      'Reto visual de glifos escondidos en cada ilustración'
+    ],
+    contents: ['1 Libro de 92 páginas en tapa dura', '1 Lámina artística coleccionable'],
+    featured: true
   },
 
   // ==========================================
@@ -558,3 +843,12 @@ export const DEFAULT_MERCADO_PRODUCTS: MercadoProduct[] = [
     featured: false
   }
 ];
+
+export const getCollectionBooks = (collectionId: string, products: MercadoProduct[] = DEFAULT_MERCADO_PRODUCTS): MercadoProduct[] => {
+  const collection = DEFAULT_BOOK_COLLECTIONS.find(c => c.id === collectionId);
+  if (!collection) return [];
+  return collection.bookIds
+    .map(id => products.find(p => p.id === id))
+    .filter((p): p is MercadoProduct => Boolean(p));
+};
+
