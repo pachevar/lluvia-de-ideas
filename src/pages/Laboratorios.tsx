@@ -60,6 +60,38 @@ export default function Laboratorios() {
 
   const modulesList = config.laboratorios?.modules || [];
   const [activeLabModule, setActiveLabModule] = useState<number>(1);
+  const [activeScheduleModule, setActiveScheduleModule] = useState<number>(1);
+
+  // Control de secciones desplegables para ahorrar espacio en pantalla
+  const [openAccordions, setOpenAccordions] = useState<{
+    desc: boolean;
+    features: boolean;
+    modules: boolean;
+    schedule: boolean;
+  }>({
+    desc: false,      // Plegado por defecto para ganar espacio
+    features: false,  // Plegado por defecto para ganar espacio
+    modules: true,    // Abierto por defecto para navegación inmediata
+    schedule: true    // Abierto por defecto con navegación horizontal
+  });
+
+  const toggleAccordion = (key: 'desc' | 'features' | 'modules' | 'schedule') => {
+    soundEffects.playClick();
+    setOpenAccordions(prev => ({
+      ...prev,
+      [key]: !prev[key]
+    }));
+  };
+
+  const handleToggleAllAccordions = (open: boolean) => {
+    soundEffects.playClick();
+    setOpenAccordions({
+      desc: open,
+      features: open,
+      modules: open,
+      schedule: open
+    });
+  };
 
   // Estados del modal de inscripción
   const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
@@ -73,6 +105,9 @@ export default function Laboratorios() {
 
   const currentMod = modulesList.find(m => m.id === activeLabModule) || modulesList[0];
   const currentExtras = currentMod ? MODULE_EXTRAS[currentMod.id] : undefined;
+
+  const scheduleMod = modulesList.find(m => m.id === activeScheduleModule) || modulesList[0];
+  const scheduleModExtras = scheduleMod ? MODULE_EXTRAS[scheduleMod.id] : undefined;
 
   const handleGoToWorkshop = (subLab: string) => {
     soundEffects.playClick();
@@ -101,12 +136,32 @@ export default function Laboratorios() {
     }
   };
 
+  const handleSelectScheduleModule = (id: number) => {
+    soundEffects.playClick();
+    setActiveScheduleModule(id);
+  };
+
+  const handlePrevSchedule = () => {
+    if (activeScheduleModule > 1) {
+      handleSelectScheduleModule(activeScheduleModule - 1);
+    }
+  };
+
+  const handleNextSchedule = () => {
+    if (activeScheduleModule < modulesList.length) {
+      handleSelectScheduleModule(activeScheduleModule + 1);
+    }
+  };
+
   const scrollToSchedule = () => {
     soundEffects.playClick();
-    const el = document.getElementById('cronograma-laboratorio');
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth' });
-    }
+    setOpenAccordions(prev => ({ ...prev, schedule: true }));
+    setTimeout(() => {
+      const el = document.getElementById('cronograma-laboratorio');
+      if (el) {
+        el.scrollIntoView({ behavior: 'smooth' });
+      }
+    }, 100);
   };
 
   const handleRegisterSubmit = async (e: React.FormEvent) => {
@@ -351,292 +406,510 @@ export default function Laboratorios() {
                 <p className="lab-hero-lead">
                   {config.laboratorios?.intro || 'Transforma tu práctica docente mediante experiencias de aprendizaje basadas en la narrativa, el juego y la producción de animación en el aula.'}
                 </p>
+
+                {/* Controles de expansión rápida */}
+                <div className="lab-accordions-toolbar">
+                  <span className="lab-toolbar-hint">Navegación compacta por secciones:</span>
+                  <div className="lab-toolbar-btns">
+                    <button 
+                      type="button" 
+                      className="lab-toolbar-btn"
+                      onClick={() => handleToggleAllAccordions(true)}
+                      title="Abrir todas las secciones"
+                    >
+                      <span>📂 Expandir todo</span>
+                    </button>
+                    <button 
+                      type="button" 
+                      className="lab-toolbar-btn"
+                      onClick={() => handleToggleAllAccordions(false)}
+                      title="Cerrar todas las secciones para máximo espacio"
+                    >
+                      <span>📁 Colapsar todo</span>
+                    </button>
+                  </div>
+                </div>
               </header>
 
-              {/* Barra de Métricas y Características del Taller */}
-              <section className="lab-stats-grid">
-                <div className="lab-stat-card">
-                  <div className="lab-stat-icon-wrap">🎓</div>
-                  <div className="lab-stat-info">
-                    <span className="lab-stat-val">10 Módulos</span>
-                    <span className="lab-stat-label">Progresivos y prácticos</span>
-                  </div>
-                </div>
+              <div className="lab-accordions-container">
 
-                <div className="lab-stat-card">
-                  <div className="lab-stat-icon-wrap" style={{ background: 'rgba(16, 185, 129, 0.12)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-                    <span style={{ color: '#10b981' }}>⏱️</span>
-                  </div>
-                  <div className="lab-stat-info">
-                    <span className="lab-stat-val">30 Horas</span>
-                    <span className="lab-stat-label">3h presenciales por sesión</span>
-                  </div>
-                </div>
-
-                <div className="lab-stat-card">
-                  <div className="lab-stat-icon-wrap" style={{ background: 'rgba(245, 158, 11, 0.12)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-                    <span style={{ color: '#f59e0b' }}>📍</span>
-                  </div>
-                  <div className="lab-stat-info">
-                    <span className="lab-stat-val">Modalidad Viva</span>
-                    <span className="lab-stat-label">Presencial en grupo</span>
-                  </div>
-                </div>
-
-                <div className="lab-stat-card">
-                  <div className="lab-stat-icon-wrap" style={{ background: 'rgba(192, 132, 252, 0.12)', borderColor: 'rgba(192, 132, 252, 0.3)' }}>
-                    <span style={{ color: '#c084fc' }}>📜</span>
-                  </div>
-                  <div className="lab-stat-info">
-                    <span className="lab-stat-val">Certificación</span>
-                    <span className="lab-stat-label">Acreditado por Lluvia de Ideas</span>
-                  </div>
-                </div>
-              </section>
-
-              {/* VISOR DINÁMICO DE MÓDULOS */}
-              <section className="lab-showcase-wrapper">
-                <div className="lab-showcase-header">
-                  <div className="lab-showcase-header-left">
-                    <span className="lab-showcase-tag">Programa Formativo Modular</span>
-                    <h2 className="lab-showcase-title">Ruta de Formación y Competencias</h2>
-                  </div>
-
-                  {/* Botones de navegación Anterior / Siguiente */}
-                  <div className="lab-module-arrows">
-                    <button 
-                      type="button"
-                      className="lab-module-arrow-btn"
-                      onClick={handlePrevModule}
-                      disabled={activeLabModule <= 1}
-                      title="Módulo anterior"
-                    >
-                      ◀ Anterior
-                    </button>
-                    <button 
-                      type="button"
-                      className="lab-module-arrow-btn"
-                      onClick={handleNextModule}
-                      disabled={activeLabModule >= modulesList.length}
-                      title="Siguiente módulo"
-                    >
-                      Siguiente ▶
-                    </button>
-                  </div>
-                </div>
-
-                {/* Riel Horizontal de Módulos (1 a 10) */}
-                <div className="lab-modules-rail">
-                  {modulesList.map((mod) => {
-                    const isActive = activeLabModule === mod.id;
-                    return (
-                      <button
-                        key={mod.id}
-                        type="button"
-                        className={`lab-rail-item ${isActive ? 'active' : ''}`}
-                        onClick={() => handleSelectModule(mod.id)}
-                        title={`Ver Módulo ${mod.id}: ${mod.title}`}
-                      >
-                        <span className="lab-rail-icon">{mod.icon}</span>
-                        <div className="lab-rail-text">
-                          <span className="lab-rail-num">Módulo {mod.id}</span>
-                          <span className="lab-rail-title">{mod.title}</span>
-                        </div>
-                      </button>
-                    );
-                  })}
-                </div>
-
-                {/* Ficha de Detalle del Módulo Activo */}
-                {currentMod && (
-                  <article className="lab-card-detail animate-fade-in" key={currentMod.id}>
-                    
-                    {/* Cabecera del Módulo */}
-                    <div className="lab-detail-header-row">
-                      <div className="lab-detail-big-icon">
-                        {currentMod.icon}
-                      </div>
-                      <div className="lab-detail-meta">
-                        <div className="lab-detail-badge-row">
-                          <span className="lab-detail-mod-badge">Módulo {currentMod.id} de {modulesList.length}</span>
-                          {currentExtras?.phase && (
-                            <span className="lab-detail-phase-badge">{currentExtras.phase}</span>
-                          )}
-                          {currentExtras?.duration && (
-                            <span className="lab-detail-phase-badge" style={{ background: 'rgba(56, 189, 248, 0.1)', color: '#38bdf8' }}>
-                              ⏱️ {currentExtras.duration}
-                            </span>
-                          )}
-                        </div>
-                        <h3 className="lab-detail-title">{currentMod.title}</h3>
+                {/* ==============================================================
+                    DESPLEGABLE 1: DESCRIPCIÓN DEL LABORATORIO
+                    ============================================================== */}
+                <div className="lab-accordion-item">
+                  <button
+                    type="button"
+                    className={`lab-accordion-header ${openAccordions.desc ? 'active' : ''}`}
+                    onClick={() => toggleAccordion('desc')}
+                    aria-expanded={openAccordions.desc}
+                  >
+                    <div className="lab-accordion-title-wrap">
+                      <span className="lab-accordion-icon">📖</span>
+                      <div className="lab-accordion-headings">
+                        <h2 className="lab-accordion-title">Descripción y Enfoque Pedagógico</h2>
+                        <span className="lab-accordion-subtitle">Fundamentación, metodología activa y beneficios para el aula</span>
                       </div>
                     </div>
-
-                    {/* Tarjeta de Competencia Pedagógica */}
-                    <div className="lab-competency-card">
-                      <h4 className="lab-competency-title">
-                        <span>🎯</span> Competencia Docente Central
-                      </h4>
-                      <p className="lab-competency-text">
-                        {currentMod.competency}
-                      </p>
+                    <div className="lab-accordion-right-meta">
+                      <span className="lab-accordion-status-badge">
+                        {openAccordions.desc ? 'Ocultar' : 'Ver detalle'}
+                      </span>
+                      <span className={`lab-accordion-chevron ${openAccordions.desc ? 'open' : ''}`}>▼</span>
                     </div>
+                  </button>
 
-                    {/* Habilidades y Destrezas Clave en Chips */}
-                    <div className="lab-skills-container">
-                      <h4 className="lab-skills-title">
-                        <span>✨</span> Habilidades a Desarrollar
-                      </h4>
-                      <div className="lab-skills-chips">
-                        {currentMod.skills.map((skill, idx) => (
-                          <div className="lab-skill-chip" key={idx}>
-                            <span className="lab-skill-bullet">✦</span>
-                            <span>{skill}</span>
+                  {openAccordions.desc && (
+                    <div className="lab-accordion-body animate-fade-in">
+                      <div className="lab-desc-content-grid">
+                        <div className="lab-desc-text-col">
+                          <p className="lab-desc-p">
+                            {config.laboratorios?.intro || 'Transforma tu práctica docente mediante experiencias de aprendizaje basadas en la narrativa, el juego y la producción de animación en el aula.'}
+                          </p>
+                          <p className="lab-desc-p">
+                            El <strong>Laboratorio de Animación Educativa</strong> es un espacio formativo presencial y vivencial de 30 horas donde los maestros descubren cómo utilizar la técnica de animación cuadro a cuadro (*stop-motion*) como una herramienta transversal para la lectoescritura, la resolución pacífica de conflictos y la integración curricular STEAM.
+                          </p>
+                          <p className="lab-desc-p">
+                            No requieres experiencia artística previa: a lo largo de 10 módulos prácticos, aprenderás técnicas accesibles con plastilina, papel, teléfonos inteligentes y materiales reciclables, culminando con un cortometraje listo para proyectar con tus estudiantes en la escuela.
+                          </p>
+                        </div>
+                        <div className="lab-desc-pillars-col">
+                          <div className="lab-desc-pillar">
+                            <span className="lab-desc-pillar-icon">🎨</span>
+                            <div>
+                              <strong>Expresión Socioemocional</strong>
+                              <p>Modelado de personajes y gestión de emociones a través del arte y la plástica.</p>
+                            </div>
                           </div>
-                        ))}
+                          <div className="lab-desc-pillar">
+                            <span className="lab-desc-pillar-icon">✍️</span>
+                            <div>
+                              <strong>Narrativa y Lectoescritura</strong>
+                              <p>Estructuración dramática, guiones creativos y mitos ancestrales mesoamericanos.</p>
+                            </div>
+                          </div>
+                          <div className="lab-desc-pillar">
+                            <span className="lab-desc-pillar-icon">🎬</span>
+                            <div>
+                              <strong>Producción Audiovisual Accesible</strong>
+                              <p>Stop-motion en el aula con materiales de bajo costo y dispositivos móviles.</p>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
+                  )}
+                </div>
 
-                    {/* Entregable / Producto del Taller */}
-                    {currentExtras?.deliverable && (
-                      <div className="lab-competency-card" style={{ background: 'rgba(16, 185, 129, 0.08)', borderColor: 'rgba(16, 185, 129, 0.3)' }}>
-                        <h4 className="lab-competency-title" style={{ color: '#34d399' }}>
-                          <span>📦</span> Producto Aplicable al Aula (Entregable Docente)
-                        </h4>
-                        <p className="lab-competency-text" style={{ color: '#e2e8f0', fontSize: '0.98rem' }}>
-                          {currentExtras.deliverable}
-                        </p>
+                {/* ==============================================================
+                    DESPLEGABLE 2: CARACTERÍSTICAS DEL PROGRAMA / MODALIDAD
+                    ============================================================== */}
+                <div className="lab-accordion-item">
+                  <button
+                    type="button"
+                    className={`lab-accordion-header ${openAccordions.features ? 'active' : ''}`}
+                    onClick={() => toggleAccordion('features')}
+                    aria-expanded={openAccordions.features}
+                  >
+                    <div className="lab-accordion-title-wrap">
+                      <span className="lab-accordion-icon">⚡</span>
+                      <div className="lab-accordion-headings">
+                        <h2 className="lab-accordion-title">Características del Laboratorio</h2>
+                        <span className="lab-accordion-subtitle">Duración, modalidad, becas y acreditación oficial</span>
                       </div>
-                    )}
+                    </div>
+                    <div className="lab-accordion-right-meta">
+                      <span className="lab-accordion-status-badge">
+                        {openAccordions.features ? 'Ocultar' : 'Ver detalle'}
+                      </span>
+                      <span className={`lab-accordion-chevron ${openAccordions.features ? 'open' : ''}`}>▼</span>
+                    </div>
+                  </button>
 
-                    {/* Barra de Acciones del Módulo */}
-                    <div className="lab-card-actions">
-                      <div className="lab-date-quick-badge">
-                        <span>📅 Fecha programada:</span>
-                        <strong>{formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}</strong>
+                  {openAccordions.features && (
+                    <div className="lab-accordion-body animate-fade-in">
+                      <div className="lab-features-grid">
+                        <div className="lab-feature-box">
+                          <span className="lab-feature-icon">🎓</span>
+                          <div>
+                            <strong>10 Módulos Formativos</strong>
+                            <p>Ruta progresiva de tres fases: narrativa, expresión plástica y producción final.</p>
+                          </div>
+                        </div>
+                        <div className="lab-feature-box">
+                          <span className="lab-feature-icon" style={{ background: 'rgba(16, 185, 129, 0.12)', color: '#10b981' }}>⏱️</span>
+                          <div>
+                            <strong>30 Horas Prácticas</strong>
+                            <p>10 sesiones presenciales intensivas de 3 horas prácticas cada una.</p>
+                          </div>
+                        </div>
+                        <div className="lab-feature-box">
+                          <span className="lab-feature-icon" style={{ background: 'rgba(245, 158, 11, 0.12)', color: '#f59e0b' }}>📍</span>
+                          <div>
+                            <strong>Modalidad Presencial Viva</strong>
+                            <p>Dinámicas vivenciales, trabajo en equipo y experimentación con materiales reales.</p>
+                          </div>
+                        </div>
+                        <div className="lab-feature-box">
+                          <span className="lab-feature-icon" style={{ background: 'rgba(192, 132, 252, 0.12)', color: '#c084fc' }}>📜</span>
+                          <div>
+                            <strong>Certificación Curricular</strong>
+                            <p>Diploma oficial acreditado y respaldado por Editorial Lluvia de Ideas.</p>
+                          </div>
+                        </div>
+                        <div className="lab-feature-box">
+                          <span className="lab-feature-icon" style={{ background: 'rgba(56, 189, 248, 0.12)', color: '#38bdf8' }}>🎟️</span>
+                          <div>
+                            <strong>Beca del 100%</strong>
+                            <p>Formación sin costo para docentes de instituciones educativas vinculadas.</p>
+                          </div>
+                        </div>
+                        <div className="lab-feature-box">
+                          <span className="lab-feature-icon" style={{ background: 'rgba(234, 179, 8, 0.12)', color: '#eab308' }}>📦</span>
+                          <div>
+                            <strong>Materiales Incluidos</strong>
+                            <p>Kits plásticos, guías de aula y plantillas descargables para tus alumnos.</p>
+                          </div>
+                        </div>
                       </div>
+                    </div>
+                  )}
+                </div>
 
-                      <div className="lab-card-btns">
-                        <button
+                {/* ==============================================================
+                    DESPLEGABLE 3: RUTA DE FORMACIÓN Y COMPETENCIAS
+                    (Navegación con botones y texto "Módulo X", título abajo y columnas horizontales)
+                    ============================================================== */}
+                <div className="lab-accordion-item">
+                  <button
+                    type="button"
+                    className={`lab-accordion-header ${openAccordions.modules ? 'active' : ''}`}
+                    onClick={() => toggleAccordion('modules')}
+                    aria-expanded={openAccordions.modules}
+                  >
+                    <div className="lab-accordion-title-wrap">
+                      <span className="lab-accordion-icon">🎯</span>
+                      <div className="lab-accordion-headings">
+                        <h2 className="lab-accordion-title">Ruta de Formación y Competencias</h2>
+                        <span className="lab-accordion-subtitle">
+                          Módulo activo: <strong>Módulo {activeLabModule} de {modulesList.length}</strong>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="lab-accordion-right-meta">
+                      <span className="lab-accordion-status-badge">
+                        {openAccordions.modules ? 'Ocultar' : 'Ver detalle'}
+                      </span>
+                      <span className={`lab-accordion-chevron ${openAccordions.modules ? 'open' : ''}`}>▼</span>
+                    </div>
+                  </button>
+
+                  {openAccordions.modules && currentMod && (
+                    <div className="lab-accordion-body animate-fade-in">
+
+                      {/* 1. Botones Anterior / Siguiente con texto "Módulo X" en medio */}
+                      <div className="lab-mod-nav-bar">
+                        <button 
                           type="button"
-                          className="btn-jump-schedule"
-                          onClick={scrollToSchedule}
+                          className="lab-nav-arrow-btn"
+                          onClick={handlePrevModule}
+                          disabled={activeLabModule <= 1}
+                          title="Ir al módulo anterior"
                         >
-                          <span>📅</span>
-                          <span>Ver en Cronograma</span>
+                          ◀ Anterior
                         </button>
 
-                        <button
+                        <div className="lab-nav-mid-badge">
+                          <span className="lab-nav-mid-label">MÓDULO</span>
+                          <span className="lab-nav-mid-num">{activeLabModule} <small>/ {modulesList.length}</small></span>
+                        </div>
+
+                        <button 
                           type="button"
-                          className="btn-register-highlight"
+                          className="lab-nav-arrow-btn"
+                          onClick={handleNextModule}
+                          disabled={activeLabModule >= modulesList.length}
+                          title="Ir al siguiente módulo"
+                        >
+                          Siguiente ▶
+                        </button>
+                      </div>
+
+                      {/* 2. Título del módulo abajo de los botones */}
+                      <div className="lab-active-mod-header">
+                        <div className="lab-mod-tags-row">
+                          <span className="lab-mod-phase-tag">{currentExtras?.phase || 'Fase Formativa'}</span>
+                          <span className="lab-mod-dur-tag">⏱️ {currentExtras?.duration || '3 Horas'}</span>
+                          <span className="lab-mod-date-tag">📅 {formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}</span>
+                        </div>
+                        <h3 className="lab-active-mod-title">
+                          <span className="lab-active-mod-icon">{currentMod.icon}</span>
+                          <span>{currentMod.title}</span>
+                        </h3>
+                      </div>
+
+                      {/* 3. Despliegue de la información de forma horizontal (eliminando los cuadros de títulos anteriores) */}
+                      <div className="lab-mod-horizontal-grid">
+                        
+                        {/* Columna 1: Competencia Docente */}
+                        <div className="lab-horizontal-col col-competency">
+                          <div className="lab-col-header">
+                            <span className="lab-col-icon">🎯</span>
+                            <h4 className="lab-col-title">Competencia Docente</h4>
+                          </div>
+                          <p className="lab-col-text">
+                            {currentMod.competency}
+                          </p>
+                        </div>
+
+                        {/* Columna 2: Habilidades a Desarrollar */}
+                        <div className="lab-horizontal-col col-skills">
+                          <div className="lab-col-header">
+                            <span className="lab-col-icon">✨</span>
+                            <h4 className="lab-col-title">Habilidades Clave</h4>
+                          </div>
+                          <div className="lab-col-chips">
+                            {currentMod.skills.map((skill, idx) => (
+                              <span className="lab-col-chip" key={idx}>
+                                <span className="lab-chip-bullet">✦</span> {skill}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+
+                        {/* Columna 3: Entregable para el Aula */}
+                        <div className="lab-horizontal-col col-deliverable">
+                          <div className="lab-col-header">
+                            <span className="lab-col-icon">📦</span>
+                            <h4 className="lab-col-title">Producto de Aula</h4>
+                          </div>
+                          <p className="lab-col-text">
+                            {currentExtras?.deliverable || "Secuencia didáctica y artefactos aplicables directamente a tus alumnos."}
+                          </p>
+                        </div>
+
+                        {/* Columna 4: Sesión e Inscripción */}
+                        <div className="lab-horizontal-col col-action">
+                          <div className="lab-col-header">
+                            <span className="lab-col-icon">🎟️</span>
+                            <h4 className="lab-col-title">Sesión y Reserva</h4>
+                          </div>
+                          <div className="lab-col-date-text">
+                            {formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}
+                          </div>
+                          <div className="lab-col-time-text">
+                            ⏰ 2:00 PM a 5:00 PM · Presencial
+                          </div>
+                          <button
+                            type="button"
+                            className="btn-register-highlight"
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setIsRegisterModalOpen(true);
+                            }}
+                          >
+                            <span>📝 Inscribirme al Taller</span>
+                          </button>
+                          <button
+                            type="button"
+                            className="lab-toolbar-btn"
+                            style={{ marginTop: '8px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '6px' }}
+                            onClick={() => {
+                              handleSelectScheduleModule(currentMod.id);
+                              scrollToSchedule();
+                            }}
+                          >
+                            <span>📅 Ver en Cronograma</span>
+                          </button>
+                        </div>
+
+                      </div>
+
+                    </div>
+                  )}
+                </div>
+
+                {/* ==============================================================
+                    DESPLEGABLE 4: CRONOGRAMA DE SESIONES PRESENCIALES
+                    (Repite la lógica: botones con texto "Sesión X", título abajo y columnas horizontales)
+                    ============================================================== */}
+                <div id="cronograma-laboratorio" className="lab-accordion-item">
+                  <button
+                    type="button"
+                    className={`lab-accordion-header ${openAccordions.schedule ? 'active' : ''}`}
+                    onClick={() => toggleAccordion('schedule')}
+                    aria-expanded={openAccordions.schedule}
+                  >
+                    <div className="lab-accordion-title-wrap">
+                      <span className="lab-accordion-icon">📅</span>
+                      <div className="lab-accordion-headings">
+                        <h2 className="lab-accordion-title">Cronograma de Sesiones Presenciales</h2>
+                        <span className="lab-accordion-subtitle">
+                          Sesión seleccionada: <strong>Sesión {activeScheduleModule} de {modulesList.length}</strong>
+                        </span>
+                      </div>
+                    </div>
+                    <div className="lab-accordion-right-meta">
+                      <span className="lab-accordion-status-badge">
+                        {openAccordions.schedule ? 'Ocultar' : 'Ver detalle'}
+                      </span>
+                      <span className={`lab-accordion-chevron ${openAccordions.schedule ? 'open' : ''}`}>▼</span>
+                    </div>
+                  </button>
+
+                  {openAccordions.schedule && scheduleMod && (
+                    <div className="lab-accordion-body animate-fade-in">
+
+                      {/* 1. Botones Anterior / Siguiente con texto "Sesión X" en medio */}
+                      <div className="lab-mod-nav-bar">
+                        <button 
+                          type="button"
+                          className="lab-nav-arrow-btn"
+                          onClick={handlePrevSchedule}
+                          disabled={activeScheduleModule <= 1}
+                          title="Ir a la sesión anterior"
+                        >
+                          ◀ Anterior
+                        </button>
+
+                        <div className="lab-nav-mid-badge">
+                          <span className="lab-nav-mid-label">SESIÓN</span>
+                          <span className="lab-nav-mid-num">{activeScheduleModule} <small>/ {modulesList.length}</small></span>
+                        </div>
+
+                        <button 
+                          type="button"
+                          className="lab-nav-arrow-btn"
+                          onClick={handleNextSchedule}
+                          disabled={activeScheduleModule >= modulesList.length}
+                          title="Ir a la siguiente sesión"
+                        >
+                          Siguiente ▶
+                        </button>
+                      </div>
+
+                      {/* 2. Título de la sesión abajo de los botones */}
+                      <div className="lab-active-mod-header">
+                        <div className="lab-mod-tags-row">
+                          <span className="lab-mod-phase-tag">{scheduleModExtras?.phase || 'Fase Formativa'}</span>
+                          <span className="lab-mod-dur-tag">Modalidad Presencial</span>
+                          <span className="lab-mod-date-tag">Sesión Oficial 2026</span>
+                        </div>
+                        <h3 className="lab-active-mod-title">
+                          <span className="lab-active-mod-icon">{scheduleMod.icon}</span>
+                          <span>Módulo {scheduleMod.id}: {scheduleMod.title}</span>
+                        </h3>
+                      </div>
+
+                      {/* 3. Despliegue de la información de la sesión de forma horizontal */}
+                      <div className="lab-mod-horizontal-grid">
+
+                        {/* Columna 1: Fecha Programada */}
+                        <div className="lab-horizontal-col col-schedule-date">
+                          <div className="lab-col-header">
+                            <span className="lab-col-icon">📅</span>
+                            <h4 className="lab-col-title">Fecha Programada</h4>
+                          </div>
+                          <div className="lab-col-date-text" style={{ fontSize: '1.15rem', color: '#38bdf8' }}>
+                            {formatDateSpanish(scheduleMod.date || getModuleDate(scheduleMod.id))}
+                          </div>
+                          <p className="lab-col-text" style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '6px' }}>
+                            {scheduleMod.id > 8 ? "Fecha y horario acordados con el grupo docente" : "Sesión formal de viernes formativo"}
+                          </p>
+                        </div>
+
+                        {/* Columna 2: Horario y Duración */}
+                        <div className="lab-horizontal-col col-schedule-time">
+                          <div className="lab-col-header">
+                            <span className="lab-col-icon">⏰</span>
+                            <h4 className="lab-col-title">Horario</h4>
+                          </div>
+                          <div className="lab-col-date-text" style={{ fontSize: '1.15rem', color: '#10b981' }}>
+                            {scheduleMod.time || (scheduleMod.id > 8 ? "Por acordar con el grupo" : "2:00 PM a 5:00 PM")}
+                          </div>
+                          <p className="lab-col-text" style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '6px' }}>
+                            3 horas prácticas presenciales de producción en aula.
+                          </p>
+                        </div>
+
+                        {/* Columna 3: Sede de Trabajo */}
+                        <div className="lab-horizontal-col col-schedule-venue">
+                          <div className="lab-col-header">
+                            <span className="lab-col-icon">📍</span>
+                            <h4 className="lab-col-title">Sede de Trabajo</h4>
+                          </div>
+                          <div className="lab-col-date-text" style={{ fontSize: '1.05rem', color: '#fbbf24' }}>
+                            {scheduleMod.location || "Lugar céntrico de la Ciudad"}
+                          </div>
+                          <p className="lab-col-text" style={{ fontSize: '0.85rem', color: '#94a3b8', marginTop: '6px' }}>
+                            Salón equipado con mesas, iluminación y herramientas.
+                          </p>
+                        </div>
+
+                        {/* Columna 4: Reserva y Disponibilidad */}
+                        <div className="lab-horizontal-col col-action">
+                          <div className="lab-col-header">
+                            <span className="lab-col-icon">🎟️</span>
+                            <h4 className="lab-col-title">Disponibilidad</h4>
+                          </div>
+                          <div className="lab-status-badge-inline">
+                            🟢 Convocatoria Abierta
+                          </div>
+                          <button
+                            type="button"
+                            className="btn-register-highlight"
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setIsRegisterModalOpen(true);
+                            }}
+                          >
+                            <span>📝 Reservar Mi Cupo</span>
+                          </button>
+                        </div>
+
+                      </div>
+
+                      {/* Selector rápido de sesiones (1 a 10) compacto para saltar directamente */}
+                      <div className="lab-schedule-quick-chips">
+                        <span className="lab-quick-chips-label">Saltar a sesión:</span>
+                        <div className="lab-chips-row">
+                          {modulesList.map((m) => (
+                            <button
+                              key={m.id}
+                              type="button"
+                              className={`lab-quick-session-btn ${activeScheduleModule === m.id ? 'active' : ''}`}
+                              onClick={() => handleSelectScheduleModule(m.id)}
+                              title={`Sesión ${m.id}: ${m.title}`}
+                            >
+                              S{m.id}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Llamado Central a la Inscripción */}
+                      <div className="lab-main-cta-box" style={{ marginTop: '28px' }}>
+                        <h3 className="lab-main-cta-title">¿Listo para innovar en tu aula de clases?</h3>
+                        <p className="lab-main-cta-desc">
+                          El taller es 100% becado por Editorial Lluvia de Ideas para docentes comprometidos con la educación transformadora. Reserva tu plaza antes del inicio de módulo.
+                        </p>
+                        <button 
+                          type="button" 
+                          className="btn-main-register"
                           onClick={() => {
                             soundEffects.playClick();
                             setIsRegisterModalOpen(true);
                           }}
                         >
                           <span>📝</span>
-                          <span>Inscribirme al Taller</span>
+                          <span>Inscribirme al Laboratorio de Animación ➔</span>
                         </button>
                       </div>
-                    </div>
-                  </article>
-                )}
-              </section>
 
-              {/* CRONOGRAMA INTERACTIVO DE SESIONES */}
-              <section id="cronograma-laboratorio" className="lab-schedule-box">
-                <div className="lab-schedule-header-wrap">
-                  <span className="lab-schedule-badge">Agenda Formativa</span>
-                  <h2 className="lab-schedule-title">📅 Cronograma de Sesiones Presenciales</h2>
-                  <p className="lab-schedule-desc">
-                    Haz clic en cualquier fecha para previsualizar los detalles del módulo en el visor superior. La formación está diseñada para acompañarte paso a paso sin saturar tus tiempos lectivos.
-                  </p>
-
-                  {/* Barra Logística Rápida */}
-                  <div className="lab-logistics-bar">
-                    <div className="lab-logistics-item">
-                      <span>⏰</span>
-                      <span><strong>Horario:</strong> 2:00 PM a 5:00 PM</span>
                     </div>
-                    <div className="lab-logistics-item">
-                      <span>📍</span>
-                      <span><strong>Sede:</strong> Lugar céntrico de la Ciudad</span>
-                    </div>
-                    <div className="lab-logistics-item">
-                      <span>🎟️</span>
-                      <span><strong>Cupo:</strong> Limitado a docentes inscritos</span>
-                    </div>
-                  </div>
+                  )}
                 </div>
 
-                {/* Grilla de Tarjetas de Sesión */}
-                <div className="lab-schedule-grid">
-                  {modulesList.map((mod) => {
-                    const isUpcoming = mod.id > 8;
-                    const isSelected = activeLabModule === mod.id;
-                    const dateText = formatDateSpanish(mod.date || getModuleDate(mod.id));
-                    const timeText = mod.time || (isUpcoming ? "Por definir con el grupo" : "2:00 PM a 5:00 PM");
-                    const locationText = mod.location || "Lugar céntrico por confirmar";
-                    const typeText = mod.type || "Presencial";
-
-                    return (
-                      <div
-                        key={mod.id}
-                        className={`lab-schedule-card ${isSelected ? 'active' : ''}`}
-                        onClick={() => {
-                          handleSelectModule(mod.id);
-                          const el = document.querySelector('.lab-showcase-wrapper');
-                          if (el) el.scrollIntoView({ behavior: 'smooth' });
-                        }}
-                        title={`Clic para ver detalles pedagógicos del Módulo ${mod.id}`}
-                      >
-                        <div className="lab-card-top-info">
-                          <span className="lab-card-mod-num">Módulo {mod.id}</span>
-                          <span className="lab-card-type-badge">{typeText}</span>
-                        </div>
-
-                        <h3 className="lab-card-title">{mod.title}</h3>
-
-                        <div className="lab-card-rows">
-                          <div className="lab-card-row">
-                            <span>📅</span>
-                            <span><strong>Fecha:</strong> {dateText}</span>
-                          </div>
-                          <div className="lab-card-row">
-                            <span>⏰</span>
-                            <span><strong>Horario:</strong> {timeText}</span>
-                          </div>
-                          <div className="lab-card-row">
-                            <span>📍</span>
-                            <span><strong>Sede:</strong> {locationText}</span>
-                          </div>
-                        </div>
-
-                        <span className="lab-card-watermark">{mod.icon}</span>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Llamado Central a la Inscripción */}
-                <div className="lab-main-cta-box">
-                  <h3 className="lab-main-cta-title">¿Listo para innovar en tu aula de clases?</h3>
-                  <p className="lab-main-cta-desc">
-                    El taller es 100% becado por Editorial Lluvia de Ideas para docentes comprometidos con la educación transformadora. Reserva tu plaza antes del inicio de módulo.
-                  </p>
-                  <button 
-                    type="button" 
-                    className="btn-main-register"
-                    onClick={() => {
-                      soundEffects.playClick();
-                      setIsRegisterModalOpen(true);
-                    }}
-                  >
-                    <span>📝</span>
-                    <span>Inscribirme al Laboratorio de Animación ➔</span>
-                  </button>
-                </div>
-              </section>
+              </div>
             </div>
           )}
 
