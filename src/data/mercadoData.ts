@@ -14,10 +14,12 @@ export interface MercadoProduct {
   longDescription: string;
   badge?: string;
   icon: string;
+  image?: string;
   gradeOrAge: string;
   features: string[];
   contents?: string[];
   featured?: boolean;
+  inStock?: boolean;
 }
 
 export const MERCADO_CATEGORIES = [

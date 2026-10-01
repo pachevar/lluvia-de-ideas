@@ -84,6 +84,40 @@ export interface TiendaConfig {
   whatsappPhone?: string;
 }
 
+export type MercadoCategory = 'cuentos' | 'juegos' | 'personajes' | 'tarjetas' | 'proyectos' | 'utiles';
+
+export interface MercadoProductConfig {
+  id: string;
+  title: string;
+  category: MercadoCategory;
+  categoryLabel: string;
+  price: number;
+  originalPrice?: number;
+  currency: string;
+  rating: number;
+  reviewsCount: number;
+  soldCount?: number;
+  deliveryTime?: string;
+  description: string;
+  longDescription: string;
+  badge?: string;
+  icon: string;
+  image?: string;
+  gradeOrAge: string;
+  features: string[];
+  contents?: string[];
+  featured?: boolean;
+  inStock?: boolean;
+}
+
+export interface MercadoConfig {
+  announcement?: string;
+  whatsappPhone?: string;
+  bannerTitle?: string;
+  bannerSubtitle?: string;
+  showPromoStrip?: boolean;
+}
+
 export type BookAccent = 'cyan' | 'yellow' | 'lilac';
 export type BookCategory = 'primaria' | 'basico' | 'diversificado' | 'todos';
 
@@ -192,6 +226,8 @@ export interface PortalConfig {
   techTreeNodes?: Record<string, TechNode>;
   tiendaConfig?: TiendaConfig;
   libros?: BookProduct[];
+  mercadoConfig?: MercadoConfig;
+  mercadoProducts?: MercadoProductConfig[];
   landingConfig?: LandingConfig;
   archetypeImages?: Record<string, string>;
   journeyStageImages?: Record<string, string>;

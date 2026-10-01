@@ -1,414 +1,928 @@
-import { useRef, useState } from 'react';
-import type { BookAccent, BookCategory, BookProduct, PortalConfig } from '../../types';
-import { DEFAULT_BOOKS } from '../../data/books';
+import { useState, useRef, useMemo } from 'react';
+import type { PortalConfig } from '../../types';
+import { 
+  DEFAULT_MERCADO_PRODUCTS, 
+  MERCADO_CATEGORIES, 
+  type MercadoProduct 
+} from '../../data/mercadoData';
 import { uploadImageToStorage } from '../../utils/imageUpload';
+import { soundEffects } from '../../utils/soundEffects';
+import './AdminTabTienda.css';
 
 interface AdminTabTiendaProps {
   localConfig: PortalConfig;
   setLocalConfig: React.Dispatch<React.SetStateAction<PortalConfig | null>>;
-  updateField: (section: string, field: string, value: unknown) => void;
+  updateField?: (section: string, field: string, value: unknown) => void;
 }
 
-const CATEGORY_LABELS: Record<BookCategory, string> = {
-  primaria: 'Primaria',
-  basico: 'Básico',
-  diversificado: 'Diversificado',
-  todos: 'Todos los grados'
-};
-
-const ACCENT_OPTIONS: { id: BookAccent; label: string; color: string }[] = [
-  { id: 'yellow', label: 'Amarillo', color: '#ffe600' },
-  { id: 'cyan', label: 'Cian', color: '#00e5ff' },
-  { id: 'lilac', label: 'Lila', color: '#ff2ec4' }
+const POPULAR_EMOJIS = [
+  '📚', '📖', '🎲', '♟️', '🎭', '🎴', '🃏', '🚀', 
+  '🔬', '🎨', '🖍️', '🌽', '🧭', '🧪', '🧬', '⚡', 
+  '🪐', '👑', '🦖', '🎒', '🧩', '📝', '✂️', '🏺'
 ];
 
-const emptyDraft = (): BookProduct => ({
-  id: `b-${Date.now()}`,
+const BADGE_PRESETS = [
+  'MÁS VENDIDO',
+  'OFERTA RELÁMPAGO',
+  'EXCLUSIVO EDITORIAL',
+  'RECOMENDADO DOCENTE',
+  'TENDENCIA',
+  'NUEVO LANZAMIENTO',
+  'EDICIÓN LIMITADA'
+];
+
+const createEmptyProduct = (): MercadoProduct => ({
+  id: `prod-${Date.now()}`,
   title: '',
-  tagline: '',
-  accent: 'cyan',
-  category: 'primaria',
-  price: 15,
+  category: 'cuentos',
+  categoryLabel: 'Cuentos y Libros',
+  price: 50.00,
+  originalPrice: 65.00,
+  currency: 'Q',
+  rating: 5.0,
+  reviewsCount: 1,
+  soldCount: 10,
+  deliveryTime: 'Entrega 24-48 hrs en toda Guatemala',
+  badge: 'NUEVO LANZAMIENTO',
+  icon: '📚',
+  gradeOrAge: 'Primaria & Básicos',
   description: '',
-  gradeLevel: '',
-  coverEmoji: '📖',
-  available: true,
-  featured: false,
-  pos: { x: 50, y: 50 }
+  longDescription: '',
+  features: [
+    'Material pedagógico certificado',
+    'Integración curricular para el aula'
+  ],
+  contents: [
+    '1 Set completo con guía de uso'
+  ],
+  featured: true,
+  inStock: true
 });
 
-export default function AdminTabTienda({ localConfig, setLocalConfig, updateField }: AdminTabTiendaProps) {
-  const tienda = localConfig.tiendaConfig || {
-    announcement: "¡Nuevas publicaciones y guías pedagógicas disponibles para el ciclo escolar!",
-    whatsappPhone: "50246741239"
+export default function AdminTabTienda({ localConfig, setLocalConfig }: AdminTabTiendaProps) {
+  // Productos activos
+  const products: MercadoProduct[] = useMemo(() => {
+    if (localConfig.mercadoProducts && Array.isArray(localConfig.mercadoProducts) && localConfig.mercadoProducts.length > 0) {
+      return localConfig.mercadoProducts as MercadoProduct[];
+    }
+    return DEFAULT_MERCADO_PRODUCTS;
+  }, [localConfig.mercadoProducts]);
+
+  // Configuración del Mercado
+  const mercadoConfig = localConfig.mercadoConfig || {
+    announcement: "Envíos a todo el país en 24-48 hrs · Descuentos por volumen para colegios y docentes",
+    whatsappPhone: "50246741239",
+    bannerTitle: "Mercado Educativo & Creativo",
+    bannerSubtitle: "Materiales didácticos, cuentos y proyectos pedagógicos directos de la editorial",
+    showPromoStrip: true
   };
 
-  const books = localConfig.libros && localConfig.libros.length > 0 ? localConfig.libros : DEFAULT_BOOKS;
+  // Estados de interfaz
+  const [selectedCategory, setSelectedCategory] = useState<string>('todos');
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [editingProduct, setEditingProduct] = useState<MercadoProduct | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [uploadingForId, setUploadingForId] = useState<string | null>(null);
+  const [uploadStatus, setUploadStatus] = useState<string | null>(null);
 
-  const [editing, setEditing] = useState<BookProduct | null>(null);
-  const [showEditor, setShowEditor] = useState(false);
-  const [uploadingFor, setUploadingFor] = useState<string | null>(null);
-  const [uploadStatus, setUploadStatus] = useState<{ id: string; message: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const modalFileInputRef = useRef<HTMLInputElement>(null);
 
-  const commitBooks = (next: BookProduct[]) => {
-    setLocalConfig(prev => (prev ? { ...prev, libros: next } : prev));
+  // Actualizar lista en localConfig
+  const commitProducts = (nextProducts: MercadoProduct[]) => {
+    setLocalConfig(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        mercadoProducts: nextProducts
+      };
+    });
   };
 
-  const handleChange = (field: string, value: string) => {
-    updateField('tiendaConfig', field, value);
+  // Actualizar mercadoConfig
+  const updateMercadoConfig = (field: string, value: unknown) => {
+    setLocalConfig(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        mercadoConfig: {
+          ...(prev.mercadoConfig || {}),
+          [field]: value
+        }
+      };
+    });
   };
 
-  const openNew = () => {
-    setEditing(emptyDraft());
-    setShowEditor(true);
+  // Filtrado de productos
+  const filteredProducts = useMemo(() => {
+    let list = products;
+    if (selectedCategory !== 'todos') {
+      list = list.filter(p => p.category === selectedCategory);
+    }
+    if (searchTerm.trim()) {
+      const q = searchTerm.toLowerCase().trim();
+      list = list.filter(p => 
+        p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        p.categoryLabel.toLowerCase().includes(q) ||
+        p.gradeOrAge.toLowerCase().includes(q) ||
+        (p.badge && p.badge.toLowerCase().includes(q))
+      );
+    }
+    return list;
+  }, [products, selectedCategory, searchTerm]);
+
+  // Abrir modal de nuevo producto
+  const handleOpenNew = () => {
+    soundEffects.playClick();
+    setEditingProduct(createEmptyProduct());
+    setIsModalOpen(true);
   };
 
-  const openEdit = (book: BookProduct) => {
-    setEditing({ ...book });
-    setShowEditor(true);
+  // Abrir modal de edición
+  const handleOpenEdit = (product: MercadoProduct) => {
+    soundEffects.playClick();
+    setEditingProduct({ 
+      ...product,
+      features: [...(product.features || [])],
+      contents: [...(product.contents || [])]
+    });
+    setIsModalOpen(true);
   };
 
-  const updateDraft = <K extends keyof BookProduct>(key: K, value: BookProduct[K]) => {
-    setEditing(prev => (prev ? { ...prev, [key]: value } : prev));
+  // Guardar producto desde modal
+  const handleSaveProduct = () => {
+    if (!editingProduct) return;
+    if (!editingProduct.title.trim()) {
+      alert('Por favor, ingresa al menos un título para el producto.');
+      return;
+    }
+
+    soundEffects.playClick();
+    const exists = products.some(p => p.id === editingProduct.id);
+    const next = exists 
+      ? products.map(p => p.id === editingProduct.id ? editingProduct : p)
+      : [editingProduct, ...products];
+
+    commitProducts(next);
+    setIsModalOpen(false);
+    setEditingProduct(null);
   };
 
-  const updateDraftPos = (axis: 'x' | 'y', value: number) => {
-    setEditing(prev => (prev ? { ...prev, pos: { ...(prev.pos || { x: 50, y: 50 }), [axis]: value } } : prev));
+  // Duplicar producto
+  const handleDuplicateProduct = (product: MercadoProduct) => {
+    soundEffects.playClick();
+    const copy: MercadoProduct = {
+      ...product,
+      id: `prod-${Date.now()}`,
+      title: `${product.title} (Copia)`,
+      features: [...(product.features || [])],
+      contents: [...(product.contents || [])]
+    };
+    commitProducts([copy, ...products]);
   };
 
-  const saveBook = () => {
-    if (!editing) return;
-    const exists = books.some(b => b.id === editing.id);
-    const next = exists ? books.map(b => (b.id === editing.id ? editing : b)) : [...books, editing];
-    commitBooks(next);
-    setShowEditor(false);
-    setEditing(null);
+  // Eliminar producto
+  const handleDeleteProduct = (productId: string, title: string) => {
+    if (window.confirm(`¿Estás seguro de eliminar "${title}" del catálogo?`)) {
+      soundEffects.playClick();
+      commitProducts(products.filter(p => p.id !== productId));
+    }
   };
 
-  const deleteBook = (id: string) => {
-    if (!window.confirm('¿Eliminar este cuento de la tienda?')) return;
-    commitBooks(books.filter(b => b.id !== id));
+  // Reordenar producto
+  const handleMoveProduct = (index: number, direction: -1 | 1) => {
+    soundEffects.playClick();
+    const targetIdx = index + direction;
+    if (targetIdx < 0 || targetIdx >= products.length) return;
+    const next = [...products];
+    [next[index], next[targetIdx]] = [next[targetIdx], next[index]];
+    commitProducts(next);
   };
 
-  const moveBook = (index: number, dir: -1 | 1) => {
-    const target = index + dir;
-    if (target < 0 || target >= books.length) return;
-    const next = [...books];
-    [next[index], next[target]] = [next[target], next[index]];
-    commitBooks(next);
+  // Restaurar catálogo base
+  const handleRestoreDefault = () => {
+    if (window.confirm('¿Deseas restaurar la colección oficial inicial de 18 productos del Mercado? Se reemplazarán los cambios actuales no guardados.')) {
+      soundEffects.playClick();
+      commitProducts(DEFAULT_MERCADO_PRODUCTS);
+    }
   };
 
-  const toggleBook = (id: string, key: 'available' | 'featured') => {
-    commitBooks(books.map(b => (b.id === id ? { ...b, [key]: !b[key] } : b)));
-  };
-
-  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>, bookId: string) => {
+  // Subida de imagen para producto en tarjeta
+  const handleCardImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, productId: string) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    setUploadingFor(bookId);
-    setUploadStatus({ id: bookId, message: '⚡ Comprimiendo imagen a WebP liviano...' });
+
+    setUploadingForId(productId);
+    setUploadStatus('Comprimiendo y subiendo imagen...');
     try {
-      const originalMB = (file.size / (1024 * 1024)).toFixed(2);
-      setUploadStatus({ id: bookId, message: `🚀 Subiendo portada (${originalMB}MB)...` });
-      const url = await uploadImageToStorage(file, 'libros-assets');
-      commitBooks(books.map(b => (b.id === bookId ? { ...b, image: url } : b)));
-      setUploadStatus({ id: bookId, message: '✨ ¡Portada guardada!' });
+      const url = await uploadImageToStorage(file, 'mercado-assets');
+      commitProducts(products.map(p => p.id === productId ? { ...p, image: url } : p));
+      setUploadStatus('¡Imagen actualizada!');
+      setTimeout(() => setUploadStatus(null), 2500);
     } catch (err) {
-      console.error('Error subiendo portada:', err);
-      alert('Error al comprimir o subir la imagen.');
+      console.error('Error subiendo imagen:', err);
+      alert('Error al subir la imagen. Inténtalo de nuevo.');
     } finally {
-      setUploadingFor(null);
+      setUploadingForId(null);
+      if (fileInputRef.current) fileInputRef.current.value = '';
     }
-    if (fileInputRef.current) fileInputRef.current.value = '';
   };
 
+  // Subida de imagen dentro del modal
+  const handleModalImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingProduct) return;
+
+    setUploadStatus('Comprimiendo y subiendo imagen de portada...');
+    try {
+      const url = await uploadImageToStorage(file, 'mercado-assets');
+      setEditingProduct(prev => prev ? { ...prev, image: url } : prev);
+      setUploadStatus('¡Portada cargada con éxito!');
+      setTimeout(() => setUploadStatus(null), 2500);
+    } catch (err) {
+      console.error('Error subiendo imagen modal:', err);
+      alert('Error al subir la imagen.');
+    } finally {
+      if (modalFileInputRef.current) modalFileInputRef.current.value = '';
+    }
+  };
+
+  // Categorías con conteos
+  const categoryCounts = useMemo(() => {
+    const counts: Record<string, number> = { todos: products.length };
+    MERCADO_CATEGORIES.forEach(cat => {
+      if (cat.id !== 'todos') {
+        counts[cat.id] = products.filter(p => p.category === cat.id).length;
+      }
+    });
+    return counts;
+  }, [products]);
+
   return (
-    <div className="admin-card card-glass animate-fade-in">
-      <div className="admin-nested-header">
-        <span className="admin-nested-icon">📚</span>
-        <div>
-          <h3>Tienda de Cuentos</h3>
-          <p className="tab-section-desc">Gestiona los cuentos de la tienda: portadas con imagen, descripciones, precios y filtros por etapa educativa.</p>
+    <div className="admin-mercado-wrapper animate-fade-in">
+      {/* 1. Header y Acciones Principales */}
+      <div className="admin-mercado-header">
+        <div className="admin-mercado-title-group">
+          <div className="admin-mercado-icon-wrap">
+            <span>🛍️</span>
+          </div>
+          <div className="admin-mercado-heading">
+            <h3>Administrador de Mercado (Tienda Oficial)</h3>
+            <p>
+              Gestiona el catálogo completo de productos educativos: cuentos, juegos de mesa, personajes, tarjetas, proyectos STEAM y útiles.
+            </p>
+          </div>
+        </div>
+
+        <div className="admin-mercado-top-actions">
+          <button 
+            type="button" 
+            className="btn-mercado-secondary"
+            onClick={handleRestoreDefault}
+            title="Restaurar catálogo inicial"
+          >
+            ♻️ Restaurar Catálogo Base
+          </button>
+          <button 
+            type="button" 
+            className="btn-mercado-primary"
+            onClick={handleOpenNew}
+            title="Crear un nuevo producto"
+          >
+            ＋ Nuevo Producto
+          </button>
         </div>
       </div>
 
-      <div className="admin-form-section">
-        <h4>Banner de Anuncio del Catálogo</h4>
-        <div className="admin-form-row">
-          <div className="admin-form-group">
-            <label>Mensaje de Anuncio / Novedades</label>
+      {/* 2. Configuración Superior de la Tienda (Banner y WhatsApp) */}
+      <div className="admin-mercado-config-card">
+        <div className="config-card-header">
+          <h4 className="config-card-title">
+            <span>📢</span> Configuración General de la Tienda
+          </h4>
+          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+            Afecta la barra promocional y el canal de ventas directo
+          </span>
+        </div>
+
+        <div className="admin-mercado-grid-fields">
+          <div className="mercado-input-group">
+            <label>Cintillo de Anuncio Superior (Promociones / Avisos)</label>
             <textarea
               rows={2}
-              value={tienda.announcement || ''}
-              onChange={(e) => handleChange('announcement', e.target.value)}
-              placeholder="Escribe el mensaje destacado para los clientes en el catálogo..."
+              value={mercadoConfig.announcement || ''}
+              onChange={(e) => updateMercadoConfig('announcement', e.target.value)}
+              placeholder="Ej: Envíos a todo el país en 24-48 hrs · Descuentos por volumen para colegios y docentes"
             />
           </div>
-        </div>
 
-        <div className="admin-form-row two-cols">
-          <div className="admin-form-group">
-            <label>Teléfono de WhatsApp para Pedidos (Código de país sin +)</label>
+          <div className="mercado-input-group">
+            <label>WhatsApp Oficial de Pedidos (Código de país sin +)</label>
             <input
               type="text"
-              value={tienda.whatsappPhone || ''}
-              onChange={(e) => handleChange('whatsappPhone', e.target.value)}
-              placeholder="Ejemplo: 50246741239"
+              value={mercadoConfig.whatsappPhone || ''}
+              onChange={(e) => updateMercadoConfig('whatsappPhone', e.target.value)}
+              placeholder="Ej: 50246741239"
             />
           </div>
         </div>
       </div>
 
-      <div className="admin-form-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
-          <h4 style={{ margin: 0 }}>Cuentos de la Tienda ({books.length})</h4>
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            <button className="btn btn-secondary btn-sm" onClick={() => { if (window.confirm('¿Restaurar la colección inicial de 6 cuentos? Se descartan los cambios no guardados de esta lista.')) commitBooks(DEFAULT_BOOKS); }}>
-              ♻️ Restaurar colección inicial
+      {/* 3. Filtros por Categoría y Buscador */}
+      <div className="admin-mercado-filter-strip">
+        <div className="admin-mercado-search-bar">
+          <span style={{ fontSize: '1.1rem' }}>🔍</span>
+          <input
+            type="text"
+            placeholder="Buscar por título, categoría, grado o palabra clave en el inventario..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+          {searchTerm && (
+            <button 
+              type="button"
+              onClick={() => setSearchTerm('')}
+              style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+            >
+              ✕
             </button>
-            <button className="btn btn-primary btn-sm" onClick={openNew}>
-              ＋ Añadir Cuento
-            </button>
-          </div>
+          )}
         </div>
 
-        <div className="admin-books-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '16px' }}>
-          {books.map((book, idx) => (
-            <div key={book.id} className="admin-book-card card-glass" style={{ padding: '14px', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-              <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-                <div
-                  className="admin-book-cover"
-                  style={{
-                    width: '64px',
-                    height: '84px',
-                    borderRadius: '10px',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '2rem',
-                    background: `radial-gradient(circle at 50% 40%, color-mix(in srgb, ${book.accent === 'yellow' ? '#ffe600' : book.accent === 'cyan' ? '#00e5ff' : '#ff2ec4'} 35%, #0b1020) 0%, #0b1020 100%)`,
-                    border: `1px solid color-mix(in srgb, ${book.accent === 'yellow' ? '#ffe600' : book.accent === 'cyan' ? '#00e5ff' : '#ff2ec4'} 50%, transparent)`,
-                    overflow: 'hidden'
-                  }}
-                >
-                  {book.image ? (
-                    <img src={book.image} alt={book.title} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <span>{book.coverEmoji || '📖'}</span>
-                  )}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                    <strong style={{ color: '#fff', fontSize: '0.95rem' }}>{book.title || 'Sin título'}</strong>
-                    {book.featured && <span className="badge badge-success" style={{ fontSize: '0.6rem' }}>★</span>}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8' }}>{book.tagline} · ${book.price?.toFixed(2)}</div>
-                  <div style={{ fontSize: '0.7rem', color: '#64748b' }}>{CATEGORY_LABELS[book.category]}</div>
-                </div>
-              </div>
-
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <button className="btn btn-glass btn-sm" onClick={() => openEdit(book)}>✏️ Editar</button>
-                <button className="btn btn-glass btn-sm" onClick={() => toggleBook(book.id, 'featured')} title="Destacado">
-                  {book.featured ? '⭐ Destacado' : '☆ Destacar'}
-                </button>
-                <button className="btn btn-glass btn-sm" onClick={() => toggleBook(book.id, 'available')} title="Disponible">
-                  {book.available ? '✅ Disponible' : '⛔ Agotado'}
-                </button>
-                <button className="btn btn-glass btn-sm" onClick={() => moveBook(idx, -1)} disabled={idx === 0}>▲</button>
-                <button className="btn btn-glass btn-sm" onClick={() => moveBook(idx, 1)} disabled={idx === books.length - 1}>▼</button>
-                <button className="btn btn-glass btn-sm" style={{ color: '#f87171' }} onClick={() => deleteBook(book.id)}>🗑</button>
-              </div>
-            </div>
+        <div className="admin-mercado-categories-scroll">
+          {MERCADO_CATEGORIES.map(cat => (
+            <button
+              key={cat.id}
+              type="button"
+              className={`admin-cat-pill-btn ${selectedCategory === cat.id ? 'active' : ''}`}
+              onClick={() => {
+                soundEffects.playClick();
+                setSelectedCategory(cat.id);
+              }}
+            >
+              <span>{cat.icon}</span>
+              <span>{cat.label}</span>
+              <span className="admin-cat-pill-count">{categoryCounts[cat.id] || 0}</span>
+            </button>
           ))}
         </div>
       </div>
 
-      {/* Editor de Cuento */}
-      {showEditor && editing && (
-        <div className="admin-form-section card-glass" style={{ marginTop: '18px', padding: '18px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '14px' }}>
-            <h4 style={{ margin: 0 }}>{books.some(b => b.id === editing.id) ? '✏️ Editar Cuento' : '＋ Nuevo Cuento'}</h4>
-            <button className="btn btn-glass btn-sm" onClick={() => { setShowEditor(false); setEditing(null); }}>✕ Cerrar</button>
-          </div>
-
-          <div className="admin-form-row two-cols">
-            <div className="admin-form-group">
-              <label>Título del Cuento</label>
-              <input type="text" value={editing.title} onChange={(e) => updateDraft('title', e.target.value)} placeholder="Ej: El Código del Maíz" />
-            </div>
-            <div className="admin-form-group">
-              <label>Tagline / Subtítulo</label>
-              <input type="text" value={editing.tagline} onChange={(e) => updateDraft('tagline', e.target.value)} placeholder="Ej: Origen y Sustento" />
-            </div>
-          </div>
-
-          <div className="admin-form-row two-cols">
-            <div className="admin-form-group">
-              <label>Acento de Color</label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {ACCENT_OPTIONS.map(opt => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={() => updateDraft('accent', opt.id)}
-                    style={{
-                      border: `1px solid ${opt.color}`,
-                      color: opt.color,
-                      background: editing.accent === opt.id ? `${opt.color}22` : 'transparent',
-                      boxShadow: editing.accent === opt.id ? `0 0 12px ${opt.color}55` : 'none'
-                    }}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div className="admin-form-group">
-              <label>Categoría / Etapa Educativa</label>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {(Object.keys(CATEGORY_LABELS) as BookCategory[]).map(cat => (
-                  <button
-                    key={cat}
-                    type="button"
-                    className="btn btn-sm"
-                    onClick={() => updateDraft('category', cat)}
-                    style={{
-                      border: `1px solid ${editing.category === cat ? '#38bdf8' : 'rgba(255,255,255,0.2)'}`,
-                      color: editing.category === cat ? '#38bdf8' : '#cbd5e1',
-                      background: editing.category === cat ? 'rgba(56,189,248,0.12)' : 'transparent'
-                    }}
-                  >
-                    {CATEGORY_LABELS[cat]}
-                  </button>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div className="admin-form-row two-cols">
-            <div className="admin-form-group">
-              <label>Grado / Nivel (texto)</label>
-              <input type="text" value={editing.gradeLevel} onChange={(e) => updateDraft('gradeLevel', e.target.value)} placeholder="Ej: 4to a 6to Primaria" />
-            </div>
-            <div className="admin-form-group">
-              <label>Precio (USD)</label>
-              <input type="number" min="0" step="0.01" value={editing.price} onChange={(e) => updateDraft('price', Number(e.target.value))} />
-            </div>
-          </div>
-
-          <div className="admin-form-row">
-            <div className="admin-form-group">
-              <label>Descripción</label>
-              <textarea rows={3} value={editing.description} onChange={(e) => updateDraft('description', e.target.value)} placeholder="Descripción del cuento para la tienda..." />
-            </div>
-          </div>
-
-          <div className="admin-form-row two-cols">
-            <div className="admin-form-group">
-              <label>Badge / Etiqueta (opcional)</label>
-              <input type="text" value={editing.badge || ''} onChange={(e) => updateDraft('badge', e.target.value)} placeholder="Ej: Nuevo, Best Seller, Clásico" />
-            </div>
-            <div className="admin-form-group">
-              <label>Emoji de Portada (respaldo)</label>
-              <input type="text" value={editing.coverEmoji || ''} onChange={(e) => updateDraft('coverEmoji', e.target.value)} placeholder="📖" />
-            </div>
-          </div>
-
-          <div className="admin-form-row two-cols">
-            <div className="admin-form-group">
-              <label>Portada (Imagen del Producto)</label>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                <div
-                  style={{
-                    width: '72px',
-                    height: '96px',
-                    borderRadius: '10px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    fontSize: '2.2rem',
-                    background: 'rgba(255,255,255,0.05)',
-                    border: '1px solid rgba(255,255,255,0.15)',
-                    overflow: 'hidden'
-                  }}
-                >
-                  {editing.image ? (
-                    <img src={editing.image} alt="Portada" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  ) : (
-                    <span>{editing.coverEmoji || '📖'}</span>
-                  )}
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <label className="btn btn-primary btn-sm" style={{ cursor: 'pointer', display: 'inline-flex' }}>
-                    {uploadingFor === editing.id ? 'Subiendo...' : '📤 Subir Imagen'}
-                    <input
-                      ref={fileInputRef}
-                      type="file"
-                      accept="image/*"
-                      style={{ display: 'none' }}
-                      disabled={uploadingFor === editing.id}
-                      onChange={(e) => handleUpload(e, editing.id)}
-                    />
-                  </label>
-                  {editing.image && (
-                    <button className="btn btn-glass btn-sm" onClick={() => updateDraft('image', undefined)}>🗑 Quitar imagen</button>
-                  )}
-                  {uploadStatus?.id === editing.id && (
-                    <span style={{ fontSize: '0.72rem', color: '#38bdf8' }}>{uploadStatus.message}</span>
-                  )}
-                </div>
-              </div>
-            </div>
-            <div className="admin-form-group">
-              <label>Estado</label>
-              <div style={{ display: 'flex', gap: '12px', fontSize: '0.85rem', color: '#e2e8f0' }}>
-                <label style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <input type="checkbox" checked={!!editing.available} onChange={(e) => updateDraft('available', e.target.checked)} />
-                  Disponible
-                </label>
-                <label style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  <input type="checkbox" checked={!!editing.featured} onChange={(e) => updateDraft('featured', e.target.checked)} />
-                  Destacado
-                </label>
-              </div>
-              <div style={{ marginTop: '10px', display: 'flex', gap: '16px', fontSize: '0.8rem', color: '#94a3b8' }}>
-                <label style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  Posición X
-                  <input type="number" min="0" max="100" value={editing.pos?.x ?? 50} onChange={(e) => updateDraftPos('x', Number(e.target.value))} style={{ width: '60px' }} />
-                </label>
-                <label style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
-                  Y
-                  <input type="number" min="0" max="100" value={editing.pos?.y ?? 50} onChange={(e) => updateDraftPos('y', Number(e.target.value))} style={{ width: '60px' }} />
-                </label>
-              </div>
-            </div>
-          </div>
-
-          <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
-            <button className="btn btn-glass" onClick={() => { setShowEditor(false); setEditing(null); }}>Cancelar</button>
-            <button className="btn btn-primary" onClick={saveBook} disabled={!editing.title.trim()}>💾 Guardar Cuento</button>
-          </div>
+      {/* Estado de carga de subida */}
+      {uploadStatus && (
+        <div style={{ background: 'rgba(255, 80, 0, 0.15)', border: '1px solid #ff5000', color: '#ff9a60', padding: '8px 16px', borderRadius: '8px', fontSize: '0.86rem', fontWeight: 800 }}>
+          ⚡ {uploadStatus}
         </div>
       )}
 
-      <div className="admin-form-section">
-        <h4>Vínculos Rápidos de Comercialización</h4>
-        <div className="admin-quick-links-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px', marginTop: '12px' }}>
-          <a
-            href="/nuestros-libros"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="btn btn-secondary"
-            style={{ textDecoration: 'none', textAlign: 'center', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}
-          >
-            🛍️ Ver Tienda de Cuentos Pública ↗
-          </a>
-        </div>
+      {/* 4. Grilla de Productos */}
+      <div className="admin-mercado-products-grid">
+        {filteredProducts.map((product, idx) => {
+          const discountPercent = product.originalPrice 
+            ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+            : 0;
+
+          return (
+            <div key={product.id} className="admin-product-card">
+              {/* Parte Superior: Portada y Datos Clave */}
+              <div className="admin-product-card-top">
+                <div className="admin-product-thumb-box">
+                  {product.image ? (
+                    <img src={product.image} alt={product.title} className="admin-product-thumb-img" />
+                  ) : (
+                    <span>{product.icon}</span>
+                  )}
+                  {uploadingForId === product.id && (
+                    <div style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.7)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.7rem', color: '#ff9a60' }}>
+                      ⏳
+                    </div>
+                  )}
+                </div>
+
+                <div className="admin-product-info">
+                  <div className="admin-product-badge-row">
+                    {product.badge && (
+                      <span className="admin-badge-tag">{product.badge}</span>
+                    )}
+                    <span className="admin-category-tag">{product.categoryLabel}</span>
+                  </div>
+
+                  <h4 className="admin-product-title" title={product.title}>
+                    {product.title}
+                  </h4>
+
+                  <span className="admin-product-grade">
+                    🎯 {product.gradeOrAge}
+                  </span>
+                </div>
+              </div>
+
+              {/* Fila de Precios y Social Proof */}
+              <div className="admin-product-stats-row">
+                <div className="admin-product-price-box">
+                  <span className="admin-price-current">Q {product.price.toFixed(2)}</span>
+                  {product.originalPrice && product.originalPrice > product.price && (
+                    <>
+                      <span className="admin-price-old">Q {product.originalPrice.toFixed(2)}</span>
+                      <span className="admin-discount-pill">-{discountPercent}%</span>
+                    </>
+                  )}
+                </div>
+
+                <div className="admin-product-social">
+                  ⭐ {product.rating.toFixed(1)} ({product.reviewsCount})
+                  {product.soldCount ? ` · +${product.soldCount}` : ''}
+                </div>
+              </div>
+
+              {/* Botonera de Acciones de la Tarjeta */}
+              <div className="admin-product-card-actions">
+                <div className="admin-card-reorder-group">
+                  <button 
+                    type="button" 
+                    className="btn-card-icon" 
+                    onClick={() => handleMoveProduct(idx, -1)} 
+                    disabled={idx === 0}
+                    title="Mover hacia arriba"
+                  >
+                    ⬆️
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn-card-icon" 
+                    onClick={() => handleMoveProduct(idx, 1)} 
+                    disabled={idx === products.length - 1}
+                    title="Mover hacia abajo"
+                  >
+                    ⬇️
+                  </button>
+                </div>
+
+                <div className="admin-card-buttons-main">
+                  <label className="btn-card-icon" title="Subir foto de portada" style={{ cursor: 'pointer' }}>
+                    📷
+                    <input 
+                      type="file" 
+                      accept="image/*" 
+                      style={{ display: 'none' }}
+                      onChange={(e) => handleCardImageUpload(e, product.id)}
+                    />
+                  </label>
+
+                  <button 
+                    type="button" 
+                    className="btn-card-duplicate"
+                    onClick={() => handleDuplicateProduct(product)}
+                    title="Duplicar este producto"
+                  >
+                    📋 Duplicar
+                  </button>
+
+                  <button 
+                    type="button" 
+                    className="btn-card-edit"
+                    onClick={() => handleOpenEdit(product)}
+                    title="Editar producto"
+                  >
+                    ✏️ Editar
+                  </button>
+
+                  <button 
+                    type="button" 
+                    className="btn-card-delete"
+                    onClick={() => handleDeleteProduct(product.id, product.title)}
+                    title="Eliminar producto"
+                  >
+                    🗑️
+                  </button>
+                </div>
+              </div>
+            </div>
+          );
+        })}
       </div>
+
+      {filteredProducts.length === 0 && (
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(15, 23, 42, 0.5)', borderRadius: '16px', color: '#94a3b8' }}>
+          <span style={{ fontSize: '3rem', display: 'block', marginBottom: '12px' }}>🔍</span>
+          <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff' }}>No se encontraron productos con el filtro aplicado.</p>
+          <button 
+            className="btn-mercado-primary" 
+            style={{ marginTop: '12px' }}
+            onClick={() => { setSelectedCategory('todos'); setSearchTerm(''); }}
+          >
+            Limpiar Filtros
+          </button>
+        </div>
+      )}
+
+      {/* ==============================================================
+          MODAL DE EDICIÓN COMPLETA DEL PRODUCTO
+          ============================================================== */}
+      {isModalOpen && editingProduct && (
+        <div className="admin-modal-overlay animate-fade-in" onClick={() => setIsModalOpen(false)}>
+          <div className="admin-mercado-modal animate-scale-up" onClick={(e) => e.stopPropagation()}>
+            {/* Header del Modal */}
+            <div className="admin-modal-header">
+              <h3>
+                <span>🛍️</span>
+                {editingProduct.id.startsWith('prod-') && !products.some(p => p.id === editingProduct.id) 
+                  ? 'Añadir Nuevo Producto al Mercado' 
+                  : `Editar: ${editingProduct.title || 'Producto'}`}
+              </h3>
+              <button 
+                type="button" 
+                className="admin-modal-close" 
+                onClick={() => setIsModalOpen(false)}
+                title="Cerrar modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Cuerpo del Modal con Secciones Organizadas */}
+            <div className="admin-modal-body-scroll">
+              {/* SECCIÓN 1: Identificación y Categoría */}
+              <div className="modal-section-box">
+                <h4 className="modal-section-title">
+                  <span>📌</span> 1. Información General del Producto
+                </h4>
+
+                <div className="mercado-input-group">
+                  <label>Título Comercial del Producto *</label>
+                  <input
+                    type="text"
+                    value={editingProduct.title}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, title: e.target.value })}
+                    placeholder="Ej: El Código del Maíz: Origen y Sustento"
+                    required
+                  />
+                </div>
+
+                <div className="form-grid-3">
+                  <div className="mercado-input-group">
+                    <label>Categoría</label>
+                    <select
+                      value={editingProduct.category}
+                      onChange={(e) => {
+                        const catId = e.target.value as MercadoProduct['category'];
+                        const catObj = MERCADO_CATEGORIES.find(c => c.id === catId);
+                        setEditingProduct({
+                          ...editingProduct,
+                          category: catId,
+                          categoryLabel: catObj ? catObj.label : 'General'
+                        });
+                      }}
+                    >
+                      <option value="cuentos">📚 Cuentos y Libros</option>
+                      <option value="juegos">🎲 Juegos de Mesa</option>
+                      <option value="personajes">🎭 Personajes y Títeres</option>
+                      <option value="tarjetas">🎴 Tarjetas y Barajas</option>
+                      <option value="proyectos">🚀 Proyectos STEAM</option>
+                      <option value="utiles">🎨 Útiles y Arte</option>
+                    </select>
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Grado Escolar / Edad Dirigida</label>
+                    <input
+                      type="text"
+                      value={editingProduct.gradeOrAge}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, gradeOrAge: e.target.value })}
+                      placeholder="Ej: 4to a 6to Primaria"
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Insignia / Badge Comercial</label>
+                    <input
+                      type="text"
+                      value={editingProduct.badge || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, badge: e.target.value })}
+                      placeholder="Ej: MÁS VENDIDO, OFERTA..."
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                  <span style={{ fontSize: '0.74rem', color: '#94a3b8', width: '100%' }}>Insignias rápidas:</span>
+                  {BADGE_PRESETS.map(badge => (
+                    <button
+                      key={badge}
+                      type="button"
+                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#cbd5e1', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer' }}
+                      onClick={() => setEditingProduct({ ...editingProduct, badge })}
+                    >
+                      {badge}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* SECCIÓN 2: Precios, Descuentos y Entrega */}
+              <div className="modal-section-box">
+                <h4 className="modal-section-title">
+                  <span>💰</span> 2. Precios, Descuentos y Tiempos de Entrega
+                </h4>
+
+                <div className="form-grid-3">
+                  <div className="mercado-input-group">
+                    <label>Precio de Venta (Q) *</label>
+                    <input
+                      type="number"
+                      step="0.50"
+                      min="0"
+                      value={editingProduct.price}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, price: parseFloat(e.target.value) || 0 })}
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Precio Regular Tachado (Q)</label>
+                    <input
+                      type="number"
+                      step="0.50"
+                      min="0"
+                      value={editingProduct.originalPrice || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, originalPrice: e.target.value ? parseFloat(e.target.value) : undefined })}
+                      placeholder="Opcional para mostrar rebaja"
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Tiempo de Entrega</label>
+                    <input
+                      type="text"
+                      value={editingProduct.deliveryTime || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, deliveryTime: e.target.value })}
+                      placeholder="Ej: Entrega 24-48 hrs"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-grid-2">
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#cbd5e1', fontSize: '0.88rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={editingProduct.inStock ?? true}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, inStock: e.target.checked })}
+                    />
+                    <span>🟢 Producto Disponible en Inventario (En Stock)</span>
+                  </label>
+
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', color: '#cbd5e1', fontSize: '0.88rem' }}>
+                    <input
+                      type="checkbox"
+                      checked={editingProduct.featured ?? false}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, featured: e.target.checked })}
+                    />
+                    <span>⭐ Destacar en primera fila del catálogo</span>
+                  </label>
+                </div>
+              </div>
+
+              {/* SECCIÓN 3: Aspecto Visual e Imagen de Portada */}
+              <div className="modal-section-box">
+                <h4 className="modal-section-title">
+                  <span>🎨</span> 3. Icono Emoji y Foto de Portada
+                </h4>
+
+                <div className="form-grid-2">
+                  <div className="mercado-input-group">
+                    <label>Icono Emoji Representativo</label>
+                    <input
+                      type="text"
+                      value={editingProduct.icon}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, icon: e.target.value })}
+                      style={{ fontSize: '1.4rem' }}
+                    />
+                    <div className="emoji-quick-picker">
+                      {POPULAR_EMOJIS.map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className="emoji-quick-btn"
+                          onClick={() => setEditingProduct({ ...editingProduct, icon: emoji })}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>URL de Foto de Portada (o subir archivo)</label>
+                    <input
+                      type="text"
+                      value={editingProduct.image || ''}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, image: e.target.value })}
+                      placeholder="https://... o sube una imagen abajo"
+                    />
+
+                    <label className="image-upload-dropzone">
+                      {editingProduct.image ? (
+                        <img src={editingProduct.image} alt="Portada" className="dropzone-preview" />
+                      ) : (
+                        <span style={{ fontSize: '2rem' }}>📷</span>
+                      )}
+                      <div>
+                        <strong style={{ display: 'block', color: '#ffffff', fontSize: '0.84rem' }}>
+                          Subir foto desde la computadora
+                        </strong>
+                        <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                          Se comprime automáticamente a formato WebP liviano
+                        </span>
+                      </div>
+                      <input 
+                        ref={modalFileInputRef}
+                        type="file" 
+                        accept="image/*" 
+                        style={{ display: 'none' }}
+                        onChange={handleModalImageUpload}
+                      />
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECCIÓN 4: Social Proof y Reseñas */}
+              <div className="modal-section-box">
+                <h4 className="modal-section-title">
+                  <span>⭐</span> 4. Calificaciones y Métricas Sociales
+                </h4>
+
+                <div className="form-grid-3">
+                  <div className="mercado-input-group">
+                    <label>Puntuación de Estrellas (1.0 a 5.0)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      min="1.0"
+                      max="5.0"
+                      value={editingProduct.rating}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, rating: parseFloat(e.target.value) || 5.0 })}
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Número de Reseñas / Calificaciones</label>
+                    <input
+                      type="number"
+                      min="1"
+                      value={editingProduct.reviewsCount}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, reviewsCount: parseInt(e.target.value, 10) || 1 })}
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Unidades Vendidas Estimadas</label>
+                    <input
+                      type="number"
+                      min="0"
+                      value={editingProduct.soldCount || 0}
+                      onChange={(e) => setEditingProduct({ ...editingProduct, soldCount: parseInt(e.target.value, 10) || 0 })}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* SECCIÓN 5: Descripciones y Ficha Pedagógica */}
+              <div className="modal-section-box">
+                <h4 className="modal-section-title">
+                  <span>📝</span> 5. Descripciones y Contenidos del Paquete
+                </h4>
+
+                <div className="mercado-input-group">
+                  <label>Descripción Breve (Resumen para la Tarjeta de Catálogo)</label>
+                  <textarea
+                    rows={2}
+                    value={editingProduct.description}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, description: e.target.value })}
+                    placeholder="Resumen de 1-2 líneas que destaca el valor pedagógico principal..."
+                  />
+                </div>
+
+                <div className="mercado-input-group">
+                  <label>Descripción Detallada (Ficha Pedagógica en Modal)</label>
+                  <textarea
+                    rows={4}
+                    value={editingProduct.longDescription}
+                    onChange={(e) => setEditingProduct({ ...editingProduct, longDescription: e.target.value })}
+                    placeholder="Explicación completa de las metodologías, competencias y enfoque pedagógico..."
+                  />
+                </div>
+
+                {/* Lista Dinámica de Características */}
+                <div className="mercado-input-group">
+                  <label>Características y Competencias Clave</label>
+                  <div className="dynamic-items-list">
+                    {(editingProduct.features || []).map((feat, fIdx) => (
+                      <div key={fIdx} className="dynamic-item-row">
+                        <input
+                          type="text"
+                          value={feat}
+                          onChange={(e) => {
+                            const nextFeats = [...editingProduct.features];
+                            nextFeats[fIdx] = e.target.value;
+                            setEditingProduct({ ...editingProduct, features: nextFeats });
+                          }}
+                          placeholder="Ej: Actividades de comprensión lectora..."
+                        />
+                        <button
+                          type="button"
+                          className="btn-remove-item"
+                          onClick={() => {
+                            const nextFeats = editingProduct.features.filter((_, i) => i !== fIdx);
+                            setEditingProduct({ ...editingProduct, features: nextFeats });
+                          }}
+                          title="Quitar característica"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="btn-add-item"
+                      onClick={() => {
+                        setEditingProduct({
+                          ...editingProduct,
+                          features: [...(editingProduct.features || []), '']
+                        });
+                      }}
+                    >
+                      ＋ Agregar Otra Característica
+                    </button>
+                  </div>
+                </div>
+
+                {/* Lista Dinámica de Contenidos del Paquete */}
+                <div className="mercado-input-group">
+                  <label>Contenido del Paquete / Set Incluido</label>
+                  <div className="dynamic-items-list">
+                    {(editingProduct.contents || []).map((item, cIdx) => (
+                      <div key={cIdx} className="dynamic-item-row">
+                        <input
+                          type="text"
+                          value={item}
+                          onChange={(e) => {
+                            const nextContents = [...(editingProduct.contents || [])];
+                            nextContents[cIdx] = e.target.value;
+                            setEditingProduct({ ...editingProduct, contents: nextContents });
+                          }}
+                          placeholder="Ej: 1 Libro impreso de 64 páginas a color..."
+                        />
+                        <button
+                          type="button"
+                          className="btn-remove-item"
+                          onClick={() => {
+                            const nextContents = (editingProduct.contents || []).filter((_, i) => i !== cIdx);
+                            setEditingProduct({ ...editingProduct, contents: nextContents });
+                          }}
+                          title="Quitar item"
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    ))}
+                    <button
+                      type="button"
+                      className="btn-add-item"
+                      onClick={() => {
+                        setEditingProduct({
+                          ...editingProduct,
+                          contents: [...(editingProduct.contents || []), '']
+                        });
+                      }}
+                    >
+                      ＋ Agregar Item a la Caja
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Footer de Acciones del Modal */}
+            <div className="admin-modal-footer">
+              <button 
+                type="button" 
+                className="btn-mercado-secondary"
+                onClick={() => setIsModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                className="btn-mercado-primary"
+                onClick={handleSaveProduct}
+              >
+                💾 Guardar Producto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

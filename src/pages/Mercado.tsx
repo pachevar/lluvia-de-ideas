@@ -1,6 +1,7 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
+import { usePortalConfig } from '../context/PortalConfigContext';
 import { DEFAULT_MERCADO_PRODUCTS, MERCADO_CATEGORIES, type MercadoProduct } from '../data/mercadoData';
 import { soundEffects } from '../utils/soundEffects';
 import { CONTACT } from '../constants';
@@ -14,6 +15,23 @@ interface CartItem {
 const CART_STORAGE_KEY = 'mercado_cart_v1';
 
 export default function Mercado() {
+  const { config } = usePortalConfig();
+
+  const allProducts: MercadoProduct[] = useMemo(() => {
+    if (config?.mercadoProducts && Array.isArray(config.mercadoProducts) && config.mercadoProducts.length > 0) {
+      return config.mercadoProducts as MercadoProduct[];
+    }
+    return DEFAULT_MERCADO_PRODUCTS;
+  }, [config?.mercadoProducts]);
+
+  const mercadoConfig = config?.mercadoConfig || {
+    announcement: "Envíos a todo el país en 24-48 hrs · Descuentos por volumen para colegios y docentes",
+    whatsappPhone: CONTACT.whatsappPhone,
+    bannerTitle: "Mercado Educativo & Creativo",
+    bannerSubtitle: "Materiales didácticos, cuentos y proyectos pedagógicos directos de la editorial",
+    showPromoStrip: true
+  };
+
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'sold'>('featured');
@@ -139,7 +157,7 @@ export default function Mercado() {
     ].filter(Boolean);
 
     const message = encodeURIComponent(lines.join('\n'));
-    const phone = CONTACT.whatsappPhone || '50246741239';
+    const phone = mercadoConfig.whatsappPhone || CONTACT.whatsappPhone || '50246741239';
     return `https://wa.me/${phone}?text=${message}`;
   };
 
@@ -154,13 +172,13 @@ export default function Mercado() {
       '¿Podrían darme más información de disponibilidad y formas de envío? ¡Gracias!'
     ];
     const message = encodeURIComponent(lines.join('\n'));
-    const phone = CONTACT.whatsappPhone || '50246741239';
+    const phone = mercadoConfig.whatsappPhone || CONTACT.whatsappPhone || '50246741239';
     return `https://wa.me/${phone}?text=${message}`;
   };
 
   // Filtrado y ordenamiento de productos
   const filteredProducts = useMemo(() => {
-    let list = DEFAULT_MERCADO_PRODUCTS;
+    let list = allProducts;
 
     // Filtro por categoría
     if (selectedCategory !== 'todos') {
@@ -188,7 +206,7 @@ export default function Mercado() {
       // 'featured'
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
-  }, [selectedCategory, searchQuery, sortBy]);
+  }, [allProducts, selectedCategory, searchQuery, sortBy]);
 
   return (
     <div className="mercado-amazon-container animate-fade-in">
@@ -199,13 +217,15 @@ export default function Mercado() {
       />
 
       {/* Cinta Promocional Superior Estilo Amazon/Temu */}
-      <div className="mercado-top-promo-strip">
-        <div className="promo-strip-content">
-          <span className="promo-tag">🔥 OFERTAS DE TEMPORADA</span>
-          <span className="promo-text">Envíos a todo el país en 24-48 hrs · Descuentos por volumen para colegios y docentes</span>
-          <span className="promo-contact">📞 WhatsApp Directo: <strong>4674-1239</strong></span>
+      {mercadoConfig.showPromoStrip !== false && (
+        <div className="mercado-top-promo-strip">
+          <div className="promo-strip-content">
+            <span className="promo-tag">🔥 OFERTAS DE TEMPORADA</span>
+            <span className="promo-text">{mercadoConfig.announcement || 'Envíos a todo el país en 24-48 hrs · Descuentos por volumen para colegios y docentes'}</span>
+            <span className="promo-contact">📞 WhatsApp Directo: <strong>{mercadoConfig.whatsappPhone || '4674-1239'}</strong></span>
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Barra de Búsqueda y Header Principal */}
       <header className="mercado-amazon-header">
@@ -298,8 +318,8 @@ export default function Mercado() {
             {MERCADO_CATEGORIES.map(cat => {
               const isActive = selectedCategory === cat.id;
               const count = cat.id === 'todos' 
-                ? DEFAULT_MERCADO_PRODUCTS.length 
-                : DEFAULT_MERCADO_PRODUCTS.filter(p => p.category === cat.id).length;
+                ? allProducts.length 
+                : allProducts.filter(p => p.category === cat.id).length;
 
               return (
                 <button
@@ -411,7 +431,11 @@ export default function Mercado() {
                       }}
                       title="Ver detalle del producto"
                     >
-                      <span className="card-product-icon">{product.icon}</span>
+                      {product.image ? (
+                        <img src={product.image} alt={product.title} className="card-product-img" />
+                      ) : (
+                        <span className="card-product-icon">{product.icon}</span>
+                      )}
                     </div>
 
                     {/* Cuerpo de la Tarjeta */}
@@ -573,7 +597,11 @@ export default function Mercado() {
                 cartItems.map(({ product, quantity }) => (
                   <div key={product.id} className="sidebar-product-item">
                     <div className="sidebar-item-icon-box">
-                      <span>{product.icon}</span>
+                      {product.image ? (
+                        <img src={product.image} alt={product.title} style={{ width: '100%', height: '100%', objectFit: 'cover', borderRadius: '8px' }} />
+                      ) : (
+                        <span>{product.icon}</span>
+                      )}
                     </div>
 
                     <div className="sidebar-item-details">
@@ -702,7 +730,11 @@ export default function Mercado() {
               {/* Columna Izquierda: Imagen y Garantías */}
               <div className="modal-left-column">
                 <div className="modal-image-display">
-                  <span className="modal-hero-icon">{selectedProduct.icon}</span>
+                  {selectedProduct.image ? (
+                    <img src={selectedProduct.image} alt={selectedProduct.title} className="modal-hero-img" />
+                  ) : (
+                    <span className="modal-hero-icon">{selectedProduct.icon}</span>
+                  )}
                 </div>
 
                 <div className="modal-quick-badges">

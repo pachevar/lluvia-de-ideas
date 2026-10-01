@@ -308,13 +308,13 @@ export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
     items: [
       {
         id: 'tienda',
-        label: '🛍️ Catálogo de Cuentos & Libros',
+        label: '🛍️ Administrador de Mercado (Productos & Precios)',
         icon: '🛍️',
-        description: 'Tienda en línea: portadas, precios, sinopsis y disponibilidad de cuentos infantiles',
-        keywords: ['tienda', 'mercado', 'cuentos', 'libros', 'precios', 'productos', 'carrito', 'ventas'],
+        description: 'Gestión total del mercado: agregar, editar, eliminar y ordenar productos, cuentos, juegos, personajes, tarjetas, proyectos y útiles con fotos y descuentos',
+        keywords: ['mercado', 'tienda', 'productos', 'catalogo', 'cuentos', 'juegos', 'personajes', 'tarjetas', 'proyectos', 'utiles', 'precios', 'descuentos', 'carrito', 'inventario'],
         pillar: 'mercado',
-        publicRoute: '/tienda',
-        roleDescription: 'Vitrina comercial de cuentos y publicaciones infantiles'
+        publicRoute: '/mercado',
+        roleDescription: 'Panel de control de productos, inventario, precios y promociones del mercado en línea'
       },
       {
         id: 'bingo',
