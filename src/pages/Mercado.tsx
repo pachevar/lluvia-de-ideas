@@ -285,13 +285,20 @@ export default function Mercado() {
         showHomeButton 
       />
 
-      {/* Cinta Promocional Superior Estilo Amazon/Temu */}
+      {/* Cinta Informativa Superior Limpia y Minimalista */}
       {mercadoConfig.showPromoStrip !== false && (
-        <div className="mercado-top-promo-strip">
-          <div className="promo-strip-content">
-            <span className="promo-tag">🔥 OFERTAS DE TEMPORADA</span>
-            <span className="promo-text">{mercadoConfig.announcement || 'Envíos a todo el país en 24-48 hrs · Descuentos por volumen para colegios y docentes'}</span>
-            <span className="promo-contact">📞 WhatsApp Directo: <strong>{mercadoConfig.whatsappPhone || '4674-1239'}</strong></span>
+        <div className="mercado-clean-announcement-bar">
+          <div className="announcement-content">
+            <span className="announcement-badge">🌿 Editorial</span>
+            <span className="announcement-text">{mercadoConfig.announcement || 'Materiales didácticos y cuentos infantiles directos de imprenta · Envíos a toda Guatemala'}</span>
+            <a 
+              href={`https://wa.me/${mercadoConfig.whatsappPhone || '50246741239'}?text=${encodeURIComponent('Hola Editorial Lluvia de Ideas, deseo información de materiales y cuentos')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="announcement-link"
+            >
+              <span>Asesoría pedagógica: <strong>{mercadoConfig.whatsappPhone || '4674-1239'}</strong></span>
+            </a>
           </div>
         </div>
       )}
@@ -307,7 +314,7 @@ export default function Mercado() {
             <span className="mercado-tagline">Tienda Educativa & Creativa</span>
           </div>
 
-          {/* Barra de Búsqueda Amazon / Temu Style */}
+          {/* Barra de Búsqueda Minimalista y Despejada */}
           <div className="mercado-amazon-search-box">
             <div className="search-category-select">
               <select 
@@ -340,7 +347,7 @@ export default function Mercado() {
 
             <input 
               type="text" 
-              placeholder="Buscar en Mercado Lluvia de Ideas: cuentos, bingos, plastilinas, títeres..."
+              placeholder="Buscar por título, material, grado o palabra clave..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="amazon-search-input"
@@ -433,25 +440,16 @@ export default function Mercado() {
         </div>
       </nav>
 
-      {/* Banner de Garantías y Beneficios Temu / Amazon */}
-      <div className="mercado-guarantees-bar">
-        <div className="guarantees-container">
-          <div className="guarantee-chip">
-            <span className="guarantee-icon">🛡️</span>
-            <span>Garantía de Satisfacción Docente</span>
-          </div>
-          <div className="guarantee-chip">
-            <span className="guarantee-icon">🚚</span>
-            <span>Envío Rápido a toda Guatemala</span>
-          </div>
-          <div className="guarantee-chip">
-            <span className="guarantee-icon">⚡</span>
-            <span>Precios Directos de Editorial</span>
-          </div>
-          <div className="guarantee-chip">
-            <span className="guarantee-icon">💬</span>
-            <span>Cotizaciones y Facturas al Instante</span>
-          </div>
+      {/* Micro-cinta de Confianza y Garantías (Discreta y de Baja Carga Visual) */}
+      <div className="mercado-trust-microbar">
+        <div className="trust-microbar-inner">
+          <span className="trust-pill"><span>🛡️</span> Garantía pedagógica docente</span>
+          <span className="trust-divider">·</span>
+          <span className="trust-pill"><span>🚚</span> Envíos a todo el país (24-48 hrs)</span>
+          <span className="trust-divider">·</span>
+          <span className="trust-pill"><span>⚡</span> Precios directos de imprenta</span>
+          <span className="trust-divider">·</span>
+          <span className="trust-pill"><span>📄</span> Factura y cotizaciones formales</span>
         </div>
       </div>
 
@@ -462,39 +460,14 @@ export default function Mercado() {
         </div>
       )}
 
-      {/* Contenido Principal con Layout de Barra Lateral Vertical + 4 Columnas */}
+      {/* Contenido Principal con Layout de Barra Lateral Vertical + Catálogo */}
       <main className="mercado-amazon-main">
         <div className="mercado-columns-layout">
           {/* ==============================================================
-              BARRA LATERAL VERTICAL (Filtros, Búsqueda y Opciones en Web)
+              BARRA LATERAL VERTICAL (Filtros Limpios y Despejados)
               ============================================================== */}
           <aside className="mercado-vertical-sidebar">
-            {/* 1. Bloque de Búsqueda Vertical */}
-            <div className="sidebar-filter-block">
-              <h4 className="sidebar-filter-title">
-                <span>🔍</span> Búsqueda en Tienda
-              </h4>
-              <div className="sidebar-vertical-search">
-                <input
-                  type="text"
-                  placeholder="Ej: Cuentos, bingos, plastilinas..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-                {searchQuery && (
-                  <button 
-                    type="button" 
-                    onClick={() => setSearchQuery('')}
-                    className="sidebar-clear-btn"
-                    title="Borrar búsqueda"
-                  >
-                    ✕
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* 2. Bloque de Categorías / Departamentos Verticales */}
+            {/* 1. Bloque de Categorías / Departamentos Verticales */}
             <div className="sidebar-filter-block">
               <h4 className="sidebar-filter-title">
                 <span>📚</span> Departamentos
@@ -564,39 +537,35 @@ export default function Mercado() {
               </div>
             </div>
 
-            {/* 3. Bloque de Ordenamiento Vertical */}
+            {/* 2. Bloque de Ordenamiento Compacto */}
             <div className="sidebar-filter-block">
-              <h4 className="sidebar-filter-title">
-                <span>⚡</span> Ordenar Catálogo
-              </h4>
-              <div className="sidebar-sort-vertical-list">
-                {[
-                  { id: 'featured', label: '⭐ Destacados Editorial' },
-                  { id: 'sold', label: '🔥 Más Vendidos (+ Popular)' },
-                  { id: 'price-asc', label: '📈 Menor a Mayor Precio' },
-                  { id: 'price-desc', label: '📉 Mayor a Menor Precio' },
-                  { id: 'rating', label: '🌟 Mejor Calificados' }
-                ].map(opt => (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    className={`sidebar-sort-option ${sortBy === opt.id ? 'active' : ''}`}
-                    onClick={() => {
-                      soundEffects.playClick();
-                      setSortBy(opt.id as any);
-                    }}
-                  >
-                    <span className="sort-radio-indicator">{sortBy === opt.id ? '●' : '○'}</span>
-                    <span>{opt.label}</span>
-                  </button>
-                ))}
+              <label htmlFor="sidebar-sort-select" className="sidebar-filter-title">
+                <span>⚡</span> Ordenar Por
+              </label>
+              <div className="sidebar-sort-select-wrapper">
+                <select
+                  id="sidebar-sort-select"
+                  value={sortBy}
+                  onChange={(e) => {
+                    soundEffects.playClick();
+                    setSortBy(e.target.value as any);
+                  }}
+                  className="sidebar-sort-dropdown"
+                >
+                  <option value="featured">⭐ Destacados Editorial</option>
+                  <option value="sold">🔥 Más Populares</option>
+                  <option value="price-asc">📈 Menor a Mayor Precio</option>
+                  <option value="price-desc">📉 Mayor a Menor Precio</option>
+                  <option value="rating">🌟 Mejor Calificados</option>
+                </select>
+                <span className="dropdown-arrow">▾</span>
               </div>
             </div>
 
-            {/* 4. Bloque de Filtros Rápidos (Ofertas y Destacados) */}
+            {/* 3. Bloque de Filtros Rápidos */}
             <div className="sidebar-filter-block">
               <h4 className="sidebar-filter-title">
-                <span>🏷️</span> Filtros Especiales
+                <span>🏷️</span> Vista Rápida
               </h4>
               <div className="sidebar-badge-filter-group">
                 <button
@@ -617,7 +586,7 @@ export default function Mercado() {
                     setFilterBadge('offers');
                   }}
                 >
-                  🔥 Solo con Descuento
+                  🏷️ En Oferta
                 </button>
                 <button
                   type="button"
@@ -627,19 +596,19 @@ export default function Mercado() {
                     setFilterBadge('bestsellers');
                   }}
                 >
-                  ⭐ Solo Más Vendidos
+                  ⭐ Populares
                 </button>
               </div>
             </div>
 
-            {/* 5. Tarjeta de Contacto Directo WhatsApp */}
+            {/* 4. Tarjeta de Contacto Directo WhatsApp */}
             <div className="sidebar-whatsapp-card">
               <div className="whatsapp-card-head">
                 <span className="whatsapp-card-icon">💬</span>
                 <strong>¿Pedidos para Colegios?</strong>
               </div>
               <p>
-                Atención personalizada, cotizaciones formales y descuentos por volumen institucional.
+                Atención personalizada, cotizaciones formales y descuentos por volumen.
               </p>
               <a
                 href={`https://wa.me/${mercadoConfig.whatsappPhone || '50246741239'}?text=${encodeURIComponent('¡Hola Editorial Lluvia de Ideas! Me gustaría cotizar materiales y cuentos para una institución educativa.')}`}
@@ -840,18 +809,21 @@ export default function Mercado() {
                       : 0;
 
                     return (
-                      <article key={product.id} className="amazon-product-card">
-                        {/* Badge de Oferta / Destacado */}
-                        <div className="card-top-badges">
-                          {product.badge && (
-                            <span className={`temu-badge ${product.badge.includes('MÁS VENDIDO') || product.badge.includes('SUPERVENTAS') ? 'badge-orange' : 'badge-red'}`}>
-                              {product.badge}
-                            </span>
-                          )}
-                          {discountPercent > 0 && (
-                            <span className="temu-discount-tag">-{discountPercent}%</span>
-                          )}
-                        </div>
+                      <article key={product.id} className="amazon-product-card clean-product-card">
+                        {/* Insignia discreta (máximo una para no saturar) */}
+                        {(product.badge || discountPercent > 0) && (
+                          <div className="card-top-badges">
+                            {product.badge ? (
+                              <span className="clean-badge">
+                                {product.badge}
+                              </span>
+                            ) : (
+                              <span className="clean-badge badge-discount">
+                                -{discountPercent}%
+                              </span>
+                            )}
+                          </div>
+                        )}
 
                         {/* Ilustración / Imagen del producto */}
                         <div 
@@ -861,10 +833,10 @@ export default function Mercado() {
                             setSelectedProduct(product);
                             setDetailQuantity(1);
                           }}
-                          title="Ver detalle del producto"
+                          title={`Ver detalle de ${product.title}`}
                         >
                           {product.image ? (
-                            <img src={product.image} alt={product.title} className="card-product-img" />
+                            <img src={product.image} alt={product.title} className="card-product-img" loading="lazy" />
                           ) : (
                             <span className="card-product-icon">{product.icon}</span>
                           )}
@@ -872,7 +844,12 @@ export default function Mercado() {
 
                         {/* Cuerpo de la Tarjeta */}
                         <div className="card-details-box">
-                          <span className="card-category-label">{product.categoryLabel}</span>
+                          <div className="card-meta-line">
+                            <span className="card-category-label">{product.categoryLabel}</span>
+                            {product.gradeOrAge && (
+                              <span className="card-grade-hint">· {product.gradeOrAge}</span>
+                            )}
+                          </div>
                           
                           <h3 
                             className="card-product-title"
@@ -881,28 +858,19 @@ export default function Mercado() {
                               setSelectedProduct(product);
                               setDetailQuantity(1);
                             }}
+                            title={product.title}
                           >
                             {product.title}
                           </h3>
 
-                          {/* Estrellas y Ventas */}
+                          {/* Calificación concisa y despejada */}
                           <div className="card-rating-row">
-                            <div className="stars-row">
-                              {'★'.repeat(Math.floor(product.rating))}
-                            </div>
+                            <span className="clean-star-icon">★</span>
                             <span className="rating-score">{product.rating.toFixed(1)}</span>
                             <span className="reviews-count">({product.reviewsCount})</span>
-                            {product.soldCount && (
-                              <span className="sold-count">· +{product.soldCount} vendidos</span>
-                            )}
                           </div>
 
-                          {/* Etiqueta de Grado / Nivel */}
-                          <div className="card-grade-pill">
-                            🎯 {product.gradeOrAge}
-                          </div>
-
-                          {/* Fila de Precios Temu / Amazon Style */}
+                          {/* Fila de Precios Limpia */}
                           <div className="card-pricing-block">
                             <div className="main-price-row">
                               <span className="price-symbol">{product.currency}</span>
@@ -913,11 +881,6 @@ export default function Mercado() {
                                 </span>
                               )}
                             </div>
-                            {product.deliveryTime && (
-                              <div className="card-delivery-badge">
-                                ⚡ {product.deliveryTime}
-                              </div>
-                            )}
                           </div>
 
                           {/* Botones de Acción */}
@@ -928,7 +891,7 @@ export default function Mercado() {
                               onClick={() => handleAddToCart(product, 1)}
                               title="Agregar al Carrito"
                             >
-                              🛒 Agregar
+                              <span>🛒 Agregar</span>
                             </button>
                             
                             <button
@@ -939,7 +902,7 @@ export default function Mercado() {
                                 setSelectedProduct(product);
                                 setDetailQuantity(1);
                               }}
-                              title="Vista Rápida"
+                              title="Vista rápida"
                             >
                               👁️
                             </button>
