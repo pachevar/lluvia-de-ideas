@@ -7,7 +7,8 @@
 .mercado-amazon-container {
   min-height: 100vh;
   width: 100%;
-  max-width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
   background-color: #ffffff; /* Fondo blanco retail limpio */
   color: #0f1111; /* Texto estándar Amazon */
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
@@ -435,6 +436,9 @@
   gap: 24px;
   align-items: flex-start;
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 /* ==========================================================================
@@ -899,6 +903,26 @@
 
 .card-product-title:hover {
   color: #0284c7;
+}
+
+.card-short-desc {
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.5;
+  letter-spacing: 0.005em;
+  margin: 2px 0 10px 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  height: 2.35rem;
+  font-weight: 450;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.card-short-desc:hover {
+  color: #334155;
 }
 
 /* Calificación concisa y sin ruido */
@@ -2657,21 +2681,25 @@
 }
 
 .kindle-short-synopsis {
-  font-size: 0.78rem;
-  color: #4b5563;
-  line-height: 1.45;
-  margin: 0 0 12px 0;
+  font-size: 0.82rem;
+  color: #475569;
+  line-height: 1.55;
+  margin: 4px 0 14px 0;
   display: -webkit-box;
-  -webkit-line-clamp: 2;
+  -webkit-line-clamp: 3;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  letter-spacing: 0.01em;
+  border-left: 2.5px solid #e2e8f0;
+  padding-left: 10px;
+  font-style: normal;
 }
 
 /* Bloque de Precios Kindle */
 .kindle-pricing-section {
   margin-top: auto;
   padding-top: 10px;
-  border-top: 1px solid #f3f4f6;
+  border-top: 1px solid #f1f5f9;
   margin-bottom: 12px;
 }
 
@@ -2683,25 +2711,25 @@
 
 .kindle-price-label {
   font-size: 0.74rem;
-  color: #6b7280;
+  color: #64748b;
   margin-right: 2px;
 }
 
 .kindle-currency {
   font-size: 0.82rem;
-  font-weight: 800;
-  color: #0f1111;
+  font-weight: 750;
+  color: #0f172a;
 }
 
 .kindle-price-number {
   font-size: 1.35rem;
-  font-weight: 900;
-  color: #0f1111;
+  font-weight: 850;
+  color: #0f172a;
 }
 
 .kindle-price-strikethrough {
   font-size: 0.8rem;
-  color: #6b7280;
+  color: #94a3b8;
   text-decoration: line-through;
   margin-left: 6px;
 }
@@ -2710,7 +2738,7 @@
   display: block;
   font-size: 0.72rem;
   color: #047857;
-  font-weight: 700;
+  font-weight: 650;
   margin-top: 3px;
 }
 
@@ -2723,21 +2751,24 @@
 
 .btn-kindle-add-cart {
   flex: 1;
-  background: #ffd814;
-  border: 1px solid #fcd200;
+  background: #0f172a;
+  border: 1px solid #0f172a;
   border-radius: 8px;
   padding: 9px 12px;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 750;
-  color: #0f1111;
+  color: #ffffff;
   cursor: pointer;
   transition: all 0.18s ease;
-  box-shadow: 0 2px 5px rgba(213, 169, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
 .btn-kindle-add-cart:hover {
-  background: #f7ca00;
-  border-color: #f2c200;
+  background: #0284c7;
+  border-color: #0284c7;
   transform: translateY(-1px);
 }
 
@@ -2783,6 +2814,9 @@
    -------------------------------------------------------------------------- */
 .kindle-collections-container {
   width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
   display: flex;
   flex-direction: column;
   gap: 24px;
@@ -2798,6 +2832,9 @@
   flex-direction: column;
   gap: 16px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .clean-badge-tag {
@@ -2824,10 +2861,12 @@
 
 .clean-collections-desc {
   margin: 0;
-  font-size: 0.88rem;
-  color: #64748b;
+  font-size: 0.9rem;
+  color: #475569;
   max-width: 760px;
-  line-height: 1.5;
+  line-height: 1.6;
+  letter-spacing: 0.005em;
+  word-break: break-word;
 }
 
 .clean-collections-filters {
@@ -2873,6 +2912,10 @@
   display: flex;
   flex-direction: column;
   transition: box-shadow 0.2s ease;
+  width: 100%;
+  max-width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .collection-showcase-card:hover {
@@ -2902,12 +2945,17 @@
   grid-template-columns: 1fr 320px;
   gap: 24px;
   align-items: center;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .col-header-left {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .col-badge-row {
@@ -2954,19 +3002,24 @@
   font-weight: 750;
   line-height: 1.3;
   color: #0f172a;
+  word-break: break-word;
 }
 
 .col-subtitle {
   font-size: 0.86rem;
   color: #64748b;
   font-weight: 550;
+  word-break: break-word;
 }
 
 .col-description {
-  margin: 4px 0 8px 0;
-  font-size: 0.84rem;
-  line-height: 1.5;
-  color: #475569;
+  margin: 6px 0 10px 0;
+  font-size: 0.88rem;
+  line-height: 1.6;
+  color: #334155;
+  letter-spacing: 0.005em;
+  word-break: break-word;
+  max-width: 800px;
 }
 
 .col-features-bullets {
@@ -3103,6 +3156,10 @@
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .shelf-section-header {
@@ -3111,16 +3168,20 @@
   justify-content: space-between;
   gap: 16px;
   flex-wrap: wrap;
+  min-width: 0;
+  max-width: 100%;
 }
 
 .shelf-title-wrap {
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 }
 
 .shelf-icon {
   font-size: 1.25rem;
+  flex-shrink: 0;
 }
 
 .shelf-title {
@@ -3145,6 +3206,7 @@
   border-radius: 6px;
   cursor: pointer;
   transition: all 0.15s ease;
+  flex-shrink: 0;
 }
 
 .btn-toggle-books-accordion:hover {
@@ -3158,6 +3220,10 @@
   position: relative;
   padding-bottom: 14px;
   margin-top: 6px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;
 }
 
 .bookshelf-books-row {
@@ -3165,8 +3231,12 @@
   align-items: flex-end;
   gap: clamp(14px, 2vw, 22px);
   overflow-x: auto;
-  padding: 8px 8px 10px 8px;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 8px 12px 8px;
   scrollbar-width: thin;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .shelf-book-item {
@@ -3555,28 +3625,234 @@
   .collection-card-header {
     grid-template-columns: 1fr;
     gap: 16px;
+    padding: 18px 16px;
   }
 
   .col-header-buy-box {
     width: 100%;
     box-sizing: border-box;
+    padding: 16px;
   }
 }
 
-@media (max-width: 600px) {
-  .kindle-cuentos-subnav {
+@media (max-width: 640px) {
+  /* Announcement bar wrap */
+  .announcement-content {
     flex-direction: column;
-    align-items: flex-start;
+    gap: 6px;
+    text-align: center;
   }
 
+  .announcement-text {
+    min-width: 0;
+    font-size: 0.76rem;
+  }
+
+  /* Subnavegación de Cuentos y Libros */
+  .kindle-cuentos-subnav {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .kindle-subnav-left {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .kindle-subnav-left::-webkit-scrollbar {
+    display: none;
+  }
+
+  .kindle-subnav-pill {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.76rem;
+    padding: 5px 12px;
+  }
+
+  .kindle-badge-format-info {
+    font-size: 0.7rem;
+    text-align: center;
+  }
+
+  /* Grilla de libros Kindle */
   .kindle-books-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
 
   .kindle-book-cover-wrapper.size-md {
-    width: 150px;
-    height: 220px;
+    width: 140px;
+    height: 205px;
+  }
+
+  /* Cabecera de Colecciones en Móvil */
+  .clean-collections-header {
+    padding: 16px 14px;
+    gap: 12px;
+    border-radius: 14px;
+  }
+
+  .clean-collections-title {
+    font-size: 1.25rem;
+  }
+
+  .clean-collections-desc {
+    font-size: 0.82rem;
+    line-height: 1.5;
+  }
+
+  .clean-collections-filters {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 6px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .clean-collections-filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .clean-filter-chip {
+    flex-shrink: 0;
+    white-space: nowrap;
+    font-size: 0.78rem;
+    padding: 5px 12px;
+  }
+
+  /* Showcase Card de Colección */
+  .collection-showcase-card {
+    border-radius: 14px;
+  }
+
+  .collection-card-header {
+    padding: 14px 12px;
+    gap: 14px;
+  }
+
+  .col-title {
+    font-size: 1.18rem;
+  }
+
+  .col-subtitle {
+    font-size: 0.8rem;
+  }
+
+  .col-description {
+    font-size: 0.82rem;
+    line-height: 1.5;
+    margin: 4px 0 8px 0;
+  }
+
+  .col-header-buy-box {
+    padding: 14px 12px;
+    border-radius: 12px;
+    gap: 10px;
+  }
+
+  .col-price-number {
+    font-size: 1.45rem;
+  }
+
+  .btn-col-buy-all {
+    font-size: 0.8rem;
+    padding: 10px;
+  }
+
+  .btn-col-whatsapp {
+    font-size: 0.78rem;
+    padding: 9px;
+  }
+
+  /* Estantería de Libros en Móvil (Evita desbordamiento) */
+  .collection-shelf-section {
+    padding: 14px 10px;
+    gap: 10px;
+  }
+
+  .shelf-section-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .shelf-title {
+    font-size: 0.88rem;
+  }
+
+  .shelf-subtitle {
+    font-size: 0.72rem;
+  }
+
+  .btn-toggle-books-accordion {
+    font-size: 0.72rem;
+    padding: 4px 8px;
+  }
+
+  .bookshelf-books-row {
+    gap: 12px;
+    padding: 6px 4px 10px 4px;
+  }
+
+  .shelf-book-item {
+    width: 125px;
+  }
+
+  .shelf-book-item .kindle-book-cover-wrapper.size-md {
+    width: 115px;
+    height: 170px;
+  }
+
+  .shelf-book-title {
+    font-size: 0.74rem;
+    height: 1.85rem;
+  }
+
+  .shelf-price-val {
+    font-size: 0.72rem;
+  }
+
+  .shelf-book-buttons {
+    flex-direction: column;
+    gap: 4px;
+    width: 100%;
+  }
+
+  .btn-shelf-add-single,
+  .btn-shelf-preview {
+    width: 100%;
+    font-size: 0.68rem;
+    padding: 4px 6px;
+    text-align: center;
+  }
+
+  /* Acordeón de desglose en Móvil */
+  .collection-breakdown-panel {
+    padding: 12px 10px;
+    border-radius: 10px;
+  }
+
+  .breakdown-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .breakdown-book-card {
+    padding: 10px;
+    min-width: 0;
+  }
+
+  .breakdown-synopsis {
+    font-size: 0.78rem;
+    line-height: 1.45;
   }
 
   .modal-kindle-collection-card {

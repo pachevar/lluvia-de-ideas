@@ -863,6 +863,20 @@ export default function Mercado() {
                             {product.title}
                           </h3>
 
+                          {product.description && (
+                            <p 
+                              className="card-short-desc"
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setSelectedProduct(product);
+                                setDetailQuantity(1);
+                              }}
+                              title={product.description}
+                            >
+                              {product.description}
+                            </p>
+                          )}
+
                           {/* Calificación concisa y despejada */}
                           <div className="card-rating-row">
                             <span className="clean-star-icon">★</span>
