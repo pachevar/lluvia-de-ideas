@@ -53,43 +53,43 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
 
   return (
     <div className="kindle-collections-container animate-fade-in">
-      {/* Banner de Cabecera de Colecciones */}
-      <div className="kindle-collections-hero-banner">
-        <div className="hero-banner-content">
-          <div className="hero-badge-tag">
-            <span>📦 SUBCATEGORÍA DESTACADA</span>
+      {/* Banner de Cabecera de Colecciones Limpio y Minimalista */}
+      <div className="clean-collections-header">
+        <div className="clean-collections-header-text">
+          <div className="clean-badge-tag">
+            <span>📦 Sagas Literarias y Packs Didácticos</span>
           </div>
-          <h2 className="hero-collections-title">
-            Colecciones de Libros y Sagas Literarias
+          <h2 className="clean-collections-title">
+            Colecciones de Libros Curadas
           </h2>
-          <p className="hero-collections-desc">
-            Packs temáticos completos con descuento especial de editorial. Conoce qué libros componen cada colección y adquiérelos en paquete con ahorro exclusivo o individualmente.
+          <p className="clean-collections-desc">
+            Packs completos con ahorro exclusivo de editorial. Conoce qué títulos componen cada colección y adquiérelos juntos o de forma individual.
           </p>
         </div>
 
-        {/* Filtros rápidos de Colecciones */}
-        <div className="collections-filter-pills-row">
+        {/* Filtros sutiles de Colecciones */}
+        <div className="clean-collections-filters">
           <button
             type="button"
-            className={`col-filter-pill ${selectedFilter === 'all' ? 'active' : ''}`}
+            className={`clean-filter-chip ${selectedFilter === 'all' ? 'active' : ''}`}
             onClick={() => {
               soundEffects.playClick();
               setSelectedFilter('all');
             }}
           >
-            🌟 Todas las Colecciones ({collections.length})
+            Todas ({collections.length})
           </button>
           {collections.map(col => (
             <button
               key={col.id}
               type="button"
-              className={`col-filter-pill ${selectedFilter === col.id ? 'active' : ''}`}
+              className={`clean-filter-chip ${selectedFilter === col.id ? 'active' : ''}`}
               onClick={() => {
                 soundEffects.playClick();
                 setSelectedFilter(col.id);
               }}
             >
-              {col.badge.includes('POPOL') || col.id.includes('popol') ? '⛈️' : col.id.includes('steam') ? '🧬' : '📚'} {col.title.split(':')[0]}
+              {col.badge.includes('POPOL') || col.id.includes('popol') ? '⛈️ Popol Vuh' : col.id.includes('steam') ? '🧬 Serie STEAM' : '📚 Gran Biblioteca'}
             </button>
           ))}
         </div>
@@ -105,19 +105,16 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
           return (
             <section 
               key={collection.id} 
-              className="collection-showcase-card animate-slide-up"
+              className={`collection-showcase-card theme-${collection.id} animate-slide-up`}
               id={`collection-${collection.id}`}
             >
-              {/* Encabezado de la Colección */}
-              <div 
-                className="collection-card-header"
-                style={{ background: collection.accentGradient }}
-              >
+              {/* Encabezado Editorial Limpio de la Colección */}
+              <div className="collection-card-header">
                 <div className="col-header-left">
                   <div className="col-badge-row">
                     <span className="col-main-badge">{collection.badge}</span>
                     <span className="col-books-count-badge">
-                      📚 {componentBooks.length} Libros en esta Colección
+                      📚 {componentBooks.length} Libros
                     </span>
                     <span className="col-grade-badge">
                       🎯 {collection.gradeOrAge}
@@ -130,7 +127,7 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                   <p className="col-description">{collection.description}</p>
 
                   <div className="col-features-bullets">
-                    {collection.features.map((feat, idx) => (
+                    {collection.features.slice(0, 3).map((feat, idx) => (
                       <span key={idx} className="col-feature-chip">✓ {feat}</span>
                     ))}
                   </div>
@@ -139,7 +136,7 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                 {/* Tarjeta de Precio del Set y Compra Rápida */}
                 <div className="col-header-buy-box">
                   <div className="col-price-badge-header">
-                    <span>OFERTA DE COLECCIÓN COMPLETA</span>
+                    <span>Pack Colección Completa</span>
                   </div>
 
                   <div className="col-price-values">
@@ -150,10 +147,10 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                     {collection.originalPrice > collection.price && (
                       <div className="col-original-calc-row">
                         <span className="col-orig-strike">
-                          Precio regular: Q {collection.originalPrice.toFixed(2)}
+                          Regular: Q {collection.originalPrice.toFixed(2)}
                         </span>
                         <span className="col-savings-pill">
-                          🎉 Ahorras Q {totalSavings.toFixed(2)}
+                          Ahorro Q {totalSavings.toFixed(2)}
                         </span>
                       </div>
                     )}
@@ -167,7 +164,7 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                       onClick={() => onAddCollectionToCart(collection, componentBooks)}
                       title="Agregar los libros de la colección al carrito"
                     >
-                      <span>🛒 Comprar Colección Completa ({componentBooks.length} Libros)</span>
+                      <span>🛒 Comprar Pack ({componentBooks.length} Libros)</span>
                     </button>
 
                     <a
@@ -178,7 +175,7 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                       onClick={() => soundEffects.playSuccessFanfare()}
                       title="Pedir colección completa por WhatsApp"
                     >
-                      <span>💬 Pedir Colección por WhatsApp</span>
+                      <span>💬 Pedir por WhatsApp</span>
                     </a>
                   </div>
                 </div>
@@ -190,13 +187,13 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
               <div className="collection-shelf-section">
                 <div className="shelf-section-header">
                   <div className="shelf-title-wrap">
-                    <span className="shelf-icon">📚</span>
+                    <span className="shelf-icon">📖</span>
                     <div>
                       <h4 className="shelf-title">
-                        Libros que componen la colección ({componentBooks.length} Títulos)
+                        Libros incluidos en la colección ({componentBooks.length} Títulos)
                       </h4>
                       <span className="shelf-subtitle">
-                        Haz clic en cualquier portada para abrir su vista previa detallada o comprarlo por separado
+                        Haz clic en cualquier portada para abrir su vista previa
                       </span>
                     </div>
                   </div>
@@ -207,11 +204,11 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                     onClick={() => toggleExpand(collection.id)}
                     aria-expanded={isExpanded}
                   >
-                    <span>{isExpanded ? '▲ Ocultar Sinopsis' : '▼ Ver Sinopsis y Fichas'}</span>
+                    <span>{isExpanded ? '▲ Ocultar Fichas' : '▼ Ver Fichas y Sinopsis'}</span>
                   </button>
                 </div>
 
-                {/* Estante de madera / repisa visual con libros 3D Kindle */}
+                {/* Estante limpio y minimalista con libros 3D Kindle */}
                 <div className="kindle-bookshelf-rack">
                   <div className="bookshelf-books-row">
                     {componentBooks.map((book, index) => (
@@ -241,32 +238,27 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                             {book.title}
                           </h5>
 
-                          <div className="shelf-book-rating">
-                            <span className="stars-mini">★★★★★</span>
-                            <span className="rating-num">{book.rating.toFixed(1)}</span>
-                          </div>
-
-                          <div className="shelf-book-price">
-                            <span className="unit-label">Individual:</span>
-                            <strong>Q {book.price.toFixed(2)}</strong>
+                          <div className="shelf-book-price-row">
+                            <span className="shelf-price-val">Q {book.price.toFixed(2)}</span>
+                            <span className="shelf-rating-val">★ {book.rating.toFixed(1)}</span>
                           </div>
 
                           <div className="shelf-book-buttons">
                             <button
                               type="button"
-                              className="btn-shelf-preview"
-                              onClick={() => onQuickView(book)}
-                              title="Ver detalles"
+                              className="btn-shelf-add-single"
+                              onClick={() => onAddToCart(book, 1)}
+                              title="Agregar al carrito"
                             >
-                              👁️ Ver
+                              + Carrito
                             </button>
                             <button
                               type="button"
-                              className="btn-shelf-add-single"
-                              onClick={() => onAddToCart(book, 1)}
-                              title="Agregar solo este libro"
+                              className="btn-shelf-preview"
+                              onClick={() => onQuickView(book)}
+                              title="Ver detalles del libro"
                             >
-                              + Carrito
+                              👁️
                             </button>
                           </div>
                         </div>
@@ -274,10 +266,8 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                     ))}
                   </div>
 
-                  {/* Base de la estantería de madera / vidrio pulido */}
-                  <div className="bookshelf-wood-base" aria-hidden="true">
-                    <div className="wood-highlight" />
-                  </div>
+                  {/* Pedestal sutil y minimalista */}
+                  <div className="bookshelf-pedestal-line" aria-hidden="true" />
                 </div>
 
                 {/* Acordeón desplegable con detalles y sinopsis de cada libro */}
