@@ -15,6 +15,209 @@
 }
 
 /* --------------------------------------------------------------------------
+   0. BARRA SUPERIOR Y BOTÓN DE REGRESO AL LOBBY
+   -------------------------------------------------------------------------- */
+.lab-top-nav-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 28px;
+  padding-bottom: 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  flex-wrap: wrap;
+}
+
+.lab-back-to-lobby-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  padding: 10px 20px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(10px);
+}
+
+.lab-back-to-lobby-btn:hover {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateX(-3px);
+  box-shadow: 0 4px 15px rgba(56, 189, 248, 0.25);
+}
+
+.lab-workshop-breadcrumb {
+  font-size: 0.86rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lab-workshop-breadcrumb strong {
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   LOBBY DE TALLERES DISPONIBLES (SELECCIÓN EFICIENTE)
+   -------------------------------------------------------------------------- */
+.lab-lobby-section {
+  width: 100%;
+}
+
+.lab-lobby-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 24px;
+  margin-bottom: 48px;
+}
+
+.lab-lobby-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 30px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  backdrop-filter: blur(16px);
+  box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4);
+  position: relative;
+  overflow: hidden;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  cursor: pointer;
+}
+
+.lab-lobby-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 24px 50px rgba(0, 0, 0, 0.55);
+}
+
+.lab-lobby-card.card-active-workshop {
+  border-color: rgba(56, 189, 248, 0.45);
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.85) 0%, rgba(2, 132, 199, 0.15) 100%);
+}
+
+.lab-lobby-card.card-active-workshop:hover {
+  border-color: #38bdf8;
+  box-shadow: 0 20px 50px rgba(56, 189, 248, 0.25);
+}
+
+.lab-lobby-card.card-robotics {
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.lab-lobby-card.card-robotics:hover {
+  border-color: #f59e0b;
+  box-shadow: 0 20px 50px rgba(245, 158, 11, 0.2);
+}
+
+.lab-lobby-card.card-science {
+  border-color: rgba(192, 132, 252, 0.3);
+}
+
+.lab-lobby-card.card-science:hover {
+  border-color: #c084fc;
+  box-shadow: 0 20px 50px rgba(192, 132, 252, 0.2);
+}
+
+.lab-lobby-card-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-bottom: 14px;
+  align-self: flex-start;
+}
+
+.lab-lobby-icon {
+  font-size: 3.2rem;
+  margin-bottom: 12px;
+  display: block;
+}
+
+.lab-lobby-card-title {
+  font-size: 1.55rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 10px 0;
+  line-height: 1.25;
+}
+
+.lab-lobby-card-desc {
+  font-size: 0.92rem;
+  color: #cbd5e1;
+  line-height: 1.55;
+  margin: 0 0 20px 0;
+  flex-grow: 1;
+}
+
+.lab-lobby-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.lab-lobby-pill-tag {
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #94a3b8;
+}
+
+.lab-lobby-card-btn {
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 900;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+}
+
+.btn-enter-active {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #10b981 100%);
+  color: #ffffff;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.4);
+}
+
+.btn-enter-active:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6);
+}
+
+.btn-enter-preview {
+  background: rgba(255, 255, 255, 0.08);
+  color: #cbd5e1;
+}
+
+.btn-enter-preview:hover {
+  background: rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+/* --------------------------------------------------------------------------
    1. HERO Y SELECTOR DE SUB-LABORATORIOS
    -------------------------------------------------------------------------- */
 .lab-hero-header {
