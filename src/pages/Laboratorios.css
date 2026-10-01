@@ -1,0 +1,1137 @@
+/* ==========================================================================
+   LABORATORIOS FORMATIVOS - ESTILOS PREMIUM, DINÁMICOS Y RESPONSIVOS
+   Diseñado para alta legibilidad, neurodiseño y fluidez táctil en móvil y web.
+   Editorial Lluvia de Ideas
+   ========================================================================== */
+
+/* Contenedor Principal */
+.lab-page-container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 24px 20px 80px 20px;
+  color: var(--sutz-text-bright, #f8fafc);
+  box-sizing: border-box;
+}
+
+/* --------------------------------------------------------------------------
+   1. HERO Y SELECTOR DE SUB-LABORATORIOS
+   -------------------------------------------------------------------------- */
+.lab-hero-header {
+  text-align: center;
+  margin-bottom: 36px;
+  position: relative;
+}
+
+.lab-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(14, 165, 233, 0.12);
+  border: 1px solid rgba(14, 165, 233, 0.35);
+  color: #38bdf8;
+  padding: 6px 16px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 12px;
+  box-shadow: 0 0 20px rgba(14, 165, 233, 0.15);
+}
+
+.lab-hero-title {
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 900;
+  margin: 0 0 12px 0;
+  line-height: 1.15;
+  background: linear-gradient(135deg, #ffffff 0%, #38bdf8 50%, #c084fc 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+}
+
+.lab-hero-lead {
+  max-width: 720px;
+  margin: 0 auto 28px auto;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: var(--sutz-text-normal, #cbd5e1);
+  font-weight: 450;
+}
+
+/* Selector de Sub-Laboratorios (Pills de Navegación) */
+.lab-nav-pills {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-bottom: 24px;
+}
+
+.lab-nav-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  color: #cbd5e1;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.lab-nav-pill-btn:hover {
+  background: rgba(30, 41, 59, 0.85);
+  border-color: rgba(56, 189, 248, 0.4);
+  color: #ffffff;
+  transform: translateY(-2px);
+}
+
+.lab-nav-pill-btn.active {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #7c3aed 100%);
+  border-color: rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  box-shadow: 0 6px 25px rgba(37, 99, 235, 0.45);
+  transform: translateY(-1px);
+}
+
+.lab-nav-pill-status {
+  font-size: 0.68rem;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.status-active {
+  background: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+  border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.status-upcoming {
+  background: rgba(245, 158, 11, 0.2);
+  color: #fcd34d;
+  border: 1px solid rgba(245, 158, 11, 0.35);
+}
+
+/* --------------------------------------------------------------------------
+   2. BARRA DE MÉTRICAS Y CARACTERÍSTICAS CLAVE
+   -------------------------------------------------------------------------- */
+.lab-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.lab-stat-card {
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  backdrop-filter: blur(10px);
+  transition: border-color 0.2s, transform 0.2s;
+}
+
+.lab-stat-card:hover {
+  border-color: rgba(56, 189, 248, 0.35);
+  transform: translateY(-2px);
+}
+
+.lab-stat-icon-wrap {
+  width: 48px;
+  height: 48px;
+  border-radius: 14px;
+  background: rgba(56, 189, 248, 0.12);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.lab-stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.lab-stat-val {
+  font-size: 1.1rem;
+  font-weight: 850;
+  color: #ffffff;
+  line-height: 1.2;
+}
+
+.lab-stat-label {
+  font-size: 0.78rem;
+  color: var(--sutz-text-muted, #94a3b8);
+  font-weight: 600;
+  margin-top: 2px;
+}
+
+/* --------------------------------------------------------------------------
+   3. VISOR DINÁMICO DE MÓDULOS (SHOWCASE INTERACTIVO)
+   -------------------------------------------------------------------------- */
+.lab-showcase-wrapper {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1.5px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  padding: 30px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(16px);
+  margin-bottom: 48px;
+}
+
+.lab-showcase-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 16px;
+  padding-bottom: 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 24px;
+}
+
+.lab-showcase-header-left {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lab-showcase-tag {
+  font-size: 0.74rem;
+  font-weight: 850;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+}
+
+.lab-showcase-title {
+  margin: 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+/* Controles de Navegación de Módulo (Anterior / Siguiente) */
+.lab-module-arrows {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.lab-module-arrow-btn {
+  background: rgba(255, 255, 255, 0.07);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.85rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.lab-module-arrow-btn:hover:not(:disabled) {
+  background: rgba(56, 189, 248, 0.2);
+  border-color: #38bdf8;
+  color: #38bdf8;
+  transform: translateY(-1px);
+}
+
+.lab-module-arrow-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+/* Riel / Selector de Módulos (1 a 10) */
+.lab-modules-rail {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto;
+  padding-bottom: 12px;
+  margin-bottom: 24px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.lab-modules-rail::-webkit-scrollbar {
+  height: 6px;
+}
+
+.lab-modules-rail::-webkit-scrollbar-thumb {
+  background: rgba(56, 189, 248, 0.25);
+  border-radius: 999px;
+}
+
+.lab-rail-item {
+  flex: 0 0 auto;
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  outline: none;
+}
+
+.lab-rail-item:hover {
+  background: rgba(15, 23, 42, 0.85);
+  border-color: rgba(56, 189, 248, 0.4);
+  transform: translateY(-2px);
+}
+
+.lab-rail-item.active {
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.3) 0%, rgba(124, 58, 237, 0.3) 100%);
+  border: 1.5px solid #38bdf8;
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.3);
+  transform: translateY(-2px);
+}
+
+.lab-rail-icon {
+  font-size: 1.35rem;
+}
+
+.lab-rail-text {
+  display: flex;
+  flex-direction: column;
+  text-align: left;
+}
+
+.lab-rail-num {
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #38bdf8;
+  letter-spacing: 0.05em;
+}
+
+.lab-rail-item.active .lab-rail-num {
+  color: #67e8f9;
+}
+
+.lab-rail-title {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  max-width: 140px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.lab-rail-item.active .lab-rail-title {
+  color: #ffffff;
+}
+
+/* --------------------------------------------------------------------------
+   4. TARJETA DE DETALLE DEL MÓDULO ACTIVO
+   -------------------------------------------------------------------------- */
+.lab-card-detail {
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 24px;
+  padding: 30px;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.lab-card-detail::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 6px;
+  height: 100%;
+  background: linear-gradient(180deg, #38bdf8, #10b981);
+}
+
+/* Cabecera del Módulo */
+.lab-detail-header-row {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.lab-detail-big-icon {
+  width: 72px;
+  height: 72px;
+  border-radius: 20px;
+  background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(124, 58, 237, 0.2) 100%);
+  border: 1.5px solid rgba(56, 189, 248, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2.5rem;
+  box-shadow: 0 8px 25px rgba(56, 189, 248, 0.2);
+  flex-shrink: 0;
+}
+
+.lab-detail-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  flex: 1;
+}
+
+.lab-detail-badge-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.lab-detail-mod-badge {
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  padding: 4px 12px;
+  border-radius: 999px;
+  letter-spacing: 0.06em;
+}
+
+.lab-detail-phase-badge {
+  background: rgba(192, 132, 252, 0.15);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  color: #d8b4fe;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 4px 12px;
+  border-radius: 999px;
+}
+
+.lab-detail-title {
+  margin: 0;
+  font-size: 1.85rem;
+  font-weight: 900;
+  color: #ffffff;
+  line-height: 1.25;
+}
+
+/* Bloque de Competencia Clave */
+.lab-competency-card {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.12) 0%, rgba(15, 23, 42, 0.8) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 18px;
+  padding: 20px 24px;
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.25);
+}
+
+.lab-competency-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+  margin: 0 0 8px 0;
+}
+
+.lab-competency-text {
+  margin: 0;
+  font-size: 1.05rem;
+  line-height: 1.6;
+  color: #f1f5f9;
+  font-weight: 500;
+}
+
+/* Habilidades Clave (Chips) */
+.lab-skills-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.lab-skills-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.86rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #f472b6;
+  margin: 0;
+}
+
+.lab-skills-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.lab-skill-chip {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 8px 14px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #e2e8f0;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.lab-skill-chip:hover {
+  border-color: rgba(244, 114, 182, 0.4);
+  background: rgba(244, 114, 182, 0.1);
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.lab-skill-bullet {
+  color: #f472b6;
+  font-size: 0.85rem;
+}
+
+/* Barra de Acciones del Módulo */
+.lab-card-actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 14px;
+  padding-top: 20px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.lab-date-quick-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  color: #94a3b8;
+  font-size: 0.86rem;
+}
+
+.lab-date-quick-badge strong {
+  color: #f8fafc;
+}
+
+.lab-card-btns {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.btn-jump-schedule {
+  background: transparent;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  color: #38bdf8;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-jump-schedule:hover {
+  background: rgba(56, 189, 248, 0.15);
+  color: #ffffff;
+}
+
+.btn-register-highlight {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #10b981 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  padding: 11px 22px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 4px 18px rgba(37, 99, 235, 0.45);
+  transition: all 0.2s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-register-highlight:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6);
+}
+
+/* --------------------------------------------------------------------------
+   5. SECCIÓN DEL CRONOGRAMA INTERACTIVO
+   -------------------------------------------------------------------------- */
+.lab-schedule-box {
+  margin-top: 50px;
+}
+
+.lab-schedule-header-wrap {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.lab-schedule-badge {
+  display: inline-block;
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #34d399;
+  padding: 4px 14px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  margin-bottom: 10px;
+}
+
+.lab-schedule-title {
+  margin: 0 0 10px 0;
+  font-size: 2.2rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lab-schedule-desc {
+  max-width: 680px;
+  margin: 0 auto 24px auto;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  line-height: 1.5;
+}
+
+/* Barra de Datos Logísticos */
+.lab-logistics-bar {
+  display: inline-flex;
+  gap: 24px;
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 12px 28px;
+  border-radius: 999px;
+  backdrop-filter: blur(12px);
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.lab-logistics-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.88rem;
+  color: #cbd5e1;
+}
+
+.lab-logistics-item strong {
+  color: #38bdf8;
+}
+
+/* Grilla de Fechas */
+.lab-schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+  gap: 18px;
+  margin-top: 28px;
+}
+
+.lab-schedule-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+}
+
+.lab-schedule-card:hover {
+  transform: translateY(-4px);
+  border-color: rgba(56, 189, 248, 0.45);
+  background: rgba(30, 41, 59, 0.8);
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.35);
+}
+
+.lab-schedule-card.active {
+  background: linear-gradient(145deg, rgba(15, 23, 42, 0.95) 0%, rgba(2, 132, 199, 0.2) 100%);
+  border-color: #38bdf8;
+  box-shadow: 0 10px 30px rgba(56, 189, 248, 0.25);
+  transform: translateY(-3px);
+}
+
+.lab-schedule-card.active::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 3px;
+  background: linear-gradient(90deg, #38bdf8, #10b981);
+}
+
+.lab-card-top-info {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 12px;
+}
+
+.lab-card-mod-num {
+  font-size: 0.72rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #38bdf8;
+  letter-spacing: 0.06em;
+}
+
+.lab-card-type-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.15);
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  color: #34d399;
+  padding: 3px 8px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.lab-card-title {
+  margin: 0 0 16px 0;
+  font-size: 1.1rem;
+  font-weight: 800;
+  color: #ffffff;
+  line-height: 1.35;
+}
+
+.lab-card-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.lab-card-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+}
+
+.lab-card-row strong {
+  color: #94a3b8;
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  margin-right: 4px;
+}
+
+.lab-card-watermark {
+  position: absolute;
+  right: -10px;
+  bottom: -15px;
+  font-size: 4.5rem;
+  opacity: 0.08;
+  pointer-events: none;
+  transition: transform 0.25s, opacity 0.25s;
+}
+
+.lab-schedule-card:hover .lab-card-watermark {
+  opacity: 0.14;
+  transform: scale(1.1) rotate(-8deg);
+}
+
+/* Fila de Registro Central */
+.lab-main-cta-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-top: 48px;
+  text-align: center;
+  background: linear-gradient(135deg, rgba(2, 132, 199, 0.15) 0%, rgba(124, 58, 237, 0.15) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 24px;
+  padding: 36px 24px;
+}
+
+.lab-main-cta-title {
+  font-size: 1.5rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 8px 0;
+}
+
+.lab-main-cta-desc {
+  max-width: 600px;
+  color: #94a3b8;
+  font-size: 0.95rem;
+  margin: 0 0 20px 0;
+  line-height: 1.5;
+}
+
+.btn-main-register {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #10b981 100%);
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  color: #ffffff;
+  padding: 15px 36px;
+  border-radius: 14px;
+  font-size: 1.05rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 8px 30px rgba(37, 99, 235, 0.5);
+  transition: all 0.25s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-main-register:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 35px rgba(37, 99, 235, 0.65);
+}
+
+/* --------------------------------------------------------------------------
+   6. SUB-LABORATORIOS PRÓXIMOS (SHOWCASE PREVIEW)
+   -------------------------------------------------------------------------- */
+.lab-upcoming-card {
+  max-width: 800px;
+  margin: 0 auto;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 28px;
+  padding: 44px 32px;
+  text-align: center;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(16px);
+}
+
+.lab-upcoming-icon-stack {
+  font-size: 3.5rem;
+  margin-bottom: 16px;
+  display: block;
+}
+
+.lab-upcoming-title {
+  font-size: 1.7rem;
+  font-weight: 900;
+  color: #ffffff;
+  margin: 0 0 12px 0;
+}
+
+.lab-upcoming-lead {
+  font-size: 1.05rem;
+  color: #cbd5e1;
+  line-height: 1.6;
+  max-width: 650px;
+  margin: 0 auto 28px auto;
+}
+
+.lab-upcoming-pillars {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 14px;
+  margin-bottom: 32px;
+  text-align: left;
+}
+
+.lab-pillar-item {
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.88rem;
+  color: #f1f5f9;
+  font-weight: 650;
+}
+
+/* --------------------------------------------------------------------------
+   7. MODAL DE INSCRIPCIÓN REDISEÑADO
+   -------------------------------------------------------------------------- */
+.lab-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 999999;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  animation: labFadeIn 0.2s ease-out;
+}
+
+@keyframes labFadeIn {
+  from { opacity: 0; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.lab-modal-card {
+  width: 100%;
+  max-width: 520px;
+  background: var(--sutz-elevation-2, #1e2536);
+  border: 1.5px solid rgba(56, 189, 248, 0.35);
+  box-shadow: 0 25px 60px rgba(0, 0, 0, 0.8), 0 0 35px rgba(56, 189, 248, 0.15);
+  border-radius: 24px;
+  padding: 32px;
+  color: #ffffff;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.lab-modal-close {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #94a3b8;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.lab-modal-close:hover {
+  background: rgba(239, 68, 68, 0.2);
+  border-color: #ef4444;
+  color: #ffffff;
+}
+
+.lab-modal-header {
+  margin-bottom: 20px;
+}
+
+.lab-modal-badge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  color: #38bdf8;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+
+.lab-modal-title {
+  margin: 0 0 6px 0;
+  font-size: 1.6rem;
+  font-weight: 900;
+  color: #ffffff;
+}
+
+.lab-modal-desc {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+.lab-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-bottom: 14px;
+}
+
+.lab-form-group label {
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: #cbd5e1;
+}
+
+.lab-form-input {
+  width: 100%;
+  box-sizing: border-box;
+  background: rgba(2, 6, 23, 0.8);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-radius: 12px;
+  padding: 12px 14px;
+  color: #ffffff;
+  font-size: 0.9rem;
+  outline: none;
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+
+.lab-form-input:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 14px rgba(56, 189, 248, 0.3);
+}
+
+.lab-phone-row {
+  display: flex;
+  align-items: stretch;
+}
+
+.lab-phone-prefix {
+  background: rgba(148, 163, 184, 0.12);
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  border-right: none;
+  border-radius: 12px 0 0 12px;
+  padding: 0 14px;
+  display: flex;
+  align-items: center;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #38bdf8;
+}
+
+.lab-phone-input {
+  border-radius: 0 12px 12px 0 !important;
+  flex: 1;
+}
+
+.lab-commitment-box {
+  background: rgba(245, 158, 11, 0.1);
+  border-left: 3.5px solid #f59e0b;
+  padding: 12px 14px;
+  border-radius: 0 12px 12px 0;
+  margin: 14px 0;
+  font-size: 0.8rem;
+  color: #fde68a;
+  line-height: 1.45;
+}
+
+.lab-checkbox-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  margin-bottom: 18px;
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+.lab-checkbox-row input {
+  margin-top: 3px;
+  cursor: pointer;
+}
+
+.lab-form-submit-btn {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 50%, #10b981 100%);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(37, 99, 235, 0.45);
+  transition: all 0.2s ease;
+}
+
+.lab-form-submit-btn:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(37, 99, 235, 0.6);
+}
+
+.lab-form-submit-btn:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* --------------------------------------------------------------------------
+   8. RESPONSIVIDAD Y OPTIMIZACIÓN MÓVIL
+   -------------------------------------------------------------------------- */
+@media (max-width: 768px) {
+  .lab-page-container {
+    padding: 16px 14px 60px 14px;
+  }
+
+  .lab-hero-title {
+    font-size: 1.85rem;
+  }
+
+  .lab-nav-pill-btn {
+    padding: 10px 16px;
+    font-size: 0.84rem;
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lab-showcase-wrapper {
+    padding: 20px 16px;
+    border-radius: 20px;
+  }
+
+  .lab-card-detail {
+    padding: 20px 16px;
+    border-radius: 18px;
+  }
+
+  .lab-detail-title {
+    font-size: 1.35rem;
+  }
+
+  .lab-competency-card {
+    padding: 16px;
+  }
+
+  .lab-card-actions {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .lab-card-btns {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-jump-schedule,
+  .btn-register-highlight {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .lab-schedule-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .lab-logistics-bar {
+    border-radius: 16px;
+    padding: 12px 16px;
+  }
+
+  .lab-modal-card {
+    padding: 22px 18px;
+    border-radius: 20px;
+  }
+}
