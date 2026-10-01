@@ -62,7 +62,7 @@ export default function Laboratorios() {
   const [activeLabModule, setActiveLabModule] = useState<number>(1);
   const [activeScheduleModule, setActiveScheduleModule] = useState<number>(1);
 
-  // Control de secciones desplegables para ahorrar espacio en pantalla
+  // Control de secciones desplegables: Únicamente Ruta de Formación y Competencias abierta por defecto al abrir o refrescar
   const [openAccordions, setOpenAccordions] = useState<{
     desc: boolean;
     features: boolean;
@@ -71,8 +71,8 @@ export default function Laboratorios() {
   }>({
     desc: false,      // Plegado por defecto para ganar espacio
     features: false,  // Plegado por defecto para ganar espacio
-    modules: true,    // Abierto por defecto para navegación inmediata
-    schedule: true    // Abierto por defecto con navegación horizontal
+    modules: true,    // ÚNICO abierto por defecto para navegación inmediata
+    schedule: false   // Plegado por defecto para ahorrar espacio
   });
 
   const toggleAccordion = (key: 'desc' | 'features' | 'modules' | 'schedule') => {
@@ -645,94 +645,97 @@ export default function Laboratorios() {
                         </button>
                       </div>
 
-                      {/* 2. Título del módulo abajo de los botones */}
-                      <div className="lab-active-mod-header">
-                        <div className="lab-mod-tags-row">
-                          <span className="lab-mod-phase-tag">{currentExtras?.phase || 'Fase Formativa'}</span>
-                          <span className="lab-mod-dur-tag">⏱️ {currentExtras?.duration || '3 Horas'}</span>
-                          <span className="lab-mod-date-tag">📅 {formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}</span>
-                        </div>
-                        <h3 className="lab-active-mod-title">
-                          <span className="lab-active-mod-icon">{currentMod.icon}</span>
-                          <span>{currentMod.title}</span>
-                        </h3>
-                      </div>
-
-                      {/* 3. Despliegue de la información de forma horizontal (eliminando los cuadros de títulos anteriores) */}
-                      <div className="lab-mod-horizontal-grid">
-                        
-                        {/* Columna 1: Competencia Docente */}
-                        <div className="lab-horizontal-col col-competency">
-                          <div className="lab-col-header">
-                            <span className="lab-col-icon">🎯</span>
-                            <h4 className="lab-col-title">Competencia Docente</h4>
+                      {/* Contenido animado al cambiar de módulo */}
+                      <div className="lab-module-content-animated" key={activeLabModule}>
+                        {/* 2. Título del módulo abajo de los botones */}
+                        <div className="lab-active-mod-header">
+                          <div className="lab-mod-tags-row">
+                            <span className="lab-mod-phase-tag">{currentExtras?.phase || 'Fase Formativa'}</span>
+                            <span className="lab-mod-dur-tag">⏱️ {currentExtras?.duration || '3 Horas'}</span>
+                            <span className="lab-mod-date-tag">📅 {formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}</span>
                           </div>
-                          <p className="lab-col-text">
-                            {currentMod.competency}
-                          </p>
+                          <h3 className="lab-active-mod-title">
+                            <span className="lab-active-mod-icon">{currentMod.icon}</span>
+                            <span>{currentMod.title}</span>
+                          </h3>
                         </div>
 
-                        {/* Columna 2: Habilidades a Desarrollar */}
-                        <div className="lab-horizontal-col col-skills">
-                          <div className="lab-col-header">
-                            <span className="lab-col-icon">✨</span>
-                            <h4 className="lab-col-title">Habilidades Clave</h4>
+                        {/* 3. Despliegue de la información de forma horizontal (eliminando los cuadros de títulos anteriores) */}
+                        <div className="lab-mod-horizontal-grid">
+                          
+                          {/* Columna 1: Competencia Docente */}
+                          <div className="lab-horizontal-col col-competency">
+                            <div className="lab-col-header">
+                              <span className="lab-col-icon">🎯</span>
+                              <h4 className="lab-col-title">Competencia Docente</h4>
+                            </div>
+                            <p className="lab-col-text">
+                              {currentMod.competency}
+                            </p>
                           </div>
-                          <div className="lab-col-chips">
-                            {currentMod.skills.map((skill, idx) => (
-                              <span className="lab-col-chip" key={idx}>
-                                <span className="lab-chip-bullet">✦</span> {skill}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
 
-                        {/* Columna 3: Entregable para el Aula */}
-                        <div className="lab-horizontal-col col-deliverable">
-                          <div className="lab-col-header">
-                            <span className="lab-col-icon">📦</span>
-                            <h4 className="lab-col-title">Producto de Aula</h4>
+                          {/* Columna 2: Habilidades a Desarrollar */}
+                          <div className="lab-horizontal-col col-skills">
+                            <div className="lab-col-header">
+                              <span className="lab-col-icon">✨</span>
+                              <h4 className="lab-col-title">Habilidades Clave</h4>
+                            </div>
+                            <div className="lab-col-chips">
+                              {currentMod.skills.map((skill, idx) => (
+                                <span className="lab-col-chip" key={idx}>
+                                  <span className="lab-chip-bullet">✦</span> {skill}
+                                </span>
+                              ))}
+                            </div>
                           </div>
-                          <p className="lab-col-text">
-                            {currentExtras?.deliverable || "Secuencia didáctica y artefactos aplicables directamente a tus alumnos."}
-                          </p>
-                        </div>
 
-                        {/* Columna 4: Sesión e Inscripción */}
-                        <div className="lab-horizontal-col col-action">
-                          <div className="lab-col-header">
-                            <span className="lab-col-icon">🎟️</span>
-                            <h4 className="lab-col-title">Sesión y Reserva</h4>
+                          {/* Columna 3: Entregable para el Aula */}
+                          <div className="lab-horizontal-col col-deliverable">
+                            <div className="lab-col-header">
+                              <span className="lab-col-icon">📦</span>
+                              <h4 className="lab-col-title">Producto de Aula</h4>
+                            </div>
+                            <p className="lab-col-text">
+                              {currentExtras?.deliverable || "Secuencia didáctica y artefactos aplicables directamente a tus alumnos."}
+                            </p>
                           </div>
-                          <div className="lab-col-date-text">
-                            {formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}
-                          </div>
-                          <div className="lab-col-time-text">
-                            ⏰ 2:00 PM a 5:00 PM · Presencial
-                          </div>
-                          <button
-                            type="button"
-                            className="btn-register-highlight"
-                            onClick={() => {
-                              soundEffects.playClick();
-                              setIsRegisterModalOpen(true);
-                            }}
-                          >
-                            <span>📝 Inscribirme al Taller</span>
-                          </button>
-                          <button
-                            type="button"
-                            className="lab-toolbar-btn"
-                            style={{ marginTop: '8px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '6px' }}
-                            onClick={() => {
-                              handleSelectScheduleModule(currentMod.id);
-                              scrollToSchedule();
-                            }}
-                          >
-                            <span>📅 Ver en Cronograma</span>
-                          </button>
-                        </div>
 
+                          {/* Columna 4: Sesión e Inscripción */}
+                          <div className="lab-horizontal-col col-action">
+                            <div className="lab-col-header">
+                              <span className="lab-col-icon">🎟️</span>
+                              <h4 className="lab-col-title">Sesión y Reserva</h4>
+                            </div>
+                            <div className="lab-col-date-text">
+                              {formatDateSpanish(currentMod.date || getModuleDate(currentMod.id))}
+                            </div>
+                            <div className="lab-col-time-text">
+                              ⏰ 2:00 PM a 5:00 PM · Presencial
+                            </div>
+                            <button
+                              type="button"
+                              className="btn-register-highlight"
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setIsRegisterModalOpen(true);
+                              }}
+                            >
+                              <span>📝 Inscribirme al Taller</span>
+                            </button>
+                            <button
+                              type="button"
+                              className="lab-toolbar-btn"
+                              style={{ marginTop: '8px', width: '100%', justifyContent: 'center', display: 'flex', alignItems: 'center', gap: '6px' }}
+                              onClick={() => {
+                                handleSelectScheduleModule(currentMod.id);
+                                scrollToSchedule();
+                              }}
+                            >
+                              <span>📅 Ver en Cronograma</span>
+                            </button>
+                          </div>
+
+                        </div>
                       </div>
 
                     </div>
@@ -805,18 +808,20 @@ export default function Laboratorios() {
                         </button>
                       </div>
 
-                      {/* 2. Título de la sesión abajo de los botones */}
-                      <div className="lab-active-mod-header">
-                        <div className="lab-mod-tags-row">
-                          <span className="lab-mod-phase-tag">{scheduleModExtras?.phase || 'Fase Formativa'}</span>
-                          <span className="lab-mod-dur-tag">Modalidad Presencial</span>
-                          <span className="lab-mod-date-tag">Sesión Oficial 2026</span>
+                      {/* Contenido animado al cambiar de sesión */}
+                      <div className="lab-module-content-animated" key={activeScheduleModule}>
+                        {/* 2. Título de la sesión abajo de los botones */}
+                        <div className="lab-active-mod-header">
+                          <div className="lab-mod-tags-row">
+                            <span className="lab-mod-phase-tag">{scheduleModExtras?.phase || 'Fase Formativa'}</span>
+                            <span className="lab-mod-dur-tag">Modalidad Presencial</span>
+                            <span className="lab-mod-date-tag">Sesión Oficial 2026</span>
+                          </div>
+                          <h3 className="lab-active-mod-title">
+                            <span className="lab-active-mod-icon">{scheduleMod.icon}</span>
+                            <span>Módulo {scheduleMod.id}: {scheduleMod.title}</span>
+                          </h3>
                         </div>
-                        <h3 className="lab-active-mod-title">
-                          <span className="lab-active-mod-icon">{scheduleMod.icon}</span>
-                          <span>Módulo {scheduleMod.id}: {scheduleMod.title}</span>
-                        </h3>
-                      </div>
 
                       {/* 3. Despliegue de la información de la sesión de forma horizontal */}
                       <div className="lab-mod-horizontal-grid">
@@ -885,6 +890,7 @@ export default function Laboratorios() {
                         </div>
 
                       </div>
+                    </div>
 
                       {/* Selector rápido de sesiones (1 a 10) compacto para saltar directamente */}
                       <div className="lab-schedule-quick-chips">
