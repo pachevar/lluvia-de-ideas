@@ -16,7 +16,7 @@ const CART_STORAGE_KEY = 'mercado_cart_v1';
 export default function Mercado() {
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const [searchQuery, setSearchQuery] = useState<string>('');
-  const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'name'>('featured');
+  const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'sold'>('featured');
   
   // Detalle de Producto Modal
   const [selectedProduct, setSelectedProduct] = useState<MercadoProduct | null>(null);
@@ -63,6 +63,14 @@ export default function Mercado() {
   // Total precio en Quetzales
   const totalCartPrice = useMemo(() => {
     return cartItems.reduce((acc, item) => acc + item.product.price * item.quantity, 0);
+  }, [cartItems]);
+
+  // Ahorro total estimado
+  const totalSavings = useMemo(() => {
+    return cartItems.reduce((acc, item) => {
+      const orig = item.product.originalPrice || item.product.price;
+      return acc + (orig - item.product.price) * item.quantity;
+    }, 0);
   }, [cartItems]);
 
   // Agregar al carrito
@@ -120,14 +128,15 @@ export default function Mercado() {
   const getWhatsAppOrderUrl = () => {
     const lines = [
       '¡Hola Editorial Lluvia de Ideas! 👋',
-      'Quiero consultar y realizar un pedido en el Mercado Pedagógico:',
+      'Quiero realizar un pedido en el Mercado Pedagógico:',
       '',
       ...cartItems.map(item => `• ${item.quantity}x ${item.product.title} (Q ${(item.product.price * item.quantity).toFixed(2)})`),
       '',
-      `📦 Total Estimado: Q ${totalCartPrice.toFixed(2)}`,
+      `📦 Total a Pagar: Q ${totalCartPrice.toFixed(2)}`,
+      totalSavings > 0 ? `🎉 Ahorro aplicado: Q ${totalSavings.toFixed(2)}` : '',
       '',
       '¿Tienen disponibilidad para coordinar la entrega y formas de pago? ¡Muchas gracias!'
-    ];
+    ].filter(Boolean);
 
     const message = encodeURIComponent(lines.join('\n'));
     const phone = CONTACT.whatsappPhone || '50246741239';
@@ -175,97 +184,117 @@ export default function Mercado() {
       if (sortBy === 'price-asc') return a.price - b.price;
       if (sortBy === 'price-desc') return b.price - a.price;
       if (sortBy === 'rating') return b.rating - a.rating;
-      if (sortBy === 'name') return a.title.localeCompare(b.title);
+      if (sortBy === 'sold') return (b.soldCount || 0) - (a.soldCount || 0);
       // 'featured'
       return (b.featured ? 1 : 0) - (a.featured ? 1 : 0);
     });
   }, [selectedCategory, searchQuery, sortBy]);
 
   return (
-    <div className="mercado-page-container animate-fade-in">
-      {/* Barra de Navegación de la Landing */}
+    <div className="mercado-amazon-container animate-fade-in">
+      {/* TopBar del Portal */}
       <LandingTopBar 
-        slogan="Mercado Pedagógico · Materiales, Cuentos y Juegos" 
+        slogan="Mercado Oficial · Materiales, Cuentos y Juegos" 
         showHomeButton 
       />
 
-      {/* Hero Header del Mercado */}
-      <header className="mercado-hero">
-        <div className="mercado-hero-inner">
-          <div className="mercado-hero-badge">
-            <span>🛍️</span> Tienda Oficial Lluvia de Ideas
+      {/* Cinta Promocional Superior Estilo Amazon/Temu */}
+      <div className="mercado-top-promo-strip">
+        <div className="promo-strip-content">
+          <span className="promo-tag">🔥 OFERTAS DE TEMPORADA</span>
+          <span className="promo-text">Envíos a todo el país en 24-48 hrs · Descuentos por volumen para colegios y docentes</span>
+          <span className="promo-contact">📞 WhatsApp Directo: <strong>4674-1239</strong></span>
+        </div>
+      </div>
+
+      {/* Barra de Búsqueda y Header Principal */}
+      <header className="mercado-amazon-header">
+        <div className="mercado-header-container">
+          <div className="mercado-brand-section">
+            <h1 className="mercado-store-logo">
+              <span className="logo-cart-icon">🛒</span>
+              <span className="logo-text">mercado<small>.lluvia</small></span>
+            </h1>
+            <span className="mercado-tagline">Tienda Educativa & Creativa</span>
           </div>
-          <h1 className="mercado-hero-title">
-            Mercado Pedagógico & Creativo
-          </h1>
-          <p className="mercado-hero-subtitle">
-            Cuentos interactivos, juegos de mesa tradicionales, personajes articulados, barajas didácticas, kits STEAM y útiles para transformar el aula.
-          </p>
 
-          {/* Barra de Búsqueda y Filtros Rápidos */}
-          <div className="mercado-search-wrapper">
-            <div className="mercado-search-bar">
-              <span className="mercado-search-icon">🔍</span>
-              <input 
-                type="text" 
-                placeholder="Buscar cuentos, juegos, tarjetas, kits de robótica, útiles..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="mercado-search-input"
-              />
-              {searchQuery && (
-                <button 
-                  type="button" 
-                  className="mercado-search-clear"
-                  onClick={() => setSearchQuery('')}
-                  title="Limpiar búsqueda"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            <div className="mercado-sort-dropdown">
-              <label htmlFor="sort-select">Ordenar:</label>
+          {/* Barra de Búsqueda Amazon / Temu Style */}
+          <div className="mercado-amazon-search-box">
+            <div className="search-category-select">
               <select 
-                id="sort-select"
-                value={sortBy} 
-                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
-                className="mercado-select-input"
+                value={selectedCategory}
+                onChange={(e) => {
+                  soundEffects.playClick();
+                  setSelectedCategory(e.target.value);
+                }}
               >
-                <option value="featured">🌟 Destacados</option>
-                <option value="price-asc">💵 Precio: Menor a Mayor</option>
-                <option value="price-desc">💎 Precio: Mayor a Menor</option>
-                <option value="rating">⭐ Mejor Calificados</option>
-                <option value="name">🔤 Nombre A-Z</option>
+                <option value="todos">Todos</option>
+                <option value="cuentos">Cuentos</option>
+                <option value="juegos">Juegos</option>
+                <option value="personajes">Personajes</option>
+                <option value="tarjetas">Tarjetas</option>
+                <option value="proyectos">Proyectos</option>
+                <option value="utiles">Útiles</option>
               </select>
+              <span className="select-arrow">▾</span>
             </div>
+
+            <input 
+              type="text" 
+              placeholder="Buscar en Mercado Lluvia de Ideas: cuentos, bingos, plastilinas, títeres..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="amazon-search-input"
+            />
+
+            {searchQuery && (
+              <button 
+                type="button" 
+                className="amazon-search-clear"
+                onClick={() => setSearchQuery('')}
+                title="Borrar búsqueda"
+              >
+                ✕
+              </button>
+            )}
+
+            <button 
+              type="button" 
+              className="amazon-search-submit-btn"
+              title="Buscar"
+            >
+              🔍
+            </button>
           </div>
 
-          {/* Banner de Beneficios */}
-          <div className="mercado-perks-row">
-            <div className="mercado-perk-item">
-              <span className="perk-icon">🚚</span>
-              <span>Envíos a toda Guatemala</span>
-            </div>
-            <div className="mercado-perk-item">
-              <span className="perk-icon">🍎</span>
-              <span>Materiales aprobados para docentes</span>
-            </div>
-            <div className="mercado-perk-item">
-              <span className="perk-icon">💬</span>
-              <span>Cotización directa por WhatsApp</span>
-            </div>
+          {/* Acciones de Cabecera: Pedidos y Carrito */}
+          <div className="mercado-header-actions">
+            <button
+              type="button"
+              className="amazon-cart-btn"
+              onClick={() => {
+                soundEffects.playClick();
+                setIsCartDrawerOpen(true);
+              }}
+              title="Abrir Carrito de Compras"
+            >
+              <div className="cart-icon-wrapper">
+                <span className="cart-svg-icon">🛒</span>
+                <span className="cart-count-badge">{totalCartCount}</span>
+              </div>
+              <div className="cart-btn-text">
+                <span className="cart-text-sub">Carrito</span>
+                <span className="cart-text-price">Q {totalCartPrice.toFixed(2)}</span>
+              </div>
+            </button>
           </div>
         </div>
       </header>
 
-      {/* Contenido Principal */}
-      <main className="mercado-main-content">
-        
-        {/* Barra de Categorías (Pills con Contador) */}
-        <section className="mercado-categories-nav">
-          <div className="mercado-categories-track">
+      {/* Barra de Navegación de Categorías (Temu / Amazon Style) */}
+      <nav className="mercado-subnav-categories">
+        <div className="subnav-container">
+          <div className="categories-pills-scroll">
             {MERCADO_CATEGORIES.map(cat => {
               const isActive = selectedCategory === cat.id;
               const count = cat.id === 'todos' 
@@ -276,196 +305,261 @@ export default function Mercado() {
                 <button
                   key={cat.id}
                   type="button"
-                  className={`mercado-cat-pill ${isActive ? 'active' : ''}`}
+                  className={`amazon-cat-tab ${isActive ? 'active' : ''}`}
                   onClick={() => {
                     soundEffects.playClick();
                     setSelectedCategory(cat.id);
                   }}
                 >
-                  <span className="cat-pill-icon">{cat.icon}</span>
-                  <span className="cat-pill-label">{cat.label}</span>
-                  <span className="cat-pill-count">{count}</span>
+                  <span className="cat-tab-icon">{cat.icon}</span>
+                  <span className="cat-tab-label">{cat.label}</span>
+                  <span className="cat-tab-badge">{count}</span>
                 </button>
               );
             })}
           </div>
-        </section>
-
-        {/* Notificación flotante de agregado al carrito */}
-        {addedNotice && (
-          <div className="mercado-toast animate-slide-down">
-            <span>✨ {addedNotice}</span>
-          </div>
-        )}
-
-        {/* Resumen de resultados */}
-        <div className="mercado-results-header">
-          <span className="results-count">
-            Mostrando <strong>{filteredProducts.length}</strong> productos
-            {selectedCategory !== 'todos' && ` en ${MERCADO_CATEGORIES.find(c => c.id === selectedCategory)?.label}`}
-            {searchQuery && ` para "${searchQuery}"`}
-          </span>
-          {totalCartCount > 0 && (
-            <button
-              type="button"
-              className="btn-view-cart-link"
-              onClick={() => {
-                soundEffects.playClick();
-                setIsCartDrawerOpen(true);
-              }}
-            >
-              <span>🛒 Ver Carrito ({totalCartCount}) · Q {totalCartPrice.toFixed(2)}</span>
-            </button>
-          )}
         </div>
+      </nav>
 
-        {/* Grilla de Productos */}
-        {filteredProducts.length > 0 ? (
-          <div className="mercado-products-grid">
-            {filteredProducts.map(product => (
-              <article key={product.id} className="mercado-product-card card-glass">
-                {/* Cabecera de la tarjeta */}
-                <div className="product-card-top">
-                  {product.badge && (
-                    <span className="product-badge">{product.badge}</span>
-                  )}
-                  <span className="product-grade-tag">{product.gradeOrAge}</span>
-                </div>
+      {/* Banner de Garantías y Beneficios Temu / Amazon */}
+      <div className="mercado-guarantees-bar">
+        <div className="guarantees-container">
+          <div className="guarantee-chip">
+            <span className="guarantee-icon">🛡️</span>
+            <span>Garantía de Satisfacción Docente</span>
+          </div>
+          <div className="guarantee-chip">
+            <span className="guarantee-icon">🚚</span>
+            <span>Envío Rápido a toda Guatemala</span>
+          </div>
+          <div className="guarantee-chip">
+            <span className="guarantee-icon">⚡</span>
+            <span>Precios Directos de Editorial</span>
+          </div>
+          <div className="guarantee-chip">
+            <span className="guarantee-icon">💬</span>
+            <span>Cotizaciones y Facturas al Instante</span>
+          </div>
+        </div>
+      </div>
 
-                {/* Ilustración / Emoji / Icono central */}
-                <div 
-                  className="product-card-visual"
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setSelectedProduct(product);
-                    setDetailQuantity(1);
-                  }}
-                  title="Ver detalle completo"
-                >
-                  <div className="product-icon-glow">
-                    <span className="product-main-icon">{product.icon}</span>
-                  </div>
-                </div>
+      {/* Toast flotante de producto agregado */}
+      {addedNotice && (
+        <div className="amazon-toast animate-slide-down">
+          <span>✅ {addedNotice}</span>
+        </div>
+      )}
 
-                {/* Información del Producto */}
-                <div className="product-card-info">
-                  <span className="product-cat-tag">{product.categoryLabel}</span>
-                  <h3 
-                    className="product-title"
-                    onClick={() => {
-                      soundEffects.playClick();
-                      setSelectedProduct(product);
-                      setDetailQuantity(1);
-                    }}
-                  >
-                    {product.title}
-                  </h3>
+      {/* Contenido Principal / Catálogo */}
+      <main className="mercado-amazon-main">
+        <div className="main-content-wrapper">
+          
+          {/* Barra de Filtro y Ordenamiento Superior */}
+          <div className="products-filter-header">
+            <div className="filter-summary-text">
+              Mostrando <strong>{filteredProducts.length} resultados</strong>
+              {selectedCategory !== 'todos' && ` en "${MERCADO_CATEGORIES.find(c => c.id === selectedCategory)?.label}"`}
+              {searchQuery && ` para "${searchQuery}"`}
+            </div>
 
-                  <div className="product-rating-row">
-                    <span className="rating-stars">{'★'.repeat(Math.floor(product.rating))}</span>
-                    <span className="rating-num">{product.rating.toFixed(1)}</span>
-                    <span className="rating-reviews">({product.reviewsCount})</span>
-                  </div>
+            <div className="filter-sort-controls">
+              <label htmlFor="sort-dropdown">Ordenar por:</label>
+              <select
+                id="sort-dropdown"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as typeof sortBy)}
+                className="amazon-sort-select"
+              >
+                <option value="featured">Destacados</option>
+                <option value="sold">Más Vendidos 🔥</option>
+                <option value="price-asc">Precio: de menor a mayor</option>
+                <option value="price-desc">Precio: de mayor a menor</option>
+                <option value="rating">Opiniones de clientes</option>
+              </select>
+            </div>
+          </div>
 
-                  <p className="product-desc">
-                    {product.description}
-                  </p>
+          {/* Grilla de Tarjetas de Producto Estilo Amazon / Temu */}
+          {filteredProducts.length > 0 ? (
+            <div className="amazon-products-grid">
+              {filteredProducts.map(product => {
+                const discountPercent = product.originalPrice 
+                  ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
+                  : 0;
 
-                  <div className="product-price-row">
-                    <div className="product-price-wrap">
-                      <span className="product-currency">{product.currency}</span>
-                      <span className="product-price-val">{product.price.toFixed(2)}</span>
+                return (
+                  <article key={product.id} className="amazon-product-card">
+                    {/* Badge de Oferta / Destacado */}
+                    <div className="card-top-badges">
+                      {product.badge && (
+                        <span className={`temu-badge ${product.badge.includes('MÁS VENDIDO') || product.badge.includes('SUPERVENTAS') ? 'badge-orange' : 'badge-red'}`}>
+                          {product.badge}
+                        </span>
+                      )}
+                      {discountPercent > 0 && (
+                        <span className="temu-discount-tag">-{discountPercent}%</span>
+                      )}
                     </div>
 
-                    <div className="product-card-actions">
-                      <button
-                        type="button"
-                        className="btn-product-detail"
+                    {/* Ilustración / Imagen del producto */}
+                    <div 
+                      className="card-image-box"
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setSelectedProduct(product);
+                        setDetailQuantity(1);
+                      }}
+                      title="Ver detalle del producto"
+                    >
+                      <span className="card-product-icon">{product.icon}</span>
+                    </div>
+
+                    {/* Cuerpo de la Tarjeta */}
+                    <div className="card-details-box">
+                      <span className="card-category-label">{product.categoryLabel}</span>
+                      
+                      <h3 
+                        className="card-product-title"
                         onClick={() => {
                           soundEffects.playClick();
                           setSelectedProduct(product);
                           setDetailQuantity(1);
                         }}
-                        title="Ver detalles pedagógicos"
                       >
-                        Detalle
-                      </button>
-                      <button
-                        type="button"
-                        className="btn-product-add"
-                        onClick={() => handleAddToCart(product, 1)}
-                        title="Agregar al carrito"
-                      >
-                        <span>🛒 Agregar</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              </article>
-            ))}
-          </div>
-        ) : (
-          <div className="mercado-empty-state card-glass">
-            <span className="empty-icon">🔍</span>
-            <h3>No encontramos productos que coincidan</h3>
-            <p>Intenta cambiar la categoría o buscar con otros términos como &quot;cuento&quot;, &quot;juego&quot; o &quot;kit&quot;.</p>
-            <button 
-              type="button" 
-              className="btn-primary"
-              onClick={() => {
-                setSelectedCategory('todos');
-                setSearchQuery('');
-              }}
-            >
-              Mostrar Todos los Productos
-            </button>
-          </div>
-        )}
+                        {product.title}
+                      </h3>
 
+                      {/* Estrellas y Ventas */}
+                      <div className="card-rating-row">
+                        <div className="stars-row">
+                          {'★'.repeat(Math.floor(product.rating))}
+                        </div>
+                        <span className="rating-score">{product.rating.toFixed(1)}</span>
+                        <span className="reviews-count">({product.reviewsCount})</span>
+                        {product.soldCount && (
+                          <span className="sold-count">· +{product.soldCount} vendidos</span>
+                        )}
+                      </div>
+
+                      {/* Etiqueta de Grado / Nivel */}
+                      <div className="card-grade-pill">
+                        🎯 {product.gradeOrAge}
+                      </div>
+
+                      {/* Fila de Precios Temu / Amazon Style */}
+                      <div className="card-pricing-block">
+                        <div className="main-price-row">
+                          <span className="price-symbol">{product.currency}</span>
+                          <span className="price-amount">{product.price.toFixed(2)}</span>
+                          {product.originalPrice && (
+                            <span className="price-original">
+                              Q {product.originalPrice.toFixed(2)}
+                            </span>
+                          )}
+                        </div>
+
+                        {product.deliveryTime && (
+                          <div className="card-delivery-badge">
+                            {product.deliveryTime}
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Botón de Acción Temu / Amazon */}
+                      <div className="card-actions-row">
+                        <button
+                          type="button"
+                          className="amazon-add-btn"
+                          onClick={() => handleAddToCart(product, 1)}
+                        >
+                          <span>🛒 Agregar al Carrito</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          className="amazon-quick-view-btn"
+                          onClick={() => {
+                            soundEffects.playClick();
+                            setSelectedProduct(product);
+                            setDetailQuantity(1);
+                          }}
+                          title="Ver detalles completos"
+                        >
+                          👁️
+                        </button>
+                      </div>
+
+                    </div>
+                  </article>
+                );
+              })}
+            </div>
+          ) : (
+            <div className="amazon-empty-results">
+              <span className="empty-icon-box">🔍</span>
+              <h3>No encontramos productos que coincidan con tu búsqueda</h3>
+              <p>Revisa la ortografía o intenta buscar por categorías generales como cuentos, lotería, plastilinas o kits.</p>
+              <button 
+                type="button" 
+                className="btn-reset-filters"
+                onClick={() => {
+                  setSelectedCategory('todos');
+                  setSearchQuery('');
+                }}
+              >
+                Ver Todo el Catálogo
+              </button>
+            </div>
+          )}
+
+        </div>
       </main>
 
-      {/* Botón Flotante del Carrito */}
+      {/* Botón Flotante del Carrito (Temu Style) */}
       {totalCartCount > 0 && (
         <button
           type="button"
-          className="mercado-floating-cart-btn animate-bounce-in"
+          className="temu-floating-cart-pill animate-bounce-in"
           onClick={() => {
             soundEffects.playClick();
             setIsCartDrawerOpen(true);
           }}
-          title="Abrir Carrito de Compras"
+          title="Ver tu carrito de compras"
         >
-          <span className="floating-cart-icon">🛒</span>
-          <div className="floating-cart-info">
-            <span className="floating-cart-qty">{totalCartCount}</span>
-            <span className="floating-cart-price">Q {totalCartPrice.toFixed(2)}</span>
+          <div className="floating-cart-badge-wrap">
+            <span className="floating-cart-icon">🛒</span>
+            <span className="floating-cart-count">{totalCartCount}</span>
+          </div>
+          <div className="floating-cart-texts">
+            <span className="floating-cart-title">Ver Carrito</span>
+            <span className="floating-cart-sum">Q {totalCartPrice.toFixed(2)}</span>
           </div>
         </button>
       )}
 
       {/* ==============================================================
-          DRAWER / PANEL LATERAL DEL CARRITO DE COMPRAS
+          DRAWER LATERAL DEL CARRITO (Estilo Blanco Limpio / Amazon)
           ============================================================== */}
       {isCartDrawerOpen && createPortal(
         <div 
-          className="mercado-drawer-overlay animate-fade-in"
+          className="amazon-drawer-overlay animate-fade-in"
           onClick={() => setIsCartDrawerOpen(false)}
         >
           <aside 
-            className="mercado-cart-drawer animate-slide-left"
+            className="amazon-cart-sidebar animate-slide-left"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="cart-drawer-header">
-              <div className="drawer-title-wrap">
-                <span className="drawer-icon">🛒</span>
+            <div className="sidebar-header">
+              <div className="sidebar-title-group">
+                <span className="sidebar-icon">🛒</span>
                 <div>
-                  <h3 className="drawer-title">Carrito del Mercado</h3>
-                  <span className="drawer-subtitle">{totalCartCount} artículos seleccionados</span>
+                  <h3 className="sidebar-title">Carrito de Compras</h3>
+                  <span className="sidebar-subtitle">{totalCartCount} productos agregados</span>
                 </div>
               </div>
               <button 
                 type="button" 
-                className="drawer-close-btn"
+                className="sidebar-close-btn"
                 onClick={() => setIsCartDrawerOpen(false)}
                 aria-label="Cerrar carrito"
               >
@@ -473,83 +567,97 @@ export default function Mercado() {
               </button>
             </div>
 
-            {/* Lista de productos en carrito */}
-            <div className="cart-drawer-items-list">
+            {/* Lista de productos */}
+            <div className="sidebar-items-scroll">
               {cartItems.length > 0 ? (
                 cartItems.map(({ product, quantity }) => (
-                  <div key={product.id} className="cart-drawer-item">
-                    <span className="cart-item-icon">{product.icon}</span>
-                    <div className="cart-item-info">
-                      <h4 className="cart-item-title">{product.title}</h4>
-                      <span className="cart-item-cat">{product.categoryLabel}</span>
-                      <span className="cart-item-price">Q {product.price.toFixed(2)} c/u</span>
+                  <div key={product.id} className="sidebar-product-item">
+                    <div className="sidebar-item-icon-box">
+                      <span>{product.icon}</span>
                     </div>
 
-                    <div className="cart-item-controls">
-                      <div className="qty-picker">
-                        <button 
-                          type="button" 
-                          onClick={() => handleUpdateQuantity(product.id, -1)}
-                          title="Restar uno"
-                        >
-                          -
-                        </button>
-                        <span className="qty-val">{quantity}</span>
-                        <button 
-                          type="button" 
-                          onClick={() => handleUpdateQuantity(product.id, 1)}
-                          title="Sumar uno"
-                        >
-                          +
-                        </button>
+                    <div className="sidebar-item-details">
+                      <h4 className="sidebar-item-title">{product.title}</h4>
+                      <span className="sidebar-item-category">{product.categoryLabel}</span>
+                      
+                      <div className="sidebar-item-price-row">
+                        <span className="sidebar-unit-price">Q {product.price.toFixed(2)} c/u</span>
+                        <span className="sidebar-subtotal-price">Q {(product.price * quantity).toFixed(2)}</span>
                       </div>
 
-                      <div className="cart-item-subtotal">
-                        Q {(product.price * quantity).toFixed(2)}
-                      </div>
+                      <div className="sidebar-item-bottom-controls">
+                        <div className="amazon-qty-picker">
+                          <button 
+                            type="button" 
+                            onClick={() => handleUpdateQuantity(product.id, -1)}
+                            title="Disminuir"
+                          >
+                            -
+                          </button>
+                          <span className="qty-number">{quantity}</span>
+                          <button 
+                            type="button" 
+                            onClick={() => handleUpdateQuantity(product.id, 1)}
+                            title="Aumentar"
+                          >
+                            +
+                          </button>
+                        </div>
 
-                      <button 
-                        type="button" 
-                        className="btn-remove-item"
-                        onClick={() => handleRemoveFromCart(product.id)}
-                        title="Quitar producto"
-                      >
-                        🗑️
-                      </button>
+                        <button 
+                          type="button" 
+                          className="sidebar-delete-btn"
+                          onClick={() => handleRemoveFromCart(product.id)}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <div className="cart-drawer-empty">
-                  <span className="empty-cart-icon">🛒</span>
+                <div className="sidebar-empty-cart">
+                  <span className="empty-cart-emoji">🛒</span>
                   <h4>Tu carrito está vacío</h4>
-                  <p>Explora nuestras categorías y agrega cuentos, juegos, tarjetas o proyectos para cotizar.</p>
+                  <p>Añade cuentos, juegos de mesa, barajas o kits para cotizar y comprar.</p>
                 </div>
               )}
             </div>
 
-            {/* Footer del Carrito */}
+            {/* Footer con Resumen y Botón de WhatsApp Checkout */}
             {cartItems.length > 0 && (
-              <div className="cart-drawer-footer">
-                <div className="cart-total-row">
-                  <span>Total Estimado:</span>
-                  <strong className="cart-total-value">Q {totalCartPrice.toFixed(2)}</strong>
+              <div className="sidebar-footer">
+                <div className="sidebar-price-breakdown">
+                  <div className="breakdown-row subtotal">
+                    <span>Subtotal ({totalCartCount} artículos):</span>
+                    <strong>Q {totalCartPrice.toFixed(2)}</strong>
+                  </div>
+                  {totalSavings > 0 && (
+                    <div className="breakdown-row savings">
+                      <span>Ahorro total estimado:</span>
+                      <strong className="savings-val">- Q {totalSavings.toFixed(2)}</strong>
+                    </div>
+                  )}
+                  <div className="breakdown-row total">
+                    <span>Total a Pagar:</span>
+                    <strong className="final-total">Q {totalCartPrice.toFixed(2)}</strong>
+                  </div>
                 </div>
 
-                <div className="cart-footer-actions">
+                <div className="sidebar-checkout-actions">
                   <a
                     href={getWhatsAppOrderUrl()}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="btn-whatsapp-checkout"
+                    className="amazon-proceed-btn"
                     onClick={() => soundEffects.playSuccessFanfare()}
                   >
-                    <span>📱 Realizar Pedido en WhatsApp</span>
+                    <span>📱 Proceder al Pedido (WhatsApp)</span>
                   </a>
 
                   <button
                     type="button"
-                    className="btn-clear-cart"
+                    className="amazon-clear-btn"
                     onClick={handleClearCart}
                   >
                     Vaciar Carrito
@@ -563,24 +671,26 @@ export default function Mercado() {
       )}
 
       {/* ==============================================================
-          MODAL DE DETALLE DE PRODUCTO
+          MODAL DE DETALLE DE PRODUCTO (Estilo Amazon / Temu Claro)
           ============================================================== */}
       {selectedProduct && createPortal(
         <div 
-          className="mercado-modal-overlay animate-fade-in"
+          className="amazon-modal-overlay animate-fade-in"
           onClick={() => setSelectedProduct(null)}
           role="dialog"
           aria-modal="true"
         >
           <div 
-            className="mercado-product-modal card-glass animate-scale-up"
+            className="amazon-product-modal animate-scale-up"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="modal-top-bar">
-              <span className="modal-cat-badge">{selectedProduct.categoryLabel}</span>
+            <div className="modal-header-strip">
+              <span className="modal-category-path">
+                Mercado &gt; {selectedProduct.categoryLabel} &gt; {selectedProduct.title}
+              </span>
               <button 
                 type="button" 
-                className="modal-close-btn"
+                className="modal-close-cross"
                 onClick={() => setSelectedProduct(null)}
                 aria-label="Cerrar modal"
               >
@@ -588,102 +698,141 @@ export default function Mercado() {
               </button>
             </div>
 
-            <div className="modal-body-grid">
-              {/* Columna Izquierda: Visual & Precio */}
-              <div className="modal-visual-col">
-                <div className="modal-big-icon-wrap">
-                  <span className="modal-big-icon">{selectedProduct.icon}</span>
+            <div className="modal-two-columns">
+              {/* Columna Izquierda: Imagen y Garantías */}
+              <div className="modal-left-column">
+                <div className="modal-image-display">
+                  <span className="modal-hero-icon">{selectedProduct.icon}</span>
                 </div>
 
-                <div className="modal-price-box">
-                  <span className="modal-price-tag">{selectedProduct.currency} {selectedProduct.price.toFixed(2)}</span>
-                  <span className="modal-stock-status">🟢 Disponible para Envío</span>
-                </div>
-
-                <div className="modal-grade-box">
-                  <span>🎯 Recomendado para:</span>
-                  <strong>{selectedProduct.gradeOrAge}</strong>
+                <div className="modal-quick-badges">
+                  <div className="modal-badge-item">
+                    <span>🚚</span>
+                    <div>
+                      <strong>Envío Rápido</strong>
+                      <p>Disponible en 24-48 hrs</p>
+                    </div>
+                  </div>
+                  <div className="modal-badge-item">
+                    <span>🛡️</span>
+                    <div>
+                      <strong>Garantía Editorial</strong>
+                      <p>Material pedagógico certificado</p>
+                    </div>
+                  </div>
                 </div>
               </div>
 
-              {/* Columna Derecha: Información & Pedido */}
-              <div className="modal-info-col">
-                <div className="modal-title-header">
-                  {selectedProduct.badge && (
-                    <span className="modal-badge-chip">{selectedProduct.badge}</span>
-                  )}
-                  <h2 className="modal-product-title">{selectedProduct.title}</h2>
-                  <div className="modal-rating">
-                    <span className="rating-stars">{'★'.repeat(Math.floor(selectedProduct.rating))}</span>
-                    <span>{selectedProduct.rating.toFixed(1)} ({selectedProduct.reviewsCount} opiniones)</span>
+              {/* Columna Derecha: Información, Precio y Compra */}
+              <div className="modal-right-column">
+                <h2 className="modal-full-title">{selectedProduct.title}</h2>
+
+                <div className="modal-ratings-strip">
+                  <div className="stars-gold">
+                    {'★'.repeat(Math.floor(selectedProduct.rating))}
                   </div>
+                  <span className="modal-score">{selectedProduct.rating.toFixed(1)}</span>
+                  <span className="modal-reviews-link">{selectedProduct.reviewsCount} calificaciones</span>
+                  {selectedProduct.soldCount && (
+                    <span className="modal-sold-pill">+{selectedProduct.soldCount} comprados</span>
+                  )}
                 </div>
 
-                <p className="modal-long-desc">
+                <hr className="modal-divider" />
+
+                {/* Precios y Oferta */}
+                <div className="modal-pricing-box">
+                  <div className="modal-main-price">
+                    <span className="modal-currency">{selectedProduct.currency}</span>
+                    <span className="modal-amount">{selectedProduct.price.toFixed(2)}</span>
+                    {selectedProduct.originalPrice && (
+                      <span className="modal-original-price">
+                        Q {selectedProduct.originalPrice.toFixed(2)}
+                      </span>
+                    )}
+                  </div>
+                  <span className="modal-tax-note">Impuestos incluidos · Factura disponible</span>
+                </div>
+
+                <div className="modal-grade-target">
+                  <strong>🎯 Nivel / Edad recomendada:</strong> {selectedProduct.gradeOrAge}
+                </div>
+
+                <p className="modal-description-paragraph">
                   {selectedProduct.longDescription}
                 </p>
 
-                {/* Características Clave */}
-                <div className="modal-section-block">
-                  <h4>✨ Aspectos Pedagógicos y Destacados</h4>
-                  <ul className="modal-features-list">
+                {/* Aspectos destacados */}
+                <div className="modal-bullet-points">
+                  <h4>Características Principales</h4>
+                  <ul>
                     {selectedProduct.features.map((feat, idx) => (
-                      <li key={idx}>✦ {feat}</li>
+                      <li key={idx}>✓ {feat}</li>
                     ))}
                   </ul>
                 </div>
 
-                {/* Contenidos del Paquete */}
+                {/* Contenidos */}
                 {selectedProduct.contents && (
-                  <div className="modal-section-block">
-                    <h4>📦 Contenido Incluido</h4>
-                    <ul className="modal-contents-list">
+                  <div className="modal-contents-box">
+                    <h4>📦 ¿Qué incluye el paquete?</h4>
+                    <ul>
                       {selectedProduct.contents.map((item, idx) => (
-                        <li key={idx}>✓ {item}</li>
+                        <li key={idx}>• {item}</li>
                       ))}
                     </ul>
                   </div>
                 )}
 
-                {/* Selector de Cantidad y Botones de Compra */}
-                <div className="modal-purchase-row">
-                  <div className="modal-qty-selector">
-                    <button 
-                      type="button" 
-                      onClick={() => setDetailQuantity(Math.max(1, detailQuantity - 1))}
-                    >
-                      -
-                    </button>
-                    <span>{detailQuantity}</span>
-                    <button 
-                      type="button" 
-                      onClick={() => setDetailQuantity(detailQuantity + 1)}
-                    >
-                      +
-                    </button>
+                <hr className="modal-divider" />
+
+                {/* Bloque de Compra */}
+                <div className="modal-buy-box">
+                  <div className="modal-quantity-row">
+                    <label>Cantidad:</label>
+                    <div className="modal-qty-control">
+                      <button 
+                        type="button" 
+                        onClick={() => setDetailQuantity(Math.max(1, detailQuantity - 1))}
+                      >
+                        -
+                      </button>
+                      <span>{detailQuantity}</span>
+                      <button 
+                        type="button" 
+                        onClick={() => setDetailQuantity(detailQuantity + 1)}
+                      >
+                        +
+                      </button>
+                    </div>
+                    <span className="modal-subtotal-calc">
+                      Total: <strong>Q {(selectedProduct.price * detailQuantity).toFixed(2)}</strong>
+                    </span>
                   </div>
 
-                  <button
-                    type="button"
-                    className="btn-modal-add-cart"
-                    onClick={() => {
-                      handleAddToCart(selectedProduct, detailQuantity);
-                      setSelectedProduct(null);
-                    }}
-                  >
-                    <span>🛒 Agregar al Carrito (Q {(selectedProduct.price * detailQuantity).toFixed(2)})</span>
-                  </button>
+                  <div className="modal-action-buttons-group">
+                    <button
+                      type="button"
+                      className="btn-amazon-add-cart"
+                      onClick={() => {
+                        handleAddToCart(selectedProduct, detailQuantity);
+                        setSelectedProduct(null);
+                      }}
+                    >
+                      <span>🛒 Agregar al Carrito</span>
+                    </button>
 
-                  <a
-                    href={getSingleProductWhatsAppUrl(selectedProduct, detailQuantity)}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="btn-modal-whatsapp"
-                    onClick={() => soundEffects.playSuccessFanfare()}
-                    title="Pedir directamente por WhatsApp"
-                  >
-                    <span>📱 Pedir vía WhatsApp</span>
-                  </a>
+                    <a
+                      href={getSingleProductWhatsAppUrl(selectedProduct, detailQuantity)}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="btn-amazon-buy-now"
+                      onClick={() => soundEffects.playSuccessFanfare()}
+                      title="Pedir directamente en WhatsApp"
+                    >
+                      <span>⚡ Comprar Ya en WhatsApp</span>
+                    </a>
+                  </div>
                 </div>
 
               </div>
