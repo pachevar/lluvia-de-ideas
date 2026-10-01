@@ -64,10 +64,11 @@ function App() {
   const isBoletosView = currentPath.includes('/boletos');
   const isBingoCardView = currentPath.includes('/juegos/bingo') || currentPath.includes('/bingo');
   const isSutzView = currentPath === '/sutz' || currentPath.startsWith('/sutz') || currentPath === '/mundo-virtual';
+  const isMercadoView = currentPath === '/mercado' || currentPath === '/tienda' || currentPath === '/catalogo';
   const isCartonView = currentPath.includes('/carton');
 
   return (
-    <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''} ${isSutzView ? 'sutz-view-full' : ''}`}>
+    <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''} ${isSutzView ? 'sutz-view-full' : ''} ${isMercadoView ? 'mercado-view-full' : ''}`}>
       {/* Main Content Area */}
       <main className="main-content">
         <Suspense fallback={<PageLoader />}>
@@ -131,15 +132,15 @@ function App() {
         </Suspense>
       </main>
 
-      {/* Footer (oculto en el lobby/salas de bingo y en Sutz para experiencia inmersiva limpia) */}
-      {!currentPath.includes('/bingo') && currentPath !== '/juegos' && !isSutzView && (
+      {/* Footer (oculto en el lobby/salas de bingo, Sutz y Mercado para experiencia inmersiva limpia) */}
+      {!currentPath.includes('/bingo') && currentPath !== '/juegos' && !isSutzView && !isMercadoView && (
         <footer className="app-footer card-glass">
           <p>© 2026 Editorial Lluvia de Ideas. Todos los derechos reservados.</p>
         </footer>
       )}
 
-      {/* Floating Action Buttons (Audio & WhatsApp - Ocultos en Sutz y en el Cartón de Bingo para no tapar los números) */}
-      {!isSutzView && !isCartonView && (
+      {/* Floating Action Buttons (Audio & WhatsApp - Ocultos en Sutz, Mercado y en el Cartón de Bingo para no tapar contenido) */}
+      {!isSutzView && !isCartonView && !isMercadoView && (
         <div className="floating-action-buttons">
           {/* Floating Sound Toggle */}
           <SoundToggle />

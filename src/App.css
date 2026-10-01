@@ -12,20 +12,22 @@
   transition: padding-left 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Modo Full-Width para Tienda Oficial de Boletos y Mundo Virtual Sutz (elimina contenedor negro y espacios sobrantes) */
+/* Modo Full-Width para Tienda Oficial de Boletos, Mundo Virtual Sutz y Mercado Pedagógico (elimina contenedor negro y ocupa todo el ancho y alto del monitor) */
 .app-container.boletos-view-full,
-.app-container.sutz-view-full {
+.app-container.sutz-view-full,
+.app-container.mercado-view-full {
   max-width: 100% !important;
   width: 100% !important;
   margin: 0 !important;
   padding: 0 !important;
   padding-left: 0 !important;
   gap: 0 !important;
-  background: transparent !important;
+  background: #ffffff !important;
 }
 
 .app-container.boletos-view-full .main-content,
-.app-container.sutz-view-full .main-content {
+.app-container.sutz-view-full .main-content,
+.app-container.mercado-view-full .main-content {
   width: 100% !important;
   max-width: 100% !important;
   margin: 0 !important;
@@ -33,10 +35,16 @@
 }
 
 .app-container.boletos-view-full .app-footer,
-.app-container.sutz-view-full .app-footer {
+.app-container.sutz-view-full .app-footer,
+.app-container.mercado-view-full .app-footer {
   display: none !important;
   margin: 0 !important;
   border-radius: 0 !important;
+}
+
+.app-container.mercado-view-full .landing-top-bar-content {
+  max-width: 100% !important;
+  padding: 0 clamp(16px, 2.5vw, 40px) !important;
 }
 
 /* Cabecera Superior Compacta */
