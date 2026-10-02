@@ -13,6 +13,8 @@ interface AdminTabTiendaProps {
   localConfig: PortalConfig;
   setLocalConfig: React.Dispatch<React.SetStateAction<PortalConfig | null>>;
   updateField?: (section: string, field: string, value: unknown) => void;
+  onSave?: () => Promise<void> | void;
+  saving?: boolean;
 }
 
 const POPULAR_EMOJIS = [
@@ -46,6 +48,10 @@ const createEmptyProduct = (): MercadoProduct => ({
   badge: 'NUEVO LANZAMIENTO',
   icon: '📚',
   gradeOrAge: 'Primaria & Básicos',
+  author: 'Editorial Lluvia de Ideas',
+  pages: 64,
+  formatType: 'Kindle eBook & Tapa Dura',
+  coverTheme: 'amber',
   description: '',
   longDescription: '',
   features: [
@@ -59,7 +65,7 @@ const createEmptyProduct = (): MercadoProduct => ({
   inStock: true
 });
 
-export default function AdminTabTienda({ localConfig, setLocalConfig }: AdminTabTiendaProps) {
+export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, saving }: AdminTabTiendaProps) {
   // Productos activos
   const products: MercadoProduct[] = useMemo(() => {
     if (localConfig.mercadoProducts && Array.isArray(localConfig.mercadoProducts) && localConfig.mercadoProducts.length > 0) {
@@ -190,9 +196,11 @@ export default function AdminTabTienda({ localConfig, setLocalConfig }: AdminTab
     }
   };
 
-  // Reordenar producto
-  const handleMoveProduct = (index: number, direction: -1 | 1) => {
+  // Reordenar producto de forma segura buscando el id en el catálogo maestro
+  const handleMoveProduct = (productId: string, direction: -1 | 1) => {
     soundEffects.playClick();
+    const index = products.findIndex(p => p.id === productId);
+    if (index === -1) return;
     const targetIdx = index + direction;
     if (targetIdx < 0 || targetIdx >= products.length) return;
     const next = [...products];
@@ -276,6 +284,17 @@ export default function AdminTabTienda({ localConfig, setLocalConfig }: AdminTab
         </div>
 
         <div className="admin-mercado-top-actions">
+          {onSave && (
+            <button 
+              type="button" 
+              className="btn-mercado-save"
+              onClick={() => onSave()}
+              disabled={saving}
+              title="Guardar todos los cambios en Firestore"
+            >
+              {saving ? '⏳ Guardando en Nube...' : '💾 Guardar en Firestore'}
+            </button>
+          )}
           <button 
             type="button" 
             className="btn-mercado-secondary"
@@ -378,7 +397,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig }: AdminTab
 
       {/* 4. Grilla de Productos */}
       <div className="admin-mercado-products-grid">
-        {filteredProducts.map((product, idx) => {
+        {filteredProducts.map((product) => {
           const discountPercent = product.originalPrice 
             ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
             : 0;
@@ -438,26 +457,33 @@ export default function AdminTabTienda({ localConfig, setLocalConfig }: AdminTab
 
               {/* Botonera de Acciones de la Tarjeta */}
               <div className="admin-product-card-actions">
-                <div className="admin-card-reorder-group">
-                  <button 
-                    type="button" 
-                    className="btn-card-icon" 
-                    onClick={() => handleMoveProduct(idx, -1)} 
-                    disabled={idx === 0}
-                    title="Mover hacia arriba"
-                  >
-                    ⬆️
-                  </button>
-                  <button 
-                    type="button" 
-                    className="btn-card-icon" 
-                    onClick={() => handleMoveProduct(idx, 1)} 
-                    disabled={idx === products.length - 1}
-                    title="Mover hacia abajo"
-                  >
-                    ⬇️
-                  </button>
-                </div>
+                {(() => {
+                  const actualIdx = products.findIndex(p => p.id === product.id);
+                  const canMoveUp = actualIdx > 0;
+                  const canMoveDown = actualIdx !== -1 && actualIdx < products.length - 1;
+                  return (
+                    <div className="admin-card-reorder-group">
+                      <button 
+                        type="button" 
+                        className="btn-card-icon" 
+                        onClick={() => handleMoveProduct(product.id, -1)} 
+                        disabled={!canMoveUp}
+                        title="Mover hacia arriba en el catálogo"
+                      >
+                        ⬆️
+                      </button>
+                      <button 
+                        type="button" 
+                        className="btn-card-icon" 
+                        onClick={() => handleMoveProduct(product.id, 1)} 
+                        disabled={!canMoveDown}
+                        title="Mover hacia abajo en el catálogo"
+                      >
+                        ⬇️
+                      </button>
+                    </div>
+                  );
+                })()}
 
                 <div className="admin-card-buttons-main">
                   <label className="btn-card-icon" title="Subir foto de portada" style={{ cursor: 'pointer' }}>
@@ -901,6 +927,98 @@ export default function AdminTabTienda({ localConfig, setLocalConfig }: AdminTab
                   </div>
                 </div>
               </div>
+
+              {/* SECCIÓN 6: Formato Literario & Colección Kindle (Editorial) */}
+              {editingProduct.category === 'cuentos' && (
+                <div className="modal-section-box">
+                  <h4 className="modal-section-title">
+                    <span>📖</span> 6. Datos Editoriales & Colección Kindle
+                  </h4>
+
+                  <div className="form-grid-3">
+                    <div className="mercado-input-group">
+                      <label>Autor / Ilustrador</label>
+                      <input
+                        type="text"
+                        value={editingProduct.author || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, author: e.target.value })}
+                        placeholder="Ej: Editorial Lluvia de Ideas"
+                      />
+                    </div>
+
+                    <div className="mercado-input-group">
+                      <label>Número de Páginas</label>
+                      <input
+                        type="number"
+                        min="1"
+                        value={editingProduct.pages || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, pages: e.target.value ? parseInt(e.target.value, 10) : undefined })}
+                        placeholder="Ej: 64"
+                      />
+                    </div>
+
+                    <div className="mercado-input-group">
+                      <label>Formato de Impresión / Digital</label>
+                      <input
+                        type="text"
+                        value={editingProduct.formatType || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, formatType: e.target.value })}
+                        placeholder="Ej: Kindle eBook & Tapa Dura"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="form-grid-3" style={{ marginTop: '14px' }}>
+                    <div className="mercado-input-group">
+                      <label>Colección Literaria Asociada</label>
+                      <select
+                        value={editingProduct.collectionId || ''}
+                        onChange={(e) => {
+                          const colId = e.target.value;
+                          let colName = '';
+                          if (colId === 'col-popol-vuh') colName = 'Saga Mítica Popol Vuh: Dioses & Creación';
+                          else if (colId === 'col-steam') colName = 'Colección STEAM: Sabiduría Ancestral';
+                          else if (colId === 'col-magna') colName = 'Gran Biblioteca Escolar: Antología Completa';
+                          setEditingProduct({
+                            ...editingProduct,
+                            collectionId: colId || undefined,
+                            collectionName: colName || undefined
+                          });
+                        }}
+                      >
+                        <option value="">Sin Colección (Título Individual)</option>
+                        <option value="col-popol-vuh">🏛️ Saga Mítica Popol Vuh (5 Libros)</option>
+                        <option value="col-steam">🚀 Colección STEAM (4 Libros)</option>
+                        <option value="col-magna">📦 Gran Biblioteca Escolar (9 Libros)</option>
+                      </select>
+                    </div>
+
+                    <div className="mercado-input-group">
+                      <label>Código ISBN (Opcional)</label>
+                      <input
+                        type="text"
+                        value={editingProduct.isbn || ''}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, isbn: e.target.value })}
+                        placeholder="Ej: 978-99939-0-123-4"
+                      />
+                    </div>
+
+                    <div className="mercado-input-group">
+                      <label>Paleta de Portada Kindle 3D</label>
+                      <select
+                        value={editingProduct.coverTheme || 'amber'}
+                        onChange={(e) => setEditingProduct({ ...editingProduct, coverTheme: e.target.value as any })}
+                      >
+                        <option value="amber">🟠 Ámbar Dorado Maya (Cálido)</option>
+                        <option value="cyan">🔵 Cian Cósmico (Profundo)</option>
+                        <option value="emerald">🟢 Esmeralda Selva (Naturaleza)</option>
+                        <option value="purple">🟣 Púrpura Místico (Épico)</option>
+                        <option value="ruby">🔴 Rubí Ancestral (Intenso)</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Footer de Acciones del Modal */}

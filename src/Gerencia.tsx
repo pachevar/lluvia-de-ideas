@@ -24,6 +24,7 @@ import AdminTabTechTree from './components/admin/AdminTabTechTree';
 import AdminTabViajeDelHeroe from './components/admin/AdminTabViajeDelHeroe';
 import AdminTabGranGaleria from './components/admin/AdminTabGranGaleria';
 import { saveArchetypeAsset } from './services/archetypeAssetsService';
+import { DEFAULT_MERCADO_PRODUCTS } from './data/mercadoData';
 
 export default function Gerencia() {
   const { config, loading: configLoading, saveConfigToFirestore, resetConfigToFirestore } = usePortalConfig();
@@ -80,7 +81,9 @@ export default function Gerencia() {
             },
             techTreeNodes: config.techTreeNodes || prev.techTreeNodes,
             archetypeImages: config.archetypeImages || prev.archetypeImages || {},
-            journeyStageImages: config.journeyStageImages || prev.journeyStageImages || {}
+            journeyStageImages: config.journeyStageImages || prev.journeyStageImages || {},
+            mercadoConfig: prev.mercadoConfig || config.mercadoConfig,
+            mercadoProducts: prev.mercadoProducts || config.mercadoProducts
           };
         });
       }
@@ -139,6 +142,11 @@ export default function Gerencia() {
           },
           promoVideos: localConfig.landingConfig?.promoVideos || config.landingConfig?.promoVideos
         },
+        mercadoConfig: {
+          ...(config?.mercadoConfig || {}),
+          ...(localConfig.mercadoConfig || {})
+        },
+        mercadoProducts: localConfig.mercadoProducts !== undefined ? localConfig.mercadoProducts : (config?.mercadoProducts || DEFAULT_MERCADO_PRODUCTS),
         archetypeImages: sanitizeImagesMap(localConfig.archetypeImages || config.archetypeImages),
         journeyStageImages: sanitizeImagesMap(localConfig.journeyStageImages || config.journeyStageImages)
       };
@@ -460,6 +468,8 @@ export default function Gerencia() {
               localConfig={localConfig} 
               setLocalConfig={setLocalConfig}
               updateField={updateField} 
+              onSave={handleSaveConfig}
+              saving={saving}
             />
           )}
 

@@ -29,10 +29,7 @@ export default function Mercado() {
 
   const allProducts: MercadoProduct[] = useMemo(() => {
     if (config?.mercadoProducts && Array.isArray(config.mercadoProducts) && config.mercadoProducts.length > 0) {
-      // Garantizar que los nuevos títulos enriquecidos (Popol Vuh c-5 a c-9) se incorporen si no existen en la copia previa
-      const configIds = new Set(config.mercadoProducts.map((p: any) => p.id));
-      const missingDefaults = DEFAULT_MERCADO_PRODUCTS.filter(p => !configIds.has(p.id));
-      return [...(config.mercadoProducts as MercadoProduct[]), ...missingDefaults];
+      return config.mercadoProducts as MercadoProduct[];
     }
     return DEFAULT_MERCADO_PRODUCTS;
   }, [config?.mercadoProducts]);
