@@ -62,11 +62,17 @@ export async function blobToDataURL(blob: Blob): Promise<string> {
 export async function uploadImageWithFallback(
   file: File,
   folder = 'landing-assets',
-  maxWidth = 1280,
-  maxHeight = 720,
+  maxWidth = 1000,
+  maxHeight = 1000,
   quality = 0.78
 ): Promise<{ url: string; isBase64: boolean }> {
-  const compressedBlob = await compressImageWebP(file, maxWidth, maxHeight, quality);
+  // Para assets de libros o catálogo, dimensiones balanceadas para nitidez y peso liviano
+  const isBookAsset = folder.includes('libros') || folder.includes('mercado');
+  const targetMaxW = isBookAsset ? Math.min(maxWidth, 600) : maxWidth;
+  const targetMaxH = isBookAsset ? Math.min(maxHeight, 800) : maxHeight;
+  const targetQuality = isBookAsset ? 0.72 : quality;
+
+  const compressedBlob = await compressImageWebP(file, targetMaxW, targetMaxH, targetQuality);
   const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
   const fileRef = ref(storage, `${folder}/${Date.now()}_${cleanName}`);
 
@@ -75,8 +81,12 @@ export async function uploadImageWithFallback(
     const downloadUrl = await getDownloadURL(fileRef);
     return { url: downloadUrl, isBase64: false };
   } catch (storageErr: any) {
-    console.warn(`[ImageUpload] Firebase Storage no disponible o cuota excedida (${storageErr?.code || storageErr?.message}). Usando fallback Base64 WebP.`);
-    const dataUrl = await blobToDataURL(compressedBlob);
+    console.warn(`[ImageUpload] Firebase Storage no disponible o cuota excedida (${storageErr?.code || storageErr?.message}). Usando fallback Base64 WebP optimizado.`);
+    // En caso de fallback base64, comprimimos con dimensiones compactas para no saturar Firestore
+    const compactBlob = isBookAsset
+      ? await compressImageWebP(file, 450, 600, 0.65)
+      : compressedBlob;
+    const dataUrl = await blobToDataURL(compactBlob);
     return { url: dataUrl, isBase64: true };
   }
 }
@@ -85,3 +95,53 @@ export async function uploadImageToStorage(file: File, folder = 'libros-assets')
   const res = await uploadImageWithFallback(file, folder);
   return res.url;
 }
+
+/**
+ * Reduce y comprime una imagen en Base64 existente para que ocupe menos de 30 KiB
+ * garantizando que nunca exceda el límite de documento de Firestore.
+ */
+export async function shrinkBase64Image(
+  dataUrl: string,
+  maxWidth = 450,
+  maxHeight = 600,
+  quality = 0.65
+): Promise<string> {
+  if (!dataUrl || !dataUrl.startsWith('data:image')) {
+    return dataUrl;
+  }
+  // Si ya es muy liviana (< 40 KB de longitud de texto), no requiere re-compresión
+  if (dataUrl.length < 40000) {
+    return dataUrl;
+  }
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      let width = img.width;
+      let height = img.height;
+      if (width > maxWidth || height > maxHeight) {
+        if (width / height > maxWidth / maxHeight) {
+          height = Math.round((height * maxWidth) / width);
+          width = maxWidth;
+        } else {
+          width = Math.round((width * maxHeight) / height);
+          height = maxHeight;
+        }
+      }
+      const canvas = document.createElement('canvas');
+      canvas.width = width;
+      canvas.height = height;
+      const ctx = canvas.getContext('2d');
+      if (!ctx) {
+        return resolve(dataUrl);
+      }
+      ctx.drawImage(img, 0, 0, width, height);
+      const compressed = canvas.toDataURL('image/webp', quality);
+      resolve(compressed);
+    };
+    img.onerror = () => resolve(dataUrl);
+    img.src = dataUrl;
+  });
+}
+

@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo } from 'react';
+import { useState, useRef, useMemo, useEffect } from 'react';
 import type { PortalConfig } from '../../types';
 import { 
   DEFAULT_MERCADO_PRODUCTS, 
@@ -7,7 +7,7 @@ import {
   type BookCollection,
   type CollectionIncludedBook
 } from '../../data/mercadoData';
-import { uploadImageToStorage } from '../../utils/imageUpload';
+import { uploadImageToStorage, shrinkBase64Image } from '../../utils/imageUpload';
 import { soundEffects } from '../../utils/soundEffects';
 import './AdminTabTienda.css';
 
@@ -179,9 +179,39 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalFileInputRef = useRef<HTMLInputElement>(null);
+  const [restoredDraftNotice, setRestoredDraftNotice] = useState<string | null>(null);
 
-  // Actualizar colecciones en localConfig
+  // Auto-recuperación de borrador local si la lista de colecciones está vacía
+  useEffect(() => {
+    if (collections.length === 0) {
+      try {
+        const draft = localStorage.getItem('mercado_collections_draft');
+        if (draft) {
+          const parsed = JSON.parse(draft);
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            setLocalConfig(prev => {
+              if (!prev) return prev;
+              return {
+                ...prev,
+                mercadoCollections: parsed
+              };
+            });
+            setRestoredDraftNotice(`Se restauró tu colección "${parsed[0]?.title || 'Pack de libros'}" con sus imágenes y datos.`);
+          }
+        }
+      } catch (e) {
+        console.warn('[AdminTabTienda] Error al recuperar borrador:', e);
+      }
+    }
+  }, []);
+
+  // Actualizar colecciones en localConfig y persistir borrador seguro
   const commitCollections = (nextCollections: BookCollection[]) => {
+    try {
+      localStorage.setItem('mercado_collections_draft', JSON.stringify(nextCollections));
+    } catch (e) {
+      console.warn('[AdminTabTienda] Warning guardando borrador:', e);
+    }
     setLocalConfig(prev => {
       if (!prev) return prev;
       return {
@@ -191,8 +221,13 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     });
   };
 
-  // Actualizar lista en localConfig
+  // Actualizar lista de productos en localConfig y persistir borrador seguro
   const commitProducts = (nextProducts: MercadoProduct[]) => {
+    try {
+      localStorage.setItem('mercado_products_draft', JSON.stringify(nextProducts));
+    } catch (e) {
+      console.warn('[AdminTabTienda] Warning guardando borrador de productos:', e);
+    }
     setLocalConfig(prev => {
       if (!prev) return prev;
       return {
@@ -491,7 +526,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
   };
 
   // Guardar colección desde modal
-  const handleSaveCollection = () => {
+  const handleSaveCollection = async () => {
     if (!editingCollection) return;
     if (!editingCollection.title.trim()) {
       alert('Por favor escribe un título para la colección.');
@@ -502,17 +537,31 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
       .map(f => f.trim())
       .filter(f => f.length > 0);
 
-    const cleanIncludedBooks: CollectionIncludedBook[] = (editingCollection.includedBooks || [])
-      .filter(b => b.title.trim().length > 0)
-      .map((b, idx) => ({
-        ...b,
-        id: b.id || `book-${editingCollection.id}-${idx + 1}`,
-        title: b.title.trim(),
-        author: b.author?.trim() || 'Editorial Lluvia de Ideas',
-        description: b.description?.trim() || '',
-        image: b.image?.trim() || undefined,
-        isbn: b.isbn?.trim() || undefined
-      }));
+    // Comprimir portadas de libros si son Base64 para que sean ultra livianas (< 20KB cada una)
+    const cleanIncludedBooks: CollectionIncludedBook[] = await Promise.all(
+      (editingCollection.includedBooks || [])
+        .filter(b => b.title.trim().length > 0)
+        .map(async (b, idx) => {
+          let bookImg = b.image?.trim() || undefined;
+          if (bookImg && bookImg.startsWith('data:')) {
+            bookImg = await shrinkBase64Image(bookImg, 380, 520, 0.65);
+          }
+          return {
+            ...b,
+            id: b.id || `book-${editingCollection.id}-${idx + 1}`,
+            title: b.title.trim(),
+            author: b.author?.trim() || 'Editorial Lluvia de Ideas',
+            description: b.description?.trim() || '',
+            image: bookImg,
+            isbn: b.isbn?.trim() || undefined
+          };
+        })
+    );
+
+    let packCover = editingCollection.image?.trim() || undefined;
+    if (packCover && packCover.startsWith('data:')) {
+      packCover = await shrinkBase64Image(packCover, 480, 640, 0.68);
+    }
 
     const nextCol: BookCollection = {
       ...editingCollection,
@@ -525,6 +574,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
       currency: editingCollection.currency || 'Q',
       gradeOrAge: editingCollection.gradeOrAge || 'Primaria & Ciclo Básico',
       features: cleanFeatures,
+      image: packCover,
       includedBooks: cleanIncludedBooks,
       onlySoldAsPack: editingCollection.onlySoldAsPack !== false
     };
@@ -586,6 +636,38 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
 
   return (
     <div className="admin-mercado-wrapper animate-fade-in">
+      {restoredDraftNotice && (
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(5, 150, 105, 0.3) 100%)',
+          border: '1px solid rgba(52, 211, 153, 0.45)',
+          borderRadius: '12px',
+          padding: '12px 18px',
+          color: '#ffffff',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          marginBottom: '16px',
+          boxShadow: '0 4px 14px rgba(16, 185, 129, 0.2)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '1.4rem' }}>🛡️</span>
+            <div>
+              <strong style={{ display: 'block', color: '#6ee7b7', fontSize: '0.92rem' }}>Información Conservada Exitosamente</strong>
+              <span style={{ fontSize: '0.84rem', color: '#e2e8f0' }}>{restoredDraftNotice} Haz clic en <strong>"💾 Guardar en Firestore"</strong> para asegurarla en la nube sin error de tamaño.</span>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => setRestoredDraftNotice(null)}
+            style={{ background: 'transparent', border: 'none', color: '#cbd5e1', cursor: 'pointer', fontSize: '1.1rem', padding: '4px' }}
+            title="Descartar aviso"
+          >
+            ✕
+          </button>
+        </div>
+      )}
+
       {/* 1. Header y Acciones Principales */}
       <div className="admin-mercado-header">
         <div className="admin-mercado-title-group">

@@ -1,17 +1,20 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { PortalConfig, TiendaConfig, CustomHexagon } from '../types';
+import type { PortalConfig, TiendaConfig, CustomHexagon, BookCollectionConfig, MercadoProductConfig } from '../types';
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
 import { subscribeArchetypeAssets } from '../services/archetypeAssetsService';
 import { DEFAULT_GRAN_GALERIA } from '../data/defaultGranGaleriaData';
+import { shrinkBase64Image } from '../utils/imageUpload';
 
 interface PortalConfigContextProps {
   config: PortalConfig;
   loading: boolean;
   saveConfigToFirestore: (newConfig: PortalConfig) => Promise<void>;
   saveSutzMapToFirestore: (newMap: CustomHexagon[]) => Promise<void>;
+  saveMercadoCollectionsToFirestore: (collections: BookCollectionConfig[]) => Promise<void>;
+  saveMercadoProductsToFirestore: (products: MercadoProductConfig[]) => Promise<void>;
   resetConfigToFirestore: () => Promise<void>;
 }
 
@@ -527,18 +530,38 @@ export const DEFAULT_CONFIG: PortalConfig = {
 const PortalConfigContext = createContext<PortalConfigContextProps | undefined>(undefined);
 
 const getInitialConfig = (): PortalConfig => {
+  let base = DEFAULT_CONFIG;
   try {
     const cached = localStorage.getItem('portal_config_cache');
     if (cached) {
       const parsed = JSON.parse(cached);
       if (parsed && typeof parsed === 'object') {
-        return { ...DEFAULT_CONFIG, ...parsed };
+        base = { ...DEFAULT_CONFIG, ...parsed };
       }
+    }
+    // Recuperar drafts de mercado si existen en localStorage para evitar pérdida de datos
+    const colDraft = localStorage.getItem('mercado_collections_draft');
+    if (colDraft) {
+      try {
+        const parsedCols = JSON.parse(colDraft);
+        if (Array.isArray(parsedCols) && parsedCols.length > 0) {
+          base = { ...base, mercadoCollections: parsedCols };
+        }
+      } catch {}
+    }
+    const prodDraft = localStorage.getItem('mercado_products_draft');
+    if (prodDraft) {
+      try {
+        const parsedProds = JSON.parse(prodDraft);
+        if (Array.isArray(parsedProds) && parsedProds.length > 0) {
+          base = { ...base, mercadoProducts: parsedProds };
+        }
+      } catch {}
     }
   } catch (err) {
     console.warn("Could not read cached config from localStorage:", err);
   }
-  return DEFAULT_CONFIG;
+  return base;
 };
 
 export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -611,7 +634,15 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
           // ignore quota limits
         }
 
-        setConfig(mergedConfig);
+        setConfig(prev => ({
+          ...mergedConfig,
+          mercadoCollections: (Array.isArray(data.mercadoCollections) && data.mercadoCollections.length > 0)
+            ? data.mercadoCollections
+            : (prev.mercadoCollections && prev.mercadoCollections.length > 0 ? prev.mercadoCollections : (DEFAULT_CONFIG.mercadoCollections || [])),
+          mercadoProducts: (Array.isArray(data.mercadoProducts) && data.mercadoProducts.length > 0)
+            ? data.mercadoProducts
+            : (prev.mercadoProducts && prev.mercadoProducts.length > 0 ? prev.mercadoProducts : (DEFAULT_CONFIG.mercadoProducts || []))
+        }));
       } else {
         setDoc(configDocRef, DEFAULT_CONFIG).catch(err => {
           console.error("Error initializing config in firestore:", err);
@@ -679,6 +710,52 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return () => unsubMap();
   }, []);
 
+  // Sincronización en tiempo real con el documento independiente 'config/mercado_collections'
+  // Desacopla las colecciones para que nunca saturen los 1MB de config/portal
+  useEffect(() => {
+    const colDocRef = doc(db, 'config', 'mercado_collections');
+    const unsubCol = onSnapshot(colDocRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data.collections)) {
+          setConfig(prev => ({
+            ...prev,
+            mercadoCollections: data.collections
+          }));
+          try {
+            localStorage.setItem('mercado_collections_draft', JSON.stringify(data.collections));
+          } catch {}
+        }
+      }
+    }, (err) => {
+      console.warn('[PortalConfigContext] Listener config/mercado_collections:', err);
+    });
+    return () => unsubCol();
+  }, []);
+
+  // Sincronización en tiempo real con el documento independiente 'config/mercado_products'
+  // Desacopla los productos para que nunca saturen los 1MB de config/portal
+  useEffect(() => {
+    const prodDocRef = doc(db, 'config', 'mercado_products');
+    const unsubProd = onSnapshot(prodDocRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data.products)) {
+          setConfig(prev => ({
+            ...prev,
+            mercadoProducts: data.products
+          }));
+          try {
+            localStorage.setItem('mercado_products_draft', JSON.stringify(data.products));
+          } catch {}
+        }
+      }
+    }, (err) => {
+      console.warn('[PortalConfigContext] Listener config/mercado_products:', err);
+    });
+    return () => unsubProd();
+  }, []);
+
   useEffect(() => {
     if (config && config.colors) {
       Object.entries(config.colors).forEach(([key, val]) => {
@@ -699,16 +776,91 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     });
   };
 
+  const saveMercadoCollectionsToFirestore = async (collections: BookCollectionConfig[]) => {
+    // Comprimir cualquier imagen Base64 para que la colección sea ligera (< 150KB)
+    const sanitizedCollections = await Promise.all(
+      collections.map(async (col) => {
+        const c = { ...col };
+        if (c.image && c.image.startsWith('data:')) {
+          c.image = await shrinkBase64Image(c.image, 480, 640, 0.68);
+        }
+        if (Array.isArray(c.includedBooks)) {
+          c.includedBooks = await Promise.all(
+            c.includedBooks.map(async (b) => {
+              const bookCopy = { ...b };
+              if (bookCopy.image && bookCopy.image.startsWith('data:')) {
+                bookCopy.image = await shrinkBase64Image(bookCopy.image, 380, 520, 0.65);
+              }
+              return bookCopy;
+            })
+          );
+        }
+        return c;
+      })
+    );
+
+    const docRef = doc(db, 'config', 'mercado_collections');
+    await setDoc(docRef, { collections: sanitizedCollections, updatedAt: new Date().toISOString() }, { merge: true });
+
+    try {
+      localStorage.setItem('mercado_collections_draft', JSON.stringify(sanitizedCollections));
+    } catch {}
+
+    setConfig(prev => ({
+      ...prev,
+      mercadoCollections: sanitizedCollections
+    }));
+  };
+
+  const saveMercadoProductsToFirestore = async (products: MercadoProductConfig[]) => {
+    const sanitizedProducts = await Promise.all(
+      products.map(async (prod) => {
+        const p = { ...prod };
+        if (p.image && p.image.startsWith('data:')) {
+          p.image = await shrinkBase64Image(p.image, 480, 640, 0.68);
+        }
+        return p;
+      })
+    );
+
+    const docRef = doc(db, 'config', 'mercado_products');
+    await setDoc(docRef, { products: sanitizedProducts, updatedAt: new Date().toISOString() }, { merge: true });
+
+    try {
+      localStorage.setItem('mercado_products_draft', JSON.stringify(sanitizedProducts));
+    } catch {}
+
+    setConfig(prev => ({
+      ...prev,
+      mercadoProducts: sanitizedProducts
+    }));
+  };
+
   const saveConfigToFirestore = async (newConfig: PortalConfig) => {
-    // IMPORTANTE: Excluir archetypeImages, journeyStageImages y map de config/portal
-    // para que NUNCA excedan el límite de 1MB de Firestore (1,048,576 bytes)
-    const { archetypeImages, journeyStageImages, map, ...portalDocData } = newConfig;
+    // IMPORTANTE: Excluir archetypeImages, journeyStageImages, map, mercadoProducts y mercadoCollections
+    // de config/portal para que NUNCA excedan el límite estricto de 1MB de Firestore (1,048,576 bytes)
+    const {
+      archetypeImages,
+      journeyStageImages,
+      map,
+      mercadoProducts,
+      mercadoCollections,
+      ...portalDocData
+    } = newConfig;
 
     const configDocRef = doc(db, 'config', 'portal');
     await setDoc(configDocRef, portalDocData, { merge: true });
 
     if (map && Array.isArray(map) && map.length > 0) {
       await saveSutzMapToFirestore(map);
+    }
+
+    if (mercadoCollections !== undefined && Array.isArray(mercadoCollections)) {
+      await saveMercadoCollectionsToFirestore(mercadoCollections);
+    }
+
+    if (mercadoProducts !== undefined && Array.isArray(mercadoProducts)) {
+      await saveMercadoProductsToFirestore(mercadoProducts);
     }
 
     try {
@@ -723,7 +875,15 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
   };
 
   return (
-    <PortalConfigContext.Provider value={{ config, loading, saveConfigToFirestore, saveSutzMapToFirestore, resetConfigToFirestore }}>
+    <PortalConfigContext.Provider value={{
+      config,
+      loading,
+      saveConfigToFirestore,
+      saveSutzMapToFirestore,
+      saveMercadoCollectionsToFirestore,
+      saveMercadoProductsToFirestore,
+      resetConfigToFirestore
+    }}>
       {children}
     </PortalConfigContext.Provider>
   );
