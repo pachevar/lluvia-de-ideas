@@ -10,23 +10,27 @@ import { soundEffects } from '../../utils/soundEffects';
 
 interface KindleCollectionsViewProps {
   allProducts: MercadoProduct[];
+  collections?: BookCollection[];
   onAddToCart: (product: MercadoProduct, qty?: number) => void;
   onAddCollectionToCart: (collection: BookCollection, books: MercadoProduct[]) => void;
   onQuickView: (product: MercadoProduct) => void;
   whatsappPhone?: string;
+  onGoBackToCatalog?: () => void;
 }
 
 export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
   allProducts,
+  collections: collectionsProp,
   onAddToCart,
   onAddCollectionToCart,
   onQuickView,
-  whatsappPhone = '50246741239'
+  whatsappPhone = '50246741239',
+  onGoBackToCatalog
 }) => {
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [expandedCollectionId, setExpandedCollectionId] = useState<string | null>(null);
 
-  const collections = DEFAULT_BOOK_COLLECTIONS;
+  const collections = collectionsProp !== undefined ? collectionsProp : DEFAULT_BOOK_COLLECTIONS;
 
   const filteredCollections = selectedFilter === 'all'
     ? collections
@@ -68,39 +72,74 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
         </div>
 
         {/* Filtros sutiles de Colecciones */}
-        <div className="clean-collections-filters">
-          <button
-            type="button"
-            className={`clean-filter-chip ${selectedFilter === 'all' ? 'active' : ''}`}
-            onClick={() => {
-              soundEffects.playClick();
-              setSelectedFilter('all');
-            }}
-          >
-            Todas ({collections.length})
-          </button>
-          {collections.map(col => (
+        {collections.length > 0 && (
+          <div className="clean-collections-filters">
             <button
-              key={col.id}
               type="button"
-              className={`clean-filter-chip ${selectedFilter === col.id ? 'active' : ''}`}
+              className={`clean-filter-chip ${selectedFilter === 'all' ? 'active' : ''}`}
               onClick={() => {
                 soundEffects.playClick();
-                setSelectedFilter(col.id);
+                setSelectedFilter('all');
               }}
             >
-              {col.badge.includes('POPOL') || col.id.includes('popol') ? '⛈️ Popol Vuh' : col.id.includes('steam') ? '🧬 Serie STEAM' : '📚 Gran Biblioteca'}
+              Todas ({collections.length})
             </button>
-          ))}
-        </div>
+            {collections.map(col => (
+              <button
+                key={col.id}
+                type="button"
+                className={`clean-filter-chip ${selectedFilter === col.id ? 'active' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setSelectedFilter(col.id);
+                }}
+              >
+                {col.badge ? `${col.badge}` : col.title}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Lista de Colecciones con Estantería de Libros Componentes */}
-      <div className="collections-showcase-list">
-        {filteredCollections.map(collection => {
-          const componentBooks = getCollectionBooks(collection.id, allProducts);
-          const totalSavings = collection.originalPrice - collection.price;
-          const isExpanded = expandedCollectionId === collection.id;
+      {collections.length === 0 ? (
+        <div className="mercado-prelaunch-box animate-fade-in" style={{ maxWidth: '780px', margin: '2rem auto' }}>
+          <span className="prelaunch-tag">✨ Próximamente · Colecciones Exclusivas</span>
+          <h3 className="prelaunch-title">Nuestras sagas literarias y packs completos están en preparación</h3>
+          <p className="prelaunch-desc">
+            Muy pronto podrás adquirir colecciones pedagógicas completas de Editorial Lluvia de Ideas en ediciones de lujo y cajas conmemorativas.
+          </p>
+          <div className="prelaunch-actions" style={{ justifyContent: 'center', marginTop: '1.5rem', display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+            {onGoBackToCatalog && (
+              <button
+                type="button"
+                className="btn-prelaunch-whatsapp"
+                style={{ background: 'rgba(255,255,255,0.08)', color: 'white', borderColor: 'rgba(255,255,255,0.2)' }}
+                onClick={() => {
+                  soundEffects.playClick();
+                  onGoBackToCatalog();
+                }}
+              >
+                📚 Explorar Todo el Catálogo
+              </button>
+            )}
+            <a
+              href={`https://wa.me/${whatsappPhone}?text=${encodeURIComponent('¡Hola Editorial Lluvia de Ideas! 👋 Quisiera información sobre sus próximas colecciones y sagas de libros.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="btn-prelaunch-whatsapp"
+              onClick={() => soundEffects.playSuccessFanfare()}
+            >
+              💬 Consultar Preventa por WhatsApp
+            </a>
+          </div>
+        </div>
+      ) : (
+        /* Lista de Colecciones con Estantería de Libros Componentes */
+        <div className="collections-showcase-list">
+          {filteredCollections.map(collection => {
+            const componentBooks = getCollectionBooks(collection, allProducts, collections);
+            const totalSavings = collection.originalPrice - collection.price;
+            const isExpanded = expandedCollectionId === collection.id;
 
           return (
             <section 
@@ -239,27 +278,47 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                           </h5>
 
                           <div className="shelf-book-price-row">
-                            <span className="shelf-price-val">Q {book.price.toFixed(2)}</span>
+                            {collection.onlySoldAsPack ? (
+                              <span className="shelf-price-val" style={{ fontSize: '0.75rem', fontWeight: 600, color: '#f59e0b' }}>
+                                🔒 En el Pack
+                              </span>
+                            ) : (
+                              <span className="shelf-price-val">Q {book.price.toFixed(2)}</span>
+                            )}
                             <span className="shelf-rating-val">★ {book.rating.toFixed(1)}</span>
                           </div>
 
                           <div className="shelf-book-buttons">
-                            <button
-                              type="button"
-                              className="btn-shelf-add-single"
-                              onClick={() => onAddToCart(book, 1)}
-                              title="Agregar al carrito"
-                            >
-                              + Carrito
-                            </button>
-                            <button
-                              type="button"
-                              className="btn-shelf-preview"
-                              onClick={() => onQuickView(book)}
-                              title="Ver detalles del libro"
-                            >
-                              👁️
-                            </button>
+                            {collection.onlySoldAsPack ? (
+                              <button
+                                type="button"
+                                className="btn-shelf-preview"
+                                style={{ width: '100%', borderRadius: '6px', fontSize: '0.8rem', padding: '0.4rem 0.6rem' }}
+                                onClick={() => onQuickView(book)}
+                                title="Ver detalles y sinopsis del libro"
+                              >
+                                👁️ Ver Ficha
+                              </button>
+                            ) : (
+                              <>
+                                <button
+                                  type="button"
+                                  className="btn-shelf-add-single"
+                                  onClick={() => onAddToCart(book, 1)}
+                                  title="Agregar al carrito"
+                                >
+                                  + Carrito
+                                </button>
+                                <button
+                                  type="button"
+                                  className="btn-shelf-preview"
+                                  onClick={() => onQuickView(book)}
+                                  title="Ver detalles del libro"
+                                >
+                                  👁️
+                                </button>
+                              </>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -289,7 +348,13 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                           <p className="breakdown-synopsis">{book.description}</p>
                           
                           <div className="breakdown-footer">
-                            <span className="breakdown-price">Precio individual: <strong>Q {book.price.toFixed(2)}</strong></span>
+                            <span className="breakdown-price">
+                              {collection.onlySoldAsPack ? (
+                                <strong style={{ color: '#f59e0b', fontSize: '0.85rem' }}>🔒 Venta exclusiva en pack completo</strong>
+                              ) : (
+                                <>Precio individual: <strong>Q {book.price.toFixed(2)}</strong></>
+                              )}
+                            </span>
                             <button
                               type="button"
                               className="btn-breakdown-inspect"
@@ -308,6 +373,7 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
           );
         })}
       </div>
+      )}
     </div>
   );
 };

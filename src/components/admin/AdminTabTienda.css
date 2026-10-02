@@ -811,6 +811,341 @@
   justify-content: center;
 }
 
+/* Subtabs de Tienda (Productos vs Colecciones) */
+.admin-tienda-subtabs-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  padding: 6px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: fit-content;
+}
+
+.admin-tienda-subtab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  border-radius: 10px;
+  background: transparent;
+  color: #94a3b8;
+  font-size: 0.92rem;
+  font-weight: 750;
+  border: none;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.admin-tienda-subtab-btn:hover {
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.admin-tienda-subtab-btn.active {
+  background: linear-gradient(135deg, rgba(255, 80, 0, 0.2), rgba(255, 122, 0, 0.15));
+  color: #ff8a3d;
+  border: 1px solid rgba(255, 122, 0, 0.35);
+  box-shadow: 0 4px 12px rgba(255, 80, 0, 0.15);
+}
+
+.subtab-count-badge {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+  font-size: 0.76rem;
+  padding: 2px 7px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.admin-tienda-subtab-btn.active .subtab-count-badge {
+  background: #ff5000;
+  color: #ffffff;
+}
+
+/* Cuadrícula de Colecciones */
+.admin-collections-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(360px, 1fr));
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.admin-collection-card {
+  background: linear-gradient(180deg, rgba(30, 41, 59, 0.7) 0%, rgba(15, 23, 42, 0.85) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+  position: relative;
+  transition: transform 0.2s ease, border-color 0.2s ease;
+}
+
+.admin-collection-card:hover {
+  transform: translateY(-2px);
+  border-color: rgba(255, 122, 0, 0.4);
+}
+
+.col-card-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+.col-card-badge {
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+  padding: 4px 10px;
+  border-radius: 6px;
+  background: rgba(255, 122, 0, 0.15);
+  color: #ff8a3d;
+  border: 1px solid rgba(255, 122, 0, 0.3);
+}
+
+.col-card-pack-tag {
+  font-size: 0.72rem;
+  font-weight: 750;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(245, 158, 11, 0.15);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.col-card-title {
+  margin: 0;
+  font-size: 1.15rem;
+  font-weight: 850;
+  color: #ffffff;
+  line-height: 1.3;
+}
+
+.col-card-subtitle {
+  font-size: 0.82rem;
+  color: #38bdf8;
+  font-weight: 600;
+}
+
+.col-card-desc {
+  font-size: 0.84rem;
+  color: #94a3b8;
+  line-height: 1.45;
+  margin: 0;
+}
+
+.col-shelf-preview-strip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 10px;
+  background: rgba(15, 23, 42, 0.6);
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.col-shelf-book-thumb {
+  flex-shrink: 0;
+  width: 48px;
+  height: 68px;
+  border-radius: 6px;
+  background: #1e293b;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  text-align: center;
+}
+
+.col-shelf-book-thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.col-card-footer {
+  margin-top: auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.col-card-price-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.col-card-price {
+  font-size: 1.25rem;
+  font-weight: 900;
+  color: #10b981;
+}
+
+.col-card-orig-price {
+  font-size: 0.85rem;
+  color: #64748b;
+  text-decoration: line-through;
+}
+
+.col-card-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Interruptor de modo de venta (exclusivo pack) */
+.collection-sale-mode-box {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.12) 0%, rgba(217, 119, 6, 0.05) 100%);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  border-radius: 12px;
+  padding: 16px;
+  margin: 12px 0 18px 0;
+}
+
+.checkbox-sale-mode {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  cursor: pointer;
+}
+
+.checkbox-sale-mode input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 3px;
+  accent-color: #f59e0b;
+  cursor: pointer;
+}
+
+.sale-mode-info strong {
+  display: block;
+  color: #fbbf24;
+  font-size: 0.95rem;
+  margin-bottom: 4px;
+}
+
+.sale-mode-info p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #cbd5e1;
+  line-height: 1.4;
+}
+
+/* Gestor de libros incluidos en el modal */
+.included-books-editor {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 12px;
+}
+
+.included-book-card {
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 12px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.included-book-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-bottom: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.included-book-num {
+  font-size: 0.85rem;
+  font-weight: 850;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-remove-book {
+  background: transparent;
+  color: #ef4444;
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: 6px;
+  font-size: 0.78rem;
+  padding: 3px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.btn-remove-book:hover {
+  background: rgba(239, 68, 68, 0.15);
+}
+
+.included-book-fields-row {
+  display: grid;
+  grid-template-columns: 80px 1fr;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.included-book-cover-picker {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.included-book-thumb-box {
+  width: 72px;
+  height: 100px;
+  background: #1e293b;
+  border-radius: 8px;
+  border: 1px dashed rgba(255, 255, 255, 0.2);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.4rem;
+  color: #64748b;
+  overflow: hidden;
+  position: relative;
+}
+
+.included-book-thumb-box img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.btn-upload-book-cover {
+  font-size: 0.7rem;
+  padding: 4px 6px;
+  background: rgba(255, 255, 255, 0.08);
+  color: #ffffff;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 6px;
+  cursor: pointer;
+  width: 100%;
+  text-align: center;
+}
+
+.btn-upload-book-cover:hover {
+  background: rgba(255, 80, 0, 0.2);
+  border-color: rgba(255, 80, 0, 0.4);
+}
+
 /* Responsive */
 @media (max-width: 768px) {
   .admin-mercado-grid-fields,
@@ -819,4 +1154,12 @@
   .form-grid-4 {
     grid-template-columns: 1fr;
   }
+  .included-book-fields-row {
+    grid-template-columns: 1fr;
+  }
+  .included-book-thumb-box {
+    width: 90px;
+    height: 125px;
+  }
 }
+

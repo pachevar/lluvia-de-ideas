@@ -117,6 +117,41 @@ export interface MercadoProductConfig {
   coverTheme?: 'amber' | 'cyan' | 'emerald' | 'purple' | 'ruby';
 }
 
+export interface CollectionIncludedBookConfig {
+  id: string;
+  title: string;
+  subtitle?: string;
+  author?: string;
+  pages?: number;
+  gradeOrAge?: string;
+  description?: string;
+  image?: string;
+  coverTheme?: 'amber' | 'cyan' | 'emerald' | 'purple' | 'ruby';
+  isbn?: string;
+}
+
+export interface BookCollectionConfig {
+  id: string;
+  title: string;
+  subtitle: string;
+  badge: string;
+  description: string;
+  price: number;
+  originalPrice: number;
+  currency: string;
+  gradeOrAge: string;
+  rating: number;
+  reviewsCount: number;
+  soldCount: number;
+  bookIds?: string[];
+  includedBooks?: CollectionIncludedBookConfig[];
+  image?: string;
+  themeColor?: string;
+  accentGradient?: string;
+  features: string[];
+  onlySoldAsPack?: boolean;
+}
+
 export interface MercadoConfig {
   announcement?: string;
   whatsappPhone?: string;
@@ -237,6 +272,7 @@ export interface PortalConfig {
   libros?: BookProduct[];
   mercadoConfig?: MercadoConfig;
   mercadoProducts?: MercadoProductConfig[];
+  mercadoCollections?: BookCollectionConfig[];
   landingConfig?: LandingConfig;
   archetypeImages?: Record<string, string>;
   journeyStageImages?: Record<string, string>;

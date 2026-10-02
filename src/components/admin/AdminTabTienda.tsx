@@ -3,7 +3,9 @@ import type { PortalConfig } from '../../types';
 import { 
   DEFAULT_MERCADO_PRODUCTS, 
   MERCADO_CATEGORIES, 
-  type MercadoProduct 
+  type MercadoProduct,
+  type BookCollection,
+  type CollectionIncludedBook
 } from '../../data/mercadoData';
 import { uploadImageToStorage } from '../../utils/imageUpload';
 import { soundEffects } from '../../utils/soundEffects';
@@ -65,6 +67,71 @@ const createEmptyProduct = (): MercadoProduct => ({
   inStock: true
 });
 
+const createEmptyCollection = (): BookCollection => ({
+  id: `col-${Date.now()}`,
+  title: '',
+  subtitle: 'Colección de 5 Obras Maestras Ilustradas',
+  badge: 'PACK COLECCIÓN COMPLETA',
+  description: '',
+  price: 440.00,
+  originalPrice: 550.00,
+  currency: 'Q',
+  gradeOrAge: 'Primaria & Ciclo Básico',
+  rating: 5.0,
+  reviewsCount: 1,
+  soldCount: 0,
+  themeColor: '#0284c7',
+  accentGradient: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%)',
+  features: [
+    '5 Libros en pasta dura a todo color formato Kindle',
+    'Glosario pedagógico y mapa cosmológico incluido',
+    'Caja conmemorativa de colección'
+  ],
+  onlySoldAsPack: true,
+  includedBooks: [
+    {
+      id: `book-${Date.now()}-1`,
+      title: '',
+      author: 'Editorial Lluvia de Ideas',
+      pages: 48,
+      description: '',
+      coverTheme: 'amber'
+    },
+    {
+      id: `book-${Date.now()}-2`,
+      title: '',
+      author: 'Editorial Lluvia de Ideas',
+      pages: 48,
+      description: '',
+      coverTheme: 'cyan'
+    },
+    {
+      id: `book-${Date.now()}-3`,
+      title: '',
+      author: 'Editorial Lluvia de Ideas',
+      pages: 48,
+      description: '',
+      coverTheme: 'emerald'
+    },
+    {
+      id: `book-${Date.now()}-4`,
+      title: '',
+      author: 'Editorial Lluvia de Ideas',
+      pages: 48,
+      description: '',
+      coverTheme: 'purple'
+    },
+    {
+      id: `book-${Date.now()}-5`,
+      title: '',
+      author: 'Editorial Lluvia de Ideas',
+      pages: 48,
+      description: '',
+      coverTheme: 'ruby'
+    }
+  ]
+});
+
 export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, saving }: AdminTabTiendaProps) {
   // Productos activos (Inicia limpio o con los productos configurados)
   const products: MercadoProduct[] = useMemo(() => {
@@ -73,6 +140,25 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     }
     return [];
   }, [localConfig.mercadoProducts]);
+
+  // Colecciones y Packs activos
+  const collections: BookCollection[] = useMemo(() => {
+    if (localConfig.mercadoCollections !== undefined && Array.isArray(localConfig.mercadoCollections)) {
+      return localConfig.mercadoCollections as BookCollection[];
+    }
+    return [];
+  }, [localConfig.mercadoCollections]);
+
+  // Subpestaña activa (Productos vs Colecciones)
+  const [adminSubTab, setAdminSubTab] = useState<'productos' | 'colecciones'>('productos');
+
+  // Estados de Colección
+  const [editingCollection, setEditingCollection] = useState<BookCollection | null>(null);
+  const [isCollectionModalOpen, setIsCollectionModalOpen] = useState<boolean>(false);
+  const [uploadingBookCoverIdx, setUploadingBookCoverIdx] = useState<number | null>(null);
+  const [syncCollectionAsProduct, setSyncCollectionAsProduct] = useState<boolean>(true);
+
+  const colCoverInputRef = useRef<HTMLInputElement>(null);
 
   // Configuración del Mercado
   const mercadoConfig = localConfig.mercadoConfig || {
@@ -83,7 +169,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     showPromoStrip: true
   };
 
-  // Estados de interfaz
+  // Estados de interfaz de productos
   const [selectedCategory, setSelectedCategory] = useState<string>('todos');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [editingProduct, setEditingProduct] = useState<MercadoProduct | null>(null);
@@ -93,6 +179,17 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const modalFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Actualizar colecciones en localConfig
+  const commitCollections = (nextCollections: BookCollection[]) => {
+    setLocalConfig(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        mercadoCollections: nextCollections
+      };
+    });
+  };
 
   // Actualizar lista en localConfig
   const commitProducts = (nextProducts: MercadoProduct[]) => {
@@ -271,6 +368,211 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     }
   };
 
+  // Abrir modal nueva colección (Preconfigurado con 5 libros y solo venta en pack)
+  const handleOpenNewCollection = () => {
+    soundEffects.playClick();
+    setEditingCollection(createEmptyCollection());
+    setSyncCollectionAsProduct(true);
+    setIsCollectionModalOpen(true);
+  };
+
+  // Abrir modal editar colección
+  const handleOpenEditCollection = (col: BookCollection) => {
+    soundEffects.playClick();
+    setEditingCollection({
+      ...col,
+      features: [...(col.features || [])],
+      includedBooks: (col.includedBooks || []).map(b => ({ ...b }))
+    });
+    setSyncCollectionAsProduct(true);
+    setIsCollectionModalOpen(true);
+  };
+
+  // Eliminar colección
+  const handleDeleteCollection = (colId: string) => {
+    if (window.confirm('¿Seguro que deseas eliminar esta colección? Se quitará de la vista de colecciones.')) {
+      soundEffects.playClick();
+      commitCollections(collections.filter(c => c.id !== colId));
+      commitProducts(products.filter(p => p.id !== `bundle-${colId}`));
+    }
+  };
+
+  // Vaciar colecciones
+  const handleClearAllCollections = () => {
+    if (window.confirm('¿Deseas vaciar todas las colecciones? Podrás crearlas de nuevo cuando lo requieras.')) {
+      soundEffects.playClick();
+      commitCollections([]);
+      commitProducts(products.filter(p => !p.id.startsWith('bundle-col-')));
+    }
+  };
+
+  // Agregar ranura de libro a la colección en edición
+  const handleAddBookToCollection = () => {
+    if (!editingCollection) return;
+    soundEffects.playClick();
+    const nextIdx = (editingCollection.includedBooks?.length || 0) + 1;
+    const newBook: CollectionIncludedBook = {
+      id: `book-${Date.now()}-${nextIdx}`,
+      title: '',
+      author: 'Editorial Lluvia de Ideas',
+      pages: 48,
+      description: '',
+      coverTheme: nextIdx % 2 === 0 ? 'cyan' : 'amber'
+    };
+    setEditingCollection({
+      ...editingCollection,
+      includedBooks: [...(editingCollection.includedBooks || []), newBook]
+    });
+  };
+
+  // Quitar ranura de libro de la colección
+  const handleRemoveBookFromCollection = (idx: number) => {
+    if (!editingCollection) return;
+    soundEffects.playClick();
+    const nextBooks = [...(editingCollection.includedBooks || [])];
+    nextBooks.splice(idx, 1);
+    setEditingCollection({
+      ...editingCollection,
+      includedBooks: nextBooks
+    });
+  };
+
+  // Actualizar campo de un libro de la colección
+  const handleUpdateIncludedBook = (idx: number, field: keyof CollectionIncludedBook, value: any) => {
+    if (!editingCollection) return;
+    const nextBooks = [...(editingCollection.includedBooks || [])];
+    nextBooks[idx] = {
+      ...nextBooks[idx],
+      [field]: value
+    };
+    setEditingCollection({
+      ...editingCollection,
+      includedBooks: nextBooks
+    });
+  };
+
+  // Subir portada del pack completo
+  const handleColCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingCollection) return;
+
+    setUploadStatus('Comprimiendo y subiendo portada de la colección...');
+    try {
+      const url = await uploadImageToStorage(file, 'mercado-assets');
+      setEditingCollection(prev => prev ? ({ ...prev, image: url }) : null);
+      setUploadStatus('¡Portada de colección cargada!');
+      setTimeout(() => setUploadStatus(null), 2500);
+    } catch (err) {
+      console.error('Error subiendo imagen de colección:', err);
+      alert('Error al subir la imagen de la colección.');
+    } finally {
+      if (colCoverInputRef.current) colCoverInputRef.current.value = '';
+    }
+  };
+
+  // Subir portada de un libro individual dentro del pack
+  const handleBookCoverUpload = async (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingCollection) return;
+
+    setUploadingBookCoverIdx(idx);
+    setUploadStatus(`Subiendo portada del Libro #${idx + 1}...`);
+    try {
+      const url = await uploadImageToStorage(file, 'mercado-assets');
+      handleUpdateIncludedBook(idx, 'image', url);
+      setUploadStatus('¡Portada de libro actualizada!');
+      setTimeout(() => setUploadStatus(null), 2500);
+    } catch (err) {
+      console.error('Error subiendo portada de libro:', err);
+      alert('Error al subir la portada del libro.');
+    } finally {
+      setUploadingBookCoverIdx(null);
+    }
+  };
+
+  // Guardar colección desde modal
+  const handleSaveCollection = () => {
+    if (!editingCollection) return;
+    if (!editingCollection.title.trim()) {
+      alert('Por favor escribe un título para la colección.');
+      return;
+    }
+
+    const cleanFeatures = (editingCollection.features || [])
+      .map(f => f.trim())
+      .filter(f => f.length > 0);
+
+    const cleanIncludedBooks: CollectionIncludedBook[] = (editingCollection.includedBooks || [])
+      .filter(b => b.title.trim().length > 0)
+      .map((b, idx) => ({
+        ...b,
+        id: b.id || `book-${editingCollection.id}-${idx + 1}`,
+        title: b.title.trim(),
+        author: b.author?.trim() || 'Editorial Lluvia de Ideas',
+        description: b.description?.trim() || '',
+        image: b.image?.trim() || undefined,
+        isbn: b.isbn?.trim() || undefined
+      }));
+
+    const nextCol: BookCollection = {
+      ...editingCollection,
+      title: editingCollection.title.trim(),
+      subtitle: editingCollection.subtitle?.trim() || '',
+      badge: editingCollection.badge?.trim() || 'PACK COLECCIÓN COMPLETA',
+      description: editingCollection.description?.trim() || '',
+      price: Number(editingCollection.price) || 0,
+      originalPrice: Number(editingCollection.originalPrice) || Number(editingCollection.price) || 0,
+      currency: editingCollection.currency || 'Q',
+      gradeOrAge: editingCollection.gradeOrAge || 'Primaria & Ciclo Básico',
+      features: cleanFeatures,
+      includedBooks: cleanIncludedBooks,
+      onlySoldAsPack: editingCollection.onlySoldAsPack !== false
+    };
+
+    const exists = collections.some(c => c.id === nextCol.id);
+    const nextCollections = exists
+      ? collections.map(c => c.id === nextCol.id ? nextCol : c)
+      : [nextCol, ...collections];
+
+    commitCollections(nextCollections);
+
+    // Sincronizar en el catálogo general si está marcado
+    if (syncCollectionAsProduct) {
+      const bundleProductId = `bundle-${nextCol.id}`;
+      const cleanProducts = products.filter(p => p.id !== bundleProductId);
+      const bundleProduct: MercadoProduct = {
+        id: bundleProductId,
+        title: `Colección: ${nextCol.title} (${cleanIncludedBooks.length} Libros)`,
+        category: 'cuentos',
+        categoryLabel: 'Colección de Libros',
+        price: nextCol.price,
+        originalPrice: nextCol.originalPrice > nextCol.price ? nextCol.originalPrice : undefined,
+        currency: nextCol.currency || 'Q',
+        rating: nextCol.rating || 5.0,
+        reviewsCount: nextCol.reviewsCount || 1,
+        soldCount: nextCol.soldCount || 0,
+        deliveryTime: 'Entrega 24-48 hrs en caja conmemorativa',
+        description: nextCol.description,
+        longDescription: `${nextCol.subtitle}. Incluye los ${cleanIncludedBooks.length} títulos de la saga: ${cleanIncludedBooks.map(b => b.title).join(', ')}.`,
+        badge: nextCol.badge || 'PACK COLECCIÓN',
+        icon: '📦',
+        image: nextCol.image || cleanIncludedBooks[0]?.image,
+        gradeOrAge: nextCol.gradeOrAge,
+        features: nextCol.features,
+        contents: cleanIncludedBooks.map(b => `1x ${b.title}`),
+        featured: true,
+        inStock: true,
+        collectionId: nextCol.id,
+        collectionName: nextCol.title
+      };
+      commitProducts([bundleProduct, ...cleanProducts]);
+    }
+
+    soundEffects.playSuccessFanfare();
+    setIsCollectionModalOpen(false);
+    setEditingCollection(null);
+  };
+
   // Categorías con conteos
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { todos: products.length };
@@ -310,32 +612,58 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
               {saving ? '⏳ Guardando en Nube...' : '💾 Guardar en Firestore'}
             </button>
           )}
-          {products.length > 0 && (
-            <button 
-              type="button" 
-              className="btn-mercado-clear"
-              onClick={handleClearAllProducts}
-              title="Vaciar todo el catálogo para empezar en 0"
-            >
-              🗑️ Vaciar Catálogo
-            </button>
+
+          {adminSubTab === 'colecciones' ? (
+            <>
+              {collections.length > 0 && (
+                <button 
+                  type="button" 
+                  className="btn-mercado-clear"
+                  onClick={handleClearAllCollections}
+                  title="Vaciar todas las colecciones"
+                >
+                  🗑️ Vaciar Colecciones
+                </button>
+              )}
+              <button 
+                type="button" 
+                className="btn-mercado-primary"
+                onClick={handleOpenNewCollection}
+                title="Crear una nueva colección o paquete de libros"
+              >
+                ＋ Nueva Colección / Pack (5 Libros)
+              </button>
+            </>
+          ) : (
+            <>
+              {products.length > 0 && (
+                <button 
+                  type="button" 
+                  className="btn-mercado-clear"
+                  onClick={handleClearAllProducts}
+                  title="Vaciar todo el catálogo para empezar en 0"
+                >
+                  🗑️ Vaciar Catálogo
+                </button>
+              )}
+              <button 
+                type="button" 
+                className="btn-mercado-secondary"
+                onClick={handleRestoreDefault}
+                title="Restaurar catálogo inicial"
+              >
+                ♻️ Restaurar Catálogo Base
+              </button>
+              <button 
+                type="button" 
+                className="btn-mercado-primary"
+                onClick={handleOpenNew}
+                title="Crear un nuevo producto"
+              >
+                ＋ Nuevo Producto
+              </button>
+            </>
           )}
-          <button 
-            type="button" 
-            className="btn-mercado-secondary"
-            onClick={handleRestoreDefault}
-            title="Restaurar catálogo inicial"
-          >
-            ♻️ Restaurar Catálogo Base
-          </button>
-          <button 
-            type="button" 
-            className="btn-mercado-primary"
-            onClick={handleOpenNew}
-            title="Crear un nuevo producto"
-          >
-            ＋ Nuevo Producto
-          </button>
         </div>
       </div>
 
@@ -373,8 +701,149 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
         </div>
       </div>
 
-      {/* 3. Filtros por Categoría y Buscador */}
-      <div className="admin-mercado-filter-strip">
+      {/* 2.5 Selector de Sub-Pestaña: Productos vs Colecciones */}
+      <div className="admin-tienda-subtabs-nav">
+        <button
+          type="button"
+          className={`admin-tienda-subtab-btn ${adminSubTab === 'productos' ? 'active' : ''}`}
+          onClick={() => {
+            soundEffects.playClick();
+            setAdminSubTab('productos');
+          }}
+        >
+          <span className="subtab-icon">📚</span>
+          <span>Productos Individuales</span>
+          <span className="subtab-count-badge">{products.length}</span>
+        </button>
+        <button
+          type="button"
+          className={`admin-tienda-subtab-btn ${adminSubTab === 'colecciones' ? 'active' : ''}`}
+          onClick={() => {
+            soundEffects.playClick();
+            setAdminSubTab('colecciones');
+          }}
+        >
+          <span className="subtab-icon">📦</span>
+          <span>Colecciones y Packs (5 Libros)</span>
+          <span className="subtab-count-badge">{collections.length}</span>
+        </button>
+      </div>
+
+      {adminSubTab === 'colecciones' ? (
+        <div className="admin-collections-section animate-fade-in">
+          {/* Banner explicativo de Colecciones */}
+          <div style={{ background: 'rgba(2, 132, 199, 0.12)', border: '1px solid rgba(2, 132, 199, 0.35)', borderRadius: '14px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', color: '#e0f2fe', marginTop: '16px' }}>
+            <span style={{ fontSize: '2rem' }}>📦</span>
+            <div style={{ fontSize: '0.88rem', lineHeight: '1.45' }}>
+              <strong style={{ display: 'block', color: '#38bdf8', fontSize: '0.98rem', marginBottom: '3px' }}>
+                Gestor de Colecciones Pedagógicas y Sagas Literarias
+              </strong>
+              Aquí puedes crear paquetes de libros completos. Si los 5 libros no se venden por separado, la opción 
+              <strong style={{ color: '#fbbf24' }}> "Venta exclusiva en pack"</strong> está activada para que los visitantes puedan revisar la ficha técnica y portada de cada uno de los 5 libros en la estantería 3D, pero únicamente puedan adquirir la colección completa por un solo precio de compra.
+            </div>
+          </div>
+
+          {collections.length === 0 ? (
+            <div className="admin-empty-catalog-hero animate-fade-in" style={{ marginTop: '20px' }}>
+              <div className="admin-empty-icon-wrap">
+                <span>📦</span>
+              </div>
+              <h3>Sin Colecciones Registradas (0 colecciones)</h3>
+              <p>
+                Crea tu primer pack con los 5 libros de la saga. Podrás ingresar los títulos de cada libro, sus portadas, páginas y sinopsis, además del precio de paquete de la colección completa.
+              </p>
+              <div className="admin-empty-hero-actions">
+                <button 
+                  type="button" 
+                  className="btn-mercado-primary"
+                  onClick={handleOpenNewCollection}
+                >
+                  ＋ Crear Mi Primera Colección de 5 Libros
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="admin-collections-grid">
+              {collections.map(col => {
+                const totalSavings = col.originalPrice > col.price ? col.originalPrice - col.price : 0;
+                return (
+                  <div key={col.id} className="admin-collection-card">
+                    <div className="col-card-top-row">
+                      <span className="col-card-badge">{col.badge}</span>
+                      {col.onlySoldAsPack && (
+                        <span className="col-card-pack-tag">🔒 Venta Exclusiva en Pack</span>
+                      )}
+                    </div>
+
+                    <div>
+                      <h4 className="col-card-title">{col.title}</h4>
+                      <span className="col-card-subtitle">{col.subtitle}</span>
+                    </div>
+
+                    <p className="col-card-desc">{col.description}</p>
+
+                    {/* Fila visual de libros componentes */}
+                    {col.includedBooks && col.includedBooks.length > 0 && (
+                      <div>
+                        <span style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>
+                          📚 {col.includedBooks.length} Libros incluidos en la saga:
+                        </span>
+                        <div className="col-shelf-preview-strip">
+                          {col.includedBooks.map((b, idx) => (
+                            <div key={b.id || idx} className="col-shelf-book-thumb" title={b.title || `Libro ${idx + 1}`}>
+                              {b.image ? (
+                                <img src={b.image} alt={b.title} />
+                              ) : (
+                                <span>📖 #{idx + 1}</span>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    <div className="col-card-footer">
+                      <div className="col-card-price-row">
+                        <span className="col-card-price">{col.currency} {col.price.toFixed(2)}</span>
+                        {col.originalPrice > col.price && (
+                          <span className="col-card-orig-price">{col.currency} {col.originalPrice.toFixed(2)}</span>
+                        )}
+                        {totalSavings > 0 && (
+                          <span style={{ fontSize: '0.74rem', color: '#10b981', fontWeight: 800 }}>
+                            (Ahorro {col.currency} {totalSavings.toFixed(2)})
+                          </span>
+                        )}
+                      </div>
+
+                      <div className="col-card-actions">
+                        <button
+                          type="button"
+                          className="btn-card-icon"
+                          onClick={() => handleOpenEditCollection(col)}
+                          title="Editar colección"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          type="button"
+                          className="btn-card-icon danger"
+                          onClick={() => handleDeleteCollection(col.id)}
+                          title="Eliminar colección"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+      ) : (
+        <>
+          {/* 3. Filtros por Categoría y Buscador */}
+          <div className="admin-mercado-filter-strip">
         <div className="admin-mercado-search-bar">
           <span style={{ fontSize: '1.1rem' }}>🔍</span>
           <input
@@ -595,6 +1064,8 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
           </button>
         </div>
       ) : null}
+        </>
+      )}
 
       {/* ==============================================================
           MODAL DE EDICIÓN COMPLETA DEL PRODUCTO
@@ -1089,6 +1560,377 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                 onClick={handleSaveProduct}
               >
                 💾 Guardar Producto
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==============================================================
+          MODAL DE CONFIGURACIÓN DE COLECCIÓN / PACK (5 LIBROS)
+          ============================================================== */}
+      {isCollectionModalOpen && editingCollection && (
+        <div className="admin-modal-overlay animate-fade-in" onClick={() => setIsCollectionModalOpen(false)}>
+          <div 
+            className="admin-mercado-modal animate-scale-up" 
+            style={{ maxWidth: '880px' }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header del Modal */}
+            <div className="admin-modal-header">
+              <h3>
+                <span>📦</span>
+                {editingCollection.id.startsWith('col-') && !collections.some(c => c.id === editingCollection.id)
+                  ? 'Nueva Colección / Pack de Libros'
+                  : `Editar: ${editingCollection.title || 'Colección'}`}
+              </h3>
+              <button 
+                type="button" 
+                className="admin-modal-close" 
+                onClick={() => setIsCollectionModalOpen(false)}
+                title="Cerrar modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Cuerpo del formulario de colección */}
+            <div className="admin-modal-body">
+              {/* SECCIÓN 1: Datos Generales de la Colección */}
+              <div className="modal-section-box">
+                <h4 className="modal-section-title">
+                  <span>📖</span> 1. Información General del Pack
+                </h4>
+
+                <div className="form-grid-2">
+                  <div className="mercado-input-group">
+                    <label>Título de la Colección *</label>
+                    <input
+                      type="text"
+                      value={editingCollection.title}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, title: e.target.value })}
+                      placeholder="Ej: Saga Mítica Popol Vuh: Dioses & Creación"
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Subtítulo o Resumen del Set</label>
+                    <input
+                      type="text"
+                      value={editingCollection.subtitle || ''}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, subtitle: e.target.value })}
+                      placeholder="Ej: Colección de 5 Obras Maestras Ilustradas"
+                    />
+                  </div>
+                </div>
+
+                <div className="form-grid-3" style={{ marginTop: '12px' }}>
+                  <div className="mercado-input-group">
+                    <label>Insignia Destacada (Badge)</label>
+                    <input
+                      type="text"
+                      value={editingCollection.badge || ''}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, badge: e.target.value })}
+                      placeholder="Ej: PACK COLECCIÓN COMPLETA"
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Grado Escolar o Rango de Edad</label>
+                    <input
+                      type="text"
+                      value={editingCollection.gradeOrAge || ''}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, gradeOrAge: e.target.value })}
+                      placeholder="Ej: Primaria & Ciclo Básico (8 a 15 años)"
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Moneda</label>
+                    <input
+                      type="text"
+                      value={editingCollection.currency || 'Q'}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, currency: e.target.value })}
+                      placeholder="Q"
+                    />
+                  </div>
+                </div>
+
+                <div className="mercado-input-group" style={{ marginTop: '12px' }}>
+                  <label>Descripción General de la Saga</label>
+                  <textarea
+                    rows={3}
+                    value={editingCollection.description || ''}
+                    onChange={(e) => setEditingCollection({ ...editingCollection, description: e.target.value })}
+                    placeholder="Describe el valor pedagógico, literario o artístico de la colección completa..."
+                  />
+                </div>
+              </div>
+
+              {/* SECCIÓN 2: Precios y Regla de Venta Exclusiva */}
+              <div className="modal-section-box">
+                <h4 className="modal-section-title">
+                  <span>💰</span> 2. Precio del Pack y Modalidad de Venta
+                </h4>
+
+                <div className="form-grid-2">
+                  <div className="mercado-input-group">
+                    <label>Precio del Pack Completo ({editingCollection.currency}) *</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editingCollection.price}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, price: parseFloat(e.target.value) || 0 })}
+                      placeholder="Ej: 440.00"
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Precio Regular / Anterior (Tachado)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={editingCollection.originalPrice || ''}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, originalPrice: parseFloat(e.target.value) || 0 })}
+                      placeholder="Ej: 550.00 (opcional)"
+                    />
+                    {editingCollection.originalPrice > editingCollection.price && (
+                      <span style={{ fontSize: '0.78rem', color: '#10b981', fontWeight: 700, marginTop: '4px', display: 'block' }}>
+                        ✓ Ahorro de {editingCollection.currency} {(editingCollection.originalPrice - editingCollection.price).toFixed(2)} para el cliente
+                      </span>
+                    )}
+                  </div>
+                </div>
+
+                {/* INTERRUPTOR CLAVE: VENTA EXCLUSIVA EN PACK */}
+                <div className="collection-sale-mode-box">
+                  <label className="checkbox-sale-mode">
+                    <input
+                      type="checkbox"
+                      checked={editingCollection.onlySoldAsPack !== false}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, onlySoldAsPack: e.target.checked })}
+                    />
+                    <div className="sale-mode-info">
+                      <strong>🔒 Venta Exclusiva en Pack (Los libros NO se venden por separado)</strong>
+                      <p>
+                        Activa esta casilla para sagas que se venden juntas. Los 5 libros se exhibirán con sus portadas 3D y fichas técnicas en la estantería de la tienda para que el público aprecie cada título, pero no se podrán agregar al carrito por separado; únicamente se adquiere la colección completa.
+                      </p>
+                    </div>
+                  </label>
+                </div>
+
+                <div className="form-grid-2">
+                  <div className="mercado-input-group">
+                    <label>URL Portada Principal del Pack / Caja (Opcional)</label>
+                    <input
+                      type="text"
+                      value={editingCollection.image || ''}
+                      onChange={(e) => setEditingCollection({ ...editingCollection, image: e.target.value })}
+                      placeholder="https://... o sube la imagen abajo"
+                    />
+                    <label className="image-upload-dropzone" style={{ marginTop: '8px', padding: '12px' }}>
+                      {editingCollection.image ? (
+                        <img src={editingCollection.image} alt="Caja Pack" className="dropzone-preview" style={{ width: '48px', height: '48px' }} />
+                      ) : (
+                        <span style={{ fontSize: '1.5rem' }}>📷</span>
+                      )}
+                      <div>
+                        <strong style={{ fontSize: '0.8rem', color: '#fff' }}>Subir imagen de la caja / pack</strong>
+                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Formato PNG o WebP</span>
+                      </div>
+                      <input
+                        ref={colCoverInputRef}
+                        type="file"
+                        accept="image/*"
+                        style={{ display: 'none' }}
+                        onChange={handleColCoverUpload}
+                      />
+                    </label>
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Sincronización en Catálogo</label>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', marginTop: '12px', fontSize: '0.85rem', color: '#cbd5e1' }}>
+                      <input
+                        type="checkbox"
+                        checked={syncCollectionAsProduct}
+                        onChange={(e) => setSyncCollectionAsProduct(e.target.checked)}
+                      />
+                      <span>Mostrar también como producto destacado en la tienda principal</span>
+                    </label>
+                  </div>
+                </div>
+              </div>
+
+              {/* SECCIÓN 3: Gestor de los Libros que Componen la Colección */}
+              <div className="modal-section-box">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
+                  <h4 className="modal-section-title" style={{ margin: 0 }}>
+                    <span>📚</span> 3. Libros Incluidos en la Colección ({editingCollection.includedBooks?.length || 0} Títulos)
+                  </h4>
+                  <button
+                    type="button"
+                    className="btn-mercado-secondary"
+                    style={{ padding: '6px 12px', fontSize: '0.8rem' }}
+                    onClick={handleAddBookToCollection}
+                  >
+                    ＋ Agregar Otro Libro al Pack
+                  </button>
+                </div>
+
+                <div className="included-books-editor">
+                  {editingCollection.includedBooks?.map((book, idx) => (
+                    <div key={book.id || idx} className="included-book-card">
+                      <div className="included-book-header">
+                        <span className="included-book-num">
+                          📖 Tomo #{idx + 1}
+                        </span>
+                        {editingCollection.includedBooks!.length > 1 && (
+                          <button
+                            type="button"
+                            className="btn-remove-book"
+                            onClick={() => handleRemoveBookFromCollection(idx)}
+                            title="Quitar este libro de la colección"
+                          >
+                            ✕ Quitar Libro
+                          </button>
+                        )}
+                      </div>
+
+                      <div className="included-book-fields-row">
+                        <div className="included-book-cover-picker">
+                          <div className="included-book-thumb-box">
+                            {book.image ? (
+                              <img src={book.image} alt={book.title || `Libro ${idx + 1}`} />
+                            ) : (
+                              <span>📖</span>
+                            )}
+                          </div>
+                          <label className="btn-upload-book-cover">
+                            {uploadingBookCoverIdx === idx ? 'Subiendo...' : '📷 Portada'}
+                            <input
+                              type="file"
+                              accept="image/*"
+                              style={{ display: 'none' }}
+                              onChange={(e) => handleBookCoverUpload(e, idx)}
+                            />
+                          </label>
+                        </div>
+
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                          <div className="form-grid-2">
+                            <div className="mercado-input-group">
+                              <label>Título del Libro *</label>
+                              <input
+                                type="text"
+                                value={book.title}
+                                onChange={(e) => handleUpdateIncludedBook(idx, 'title', e.target.value)}
+                                placeholder={`Ej: Libro ${idx + 1} de la Saga`}
+                              />
+                            </div>
+
+                            <div className="mercado-input-group">
+                              <label>Autor / Adaptador</label>
+                              <input
+                                type="text"
+                                value={book.author || ''}
+                                onChange={(e) => handleUpdateIncludedBook(idx, 'author', e.target.value)}
+                                placeholder="Editorial Lluvia de Ideas"
+                              />
+                            </div>
+                          </div>
+
+                          <div className="form-grid-3">
+                            <div className="mercado-input-group">
+                              <label>Páginas</label>
+                              <input
+                                type="number"
+                                min="1"
+                                value={book.pages || ''}
+                                onChange={(e) => handleUpdateIncludedBook(idx, 'pages', e.target.value ? parseInt(e.target.value, 10) : undefined)}
+                                placeholder="Ej: 48"
+                              />
+                            </div>
+
+                            <div className="mercado-input-group">
+                              <label>Tema de Portada 3D</label>
+                              <select
+                                value={book.coverTheme || 'amber'}
+                                onChange={(e) => handleUpdateIncludedBook(idx, 'coverTheme', e.target.value)}
+                              >
+                                <option value="amber">🟠 Ámbar</option>
+                                <option value="cyan">🔵 Cian</option>
+                                <option value="emerald">🟢 Esmeralda</option>
+                                <option value="purple">🟣 Púrpura</option>
+                                <option value="ruby">🔴 Rubí</option>
+                              </select>
+                            </div>
+
+                            <div className="mercado-input-group">
+                              <label>URL Portada (Opcional)</label>
+                              <input
+                                type="text"
+                                value={book.image || ''}
+                                onChange={(e) => handleUpdateIncludedBook(idx, 'image', e.target.value)}
+                                placeholder="https://..."
+                              />
+                            </div>
+                          </div>
+
+                          <div className="mercado-input-group">
+                            <label>Sinopsis / Argumento Breve</label>
+                            <textarea
+                              rows={2}
+                              value={book.description || ''}
+                              onChange={(e) => handleUpdateIncludedBook(idx, 'description', e.target.value)}
+                              placeholder="Breve resumen del libro para la ficha técnica..."
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* SECCIÓN 4: Características y Beneficios del Pack */}
+              <div className="modal-section-box">
+                <h4 className="modal-section-title">
+                  <span>✨</span> 4. Beneficios y Características del Pack
+                </h4>
+
+                <div className="mercado-input-group">
+                  <label>Viñetas de Características (Una por línea)</label>
+                  <textarea
+                    rows={4}
+                    value={(editingCollection.features || []).join('\n')}
+                    onChange={(e) => setEditingCollection({
+                      ...editingCollection,
+                      features: e.target.value.split('\n')
+                    })}
+                    placeholder="5 Libros en pasta dura a todo color formato Kindle&#10;Glosario etimológico y mapa cosmológico desplegable&#10;Guías pedagógicas transversales de literatura y cosmovisión"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Footer de Acciones del Modal */}
+            <div className="admin-modal-footer">
+              <button 
+                type="button" 
+                className="btn-mercado-secondary"
+                onClick={() => setIsCollectionModalOpen(false)}
+              >
+                Cancelar
+              </button>
+              <button 
+                type="button" 
+                className="btn-mercado-primary"
+                onClick={handleSaveCollection}
+              >
+                💾 Guardar Colección
               </button>
             </div>
           </div>

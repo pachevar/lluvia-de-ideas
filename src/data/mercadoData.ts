@@ -35,6 +35,19 @@ export interface MercadoProduct {
   coverTheme?: 'amber' | 'cyan' | 'emerald' | 'purple' | 'ruby';
 }
 
+export interface CollectionIncludedBook {
+  id: string;
+  title: string;
+  subtitle?: string;
+  author?: string;
+  pages?: number;
+  gradeOrAge?: string;
+  description?: string;
+  image?: string;
+  coverTheme?: 'amber' | 'cyan' | 'emerald' | 'purple' | 'ruby';
+  isbn?: string;
+}
+
 export interface BookCollection {
   id: string;
   title: string;
@@ -48,10 +61,13 @@ export interface BookCollection {
   rating: number;
   reviewsCount: number;
   soldCount: number;
-  bookIds: string[];
-  themeColor: string;
-  accentGradient: string;
+  bookIds?: string[];
+  includedBooks?: CollectionIncludedBook[];
+  image?: string;
+  themeColor?: string;
+  accentGradient?: string;
   features: string[];
+  onlySoldAsPack?: boolean;
 }
 
 export const DEFAULT_BOOK_COLLECTIONS: BookCollection[] = [
@@ -844,11 +860,55 @@ export const DEFAULT_MERCADO_PRODUCTS: MercadoProduct[] = [
   }
 ];
 
-export const getCollectionBooks = (collectionId: string, products: MercadoProduct[] = DEFAULT_MERCADO_PRODUCTS): MercadoProduct[] => {
-  const collection = DEFAULT_BOOK_COLLECTIONS.find(c => c.id === collectionId);
+export const getCollectionBooks = (
+  collectionOrId: string | BookCollection,
+  products: MercadoProduct[] = DEFAULT_MERCADO_PRODUCTS,
+  allCollections: BookCollection[] = DEFAULT_BOOK_COLLECTIONS
+): MercadoProduct[] => {
+  const collection: BookCollection | undefined = typeof collectionOrId === 'string'
+    ? allCollections.find(c => c.id === collectionOrId)
+    : collectionOrId;
+
   if (!collection) return [];
-  return collection.bookIds
-    .map(id => products.find(p => p.id === id))
-    .filter((p): p is MercadoProduct => Boolean(p));
+
+  // Si tiene libros incluidos directamente en la colección
+  if (collection.includedBooks && collection.includedBooks.length > 0) {
+    return collection.includedBooks.map((b, idx) => ({
+      id: b.id || `inc-book-${collection.id}-${idx}`,
+      title: b.title,
+      category: 'cuentos',
+      categoryLabel: 'Libro de Colección',
+      price: collection.onlySoldAsPack ? 0 : (collection.price / collection.includedBooks!.length),
+      originalPrice: collection.onlySoldAsPack ? undefined : (collection.originalPrice / collection.includedBooks!.length),
+      currency: collection.currency || 'Q',
+      rating: collection.rating || 5.0,
+      reviewsCount: collection.reviewsCount || 1,
+      deliveryTime: 'Incluido en la colección',
+      description: b.description || '',
+      longDescription: b.description || '',
+      badge: collection.onlySoldAsPack ? 'EXCLUSIVO DEL PACK' : 'PARTE DE COLECCIÓN',
+      icon: '📖',
+      image: b.image || collection.image,
+      gradeOrAge: b.gradeOrAge || collection.gradeOrAge,
+      features: collection.features || [],
+      collectionId: collection.id,
+      collectionName: collection.title,
+      author: b.author || 'Editorial Lluvia de Ideas',
+      pages: b.pages,
+      formatType: 'Kindle eBook & Tapa Dura',
+      coverTheme: b.coverTheme || (idx % 2 === 0 ? 'cyan' : 'amber'),
+      isbn: b.isbn,
+      inStock: true
+    }));
+  }
+
+  // Si referencia productos existentes por bookIds
+  if (collection.bookIds && collection.bookIds.length > 0) {
+    return collection.bookIds
+      .map(id => products.find(p => p.id === id))
+      .filter((p): p is MercadoProduct => Boolean(p));
+  }
+
+  return [];
 };
 

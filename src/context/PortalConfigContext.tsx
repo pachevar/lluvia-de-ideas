@@ -200,6 +200,7 @@ export const DEFAULT_CONFIG: PortalConfig = {
     showPromoStrip: true
   },
   mercadoProducts: [],
+  mercadoCollections: [],
   landingConfig: {
     cards: {
       sutz: {
@@ -597,6 +598,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
           tiendaConfig: data.tiendaConfig || (data as unknown as { catalogoConfig?: TiendaConfig }).catalogoConfig || DEFAULT_CONFIG.tiendaConfig,
           mercadoConfig: { ...(DEFAULT_CONFIG.mercadoConfig || {}), ...(data.mercadoConfig || {}) },
           mercadoProducts: Array.isArray(data.mercadoProducts) ? data.mercadoProducts : DEFAULT_CONFIG.mercadoProducts,
+          mercadoCollections: Array.isArray(data.mercadoCollections) ? data.mercadoCollections : (DEFAULT_CONFIG.mercadoCollections || []),
           granGaleria: data.granGaleria || DEFAULT_CONFIG.granGaleria,
           archetypeImages: { ...(DEFAULT_CONFIG.archetypeImages || {}), ...(data.archetypeImages || {}) },
           journeyStageImages: { ...(DEFAULT_CONFIG.journeyStageImages || {}), ...(data.journeyStageImages || {}) }

@@ -3,9 +3,7 @@ import { createPortal } from 'react-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { 
-  DEFAULT_MERCADO_PRODUCTS, 
   MERCADO_CATEGORIES, 
-  DEFAULT_BOOK_COLLECTIONS,
   getCollectionBooks,
   type MercadoProduct,
   type BookCollection
@@ -31,8 +29,15 @@ export default function Mercado() {
     if (config?.mercadoProducts !== undefined && Array.isArray(config.mercadoProducts)) {
       return config.mercadoProducts as MercadoProduct[];
     }
-    return DEFAULT_MERCADO_PRODUCTS;
+    return [];
   }, [config?.mercadoProducts]);
+
+  const allCollections: BookCollection[] = useMemo(() => {
+    if (config?.mercadoCollections !== undefined && Array.isArray(config.mercadoCollections)) {
+      return config.mercadoCollections as BookCollection[];
+    }
+    return [];
+  }, [config?.mercadoCollections]);
 
   const mercadoConfig = config?.mercadoConfig || {
     announcement: "Envíos a todo el país en 24-48 hrs · Descuentos por volumen para colegios y docentes",
@@ -180,10 +185,10 @@ export default function Mercado() {
       longDescription: `${collection.subtitle}. Incluye los ${books.length} títulos de la saga: ${books.map(b => b.title).join(', ')}.`,
       badge: collection.badge || 'PACK COLECCIÓN',
       icon: '📦',
-      image: books[0]?.image,
+      image: collection.image || books[0]?.image,
       gradeOrAge: collection.gradeOrAge,
       features: collection.features,
-      contents: books.map(b => `1x ${b.title}`),
+      contents: collection.features || books.map(b => `1x ${b.title}`),
       featured: true,
       inStock: true
     };
@@ -298,7 +303,7 @@ export default function Mercado() {
     : (currentCatObj?.icon || '✨');
 
   const activeCategoryItemCount = isCollectionsActive
-    ? DEFAULT_BOOK_COLLECTIONS.length
+    ? allCollections.length
     : (categoryCounts[selectedCategory] || allProducts.length);
 
   // Filtrado y ordenamiento de productos
@@ -651,7 +656,7 @@ export default function Mercado() {
                                 <span className="subitem-title">Colecciones & Sagas</span>
                                 <span className="subitem-badge-pill">Ahorro</span>
                               </div>
-                              <span className="subitem-count">{DEFAULT_BOOK_COLLECTIONS.length}</span>
+                              <span className="subitem-count">{allCollections.length}</span>
                             </button>
 
                             <button
@@ -849,7 +854,7 @@ export default function Mercado() {
                       setCuentosSubCategory('colecciones');
                     }}
                   >
-                    <span className="sparkle">✨</span> 📦 Colecciones ({DEFAULT_BOOK_COLLECTIONS.length})
+                    <span className="sparkle">✨</span> 📦 Colecciones ({allCollections.length})
                   </button>
                   <button
                     type="button"
@@ -885,6 +890,7 @@ export default function Mercado() {
             {selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? (
               <KindleCollectionsView
                 allProducts={allProducts}
+                collections={allCollections}
                 onAddToCart={handleAddToCart}
                 onAddCollectionToCart={handleAddCollectionToCart}
                 onQuickView={(p) => {
@@ -893,6 +899,10 @@ export default function Mercado() {
                   setDetailQuantity(1);
                 }}
                 whatsappPhone={mercadoConfig.whatsappPhone || CONTACT.whatsappPhone}
+                onGoBackToCatalog={() => {
+                  setSelectedCategory('todos');
+                  setCuentosSubCategory('todos');
+                }}
               />
             ) : selectedCategory === 'cuentos' ? (
               /* Libros en Formato Amazon Kindle (Portadas 3D) */
@@ -1646,7 +1656,7 @@ export default function Mercado() {
                               <span className="sub-name">Colecciones & Sagas</span>
                               <span className="sub-badge-tag">Packs Ahorro</span>
                             </div>
-                            <span className="sub-count">{DEFAULT_BOOK_COLLECTIONS.length}</span>
+                            <span className="sub-count">{allCollections.length}</span>
                           </button>
                           <button
                             type="button"

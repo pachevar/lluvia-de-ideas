@@ -82,7 +82,8 @@ export default function Gerencia() {
             archetypeImages: config.archetypeImages || prev.archetypeImages || {},
             journeyStageImages: config.journeyStageImages || prev.journeyStageImages || {},
             mercadoConfig: prev.mercadoConfig || config.mercadoConfig,
-            mercadoProducts: prev.mercadoProducts || config.mercadoProducts
+            mercadoProducts: prev.mercadoProducts || config.mercadoProducts,
+            mercadoCollections: prev.mercadoCollections || config.mercadoCollections
           };
         });
       }
@@ -146,6 +147,7 @@ export default function Gerencia() {
           ...(localConfig.mercadoConfig || {})
         },
         mercadoProducts: localConfig.mercadoProducts !== undefined ? localConfig.mercadoProducts : (config?.mercadoProducts || []),
+        mercadoCollections: localConfig.mercadoCollections !== undefined ? localConfig.mercadoCollections : (config?.mercadoCollections || []),
         archetypeImages: sanitizeImagesMap(localConfig.archetypeImages || config.archetypeImages),
         journeyStageImages: sanitizeImagesMap(localConfig.journeyStageImages || config.journeyStageImages)
       };
