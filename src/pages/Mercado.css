@@ -1200,8 +1200,8 @@
    -------------------------------------------------------------------------- */
 .amazon-products-grid {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
   width: 100%;
 }
 
@@ -2290,8 +2290,10 @@
 
 /* Tablet y Pantallas Medianas (<= 1024px y <= 900px) */
 @media (max-width: 1024px) {
-  .amazon-products-grid {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
+  .amazon-products-grid,
+  .kindle-books-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 16px;
   }
 }
 
@@ -2695,6 +2697,8 @@
    -------------------------------------------------------------------------- */
 .kindle-cuentos-subnav {
   width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -2706,6 +2710,7 @@
   margin-bottom: 20px;
   box-shadow: 0 4px 14px rgba(0, 0, 0, 0.12);
   flex-wrap: wrap;
+  overflow: hidden;
 }
 
 .kindle-subnav-left {
@@ -2785,8 +2790,8 @@
    -------------------------------------------------------------------------- */
 .kindle-books-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
-  gap: 22px;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 24px;
   width: 100%;
 }
 
@@ -3561,12 +3566,83 @@
   border-bottom: 1px solid #f1f5f9;
   color: #0f172a;
   display: grid;
-  grid-template-columns: 1fr 320px;
+  grid-template-columns: 160px 1fr 280px;
   gap: 24px;
   align-items: center;
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+}
+
+/* Portada 3D de la Colección */
+.col-header-cover-stage {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.col-cover-3d-box {
+  position: relative;
+  width: 145px;
+  height: 205px;
+  border-radius: 12px;
+  box-shadow: 0 14px 28px -6px rgba(0, 0, 0, 0.25), 0 0 0 1px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.col-cover-3d-box:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 35px -6px rgba(0, 0, 0, 0.35);
+}
+
+.col-cover-image {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.col-cover-placeholder-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: #94a3b8;
+}
+
+.col-cover-placeholder-icon {
+  font-size: 2.6rem;
+}
+
+.col-cover-placeholder-text {
+  font-size: 0.72rem;
+  font-weight: 850;
+  letter-spacing: 0.1em;
+  color: #e2e8f0;
+}
+
+.col-cover-pack-tag {
+  position: absolute;
+  bottom: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.92);
+  color: #ffffff;
+  font-size: 0.68rem;
+  font-weight: 750;
+  padding: 4px 10px;
+  border-radius: 999px;
+  white-space: nowrap;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(255, 255, 255, 0.18);
 }
 
 .col-header-left {
@@ -4153,13 +4229,49 @@
 .modal-kindle-collection-card {
   background: #f0fdf4;
   border: 1px solid #86efac;
-  border-radius: 10px;
+  border-radius: 12px;
   padding: 12px 14px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 12px;
+  gap: 14px;
   margin: 12px 0;
+}
+
+.modal-col-cover-thumb {
+  position: relative;
+  width: 65px;
+  height: 92px;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  flex-shrink: 0;
+  background: #0f172a;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-col-thumb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.modal-col-pack-label {
+  position: absolute;
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.9);
+  color: #ffffff;
+  font-size: 0.58rem;
+  font-weight: 850;
+  padding: 1px 6px;
+  border-radius: 999px;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
 }
 
 .col-tag-small {
@@ -4408,23 +4520,40 @@
 
   /* Subnavegación de Cuentos y Libros */
   .kindle-cuentos-subnav {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
     flex-direction: column;
     align-items: stretch;
     padding: 10px 12px;
-    gap: 10px;
+    gap: 8px;
+    overflow: hidden !important;
+    border-radius: 10px;
   }
 
   .kindle-subnav-left {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    display: flex;
+    align-items: center;
+    gap: 8px;
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    padding-bottom: 4px;
+    padding-bottom: 2px;
     scrollbar-width: none;
     -ms-overflow-style: none;
   }
 
   .kindle-subnav-left::-webkit-scrollbar {
     display: none;
+  }
+
+  .kindle-subnav-title {
+    flex-shrink: 0;
+    font-size: 0.8rem;
+    white-space: nowrap;
   }
 
   .kindle-subnav-pill {
@@ -4434,9 +4563,16 @@
     padding: 5px 12px;
   }
 
-  .kindle-badge-format-info {
-    font-size: 0.7rem;
+  .kindle-subnav-right {
+    width: 100%;
     text-align: center;
+  }
+
+  .kindle-badge-format-info {
+    font-size: 0.68rem;
+    text-align: center;
+    display: block;
+    opacity: 0.9;
   }
 
   /* Grilla de libros Kindle */

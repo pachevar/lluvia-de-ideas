@@ -492,7 +492,7 @@ export default function Mercado() {
                 }}
               >
                 <option value="todos">Todos los Departamentos</option>
-                <option value="cuentos">📚 Cuentos y Libros (Kindle)</option>
+                <option value="cuentos">📚 Cuentos y Libros</option>
                 <option value="colecciones">📦 Colecciones de Libros</option>
                 <option value="juegos">🎲 Juegos de Mesa</option>
                 <option value="personajes">🎭 Personajes y Títeres</option>
@@ -742,32 +742,6 @@ export default function Mercado() {
 
                             <button
                               type="button"
-                              className={`sidebar-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'popol-vuh' ? 'active' : ''}`}
-                              onClick={() => {
-                                soundEffects.playClick();
-                                setSelectedCategory('cuentos');
-                                setCuentosSubCategory('popol-vuh');
-                              }}
-                            >
-                              <span className="subitem-icon">🌌</span>
-                              <span className="subitem-title">Saga Popol Vuh (c-5 a c-9)</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              className={`sidebar-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'steam' ? 'active' : ''}`}
-                              onClick={() => {
-                                soundEffects.playClick();
-                                setSelectedCategory('cuentos');
-                                setCuentosSubCategory('steam');
-                              }}
-                            >
-                              <span className="subitem-icon">🚀</span>
-                              <span className="subitem-title">Colección STEAM</span>
-                            </button>
-
-                            <button
-                              type="button"
                               className={`sidebar-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'todos' ? 'active' : ''}`}
                               onClick={() => {
                                 soundEffects.playClick();
@@ -910,12 +884,12 @@ export default function Mercado() {
               </div>
             </div>
 
-            {/* Si está en la categoría Cuentos y Libros: Barra de Subcategorías Kindle */}
+            {/* Si está en la categoría Cuentos y Libros: Barra de Subcategorías */}
             {selectedCategory === 'cuentos' && (
               <div className="kindle-cuentos-subnav">
                 <div className="kindle-subnav-left">
                   <span className="kindle-subnav-title">
-                    <span className="kindle-icon">📖</span> Kindle Bookshelf
+                    <span className="kindle-icon">📖</span> Catálogo de Libros
                   </span>
                   <button
                     type="button"
@@ -937,31 +911,11 @@ export default function Mercado() {
                   >
                     <span className="sparkle">✨</span> 📦 Colecciones ({allCollections.length})
                   </button>
-                  <button
-                    type="button"
-                    className={`kindle-subnav-pill ${cuentosSubCategory === 'popol-vuh' ? 'active' : ''}`}
-                    onClick={() => {
-                      soundEffects.playClick();
-                      setCuentosSubCategory('popol-vuh');
-                    }}
-                  >
-                    ⛈️ Saga Popol Vuh (5)
-                  </button>
-                  <button
-                    type="button"
-                    className={`kindle-subnav-pill ${cuentosSubCategory === 'steam' ? 'active' : ''}`}
-                    onClick={() => {
-                      soundEffects.playClick();
-                      setCuentosSubCategory('steam');
-                    }}
-                  >
-                    🧬 Serie STEAM (4)
-                  </button>
                 </div>
 
                 <div className="kindle-subnav-right">
                   <span className="kindle-badge-format-info">
-                    ✨ Formato Amazon Kindle · Portadas 3D & Lecturas Pedagógicas
+                    ✨ Ediciones Físicas & Digitales · Literatura Infantil
                   </span>
                 </div>
               </div>
@@ -1509,36 +1463,46 @@ export default function Mercado() {
                 </div>
 
                 {/* Si pertenece a una colección (Subcategoría interactiva) */}
-                {selectedProduct.collectionName && selectedProduct.collectionId && (
-                  <div className="modal-kindle-collection-card">
-                    <div className="col-card-text">
-                      <span className="col-tag-small">📦 COLECCIÓN EDITORIAL</span>
-                      <h4 className="col-name-h4">
-                        Este libro forma parte de: <strong>{selectedProduct.collectionName}</strong>
-                      </h4>
-                      <p className="col-expl-p">
-                        Puedes adquirir la colección completa con descuento de pack especial o explorar los otros títulos que la componen.
-                      </p>
+                {selectedProduct.collectionName && selectedProduct.collectionId && (() => {
+                  const parentCol = allCollections.find(c => c.id === selectedProduct.collectionId);
+                  const colImg = parentCol?.image || selectedProduct.image;
+                  return (
+                    <div className="modal-kindle-collection-card">
+                      {colImg && (
+                        <div className="modal-col-cover-thumb">
+                          <img src={colImg} alt={selectedProduct.collectionName} className="modal-col-thumb-img" />
+                          <span className="modal-col-pack-label">PACK</span>
+                        </div>
+                      )}
+                      <div className="col-card-text">
+                        <span className="col-tag-small">📦 COLECCIÓN EDITORIAL</span>
+                        <h4 className="col-name-h4">
+                          Este libro forma parte de: <strong>{selectedProduct.collectionName}</strong>
+                        </h4>
+                        <p className="col-expl-p">
+                          Puedes adquirir la colección completa con descuento de pack especial o explorar los otros títulos que la componen.
+                        </p>
+                      </div>
+                      <button
+                        type="button"
+                        className="btn-modal-open-collection"
+                        onClick={() => {
+                          soundEffects.playClick();
+                          const targetCol = selectedProduct.collectionId;
+                          setSelectedProduct(null);
+                          setSelectedCategory('cuentos');
+                          setCuentosSubCategory('colecciones');
+                          setTimeout(() => {
+                            const el = document.getElementById(`collection-${targetCol}`);
+                            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }, 150);
+                        }}
+                      >
+                        <span>Ver Colección Completa ▸</span>
+                      </button>
                     </div>
-                    <button
-                      type="button"
-                      className="btn-modal-open-collection"
-                      onClick={() => {
-                        soundEffects.playClick();
-                        const targetCol = selectedProduct.collectionId;
-                        setSelectedProduct(null);
-                        setSelectedCategory('cuentos');
-                        setCuentosSubCategory('colecciones');
-                        setTimeout(() => {
-                          const el = document.getElementById(`collection-${targetCol}`);
-                          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                        }, 150);
-                      }}
-                    >
-                      <span>Ver Colección Completa ▸</span>
-                    </button>
-                  </div>
-                )}
+                  );
+                })()}
 
                 {/* Estante de Libros Compañeros de la misma Colección */}
                 {selectedProduct.collectionId && (
@@ -1769,32 +1733,6 @@ export default function Mercado() {
                               <span className="sub-badge-tag">Packs Ahorro</span>
                             </div>
                             <span className="sub-count">{allCollections.length}</span>
-                          </button>
-                          <button
-                            type="button"
-                            className={`mobile-drawer-subbtn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'popol-vuh' ? 'active' : ''}`}
-                            onClick={() => {
-                              soundEffects.playClick();
-                              setSelectedCategory('cuentos');
-                              setCuentosSubCategory('popol-vuh');
-                              setIsMobileDrawerOpen(false);
-                            }}
-                          >
-                            <span className="sub-emoji">🌌</span>
-                            <span className="sub-name">Saga Popol Vuh (c-5 a c-9)</span>
-                          </button>
-                          <button
-                            type="button"
-                            className={`mobile-drawer-subbtn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'steam' ? 'active' : ''}`}
-                            onClick={() => {
-                              soundEffects.playClick();
-                              setSelectedCategory('cuentos');
-                              setCuentosSubCategory('steam');
-                              setIsMobileDrawerOpen(false);
-                            }}
-                          >
-                            <span className="sub-emoji">🚀</span>
-                            <span className="sub-name">Colección STEAM</span>
                           </button>
                           <button
                             type="button"

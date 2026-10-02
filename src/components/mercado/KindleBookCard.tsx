@@ -51,7 +51,7 @@ export const KindleBookCard: React.FC<KindleBookCardProps> = ({
         {/* Formato y Colección */}
         <div className="kindle-format-strip">
           <span className="kindle-format-text">
-            {product.formatType || '📖 Tapa Blanda · 📱 Kindle Digital'}
+            {product.formatType || '📖 Edición Física & Digital'}
           </span>
           {product.pages && (
             <span className="kindle-pages-count">· {product.pages} págs.</span>

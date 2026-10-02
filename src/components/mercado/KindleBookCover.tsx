@@ -112,11 +112,6 @@ export const KindleBookCover: React.FC<KindleBookCoverProps> = ({
               <span>👁️ Echar un vistazo</span>
             </div>
           )}
-
-          {/* Etiqueta de formato Kindle en esquina */}
-          <div className="kindle-corner-format-tag" title="Formato Libro Físico & Digital Kindle">
-            <span>Kindle</span>
-          </div>
         </div>
 
         {/* Sombra ambiental inferior */}

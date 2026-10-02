@@ -86,7 +86,7 @@ export default function Home() {
       title: cardsConf.mercado?.title || 'Mercado Pedagógico',
       badge: cardsConf.mercado?.badge || 'Tienda Editorial · Libros & Kits',
       kicheTag: cardsConf.mercado?.kicheTag || "Kʼaybʼal (Mercado)",
-      desc: cardsConf.mercado?.desc || 'Cuentos ilustrados formato Kindle, sagas del Popol Vuh, proyectos STEAM, útiles y juegos didácticos.',
+      desc: cardsConf.mercado?.desc || 'Cuentos ilustrados de lujo, colecciones pedagógicas, proyectos STEAM, útiles y juegos didácticos.',
       icon: '🛍️',
       colorClass: 'card-gradient-amber',
       accentColor: '#f59e0b'
@@ -622,11 +622,11 @@ export default function Home() {
               <span className="gradient-text-amber">{mercadoSec.title || 'Mercado Pedagógico'}</span>
             </h2>
             <p className="feature-body">
-              {mercadoSec.body || 'Explora sagas literarias en pasta dura e ilustraciones a todo color formato Kindle, proyectos prácticos de robótica y STEAM, barajas temáticas y juegos de mesa con rigor pedagógico.'}
+              {mercadoSec.body || 'Explora sagas literarias en pasta dura e ilustraciones a todo color de gran formato, proyectos prácticos de robótica y STEAM, barajas temáticas y juegos de mesa con rigor pedagógico.'}
             </p>
             <ul className="feature-bullets">
               {(mercadoSec.bullets && mercadoSec.bullets.length > 0 ? mercadoSec.bullets : [
-                'Sagas Popol Vuh & STEAM: Obras ilustradas formato Kindle con mapas y desafíos.',
+                'Sagas Literarias & Colecciones: Obras maestras ilustradas con mapas y desafíos pedagógicos.',
                 'Kits de Robótica y Ciencia: Materiales didácticos certificados directos de la editorial.',
                 'Juegos de Mesa & Cartas: Dinámicas pedagógicas para el aula y la familia.'
               ]).map((bullet: string, idx: number) => (

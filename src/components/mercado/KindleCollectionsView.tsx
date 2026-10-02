@@ -151,6 +151,31 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
             >
               {/* Encabezado Editorial Limpio de la Colección */}
               <div className="collection-card-header">
+                {/* Portada Principal de la Colección para Máximo Realce */}
+                <div className="col-header-cover-stage">
+                  <div className="col-cover-3d-box">
+                    {collection.image ? (
+                      <img 
+                        src={collection.image} 
+                        alt={`Portada de la colección ${collection.title}`}
+                        className="col-cover-image" 
+                      />
+                    ) : componentBooks[0]?.image ? (
+                      <img 
+                        src={componentBooks[0]?.image} 
+                        alt={`Portada de la colección ${collection.title}`}
+                        className="col-cover-image" 
+                      />
+                    ) : (
+                      <div className="col-cover-placeholder-box">
+                        <span className="col-cover-placeholder-icon">📦</span>
+                        <span className="col-cover-placeholder-text">PACK</span>
+                      </div>
+                    )}
+                    <span className="col-cover-pack-tag">📦 Pack {componentBooks.length} Libros</span>
+                  </div>
+                </div>
+
                 <div className="col-header-left">
                   <div className="col-badge-row">
                     <span className="col-main-badge">{collection.badge}</span>
