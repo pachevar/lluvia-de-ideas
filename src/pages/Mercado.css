@@ -2215,22 +2215,84 @@
 
 @media (max-width: 900px) {
   .mercado-amazon-header {
-    padding: 10px 16px;
+    padding: 8px 12px;
+    position: sticky;
+    top: 0;
+    z-index: 800;
   }
 
   .mercado-header-container {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+    display: grid !important;
+    grid-template-columns: 1fr auto !important;
+    grid-template-areas:
+      "brand actions"
+      "search search" !important;
+    gap: 8px 10px !important;
+    align-items: center !important;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
-  .mercado-amazon-search-box {
-    max-width: 100%;
+  .mercado-brand-section {
+    grid-area: brand;
+    align-items: flex-start;
+    text-align: left;
+  }
+
+  .mercado-store-logo {
+    font-size: 1.25rem;
+  }
+
+  .mercado-tagline {
+    font-size: 0.62rem;
   }
 
   .mercado-header-actions {
-    justify-content: space-between;
-    width: 100%;
+    grid-area: actions;
+    display: flex !important;
+    justify-content: flex-end !important;
+    align-items: center !important;
+    width: auto !important;
+  }
+
+  .amazon-cart-btn {
+    padding: 6px 12px;
+    border-radius: 12px;
+    gap: 8px;
+    background: #ffffff;
+    border: 1.5px solid #0284c7;
+    box-shadow: 0 2px 8px rgba(2, 132, 199, 0.12);
+  }
+
+  .cart-svg-icon {
+    font-size: 1.25rem;
+  }
+
+  .cart-count-badge {
+    top: -6px;
+    right: -7px;
+    width: 18px;
+    height: 18px;
+    font-size: 0.68rem;
+  }
+
+  .cart-btn-text {
+    line-height: 1.1;
+  }
+
+  .cart-text-sub {
+    font-size: 0.58rem;
+    color: #64748b;
+  }
+
+  .cart-text-price {
+    font-size: 0.84rem;
+  }
+
+  .mercado-amazon-search-box {
+    grid-area: search;
+    width: 100% !important;
+    max-width: 100% !important;
   }
 
   .mercado-amazon-main {
@@ -2292,8 +2354,8 @@
   }
 
   .mercado-brand-section {
-    align-items: center;
-    text-align: center;
+    align-items: flex-start;
+    text-align: left;
   }
 
   .mercado-store-logo {
@@ -4633,26 +4695,40 @@
 .btn-mobile-dept-trigger {
   display: none;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-  border: 1px solid #334155;
+  border: 1px solid rgba(56, 189, 248, 0.35);
   color: #ffffff;
-  padding: 8px 14px;
+  padding: 8px 12px;
   border-radius: 12px;
   cursor: pointer;
-  flex: 1;
+  flex: 1 1 auto;
   min-width: 0;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
-  transition: all 0.2s ease;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16);
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  -webkit-tap-highlight-color: transparent;
 }
 
 .btn-mobile-dept-trigger:active {
-  transform: scale(0.98);
+  transform: scale(0.97);
+  background: #0f172a;
+  border-color: #38bdf8;
+}
+
+.btn-mobile-hamburger {
+  font-size: 1rem;
+  color: #38bdf8;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .btn-mobile-icon {
-  font-size: 1.25rem;
+  font-size: 1.15rem;
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
 }
 
 .btn-mobile-texts {
@@ -4662,19 +4738,20 @@
   text-align: left;
   flex: 1;
   min-width: 0;
+  overflow: hidden;
 }
 
 .btn-mobile-pre {
-  font-size: 0.64rem;
+  font-size: 0.6rem;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
-  color: #94a3b8;
-  font-weight: 700;
-  line-height: 1;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+  font-weight: 800;
+  line-height: 1.1;
 }
 
 .btn-mobile-title {
-  font-size: 0.88rem;
+  font-size: 0.82rem;
   font-weight: 800;
   color: #ffffff;
   white-space: nowrap;
@@ -4684,19 +4761,25 @@
 }
 
 .btn-mobile-badge {
-  background: rgba(255, 255, 255, 0.18);
+  background: rgba(255, 255, 255, 0.16);
   color: #ffffff;
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 800;
   padding: 2px 7px;
-  border-radius: 20px;
+  border-radius: 999px;
   flex-shrink: 0;
 }
 
-.btn-mobile-arrow {
-  font-size: 1.1rem;
-  color: #38bdf8;
+.btn-mobile-chevron {
+  font-size: 0.82rem;
+  color: #94a3b8;
   flex-shrink: 0;
+  transition: transform 0.2s ease;
+}
+
+.btn-mobile-dept-trigger:active .btn-mobile-chevron {
+  transform: translateY(2px);
+  color: #38bdf8;
 }
 
 /* Breadcrumbs de Ubicación en el Catálogo */
@@ -5302,16 +5385,153 @@
     display: none !important;
   }
 
-  .btn-mobile-dept-trigger {
-    display: flex !important;
-  }
-
   .catalog-breadcrumbs {
     display: none !important;
   }
 
   .mercado-vertical-sidebar {
     display: none !important;
+  }
+
+  /* Barra de Control de Navegación Móvil */
+  .mercado-catalog-control-bar {
+    position: relative !important;
+    top: auto !important;
+    padding: 8px 12px !important;
+    background: #f8fafc !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03) !important;
+  }
+
+  .catalog-control-inner {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+  }
+
+  /* Botón Desplegable para Móvil */
+  .btn-mobile-dept-trigger {
+    display: flex !important;
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    max-width: calc(100% - 132px) !important;
+    padding: 7px 10px !important;
+    gap: 7px !important;
+    border-radius: 10px !important;
+    background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%) !important;
+    border: 1px solid rgba(56, 189, 248, 0.35) !important;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.16) !important;
+  }
+
+  .btn-mobile-hamburger {
+    font-size: 0.95rem;
+    color: #38bdf8;
+    flex-shrink: 0;
+  }
+
+  .btn-mobile-icon {
+    font-size: 1.1rem;
+    flex-shrink: 0;
+  }
+
+  .btn-mobile-texts {
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .btn-mobile-pre {
+    font-size: 0.58rem;
+    color: #38bdf8;
+    font-weight: 800;
+    line-height: 1;
+  }
+
+  .btn-mobile-title {
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #ffffff;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 100%;
+    display: block;
+  }
+
+  .btn-mobile-badge {
+    font-size: 0.66rem;
+    padding: 1px 5px;
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    flex-shrink: 0;
+  }
+
+  .btn-mobile-chevron {
+    font-size: 0.78rem;
+    color: #94a3b8;
+    flex-shrink: 0;
+  }
+
+  /* Selector de Ordenación (Destacados) en Móvil: Sin desbordamiento */
+  .dept-sort-box {
+    display: flex !important;
+    align-items: center !important;
+    flex: 0 0 124px !important;
+    width: 124px !important;
+    max-width: 124px !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    flex-shrink: 0 !important;
+  }
+
+  .dept-sort-label {
+    display: none !important;
+  }
+
+  .dept-sort-select {
+    width: 100% !important;
+    max-width: 124px !important;
+    font-size: 0.74rem !important;
+    font-weight: 750 !important;
+    padding: 7px 6px !important;
+    border-radius: 10px !important;
+    background: #ffffff !important;
+    border: 1.5px solid #cbd5e1 !important;
+    color: #0f172a !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05) !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    cursor: pointer;
+  }
+}
+
+@media (max-width: 360px) {
+  .catalog-control-inner {
+    flex-wrap: wrap !important;
+    gap: 6px !important;
+  }
+
+  .btn-mobile-dept-trigger {
+    max-width: 100% !important;
+    width: 100% !important;
+  }
+
+  .dept-sort-box {
+    flex: 1 1 100% !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .dept-sort-select {
+    max-width: 100% !important;
+    width: 100% !important;
   }
 }
 

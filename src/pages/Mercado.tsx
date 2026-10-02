@@ -492,15 +492,16 @@ export default function Mercado() {
               soundEffects.playClick();
               setIsMobileDrawerOpen(true);
             }}
-            title="Abrir menú vertical de departamentos"
+            title="Abrir departamentos y categorías"
           >
+            <span className="btn-mobile-hamburger">☰</span>
             <span className="btn-mobile-icon">{activeCategoryDisplayIcon}</span>
             <div className="btn-mobile-texts">
-              <span className="btn-mobile-pre">Departamento:</span>
+              <span className="btn-mobile-pre">Categoría</span>
               <span className="btn-mobile-title">{activeCategoryDisplayLabel}</span>
             </div>
             <span className="btn-mobile-badge">{activeCategoryItemCount}</span>
-            <span className="btn-mobile-arrow">☰</span>
+            <span className="btn-mobile-chevron">▾</span>
           </button>
 
           {/* Breadcrumbs de Ubicación Actual */}
