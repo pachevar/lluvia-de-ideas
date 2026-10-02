@@ -6,7 +6,6 @@ import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
 import { subscribeArchetypeAssets } from '../services/archetypeAssetsService';
 import { DEFAULT_GRAN_GALERIA } from '../data/defaultGranGaleriaData';
-import { DEFAULT_MERCADO_PRODUCTS } from '../data/mercadoData';
 
 interface PortalConfigContextProps {
   config: PortalConfig;
@@ -200,7 +199,7 @@ export const DEFAULT_CONFIG: PortalConfig = {
     bannerSubtitle: "Materiales didácticos, cuentos y proyectos pedagógicos directos de la editorial",
     showPromoStrip: true
   },
-  mercadoProducts: DEFAULT_MERCADO_PRODUCTS,
+  mercadoProducts: [],
   landingConfig: {
     cards: {
       sutz: {
@@ -597,7 +596,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
           tek100: { ...DEFAULT_CONFIG.tek100, ...(data.tek100 || {}) },
           tiendaConfig: data.tiendaConfig || (data as unknown as { catalogoConfig?: TiendaConfig }).catalogoConfig || DEFAULT_CONFIG.tiendaConfig,
           mercadoConfig: { ...(DEFAULT_CONFIG.mercadoConfig || {}), ...(data.mercadoConfig || {}) },
-          mercadoProducts: Array.isArray(data.mercadoProducts) && data.mercadoProducts.length > 0 ? data.mercadoProducts : DEFAULT_CONFIG.mercadoProducts,
+          mercadoProducts: Array.isArray(data.mercadoProducts) ? data.mercadoProducts : DEFAULT_CONFIG.mercadoProducts,
           granGaleria: data.granGaleria || DEFAULT_CONFIG.granGaleria,
           archetypeImages: { ...(DEFAULT_CONFIG.archetypeImages || {}), ...(data.archetypeImages || {}) },
           journeyStageImages: { ...(DEFAULT_CONFIG.journeyStageImages || {}), ...(data.journeyStageImages || {}) }

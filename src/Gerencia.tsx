@@ -24,7 +24,6 @@ import AdminTabTechTree from './components/admin/AdminTabTechTree';
 import AdminTabViajeDelHeroe from './components/admin/AdminTabViajeDelHeroe';
 import AdminTabGranGaleria from './components/admin/AdminTabGranGaleria';
 import { saveArchetypeAsset } from './services/archetypeAssetsService';
-import { DEFAULT_MERCADO_PRODUCTS } from './data/mercadoData';
 
 export default function Gerencia() {
   const { config, loading: configLoading, saveConfigToFirestore, resetConfigToFirestore } = usePortalConfig();
@@ -146,7 +145,7 @@ export default function Gerencia() {
           ...(config?.mercadoConfig || {}),
           ...(localConfig.mercadoConfig || {})
         },
-        mercadoProducts: localConfig.mercadoProducts !== undefined ? localConfig.mercadoProducts : (config?.mercadoProducts || DEFAULT_MERCADO_PRODUCTS),
+        mercadoProducts: localConfig.mercadoProducts !== undefined ? localConfig.mercadoProducts : (config?.mercadoProducts || []),
         archetypeImages: sanitizeImagesMap(localConfig.archetypeImages || config.archetypeImages),
         journeyStageImages: sanitizeImagesMap(localConfig.journeyStageImages || config.journeyStageImages)
       };

@@ -28,7 +28,7 @@ export default function Mercado() {
   const { config } = usePortalConfig();
 
   const allProducts: MercadoProduct[] = useMemo(() => {
-    if (config?.mercadoProducts && Array.isArray(config.mercadoProducts) && config.mercadoProducts.length > 0) {
+    if (config?.mercadoProducts !== undefined && Array.isArray(config.mercadoProducts)) {
       return config.mercadoProducts as MercadoProduct[];
     }
     return DEFAULT_MERCADO_PRODUCTS;
@@ -748,10 +748,43 @@ export default function Mercado() {
               ÁREA PRINCIPAL DE PRODUCTOS (4 Columnas en Web)
               ============================================================== */}
           <section className="mercado-catalog-content">
-            {/* Header de Resultados Superior */}
-            <div className="catalog-results-header">
-              <div className="results-count-text">
-                Mostrando <strong>{filteredProducts.length}</strong> de <strong>{allProducts.length}</strong> productos
+            {allProducts.length === 0 ? (
+              <div className="mercado-prelaunch-box animate-fade-in">
+                <div className="prelaunch-badge-tag">
+                  <span>🚀 Prelanzamiento Oficial</span>
+                </div>
+                <div className="prelaunch-icon-circle">
+                  <span>✨</span>
+                </div>
+                <h2 className="prelaunch-headline">Catálogo Oficial en Proceso de Carga</h2>
+                <p className="prelaunch-subtext">
+                  Estamos integrando el inventario oficial de cuentos ilustrados, proyectos pedagógicos STEAM,
+                  juegos de mesa y materiales didácticos directos de <strong>Editorial Lluvia de Ideas</strong>.
+                </p>
+                <div className="prelaunch-categories-preview">
+                  <div className="prelaunch-cat-chip">📚 Cuentos & Sagas Literarias</div>
+                  <div className="prelaunch-cat-chip">🚀 Proyectos STEAM & Robótica</div>
+                  <div className="prelaunch-cat-chip">🎲 Juegos de Mesa & Estrategia</div>
+                  <div className="prelaunch-cat-chip">🎴 Barajas & Tarjetas Didácticas</div>
+                </div>
+                <div className="prelaunch-contact-box">
+                  <p>¿Deseas cotizar o consultar disponibilidad para tu colegio o familia de forma anticipada?</p>
+                  <a 
+                    href={`https://wa.me/${mercadoConfig.whatsappPhone || '50246741239'}?text=${encodeURIComponent('¡Hola Editorial Lluvia de Ideas! Me gustaría consultar sobre el catálogo y prelanzamiento de materiales didácticos.')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="btn-prelaunch-whatsapp"
+                  >
+                    <span>💬 Consultar Preventa por WhatsApp</span>
+                  </a>
+                </div>
+              </div>
+            ) : (
+              <>
+                {/* Header de Resultados Superior */}
+                <div className="catalog-results-header">
+                  <div className="results-count-text">
+                    Mostrando <strong>{filteredProducts.length}</strong> de <strong>{allProducts.length}</strong> productos
                 {selectedCategory !== 'todos' && (
                   <span className="active-filter-badge">
                     {MERCADO_CATEGORIES.find(c => c.id === selectedCategory)?.label}
@@ -1073,6 +1106,8 @@ export default function Mercado() {
                 <span>Cotizar por WhatsApp</span>
               </a>
             </div>
+            </>
+          )}
           </section>
         </div>
       </main>

@@ -66,12 +66,12 @@ const createEmptyProduct = (): MercadoProduct => ({
 });
 
 export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, saving }: AdminTabTiendaProps) {
-  // Productos activos
+  // Productos activos (Inicia limpio o con los productos configurados)
   const products: MercadoProduct[] = useMemo(() => {
-    if (localConfig.mercadoProducts && Array.isArray(localConfig.mercadoProducts) && localConfig.mercadoProducts.length > 0) {
+    if (localConfig.mercadoProducts !== undefined && Array.isArray(localConfig.mercadoProducts)) {
       return localConfig.mercadoProducts as MercadoProduct[];
     }
-    return DEFAULT_MERCADO_PRODUCTS;
+    return [];
   }, [localConfig.mercadoProducts]);
 
   // Configuración del Mercado
@@ -165,10 +165,17 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     }
 
     soundEffects.playClick();
-    const exists = products.some(p => p.id === editingProduct.id);
+    const sanitizedProduct: MercadoProduct = {
+      ...editingProduct,
+      title: editingProduct.title.trim(),
+      features: (editingProduct.features || []).map(f => f.trim()).filter(f => f.length > 0),
+      contents: (editingProduct.contents || []).map(c => c.trim()).filter(c => c.length > 0),
+    };
+
+    const exists = products.some(p => p.id === sanitizedProduct.id);
     const next = exists 
-      ? products.map(p => p.id === editingProduct.id ? editingProduct : p)
-      : [editingProduct, ...products];
+      ? products.map(p => p.id === sanitizedProduct.id ? sanitizedProduct : p)
+      : [sanitizedProduct, ...products];
 
     commitProducts(next);
     setIsModalOpen(false);
@@ -193,6 +200,14 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     if (window.confirm(`¿Estás seguro de eliminar "${title}" del catálogo?`)) {
       soundEffects.playClick();
       commitProducts(products.filter(p => p.id !== productId));
+    }
+  };
+
+  // Vaciar todo el catálogo para iniciar limpio
+  const handleClearAllProducts = () => {
+    if (window.confirm('¿Deseas vaciar todos los productos del catálogo? Se dejará la tienda en 0 productos para que puedas subir los productos oficiales reales. (Podrás restaurar el catálogo base de ejemplo en cualquier momento).')) {
+      soundEffects.playClick();
+      commitProducts([]);
     }
   };
 
@@ -293,6 +308,16 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
               title="Guardar todos los cambios en Firestore"
             >
               {saving ? '⏳ Guardando en Nube...' : '💾 Guardar en Firestore'}
+            </button>
+          )}
+          {products.length > 0 && (
+            <button 
+              type="button" 
+              className="btn-mercado-clear"
+              onClick={handleClearAllProducts}
+              title="Vaciar todo el catálogo para empezar en 0"
+            >
+              🗑️ Vaciar Catálogo
             </button>
           )}
           <button 
@@ -529,7 +554,35 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
         })}
       </div>
 
-      {filteredProducts.length === 0 && (
+      {products.length === 0 ? (
+        <div className="admin-empty-catalog-hero animate-fade-in">
+          <div className="admin-empty-icon-wrap">
+            <span>✨</span>
+          </div>
+          <h3>Catálogo en Modo Limpio (0 productos)</h3>
+          <p>
+            El catálogo está listo para subir los productos oficiales de la editorial. 
+            Haz clic en <strong>＋ Nuevo Producto</strong> para registrar tu primer artículo con fotos, descripciones y precios reales,
+            o haz clic en <strong>♻️ Restaurar Catálogo Base</strong> si deseas recuperar los 18 productos de ejemplo.
+          </p>
+          <div className="admin-empty-hero-actions">
+            <button 
+              type="button" 
+              className="btn-mercado-primary"
+              onClick={handleOpenNew}
+            >
+              ＋ Crear Primer Producto Real
+            </button>
+            <button 
+              type="button" 
+              className="btn-mercado-secondary"
+              onClick={handleRestoreDefault}
+            >
+              ♻️ Cargar 18 Productos de Ejemplo
+            </button>
+          </div>
+        </div>
+      ) : filteredProducts.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(15, 23, 42, 0.5)', borderRadius: '16px', color: '#94a3b8' }}>
           <span style={{ fontSize: '3rem', display: 'block', marginBottom: '12px' }}>🔍</span>
           <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff' }}>No se encontraron productos con el filtro aplicado.</p>
@@ -541,7 +594,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
             Limpiar Filtros
           </button>
         </div>
-      )}
+      ) : null}
 
       {/* ==============================================================
           MODAL DE EDICIÓN COMPLETA DEL PRODUCTO
