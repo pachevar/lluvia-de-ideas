@@ -61,49 +61,34 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
 
   return (
     <div className="kindle-collections-container animate-fade-in">
-      {/* Banner de Cabecera de Colecciones Limpio y Minimalista */}
-      <div className="clean-collections-header">
-        <div className="clean-collections-header-text">
-          <div className="clean-badge-tag">
-            <span>📦 Sagas Literarias y Packs Didácticos</span>
-          </div>
-          <h2 className="clean-collections-title">
-            Colecciones de Libros Curadas
-          </h2>
-          <p className="clean-collections-desc">
-            Packs completos con ahorro exclusivo de editorial. Conoce qué títulos componen cada colección y adquiérelos juntos o de forma individual.
-          </p>
-        </div>
-
-        {/* Filtros sutiles de Colecciones */}
-        {collections.length > 0 && (
-          <div className="clean-collections-filters">
+      {/* Filtros de Colecciones si hay más de una */}
+      {collections.length > 1 && (
+        <div className="clean-collections-filters" style={{ marginBottom: '18px' }}>
+          <button
+            type="button"
+            className={`clean-filter-chip ${selectedFilter === 'all' ? 'active' : ''}`}
+            onClick={() => {
+              soundEffects.playClick();
+              setSelectedFilter('all');
+            }}
+          >
+            Todas ({collections.length})
+          </button>
+          {collections.map(col => (
             <button
+              key={col.id}
               type="button"
-              className={`clean-filter-chip ${selectedFilter === 'all' ? 'active' : ''}`}
+              className={`clean-filter-chip ${selectedFilter === col.id ? 'active' : ''}`}
               onClick={() => {
                 soundEffects.playClick();
-                setSelectedFilter('all');
+                setSelectedFilter(col.id);
               }}
             >
-              Todas ({collections.length})
+              {col.badge ? `${col.badge}` : col.title}
             </button>
-            {collections.map(col => (
-              <button
-                key={col.id}
-                type="button"
-                className={`clean-filter-chip ${selectedFilter === col.id ? 'active' : ''}`}
-                onClick={() => {
-                  soundEffects.playClick();
-                  setSelectedFilter(col.id);
-                }}
-              >
-                {col.badge ? `${col.badge}` : col.title}
-              </button>
-            ))}
-          </div>
-        )}
-      </div>
+          ))}
+        </div>
+      )}
 
       {collections.length === 0 ? (
         <div className="mercado-prelaunch-box animate-fade-in" style={{ maxWidth: '780px', margin: '2rem auto' }}>
