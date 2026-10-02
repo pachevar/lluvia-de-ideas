@@ -4,7 +4,6 @@ import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { useAuth } from '../context/AuthContext';
 import { compressImageWebP } from '../utils/imageUpload';
-import { generateCharacterWorksheetPDF } from '../utils/pdfGenerator';
 import { soundEffects } from '../utils/soundEffects';
 import { ref, uploadBytes, getDownloadURL } from 'firebase/storage';
 import { storage } from '../firebase';
@@ -863,6 +862,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
     try {
       setIsPdfGenerating(true);
       soundEffects.playClick();
+      const { generateCharacterWorksheetPDF } = await import('../utils/pdfGenerator');
       await generateCharacterWorksheetPDF({
         name: charName,
         archetype: charArchetype,

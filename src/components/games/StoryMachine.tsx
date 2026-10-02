@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from 'react';
-import { generateStoryWorksheetPDF } from '../../utils/pdfGenerator';
 import { soundEffects } from '../../utils/soundEffects';
 import './StoryMachine.css';
 
@@ -755,6 +754,7 @@ export default function StoryMachine() {
     setIsPdfGenerating(true);
     try {
       const { personaje, entorno, atmosfera, motivacion } = reels;
+      const { generateStoryWorksheetPDF } = await import('../../utils/pdfGenerator');
       await generateStoryWorksheetPDF({
         title: `La Odisea del ${personaje.current.title}`,
         genre: (personaje.current.genre || 'Fantasía').toUpperCase(),

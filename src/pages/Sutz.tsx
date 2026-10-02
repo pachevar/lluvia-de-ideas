@@ -282,7 +282,9 @@ export default function Sutz() {
   // GESTIÓN DE SESIÓN ÚNICA Y PRESENCIA ESCOLAR EN SUTZ
   // =========================================================================
   const isConflictRef = useRef(false);
-  isConflictRef.current = isSessionConflictOpen;
+  useEffect(() => {
+    isConflictRef.current = isSessionConflictOpen;
+  }, [isSessionConflictOpen]);
 
   useEffect(() => {
     if (!user?.uid) return;
