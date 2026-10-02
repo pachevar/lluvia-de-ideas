@@ -32,7 +32,9 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
   const [selectedFilter, setSelectedFilter] = useState<string>('all');
   const [expandedCollectionId, setExpandedCollectionId] = useState<string | null>(null);
 
-  const collections = collectionsProp !== undefined ? collectionsProp : DEFAULT_BOOK_COLLECTIONS;
+  const collections = collectionsProp && collectionsProp.length > 0
+    ? collectionsProp 
+    : DEFAULT_BOOK_COLLECTIONS;
 
   const filteredCollections = selectedFilter === 'all'
     ? collections

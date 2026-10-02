@@ -4,6 +4,8 @@ import { useSearchParams, useParams } from 'react-router-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { 
+  DEFAULT_MERCADO_PRODUCTS,
+  DEFAULT_BOOK_COLLECTIONS,
   MERCADO_CATEGORIES, 
   getCollectionBooks,
   type MercadoProduct,
@@ -28,17 +30,17 @@ export default function Mercado() {
   const { config } = usePortalConfig();
 
   const allProducts: MercadoProduct[] = useMemo(() => {
-    if (config?.mercadoProducts !== undefined && Array.isArray(config.mercadoProducts)) {
+    if (config?.mercadoProducts !== undefined && Array.isArray(config.mercadoProducts) && config.mercadoProducts.length > 0) {
       return config.mercadoProducts as MercadoProduct[];
     }
-    return [];
+    return DEFAULT_MERCADO_PRODUCTS;
   }, [config?.mercadoProducts]);
 
   const allCollections: BookCollection[] = useMemo(() => {
-    if (config?.mercadoCollections !== undefined && Array.isArray(config.mercadoCollections)) {
+    if (config?.mercadoCollections !== undefined && Array.isArray(config.mercadoCollections) && config.mercadoCollections.length > 0) {
       return config.mercadoCollections as BookCollection[];
     }
-    return [];
+    return DEFAULT_BOOK_COLLECTIONS;
   }, [config?.mercadoCollections]);
 
   const mercadoConfig = config?.mercadoConfig || {
@@ -1607,7 +1609,7 @@ export default function Mercado() {
                   <div className="modal-companion-books-rack">
                     <h4 className="companion-rack-title">Otros libros en esta misma colección:</h4>
                     <div className="companion-mini-shelf">
-                      {getCollectionBooks(selectedProduct.collectionId, allProducts)
+                      {getCollectionBooks(selectedProduct.collectionId, allProducts, allCollections)
                         .filter(b => b.id !== selectedProduct.id)
                         .map(cb => (
                           <div 
@@ -1643,12 +1645,18 @@ export default function Mercado() {
 
                 {/* Aspectos destacados */}
                 <div className="modal-bullet-points">
-                  <h4>Características Principales</h4>
-                  <ul>
-                    {selectedProduct.features.map((feat, idx) => (
-                      <li key={idx}>✓ {feat}</li>
-                    ))}
-                  </ul>
+                  <h4>Características y Competencias Clave</h4>
+                  <div className="col-features-bullets" style={{ marginTop: '8px' }}>
+                    {(selectedProduct.features || []).map((feat, idx) => {
+                      const themeColors = ['theme-blue', 'theme-emerald', 'theme-amber', 'theme-purple', 'theme-rose', 'theme-teal'];
+                      const activeTheme = themeColors[idx % themeColors.length];
+                      return (
+                        <span key={idx} className={`col-feature-chip ${activeTheme}`}>
+                          <span className="feat-check">✓</span> {feat}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </div>
 
                 {/* Contenidos */}
@@ -1710,7 +1718,7 @@ export default function Mercado() {
                                     color: '#ffffff'
                                   }}
                                   onClick={() => {
-                                    handleAddCollectionToCart(modalParentCol, getCollectionBooks(modalParentCol.id, allProducts));
+                                    handleAddCollectionToCart(modalParentCol, getCollectionBooks(modalParentCol.id, allProducts, allCollections));
                                     setSelectedProduct(null);
                                   }}
                                 >
@@ -1720,7 +1728,7 @@ export default function Mercado() {
 
                               {modalParentCol && (
                                 <a
-                                  href={getModalCollectionWhatsAppUrl(modalParentCol, getCollectionBooks(modalParentCol.id, allProducts))}
+                                  href={getModalCollectionWhatsAppUrl(modalParentCol, getCollectionBooks(modalParentCol.id, allProducts, allCollections))}
                                   target="_blank"
                                   rel="noopener noreferrer"
                                   className="btn-amazon-buy-now"

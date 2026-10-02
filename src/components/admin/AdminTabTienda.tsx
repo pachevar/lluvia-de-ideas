@@ -2,11 +2,13 @@ import { useState, useRef, useMemo, useEffect } from 'react';
 import type { PortalConfig } from '../../types';
 import { 
   DEFAULT_MERCADO_PRODUCTS, 
+  DEFAULT_BOOK_COLLECTIONS,
   MERCADO_CATEGORIES, 
   type MercadoProduct,
   type BookCollection,
   type CollectionIncludedBook
 } from '../../data/mercadoData';
+import { usePortalConfig } from '../../context/PortalConfigContext';
 import { uploadImageToStorage, shrinkBase64Image } from '../../utils/imageUpload';
 import { soundEffects } from '../../utils/soundEffects';
 import './AdminTabTienda.css';
@@ -133,20 +135,28 @@ const createEmptyCollection = (): BookCollection => ({
 });
 
 export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, saving }: AdminTabTiendaProps) {
-  // Productos activos (Inicia limpio o con los productos configurados)
+  const { saveMercadoCollectionsToFirestore, saveMercadoProductsToFirestore } = usePortalConfig();
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
+
+  const showToast = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 4000);
+  };
+
+  // Productos activos (Inicia con productos configurados o catálogo base)
   const products: MercadoProduct[] = useMemo(() => {
-    if (localConfig.mercadoProducts !== undefined && Array.isArray(localConfig.mercadoProducts)) {
+    if (localConfig.mercadoProducts !== undefined && Array.isArray(localConfig.mercadoProducts) && localConfig.mercadoProducts.length > 0) {
       return localConfig.mercadoProducts as MercadoProduct[];
     }
-    return [];
+    return DEFAULT_MERCADO_PRODUCTS;
   }, [localConfig.mercadoProducts]);
 
-  // Colecciones y Packs activos
+  // Colecciones y Packs activos (Inicia con colecciones configuradas o colecciones base)
   const collections: BookCollection[] = useMemo(() => {
-    if (localConfig.mercadoCollections !== undefined && Array.isArray(localConfig.mercadoCollections)) {
+    if (localConfig.mercadoCollections !== undefined && Array.isArray(localConfig.mercadoCollections) && localConfig.mercadoCollections.length > 0) {
       return localConfig.mercadoCollections as BookCollection[];
     }
-    return [];
+    return DEFAULT_BOOK_COLLECTIONS;
   }, [localConfig.mercadoCollections]);
 
   // Subpestaña activa (Productos vs Colecciones)
@@ -205,8 +215,8 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     }
   }, []);
 
-  // Actualizar colecciones en localConfig y persistir borrador seguro
-  const commitCollections = (nextCollections: BookCollection[]) => {
+  // Actualizar colecciones en localConfig y persistir inmediatamente en Firestore y localStorage
+  const commitCollections = async (nextCollections: BookCollection[]) => {
     try {
       localStorage.setItem('mercado_collections_draft', JSON.stringify(nextCollections));
     } catch (e) {
@@ -219,10 +229,16 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
         mercadoCollections: nextCollections
       };
     });
+    try {
+      await saveMercadoCollectionsToFirestore(nextCollections);
+      showToast('✓ Colección guardada y sincronizada en Firestore');
+    } catch (e) {
+      console.warn('[AdminTabTienda] Error guardando colecciones en Firestore:', e);
+    }
   };
 
-  // Actualizar lista de productos en localConfig y persistir borrador seguro
-  const commitProducts = (nextProducts: MercadoProduct[]) => {
+  // Actualizar lista de productos en localConfig y persistir inmediatamente en Firestore y localStorage
+  const commitProducts = async (nextProducts: MercadoProduct[]) => {
     try {
       localStorage.setItem('mercado_products_draft', JSON.stringify(nextProducts));
     } catch (e) {
@@ -235,6 +251,12 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
         mercadoProducts: nextProducts
       };
     });
+    try {
+      await saveMercadoProductsToFirestore(nextProducts);
+      showToast('✓ Producto guardado y sincronizado en Firestore');
+    } catch (e) {
+      console.warn('[AdminTabTienda] Error guardando productos en Firestore:', e);
+    }
   };
 
   // Actualizar mercadoConfig
@@ -289,7 +311,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
   };
 
   // Guardar producto desde modal
-  const handleSaveProduct = () => {
+  const handleSaveProduct = async () => {
     if (!editingProduct) return;
     if (!editingProduct.title.trim()) {
       alert('Por favor, ingresa al menos un título para el producto.');
@@ -309,7 +331,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
       ? products.map(p => p.id === sanitizedProduct.id ? sanitizedProduct : p)
       : [sanitizedProduct, ...products];
 
-    commitProducts(next);
+    await commitProducts(next);
     setIsModalOpen(false);
     setEditingProduct(null);
   };
@@ -584,7 +606,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
       ? collections.map(c => c.id === nextCol.id ? nextCol : c)
       : [nextCol, ...collections];
 
-    commitCollections(nextCollections);
+    await commitCollections(nextCollections);
 
     // Sincronizar en el catálogo general si está marcado
     if (syncCollectionAsProduct) {
@@ -615,7 +637,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
         collectionId: nextCol.id,
         collectionName: nextCol.title
       };
-      commitProducts([bundleProduct, ...cleanProducts]);
+      await commitProducts([bundleProduct, ...cleanProducts]);
     }
 
     soundEffects.playSuccessFanfare();
@@ -1449,32 +1471,66 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                 {/* Lista Dinámica de Características */}
                 <div className="mercado-input-group">
                   <label>Características y Competencias Clave</label>
-                  <div className="dynamic-items-list">
-                    {(editingProduct.features || []).map((feat, fIdx) => (
-                      <div key={fIdx} className="dynamic-item-row">
-                        <input
-                          type="text"
-                          value={feat}
-                          onChange={(e) => {
-                            const nextFeats = [...editingProduct.features];
-                            nextFeats[fIdx] = e.target.value;
-                            setEditingProduct({ ...editingProduct, features: nextFeats });
-                          }}
-                          placeholder="Ej: Actividades de comprensión lectora..."
-                        />
-                        <button
-                          type="button"
-                          className="btn-remove-item"
-                          onClick={() => {
-                            const nextFeats = editingProduct.features.filter((_, i) => i !== fIdx);
-                            setEditingProduct({ ...editingProduct, features: nextFeats });
-                          }}
-                          title="Quitar característica"
-                        >
-                          ✕
-                        </button>
-                      </div>
-                    ))}
+                  <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 12px 0' }}>
+                    Aspectos pedagógicos, habilidades y competencias que desarrolla el libro o material. Se mostrarán con distintivos de colores armónicos.
+                  </p>
+                  <div className="collection-features-editor">
+                    {(editingProduct.features || []).map((feat, fIdx) => {
+                      const colorStyles = [
+                        { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
+                        { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
+                        { bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
+                        { bg: '#faf5ff', color: '#7e22ce', border: '#e9d5ff' },
+                        { bg: '#fff1f2', color: '#be123c', border: '#fecdd3' },
+                        { bg: '#f0fdfa', color: '#0f766e', border: '#99f6e4' }
+                      ];
+                      const activeColor = colorStyles[fIdx % colorStyles.length];
+
+                      return (
+                        <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                          <span 
+                            style={{ 
+                              width: '28px', 
+                              height: '28px', 
+                              borderRadius: '8px', 
+                              background: activeColor.bg, 
+                              border: `1px solid ${activeColor.border}`, 
+                              color: activeColor.color, 
+                              display: 'flex', 
+                              alignItems: 'center', 
+                              justifyContent: 'center', 
+                              fontWeight: 800, 
+                              fontSize: '0.8rem',
+                              flexShrink: 0
+                            }}
+                          >
+                            {fIdx + 1}
+                          </span>
+                          <input
+                            type="text"
+                            value={feat}
+                            onChange={(e) => {
+                              const nextFeats = [...editingProduct.features];
+                              nextFeats[fIdx] = e.target.value;
+                              setEditingProduct({ ...editingProduct, features: nextFeats });
+                            }}
+                            placeholder="Ej: Actividades de comprensión lectora y competencias STEAM..."
+                            style={{ flex: 1, padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.86rem' }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const nextFeats = editingProduct.features.filter((_, i) => i !== fIdx);
+                              setEditingProduct({ ...editingProduct, features: nextFeats });
+                            }}
+                            title="Quitar característica"
+                            style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                          >
+                            ✕
+                          </button>
+                        </div>
+                      );
+                    })}
                     <button
                       type="button"
                       className="btn-add-item"
@@ -2168,6 +2224,29 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
               </button>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* Notificación Toast de Sincronización Inmediata */}
+      {toastMessage && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+          color: '#ffffff',
+          padding: '12px 22px',
+          borderRadius: '10px',
+          boxShadow: '0 8px 24px rgba(5, 150, 105, 0.45)',
+          fontWeight: 750,
+          fontSize: '0.92rem',
+          zIndex: 999999,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px'
+        }}>
+          <span>☁️</span>
+          <span>{toastMessage}</span>
         </div>
       )}
     </div>
