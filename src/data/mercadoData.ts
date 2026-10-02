@@ -33,6 +33,7 @@ export interface MercadoProduct {
   formatType?: string;
   isbn?: string;
   coverTheme?: 'amber' | 'cyan' | 'emerald' | 'purple' | 'ruby';
+  onlySoldAsPack?: boolean;
 }
 
 export interface CollectionIncludedBook {
@@ -898,7 +899,8 @@ export const getCollectionBooks = (
       formatType: 'Edición Impresa & Digital',
       coverTheme: b.coverTheme || (idx % 2 === 0 ? 'cyan' : 'amber'),
       isbn: b.isbn,
-      inStock: true
+      inStock: true,
+      onlySoldAsPack: collection.onlySoldAsPack
     }));
   }
 

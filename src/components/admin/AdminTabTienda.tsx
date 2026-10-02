@@ -83,7 +83,7 @@ const createEmptyCollection = (): BookCollection => ({
   themeColor: '#0284c7',
   accentGradient: 'linear-gradient(135deg, #0c4a6e 0%, #0369a1 50%, #0284c7 100%)',
   features: [
-    '5 Libros en pasta dura a todo color formato Kindle',
+    '5 Libros en pasta dura a todo color de alta definición',
     'Glosario pedagógico y mapa cosmológico incluido',
     'Caja conmemorativa de colección'
   ],
@@ -1787,21 +1787,60 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                   </div>
                 </div>
 
-                {/* INTERRUPTOR CLAVE: VENTA EXCLUSIVA EN PACK */}
-                <div className="collection-sale-mode-box">
-                  <label className="checkbox-sale-mode">
-                    <input
-                      type="checkbox"
-                      checked={editingCollection.onlySoldAsPack !== false}
-                      onChange={(e) => setEditingCollection({ ...editingCollection, onlySoldAsPack: e.target.checked })}
-                    />
-                    <div className="sale-mode-info">
-                      <strong>🔒 Venta Exclusiva en Pack (Los libros NO se venden por separado)</strong>
-                      <p>
-                        Activa esta casilla para sagas que se venden juntas. Los 5 libros se exhibirán con sus portadas 3D y fichas técnicas en la estantería de la tienda para que el público aprecie cada título, pero no se podrán agregar al carrito por separado; únicamente se adquiere la colección completa.
+                {/* CONFIGURACIÓN CLAVE: MODALIDAD DE VENTA DE LA COLECCIÓN */}
+                <div className="collection-sale-mode-selector" style={{ marginTop: '14px', marginBottom: '14px' }}>
+                  <label style={{ fontSize: '0.84rem', fontWeight: 800, color: '#0f172a', display: 'block', marginBottom: '8px' }}>
+                    Modalidad de Venta para los Libros de esta Colección *
+                  </label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '10px' }}>
+                    <div 
+                      onClick={() => setEditingCollection({ ...editingCollection, onlySoldAsPack: true })}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        border: editingCollection.onlySoldAsPack !== false ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                        background: editingCollection.onlySoldAsPack !== false ? '#f0f9ff' : '#ffffff',
+                        transition: 'all 0.15s ease'
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '1.2rem' }}>🔒</span>
+                        <strong style={{ fontSize: '0.86rem', color: editingCollection.onlySoldAsPack !== false ? '#0369a1' : '#0f172a' }}>
+                          Venta Exclusiva en Colección (Pack)
+                        </strong>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.76rem', color: '#475569', lineHeight: 1.4 }}>
+                        Los libros <strong>NO se venden por separado</strong>. En la tienda los clientes podrán ver las portadas 3D y sinopsis de cada título, pero desaparece la opción de agregarlos al carrito individualmente; solo pueden llevar la colección completa.
                       </p>
                     </div>
-                  </label>
+
+                    <div 
+                      onClick={() => setEditingCollection({ ...editingCollection, onlySoldAsPack: false })}
+                      style={{
+                        padding: '12px 14px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        border: editingCollection.onlySoldAsPack === false ? '2px solid #0284c7' : '1px solid #cbd5e1',
+                        background: editingCollection.onlySoldAsPack === false ? '#f0f9ff' : '#ffffff',
+                        transition: 'all 0.15s ease'
+                      }}
+                      role="button"
+                      tabIndex={0}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                        <span style={{ fontSize: '1.2rem' }}>🔓</span>
+                        <strong style={{ fontSize: '0.86rem', color: editingCollection.onlySoldAsPack === false ? '#0369a1' : '#0f172a' }}>
+                          Venta Mixta (Pack o Por Separado)
+                        </strong>
+                      </div>
+                      <p style={{ margin: 0, fontSize: '0.76rem', color: '#475569', lineHeight: 1.4 }}>
+                        Los clientes pueden comprar el pack completo con descuento o adquirir cualquiera de los libros de forma individual por separado en el carrito.
+                      </p>
+                    </div>
+                  </div>
                 </div>
 
                 <div className="form-grid-2">
@@ -1981,20 +2020,132 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
               {/* SECCIÓN 4: Características y Beneficios del Pack */}
               <div className="modal-section-box">
                 <h4 className="modal-section-title">
-                  <span>✨</span> 4. Beneficios y Características del Pack
+                  <span>✨</span> 4. Beneficios y Características de la Colección
                 </h4>
+                <p style={{ fontSize: '0.82rem', color: '#64748b', margin: '4px 0 12px 0' }}>
+                  Elementos descriptivos que destacan la colección (ej: 5 libros en pasta dura, glosario, caja conmemorativa). Cada uno se mostrará con un chip de color distintivo en la tienda.
+                </p>
 
-                <div className="mercado-input-group">
-                  <label>Viñetas de Características (Una por línea)</label>
-                  <textarea
-                    rows={4}
-                    value={(editingCollection.features || []).join('\n')}
-                    onChange={(e) => setEditingCollection({
-                      ...editingCollection,
-                      features: e.target.value.split('\n')
-                    })}
-                    placeholder="5 Libros en pasta dura a todo color formato Kindle&#10;Glosario etimológico y mapa cosmológico desplegable&#10;Guías pedagógicas transversales de literatura y cosmovisión"
-                  />
+                <div className="collection-features-editor">
+                  {(editingCollection.features || []).map((feat, fIdx) => {
+                    const colorStyles = [
+                      { bg: '#f0f9ff', color: '#0369a1', border: '#bae6fd' },
+                      { bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
+                      { bg: '#fffbeb', color: '#b45309', border: '#fde68a' },
+                      { bg: '#faf5ff', color: '#7e22ce', border: '#e9d5ff' },
+                      { bg: '#fff1f2', color: '#be123c', border: '#fecdd3' },
+                      { bg: '#f0fdfa', color: '#0f766e', border: '#99f6e4' }
+                    ];
+                    const activeColor = colorStyles[fIdx % colorStyles.length];
+
+                    return (
+                      <div key={fIdx} style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+                        <span 
+                          style={{ 
+                            width: '28px', 
+                            height: '28px', 
+                            borderRadius: '8px', 
+                            background: activeColor.bg, 
+                            border: `1px solid ${activeColor.border}`, 
+                            color: activeColor.color, 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'center', 
+                            fontWeight: 800, 
+                            fontSize: '0.8rem',
+                            flexShrink: 0
+                          }}
+                        >
+                          {fIdx + 1}
+                        </span>
+                        <input
+                          type="text"
+                          value={feat}
+                          onChange={(e) => {
+                            const nextFeats = [...(editingCollection.features || [])];
+                            nextFeats[fIdx] = e.target.value;
+                            setEditingCollection({ ...editingCollection, features: nextFeats });
+                          }}
+                          placeholder="Ej: 5 Libros en pasta dura a todo color..."
+                          style={{ flex: 1, padding: '8px 12px', border: '1px solid #cbd5e1', borderRadius: '8px', fontSize: '0.86rem' }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const nextFeats = (editingCollection.features || []).filter((_, i) => i !== fIdx);
+                            setEditingCollection({ ...editingCollection, features: nextFeats });
+                          }}
+                          title="Eliminar característica"
+                          style={{ background: '#fee2e2', color: '#dc2626', border: 'none', borderRadius: '8px', width: '32px', height: '32px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                    );
+                  })}
+
+                  <div style={{ marginTop: '10px' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingCollection({
+                          ...editingCollection,
+                          features: [...(editingCollection.features || []), '']
+                        });
+                      }}
+                      style={{ background: '#f8fafc', border: '1px dashed #94a3b8', color: '#0f172a', fontWeight: 700, padding: '8px 16px', borderRadius: '8px', cursor: 'pointer', width: '100%', fontSize: '0.86rem' }}
+                    >
+                      ＋ Agregar Otra Característica
+                    </button>
+                  </div>
+
+                  {/* Sugerencias Rápidas / Presets con 1 Clic */}
+                  <div style={{ marginTop: '14px', background: '#f8fafc', padding: '12px 14px', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 750, color: '#475569', display: 'block', marginBottom: '8px' }}>
+                      💡 Sugerencias descriptivas (haz clic para agregar al instante):
+                    </span>
+                    <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                      {[
+                        '5 Libros en pasta dura a todo color',
+                        'Caja conmemorativa de colección',
+                        'Glosario pedagógico y mapa cosmológico desplegable',
+                        'Guías pedagógicas transversales de literatura y cosmovisión',
+                        'Edición especial de lujo con encuadernación cosida'
+                      ].map((sug, sIdx) => {
+                        const isAdded = (editingCollection.features || []).includes(sug);
+                        return (
+                          <button
+                            key={sIdx}
+                            type="button"
+                            onClick={() => {
+                              if (!isAdded) {
+                                setEditingCollection({
+                                  ...editingCollection,
+                                  features: [...(editingCollection.features || []).filter(f => f.trim().length > 0), sug]
+                                });
+                              }
+                            }}
+                            disabled={isAdded}
+                            style={{
+                              background: isAdded ? '#f1f5f9' : '#ffffff',
+                              border: isAdded ? '1px solid #e2e8f0' : '1px solid #cbd5e1',
+                              color: isAdded ? '#94a3b8' : '#0369a1',
+                              padding: '5px 10px',
+                              borderRadius: '20px',
+                              fontSize: '0.76rem',
+                              fontWeight: 650,
+                              cursor: isAdded ? 'default' : 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px'
+                            }}
+                          >
+                            {isAdded ? '✓ Incluido' : `＋ ${sug}`}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
               </div>
             </div>

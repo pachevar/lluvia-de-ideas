@@ -9,6 +9,7 @@ interface KindleBookCardProps {
   onSelectCollection?: (collectionId: string) => void;
   onShare?: (product: MercadoProduct) => void;
   getSingleProductWhatsAppUrl?: (product: MercadoProduct, qty?: number) => string;
+  isOnlySoldAsPack?: boolean;
 }
 
 export const KindleBookCard: React.FC<KindleBookCardProps> = ({
@@ -17,8 +18,10 @@ export const KindleBookCard: React.FC<KindleBookCardProps> = ({
   onQuickView,
   onSelectCollection,
   onShare,
-  getSingleProductWhatsAppUrl
+  getSingleProductWhatsAppUrl,
+  isOnlySoldAsPack = false
 }) => {
+  const isPackOnly = isOnlySoldAsPack || Boolean(product.onlySoldAsPack);
   const discountPercent = product.originalPrice 
     ? Math.round(((product.originalPrice - product.price) / product.originalPrice) * 100)
     : 0;
@@ -110,35 +113,66 @@ export const KindleBookCard: React.FC<KindleBookCardProps> = ({
           {product.description}
         </p>
 
-        {/* Bloque de Precios Amazon Kindle */}
+        {/* Bloque de Precios Amazon */}
         <div className="kindle-pricing-section">
-          <div className="kindle-price-main-row">
-            <span className="kindle-price-label">Precio:</span>
-            <span className="kindle-currency">{product.currency}</span>
-            <span className="kindle-price-number">{product.price.toFixed(2)}</span>
-            {product.originalPrice && product.originalPrice > product.price && (
-              <span className="kindle-price-strikethrough">
-                Q {product.originalPrice.toFixed(2)}
+          {isPackOnly ? (
+            <div className="kindle-price-main-row" style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-start', gap: '3px' }}>
+              <span style={{ background: '#fef3c7', color: '#b45309', padding: '3px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, border: '1px solid #fde68a' }}>
+                🔒 Exclusivo de Colección
               </span>
-            )}
-          </div>
-          {product.deliveryTime && (
-            <span className="kindle-delivery-promise">
-              🚚 {product.deliveryTime}
-            </span>
+              <span style={{ color: '#64748b', fontSize: '0.74rem' }}>
+                Se adquiere únicamente en el pack completo
+              </span>
+            </div>
+          ) : (
+            <>
+              <div className="kindle-price-main-row">
+                <span className="kindle-price-label">Precio:</span>
+                <span className="kindle-currency">{product.currency}</span>
+                <span className="kindle-price-number">{product.price.toFixed(2)}</span>
+                {product.originalPrice && product.originalPrice > product.price && (
+                  <span className="kindle-price-strikethrough">
+                    Q {product.originalPrice.toFixed(2)}
+                  </span>
+                )}
+              </div>
+              {product.deliveryTime && (
+                <span className="kindle-delivery-promise">
+                  🚚 {product.deliveryTime}
+                </span>
+              )}
+            </>
           )}
         </div>
 
-        {/* Fila de Botones de Acción Amazon */}
+        {/* Fila de Botones de Acción */}
         <div className="kindle-actions-row">
-          <button
-            type="button"
-            className="btn-kindle-add-cart"
-            onClick={() => onAddToCart(product, 1)}
-            title="Añadir este libro al carrito"
-          >
-            <span>🛒 Agregar al Carrito</span>
-          </button>
+          {isPackOnly ? (
+            <button
+              type="button"
+              className="btn-kindle-add-cart"
+              style={{ background: '#0284c7', borderColor: '#0284c7' }}
+              onClick={() => {
+                if (product.collectionId && onSelectCollection) {
+                  onSelectCollection(product.collectionId);
+                } else {
+                  onQuickView(product);
+                }
+              }}
+              title="Ver la colección completa a la que pertenece este libro"
+            >
+              <span>📦 Ver Colección</span>
+            </button>
+          ) : (
+            <button
+              type="button"
+              className="btn-kindle-add-cart"
+              onClick={() => onAddToCart(product, 1)}
+              title="Añadir este libro al carrito"
+            >
+              <span>🛒 Agregar al Carrito</span>
+            </button>
+          )}
 
           <button
             type="button"
@@ -146,10 +180,10 @@ export const KindleBookCard: React.FC<KindleBookCardProps> = ({
             onClick={() => onQuickView(product)}
             title="Echar un vistazo al libro"
           >
-            <span>👁️ Echar un vistazo</span>
+            <span>👁️ Ver Ficha</span>
           </button>
 
-          {getSingleProductWhatsAppUrl && (
+          {!isPackOnly && getSingleProductWhatsAppUrl && (
             <a
               href={getSingleProductWhatsAppUrl(product, 1)}
               target="_blank"

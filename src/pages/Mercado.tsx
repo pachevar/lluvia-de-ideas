@@ -211,9 +211,30 @@ export default function Mercado() {
     }, 0);
   }, [cartItems]);
 
+  // Verificar si un producto pertenece a una colección que solo se vende en paquete completo
+  const isOnlySoldAsPack = (product: MercadoProduct): boolean => {
+    if (product.onlySoldAsPack) return true;
+    if (product.collectionId) {
+      const col = allCollections.find(c => c.id === product.collectionId);
+      return Boolean(col?.onlySoldAsPack);
+    }
+    return false;
+  };
+
   // Agregar al carrito
   const handleAddToCart = (product: MercadoProduct, qty = 1) => {
     soundEffects.playClick();
+
+    // Si el libro pertenece a una colección exclusiva de pack completo, agregar el pack completo
+    if (isOnlySoldAsPack(product) && product.collectionId) {
+      const col = allCollections.find(c => c.id === product.collectionId);
+      if (col) {
+        const books = getCollectionBooks(col, allProducts, allCollections);
+        handleAddCollectionToCart(col, books);
+        return;
+      }
+    }
+
     setCartItems(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
@@ -350,6 +371,22 @@ export default function Mercado() {
       `Categoría: ${product.categoryLabel}`,
       '',
       '¿Podrían darme más información de disponibilidad y formas de envío? ¡Gracias!'
+    ];
+    const message = encodeURIComponent(lines.join('\n'));
+    const phone = mercadoConfig.whatsappPhone || CONTACT.whatsappPhone || '50246741239';
+    return `https://wa.me/${phone}?text=${message}`;
+  };
+
+  const getModalCollectionWhatsAppUrl = (col: BookCollection, books: MercadoProduct[]) => {
+    const lines = [
+      '¡Hola Editorial Lluvia de Ideas! 👋',
+      `Me interesa adquirir la siguiente colección de libros:`,
+      `📦 *${col.title}* (${col.subtitle})`,
+      `• Precio Colección: ${col.currency} ${col.price.toFixed(2)} (Ahorro de ${col.currency} ${(col.originalPrice - col.price).toFixed(2)})`,
+      `• Libros incluidos (${books.length}):`,
+      ...books.map((b, i) => `   ${i + 1}. ${b.title}`),
+      '',
+      '¿Tienen disponibilidad y formas de envío? ¡Muchas gracias!'
     ];
     const message = encodeURIComponent(lines.join('\n'));
     const phone = mercadoConfig.whatsappPhone || CONTACT.whatsappPhone || '50246741239';
@@ -948,6 +985,7 @@ export default function Mercado() {
                     <KindleBookCard
                       key={product.id}
                       product={product}
+                      isOnlySoldAsPack={isOnlySoldAsPack(product)}
                       onAddToCart={handleAddToCart}
                       onQuickView={(p) => {
                         soundEffects.playClick();
@@ -1072,27 +1110,60 @@ export default function Mercado() {
 
                           {/* Fila de Precios Limpia */}
                           <div className="card-pricing-block">
-                            <div className="main-price-row">
-                              <span className="price-symbol">{product.currency}</span>
-                              <span className="price-amount">{product.price.toFixed(2)}</span>
-                              {product.originalPrice && product.originalPrice > product.price && (
-                                <span className="price-original">
-                                  Q {product.originalPrice.toFixed(2)}
+                            {isOnlySoldAsPack(product) ? (
+                              <div className="main-price-row">
+                                <span style={{ background: '#fef3c7', color: '#b45309', padding: '3px 8px', borderRadius: '6px', fontSize: '0.74rem', fontWeight: 800, border: '1px solid #fde68a' }}>
+                                  🔒 Exclusivo de Pack
                                 </span>
-                              )}
-                            </div>
+                              </div>
+                            ) : (
+                              <div className="main-price-row">
+                                <span className="price-symbol">{product.currency}</span>
+                                <span className="price-amount">{product.price.toFixed(2)}</span>
+                                {product.originalPrice && product.originalPrice > product.price && (
+                                  <span className="price-original">
+                                    Q {product.originalPrice.toFixed(2)}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
 
                           {/* Botones de Acción */}
                           <div className="card-actions-row">
-                            <button
-                              type="button"
-                              className="amazon-add-btn"
-                              onClick={() => handleAddToCart(product, 1)}
-                              title="Agregar al Carrito"
-                            >
-                              <span>🛒 Agregar</span>
-                            </button>
+                            {isOnlySoldAsPack(product) ? (
+                              <button
+                                type="button"
+                                className="amazon-add-btn"
+                                style={{ background: '#0284c7', borderColor: '#0284c7' }}
+                                onClick={() => {
+                                  soundEffects.playClick();
+                                  if (product.collectionId) {
+                                    setSelectedCategory('cuentos');
+                                    setCuentosSubCategory('colecciones');
+                                    setTimeout(() => {
+                                      const el = document.getElementById(`collection-${product.collectionId}`);
+                                      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                                    }, 150);
+                                  } else {
+                                    setSelectedProduct(product);
+                                    setDetailQuantity(1);
+                                  }
+                                }}
+                                title="Ver la colección completa de este libro"
+                              >
+                                <span>📦 Ver Pack</span>
+                              </button>
+                            ) : (
+                              <button
+                                type="button"
+                                className="amazon-add-btn"
+                                onClick={() => handleAddToCart(product, 1)}
+                                title="Agregar al Carrito"
+                              >
+                                <span>🛒 Agregar</span>
+                              </button>
+                            )}
                             
                             <button
                               type="button"
@@ -1450,16 +1521,41 @@ export default function Mercado() {
 
                 {/* Precios y Oferta */}
                 <div className="modal-pricing-box">
-                  <div className="modal-main-price">
-                    <span className="modal-currency">{selectedProduct.currency}</span>
-                    <span className="modal-amount">{selectedProduct.price.toFixed(2)}</span>
-                    {selectedProduct.originalPrice && (
-                      <span className="modal-original-price">
-                        Q {selectedProduct.originalPrice.toFixed(2)}
+                  {isOnlySoldAsPack(selectedProduct) ? (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <span style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '5px 14px',
+                        borderRadius: '100px',
+                        background: 'rgba(239, 68, 68, 0.12)',
+                        border: '1px solid rgba(239, 68, 68, 0.35)',
+                        color: '#ef4444',
+                        fontWeight: 800,
+                        fontSize: '0.84rem',
+                        width: 'fit-content'
+                      }}>
+                        🔒 Venta Exclusiva en Colección Completa
                       </span>
-                    )}
-                  </div>
-                  <span className="modal-tax-note">Impuestos incluidos · Factura disponible</span>
+                      <p style={{ margin: 0, fontSize: '0.92rem', color: 'var(--text-secondary, #64748b)', lineHeight: '1.4' }}>
+                        Este libro no se comercializa de forma individual. Está disponible exclusivamente dentro del estuche o paquete conmemorativo de su colección.
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <div className="modal-main-price">
+                        <span className="modal-currency">{selectedProduct.currency}</span>
+                        <span className="modal-amount">{selectedProduct.price.toFixed(2)}</span>
+                        {selectedProduct.originalPrice && (
+                          <span className="modal-original-price">
+                            Q {selectedProduct.originalPrice.toFixed(2)}
+                          </span>
+                        )}
+                      </div>
+                      <span className="modal-tax-note">Impuestos incluidos · Factura disponible</span>
+                    </>
+                  )}
                 </div>
 
                 {/* Si pertenece a una colección (Subcategoría interactiva) */}
@@ -1480,7 +1576,9 @@ export default function Mercado() {
                           Este libro forma parte de: <strong>{selectedProduct.collectionName}</strong>
                         </h4>
                         <p className="col-expl-p">
-                          Puedes adquirir la colección completa con descuento de pack especial o explorar los otros títulos que la componen.
+                          {isOnlySoldAsPack(selectedProduct)
+                            ? 'Los títulos de esta edición forman una obra integral y se entregan reunidos en su pack conmemorativo.'
+                            : 'Puedes adquirir la colección completa con descuento de pack especial o explorar los otros títulos que la componen.'}
                         </p>
                       </div>
                       <button
@@ -1526,7 +1624,9 @@ export default function Mercado() {
                               <KindleBookCover product={cb} size="sm" showLookInsideBadge={false} />
                             </div>
                             <span className="companion-shelf-title">{cb.title}</span>
-                            <span className="companion-shelf-price">Q {cb.price.toFixed(2)}</span>
+                            <span className="companion-shelf-price">
+                              {isOnlySoldAsPack(cb) ? 'Pack' : `Q ${cb.price.toFixed(2)}`}
+                            </span>
                           </div>
                         ))}
                     </div>
@@ -1567,59 +1667,116 @@ export default function Mercado() {
 
                 {/* Bloque de Compra */}
                 <div className="modal-buy-box">
-                  <div className="modal-quantity-row">
-                    <label>Cantidad:</label>
-                    <div className="modal-qty-control">
-                      <button 
-                        type="button" 
-                        onClick={() => setDetailQuantity(Math.max(1, detailQuantity - 1))}
-                      >
-                        -
-                      </button>
-                      <span>{detailQuantity}</span>
-                      <button 
-                        type="button" 
-                        onClick={() => setDetailQuantity(detailQuantity + 1)}
-                      >
-                        +
-                      </button>
+                  {!isOnlySoldAsPack(selectedProduct) && (
+                    <div className="modal-quantity-row">
+                      <label>Cantidad:</label>
+                      <div className="modal-qty-control">
+                        <button 
+                          type="button" 
+                          onClick={() => setDetailQuantity(Math.max(1, detailQuantity - 1))}
+                        >
+                          -
+                        </button>
+                        <span>{detailQuantity}</span>
+                        <button 
+                          type="button" 
+                          onClick={() => setDetailQuantity(detailQuantity + 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <span className="modal-subtotal-calc">
+                        Total: <strong>Q {(selectedProduct.price * detailQuantity).toFixed(2)}</strong>
+                      </span>
                     </div>
-                    <span className="modal-subtotal-calc">
-                      Total: <strong>Q {(selectedProduct.price * detailQuantity).toFixed(2)}</strong>
-                    </span>
-                  </div>
+                  )}
 
                   <div className="modal-action-buttons-group">
-                    <button
-                      type="button"
-                      className="btn-amazon-add-cart"
-                      onClick={() => {
-                        handleAddToCart(selectedProduct, detailQuantity);
-                        setSelectedProduct(null);
-                      }}
-                    >
-                      <span>🛒 Agregar al Carrito</span>
-                    </button>
+                    {isOnlySoldAsPack(selectedProduct) ? (
+                      <>
+                        {(() => {
+                          const modalParentCol = selectedProduct.collectionId 
+                            ? allCollections.find(c => c.id === selectedProduct.collectionId) 
+                            : null;
+                          return (
+                            <>
+                              {modalParentCol && (
+                                <button
+                                  type="button"
+                                  className="btn-amazon-add-cart"
+                                  style={{
+                                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                                    boxShadow: '0 4px 14px rgba(5, 150, 105, 0.35)',
+                                    color: '#ffffff'
+                                  }}
+                                  onClick={() => {
+                                    handleAddCollectionToCart(modalParentCol, getCollectionBooks(modalParentCol.id, allProducts));
+                                    setSelectedProduct(null);
+                                  }}
+                                >
+                                  <span>🛒 Llevar Colección Completa ({modalParentCol.currency} {modalParentCol.price.toFixed(2)})</span>
+                                </button>
+                              )}
 
-                    <a
-                      href={getSingleProductWhatsAppUrl(selectedProduct, detailQuantity)}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="btn-amazon-buy-now"
-                      onClick={() => soundEffects.playSuccessFanfare()}
-                      title="Pedir directamente en WhatsApp"
-                    >
-                      <span>⚡ Comprar Ya en WhatsApp</span>
-                    </a>
+                              {modalParentCol && (
+                                <a
+                                  href={getModalCollectionWhatsAppUrl(modalParentCol, getCollectionBooks(modalParentCol.id, allProducts))}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="btn-amazon-buy-now"
+                                  onClick={() => soundEffects.playSuccessFanfare()}
+                                  title="Pedir colección completa por WhatsApp"
+                                >
+                                  <span>⚡ Pedir Colección en WhatsApp</span>
+                                </a>
+                              )}
+                            </>
+                          );
+                        })()}
 
-                    <button
-                      type="button"
-                      className="btn-amazon-share"
-                      onClick={() => handleOpenShareProduct(selectedProduct)}
-                      title="Compartir este producto con enlace directo"
-                    >
-                      <span>🔗 Compartir</span>
-                    </button>
+                        <button
+                          type="button"
+                          className="btn-amazon-share"
+                          onClick={() => handleOpenShareProduct(selectedProduct)}
+                          title="Compartir este producto con enlace directo"
+                        >
+                          <span>🔗 Compartir</span>
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          className="btn-amazon-add-cart"
+                          onClick={() => {
+                            handleAddToCart(selectedProduct, detailQuantity);
+                            setSelectedProduct(null);
+                          }}
+                        >
+                          <span>🛒 Agregar al Carrito</span>
+                        </button>
+
+                        <a
+                          href={getSingleProductWhatsAppUrl(selectedProduct, detailQuantity)}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn-amazon-buy-now"
+                          onClick={() => soundEffects.playSuccessFanfare()}
+                          title="Pedir directamente en WhatsApp"
+                        >
+                          <span>⚡ Comprar Ya en WhatsApp</span>
+                        </a>
+
+                        <button
+                          type="button"
+                          className="btn-amazon-share"
+                          onClick={() => handleOpenShareProduct(selectedProduct)}
+                          title="Compartir este producto con enlace directo"
+                        >
+                          <span>🔗 Compartir</span>
+                        </button>
+                      </>
+                    )}
                   </div>
                 </div>
 

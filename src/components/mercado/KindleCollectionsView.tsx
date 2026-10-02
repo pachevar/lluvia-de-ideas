@@ -193,9 +193,15 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                   <p className="col-description">{collection.description}</p>
 
                   <div className="col-features-bullets">
-                    {collection.features.slice(0, 3).map((feat, idx) => (
-                      <span key={idx} className="col-feature-chip">✓ {feat}</span>
-                    ))}
+                    {(collection.features || []).map((feat, idx) => {
+                      const themeColors = ['theme-blue', 'theme-emerald', 'theme-amber', 'theme-purple', 'theme-rose', 'theme-teal'];
+                      const activeTheme = themeColors[idx % themeColors.length];
+                      return (
+                        <span key={idx} className={`col-feature-chip ${activeTheme}`}>
+                          <span className="feat-check">✓</span> {feat}
+                        </span>
+                      );
+                    })}
                   </div>
                 </div>
 
