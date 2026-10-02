@@ -108,25 +108,31 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
                   </button>
 
                   {isUserMenuOpen && (
-                    <div className="top-user-dropdown card-glass animate-fade-in">
-                      <div className="dropdown-user-info">
-                        <strong>{userProfile?.displayName || 'Usuario'}</strong>
-                        <p>{user.email}</p>
-                        <span className="user-role-badge">
-                          {userProfile?.role === 'teacher' ? '🍎 Docente' : '🎓 Estudiante'}
-                        </span>
+                    <>
+                      <div
+                        className="top-dropdown-backdrop"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      />
+                      <div className="top-user-dropdown card-glass animate-fade-in">
+                        <div className="dropdown-user-info">
+                          <strong>{userProfile?.displayName || 'Usuario'}</strong>
+                          <p>{user.email}</p>
+                          <span className="user-role-badge">
+                            {userProfile?.role === 'teacher' ? '🍎 Docente' : '🎓 Estudiante'}
+                          </span>
+                        </div>
+                        <hr className="dropdown-divider" />
+                        <button
+                          className="dropdown-item danger"
+                          onClick={() => {
+                            logout();
+                            setIsUserMenuOpen(false);
+                          }}
+                        >
+                          🚪 Cerrar Sesión
+                        </button>
                       </div>
-                      <hr className="dropdown-divider" />
-                      <button
-                        className="dropdown-item danger"
-                        onClick={() => {
-                          logout();
-                          setIsUserMenuOpen(false);
-                        }}
-                      >
-                        🚪 Cerrar Sesión
-                      </button>
-                    </div>
+                    </>
                   )}
                 </div>
               ) : (
@@ -152,59 +158,65 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
               </button>
 
               {isMobileMenuOpen && (
-                <div className="top-mobile-dropdown animate-fade-in">
-                  {showHomeButton && (
+                <>
+                  <div
+                    className="top-dropdown-backdrop"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                  />
+                  <div className="top-mobile-dropdown animate-fade-in">
+                    {showHomeButton && (
+                      <button
+                        className="top-btn top-btn-home"
+                        onClick={() => go('/')}
+                      >
+                        <span className="top-btn-icon">🏠</span> Inicio
+                      </button>
+                    )}
+
                     <button
-                      className="top-btn top-btn-home"
-                      onClick={() => go('/')}
+                      className="top-btn top-btn-sutz"
+                      onClick={() => go('/sutz')}
                     >
-                      <span className="top-btn-icon">🏠</span> Inicio
+                      <span className="top-btn-icon">☁️</span> Mundo Virtual Sutz
                     </button>
-                  )}
 
-                  <button
-                    className="top-btn top-btn-sutz"
-                    onClick={() => go('/sutz')}
-                  >
-                    <span className="top-btn-icon">☁️</span> Mundo Virtual Sutz
-                  </button>
-
-                  <button
-                    className="top-btn top-btn-neuro"
-                    onClick={() => go('/neurociencia')}
-                  >
-                    <span className="top-btn-icon">🧠</span> Neurociencia Aula
-                  </button>
-
-                  <button
-                    className="top-btn top-btn-mercado"
-                    onClick={() => go('/mercado')}
-                  >
-                    <span className="top-btn-icon">🛍️</span> Mercado
-                  </button>
-
-                  {user ? (
                     <button
-                      className="top-btn top-btn-user"
-                      onClick={() => {
-                        logout();
-                        setIsMobileMenuOpen(false);
-                      }}
+                      className="top-btn top-btn-neuro"
+                      onClick={() => go('/neurociencia')}
                     >
-                      <span className="top-btn-icon">🚪</span> Cerrar Sesión ({user.email?.split('@')[0]})
+                      <span className="top-btn-icon">🧠</span> Neurociencia Aula
                     </button>
-                  ) : (
+
                     <button
-                      className="top-btn top-btn-login"
-                      onClick={() => {
-                        setIsAuthModalOpen(true);
-                        setIsMobileMenuOpen(false);
-                      }}
+                      className="top-btn top-btn-mercado"
+                      onClick={() => go('/mercado')}
                     >
-                      <span className="top-btn-icon">👤</span> Iniciar Sesión
+                      <span className="top-btn-icon">🛍️</span> Mercado
                     </button>
-                  )}
-                </div>
+
+                    {user ? (
+                      <button
+                        className="top-btn top-btn-user"
+                        onClick={() => {
+                          logout();
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <span className="top-btn-icon">🚪</span> Cerrar Sesión ({user.email?.split('@')[0]})
+                      </button>
+                    ) : (
+                      <button
+                        className="top-btn top-btn-login"
+                        onClick={() => {
+                          setIsAuthModalOpen(true);
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <span className="top-btn-icon">👤</span> Iniciar Sesión
+                      </button>
+                    )}
+                  </div>
+                </>
               )}
             </div>
           </div>

@@ -88,7 +88,7 @@
   border-bottom: 1px solid #e2e8f0;
   padding: 12px clamp(16px, 2.5vw, 40px);
   position: sticky;
-  top: 0;
+  top: 64px;
   z-index: 800;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03);
   box-sizing: border-box;
@@ -2301,7 +2301,7 @@
   .mercado-amazon-header {
     padding: 8px 12px;
     position: sticky;
-    top: 0;
+    top: 48px;
     z-index: 800;
   }
 
@@ -4945,7 +4945,7 @@
   border-bottom: 1px solid #e2e8f0;
   padding: 10px clamp(16px, 2.5vw, 40px);
   position: sticky;
-  top: 68px;
+  top: 132px;
   z-index: 750;
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
   box-sizing: border-box;
