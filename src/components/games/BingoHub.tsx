@@ -376,8 +376,14 @@ export default function BingoHub() {
     syncCountdownToSchedule();
   }, [activeGame?.id, activeGame?.nextRoundTime, activeGame?.title, activeGame?.scheduledGameId, scheduledGamesList]);
 
-  // Escuchar tokens de acceso y órdenes para el Host
+  // Escuchar tokens de acceso y órdenes para el Host (exclusivo para administradores/host autenticados)
   useEffect(() => {
+    if (!isAdmin) {
+      setAllAccessTokens([]);
+      setAllBingoOrders([]);
+      return;
+    }
+
     const qTokens = query(collection(db, 'bingo_access_tokens'));
     const unsubTokens = onSnapshot(qTokens, (snap) => {
       const list = snap.docs.map(d => ({ id: d.id, ...d.data() } as BingoAccessToken));
@@ -398,7 +404,7 @@ export default function BingoHub() {
       unsubTokens();
       unsubOrders();
     };
-  }, []);
+  }, [isAdmin]);
 
   // Solicitudes de Pago en Efectivo pendientes de cobrar y habilitar
   const pendingCashTokens = useMemo(() => {
@@ -838,17 +844,15 @@ export default function BingoHub() {
     return 'live';
   }, [allAccessTokens]);
 
-  // Listen to cards registered in real-time (para el Host escucha todas las partidas para poder aislarlas por filtro)
+  // Listen to cards registered in real-time (exclusivo para el Host/Admin para monitorear partidas)
   useEffect(() => {
-    if (!isAdmin && !activeGame?.id) {
+    if (!isAdmin) {
       setRegisteredCards([]);
       setShoutedCards([]);
       return;
     }
 
-    const qCards = isAdmin
-      ? collection(db, 'bingo_cards')
-      : query(collection(db, 'bingo_cards'), where('gameId', '==', activeGame?.id || 'juego-principal'));
+    const qCards = collection(db, 'bingo_cards');
 
     const unsubscribeCards = onSnapshot(qCards, (snapshot) => {
       const cards = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as BingoCard));

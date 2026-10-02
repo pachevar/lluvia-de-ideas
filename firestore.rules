@@ -98,12 +98,14 @@ service cloud.firestore {
     // Colección de juegos y partidas programadas de Bingo
     match /bingo_scheduled_games/{gameId} {
       allow read: if true; // Lectura pública para sincronizar horarios y compras
-      allow write: if true; // Creación y actualización por organizadores y tómbola
+      allow write: if isAdmin(); // Solo administradores y host autenticado pueden programar o modificar partidas
     }
 
     // Cartera de clientes / perfiles de jugadores de Bingo
     match /bingo_players/{playerId} {
-      allow read, create, update: if true;
+      allow get: if true; // Consulta individual por teléfono
+      allow list: if isAdmin(); // Evita volcado/escaneo masivo de la cartera de clientes por terceros
+      allow create, update: if true;
       allow delete: if isAdmin();
     }
 
