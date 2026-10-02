@@ -673,7 +673,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
           <h4 className="config-card-title">
             <span>📢</span> Configuración General de la Tienda
           </h4>
-          <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+          <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
             Afecta la barra promocional y el canal de ventas directo
           </span>
         </div>
@@ -785,7 +785,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                     {/* Fila visual de libros componentes */}
                     {col.includedBooks && col.includedBooks.length > 0 && (
                       <div>
-                        <span style={{ fontSize: '0.78rem', color: '#94a3b8', display: 'block', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '0.8rem', color: '#cbd5e1', fontWeight: 650, display: 'block', marginBottom: '6px' }}>
                           📚 {col.includedBooks.length} Libros incluidos en la saga:
                         </span>
                         <div className="col-shelf-preview-strip">
@@ -856,7 +856,8 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
             <button 
               type="button"
               onClick={() => setSearchTerm('')}
-              style={{ background: 'transparent', border: 'none', color: '#94a3b8', cursor: 'pointer' }}
+              style={{ background: 'rgba(255,255,255,0.12)', border: 'none', color: '#ffffff', borderRadius: '50%', width: '22px', height: '22px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.75rem' }}
+              title="Borrar búsqueda"
             >
               ✕
             </button>
@@ -1052,7 +1053,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
           </div>
         </div>
       ) : filteredProducts.length === 0 ? (
-        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(15, 23, 42, 0.5)', borderRadius: '16px', color: '#94a3b8' }}>
+        <div style={{ textAlign: 'center', padding: '60px 20px', background: 'rgba(15, 23, 42, 0.5)', borderRadius: '16px', color: '#cbd5e1' }}>
           <span style={{ fontSize: '3rem', display: 'block', marginBottom: '12px' }}>🔍</span>
           <p style={{ fontSize: '1.1rem', fontWeight: 700, color: '#ffffff' }}>No se encontraron productos con el filtro aplicado.</p>
           <button 
@@ -1155,13 +1156,13 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                   </div>
                 </div>
 
-                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '0.74rem', color: '#94a3b8', width: '100%' }}>Insignias rápidas:</span>
+                <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#cbd5e1', fontWeight: 650, width: '100%' }}>Insignias rápidas recomendadas:</span>
                   {BADGE_PRESETS.map(badge => (
                     <button
                       key={badge}
                       type="button"
-                      style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.12)', color: '#cbd5e1', padding: '2px 8px', borderRadius: '4px', fontSize: '0.72rem', cursor: 'pointer' }}
+                      className="badge-preset-btn"
                       onClick={() => setEditingProduct({ ...editingProduct, badge })}
                     >
                       {badge}
@@ -1280,7 +1281,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                         <strong style={{ display: 'block', color: '#ffffff', fontSize: '0.84rem' }}>
                           Subir foto desde la computadora
                         </strong>
-                        <span style={{ fontSize: '0.74rem', color: '#94a3b8' }}>
+                        <span style={{ fontSize: '0.76rem', color: '#cbd5e1' }}>
                           Se comprime automáticamente a formato WebP liviano
                         </span>
                       </div>
@@ -1595,7 +1596,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
             </div>
 
             {/* Cuerpo del formulario de colección */}
-            <div className="admin-modal-body">
+            <div className="admin-modal-body-scroll">
               {/* SECCIÓN 1: Datos Generales de la Colección */}
               <div className="modal-section-box">
                 <h4 className="modal-section-title">
@@ -1738,7 +1739,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                       )}
                       <div>
                         <strong style={{ fontSize: '0.8rem', color: '#fff' }}>Subir imagen de la caja / pack</strong>
-                        <span style={{ fontSize: '0.72rem', color: '#94a3b8' }}>Formato PNG o WebP</span>
+                        <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>Formato PNG o WebP</span>
                       </div>
                       <input
                         ref={colCoverInputRef}
