@@ -4562,3 +4562,756 @@
   }
 }
 
+/* ==========================================================================
+   NUEVO MENÚ VERTICAL DESPLEGABLE & EQUIVALENTE MÓVIL (OFF-CANVAS DRAWER)
+   ========================================================================== */
+
+/* 1. Barra de Control Superior del Catálogo */
+.mercado-catalog-control-bar {
+  width: 100%;
+  max-width: 100%;
+  background: #ffffff;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 10px clamp(16px, 2.5vw, 40px);
+  position: sticky;
+  top: 68px;
+  z-index: 750;
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+  box-sizing: border-box;
+}
+
+.catalog-control-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+
+/* Botón Toggle del Menú Vertical para Desktop */
+.btn-toggle-sidebar-desktop {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #0f172a;
+  border: 1px solid #0f172a;
+  color: #ffffff;
+  padding: 8px 16px;
+  border-radius: 12px;
+  font-size: 0.86rem;
+  font-weight: 750;
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 2px 8px rgba(15, 23, 42, 0.15);
+  flex-shrink: 0;
+}
+
+.btn-toggle-sidebar-desktop:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.22);
+}
+
+.btn-toggle-sidebar-desktop .toggle-icon {
+  font-size: 1.05rem;
+}
+
+.btn-toggle-sidebar-desktop .toggle-chevron {
+  font-size: 0.75rem;
+  transition: transform 0.25s ease;
+  color: #94a3b8;
+}
+
+.btn-toggle-sidebar-desktop .toggle-chevron.open {
+  transform: rotate(180deg);
+  color: #38bdf8;
+}
+
+/* Botón Desplegable Exclusivo para Móvil */
+.btn-mobile-dept-trigger {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
+  border: 1px solid #334155;
+  color: #ffffff;
+  padding: 8px 14px;
+  border-radius: 12px;
+  cursor: pointer;
+  flex: 1;
+  min-width: 0;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+  transition: all 0.2s ease;
+}
+
+.btn-mobile-dept-trigger:active {
+  transform: scale(0.98);
+}
+
+.btn-mobile-icon {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.btn-mobile-texts {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  text-align: left;
+  flex: 1;
+  min-width: 0;
+}
+
+.btn-mobile-pre {
+  font-size: 0.64rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #94a3b8;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.btn-mobile-title {
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #ffffff;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+.btn-mobile-badge {
+  background: rgba(255, 255, 255, 0.18);
+  color: #ffffff;
+  font-size: 0.72rem;
+  font-weight: 800;
+  padding: 2px 7px;
+  border-radius: 20px;
+  flex-shrink: 0;
+}
+
+.btn-mobile-arrow {
+  font-size: 1.1rem;
+  color: #38bdf8;
+  flex-shrink: 0;
+}
+
+/* Breadcrumbs de Ubicación en el Catálogo */
+.catalog-breadcrumbs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.84rem;
+  color: #64748b;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.breadcrumb-link {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #0284c7;
+  cursor: pointer;
+  transition: color 0.15s ease;
+}
+
+.breadcrumb-link:hover {
+  color: #0369a1;
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  color: #94a3b8;
+  font-size: 0.75rem;
+}
+
+.breadcrumb-current {
+  font-weight: 750;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 2. Cabecera y Acordeón del Sidebar Vertical Desktop */
+.sidebar-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+}
+
+.sidebar-header-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.96rem;
+  font-weight: 850;
+  color: #0f172a;
+  letter-spacing: -0.01em;
+}
+
+.sidebar-header-icon {
+  font-size: 1.15rem;
+}
+
+.sidebar-close-toggle {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 8px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sidebar-close-toggle:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+  transform: scale(1.05);
+}
+
+.sidebar-cat-group {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.sidebar-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.sidebar-cat-row .sidebar-vertical-cat-item {
+  flex: 1;
+  min-width: 0;
+}
+
+.sidebar-accordion-toggle-btn {
+  background: transparent;
+  border: none;
+  border-radius: 6px;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.85rem;
+  color: #64748b;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.sidebar-accordion-toggle-btn:hover {
+  background: #f1f5f9;
+  color: #0f172a;
+}
+
+.sidebar-accordion-toggle-btn.expanded {
+  transform: rotate(180deg);
+  color: #0284c7;
+}
+
+.sidebar-subitems-vertical {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-left: 22px;
+  padding-left: 10px;
+  border-left: 2px solid #e2e8f0;
+  margin-top: 2px;
+  margin-bottom: 4px;
+}
+
+.sidebar-subitem-btn {
+  background: transparent;
+  border: none;
+  border-radius: 8px;
+  padding: 6px 10px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #475569;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+}
+
+.sidebar-subitem-btn:hover {
+  background: #f8fafc;
+  color: #0f172a;
+  transform: translateX(2px);
+}
+
+.sidebar-subitem-btn.active {
+  background: #f0fdf4;
+  color: #166534;
+  font-weight: 750;
+  border: 1px solid #bbf7d0;
+}
+
+.subitem-icon {
+  font-size: 0.95rem;
+}
+
+.subitem-text-group {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.subitem-title {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.subitem-badge-pill {
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.subitem-count {
+  font-size: 0.7rem;
+  color: #94a3b8;
+  font-weight: 700;
+}
+
+/* 3. Menú Vertical Desplegable Móvil (Drawer Off-Canvas) */
+.mercado-mobile-drawer-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(15, 23, 42, 0.65);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10000;
+  display: flex;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.mercado-mobile-drawer-sheet {
+  background: #ffffff;
+  width: 340px;
+  max-width: 86vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 8px 0 32px rgba(15, 23, 42, 0.28);
+  box-sizing: border-box;
+  animation: slideInLeft 0.28s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  overflow: hidden;
+}
+
+@keyframes slideInLeft {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+.mobile-drawer-header {
+  padding: 16px 20px;
+  background: #0f172a;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #1e293b;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-title-group {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.mobile-drawer-icon {
+  font-size: 1.5rem;
+}
+
+.mobile-drawer-title {
+  margin: 0;
+  font-size: 1.05rem;
+  font-weight: 850;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.mobile-drawer-subtitle {
+  margin: 2px 0 0 0;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.mobile-drawer-close-btn {
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #ffffff;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.mobile-drawer-close-btn:active {
+  background: rgba(255, 255, 255, 0.25);
+  transform: scale(0.92);
+}
+
+.mobile-drawer-body {
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.mobile-drawer-cat-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mobile-drawer-group {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.mobile-drawer-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.mobile-drawer-cat-btn {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 11px 14px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  min-height: 48px;
+}
+
+.mobile-drawer-cat-btn:active {
+  background: #e2e8f0;
+  transform: scale(0.99);
+}
+
+.mobile-drawer-cat-btn.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.15);
+}
+
+.mobile-cat-emoji {
+  font-size: 1.25rem;
+  flex-shrink: 0;
+}
+
+.mobile-cat-info {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+.mobile-cat-name {
+  font-size: 0.92rem;
+  font-weight: 750;
+  line-height: 1.2;
+}
+
+.mobile-drawer-cat-btn.active .mobile-cat-name {
+  color: #ffffff;
+}
+
+.mobile-cat-count {
+  font-size: 0.76rem;
+  background: #e2e8f0;
+  color: #475569;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-weight: 800;
+  flex-shrink: 0;
+}
+
+.mobile-drawer-cat-btn.active .mobile-cat-count {
+  background: rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+}
+
+.mobile-cat-expand-btn {
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  width: 44px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  color: #64748b;
+  cursor: pointer;
+  flex-shrink: 0;
+  transition: all 0.2s ease;
+}
+
+.mobile-cat-expand-btn.expanded {
+  transform: rotate(180deg);
+  background: #e0f2fe;
+  color: #0284c7;
+  border-color: #bae6fd;
+}
+
+.mobile-drawer-sublist {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-left: 24px;
+  padding-left: 12px;
+  border-left: 3px solid #0284c7;
+  margin-top: 4px;
+  margin-bottom: 6px;
+}
+
+.mobile-drawer-subbtn {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.15s ease;
+  min-height: 44px;
+}
+
+.mobile-drawer-subbtn:active {
+  background: #f1f5f9;
+}
+
+.mobile-drawer-subbtn.active {
+  background: #f0fdf4;
+  border-color: #86efac;
+  color: #166534;
+  font-weight: 750;
+}
+
+.sub-emoji {
+  font-size: 1.05rem;
+}
+
+.sub-text-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.sub-name {
+  font-size: 0.84rem;
+  font-weight: 700;
+  color: #1e293b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.sub-badge-tag {
+  background: #fee2e2;
+  color: #dc2626;
+  font-size: 0.65rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  text-transform: uppercase;
+}
+
+.sub-count {
+  font-size: 0.74rem;
+  color: #64748b;
+  font-weight: 800;
+}
+
+.mobile-drawer-filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-top: 12px;
+  border-top: 1px solid #f1f5f9;
+}
+
+.mobile-drawer-section-title {
+  margin: 0;
+  font-size: 0.84rem;
+  font-weight: 800;
+  color: #0f172a;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mobile-drawer-filter-chips {
+  display: flex;
+  gap: 8px;
+}
+
+.mobile-filter-chip {
+  flex: 1;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  padding: 10px;
+  font-size: 0.82rem;
+  font-weight: 750;
+  color: #334155;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  min-height: 44px;
+}
+
+.mobile-filter-chip.active {
+  background: #0f172a;
+  border-color: #0f172a;
+  color: #ffffff;
+}
+
+.mobile-drawer-support-card {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-radius: 12px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.support-card-emoji {
+  font-size: 1.4rem;
+}
+
+.support-card-title {
+  margin: 0;
+  font-size: 0.88rem;
+  font-weight: 800;
+  color: #166534;
+}
+
+.support-card-desc {
+  margin: 0;
+  font-size: 0.74rem;
+  color: #15803d;
+  line-height: 1.3;
+}
+
+.mobile-support-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #16a34a;
+  color: #ffffff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  text-decoration: none;
+  margin-top: 4px;
+  transition: background 0.15s ease;
+}
+
+.mobile-support-link:active {
+  background: #15803d;
+}
+
+.mobile-drawer-footer {
+  padding: 14px 16px;
+  background: #ffffff;
+  border-top: 1px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.btn-mobile-view-results {
+  width: 100%;
+  background: #0284c7;
+  border: none;
+  color: #ffffff;
+  font-size: 0.92rem;
+  font-weight: 800;
+  padding: 12px;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(2, 132, 199, 0.25);
+  transition: all 0.15s ease;
+}
+
+.btn-mobile-view-results:active {
+  background: #0369a1;
+  transform: scale(0.98);
+}
+
+/* 4. Adaptaciones Responsivas para Pantallas Móviles (< 900px) */
+@media (max-width: 900px) {
+  .btn-toggle-sidebar-desktop {
+    display: none !important;
+  }
+
+  .btn-mobile-dept-trigger {
+    display: flex !important;
+  }
+
+  .catalog-breadcrumbs {
+    display: none !important;
+  }
+
+  .mercado-vertical-sidebar {
+    display: none !important;
+  }
+}
+

@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
@@ -65,23 +65,28 @@ export default function Mercado() {
   });
   const [isCartDrawerOpen, setIsCartDrawerOpen] = useState<boolean>(false);
   const [addedNotice, setAddedNotice] = useState<string | null>(null);
-  const [isCatDropdownOpen, setIsCatDropdownOpen] = useState<boolean>(false);
-  const deptDropdownRef = useRef<HTMLDivElement>(null);
-
-  // Cerrar menú desplegable al hacer clic fuera
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (deptDropdownRef.current && !deptDropdownRef.current.contains(event.target as Node)) {
-        setIsCatDropdownOpen(false);
-      }
-    };
-    if (isCatDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
+  
+  // Estado del Menú Vertical Desplegable (Desktop y Móvil)
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('mercado_sidebar_open') !== 'false';
+    } catch {
+      return true;
     }
-    return () => {
-      document.removeEventListener('mousedown', handleClickOutside);
-    };
-  }, [isCatDropdownOpen]);
+  });
+  const [isMobileDrawerOpen, setIsMobileDrawerOpen] = useState<boolean>(false);
+  const [isCuentosAccordionOpen, setIsCuentosAccordionOpen] = useState<boolean>(true);
+
+  const toggleSidebar = () => {
+    soundEffects.playClick();
+    setIsSidebarOpen(prev => {
+      const next = !prev;
+      try {
+        localStorage.setItem('mercado_sidebar_open', String(next));
+      } catch {}
+      return next;
+    });
+  };
 
   // Guardar carrito
   useEffect(() => {
@@ -98,7 +103,7 @@ export default function Mercado() {
       if (e.key === 'Escape') {
         setSelectedProduct(null);
         setIsCartDrawerOpen(false);
-        setIsCatDropdownOpen(false);
+        setIsMobileDrawerOpen(false);
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -467,200 +472,56 @@ export default function Mercado() {
         </div>
       </header>
 
-      {/* Barra de Categorías Horizontal Exclusiva para Móvil */}
-      {/* Barra Superior Universal de Departamentos y Categorías con Menú Desplegable */}
-      <nav className="mercado-department-bar" ref={deptDropdownRef}>
-        <div className="dept-bar-inner">
-          {/* Botón Principal Desplegable de Departamentos */}
-          <div className="dept-dropdown-wrapper">
-            <button
-              type="button"
-              className={`btn-dept-dropdown-trigger ${isCatDropdownOpen ? 'active' : ''}`}
+      {/* Barra de Control de Navegación del Catálogo (Desktop & Móvil) */}
+      <nav className="mercado-catalog-control-bar">
+        <div className="catalog-control-inner">
+          {/* Botón Desplegable para Desktop */}
+          <button
+            type="button"
+            className={`btn-toggle-sidebar-desktop ${isSidebarOpen ? 'active' : ''}`}
+            onClick={toggleSidebar}
+            title={isSidebarOpen ? "Ocultar menú vertical de departamentos" : "Desplegar menú vertical de departamentos"}
+          >
+            <span className="toggle-icon">☰</span>
+            <span className="toggle-label">{isSidebarOpen ? 'Ocultar Menú' : 'Ver Departamentos'}</span>
+            <span className={`toggle-chevron ${isSidebarOpen ? 'open' : ''}`}>▾</span>
+          </button>
+
+          {/* Botón Desplegable Exclusivo para Móvil */}
+          <button
+            type="button"
+            className="btn-mobile-dept-trigger"
+            onClick={() => {
+              soundEffects.playClick();
+              setIsMobileDrawerOpen(true);
+            }}
+            title="Abrir menú vertical de departamentos"
+          >
+            <span className="btn-mobile-icon">{activeCategoryDisplayIcon}</span>
+            <div className="btn-mobile-texts">
+              <span className="btn-mobile-pre">Departamento:</span>
+              <span className="btn-mobile-title">{activeCategoryDisplayLabel}</span>
+            </div>
+            <span className="btn-mobile-badge">{activeCategoryItemCount}</span>
+            <span className="btn-mobile-arrow">☰</span>
+          </button>
+
+          {/* Breadcrumbs de Ubicación Actual */}
+          <div className="catalog-breadcrumbs">
+            <button 
+              type="button" 
+              className="breadcrumb-link"
               onClick={() => {
                 soundEffects.playClick();
-                setIsCatDropdownOpen(prev => !prev);
-              }}
-              aria-expanded={isCatDropdownOpen}
-              title="Abrir menú desplegable de departamentos y categorías"
-            >
-              <span className="dept-trigger-icon">{activeCategoryDisplayIcon}</span>
-              <div className="dept-trigger-texts">
-                <span className="dept-trigger-pre">Departamento:</span>
-                <span className="dept-trigger-name">{activeCategoryDisplayLabel}</span>
-              </div>
-              <span className="dept-trigger-badge">{activeCategoryItemCount}</span>
-              <span className={`dept-trigger-chevron ${isCatDropdownOpen ? 'open' : ''}`}>▾</span>
-            </button>
-
-            {/* Menú Desplegable Flotante de Categorías */}
-            {isCatDropdownOpen && (
-              <div className="dept-dropdown-menu animate-fade-in" role="menu">
-                <div className="dept-menu-header">
-                  <div className="dept-menu-title-row">
-                    <span className="dept-menu-icon">📂</span>
-                    <div>
-                      <h4 className="dept-menu-title">Departamentos & Categorías</h4>
-                      <p className="dept-menu-subtitle">Navega directamente a cualquier sección sin scroll vertical</p>
-                    </div>
-                  </div>
-                  <button 
-                    type="button" 
-                    className="dept-menu-close-btn"
-                    onClick={() => setIsCatDropdownOpen(false)}
-                    title="Cerrar menú"
-                  >
-                    ✕
-                  </button>
-                </div>
-
-                <div className="dept-menu-list">
-                  {MERCADO_CATEGORIES.map(cat => {
-                    const isSelected = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
-                    const count = categoryCounts[cat.id] || 0;
-
-                    return (
-                      <div key={cat.id} className="dept-menu-item-group">
-                        <button
-                          type="button"
-                          className={`dept-menu-item ${isSelected ? 'selected' : ''}`}
-                          onClick={() => {
-                            soundEffects.playClick();
-                            setSelectedCategory(cat.id);
-                            if (cat.id === 'cuentos') {
-                              setCuentosSubCategory('todos');
-                            }
-                            setIsCatDropdownOpen(false);
-                          }}
-                        >
-                          <span className="dept-item-icon">{cat.icon}</span>
-                          <div className="dept-item-info">
-                            <span className="dept-item-label">{cat.label}</span>
-                            <span className="dept-item-hint">
-                              {cat.id === 'todos' ? 'Catálogo pedagógico completo' :
-                               cat.id === 'cuentos' ? 'Obras ilustradas formato Kindle' :
-                               cat.id === 'juegos' ? 'Loterías, dominós y dinámicas' :
-                               cat.id === 'personajes' ? 'Títeres didácticos y teatro' :
-                               cat.id === 'tarjetas' ? 'Barajas y flashcards educativas' :
-                               cat.id === 'proyectos' ? 'Astronomía, kits y ciencia' :
-                               'Cuadernos pedagógicos y arte'}
-                            </span>
-                          </div>
-                          <span className="dept-item-count">{count}</span>
-                        </button>
-
-                        {/* Subopción de Colecciones dentro del departamento Cuentos */}
-                        {cat.id === 'cuentos' && (
-                          <div className="dept-menu-subitems">
-                            <button
-                              type="button"
-                              className={`dept-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'selected' : ''}`}
-                              onClick={() => {
-                                soundEffects.playClick();
-                                setSelectedCategory('cuentos');
-                                setCuentosSubCategory('colecciones');
-                                setIsCatDropdownOpen(false);
-                              }}
-                            >
-                              <span className="dept-sub-icon">📦</span>
-                              <div className="dept-sub-info">
-                                <span className="dept-sub-label">Colecciones y Sagas Literarias</span>
-                                <span className="dept-sub-badge-promo">Packs con Ahorro</span>
-                              </div>
-                              <span className="dept-sub-count">{DEFAULT_BOOK_COLLECTIONS.length} packs</span>
-                            </button>
-
-                            <button
-                              type="button"
-                              className={`dept-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'todos' ? 'selected' : ''}`}
-                              onClick={() => {
-                                soundEffects.playClick();
-                                setSelectedCategory('cuentos');
-                                setCuentosSubCategory('todos');
-                                setIsCatDropdownOpen(false);
-                              }}
-                            >
-                              <span className="dept-sub-icon">📖</span>
-                              <span className="dept-sub-label">Todos los Libros individuales</span>
-                              <span className="dept-sub-count">{categoryCounts['cuentos'] || 9}</span>
-                            </button>
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Filtros Rápidos Inferiores en el Menú */}
-                <div className="dept-menu-footer">
-                  <span className="dept-footer-label">Filtros directos:</span>
-                  <div className="dept-footer-chips">
-                    <button
-                      type="button"
-                      className={`dept-footer-chip ${filterBadge === 'offers' ? 'active' : ''}`}
-                      onClick={() => {
-                        soundEffects.playClick();
-                        setFilterBadge(prev => prev === 'offers' ? 'all' : 'offers');
-                        setIsCatDropdownOpen(false);
-                      }}
-                    >
-                      🔥 Con Descuento
-                    </button>
-                    <button
-                      type="button"
-                      className={`dept-footer-chip ${filterBadge === 'bestsellers' ? 'active' : ''}`}
-                      onClick={() => {
-                        soundEffects.playClick();
-                        setFilterBadge(prev => prev === 'bestsellers' ? 'all' : 'bestsellers');
-                        setIsCatDropdownOpen(false);
-                      }}
-                    >
-                      ⭐ Más Vendidos
-                    </button>
-                  </div>
-                </div>
-              </div>
-            )}
-          </div>
-
-          {/* Píldoras de Acceso Rápido (Desplazamiento horizontal fluido sin scroll vertical) */}
-          <div className="dept-quick-scroll">
-            {MERCADO_CATEGORIES.map(cat => {
-              const isActive = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
-              const count = categoryCounts[cat.id] || 0;
-
-              return (
-                <button
-                  key={cat.id}
-                  type="button"
-                  className={`dept-quick-pill ${isActive ? 'active' : ''}`}
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setSelectedCategory(cat.id);
-                    if (cat.id === 'cuentos') {
-                      setCuentosSubCategory('todos');
-                    }
-                  }}
-                >
-                  <span className="pill-icon">{cat.icon}</span>
-                  <span className="pill-text">{cat.label}</span>
-                  <span className="pill-count">{count}</span>
-                </button>
-              );
-            })}
-
-            <button
-              type="button"
-              className={`dept-quick-pill pill-colecciones ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
-              onClick={() => {
-                soundEffects.playClick();
-                setSelectedCategory('cuentos');
-                setCuentosSubCategory('colecciones');
+                setSelectedCategory('todos');
+                setCuentosSubCategory('todos');
+                setFilterBadge('all');
               }}
             >
-              <span className="pill-icon">📦</span>
-              <span className="pill-text">Colecciones</span>
-              <span className="pill-count">{DEFAULT_BOOK_COLLECTIONS.length}</span>
+              Mercado
             </button>
+            <span className="breadcrumb-separator">›</span>
+            <span className="breadcrumb-current">{activeCategoryDisplayLabel}</span>
           </div>
 
           {/* Selector de Ordenación Rápida */}
@@ -708,6 +569,181 @@ export default function Mercado() {
       {/* Contenido Principal con Layout de Barra Lateral Vertical + Catálogo */}
       <main className="mercado-amazon-main">
         <div className="mercado-columns-layout">
+
+          {/* ==============================================================
+              BARRA LATERAL VERTICAL DESPLEGABLE (Desktop Web)
+              ============================================================== */}
+          {isSidebarOpen && (
+            <aside className="mercado-vertical-sidebar animate-fade-in" aria-label="Menú vertical de departamentos">
+              <div className="sidebar-header-row">
+                <div className="sidebar-header-title">
+                  <span className="sidebar-header-icon">📂</span>
+                  <span>Departamentos</span>
+                </div>
+                <button
+                  type="button"
+                  className="sidebar-close-toggle"
+                  onClick={toggleSidebar}
+                  title="Ocultar menú vertical"
+                >
+                  ◀
+                </button>
+              </div>
+
+              {/* Lista Vertical de Departamentos con Acordeón Desplegable */}
+              <div className="sidebar-filter-block">
+                <div className="sidebar-categories-vertical-list">
+                  {MERCADO_CATEGORIES.map(cat => {
+                    const isSelected = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
+                    const count = categoryCounts[cat.id] || 0;
+                    const isCuentos = cat.id === 'cuentos';
+
+                    return (
+                      <div key={cat.id} className="sidebar-cat-group">
+                        <div className="sidebar-cat-row">
+                          <button
+                            type="button"
+                            className={`sidebar-vertical-cat-item ${isSelected ? 'active' : ''}`}
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setSelectedCategory(cat.id);
+                              if (isCuentos) {
+                                setCuentosSubCategory('todos');
+                                setIsCuentosAccordionOpen(true);
+                              }
+                            }}
+                          >
+                            <div className="sidebar-cat-left">
+                              <span className="sidebar-cat-emoji">{cat.icon}</span>
+                              <span className="sidebar-cat-name">{cat.label}</span>
+                            </div>
+                            <span className="sidebar-cat-number">{count}</span>
+                          </button>
+                          {isCuentos && (
+                            <button
+                              type="button"
+                              className={`sidebar-accordion-toggle-btn ${isCuentosAccordionOpen ? 'expanded' : ''}`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                soundEffects.playClick();
+                                setIsCuentosAccordionOpen(prev => !prev);
+                              }}
+                              title={isCuentosAccordionOpen ? "Colapsar opciones de libros" : "Desplegar opciones de libros"}
+                              aria-label="Desplegar u ocultar subcategorías de libros"
+                            >
+                              ▾
+                            </button>
+                          )}
+                        </div>
+
+                        {/* Acordeón Vertical Desplegable de Cuentos */}
+                        {isCuentos && isCuentosAccordionOpen && (
+                          <div className="sidebar-subitems-vertical animate-slide-down">
+                            <button
+                              type="button"
+                              className={`sidebar-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setSelectedCategory('cuentos');
+                                setCuentosSubCategory('colecciones');
+                              }}
+                            >
+                              <span className="subitem-icon">📦</span>
+                              <div className="subitem-text-group">
+                                <span className="subitem-title">Colecciones & Sagas</span>
+                                <span className="subitem-badge-pill">Ahorro</span>
+                              </div>
+                              <span className="subitem-count">{DEFAULT_BOOK_COLLECTIONS.length}</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className={`sidebar-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'popol-vuh' ? 'active' : ''}`}
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setSelectedCategory('cuentos');
+                                setCuentosSubCategory('popol-vuh');
+                              }}
+                            >
+                              <span className="subitem-icon">🌌</span>
+                              <span className="subitem-title">Saga Popol Vuh (c-5 a c-9)</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className={`sidebar-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'steam' ? 'active' : ''}`}
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setSelectedCategory('cuentos');
+                                setCuentosSubCategory('steam');
+                              }}
+                            >
+                              <span className="subitem-icon">🚀</span>
+                              <span className="subitem-title">Colección STEAM</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              className={`sidebar-subitem-btn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'todos' ? 'active' : ''}`}
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setSelectedCategory('cuentos');
+                                setCuentosSubCategory('todos');
+                              }}
+                            >
+                              <span className="subitem-icon">📖</span>
+                              <span className="subitem-title">Todos los Libros ({categoryCounts['cuentos'] || 9})</span>
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* Filtros Rápidos Verticales */}
+              <div className="sidebar-filter-block">
+                <h4 className="sidebar-filter-title"><span>⚡</span> Filtros Directos</h4>
+                <div className="sidebar-badge-filter-group">
+                  <button
+                    type="button"
+                    className={`sidebar-badge-pill ${filterBadge === 'offers' ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setFilterBadge(prev => prev === 'offers' ? 'all' : 'offers');
+                    }}
+                  >
+                    🔥 En Oferta / Descuento
+                  </button>
+                  <button
+                    type="button"
+                    className={`sidebar-badge-pill ${filterBadge === 'bestsellers' ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setFilterBadge(prev => prev === 'bestsellers' ? 'all' : 'bestsellers');
+                    }}
+                  >
+                    ⭐ Más Vendidos
+                  </button>
+                </div>
+              </div>
+
+              {/* Tarjeta Institucional WhatsApp */}
+              <div className="sidebar-whatsapp-card">
+                <span className="whatsapp-card-title">💬 ¿Pedidos Escolares?</span>
+                <p className="whatsapp-card-desc">Atención y cotizaciones inmediatas para directores y docentes con factura institucional.</p>
+                <a
+                  href={`https://wa.me/${mercadoConfig.whatsappPhone || '50246741239'}?text=${encodeURIComponent('Hola Editorial Lluvia de Ideas, deseo información de materiales para mi colegio')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="whatsapp-card-btn"
+                >
+                  Escribir al WhatsApp ➔
+                </a>
+              </div>
+            </aside>
+          )}
 
 
           {/* ==============================================================
@@ -1469,6 +1505,221 @@ export default function Mercado() {
                 </div>
 
               </div>
+            </div>
+          </div>
+        </div>,
+        document.body
+      )}
+
+      {/* ==============================================================
+          MENÚ VERTICAL DESPLEGABLE MÓVIL (Off-Canvas Drawer)
+          ============================================================== */}
+      {isMobileDrawerOpen && createPortal(
+        <div 
+          className="mercado-mobile-drawer-overlay animate-fade-in" 
+          onClick={() => setIsMobileDrawerOpen(false)}
+        >
+          <div 
+            className="mercado-mobile-drawer-sheet animate-slide-in-left" 
+            onClick={(e) => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-label="Menú vertical de departamentos de la tienda"
+          >
+            {/* Header del Menú Móvil */}
+            <div className="mobile-drawer-header">
+              <div className="mobile-drawer-title-group">
+                <span className="mobile-drawer-icon">🛒</span>
+                <div>
+                  <h3 className="mobile-drawer-title">Departamentos</h3>
+                  <p className="mobile-drawer-subtitle">Editorial Lluvia de Ideas</p>
+                </div>
+              </div>
+              <button 
+                type="button"
+                className="mobile-drawer-close-btn"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setIsMobileDrawerOpen(false);
+                }}
+                aria-label="Cerrar menú de departamentos"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Contenido Scrollable Vertical de Categorías */}
+            <div className="mobile-drawer-body">
+              <div className="mobile-drawer-cat-list">
+                {MERCADO_CATEGORIES.map(cat => {
+                  const isSelected = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
+                  const count = categoryCounts[cat.id] || 0;
+                  const isCuentos = cat.id === 'cuentos';
+
+                  return (
+                    <div key={cat.id} className="mobile-drawer-group">
+                      <div className="mobile-drawer-cat-row">
+                        <button
+                          type="button"
+                          className={`mobile-drawer-cat-btn ${isSelected ? 'active' : ''}`}
+                          onClick={() => {
+                            soundEffects.playClick();
+                            setSelectedCategory(cat.id);
+                            if (isCuentos) {
+                              setCuentosSubCategory('todos');
+                              setIsCuentosAccordionOpen(true);
+                            } else {
+                              setIsMobileDrawerOpen(false);
+                            }
+                          }}
+                        >
+                          <span className="mobile-cat-emoji">{cat.icon}</span>
+                          <div className="mobile-cat-info">
+                            <span className="mobile-cat-name">{cat.label}</span>
+                          </div>
+                          <span className="mobile-cat-count">{count}</span>
+                        </button>
+                        {isCuentos && (
+                          <button
+                            type="button"
+                            className={`mobile-cat-expand-btn ${isCuentosAccordionOpen ? 'expanded' : ''}`}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundEffects.playClick();
+                              setIsCuentosAccordionOpen(prev => !prev);
+                            }}
+                            aria-label="Alternar subcategorías de libros"
+                          >
+                            ▾
+                          </button>
+                        )}
+                      </div>
+
+                      {/* Subacordeón Móvil para Cuentos y Colecciones */}
+                      {isCuentos && isCuentosAccordionOpen && (
+                        <div className="mobile-drawer-sublist animate-slide-down">
+                          <button
+                            type="button"
+                            className={`mobile-drawer-subbtn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones' ? 'active' : ''}`}
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setSelectedCategory('cuentos');
+                              setCuentosSubCategory('colecciones');
+                              setIsMobileDrawerOpen(false);
+                            }}
+                          >
+                            <span className="sub-emoji">📦</span>
+                            <div className="sub-text-wrapper">
+                              <span className="sub-name">Colecciones & Sagas</span>
+                              <span className="sub-badge-tag">Packs Ahorro</span>
+                            </div>
+                            <span className="sub-count">{DEFAULT_BOOK_COLLECTIONS.length}</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`mobile-drawer-subbtn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'popol-vuh' ? 'active' : ''}`}
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setSelectedCategory('cuentos');
+                              setCuentosSubCategory('popol-vuh');
+                              setIsMobileDrawerOpen(false);
+                            }}
+                          >
+                            <span className="sub-emoji">🌌</span>
+                            <span className="sub-name">Saga Popol Vuh (c-5 a c-9)</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`mobile-drawer-subbtn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'steam' ? 'active' : ''}`}
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setSelectedCategory('cuentos');
+                              setCuentosSubCategory('steam');
+                              setIsMobileDrawerOpen(false);
+                            }}
+                          >
+                            <span className="sub-emoji">🚀</span>
+                            <span className="sub-name">Colección STEAM</span>
+                          </button>
+                          <button
+                            type="button"
+                            className={`mobile-drawer-subbtn ${selectedCategory === 'cuentos' && cuentosSubCategory === 'todos' ? 'active' : ''}`}
+                            onClick={() => {
+                              soundEffects.playClick();
+                              setSelectedCategory('cuentos');
+                              setCuentosSubCategory('todos');
+                              setIsMobileDrawerOpen(false);
+                            }}
+                          >
+                            <span className="sub-emoji">📖</span>
+                            <span className="sub-name">Todos los Libros ({categoryCounts['cuentos'] || 9})</span>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+
+              {/* Filtros Rápidos en Móvil */}
+              <div className="mobile-drawer-filters-section">
+                <h4 className="mobile-drawer-section-title">⚡ Filtros Rápidos</h4>
+                <div className="mobile-drawer-filter-chips">
+                  <button
+                    type="button"
+                    className={`mobile-filter-chip ${filterBadge === 'offers' ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setFilterBadge(prev => prev === 'offers' ? 'all' : 'offers');
+                      setIsMobileDrawerOpen(false);
+                    }}
+                  >
+                    🔥 Con Descuento
+                  </button>
+                  <button
+                    type="button"
+                    className={`mobile-filter-chip ${filterBadge === 'bestsellers' ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setFilterBadge(prev => prev === 'bestsellers' ? 'all' : 'bestsellers');
+                      setIsMobileDrawerOpen(false);
+                    }}
+                  >
+                    ⭐ Más Vendidos
+                  </button>
+                </div>
+              </div>
+
+              {/* Pedidos Especiales Móvil */}
+              <div className="mobile-drawer-support-card">
+                <span className="support-card-emoji">💬</span>
+                <div>
+                  <h5 className="support-card-title">¿Cotizaciones y Colegios?</h5>
+                  <p className="support-card-desc">Atención por WhatsApp para docentes e instituciones.</p>
+                </div>
+                <a
+                  href={`https://wa.me/${mercadoConfig.whatsappPhone || '50246741239'}?text=${encodeURIComponent('Hola Editorial Lluvia de Ideas, deseo información de libros y materiales')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mobile-support-link"
+                >
+                  Abrir Chat ➔
+                </a>
+              </div>
+            </div>
+
+            {/* Footer Móvil con Botón de Ver Resultados */}
+            <div className="mobile-drawer-footer">
+              <button
+                type="button"
+                className="btn-mobile-view-results"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setIsMobileDrawerOpen(false);
+                }}
+              >
+                Ver {filteredProducts.length} productos filtrados ➔
+              </button>
             </div>
           </div>
         </div>,
