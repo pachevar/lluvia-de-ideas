@@ -1486,6 +1486,28 @@
   color: #0f172a;
 }
 
+.amazon-share-btn {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #0284c7;
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.95rem;
+  transition: all 0.15s ease;
+}
+
+.amazon-share-btn:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0369a1;
+  transform: translateY(-1px);
+}
+
 /* Estado Vacío */
 .amazon-empty-results {
   background: #ffffff;
@@ -1916,6 +1938,42 @@
   border-radius: 50%;
   font-size: 1rem;
   cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.modal-close-cross:hover {
+  background: #e2e8f0;
+  color: #0f172a;
+}
+
+.modal-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-share-quick-btn {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  font-size: 0.8rem;
+  font-weight: 750;
+  padding: 6px 14px;
+  border-radius: 999px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  transition: all 0.15s ease;
+}
+
+.modal-share-quick-btn:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+  transform: translateY(-1px);
 }
 
 .modal-two-columns {
@@ -2200,6 +2258,30 @@
 
 .btn-amazon-buy-now:hover {
   background: #fa8900;
+}
+
+.btn-amazon-share {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #0369a1;
+  padding: 12px 18px;
+  border-radius: 999px;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.btn-amazon-share:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0284c7;
+  transform: translateY(-1px);
 }
 
 /* --------------------------------------------------------------------------
@@ -3326,6 +3408,26 @@
   transform: scale(1.05);
 }
 
+.btn-kindle-share-direct {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 0.95rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+
+.btn-kindle-share-direct:hover {
+  background: #dcfce7;
+  border-color: #86efac;
+  transform: scale(1.05);
+}
+
 /* --------------------------------------------------------------------------
    VISTA DE SUBCATEGORÍA COLECCIONES (DISEÑO MINIMALISTA Y RELAJANTE)
    -------------------------------------------------------------------------- */
@@ -3662,6 +3764,30 @@
 .btn-col-whatsapp:hover {
   background: #f0fdf4;
   border-color: #86efac;
+}
+
+.btn-col-share {
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  color: #0284c7;
+  font-size: 0.78rem;
+  font-weight: 700;
+  padding: 8px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: center;
+  transition: all 0.15s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+}
+
+.btn-col-share:hover {
+  background: #e0f2fe;
+  border-color: #7dd3fc;
+  color: #0369a1;
+  transform: translateY(-1px);
 }
 
 /* --------------------------------------------------------------------------

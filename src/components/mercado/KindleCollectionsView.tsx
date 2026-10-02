@@ -14,6 +14,7 @@ interface KindleCollectionsViewProps {
   onAddToCart: (product: MercadoProduct, qty?: number) => void;
   onAddCollectionToCart: (collection: BookCollection, books: MercadoProduct[]) => void;
   onQuickView: (product: MercadoProduct) => void;
+  onShareCollection?: (collection: BookCollection) => void;
   whatsappPhone?: string;
   onGoBackToCatalog?: () => void;
 }
@@ -24,6 +25,7 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
   onAddToCart,
   onAddCollectionToCart,
   onQuickView,
+  onShareCollection,
   whatsappPhone = '50246741239',
   onGoBackToCatalog
 }) => {
@@ -216,6 +218,17 @@ export const KindleCollectionsView: React.FC<KindleCollectionsViewProps> = ({
                     >
                       <span>💬 Pedir por WhatsApp</span>
                     </a>
+
+                    {onShareCollection && (
+                      <button
+                        type="button"
+                        className="btn-col-share"
+                        onClick={() => onShareCollection(collection)}
+                        title="Compartir esta colección en redes sociales o copiar enlace"
+                      >
+                        <span>🔗 Compartir Pack</span>
+                      </button>
+                    )}
                   </div>
                 </div>
               </div>

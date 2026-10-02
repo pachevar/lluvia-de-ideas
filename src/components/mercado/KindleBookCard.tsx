@@ -7,6 +7,7 @@ interface KindleBookCardProps {
   onAddToCart: (product: MercadoProduct, qty?: number) => void;
   onQuickView: (product: MercadoProduct) => void;
   onSelectCollection?: (collectionId: string) => void;
+  onShare?: (product: MercadoProduct) => void;
   getSingleProductWhatsAppUrl?: (product: MercadoProduct, qty?: number) => string;
 }
 
@@ -15,6 +16,7 @@ export const KindleBookCard: React.FC<KindleBookCardProps> = ({
   onAddToCart,
   onQuickView,
   onSelectCollection,
+  onShare,
   getSingleProductWhatsAppUrl
 }) => {
   const discountPercent = product.originalPrice 
@@ -157,6 +159,17 @@ export const KindleBookCard: React.FC<KindleBookCardProps> = ({
             >
               <span>💬</span>
             </a>
+          )}
+
+          {onShare && (
+            <button
+              type="button"
+              className="btn-kindle-share-direct"
+              onClick={() => onShare(product)}
+              title="Compartir este libro en redes o copiar enlace"
+            >
+              <span>🔗</span>
+            </button>
           )}
         </div>
       </div>

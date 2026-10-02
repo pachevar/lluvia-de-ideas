@@ -64,7 +64,7 @@ function App() {
   const isBoletosView = currentPath.includes('/boletos');
   const isBingoCardView = currentPath.includes('/juegos/bingo') || currentPath.includes('/bingo');
   const isSutzView = currentPath === '/sutz' || currentPath.startsWith('/sutz') || currentPath === '/mundo-virtual';
-  const isMercadoView = currentPath === '/mercado' || currentPath === '/tienda' || currentPath === '/catalogo';
+  const isMercadoView = currentPath.startsWith('/mercado') || currentPath.startsWith('/tienda') || currentPath.startsWith('/catalogo');
   const isCartonView = currentPath.includes('/carton');
 
   return (
@@ -125,8 +125,11 @@ function App() {
             <Route path="/galeria" element={<GranGaleria />} />
             <Route path="/concursos-estudiantiles" element={<GranGaleria />} />
             <Route path="/mercado" element={<Mercado />} />
+            <Route path="/mercado/:productId" element={<Mercado />} />
             <Route path="/tienda" element={<Mercado />} />
+            <Route path="/tienda/:productId" element={<Mercado />} />
             <Route path="/catalogo" element={<Mercado />} />
+            <Route path="/catalogo/:productId" element={<Mercado />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>

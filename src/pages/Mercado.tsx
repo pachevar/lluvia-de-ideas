@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from 'react';
 import { createPortal } from 'react-dom';
+import { useSearchParams, useParams } from 'react-router-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { 
@@ -11,6 +12,7 @@ import {
 import KindleBookCover from '../components/mercado/KindleBookCover';
 import KindleBookCard from '../components/mercado/KindleBookCard';
 import KindleCollectionsView from '../components/mercado/KindleCollectionsView';
+import ProductShareModal from '../components/mercado/ProductShareModal';
 import { soundEffects } from '../utils/soundEffects';
 import { CONTACT } from '../constants';
 import './Mercado.css';
@@ -52,9 +54,17 @@ export default function Mercado() {
   const [searchQuery, setSearchQuery] = useState<string>('');
   const [sortBy, setSortBy] = useState<'featured' | 'price-asc' | 'price-desc' | 'rating' | 'sold'>('featured');
   
+  // Parámetros de ruta y consulta para enlaces únicos directos
+  const [searchParams] = useSearchParams();
+  const { productId: routeProductId } = useParams<{ productId?: string }>();
+
   // Detalle de Producto Modal
   const [selectedProduct, setSelectedProduct] = useState<MercadoProduct | null>(null);
   const [detailQuantity, setDetailQuantity] = useState<number>(1);
+
+  // Estado del Modal de Compartir
+  const [shareItem, setShareItem] = useState<{ product?: MercadoProduct; collection?: BookCollection } | null>(null);
+  const [isShareModalOpen, setIsShareModalOpen] = useState<boolean>(false);
 
   // Carrito de compras
   const [cartItems, setCartItems] = useState<CartItem[]>(() => {
@@ -111,6 +121,77 @@ export default function Mercado() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
+
+  // Efecto para abrir automáticamente producto o colección desde el enlace único directo
+  useEffect(() => {
+    const pId = routeProductId || searchParams.get('p') || searchParams.get('producto');
+    const cId = searchParams.get('c') || searchParams.get('coleccion');
+
+    if (pId && allProducts.length > 0) {
+      const foundProd = allProducts.find(p => p.id === pId);
+      if (foundProd) {
+        setSelectedProduct(foundProd);
+        setDetailQuantity(1);
+        document.title = `${foundProd.title} | Mercado - Editorial Lluvia de Ideas`;
+        return;
+      }
+      if (allCollections.length > 0) {
+        const foundCol = allCollections.find(c => c.id === pId || `bundle-${c.id}` === pId);
+        if (foundCol) {
+          setSelectedCategory('cuentos');
+          setCuentosSubCategory('colecciones');
+          setTimeout(() => {
+            const el = document.getElementById(`collection-${foundCol.id}`);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }, 200);
+          document.title = `Colección ${foundCol.title} | Editorial Lluvia de Ideas`;
+          return;
+        }
+      }
+    }
+
+    if (cId && allCollections.length > 0) {
+      const foundCol = allCollections.find(c => c.id === cId);
+      if (foundCol) {
+        setSelectedCategory('cuentos');
+        setCuentosSubCategory('colecciones');
+        setTimeout(() => {
+          const el = document.getElementById(`collection-${foundCol.id}`);
+          if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 200);
+        document.title = `Colección ${foundCol.title} | Editorial Lluvia de Ideas`;
+      }
+    }
+  }, [routeProductId, searchParams, allProducts, allCollections]);
+
+  // Sincronizar URL del navegador cuando se abre o cierra la vista previa del producto
+  useEffect(() => {
+    if (selectedProduct) {
+      const currentP = new URLSearchParams(window.location.search).get('p');
+      if (currentP !== selectedProduct.id) {
+        window.history.replaceState(null, '', `/mercado?p=${encodeURIComponent(selectedProduct.id)}`);
+      }
+      document.title = `${selectedProduct.title} | Mercado - Editorial Lluvia de Ideas`;
+    } else {
+      const currentP = new URLSearchParams(window.location.search).get('p');
+      if (currentP) {
+        window.history.replaceState(null, '', '/mercado');
+      }
+      document.title = 'Mercado Educativo & Creativo | Editorial Lluvia de Ideas';
+    }
+  }, [selectedProduct]);
+
+  const handleOpenShareProduct = (prod: MercadoProduct) => {
+    soundEffects.playClick();
+    setShareItem({ product: prod });
+    setIsShareModalOpen(true);
+  };
+
+  const handleOpenShareCollection = (col: BookCollection) => {
+    soundEffects.playClick();
+    setShareItem({ collection: col });
+    setIsShareModalOpen(true);
+  };
 
   // Total de items en carrito
   const totalCartCount = useMemo(() => {
@@ -898,6 +979,7 @@ export default function Mercado() {
                   setSelectedProduct(p);
                   setDetailQuantity(1);
                 }}
+                onShareCollection={handleOpenShareCollection}
                 whatsappPhone={mercadoConfig.whatsappPhone || CONTACT.whatsappPhone}
                 onGoBackToCatalog={() => {
                   setSelectedCategory('todos');
@@ -918,6 +1000,7 @@ export default function Mercado() {
                         setSelectedProduct(p);
                         setDetailQuantity(1);
                       }}
+                      onShare={handleOpenShareProduct}
                       onSelectCollection={(colId) => {
                         soundEffects.playClick();
                         setCuentosSubCategory('colecciones');
@@ -1057,6 +1140,16 @@ export default function Mercado() {
                               <span>🛒 Agregar</span>
                             </button>
                             
+                            <button
+                              type="button"
+                              className="amazon-share-btn"
+                              onClick={() => handleOpenShareProduct(product)}
+                              title="Compartir este producto"
+                              aria-label="Compartir este producto"
+                            >
+                              🔗
+                            </button>
+
                             <button
                               type="button"
                               className="amazon-quick-view-btn"
@@ -1313,14 +1406,24 @@ export default function Mercado() {
               <span className="modal-category-path">
                 Mercado &gt; {selectedProduct.categoryLabel} &gt; {selectedProduct.title}
               </span>
-              <button 
-                type="button" 
-                className="modal-close-cross"
-                onClick={() => setSelectedProduct(null)}
-                aria-label="Cerrar modal"
-              >
-                ✕
-              </button>
+              <div className="modal-header-actions">
+                <button
+                  type="button"
+                  className="modal-share-quick-btn"
+                  onClick={() => handleOpenShareProduct(selectedProduct)}
+                  title="Compartir este producto con enlace directo"
+                >
+                  <span>🔗 Compartir</span>
+                </button>
+                <button 
+                  type="button" 
+                  className="modal-close-cross"
+                  onClick={() => setSelectedProduct(null)}
+                  aria-label="Cerrar modal"
+                >
+                  ✕
+                </button>
+              </div>
             </div>
 
             <div className="modal-two-columns">
@@ -1544,6 +1647,15 @@ export default function Mercado() {
                     >
                       <span>⚡ Comprar Ya en WhatsApp</span>
                     </a>
+
+                    <button
+                      type="button"
+                      className="btn-amazon-share"
+                      onClick={() => handleOpenShareProduct(selectedProduct)}
+                      title="Compartir este producto con enlace directo"
+                    >
+                      <span>🔗 Compartir</span>
+                    </button>
                   </div>
                 </div>
 
@@ -1768,6 +1880,17 @@ export default function Mercado() {
         </div>,
         document.body
       )}
+
+      {/* Modal de Compartir Producto o Colección con Enlace Único */}
+      <ProductShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => {
+          setIsShareModalOpen(false);
+          setShareItem(null);
+        }}
+        product={shareItem?.product}
+        collection={shareItem?.collection}
+      />
 
     </div>
   );
