@@ -84,7 +84,7 @@ export interface TiendaConfig {
   whatsappPhone?: string;
 }
 
-export type MercadoCategory = 'cuentos' | 'juegos' | 'personajes' | 'tarjetas' | 'proyectos' | 'utiles';
+export type MercadoCategory = string;
 
 export interface MercadoProductConfig {
   id: string;
@@ -158,6 +158,14 @@ export interface MercadoConfig {
   bannerTitle?: string;
   bannerSubtitle?: string;
   showPromoStrip?: boolean;
+}
+
+export interface MercadoCategoryConfig {
+  id: string;
+  label: string;
+  icon: string;
+  description?: string;
+  order?: number;
 }
 
 export type BookAccent = 'cyan' | 'yellow' | 'lilac';
@@ -273,6 +281,7 @@ export interface PortalConfig {
   mercadoConfig?: MercadoConfig;
   mercadoProducts?: MercadoProductConfig[];
   mercadoCollections?: BookCollectionConfig[];
+  mercadoCategories?: MercadoCategoryConfig[];
   landingConfig?: LandingConfig;
   archetypeImages?: Record<string, string>;
   journeyStageImages?: Record<string, string>;

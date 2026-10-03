@@ -216,6 +216,10 @@ class SoundManager {
     }
   }
 
+  public playSuccess() {
+    this.playSuccessFanfare();
+  }
+
   public playBingoBall() {
     if (this.muted) return;
     this.initContext();

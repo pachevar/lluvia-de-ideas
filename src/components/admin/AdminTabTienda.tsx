@@ -3,15 +3,24 @@ import type { PortalConfig } from '../../types';
 import { 
   DEFAULT_MERCADO_PRODUCTS, 
   DEFAULT_BOOK_COLLECTIONS,
-  MERCADO_CATEGORIES, 
+  DEFAULT_MERCADO_DEPARTMENTS,
   type MercadoProduct,
   type BookCollection,
-  type CollectionIncludedBook
+  type CollectionIncludedBook,
+  type MercadoCategory
 } from '../../data/mercadoData';
 import { usePortalConfig } from '../../context/PortalConfigContext';
 import { uploadImageToStorage, shrinkBase64Image } from '../../utils/imageUpload';
 import { soundEffects } from '../../utils/soundEffects';
 import './AdminTabTienda.css';
+
+const createEmptyDepartment = (currentLength: number): MercadoCategory => ({
+  id: `dept-${Date.now()}`,
+  label: '',
+  icon: '📦',
+  description: '',
+  order: currentLength + 1
+});
 
 interface AdminTabTiendaProps {
   localConfig: PortalConfig;
@@ -135,7 +144,11 @@ const createEmptyCollection = (): BookCollection => ({
 });
 
 export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, saving }: AdminTabTiendaProps) {
-  const { saveMercadoCollectionsToFirestore, saveMercadoProductsToFirestore } = usePortalConfig();
+  const { 
+    saveMercadoCollectionsToFirestore, 
+    saveMercadoProductsToFirestore,
+    saveMercadoCategoriesToFirestore 
+  } = usePortalConfig();
   const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const showToast = (msg: string) => {
@@ -159,8 +172,23 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     return DEFAULT_BOOK_COLLECTIONS;
   }, [localConfig.mercadoCollections]);
 
-  // Subpestaña activa (Productos vs Colecciones)
-  const [adminSubTab, setAdminSubTab] = useState<'productos' | 'colecciones'>('productos');
+  // Departamentos y Categorías activas (Inicia con departamentos configurados o departamentos base)
+  const departments: MercadoCategory[] = useMemo(() => {
+    if (localConfig.mercadoCategories !== undefined && Array.isArray(localConfig.mercadoCategories) && localConfig.mercadoCategories.length > 0) {
+      return [...localConfig.mercadoCategories].sort((a, b) => (a.order || 0) - (b.order || 0));
+    }
+    return DEFAULT_MERCADO_DEPARTMENTS;
+  }, [localConfig.mercadoCategories]);
+
+  // Subpestaña activa (Productos vs Colecciones vs Departamentos)
+  const [adminSubTab, setAdminSubTab] = useState<'productos' | 'colecciones' | 'departamentos'>('productos');
+
+  // Estados de Departamento / Categoría
+  const [editingDepartment, setEditingDepartment] = useState<MercadoCategory | null>(null);
+  const [isDepartmentModalOpen, setIsDepartmentModalOpen] = useState<boolean>(false);
+  const [originalDepartmentId, setOriginalDepartmentId] = useState<string | null>(null);
+  const [departmentToDelete, setDepartmentToDelete] = useState<MercadoCategory | null>(null);
+  const [reassignCategoryTo, setReassignCategoryTo] = useState<string>('');
 
   // Estados de Colección
   const [editingCollection, setEditingCollection] = useState<BookCollection | null>(null);
@@ -256,6 +284,169 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
       showToast('✓ Producto guardado y sincronizado en Firestore');
     } catch (e) {
       console.warn('[AdminTabTienda] Error guardando productos en Firestore:', e);
+    }
+  };
+
+  // Actualizar departamentos en localConfig y persistir en Firestore y localStorage
+  const commitDepartments = async (nextDepartments: MercadoCategory[]) => {
+    const ordered = nextDepartments.map((dept, index) => ({
+      ...dept,
+      order: index + 1
+    }));
+
+    try {
+      localStorage.setItem('mercado_categories_draft', JSON.stringify(ordered));
+    } catch (e) {
+      console.warn('[AdminTabTienda] Warning guardando borrador categorías:', e);
+    }
+
+    setLocalConfig(prev => {
+      if (!prev) return prev;
+      return {
+        ...prev,
+        mercadoCategories: ordered
+      };
+    });
+
+    try {
+      await saveMercadoCategoriesToFirestore(ordered);
+      showToast('✓ Departamentos guardados y sincronizados');
+    } catch (e) {
+      console.warn('[AdminTabTienda] Error guardando categorías en Firestore:', e);
+      showToast('⚠️ Guardado local. Se subirá con la sincronización general.');
+    }
+  };
+
+  const handleOpenNewDepartment = () => {
+    soundEffects.playClick();
+    setEditingDepartment(createEmptyDepartment(departments.length));
+    setOriginalDepartmentId(null);
+    setIsDepartmentModalOpen(true);
+  };
+
+  const handleOpenEditDepartment = (dept: MercadoCategory) => {
+    soundEffects.playClick();
+    setEditingDepartment({ ...dept });
+    setOriginalDepartmentId(dept.id);
+    setIsDepartmentModalOpen(true);
+  };
+
+  const handleSaveDepartment = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingDepartment) return;
+
+    const cleanLabel = editingDepartment.label.trim();
+    if (!cleanLabel) {
+      alert('Por favor ingresa un nombre para el departamento.');
+      return;
+    }
+
+    let cleanId = editingDepartment.id.trim().toLowerCase().replace(/[^a-z0-9_-]/g, '-');
+    if (!cleanId) {
+      cleanId = cleanLabel.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]/g, "-").replace(/-+/g, "-");
+    }
+
+    // Verificar ID duplicado
+    const isDuplicate = departments.some(d => d.id === cleanId && d.id !== originalDepartmentId);
+    if (isDuplicate) {
+      alert(`Ya existe un departamento con el identificador "${cleanId}". Por favor usa otro ID.`);
+      return;
+    }
+
+    const finalDept: MercadoCategory = {
+      ...editingDepartment,
+      id: cleanId,
+      label: cleanLabel,
+      icon: editingDepartment.icon?.trim() || '📦'
+    };
+
+    let nextDepts: MercadoCategory[];
+    if (originalDepartmentId) {
+      nextDepts = departments.map(d => d.id === originalDepartmentId ? finalDept : d);
+      
+      // Si el ID cambió, actualizar todos los productos que usaban el ID anterior
+      if (originalDepartmentId !== cleanId) {
+        const updatedProducts = products.map(p => {
+          if (p.category === originalDepartmentId) {
+            return {
+              ...p,
+              category: cleanId,
+              categoryLabel: cleanLabel
+            };
+          }
+          return p;
+        });
+        await commitProducts(updatedProducts);
+      }
+    } else {
+      nextDepts = [...departments, finalDept];
+    }
+
+    await commitDepartments(nextDepts);
+    setIsDepartmentModalOpen(false);
+    setEditingDepartment(null);
+    setOriginalDepartmentId(null);
+    soundEffects.playSuccessFanfare();
+    showToast(originalDepartmentId ? '✓ Departamento modificado exitosamente' : '✨ Nuevo departamento creado exitosamente');
+  };
+
+  const handleMoveDepartment = async (deptId: string, direction: -1 | 1) => {
+    soundEffects.playClick();
+    const idx = departments.findIndex(d => d.id === deptId);
+    if (idx === -1) return;
+    const targetIdx = idx + direction;
+    if (targetIdx < 0 || targetIdx >= departments.length) return;
+
+    const reordered = [...departments];
+    const [moved] = reordered.splice(idx, 1);
+    reordered.splice(targetIdx, 0, moved);
+
+    await commitDepartments(reordered);
+  };
+
+  const handlePromptDeleteDepartment = (dept: MercadoCategory) => {
+    soundEffects.playClick();
+    setDepartmentToDelete(dept);
+    const otherCat = departments.find(d => d.id !== dept.id);
+    setReassignCategoryTo(otherCat ? otherCat.id : '');
+  };
+
+  const handleConfirmDeleteDepartment = async (reassign: boolean) => {
+    if (!departmentToDelete) return;
+    soundEffects.playClick();
+    const deptId = departmentToDelete.id;
+
+    // Si hay reasignación de productos
+    if (reassign && reassignCategoryTo) {
+      const targetDept = departments.find(d => d.id === reassignCategoryTo);
+      const updatedProducts = products.map(p => {
+        if (p.category === deptId) {
+          return {
+            ...p,
+            category: reassignCategoryTo,
+            categoryLabel: targetDept ? targetDept.label : 'General'
+          };
+        }
+        return p;
+      });
+      await commitProducts(updatedProducts);
+    }
+
+    const nextDepts = departments.filter(d => d.id !== deptId);
+    await commitDepartments(nextDepts);
+
+    setDepartmentToDelete(null);
+    setReassignCategoryTo('');
+    soundEffects.playSuccessFanfare();
+    showToast('✓ Departamento eliminado del catálogo');
+  };
+
+  const handleRestoreDefaultDepartments = async () => {
+    if (window.confirm('¿Restaurar los 6 departamentos pedagógicos originales de la editorial? No se eliminarán tus productos existentes.')) {
+      soundEffects.playClick();
+      await commitDepartments(DEFAULT_MERCADO_DEPARTMENTS);
+      soundEffects.playSuccessFanfare();
+      showToast('♻️ Departamentos base restaurados exitosamente');
     }
   };
 
@@ -645,16 +836,14 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     setEditingCollection(null);
   };
 
-  // Categorías con conteos
+  // Categorías con conteos dinámicos
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { todos: products.length };
-    MERCADO_CATEGORIES.forEach(cat => {
-      if (cat.id !== 'todos') {
-        counts[cat.id] = products.filter(p => p.category === cat.id).length;
-      }
+    departments.forEach(cat => {
+      counts[cat.id] = products.filter(p => p.category === cat.id).length;
     });
     return counts;
-  }, [products]);
+  }, [products, departments]);
 
   return (
     <div className="admin-mercado-wrapper animate-fade-in">
@@ -738,6 +927,25 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                 ＋ Nueva Colección / Pack (5 Libros)
               </button>
             </>
+          ) : adminSubTab === 'departamentos' ? (
+            <>
+              <button 
+                type="button" 
+                className="btn-mercado-secondary"
+                onClick={handleRestoreDefaultDepartments}
+                title="Restaurar los 6 departamentos pedagógicos base"
+              >
+                ♻️ Restaurar Departamentos Base
+              </button>
+              <button 
+                type="button" 
+                className="btn-mercado-primary"
+                onClick={handleOpenNewDepartment}
+                title="Crear un nuevo departamento o categoría"
+              >
+                ＋ Nuevo Departamento
+              </button>
+            </>
           ) : (
             <>
               {products.length > 0 && (
@@ -805,7 +1013,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
         </div>
       </div>
 
-      {/* 2.5 Selector de Sub-Pestaña: Productos vs Colecciones */}
+      {/* 2.5 Selector de Sub-Pestaña: Productos vs Colecciones vs Departamentos */}
       <div className="admin-tienda-subtabs-nav">
         <button
           type="button"
@@ -830,6 +1038,18 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
           <span className="subtab-icon">📦</span>
           <span>Colecciones y Packs (5 Libros)</span>
           <span className="subtab-count-badge">{collections.length}</span>
+        </button>
+        <button
+          type="button"
+          className={`admin-tienda-subtab-btn ${adminSubTab === 'departamentos' ? 'active' : ''}`}
+          onClick={() => {
+            soundEffects.playClick();
+            setAdminSubTab('departamentos');
+          }}
+        >
+          <span className="subtab-icon">🗂️</span>
+          <span>Departamentos & Categorías</span>
+          <span className="subtab-count-badge">{departments.length}</span>
         </button>
       </div>
 
@@ -944,48 +1164,180 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
             </div>
           )}
         </div>
+      ) : adminSubTab === 'departamentos' ? (
+        <div className="admin-departments-section animate-fade-in">
+          {/* Banner explicativo de Departamentos */}
+          <div style={{ background: 'rgba(255, 122, 0, 0.1)', border: '1px solid rgba(255, 122, 0, 0.35)', borderRadius: '14px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', color: '#ffedd5', marginTop: '16px' }}>
+            <span style={{ fontSize: '2rem' }}>🗂️</span>
+            <div style={{ fontSize: '0.88rem', lineHeight: '1.45' }}>
+              <strong style={{ display: 'block', color: '#fb923c', fontSize: '0.98rem', marginBottom: '3px' }}>
+                Gestor de Departamentos y Categorías del Mercado
+              </strong>
+              Aquí puedes modificar los nombres, emojis y descripciones de las secciones de tu tienda, o crear nuevos departamentos pedagógicos (ej: Robótica, Instrumentos, Teatro, etc.). Todo cambio se refleja inmediatamente en el menú vertical de departamentos, el buscador y el catálogo público del Mercado.
+            </div>
+          </div>
+
+          {departments.length === 0 ? (
+            <div className="admin-empty-catalog-hero animate-fade-in" style={{ marginTop: '20px' }}>
+              <div className="admin-empty-icon-wrap">
+                <span>🗂️</span>
+              </div>
+              <h3>Sin Departamentos Configurados (0 departamentos)</h3>
+              <p>
+                No tienes categorías activas en el mercado. Puedes restaurar los 6 departamentos pedagógicos originales o crear uno nuevo.
+              </p>
+              <div className="admin-empty-hero-actions">
+                <button 
+                  type="button" 
+                  className="btn-mercado-secondary"
+                  onClick={handleRestoreDefaultDepartments}
+                >
+                  ♻️ Restaurar Departamentos Base
+                </button>
+                <button 
+                  type="button" 
+                  className="btn-mercado-primary"
+                  onClick={handleOpenNewDepartment}
+                >
+                  ＋ Crear Mi Primer Departamento
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="admin-departments-grid">
+              {departments.map((dept, idx) => {
+                const count = products.filter(p => p.category === dept.id).length;
+                const canMoveUp = idx > 0;
+                const canMoveDown = idx < departments.length - 1;
+
+                return (
+                  <div key={dept.id} className="admin-dept-card">
+                    <div>
+                      <div className="admin-dept-card-header">
+                        <div className="admin-dept-icon-wrap">
+                          <span>{dept.icon}</span>
+                        </div>
+                        <div className="admin-dept-card-meta">
+                          <div className="admin-dept-title-row">
+                            <h4 className="admin-dept-card-title">{dept.label}</h4>
+                            <span className="admin-dept-order-badge">#{idx + 1}</span>
+                          </div>
+                          <span className="admin-dept-slug-badge">ID: {dept.id}</span>
+                        </div>
+                      </div>
+
+                      {dept.description && (
+                        <p className="admin-dept-card-desc">{dept.description}</p>
+                      )}
+                    </div>
+
+                    <div className="admin-dept-card-footer">
+                      <span className={`admin-dept-count-badge ${count > 0 ? 'has-items' : 'empty'}`}>
+                        <span>🏷️</span>
+                        <span>{count} {count === 1 ? 'producto' : 'productos'}</span>
+                      </span>
+
+                      <div className="admin-dept-actions-group">
+                        <div className="admin-card-reorder-group">
+                          <button
+                            type="button"
+                            className="btn-card-icon"
+                            onClick={() => handleMoveDepartment(dept.id, -1)}
+                            disabled={!canMoveUp}
+                            title="Mover arriba en el menú"
+                          >
+                            ⬆️
+                          </button>
+                          <button
+                            type="button"
+                            className="btn-card-icon"
+                            onClick={() => handleMoveDepartment(dept.id, 1)}
+                            disabled={!canMoveDown}
+                            title="Mover abajo en el menú"
+                          >
+                            ⬇️
+                          </button>
+                        </div>
+
+                        <button
+                          type="button"
+                          className="btn-card-icon"
+                          onClick={() => handleOpenEditDepartment(dept)}
+                          title="Editar departamento"
+                        >
+                          ✏️
+                        </button>
+
+                        <button
+                          type="button"
+                          className="btn-card-icon danger"
+                          onClick={() => handlePromptDeleteDepartment(dept)}
+                          title="Eliminar departamento"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
       ) : (
         <>
           {/* 3. Filtros por Categoría y Buscador */}
           <div className="admin-mercado-filter-strip">
-        <div className="admin-mercado-search-bar">
-          <span style={{ fontSize: '1.1rem' }}>🔍</span>
-          <input
-            type="text"
-            placeholder="Buscar por título, categoría, grado o palabra clave en el inventario..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-          {searchTerm && (
-            <button 
-              type="button"
-              onClick={() => setSearchTerm('')}
-              style={{ background: 'rgba(255,255,255,0.12)', border: 'none', color: '#ffffff', borderRadius: '50%', width: '22px', height: '22px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.75rem' }}
-              title="Borrar búsqueda"
-            >
-              ✕
-            </button>
-          )}
-        </div>
+            <div className="admin-mercado-search-bar">
+              <span style={{ fontSize: '1.1rem' }}>🔍</span>
+              <input
+                type="text"
+                placeholder="Buscar por título, categoría, grado o palabra clave en el inventario..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+              {searchTerm && (
+                <button 
+                  type="button" 
+                  onClick={() => setSearchTerm('')}
+                  style={{ background: 'rgba(255,255,255,0.12)', border: 'none', color: '#ffffff', borderRadius: '50%', width: '22px', height: '22px', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', fontSize: '0.75rem' }}
+                  title="Borrar búsqueda"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
 
-        <div className="admin-mercado-categories-scroll">
-          {MERCADO_CATEGORIES.map(cat => (
-            <button
-              key={cat.id}
-              type="button"
-              className={`admin-cat-pill-btn ${selectedCategory === cat.id ? 'active' : ''}`}
-              onClick={() => {
-                soundEffects.playClick();
-                setSelectedCategory(cat.id);
-              }}
-            >
-              <span>{cat.icon}</span>
-              <span>{cat.label}</span>
-              <span className="admin-cat-pill-count">{categoryCounts[cat.id] || 0}</span>
-            </button>
-          ))}
-        </div>
-      </div>
+            <div className="admin-mercado-categories-scroll">
+              <button
+                type="button"
+                className={`admin-cat-pill-btn ${selectedCategory === 'todos' ? 'active' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setSelectedCategory('todos');
+                }}
+              >
+                <span>⚡</span>
+                <span>Todo el Catálogo</span>
+                <span className="admin-cat-pill-count">{categoryCounts['todos'] || 0}</span>
+              </button>
+              {departments.map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  className={`admin-cat-pill-btn ${selectedCategory === cat.id ? 'active' : ''}`}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setSelectedCategory(cat.id);
+                  }}
+                >
+                  <span>{cat.icon}</span>
+                  <span>{cat.label}</span>
+                  <span className="admin-cat-pill-count">{categoryCounts[cat.id] || 0}</span>
+                </button>
+              ))}
+            </div>
+          </div>
 
       {/* Estado de carga de subida */}
       {uploadStatus && (
@@ -1217,12 +1569,12 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
 
                 <div className="form-grid-3">
                   <div className="mercado-input-group">
-                    <label>Categoría</label>
+                    <label>Categoría / Departamento</label>
                     <select
                       value={editingProduct.category}
                       onChange={(e) => {
-                        const catId = e.target.value as MercadoProduct['category'];
-                        const catObj = MERCADO_CATEGORIES.find(c => c.id === catId);
+                        const catId = e.target.value;
+                        const catObj = departments.find(c => c.id === catId);
                         setEditingProduct({
                           ...editingProduct,
                           category: catId,
@@ -1230,12 +1582,11 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
                         });
                       }}
                     >
-                      <option value="cuentos">📚 Cuentos y Libros</option>
-                      <option value="juegos">🎲 Juegos de Mesa</option>
-                      <option value="personajes">🎭 Personajes y Títeres</option>
-                      <option value="tarjetas">🎴 Tarjetas y Barajas</option>
-                      <option value="proyectos">🚀 Proyectos STEAM</option>
-                      <option value="utiles">🎨 Útiles y Arte</option>
+                      {departments.map(d => (
+                        <option key={d.id} value={d.id}>
+                          {d.icon} {d.label}
+                        </option>
+                      ))}
                     </select>
                   </div>
 
@@ -2222,6 +2573,264 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
               >
                 💾 Guardar Colección
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 5. MODAL DE CREAR / EDITAR DEPARTAMENTO */}
+      {isDepartmentModalOpen && editingDepartment && (
+        <div className="admin-modal-backdrop animate-fade-in" onClick={() => setIsDepartmentModalOpen(false)}>
+          <div className="admin-modal-card card-glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px' }}>
+            <div className="admin-modal-header">
+              <div className="admin-modal-title-wrap">
+                <span className="modal-title-icon">{editingDepartment.icon || '🗂️'}</span>
+                <div>
+                  <h3 className="admin-modal-title">
+                    {originalDepartmentId ? 'Editar Departamento' : 'Nuevo Departamento / Categoría'}
+                  </h3>
+                  <span className="admin-modal-subtitle">
+                    Configura el nombre, emoji identificador y descripción pedagógica
+                  </span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="btn-modal-close"
+                onClick={() => setIsDepartmentModalOpen(false)}
+                title="Cerrar modal"
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveDepartment}>
+              <div className="admin-modal-body-scroll" style={{ maxHeight: '70vh' }}>
+                <div className="modal-section-box">
+                  <h4 className="modal-section-title">
+                    <span>🎨</span> Icono / Emoji Representativo
+                  </h4>
+
+                  <div className="admin-emoji-picker-container">
+                    <div className="form-grid-2">
+                      <div className="mercado-input-group">
+                        <label>Emoji seleccionado</label>
+                        <input
+                          type="text"
+                          value={editingDepartment.icon}
+                          onChange={(e) => setEditingDepartment({ ...editingDepartment, icon: e.target.value })}
+                          placeholder="Ej: 📚"
+                          style={{ fontSize: '1.4rem', textAlign: 'center', fontWeight: 'bold' }}
+                          maxLength={4}
+                          required
+                        />
+                      </div>
+                      <div className="mercado-input-group">
+                        <label>Vista previa visual</label>
+                        <div style={{ height: '44px', display: 'flex', alignItems: 'center', gap: '10px', background: 'rgba(255,255,255,0.05)', borderRadius: '10px', padding: '0 12px', border: '1px solid rgba(255,255,255,0.1)' }}>
+                          <span style={{ fontSize: '1.6rem' }}>{editingDepartment.icon || '📦'}</span>
+                          <span style={{ color: '#ffffff', fontWeight: 750, fontSize: '0.95rem' }}>
+                            {editingDepartment.label || 'Nombre del Departamento'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <label style={{ fontSize: '0.78rem', color: '#94a3b8', marginTop: '6px' }}>
+                      O elige uno de los iconos sugeridos:
+                    </label>
+                    <div className="admin-emoji-preset-grid">
+                      {['📚', '📖', '🎲', '♟️', '🎭', '🎴', '🚀', '🔬', '🎨', '🤖', '🧩', '🎵', '📐', '💻', '🎒', '🌿', '🧪', '🧬', '⚡', '🪐', '👑', '🦖', '🏺', '📝', '🧸', '🔍', '⭐', '🥇'].map(emoji => (
+                        <button
+                          key={emoji}
+                          type="button"
+                          className={`admin-emoji-preset-btn ${editingDepartment.icon === emoji ? 'active' : ''}`}
+                          onClick={() => setEditingDepartment({ ...editingDepartment, icon: emoji })}
+                          title={`Elegir ${emoji}`}
+                        >
+                          {emoji}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="modal-section-box">
+                  <h4 className="modal-section-title">
+                    <span>🏷️</span> Información y Nomenclatura
+                  </h4>
+
+                  <div className="mercado-input-group">
+                    <label>Nombre del Departamento / Categoría *</label>
+                    <input
+                      type="text"
+                      value={editingDepartment.label}
+                      onChange={(e) => {
+                        const newLabel = e.target.value;
+                        const update: Partial<MercadoCategory> = { label: newLabel };
+                        if (!originalDepartmentId) {
+                          update.id = newLabel
+                            .toLowerCase()
+                            .normalize("NFD")
+                            .replace(/[\u0300-\u036f]/g, "")
+                            .replace(/[^a-z0-9]/g, "-")
+                            .replace(/-+/g, "-");
+                        }
+                        setEditingDepartment({ ...editingDepartment, ...update });
+                      }}
+                      placeholder="Ej: Robótica Educativa & Programación"
+                      required
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>
+                      Identificador Técnico (Slug) *
+                      <small style={{ color: '#94a3b8', marginLeft: '6px', fontWeight: 400 }}>
+                        (Se usa para filtrados URL y relaciones de productos)
+                      </small>
+                    </label>
+                    <input
+                      type="text"
+                      value={editingDepartment.id}
+                      onChange={(e) => setEditingDepartment({ ...editingDepartment, id: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, '-') })}
+                      placeholder="Ej: robotica-educativa"
+                      required
+                    />
+                  </div>
+
+                  <div className="mercado-input-group">
+                    <label>Descripción Pedagógica (Opcional)</label>
+                    <textarea
+                      rows={2}
+                      value={editingDepartment.description || ''}
+                      onChange={(e) => setEditingDepartment({ ...editingDepartment, description: e.target.value })}
+                      placeholder="Breve explicación de los materiales que integran este departamento..."
+                    />
+                  </div>
+                </div>
+              </div>
+
+              <div className="admin-modal-footer">
+                <button 
+                  type="button" 
+                  className="btn-mercado-secondary"
+                  onClick={() => setIsDepartmentModalOpen(false)}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-mercado-primary"
+                >
+                  💾 Guardar Departamento
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 6. MODAL DE CONFIRMACIÓN / REASIGNACIÓN AL ELIMINAR DEPARTAMENTO */}
+      {departmentToDelete && (
+        <div className="admin-modal-backdrop animate-fade-in" onClick={() => setDepartmentToDelete(null)}>
+          <div className="admin-modal-card card-glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+            <div className="admin-modal-header">
+              <div className="admin-modal-title-wrap">
+                <span className="modal-title-icon">🗑️</span>
+                <div>
+                  <h3 className="admin-modal-title">Eliminar Departamento</h3>
+                  <span className="admin-modal-subtitle">
+                    {departmentToDelete.icon} {departmentToDelete.label}
+                  </span>
+                </div>
+              </div>
+              <button 
+                type="button" 
+                className="btn-modal-close"
+                onClick={() => setDepartmentToDelete(null)}
+              >
+                ✕
+              </button>
+            </div>
+
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {(() => {
+                const assignedCount = products.filter(p => p.category === departmentToDelete.id).length;
+                const otherDepartments = departments.filter(d => d.id !== departmentToDelete.id);
+
+                if (assignedCount > 0) {
+                  return (
+                    <div className="admin-delete-reassign-box">
+                      <strong>⚠️ Este departamento tiene {assignedCount} producto(s) asociado(s)</strong>
+                      <p>
+                        Para evitar que los productos queden sin departamento en tu tienda, selecciona a qué categoría deseas reasignarlos:
+                      </p>
+
+                      {otherDepartments.length > 0 && (
+                        <div className="mercado-input-group" style={{ marginTop: '4px' }}>
+                          <label style={{ color: '#ffffff', fontWeight: 700 }}>Reasignar productos a:</label>
+                          <select
+                            value={reassignCategoryTo}
+                            onChange={(e) => setReassignCategoryTo(e.target.value)}
+                            style={{ background: '#0f172a', color: '#ffffff' }}
+                          >
+                            {otherDepartments.map(d => (
+                              <option key={d.id} value={d.id}>
+                                {d.icon} {d.label}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                      )}
+
+                      <div style={{ display: 'flex', gap: '10px', marginTop: '10px', flexWrap: 'wrap' }}>
+                        {otherDepartments.length > 0 && (
+                          <button
+                            type="button"
+                            className="btn-mercado-primary"
+                            onClick={() => handleConfirmDeleteDepartment(true)}
+                            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)', border: 'none' }}
+                          >
+                            ✓ Reasignar {assignedCount} productos y Eliminar
+                          </button>
+                        )}
+                        <button
+                          type="button"
+                          className="btn-mercado-clear"
+                          onClick={() => handleConfirmDeleteDepartment(false)}
+                        >
+                          Eliminar de todos modos (sin reasignar)
+                        </button>
+                      </div>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div>
+                    <p style={{ color: '#e2e8f0', fontSize: '0.95rem', lineHeight: '1.5', margin: '0 0 16px 0' }}>
+                      ¿Confirmas que deseas eliminar el departamento <strong>"{departmentToDelete.label}"</strong>? Esta categoría ya no aparecerá en el menú vertical ni en los filtros del Mercado.
+                    </p>
+                    <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                      <button
+                        type="button"
+                        className="btn-mercado-secondary"
+                        onClick={() => setDepartmentToDelete(null)}
+                      >
+                        Cancelar
+                      </button>
+                      <button
+                        type="button"
+                        className="btn-mercado-clear"
+                        onClick={() => handleConfirmDeleteDepartment(false)}
+                      >
+                        🗑️ Sí, Eliminar Departamento
+                      </button>
+                    </div>
+                  </div>
+                );
+              })()}
             </div>
           </div>
         </div>

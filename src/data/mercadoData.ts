@@ -7,7 +7,7 @@ import ququmatzTitulo from '../cuentos/Ququmatz titulo.png';
 export interface MercadoProduct {
   id: string;
   title: string;
-  category: 'cuentos' | 'juegos' | 'personajes' | 'tarjetas' | 'proyectos' | 'utiles';
+  category: string;
   categoryLabel: string;
   price: number;
   originalPrice?: number;
@@ -138,6 +138,23 @@ export const DEFAULT_BOOK_COLLECTIONS: BookCollection[] = [
       'Membresía digital para recursos pedagógicos de aula y proyectos'
     ]
   }
+];
+
+export interface MercadoCategory {
+  id: string;
+  label: string;
+  icon: string;
+  description?: string;
+  order?: number;
+}
+
+export const DEFAULT_MERCADO_DEPARTMENTS: MercadoCategory[] = [
+  { id: 'cuentos', label: 'Cuentos y Libros', icon: '📚', description: 'Obras literarias, sagas y lecturas pedagógicas', order: 1 },
+  { id: 'juegos', label: 'Juegos de Mesa', icon: '🎲', description: 'Juegos formativos y dinámicas de grupo', order: 2 },
+  { id: 'personajes', label: 'Personajes y Títeres', icon: '🎭', description: 'Títeres y figuras para dramatización y juego de roles', order: 3 },
+  { id: 'tarjetas', label: 'Tarjetas y Barajas', icon: '🎴', description: 'Tarjetas nemotécnicas y barajas didácticas', order: 4 },
+  { id: 'proyectos', label: 'Proyectos STEAM', icon: '🚀', description: 'Kits y guías de ciencia, robótica y tecnología', order: 5 },
+  { id: 'utiles', label: 'Útiles y Arte', icon: '🎨', description: 'Materiales artísticos, papelería y herramientas escolares', order: 6 }
 ];
 
 export const MERCADO_CATEGORIES = [

@@ -6,10 +6,11 @@ import { usePortalConfig } from '../context/PortalConfigContext';
 import { 
   DEFAULT_MERCADO_PRODUCTS,
   DEFAULT_BOOK_COLLECTIONS,
-  MERCADO_CATEGORIES, 
+  DEFAULT_MERCADO_DEPARTMENTS,
   getCollectionBooks,
   type MercadoProduct,
-  type BookCollection
+  type BookCollection,
+  type MercadoCategory
 } from '../data/mercadoData';
 import KindleBookCover from '../components/mercado/KindleBookCover';
 import KindleBookCard from '../components/mercado/KindleBookCard';
@@ -397,20 +398,32 @@ export default function Mercado() {
 
   const [filterBadge, setFilterBadge] = useState<'all' | 'offers' | 'bestsellers'>('all');
 
+  // Departamentos y Categorías activas (configuración en Firestore o por defecto)
+  const categories = useMemo(() => {
+    const rawCategories: MercadoCategory[] = (config.mercadoCategories && Array.isArray(config.mercadoCategories) && config.mercadoCategories.length > 0)
+      ? [...config.mercadoCategories].sort((a, b) => (a.order || 0) - (b.order || 0))
+      : DEFAULT_MERCADO_DEPARTMENTS;
+
+    return [
+      { id: 'todos', label: 'Todo el Catálogo', icon: '⚡' },
+      ...rawCategories
+    ];
+  }, [config.mercadoCategories]);
+
   // Conteo de productos por categoría
   const categoryCounts = useMemo(() => {
     const counts: Record<string, number> = { todos: allProducts.length };
-    MERCADO_CATEGORIES.forEach(cat => {
+    categories.forEach(cat => {
       if (cat.id !== 'todos') {
         counts[cat.id] = allProducts.filter(p => p.category === cat.id).length;
       }
     });
     return counts;
-  }, [allProducts]);
+  }, [allProducts, categories]);
 
   const currentCatObj = useMemo(() => {
-    return MERCADO_CATEGORIES.find(c => c.id === selectedCategory);
-  }, [selectedCategory]);
+    return categories.find(c => c.id === selectedCategory);
+  }, [categories, selectedCategory]);
 
   const isCollectionsActive = selectedCategory === 'cuentos' && cuentosSubCategory === 'colecciones';
 
@@ -531,13 +544,12 @@ export default function Mercado() {
                 }}
               >
                 <option value="todos">Todos los Departamentos</option>
-                <option value="cuentos">📚 Cuentos y Libros</option>
                 <option value="colecciones">📦 Colecciones de Libros</option>
-                <option value="juegos">🎲 Juegos de Mesa</option>
-                <option value="personajes">🎭 Personajes y Títeres</option>
-                <option value="tarjetas">🎴 Tarjetas y Barajas</option>
-                <option value="proyectos">🚀 Proyectos STEAM</option>
-                <option value="utiles">🎨 Útiles y Arte</option>
+                {categories.filter(c => c.id !== 'todos').map(c => (
+                  <option key={c.id} value={c.id}>
+                    {c.icon} {c.label}
+                  </option>
+                ))}
               </select>
               <span className="select-arrow">▾</span>
             </div>
@@ -716,7 +728,7 @@ export default function Mercado() {
               {/* Lista Vertical de Departamentos con Acordeón Desplegable */}
               <div className="sidebar-filter-block">
                 <div className="sidebar-categories-vertical-list">
-                  {MERCADO_CATEGORIES.map(cat => {
+                  {categories.map(cat => {
                     const isSelected = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
                     const count = categoryCounts[cat.id] || 0;
                     const isCuentos = cat.id === 'cuentos';
@@ -886,7 +898,7 @@ export default function Mercado() {
                     Mostrando <strong>{filteredProducts.length}</strong> de <strong>{allProducts.length}</strong> productos
                 {selectedCategory !== 'todos' && (
                   <span className="active-filter-badge">
-                    {MERCADO_CATEGORIES.find(c => c.id === selectedCategory)?.label}
+                    {categories.find(c => c.id === selectedCategory)?.label}
                     <button 
                       type="button" 
                       onClick={() => setSelectedCategory('todos')}
@@ -1835,7 +1847,7 @@ export default function Mercado() {
             {/* Contenido Scrollable Vertical de Categorías */}
             <div className="mobile-drawer-body">
               <div className="mobile-drawer-cat-list">
-                {MERCADO_CATEGORIES.map(cat => {
+                {categories.map(cat => {
                   const isSelected = selectedCategory === cat.id && (cat.id !== 'cuentos' || cuentosSubCategory !== 'colecciones');
                   const count = categoryCounts[cat.id] || 0;
                   const isCuentos = cat.id === 'cuentos';

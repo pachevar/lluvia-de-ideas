@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { PortalConfig, TiendaConfig, CustomHexagon, BookCollectionConfig, MercadoProductConfig } from '../types';
+import type { PortalConfig, TiendaConfig, CustomHexagon, BookCollectionConfig, MercadoProductConfig, MercadoCategoryConfig } from '../types';
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
 import { subscribeArchetypeAssets } from '../services/archetypeAssetsService';
@@ -15,6 +15,7 @@ interface PortalConfigContextProps {
   saveSutzMapToFirestore: (newMap: CustomHexagon[]) => Promise<void>;
   saveMercadoCollectionsToFirestore: (collections: BookCollectionConfig[]) => Promise<void>;
   saveMercadoProductsToFirestore: (products: MercadoProductConfig[]) => Promise<void>;
+  saveMercadoCategoriesToFirestore: (categories: MercadoCategoryConfig[]) => Promise<void>;
   resetConfigToFirestore: () => Promise<void>;
 }
 
@@ -204,6 +205,7 @@ export const DEFAULT_CONFIG: PortalConfig = {
   },
   mercadoProducts: [],
   mercadoCollections: [],
+  mercadoCategories: [],
   landingConfig: {
     cards: {
       sutz: {
@@ -558,6 +560,15 @@ const getInitialConfig = (): PortalConfig => {
         }
       } catch {}
     }
+    const catDraft = localStorage.getItem('mercado_categories_draft');
+    if (catDraft) {
+      try {
+        const parsedCats = JSON.parse(catDraft);
+        if (Array.isArray(parsedCats) && parsedCats.length > 0) {
+          base = { ...base, mercadoCategories: parsedCats };
+        }
+      } catch {}
+    }
   } catch (err) {
     console.warn("Could not read cached config from localStorage:", err);
   }
@@ -622,6 +633,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
           mercadoConfig: { ...(DEFAULT_CONFIG.mercadoConfig || {}), ...(data.mercadoConfig || {}) },
           mercadoProducts: Array.isArray(data.mercadoProducts) ? data.mercadoProducts : DEFAULT_CONFIG.mercadoProducts,
           mercadoCollections: Array.isArray(data.mercadoCollections) ? data.mercadoCollections : (DEFAULT_CONFIG.mercadoCollections || []),
+          mercadoCategories: Array.isArray(data.mercadoCategories) ? data.mercadoCategories : (DEFAULT_CONFIG.mercadoCategories || []),
           granGaleria: data.granGaleria || DEFAULT_CONFIG.granGaleria,
           archetypeImages: { ...(DEFAULT_CONFIG.archetypeImages || {}), ...(data.archetypeImages || {}) },
           journeyStageImages: { ...(DEFAULT_CONFIG.journeyStageImages || {}), ...(data.journeyStageImages || {}) }
@@ -641,7 +653,10 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
             : (prev.mercadoCollections && prev.mercadoCollections.length > 0 ? prev.mercadoCollections : (DEFAULT_CONFIG.mercadoCollections || [])),
           mercadoProducts: (Array.isArray(data.mercadoProducts) && data.mercadoProducts.length > 0)
             ? data.mercadoProducts
-            : (prev.mercadoProducts && prev.mercadoProducts.length > 0 ? prev.mercadoProducts : (DEFAULT_CONFIG.mercadoProducts || []))
+            : (prev.mercadoProducts && prev.mercadoProducts.length > 0 ? prev.mercadoProducts : (DEFAULT_CONFIG.mercadoProducts || [])),
+          mercadoCategories: (Array.isArray(data.mercadoCategories) && data.mercadoCategories.length > 0)
+            ? data.mercadoCategories
+            : (prev.mercadoCategories && prev.mercadoCategories.length > 0 ? prev.mercadoCategories : (DEFAULT_CONFIG.mercadoCategories || []))
         }));
       } else {
         setDoc(configDocRef, DEFAULT_CONFIG).catch(err => {
@@ -756,6 +771,28 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return () => unsubProd();
   }, []);
 
+  // Sincronización en tiempo real con el documento independiente 'config/mercado_categories'
+  useEffect(() => {
+    const catDocRef = doc(db, 'config', 'mercado_categories');
+    const unsubCat = onSnapshot(catDocRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data();
+        if (Array.isArray(data.categories)) {
+          setConfig(prev => ({
+            ...prev,
+            mercadoCategories: data.categories
+          }));
+          try {
+            localStorage.setItem('mercado_categories_draft', JSON.stringify(data.categories));
+          } catch {}
+        }
+      }
+    }, (err) => {
+      console.warn('[PortalConfigContext] Listener config/mercado_categories:', err);
+    });
+    return () => unsubCat();
+  }, []);
+
   useEffect(() => {
     if (config && config.colors) {
       Object.entries(config.colors).forEach(([key, val]) => {
@@ -836,8 +873,22 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }));
   };
 
+  const saveMercadoCategoriesToFirestore = async (categories: MercadoCategoryConfig[]) => {
+    const docRef = doc(db, 'config', 'mercado_categories');
+    await setDoc(docRef, { categories, updatedAt: new Date().toISOString() }, { merge: true });
+
+    try {
+      localStorage.setItem('mercado_categories_draft', JSON.stringify(categories));
+    } catch {}
+
+    setConfig(prev => ({
+      ...prev,
+      mercadoCategories: categories
+    }));
+  };
+
   const saveConfigToFirestore = async (newConfig: PortalConfig) => {
-    // IMPORTANTE: Excluir archetypeImages, journeyStageImages, map, mercadoProducts y mercadoCollections
+    // IMPORTANTE: Excluir archetypeImages, journeyStageImages, map, mercadoProducts, mercadoCollections y mercadoCategories
     // de config/portal para que NUNCA excedan el límite estricto de 1MB de Firestore (1,048,576 bytes)
     const {
       archetypeImages,
@@ -845,6 +896,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
       map,
       mercadoProducts,
       mercadoCollections,
+      mercadoCategories,
       ...portalDocData
     } = newConfig;
 
@@ -861,6 +913,10 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
 
     if (mercadoProducts !== undefined && Array.isArray(mercadoProducts)) {
       await saveMercadoProductsToFirestore(mercadoProducts);
+    }
+
+    if (mercadoCategories !== undefined && Array.isArray(mercadoCategories)) {
+      await saveMercadoCategoriesToFirestore(mercadoCategories);
     }
 
     try {
@@ -882,6 +938,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
       saveSutzMapToFirestore,
       saveMercadoCollectionsToFirestore,
       saveMercadoProductsToFirestore,
+      saveMercadoCategoriesToFirestore,
       resetConfigToFirestore
     }}>
       {children}
