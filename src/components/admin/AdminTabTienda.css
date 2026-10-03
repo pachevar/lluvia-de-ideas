@@ -1460,4 +1460,38 @@
   line-height: 1.4;
 }
 
+/* Modal Title Wrap & Subtitles */
+.admin-modal-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.modal-title-icon {
+  font-size: 1.6rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  flex-shrink: 0;
+}
+
+.admin-modal-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 850;
+  color: #ffffff;
+}
+
+.admin-modal-subtitle {
+  display: block;
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin-top: 2px;
+}
+
 

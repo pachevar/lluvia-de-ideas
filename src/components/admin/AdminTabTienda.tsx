@@ -180,8 +180,36 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
     return DEFAULT_MERCADO_DEPARTMENTS;
   }, [localConfig.mercadoCategories]);
 
-  // Subpestaña activa (Productos vs Colecciones vs Departamentos)
-  const [adminSubTab, setAdminSubTab] = useState<'productos' | 'colecciones' | 'departamentos'>('productos');
+  // Subpestaña activa (Productos vs Colecciones vs Departamentos) con persistencia en recarga
+  const [adminSubTab, setAdminSubTab] = useState<'productos' | 'colecciones' | 'departamentos'>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const subtabFromUrl = urlParams.get('subtab');
+      if (subtabFromUrl === 'productos' || subtabFromUrl === 'colecciones' || subtabFromUrl === 'departamentos') {
+        return subtabFromUrl;
+      }
+      const saved = localStorage.getItem('admin_tienda_subtab');
+      if (saved === 'productos' || saved === 'colecciones' || saved === 'departamentos') {
+        return saved;
+      }
+    } catch {
+      // Fallback
+    }
+    return 'productos';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('admin_tienda_subtab', adminSubTab);
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('subtab') !== adminSubTab) {
+        url.searchParams.set('subtab', adminSubTab);
+        window.history.replaceState({}, '', url.toString());
+      }
+    } catch (e) {
+      console.warn('[AdminTabTienda] Error saving adminSubTab:', e);
+    }
+  }, [adminSubTab]);
 
   // Estados de Departamento / Categoría
   const [editingDepartment, setEditingDepartment] = useState<MercadoCategory | null>(null);
@@ -2580,8 +2608,12 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
 
       {/* 5. MODAL DE CREAR / EDITAR DEPARTAMENTO */}
       {isDepartmentModalOpen && editingDepartment && (
-        <div className="admin-modal-backdrop animate-fade-in" onClick={() => setIsDepartmentModalOpen(false)}>
-          <div className="admin-modal-card card-glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '580px' }}>
+        <div className="admin-modal-overlay animate-fade-in" onClick={() => setIsDepartmentModalOpen(false)}>
+          <div 
+            className="admin-mercado-modal animate-scale-up" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ maxWidth: '600px' }}
+          >
             <div className="admin-modal-header">
               <div className="admin-modal-title-wrap">
                 <span className="modal-title-icon">{editingDepartment.icon || '🗂️'}</span>
@@ -2596,7 +2628,7 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
               </div>
               <button 
                 type="button" 
-                className="btn-modal-close"
+                className="admin-modal-close"
                 onClick={() => setIsDepartmentModalOpen(false)}
                 title="Cerrar modal"
               >
@@ -2733,8 +2765,12 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
 
       {/* 6. MODAL DE CONFIRMACIÓN / REASIGNACIÓN AL ELIMINAR DEPARTAMENTO */}
       {departmentToDelete && (
-        <div className="admin-modal-backdrop animate-fade-in" onClick={() => setDepartmentToDelete(null)}>
-          <div className="admin-modal-card card-glass" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
+        <div className="admin-modal-overlay animate-fade-in" onClick={() => setDepartmentToDelete(null)}>
+          <div 
+            className="admin-mercado-modal animate-scale-up" 
+            onClick={(e) => e.stopPropagation()} 
+            style={{ maxWidth: '540px' }}
+          >
             <div className="admin-modal-header">
               <div className="admin-modal-title-wrap">
                 <span className="modal-title-icon">🗑️</span>
@@ -2747,8 +2783,9 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
               </div>
               <button 
                 type="button" 
-                className="btn-modal-close"
+                className="admin-modal-close"
                 onClick={() => setDepartmentToDelete(null)}
+                title="Cerrar modal"
               >
                 ✕
               </button>

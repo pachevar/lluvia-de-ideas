@@ -31,7 +31,46 @@ export default function Gerencia() {
   const navigate = useNavigate();
   const onBackToPortal = () => navigate('/');
 
-  const [activeAdminTab, setActiveAdminTab] = useState<AdminTabType>('inicio');
+const VALID_ADMIN_TABS: AdminTabType[] = [
+  'inicio', 'videos', 'neurociencia', 'libros', 'mapa', 'techtree', 
+  'creatika', '100tek', 'sistema_solar', 'laboratorios', 'bingo', 
+  'tienda', 'viaje_del_heroe', 'inscripciones', 'cotizador', 
+  'colors', 'pozo_ideas', 'ajustes'
+];
+
+  const [activeAdminTab, setActiveAdminTab] = useState<AdminTabType>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tabFromUrl = urlParams.get('tab') as AdminTabType;
+      if (tabFromUrl && VALID_ADMIN_TABS.includes(tabFromUrl)) {
+        return tabFromUrl;
+      }
+      const savedTab = localStorage.getItem('admin_active_tab') as AdminTabType;
+      if (savedTab && VALID_ADMIN_TABS.includes(savedTab)) {
+        return savedTab;
+      }
+    } catch {
+      // Fallback
+    }
+    return 'inicio';
+  });
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('admin_active_tab', activeAdminTab);
+      const url = new URL(window.location.href);
+      if (url.searchParams.get('tab') !== activeAdminTab) {
+        url.searchParams.set('tab', activeAdminTab);
+        if (activeAdminTab !== 'tienda') {
+          url.searchParams.delete('subtab');
+        }
+        window.history.replaceState({}, '', url.toString());
+      }
+    } catch (e) {
+      console.warn('[Gerencia] Error guardando activeAdminTab:', e);
+    }
+  }, [activeAdminTab]);
+
   const [localConfig, setLocalConfig] = useState<PortalConfig | null>(null);
   const [saveStatus, setSaveStatus] = useState<{ type: 'success' | 'error' | null; message: string }>({ type: null, message: '' });
   const [saving, setSaving] = useState(false);
