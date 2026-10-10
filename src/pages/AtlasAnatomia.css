@@ -38,24 +38,71 @@
 .atlas-back-button {
   display: inline-flex;
   align-items: center;
-  gap: 0.5rem;
-  padding: 0.45rem 0.9rem;
-  background: hsla(218, 30%, 15%, 0.8);
-  border: 1px solid hsla(215, 25%, 35%, 0.4);
-  border-radius: 9999px;
+  gap: 0.65rem;
+  padding: 0.35rem 0.95rem 0.35rem 0.45rem;
+  background: linear-gradient(135deg, hsla(218, 35%, 16%, 0.92), hsla(222, 42%, 11%, 0.96));
+  border: 1px solid hsla(199, 89%, 48%, 0.42);
+  border-radius: 12px;
   color: #f1f5f9;
-  font-size: 0.85rem;
-  font-weight: 600;
   cursor: pointer;
-  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
   text-decoration: none;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.45), inset 0 1px 0 hsla(199, 89%, 48%, 0.25);
+}
+
+.atlas-back-icon-wrap {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: linear-gradient(135deg, hsla(199, 89%, 48%, 0.32), hsla(199, 89%, 48%, 0.1));
+  border: 1px solid hsla(199, 89%, 48%, 0.55);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--sutz-color-guide-light, #38bdf8);
+  box-shadow: 0 0 10px hsla(199, 89%, 48%, 0.25);
+  transition: all 0.25s ease;
+}
+
+.atlas-back-text-group {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  line-height: 1.15;
+}
+
+.atlas-back-label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: -0.01em;
+}
+
+.atlas-back-sublabel {
+  font-size: 0.62rem;
+  font-weight: 700;
+  color: var(--sutz-color-guide-light, #38bdf8);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
 }
 
 .atlas-back-button:hover {
-  background: var(--sutz-color-challenge-surface, hsla(38, 92%, 50%, 0.15));
-  border-color: var(--sutz-color-challenge, #f59e0b);
+  background: linear-gradient(135deg, hsla(199, 89%, 48%, 0.22), hsla(220, 38%, 14%, 0.96));
+  border-color: var(--sutz-color-guide, #0284c7);
   color: #ffffff;
-  transform: translateX(-2px);
+  transform: translateY(-1px) translateX(-2px);
+  box-shadow: 0 6px 20px hsla(199, 89%, 48%, 0.35), inset 0 1px 0 hsla(199, 89%, 48%, 0.4);
+}
+
+.atlas-back-button:hover .atlas-back-icon-wrap {
+  transform: rotate(-25deg);
+  background: hsla(199, 89%, 48%, 0.45);
+  color: #ffffff;
+  box-shadow: 0 0 14px hsla(199, 89%, 48%, 0.5);
+}
+
+.atlas-back-button:active {
+  transform: scale(0.97);
 }
 
 .atlas-brand-info {
@@ -166,8 +213,17 @@
     height: calc(100vh - 50px);
   }
   
+  .atlas-back-sublabel {
+    display: none;
+  }
+  
+  .atlas-back-button {
+    padding: 0.3rem 0.65rem 0.3rem 0.35rem;
+    gap: 0.45rem;
+  }
+  
   .atlas-title {
-    font-size: 0.9rem;
+    font-size: 0.88rem;
   }
   
   .atlas-badge {

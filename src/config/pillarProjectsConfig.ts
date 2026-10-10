@@ -45,7 +45,7 @@ export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
   // ⚡ 100tek (Ciencia, Lógica & Tecnología)
   { id: '100tek_solar', label: '🪐 Sistema Solar 3D', target: '/100tek/sistema-solar', type: 'navigate', pillarId: '100tek' },
   { id: '100tek_secuencias', label: '🔢 Secuencias Numéricas', target: '/100tek/secuencias-numericas', type: 'navigate', pillarId: '100tek' },
-  { id: '100tek_atlas', label: '🫀 Atlas del Cuerpo Humano 3D', target: '/atlas', type: 'navigate', pillarId: '100tek' },
+  { id: '100tek_atlas', label: '🫀 Cuerpo Humano Virtual 3D', target: '/atlas', type: 'navigate', pillarId: '100tek' },
 
   // 📚 Tienda (Libros y Catálogo)
   { id: 'tienda_principal', label: '📚 Tienda de Libros & Cuentos', target: '/tienda', type: 'navigate', pillarId: 'tienda' },

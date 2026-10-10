@@ -1,6 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaExpand, FaCompress } from 'react-icons/fa';
+import { FaCompass, FaExpand, FaCompress } from 'react-icons/fa';
 import './AtlasAnatomia.css';
 import { soundEffects } from '../utils/soundEffects';
 
@@ -12,11 +12,7 @@ export const AtlasAnatomia: React.FC = () => {
 
   const handleBack = () => {
     soundEffects.playClick();
-    if (window.history.length > 1) {
-      navigate(-1);
-    } else {
-      navigate('/');
-    }
+    navigate('/sutz');
   };
 
   const toggleFullscreen = () => {
@@ -43,13 +39,18 @@ export const AtlasAnatomia: React.FC = () => {
           <button
             onClick={handleBack}
             className="atlas-back-button"
-            title="Volver al Portal Educativo"
+            title="Volver al Mapa de Sutz"
           >
-            <FaArrowLeft size={14} />
-            <span>Volver al Portal</span>
+            <span className="atlas-back-icon-wrap">
+              <FaCompass className="atlas-back-icon" size={15} />
+            </span>
+            <div className="atlas-back-text-group">
+              <span className="atlas-back-label">Volver al Mapa</span>
+              <span className="atlas-back-sublabel">Sutz Virtual</span>
+            </div>
           </button>
           <div className="atlas-brand-info">
-            <h1 className="atlas-title">Atlas del Cuerpo Humano 3D</h1>
+            <h1 className="atlas-title">Cuerpo Humano Virtual 3D</h1>
             <span className="atlas-badge">Interactivo · 3,400+ Piezas</span>
           </div>
         </div>
@@ -70,13 +71,13 @@ export const AtlasAnatomia: React.FC = () => {
         {loading && (
           <div className="atlas-loading-overlay">
             <div className="atlas-spinner" />
-            <p>Cargando visualizador anatómico 3D...</p>
+            <p>Cargando cuerpo humano virtual 3D...</p>
           </div>
         )}
         <iframe
           src="/atlas/index.html"
           className="atlas-iframe"
-          title="Atlas Anatómico Humano 3D"
+          title="Cuerpo Humano Virtual 3D"
           allow="fullscreen; accelerometer; gyroscope"
           onLoad={() => setLoading(false)}
         />

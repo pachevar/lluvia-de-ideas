@@ -479,9 +479,9 @@ export default function Home() {
                 className="btn btn-primary"
                 onClick={() => handleNavigate('/atlas')}
                 style={{ background: 'linear-gradient(90deg, #f43f5e, #e11d48)', color: '#fff', fontWeight: 800, padding: '12px 24px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(244, 63, 94, 0.35)' }}
-                title="Explorar el Atlas Anatómico Humano 3D"
+                title="Explorar el Cuerpo Humano Virtual 3D"
               >
-                🫀 Atlas Anatómico 3D ➔
+                🫀 Cuerpo Humano Virtual 3D ➔
               </button>
               <button
                 className="btn btn-primary"
