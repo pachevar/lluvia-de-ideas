@@ -466,6 +466,7 @@ export default function Home() {
             </p>
             <ul className="feature-bullets">
               {(tek100Sec.bullets && tek100Sec.bullets.length > 0 ? tek100Sec.bullets : [
+                'Atlas Anatómico 3D: Explorador interactivo en español con más de 3,400 estructuras, capas y despiece anatómico.',
                 'Sistema Solar 3D: Simulación del espacio para la comprensión de fenómenos astronómicos.',
                 'Secuencias Numéricas: Desafíos para fortalecer el razonamiento matemático abstracto.',
                 'Pensamiento Científico: Enfoque interdisciplinario centrado en la investigación.'
@@ -474,6 +475,14 @@ export default function Home() {
               ))}
             </ul>
             <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+              <button
+                className="btn btn-primary"
+                onClick={() => handleNavigate('/atlas')}
+                style={{ background: 'linear-gradient(90deg, #f43f5e, #e11d48)', color: '#fff', fontWeight: 800, padding: '12px 24px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(244, 63, 94, 0.35)' }}
+                title="Explorar el Atlas Anatómico Humano 3D"
+              >
+                🫀 Atlas Anatómico 3D ➔
+              </button>
               <button
                 className="btn btn-primary"
                 onClick={() => handleNavigate('/100tek/sistema-solar')}

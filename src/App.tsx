@@ -5,6 +5,8 @@ import { useCart } from './context/CartContext';
 import { CONTACT } from './constants';
 import PageLoader from './components/PageLoader';
 import SoundToggle from './components/SoundToggle';
+import AcademiaQrTaskBanner from './components/AcademiaQrTaskBanner';
+
 import { soundEffects } from './utils/soundEffects';
 
 // Lazy load routes to code-split heavy bundles (Gerencia/PDF, cotizaciones, juegos, etc.)
@@ -31,6 +33,7 @@ const BingoBoletos = React.lazy(() => import('./pages/BingoBoletos'));
 const BingoBoletosConfirmacion = React.lazy(() => import('./pages/BingoBoletosConfirmacion'));
 const GranGaleria = React.lazy(() => import('./pages/GranGaleria'));
 const Mercado = React.lazy(() => import('./pages/Mercado'));
+const AtlasAnatomia = React.lazy(() => import('./pages/AtlasAnatomia'));
 
 function App() {
   const navigate = useNavigate();
@@ -66,9 +69,10 @@ function App() {
   const isSutzView = currentPath === '/sutz' || currentPath.startsWith('/sutz') || currentPath === '/mundo-virtual';
   const isMercadoView = currentPath.startsWith('/mercado') || currentPath.startsWith('/tienda') || currentPath.startsWith('/catalogo');
   const isCartonView = currentPath.includes('/carton');
+  const isAtlasView = currentPath.startsWith('/atlas') || currentPath === '/anatomia' || currentPath.startsWith('/recursos/atlas') || currentPath === '/100tek/atlas';
 
   return (
-    <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''} ${isSutzView ? 'sutz-view-full' : ''} ${isMercadoView ? 'mercado-view-full' : ''}`}>
+    <div className={`app-container ${isBoletosView || isBingoCardView ? 'boletos-view-full' : ''} ${isSutzView ? 'sutz-view-full' : ''} ${isMercadoView ? 'mercado-view-full' : ''} ${isAtlasView ? 'atlas-view-full' : ''}`}>
       {/* Main Content Area */}
       <main className="main-content">
         <Suspense fallback={<PageLoader />}>
@@ -120,6 +124,11 @@ function App() {
             <Route path="/100tek/secuencias-numericas" element={<NumberSequences />} />
             <Route path="/100tek/teoria-del-color" element={<ColorTheory />} />
             <Route path="/100tek/sistema-solar" element={<SolarSystem />} />
+            <Route path="/100tek/atlas" element={<AtlasAnatomia />} />
+            <Route path="/atlas" element={<AtlasAnatomia />} />
+            <Route path="/atlas/*" element={<AtlasAnatomia />} />
+            <Route path="/anatomia" element={<AtlasAnatomia />} />
+            <Route path="/recursos/atlas" element={<AtlasAnatomia />} />
             <Route path="/herramientas/teoria-del-color" element={<ColorTheory />} />
             <Route path="/gran-galeria" element={<GranGaleria />} />
             <Route path="/galeria" element={<GranGaleria />} />
@@ -135,15 +144,18 @@ function App() {
         </Suspense>
       </main>
 
-      {/* Footer (oculto en el lobby/salas de bingo, Sutz y Mercado para experiencia inmersiva limpia) */}
-      {!currentPath.includes('/bingo') && currentPath !== '/juegos' && !isSutzView && !isMercadoView && (
+      {/* Footer (oculto en el lobby/salas de bingo, Sutz, Mercado y Atlas para experiencia inmersiva limpia) */}
+      {!currentPath.includes('/bingo') && currentPath !== '/juegos' && !isSutzView && !isMercadoView && !isAtlasView && (
         <footer className="app-footer card-glass">
           <p>© 2026 Editorial Lluvia de Ideas. Todos los derechos reservados.</p>
         </footer>
       )}
 
-      {/* Floating Action Buttons (Audio & WhatsApp - Ocultos en Sutz, Mercado y en el Cartón de Bingo para no tapar contenido) */}
-      {!isSutzView && !isCartonView && !isMercadoView && (
+      {/* AcademiaQR Dynamic Task Banner (Active only when referred from AcademiaQR) */}
+      <AcademiaQrTaskBanner />
+
+      {/* Floating Action Buttons (Audio & WhatsApp - Ocultos en Sutz, Mercado, Atlas y en el Cartón de Bingo para no tapar contenido) */}
+      {!isSutzView && !isCartonView && !isMercadoView && !isAtlasView && (
         <div className="floating-action-buttons">
           {/* Floating Sound Toggle */}
           <SoundToggle />
