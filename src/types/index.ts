@@ -67,6 +67,7 @@ export interface CustomHexagon {
   action: HexInteractiveAction; // Lógica de acción al hacer clic
   introModal?: HexIntroModalConfig; // Modal interactivo con personaje y bienvenida antes de entrar
   pillar?: HexPillarId;       // Indicador de pertenencia al reino (Creatika, 100tek, Tienda, LAB, Mercado, Gran Galería)
+  code?: string;             // Código curricular único SUTZ-CODE (ej. TEK-ATLAS-C01, CRK-COL-R01, STZ-CAM-P01)
 }
 
 export interface CreatikaConfig {
