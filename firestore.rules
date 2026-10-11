@@ -148,5 +148,22 @@ service cloud.firestore {
       allow create: if request.auth != null && request.resource.data.authorUid == request.auth.uid;
       allow update, delete: if request.auth != null && (resource.data.authorUid == request.auth.uid || isAdmin());
     }
+
+    // =========================================================================
+    // PUENTE DE INTEROPERABILIDAD CON ACADEMIAQR (SUITE EDUCATIVA)
+    // =========================================================================
+
+    // Registro de tareas y retos completados enviados desde Sutz hacia AcademiaQR
+    match /sutz_completions/{completionId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+    }
+
+    // Colegios y parámetros de enlace Sutz ⇄ AcademiaQR
+    match /sutz_schools/{schoolId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
   }
 }

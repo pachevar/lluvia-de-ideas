@@ -4,6 +4,7 @@ import { SUTZ_RESOURCE_KEYS, DEFAULT_SUTZ_RESOURCES } from '../data/sutzResource
 import { useAuth } from './AuthContext';
 import { db } from '../firebase';
 import { doc, getDoc, setDoc } from 'firebase/firestore';
+import { ACADEMIAQR_BRIDGE_CONFIG, type AcademiaQrCompletionPayload } from '../config/academiaqrBridgeConfig';
 
 export interface SutzBadge {
   id: string;
@@ -160,6 +161,30 @@ export const SutzResourcesProvider: React.FC<{ children: React.ReactNode }> = ({
       return next;
     });
   };
+
+  // Escuchar culminación de retos de AcademiaQR para otorgar recompensas de gamificación en SUTZ
+  useEffect(() => {
+    const handleAcademiaQrCompleted = (e: Event) => {
+      const customEvent = e as CustomEvent<AcademiaQrCompletionPayload>;
+      if (customEvent.detail) {
+        const payload = customEvent.detail;
+        const pts = Math.round((payload.score || 0) * (ACADEMIAQR_BRIDGE_CONFIG.rewardsMultiplier.puntosPerScoreUnit || 10));
+        const gemas = ACADEMIAQR_BRIDGE_CONFIG.rewardsMultiplier.gemasPerCompletion || 5;
+        const pergaminos = ACADEMIAQR_BRIDGE_CONFIG.rewardsMultiplier.pergaminosPerCompletion || 1;
+        
+        addResources({
+          puntos: pts,
+          gemas,
+          pergaminos
+        });
+      }
+    };
+
+    window.addEventListener('academiaqr:challenge_completed', handleAcademiaQrCompleted);
+    return () => {
+      window.removeEventListener('academiaqr:challenge_completed', handleAcademiaQrCompleted);
+    };
+  }, []);
 
   const trySubtract = (delta: Partial<Record<SutzResourceKey, number>>): boolean => {
     let success = true;
