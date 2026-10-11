@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import type { PortalConfig, CustomHexagon, HexLayer } from '../../types';
 import { DEFAULT_CONFIG, usePortalConfig } from '../../context/PortalConfigContext';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
@@ -16,6 +16,13 @@ import {
   type PillarAppRoute 
 } from '../../config/pillarProjectsConfig';
 import { HEX_PILLARS, normalizePillarId, type HexPillarId } from '../../utils/hexPillarUtils';
+import { 
+  SUTZ_CURRICULUM_MODULES, 
+  getCurriculumCoverageSummary, 
+  getCurriculumModuleForHex,
+  getModuleByCode,
+  type SutzModuleContent
+} from '../../config/sutzCurriculumConfig';
 import camazotzTitulo from '../../cuentos/Camazotz titulo.png';
 import ixkikTitulo from '../../cuentos/Ixkik titulo.png';
 import ixmukanneTitulo from '../../cuentos/Ixmukanne titulo.png';
@@ -100,6 +107,67 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const [newRouteType, setNewRouteType] = useState<'navigate' | 'external' | 'modal'>('navigate');
   const [newRoutePillar, setNewRoutePillar] = useState('100tek');
   const [isSavingRoute, setIsSavingRoute] = useState(false);
+
+  // Estados para Matriz Curricular SUTZ-CODE en el Mapa
+  const [showCurriculumModal, setShowCurriculumModal] = useState(false);
+  const [curriculumModalFilter, setCurriculumModalFilter] = useState<'all' | 'active' | 'inactive'>('all');
+  const [curriculumModalSearch, setCurriculumModalSearch] = useState('');
+
+  const curriculumCoverage = useMemo(() => {
+    return getCurriculumCoverageSummary(mapData);
+  }, [mapData]);
+
+  const handleAssignModuleToHex = (module: SutzModuleContent, targetHex?: CustomHexagon) => {
+    const isModal = module.route.includes('story=');
+    const modalTarget = isModal ? module.route.split('story=')[1] : '';
+    const isExternal = module.route.startsWith('http');
+
+    if (targetHex || editingHex) {
+      const base = targetHex || editingHex!;
+      const updated: CustomHexagon = {
+        ...base,
+        title: module.title,
+        code: module.code,
+        pillar: (normalizePillarId(module.pillarId) || base.pillar) as HexPillarId | undefined,
+        layerInteractive: {
+          ...base.layerInteractive,
+          type: 'icon',
+          value: module.icon || '⭐'
+        },
+        action: {
+          type: isExternal ? 'external' : (isModal ? 'modal' : 'navigate'),
+          target: isModal ? modalTarget : module.route
+        }
+      };
+      setEditingHex(updated);
+      updateHexInGlobalConfig(updated, true, true);
+      setShowCurriculumModal(false);
+      return;
+    }
+
+    // Si no hay hexágono activo, usar la primera coordenada candidata disponible
+    const candidates = getCandidateHexes(mapData);
+    const targetCoord = candidates[0] || { row: 0, col: 0 };
+    const newHex: CustomHexagon = {
+      id: `${targetCoord.row},${targetCoord.col}`,
+      row: targetCoord.row,
+      col: targetCoord.col,
+      title: module.title,
+      code: module.code,
+      pillar: normalizePillarId(module.pillarId) as HexPillarId | undefined,
+      glowColor: 'rgba(56, 189, 248, 0.85)',
+      layerBg: { type: 'none', value: '' },
+      layerDeco: { type: 'none', value: '' },
+      layerInteractive: { type: 'icon', value: module.icon || '⭐' },
+      action: {
+        type: isExternal ? 'external' : (isModal ? 'modal' : 'navigate'),
+        target: isModal ? modalTarget : module.route
+      }
+    };
+    setEditingHex(newHex);
+    updateHexInGlobalConfig(newHex, true, true);
+    setShowCurriculumModal(false);
+  };
 
   useEffect(() => {
     const unsub = subscribeCustomRoutes((routes) => {
@@ -365,6 +433,52 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
         </div>
       </div>
 
+      {/* Barra de Cobertura Curricular SUTZ-CODE en el Mapa */}
+      <div className="map-curriculum-bar">
+        <div className="map-curriculum-bar-left">
+          <div className="map-curriculum-badge">
+            <span>🏷️</span>
+            <span>Estatus Curricular SUTZ-CODE:</span>
+          </div>
+          <div className="map-curriculum-stats">
+            <span className="map-curriculum-chip chip-active" title="Contenidos curriculares ubicados en celdas del mapa">
+              🟢 {curriculumCoverage.activeCount} Activos ({curriculumCoverage.activePercentage}%)
+            </span>
+            <span className="map-curriculum-chip chip-inactive" title="Contenidos oficiales pendientes de ubicar en el mapa">
+              ⚪ {curriculumCoverage.inactiveCount} Inactivos
+            </span>
+            <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+              de {curriculumCoverage.totalModules} contenidos oficiales
+            </span>
+          </div>
+        </div>
+
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <button
+            type="button"
+            className="map-curriculum-bar-btn"
+            onClick={() => {
+              setCurriculumModalFilter('inactive');
+              setShowCurriculumModal(true);
+            }}
+            title="Ver qué contenidos aún no han sido ubicados en el mapa"
+          >
+            <span>➕</span> Ver Inactivos ({curriculumCoverage.inactiveCount})
+          </button>
+          <button
+            type="button"
+            className="map-curriculum-bar-btn"
+            onClick={() => {
+              setCurriculumModalFilter('all');
+              setShowCurriculumModal(true);
+            }}
+            title="Abrir matriz de contenidos curriculares en el mapa"
+          >
+            <span>📋</span> Matriz de Contenidos & Códigos
+          </button>
+        </div>
+      </div>
+
       {/* Disposición Apilada Vertical: Mapa arriba (ancho completo), Opciones abajo */}
       <div className="sutz-stacked-layout">
 
@@ -488,7 +602,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                   >
                     {mapData.map(h => (
                       <option key={`${h.row},${h.col}`} value={`${h.row},${h.col}`}>
-                        📍 Hex ({h.row}, {h.col}) — {h.title || 'Sin Título'}
+                        📍 Hex ({h.row}, {h.col}) — {h.title || 'Sin Título'} {h.code ? `[${h.code}]` : ''}
                       </option>
                     ))}
                   </select>
@@ -528,7 +642,43 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     <span className="inspector-title-badge-tag">
                       🏷️ TÍTULO DEL HEXÁGONO
                     </span>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+                      {editingHex.code ? (
+                        <span 
+                          className="curriculum-code-badge" 
+                          style={{ fontSize: '0.74rem', padding: '2px 8px' }}
+                          title="Código curricular oficial asignado a esta celda"
+                        >
+                          🏷️ {editingHex.code}
+                        </span>
+                      ) : (() => {
+                        const detected = getCurriculumModuleForHex(editingHex);
+                        if (detected) {
+                          return (
+                            <button
+                              type="button"
+                              className="curriculum-code-badge"
+                              style={{ 
+                                fontSize: '0.72rem', 
+                                padding: '2px 8px', 
+                                background: 'rgba(245, 158, 11, 0.2)', 
+                                color: '#fbbf24', 
+                                borderColor: 'rgba(245, 158, 11, 0.4)' 
+                              }}
+                              title={`Vincular automáticamente al código oficial detectado: ${detected.code}`}
+                              onClick={() => {
+                                const updated = { ...editingHex, code: detected.code };
+                                setEditingHex(updated);
+                                updateHexInGlobalConfig(updated, true, true);
+                              }}
+                            >
+                              💡 Vincular {detected.code}
+                            </button>
+                          );
+                        }
+                        return null;
+                      })()}
+
                       <span style={{ fontSize: '0.75rem', color: '#cbd5e1', fontWeight: 600 }}>
                         🏛️ Reino:
                       </span>
@@ -1218,6 +1368,85 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                     )}
                   </div>
 
+                  {/* Tarjeta A2: Código Curricular Oficial SUTZ-CODE */}
+                  <div className="inspector-card-panel" style={{ borderLeft: '3px solid #38bdf8' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <span className="inspector-panel-title" style={{ margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                        <span>🏷️</span> Código Curricular SUTZ-CODE
+                      </span>
+                      {editingHex.code && (
+                        <button
+                          type="button"
+                          className="inspector-clear-submodule-btn"
+                          onClick={() => {
+                            const updated = { ...editingHex, code: undefined };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated, true, true);
+                          }}
+                          title="Quitar código curricular"
+                        >
+                          Quitar Código
+                        </button>
+                      )}
+                    </div>
+
+                    <div className="inspector-form-group" style={{ marginTop: '8px' }}>
+                      <label className="inspector-label">Vincular a Contenido Oficial del Catálogo:</label>
+                      <select
+                        className="inspector-select"
+                        value={editingHex.code || ''}
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (!val) {
+                            const updated = { ...editingHex, code: undefined };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated, true, true);
+                            return;
+                          }
+                          const found = getModuleByCode(val);
+                          if (found) {
+                            handleAssignModuleToHex(found, editingHex);
+                          } else {
+                            const updated = { ...editingHex, code: val };
+                            setEditingHex(updated);
+                            updateHexInGlobalConfig(updated, true, true);
+                          }
+                        }}
+                      >
+                        <option value="">-- Seleccionar Contenido Curricular --</option>
+                        {SUTZ_CURRICULUM_MODULES.map(m => {
+                          const isAssignedElsewhere = mapData.some(h => 
+                            (h.row !== editingHex.row || h.col !== editingHex.col) && 
+                            (h.code === m.code || h.action?.target === m.route)
+                          );
+                          return (
+                            <option key={m.code} value={m.code}>
+                              [{m.code}] {m.icon} {m.title} ({m.pillarName}) {isAssignedElsewhere ? '· (Ya en otra celda)' : '· (Libre)'}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </div>
+
+                    <div className="inspector-form-group" style={{ marginTop: '8px' }}>
+                      <label className="inspector-label">Código Personalizado / Específico:</label>
+                      <input
+                        type="text"
+                        className="inspector-input"
+                        placeholder="Ej: TEK-ATLAS-C01, CRK-STORY-C01..."
+                        value={editingHex.code || ''}
+                        onChange={(e) => {
+                          const updated = { ...editingHex, code: e.target.value.toUpperCase() };
+                          setEditingHex(updated);
+                          updateHexInGlobalConfig(updated, true, false);
+                        }}
+                        onBlur={() => {
+                          if (editingHex) updateHexInGlobalConfig(editingHex, true, true);
+                        }}
+                      />
+                    </div>
+                  </div>
+
                   {/* Tarjeta B: Acción al Clic & Rutas Rápidas (Independiente) */}
                   <div className="inspector-card-panel">
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -1418,25 +1647,44 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                       <div className="quick-suggestions-pills">
                         {filteredRoutes.map(qa => {
                           const isMatch = editingHex.action?.target === qa.target;
+                          const activeHexForRoute = mapData.find(h => 
+                            (qa.code && h.code === qa.code) || 
+                            (h.action?.target && h.action.target.toLowerCase() === qa.target.toLowerCase())
+                          );
+                          const isAlreadyActiveInMap = Boolean(activeHexForRoute);
+
                           return (
                             <div key={qa.id || qa.label} style={{ display: 'inline-flex', position: 'relative' }}>
                               <button
                                 type="button"
                                 className={`quick-pill-btn ${isMatch ? 'active' : ''}`}
-                                title={`Asignar acción a: ${qa.target}`}
+                                title={
+                                  isAlreadyActiveInMap 
+                                    ? `Asignar acción a: ${qa.target} (🟢 Ya activo en celda Hex ${activeHexForRoute?.row}, ${activeHexForRoute?.col})`
+                                    : `Asignar acción a: ${qa.target} (⚪ Inactivo en el mapa)`
+                                }
                                 onClick={() => {
                                   const routePillar = normalizePillarId(qa.pillarId);
                                   const isGaleria = qa.target.toLowerCase().includes('galeria');
                                   const updated = {
                                     ...editingHex,
                                     action: { type: qa.type, target: qa.target },
+                                    code: qa.code || editingHex.code,
                                     pillar: (isGaleria ? 'creatika' : (editingHex.pillar || routePillar || undefined)) as HexPillarId | undefined
                                   };
                                   setEditingHex(updated);
                                   updateHexInGlobalConfig(updated, true);
                                 }}
                               >
+                                <span className="quick-pill-status-dot">
+                                  {isAlreadyActiveInMap ? '🟢' : '⚪'}
+                                </span>
                                 {qa.label}
+                                {qa.code && (
+                                  <span className="quick-pill-code-badge">
+                                    {qa.code}
+                                  </span>
+                                )}
                                 {qa.isCustom && (
                                   <span 
                                     className="quick-pill-delete-btn"
@@ -1867,7 +2115,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                   <option value="">-- Seleccionar Hexágono para Editar --</option>
                   {mapData.map(h => (
                     <option key={`${h.row},${h.col}`} value={`${h.row},${h.col}`}>
-                      📍 Hex ({h.row}, {h.col}) — {h.title || 'Sin Título'}
+                      📍 Hex ({h.row}, {h.col}) — {h.title || 'Sin Título'} {h.code ? `[${h.code}]` : ''}
                     </option>
                   ))}
                 </select>
@@ -1932,6 +2180,161 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
           onClose={() => setShowIconPicker(false)}
         />
       )}
+
+      {/* Modal Matriz Curricular SUTZ-CODE en el Mapa (Activos / Inactivos) */}
+      {showCurriculumModal && (
+        <div className="map-curriculum-modal-backdrop" onClick={() => setShowCurriculumModal(false)}>
+          <div className="map-curriculum-modal-container" onClick={e => e.stopPropagation()}>
+            <div className="map-curriculum-modal-header">
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ fontSize: '1.6rem' }}>📋</span>
+                <div>
+                  <h4 style={{ margin: 0, color: '#ffffff', fontSize: '1.15rem' }}>
+                    Matriz Curricular SUTZ-CODE en el Mapa Virtual
+                  </h4>
+                  <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                    {curriculumCoverage.activeCount} de {curriculumCoverage.totalModules} contenidos activos en el mapa ({curriculumCoverage.activePercentage}% de cobertura)
+                  </span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowCurriculumModal(false)}
+                style={{ padding: '4px 10px' }}
+              >
+                ✕ Cerrar
+              </button>
+            </div>
+
+            {/* Filtros de la Modal */}
+            <div style={{ padding: '12px 22px', background: 'rgba(15, 23, 42, 0.4)', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <input
+                type="text"
+                className="curriculum-search-input"
+                style={{ maxWidth: '300px' }}
+                placeholder="Buscar por código o nombre..."
+                value={curriculumModalSearch}
+                onChange={e => setCurriculumModalSearch(e.target.value)}
+              />
+
+              <div className="curriculum-filter-chips">
+                <button
+                  type="button"
+                  className={`curriculum-filter-chip ${curriculumModalFilter === 'all' ? 'active' : ''}`}
+                  onClick={() => setCurriculumModalFilter('all')}
+                >
+                  Todos ({curriculumCoverage.totalModules})
+                </button>
+                <button
+                  type="button"
+                  className={`curriculum-filter-chip status-active ${curriculumModalFilter === 'active' ? 'active' : ''}`}
+                  onClick={() => setCurriculumModalFilter('active')}
+                >
+                  🟢 Activos ({curriculumCoverage.activeCount})
+                </button>
+                <button
+                  type="button"
+                  className={`curriculum-filter-chip status-inactive ${curriculumModalFilter === 'inactive' ? 'active' : ''}`}
+                  onClick={() => setCurriculumModalFilter('inactive')}
+                >
+                  ⚪ Inactivos ({curriculumCoverage.inactiveCount})
+                </button>
+              </div>
+            </div>
+
+            {/* Lista de Contenidos */}
+            <div className="map-curriculum-modal-body">
+              {curriculumCoverage.items
+                .filter(({ module, isActive }) => {
+                  if (curriculumModalFilter === 'active' && !isActive) return false;
+                  if (curriculumModalFilter === 'inactive' && isActive) return false;
+                  if (curriculumModalSearch.trim()) {
+                    const q = curriculumModalSearch.toLowerCase();
+                    return (
+                      module.code.toLowerCase().includes(q) ||
+                      module.title.toLowerCase().includes(q) ||
+                      module.route.toLowerCase().includes(q)
+                    );
+                  }
+                  return true;
+                })
+                .map(({ module, isActive, assignedHexes }) => (
+                  <div 
+                    key={module.code} 
+                    className={`map-curriculum-item-row ${isActive ? 'is-active' : 'is-inactive'}`}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <span style={{ fontSize: '1.6rem', width: '38px', textAlign: 'center' }}>{module.icon}</span>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                          <span className="curriculum-code-badge" style={{ fontSize: '0.75rem', padding: '1px 6px' }}>
+                            {module.code}
+                          </span>
+                          <strong style={{ color: '#ffffff', fontSize: '0.92rem' }}>
+                            {module.title}
+                          </strong>
+                          <span style={{ 
+                            fontSize: '0.68rem', 
+                            color: '#94a3b8', 
+                            background: 'rgba(255,255,255,0.06)', 
+                            padding: '1px 5px', 
+                            borderRadius: '4px' 
+                          }}>
+                            {module.pillarName}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.76rem', color: '#94a3b8', marginTop: '2px' }}>
+                          Ruta: <code>{module.route}</code>
+                          {isActive && (
+                            <span style={{ color: '#34d399', marginLeft: '8px', fontWeight: 600 }}>
+                              · Celda: {assignedHexes.map(h => `Hex (${h.row}, ${h.col})`).join(', ')}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    </div>
+
+                    <div>
+                      {isActive ? (
+                        <button
+                          type="button"
+                          className="curriculum-card-btn"
+                          onClick={() => {
+                            const first = assignedHexes[0];
+                            if (first) {
+                              const targetCell = previewCells.find(c => c.row === first.row && c.col === first.col);
+                              if (targetCell) handlePreviewClick(targetCell);
+                            }
+                            setShowCurriculumModal(false);
+                            inspectorSectionRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                          }}
+                          title="Inspeccionar este hexágono en el mapa"
+                        >
+                          👁️ Ver en Mapa
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          className="curriculum-card-btn locate-btn"
+                          onClick={() => handleAssignModuleToHex(module)}
+                          title={
+                            editingHex 
+                              ? `Asignar a hexágono actual (${editingHex.row}, ${editingHex.col})` 
+                              : `Crear celda nueva en el mapa para este contenido`
+                          }
+                        >
+                          {editingHex ? `✨ Asignar a (${editingHex.row}, ${editingHex.col})` : `➕ Ubicar en Mapa`}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+            </div>
+          </div>
+        </div>
+      )}
+
 
     </div>
   );

@@ -439,6 +439,20 @@ export const SUTZ_CURRICULUM_MODULES: SutzModuleContent[] = [
   // 🧪 LAB (Laboratorios Pedagógicos & Prácticas)
   // =========================================================================
   {
+    code: 'LAB-HOME-C01',
+    pillarId: 'lab',
+    pillarName: 'LAB',
+    title: 'Laboratorios Pedagógicos Formativos',
+    icon: '🧪',
+    type: 'laboratorio',
+    route: '/laboratorios',
+    hexCoord: { row: 0, col: -1 },
+    summary: 'Centro de formación integral para docentes y estudiantes con 10 módulos metodológicos en artes, narrativa, ciencia y gamificación.',
+    pedagogicalCompetency: 'Metodologías activas de aula, diseño de experiencias pedagógicas e innovación educativa.',
+    challenges: [],
+    projects: []
+  },
+  {
     code: 'LAB-ANIMACION-C01',
     pillarId: 'lab',
     pillarName: 'LAB',
@@ -472,7 +486,6 @@ export const SUTZ_CURRICULUM_MODULES: SutzModuleContent[] = [
     icon: '💡',
     type: 'laboratorio',
     route: '/pensamiento-cientifico',
-    hexCoord: { row: 0, col: -1 },
     summary: 'Guía de formulación de hipótesis, experimentación rigurosa y divulgación científica.',
     pedagogicalCompetency: 'Método científico empírico, análisis crítico de datos y pensamiento escéptico.',
     challenges: [],
@@ -572,3 +585,123 @@ export function formatScoreForAcademiaQr(params: {
     isApproved: score >= (maxScore * 0.6)
   };
 }
+
+import { BUILTIN_PILLAR_ROUTES } from './pillarProjectsConfig';
+
+// =========================================================================
+// CORRELACIÓN CURRICULAR CON EL MAPA VIRTUAL DE SUTZ
+// =========================================================================
+
+export interface SutzAssignedHex {
+  id: string;
+  row: number;
+  col: number;
+  title: string;
+}
+
+export interface SutzModuleMapStatus {
+  module: SutzModuleContent;
+  isActive: boolean;
+  assignedHexes: SutzAssignedHex[];
+}
+
+export interface SutzCurriculumCoverageSummary {
+  totalModules: number;
+  activeCount: number;
+  inactiveCount: number;
+  activePercentage: number;
+  items: SutzModuleMapStatus[];
+}
+
+/**
+ * Verifica si un hexágono corresponde a un módulo curricular específico
+ */
+export function matchHexagonToModule(
+  hex: { code?: string; action?: { type?: string; target?: string } },
+  module: SutzModuleContent
+): boolean {
+  if (!hex) return false;
+
+  // 1. Coincidencia directa por código oficial
+  if (hex.code && hex.code.trim().toUpperCase() === module.code.trim().toUpperCase()) {
+    return true;
+  }
+
+  const target = hex.action?.target?.trim();
+  if (!target) return false;
+
+  // 2. Coincidencia por ruta del módulo
+  const cleanTarget = target.split('?')[0].replace(/\/+$/, '').toLowerCase();
+  const cleanModuleRoute = module.route.split('?')[0].replace(/\/+$/, '').toLowerCase();
+  if (cleanTarget && cleanModuleRoute && cleanTarget === cleanModuleRoute) {
+    return true;
+  }
+
+  // 3. Coincidencia de modales de Popol Vuh (ej: /sutz?story=camazotz vs 'camazotz')
+  if (module.route.includes('=')) {
+    const storyKey = module.route.split('=')[1]?.toLowerCase();
+    if (storyKey && (cleanTarget === storyKey || cleanTarget === `story-${storyKey}`)) {
+      return true;
+    }
+  }
+
+  // 4. Coincidencia mediante catálogo de rutas builtin
+  const routeMatch = BUILTIN_PILLAR_ROUTES.find(r => r.code === module.code);
+  if (routeMatch && routeMatch.target.toLowerCase() === target.toLowerCase()) {
+    return true;
+  }
+
+  return false;
+}
+
+/**
+ * Obtiene el módulo curricular correspondiente a un hexágono
+ */
+export function getCurriculumModuleForHex(
+  hex: { code?: string; action?: { type?: string; target?: string } }
+): SutzModuleContent | undefined {
+  if (!hex) return undefined;
+  if (hex.code) {
+    const mod = getModuleByCode(hex.code);
+    if (mod) return mod;
+  }
+  return SUTZ_CURRICULUM_MODULES.find(m => matchHexagonToModule(hex, m));
+}
+
+/**
+ * Calcula la cobertura de contenidos curriculares en el mapa virtual actual
+ */
+export function getCurriculumCoverageSummary(
+  mapHexagons: Array<{ id?: string; row: number; col: number; title?: string; code?: string; action?: { type?: string; target?: string } }>
+): SutzCurriculumCoverageSummary {
+  const items: SutzModuleMapStatus[] = SUTZ_CURRICULUM_MODULES.map(module => {
+    const assignedHexes: SutzAssignedHex[] = (mapHexagons || [])
+      .filter(h => matchHexagonToModule(h, module))
+      .map(h => ({
+        id: h.id || `${h.row},${h.col}`,
+        row: h.row,
+        col: h.col,
+        title: h.title || module.title
+      }));
+
+    return {
+      module,
+      isActive: assignedHexes.length > 0,
+      assignedHexes
+    };
+  });
+
+  const activeCount = items.filter(it => it.isActive).length;
+  const totalModules = items.length;
+  const inactiveCount = totalModules - activeCount;
+  const activePercentage = totalModules > 0 ? Math.round((activeCount / totalModules) * 100) : 0;
+
+  return {
+    totalModules,
+    activeCount,
+    inactiveCount,
+    activePercentage,
+    items
+  };
+}
+

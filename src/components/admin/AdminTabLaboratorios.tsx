@@ -40,7 +40,21 @@ export default function AdminTabLaboratorios({ localConfig, setLocalConfig, upda
   return (
     <div className="admin-card card-glass animate-fade-in">
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '8px' }}>
-        <h3 style={{ margin: 0 }}>🧪 LAB: Gestión y Edición de Módulos Formativos</h3>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          <h3 style={{ margin: 0 }}>🧪 LAB: Gestión y Edición de Módulos Formativos</h3>
+          <span style={{ 
+            fontSize: '0.74rem', 
+            fontFamily: 'monospace', 
+            fontWeight: 700, 
+            background: 'rgba(56, 189, 248, 0.15)', 
+            color: '#38bdf8', 
+            border: '1px solid rgba(56, 189, 248, 0.35)', 
+            padding: '2px 8px', 
+            borderRadius: '6px' 
+          }}>
+            LAB-HOME-C01
+          </span>
+        </div>
         <span style={{ 
           background: 'rgba(56, 189, 248, 0.15)', 
           color: '#38bdf8', 

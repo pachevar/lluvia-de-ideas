@@ -69,7 +69,12 @@ export default function AdminTab100tek({ localConfig, updateField, mode = 'all' 
         {(!isSolarOnly) && (
           <div className="admin-form-row">
             <div className="admin-form-group">
-              <label>🔢 Secuencias Numéricas - Descripción / Enfoque Didáctico</label>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>🔢 Secuencias Numéricas - Descripción / Enfoque Didáctico</span>
+                <span style={{ fontSize: '0.72rem', background: 'rgba(245, 158, 11, 0.2)', color: '#fbbf24', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700 }}>
+                  TEK-SECUENCIAS-C01
+                </span>
+              </label>
               <textarea 
                 rows={3} 
                 value={tek100.numberSequencesIntro || ''} 
@@ -83,7 +88,12 @@ export default function AdminTab100tek({ localConfig, updateField, mode = 'all' 
         {(!isSecuenciasOnly) && (
           <div className="admin-form-row">
             <div className="admin-form-group">
-              <label>🪐 Sistema Solar 3D - Descripción / Enfoque Didáctico</label>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span>🪐 Sistema Solar 3D - Descripción / Enfoque Didáctico</span>
+                <span style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.2)', color: '#38bdf8', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700 }}>
+                  TEK-SOLAR-C01
+                </span>
+              </label>
               <textarea 
                 rows={3} 
                 value={tek100.solarSystemIntro || ''} 
@@ -97,25 +107,42 @@ export default function AdminTab100tek({ localConfig, updateField, mode = 'all' 
 
       {/* Catálogo de Módulos y Enlaces Directos */}
       <div className="admin-form-section">
-        <h4>{isSolarOnly ? '🚀 Acceso Directo al Simulador Espacial' : '🚀 Rutas Didácticas y Ejercicios Públicos de 100tek'}</h4>
+        <h4>{isSolarOnly ? '🚀 Acceso Directo al Simulador Espacial' : '🚀 Rutas Didácticas y Simuladores de 100tek'}</h4>
         <p className="admin-section-help" style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
           {isSolarOnly 
-            ? 'El simulador del Sistema Solar 3D forma parte integral de 100tek y permite a los estudiantes explorar órbitas, planetas rocosos, gigantes gaseosos y sondas espaciales:'
-            : 'Todo el pensamiento lógico, matemático y astronómico se organiza en 100tek. Haz clic para probar cualquier herramienta en tiempo real:'}
+            ? 'El simulador del Sistema Solar 3D (TEK-SOLAR-C01) forma parte integral de 100tek y permite explorar órbitas y magnitudes planetarias:'
+            : 'Ciencia, anatomía, lógica y astronomía organizadas bajo el estándar curricular SUTZ-CODE:'}
         </p>
 
         <div className="admin-quick-links-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginTop: '14px' }}>
           {(!isSolarOnly) && (
-            <a 
-              href="/100tek/secuencias-numericas" 
-              target="_blank" 
-              rel="noopener noreferrer"
-              className="btn btn-secondary"
-              style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
-            >
-              <span>🔢 Secuencias Numéricas</span>
-              <span style={{ opacity: 0.7 }}>↗</span>
-            </a>
+            <>
+              <a 
+                href="/100tek/secuencias-numericas" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-secondary"
+                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
+              >
+                <span>🔢 Secuencias Numéricas</span>
+                <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', background: 'rgba(245,158,11,0.2)', color: '#fbbf24', padding: '2px 6px', borderRadius: '4px' }}>
+                  TEK-SECUENCIAS-C01
+                </span>
+              </a>
+
+              <a 
+                href="/atlas" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                className="btn btn-secondary"
+                style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
+              >
+                <span>🫀 Cuerpo Humano Virtual 3D</span>
+                <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', background: 'rgba(245,158,11,0.2)', color: '#fbbf24', padding: '2px 6px', borderRadius: '4px' }}>
+                  TEK-ATLAS-C01
+                </span>
+              </a>
+            </>
           )}
 
           <a 
@@ -135,8 +162,10 @@ export default function AdminTab100tek({ localConfig, updateField, mode = 'all' 
               fontWeight: 700
             }}
           >
-            <span>🪐 Abrir Simulador Sistema Solar 3D</span>
-            <span>➔</span>
+            <span>🪐 Abrir Sistema Solar 3D</span>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', background: 'rgba(0,0,0,0.3)', color: '#ffffff', padding: '2px 6px', borderRadius: '4px' }}>
+              TEK-SOLAR-C01
+            </span>
           </a>
         </div>
       </div>

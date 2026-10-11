@@ -21,6 +21,7 @@ import AdminTabCreatika from './components/admin/AdminTabCreatika';
 import AdminTab100tek from './components/admin/AdminTab100tek';
 import AdminTabTienda from './components/admin/AdminTabTienda';
 import AdminTabTechTree from './components/admin/AdminTabTechTree';
+import AdminTabCurriculum from './components/admin/AdminTabCurriculum';
 import AdminTabViajeDelHeroe from './components/admin/AdminTabViajeDelHeroe';
 import AdminTabGranGaleria from './components/admin/AdminTabGranGaleria';
 import { saveArchetypeAsset } from './services/archetypeAssetsService';
@@ -32,7 +33,7 @@ export default function Gerencia() {
   const onBackToPortal = () => navigate('/');
 
 const VALID_ADMIN_TABS: AdminTabType[] = [
-  'inicio', 'videos', 'neurociencia', 'libros', 'mapa', 'techtree', 
+  'inicio', 'videos', 'neurociencia', 'libros', 'mapa', 'curriculum', 'techtree', 
   'creatika', '100tek', 'sistema_solar', 'laboratorios', 'bingo', 
   'tienda', 'viaje_del_heroe', 'inscripciones', 'cotizador', 
   'colors', 'pozo_ideas', 'ajustes'
@@ -484,6 +485,13 @@ const VALID_ADMIN_TABS: AdminTabType[] = [
             <AdminTabMundoVirtual 
               localConfig={localConfig} 
               setLocalConfig={setLocalConfig} 
+            />
+          )}
+
+          {activeAdminTab === 'curriculum' && (
+            <AdminTabCurriculum 
+              localConfig={localConfig}
+              setActiveAdminTab={setActiveAdminTab}
             />
           )}
 

@@ -914,7 +914,12 @@ export default function AdminTabTienda({ localConfig, setLocalConfig, onSave, sa
             <span>🛍️</span>
           </div>
           <div className="admin-mercado-heading">
-            <h3>Administrador de Mercado (Tienda Oficial)</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h3 style={{ margin: 0 }}>Administrador de Mercado (Tienda Oficial)</h3>
+              <span style={{ fontSize: '0.74rem', fontFamily: 'monospace', fontWeight: 700, background: 'rgba(20, 184, 166, 0.2)', color: '#2dd4bf', padding: '2px 8px', borderRadius: '4px' }}>
+                TND-LIBROS-C01 · MKT-BOLETOS-C01
+              </span>
+            </div>
             <p>
               Gestiona el catálogo completo de productos educativos: cuentos, juegos de mesa, personajes, tarjetas, proyectos STEAM y útiles.
             </p>

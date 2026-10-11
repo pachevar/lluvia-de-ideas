@@ -58,7 +58,12 @@ export default function AdminTabCreatika({ localConfig, updateField }: AdminTabC
         
         <div className="admin-form-row">
           <div className="admin-form-group">
-            <label>🎰 Máquina de Cuentos - Descripción / Enfoque Didáctico</label>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>🎰 Máquina de Cuentos - Descripción / Enfoque Didáctico</span>
+              <span style={{ fontSize: '0.72rem', background: 'rgba(236, 72, 153, 0.2)', color: '#f472b6', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700 }}>
+                CRK-STORY-C01
+              </span>
+            </label>
             <textarea 
               rows={3} 
               value={creatika.storyMachineIntro || ''} 
@@ -70,7 +75,12 @@ export default function AdminTabCreatika({ localConfig, updateField }: AdminTabC
 
         <div className="admin-form-row">
           <div className="admin-form-group">
-            <label>🎨 Teoría del Color - Descripción / Enfoque Didáctico</label>
+            <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+              <span>🎨 Teoría del Color - Descripción / Enfoque Didáctico</span>
+              <span style={{ fontSize: '0.72rem', background: 'rgba(236, 72, 153, 0.2)', color: '#f472b6', padding: '2px 8px', borderRadius: '4px', fontFamily: 'monospace', fontWeight: 700 }}>
+                CRK-COLOR-C01
+              </span>
+            </label>
             <textarea 
               rows={3} 
               value={creatika.colorTheoryIntro || ''} 
@@ -85,7 +95,7 @@ export default function AdminTabCreatika({ localConfig, updateField }: AdminTabC
       <div className="admin-form-section">
         <h4>🚀 Rutas Didácticas y Ejercicios Públicos de Creatika</h4>
         <p className="admin-section-help" style={{ color: '#94a3b8', fontSize: '0.85rem' }}>
-          Todo lo artístico, narrativo y visual converge en Creatika. Haz clic para probar cualquier herramienta en tiempo real:
+          Todo lo artístico, narrativo y visual converge en Creatika con sus códigos curriculares SUTZ-CODE:
         </p>
 
         <div className="admin-quick-links-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginTop: '14px' }}>
@@ -97,7 +107,9 @@ export default function AdminTabCreatika({ localConfig, updateField }: AdminTabC
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
           >
             <span>🎰 Máquina de Cuentos</span>
-            <span style={{ opacity: 0.7 }}>↗</span>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', opacity: 0.8, background: 'rgba(236,72,153,0.2)', color: '#f472b6', padding: '2px 6px', borderRadius: '4px' }}>
+              CRK-STORY-C01
+            </span>
           </a>
 
           <a 
@@ -108,40 +120,48 @@ export default function AdminTabCreatika({ localConfig, updateField }: AdminTabC
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
           >
             <span>🎨 Teoría del Color</span>
-            <span style={{ opacity: 0.7 }}>↗</span>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', opacity: 0.8, background: 'rgba(236,72,153,0.2)', color: '#f472b6', padding: '2px 6px', borderRadius: '4px' }}>
+              CRK-COLOR-C01
+            </span>
           </a>
 
           <a 
-            href="/creatika/construyendo-personaje" 
+            href="/creatika/construyendo-el-personaje" 
             target="_blank" 
             rel="noopener noreferrer"
             className="btn btn-secondary"
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
           >
             <span>🦸 El Viaje del Héroe</span>
-            <span style={{ opacity: 0.7 }}>↗</span>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', opacity: 0.8, background: 'rgba(236,72,153,0.2)', color: '#f472b6', padding: '2px 6px', borderRadius: '4px' }}>
+              CRK-PERSONAJE-C01
+            </span>
           </a>
 
           <a 
-            href="/creatika/codigo-docente" 
+            href="/codigo-docente" 
             target="_blank" 
             rel="noopener noreferrer"
             className="btn btn-secondary"
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
           >
             <span>📜 El Código Docente</span>
-            <span style={{ opacity: 0.7 }}>↗</span>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', opacity: 0.8, background: 'rgba(236,72,153,0.2)', color: '#f472b6', padding: '2px 6px', borderRadius: '4px' }}>
+              CRK-DOCENTE-C01
+            </span>
           </a>
 
           <a 
-            href="/creatika/codigo-estudiante" 
+            href="/codigo-estudiante" 
             target="_blank" 
             rel="noopener noreferrer"
             className="btn btn-secondary"
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
           >
             <span>🎓 El Código del Estudiante</span>
-            <span style={{ opacity: 0.7 }}>↗</span>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', opacity: 0.8, background: 'rgba(236,72,153,0.2)', color: '#f472b6', padding: '2px 6px', borderRadius: '4px' }}>
+              CRK-ESTUDIANTE-C01
+            </span>
           </a>
 
           <a 
@@ -151,19 +171,23 @@ export default function AdminTabCreatika({ localConfig, updateField }: AdminTabC
             className="btn btn-secondary"
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
           >
-            <span>🏛️ Gran Galería (Relatos & Museo)</span>
-            <span style={{ opacity: 0.7 }}>↗</span>
+            <span>🏛️ Gran Galería</span>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', opacity: 0.8, background: 'rgba(236,72,153,0.2)', color: '#f472b6', padding: '2px 6px', borderRadius: '4px' }}>
+              CRK-GALERIA-C01
+            </span>
           </a>
 
           <a 
-            href="/nuestros-libros" 
+            href="/libros" 
             target="_blank" 
             rel="noopener noreferrer"
             className="btn btn-secondary"
             style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '12px 16px', borderRadius: '10px' }}
           >
-            <span>📖 Nuestros Libros & Cuentos</span>
-            <span style={{ opacity: 0.7 }}>↗</span>
+            <span>📖 Libros & Cuentos</span>
+            <span style={{ fontSize: '0.72rem', fontFamily: 'monospace', opacity: 0.8, background: 'rgba(59,130,246,0.2)', color: '#60a5fa', padding: '2px 6px', borderRadius: '4px' }}>
+              TND-LIBROS-C01
+            </span>
           </a>
 
           <a 

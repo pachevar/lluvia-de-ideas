@@ -4,6 +4,7 @@ export type AdminTabType =
   | 'neurociencia'
   | 'libros'
   | 'mapa'
+  | 'curriculum'
   | 'techtree'
   | 'creatika' 
   | '100tek' 
@@ -187,6 +188,17 @@ export const PILLAR_NAV_CATEGORIES: AdminCategory[] = [
         pillar: 'sutz',
         publicRoute: '/sutz',
         roleDescription: 'Mapa virtual que centraliza y conecta todas las rutas a ejercicios y pilares'
+      },
+      {
+        id: 'curriculum',
+        label: '📋 Códigos SUTZ-CODE & Catálogo',
+        icon: '📋',
+        description: 'Matriz curricular oficial, identificador de códigos (ej: TEK-ATLAS-C01), retos, competencias y estado activo/inactivo en el mapa',
+        keywords: ['codigos', 'sutz-code', 'curriculum', 'modulos', 'retos', 'proyectos', 'competencias', 'catalogo', 'activos', 'inactivos', 'mapa'],
+        pillar: 'sutz',
+        badge: 'SUTZ-CODE',
+        publicRoute: '/sutz',
+        roleDescription: 'Catálogo de códigos de contenidos y monitor de presencia en el mapa virtual'
       },
       {
         id: 'techtree',
