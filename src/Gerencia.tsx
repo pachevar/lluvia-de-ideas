@@ -19,7 +19,7 @@ import AdminBingoTab from './components/admin/AdminBingoTab';
 import AdminTabMundoVirtual from './components/admin/AdminTabMundoVirtual';
 import AdminTabCreatika from './components/admin/AdminTabCreatika';
 import AdminTab100tek from './components/admin/AdminTab100tek';
-import AdminTabTienda from './components/admin/AdminTabTienda';
+import AdminTabTiendaExternal from './components/admin/AdminTabTiendaExternal';
 import AdminTabTechTree from './components/admin/AdminTabTechTree';
 import AdminTabCurriculum from './components/admin/AdminTabCurriculum';
 import AdminTabViajeDelHeroe from './components/admin/AdminTabViajeDelHeroe';
@@ -512,13 +512,7 @@ const VALID_ADMIN_TABS: AdminTabType[] = [
           )}
 
           {activeAdminTab === 'tienda' && (
-            <AdminTabTienda 
-              localConfig={localConfig} 
-              setLocalConfig={setLocalConfig}
-              updateField={updateField} 
-              onSave={handleSaveConfig}
-              saving={saving}
-            />
+            <AdminTabTiendaExternal />
           )}
 
           {activeAdminTab === 'viaje_del_heroe' && (

@@ -32,7 +32,7 @@ const ConstruyendoPersonaje = React.lazy(() => import('./pages/ConstruyendoPerso
 const BingoBoletos = React.lazy(() => import('./pages/BingoBoletos'));
 const BingoBoletosConfirmacion = React.lazy(() => import('./pages/BingoBoletosConfirmacion'));
 const GranGaleria = React.lazy(() => import('./pages/GranGaleria'));
-const Mercado = React.lazy(() => import('./pages/Mercado'));
+const MercadoRedirect = React.lazy(() => import('./pages/MercadoRedirect'));
 const AtlasAnatomia = React.lazy(() => import('./pages/AtlasAnatomia'));
 
 function App() {
@@ -133,12 +133,12 @@ function App() {
             <Route path="/gran-galeria" element={<GranGaleria />} />
             <Route path="/galeria" element={<GranGaleria />} />
             <Route path="/concursos-estudiantiles" element={<GranGaleria />} />
-            <Route path="/mercado" element={<Mercado />} />
-            <Route path="/mercado/:productId" element={<Mercado />} />
-            <Route path="/tienda" element={<Mercado />} />
-            <Route path="/tienda/:productId" element={<Mercado />} />
-            <Route path="/catalogo" element={<Mercado />} />
-            <Route path="/catalogo/:productId" element={<Mercado />} />
+            <Route path="/mercado" element={<MercadoRedirect />} />
+            <Route path="/mercado/:productId" element={<MercadoRedirect />} />
+            <Route path="/tienda" element={<MercadoRedirect />} />
+            <Route path="/tienda/:productId" element={<MercadoRedirect />} />
+            <Route path="/catalogo" element={<MercadoRedirect />} />
+            <Route path="/catalogo/:productId" element={<MercadoRedirect />} />
             <Route path="*" element={<NotFound />} />
           </Routes>
         </Suspense>
