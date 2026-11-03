@@ -126,14 +126,14 @@ export function getLocalDeviceId(): string {
 /**
  * Alias de compatibilidad: retorna el ID de dispositivo de este cliente.
  */
-export function getLocalSessionId(_uid?: string): string {
+export function getLocalSessionId(): string {
   return getLocalDeviceId();
 }
 
 /**
  * Regenera un nuevo ID de dispositivo si el usuario explícitamente reclama la sesión.
  */
-export function refreshLocalSessionId(_uid?: string): string {
+export function refreshLocalSessionId(): string {
   const randomPart = Math.random().toString(36).substring(2, 12);
   const newId = `dev_${Date.now()}_${randomPart}`;
   try {

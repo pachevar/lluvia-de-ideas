@@ -10,8 +10,7 @@ export const CONTACT = {
   bankAccountHolder: 'Lluvia de Ideas Editorial S.A.',
   siteUrl: 'https://lluviadeideasgt.com',
   // URL de la nueva Tienda en Línea Externa independiente:
-  // Cuando tengas la URL lista, colócala aquí (ej: 'https://tienda.lluviadeideasgt.com')
-  externalStoreUrl: '',
+  externalStoreUrl: 'https://www.volckan.com/tienda/index.html',
 };
 
 export const EXTERNAL_STORE_URL = CONTACT.externalStoreUrl;

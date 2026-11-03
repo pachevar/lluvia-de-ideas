@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import React, { useState, useMemo, useEffect } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { DEFAULT_GRAN_GALERIA } from '../data/defaultGranGaleriaData';
 import type { 
@@ -18,6 +18,7 @@ type GaleriaSection = 'escriba' | 'museo' | 'cine' | 'concursos';
 
 export const GranGaleria: React.FC = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { config, saveConfigToFirestore } = usePortalConfig();
 
   // Config data fallback
@@ -42,6 +43,22 @@ export const GranGaleria: React.FC = () => {
   const [activeVideo, setActiveVideo] = useState<StudentVideoItem | null>(null);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
+  const [editorInitialData, setEditorInitialData] = useState<Partial<StudentTextItem> | undefined>(undefined);
+
+  // Detección de prompt detonador desde la Máquina de Cuentos (Suite Creatika)
+  useEffect(() => {
+    if (location.state && (location.state as any).initialPrompt) {
+      const state = location.state as { initialPrompt?: string; titleSuggestion?: string; category?: string };
+      setActiveTab('escriba');
+      setEditorInitialData({
+        title: state.titleSuggestion || '',
+        genre: 'fantasia',
+        synopsis: state.initialPrompt || '',
+        content: `Prompt detonador de la Máquina de Cuentos:\n"${state.initialPrompt}"\n\n---\n\n(Comienza a redactar tu historia aquí...)`
+      });
+      setIsEditorOpen(true);
+    }
+  }, [location.state]);
 
   const handleSaveNewText = async (newText: StudentTextItem) => {
     const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
@@ -712,8 +729,12 @@ export const GranGaleria: React.FC = () => {
       {/* Modal Taller del Pergamino del Escriba */}
       <EscribaEditorModal
         isOpen={isEditorOpen}
-        onClose={() => setIsEditorOpen(false)}
+        onClose={() => {
+          setIsEditorOpen(false);
+          setEditorInitialData(undefined);
+        }}
         onSave={handleSaveNewText}
+        initialData={editorInitialData}
       />
     </div>
   );

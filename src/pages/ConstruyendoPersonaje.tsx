@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { createPortal } from 'react-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
@@ -638,13 +639,34 @@ export default function ConstruyendoPersonaje() {
   const [copiedNotification, setCopiedNotification] = useState(false);
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
 
-  const sectionRefs = {
-    psicologia: useRef<HTMLDivElement>(null),
-    arquetipos: useRef<HTMLDivElement>(null),
-    viaje: useRef<HTMLDivElement>(null),
-    herramientas: useRef<HTMLDivElement>(null),
-    taller: useRef<HTMLDivElement>(null)
-  };
+  const location = useLocation();
+
+  const refPsicologia = useRef<HTMLElement>(null);
+  const refArquetipos = useRef<HTMLElement>(null);
+  const refViaje = useRef<HTMLElement>(null);
+  const refHerramientas = useRef<HTMLElement>(null);
+  const refTaller = useRef<HTMLElement>(null);
+
+  const sectionRefs = useMemo(() => ({
+    psicologia: refPsicologia,
+    arquetipos: refArquetipos,
+    viaje: refViaje,
+    herramientas: refHerramientas,
+    taller: refTaller
+  }), []);
+
+  // Cargar datos si provienen de la Máquina de Cuentos (Suite Creatika)
+  useEffect(() => {
+    if (location.state && (location.state as any).characterName) {
+      const state = location.state as { characterName?: string; description?: string; emoji?: string };
+      if (state.characterName) setCharName(state.characterName);
+      if (state.description) setCharWant(state.description);
+      // Desplazamiento fluido al taller
+      setTimeout(() => {
+        refTaller.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }, 350);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     document.body.classList.add('home-page-active');
@@ -955,7 +977,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
       {/* =========================================================================
           MÓDULO 1: PSICOLOGÍA PROFUNDA DEL PERSONAJE (LAS 4 FICHAS DEL ALMA)
           ========================================================================= */}
-      <section ref={sectionRefs.psicologia} className="personaje-section" id="psicologia">
+      <section ref={refPsicologia} className="personaje-section" id="psicologia">
         <div className="section-header-block">
           <span className="section-tag">Módulo 1</span>
           <h2 className="section-main-title">La Anatomía Interna: Los Cuatro Pilares del Alma</h2>
@@ -1374,7 +1396,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
       {/* =========================================================================
           MÓDULO 2: ARQUETIPOS DE PERSONAJES (CON IMAGEN GRANDE Y COMPRESIÓN)
           ========================================================================= */}
-      <section ref={sectionRefs.arquetipos} className="personaje-section" id="arquetipos">
+      <section ref={refArquetipos} className="personaje-section" id="arquetipos">
         <div className="section-header-block">
           <span className="section-tag">Módulo 2</span>
           <h2 className="section-main-title">Arquetipos Dinámicos: Más Allá del Héroe</h2>
@@ -1720,7 +1742,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
       {/* =========================================================================
           MÓDULO 3: EL VIAJE DEL HÉROE Y LA EVOLUCIÓN DEL PERSONAJE
           ========================================================================= */}
-      <section ref={sectionRefs.viaje} className="personaje-section" id="viaje">
+      <section ref={refViaje} className="personaje-section" id="viaje">
         <div className="section-header-block">
           <span className="section-tag">Módulo 3</span>
           <h2 className="section-main-title">El Viaje del Héroe y el Arco de Tensión Dramática</h2>
@@ -1889,7 +1911,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
       {/* =========================================================================
           MÓDULO 4: HERRAMIENTAS NARRATIVAS Y GUION
           ========================================================================= */}
-      <section ref={sectionRefs.herramientas} className="personaje-section" id="herramientas">
+      <section ref={refHerramientas} className="personaje-section" id="herramientas">
         <div className="section-header-block">
           <span className="section-tag">Módulo 4</span>
           <h2 className="section-main-title">Herramientas de Guion: Voz, Diálogo y Subtexto</h2>
@@ -1952,7 +1974,7 @@ Plataforma Editorial Lluvia de Ideas | Creatika 2026`;
       {/* =========================================================================
           MÓDULO 5: TALLER INTERACTIVO / FORJA DEL PERSONAJE
           ========================================================================= */}
-      <section ref={sectionRefs.taller} className="personaje-section" id="taller">
+      <section ref={refTaller} className="personaje-section" id="taller">
         <div className="section-header-block">
           <span className="section-tag">Taller Práctico</span>
           <h2 className="section-main-title">La Forja del Personaje (Character Forge)</h2>

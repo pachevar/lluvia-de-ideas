@@ -63,7 +63,9 @@ export function getActiveAcademiaQrHandshake(): AcademiaQrHandshake | null {
     if (raw) {
       return JSON.parse(raw) as AcademiaQrHandshake;
     }
-  } catch {}
+  } catch (err) {
+    console.debug('Error recuperando handshake de AcademiaQR:', err);
+  }
   return null;
 }
 
@@ -81,7 +83,9 @@ export function clearAcademiaQrHandshake(): void {
   if (typeof window === 'undefined') return;
   try {
     sessionStorage.removeItem(ACADEMIAQR_BRIDGE_CONFIG.sessionStorageKey);
-  } catch {}
+  } catch (err) {
+    console.debug('Error limpiando handshake de AcademiaQR:', err);
+  }
 }
 
 /**
@@ -149,7 +153,9 @@ export async function reportChallengeCompletion(params: {
     const history = JSON.parse(historyRaw);
     history.unshift(payload);
     localStorage.setItem(ACADEMIAQR_BRIDGE_CONFIG.completionStorageKey, JSON.stringify(history.slice(0, 50)));
-  } catch {}
+  } catch (err) {
+    console.debug('Error guardando historial local de AcademiaQR:', err);
+  }
 
   // 4. Emitir evento del navegador local para componentes React
   if (typeof window !== 'undefined') {

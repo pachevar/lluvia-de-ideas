@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import JuracanConstellation from '../components/books/JuracanConstellation';
 import { usePortalConfig } from '../context/PortalConfigContext';
@@ -26,6 +26,7 @@ const toProductId = (id: string) => Array.from(id).reduce((acc, c) => (acc * 31 
 
 export default function NuestrosLibros() {
   const navigate = useNavigate();
+  const { storyId } = useParams<{ storyId?: string }>();
   const { config } = usePortalConfig();
   const { cart, addToCart, removeFromCart, clearCart, getTotalCartPrice } = useCart();
 
@@ -38,6 +39,27 @@ export default function NuestrosLibros() {
   const [mode, setMode] = useState<'store' | 'constellation'>('store');
   const [showCart, setShowCart] = useState(false);
   const [selectedStory, setSelectedStory] = useState<BookProduct | null>(null);
+
+  // Manejo de enlace directo con parámetro de cuento (/cuento/:storyId)
+  useEffect(() => {
+    if (storyId && books.length > 0) {
+      const clean = storyId.toLowerCase().trim();
+      const match = books.find(b => 
+        b.id.toLowerCase() === clean ||
+        b.title.toLowerCase().replace(/\s+/g, '-').includes(clean) ||
+        clean.includes(b.title.toLowerCase().replace(/\s+/g, '-')) ||
+        (b.tagline && b.tagline.toLowerCase().replace(/\s+/g, '-').includes(clean))
+      );
+      if (match) {
+        setSelectedStory(match);
+        setMode('constellation');
+        // Scroll hacia el detalle tras renderizado
+        setTimeout(() => {
+          window.scrollTo({ top: 380, behavior: 'smooth' });
+        }, 300);
+      }
+    }
+  }, [storyId, books]);
 
   useEffect(() => {
     document.body.classList.add('home-page-active');

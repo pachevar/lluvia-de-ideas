@@ -311,7 +311,7 @@ function wavelengthToColor(wavelength: number): { hex: string; name: string; isV
   const blue = Math.round(b * factor * 255);
   const hex = `#${((1 << 24) + (red << 16) + (green << 8) + blue).toString(16).slice(1)}`;
 
-  let name = 'Luz Visible';
+  let name: string;
   if (wavelength < 440) name = 'Violeta';
   else if (wavelength < 490) name = 'Azul';
   else if (wavelength < 510) name = 'Cian';
@@ -2527,7 +2527,7 @@ export default function SolarSystem() {
                     {selectedBody.id !== 'sol' && selectedBody.type !== 'cinturon' && (() => {
                       let cx: number;
                       let cy: number;
-                      let ringRadius = 24;
+                      let ringRadius: number;
                       if (selectedBody.id === 'jwst') { cx = coordsJWST.x; cy = coordsJWST.y; ringRadius = 14; }
                       else if (selectedBody.id === 'hubble') { cx = coordsHubble.x; cy = coordsHubble.y; ringRadius = 13; }
                       else if (selectedBody.id === 'parker') { cx = coordsParker.x; cy = coordsParker.y; ringRadius = 13; }

@@ -167,8 +167,8 @@ export const autoDispatchPurchaseToTelegramIfLinked = async (params: {
     return { dispatched: false };
   }
 
-  let messageText = '';
-  let inlineKeyboard: Array<Array<{ text: string; url?: string }>> = [];
+  let messageText: string;
+  let inlineKeyboard: Array<Array<{ text: string; url?: string }>>;
 
   if (params.purchaseMode === 'gift' && params.giftLinks && params.giftLinks.length > 0) {
     let linksFormatted = '';

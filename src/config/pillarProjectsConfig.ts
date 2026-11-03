@@ -49,7 +49,7 @@ export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
   { id: '100tek_atlas', code: 'TEK-ATLAS-C01', label: '🫀 Cuerpo Humano Virtual 3D', target: '/atlas', type: 'navigate', pillarId: '100tek' },
 
   // 📚 Tienda (Libros y Catálogo)
-  { id: 'tienda_principal', code: 'TND-LIBROS-C01', label: '📚 Tienda de Libros & Cuentos', target: '/tienda', type: 'navigate', pillarId: 'tienda' },
+  { id: 'tienda_principal', code: 'TND-LIBROS-C01', label: '🛍️ Tienda Oficial Volckan', target: '/mercado', type: 'navigate', pillarId: 'tienda' },
   { id: 'tienda_catalogo', code: 'TND-CATALOGO-C01', label: '📖 Catálogo Editorial de Libros', target: '/libros', type: 'navigate', pillarId: 'tienda' },
 
   // 🧪 LAB (Prácticas, Talleres y Guías de Tareas)

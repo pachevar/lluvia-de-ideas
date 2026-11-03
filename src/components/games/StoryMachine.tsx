@@ -1,4 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { soundEffects } from '../../utils/soundEffects';
 import './StoryMachine.css';
 
@@ -478,26 +479,45 @@ const ITEMS_POOL: ReelItem[] = [
 ];
 
 export default function StoryMachine() {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<'maquina' | 'neurociencia' | 'estructuras'>(() => {
     const saved = localStorage.getItem('sm_active_tab');
     return (saved === 'neurociencia' || saved === 'maquina' || saved === 'estructuras') ? saved : 'maquina';
   });
 
-  // Reel states (Personaje: index 0, Entorno: index 18, Atmósfera: index 33, Motivación: index 45)
-  const [reels, setReels] = useState({
-    personaje: { current: ITEMS_POOL[0], locked: false, isSpinning: false },
-    entorno: { current: ITEMS_POOL[18], locked: false, isSpinning: false },
-    atmosfera: { current: ITEMS_POOL[33], locked: false, isSpinning: false },
-    motivacion: { current: ITEMS_POOL[45], locked: false, isSpinning: false }
-  });
+  // Reel states con búsqueda dinámica segura por categoría
+  const [reels, setReels] = useState(() => ({
+    personaje: { current: ITEMS_POOL.find(i => i.category === 'personaje') || ITEMS_POOL[0], locked: false, isSpinning: false },
+    entorno: { current: ITEMS_POOL.find(i => i.category === 'entorno') || ITEMS_POOL[0], locked: false, isSpinning: false },
+    atmosfera: { current: ITEMS_POOL.find(i => i.category === 'atmosfera') || ITEMS_POOL[0], locked: false, isSpinning: false },
+    motivacion: { current: ITEMS_POOL.find(i => i.category === 'motivacion') || ITEMS_POOL[0], locked: false, isSpinning: false }
+  }));
 
   const [genreFilter, setGenreFilter] = useState<'todos' | 'fantasia' | 'scifi' | 'realismo'>('todos');
   const [isAnyReelSpinning, setIsAnyReelSpinning] = useState(false);
   const [copied, setCopied] = useState(false);
   const [soundEnabled, setSoundEnabled] = useState(true);
 
-  // Audio Context Ref
+  // Audio Context Ref y referencias para limpieza de timers
   const audioCtxRef = useRef<AudioContext | null>(null);
+  const activeIntervalsRef = useRef<ReturnType<typeof setInterval>[]>([]);
+  const activeTimeoutsRef = useRef<ReturnType<typeof setTimeout>[]>([]);
+
+  const clearAllTimers = () => {
+    activeIntervalsRef.current.forEach(id => clearInterval(id));
+    activeIntervalsRef.current = [];
+    activeTimeoutsRef.current.forEach(id => clearTimeout(id));
+    activeTimeoutsRef.current = [];
+  };
+
+  useEffect(() => {
+    return () => {
+      clearAllTimers();
+      if (audioCtxRef.current && audioCtxRef.current.state !== 'closed') {
+        audioCtxRef.current.close().catch(() => {});
+      }
+    };
+  }, []);
 
   // --- NEUROSCIENCE PRESENTATION INTERACTIVE STATES ---
   const [neuroModule, setNeuroModule] = useState<'coupling' | 'chemistry' | 'memory' | 'classroom'>(() => {
@@ -647,11 +667,16 @@ export default function StoryMachine() {
   };
 
   const getFilteredItems = (category: 'personaje' | 'entorno' | 'atmosfera' | 'motivacion') => {
-    return ITEMS_POOL.filter(item => {
+    const items = ITEMS_POOL.filter(item => {
       if (item.category !== category) return false;
       if (genreFilter === 'todos') return true;
       return item.genre === genreFilter || item.genre === 'todos';
     });
+    // Fallback de seguridad incondicional para evitar arrays vacíos
+    if (items.length === 0) {
+      return ITEMS_POOL.filter(item => item.category === category);
+    }
+    return items;
   };
 
   const toggleLock = (category: 'personaje' | 'entorno' | 'atmosfera' | 'motivacion') => {
@@ -665,6 +690,7 @@ export default function StoryMachine() {
 
   const spinAll = () => {
     initAudio();
+    clearAllTimers();
     const categories: ('personaje' | 'entorno' | 'atmosfera' | 'motivacion')[] = [
       'personaje', 'entorno', 'atmosfera', 'motivacion'
     ];
@@ -692,18 +718,22 @@ export default function StoryMachine() {
         clearInterval(tickInterval);
       }
     }, 120);
+    activeIntervalsRef.current.push(tickInterval);
 
     const intervals: { [key: string]: ReturnType<typeof setInterval> } = {};
     categories.forEach(cat => {
       if (!reels[cat].locked) {
         const pool = getFilteredItems(cat);
         intervals[cat] = setInterval(() => {
-          const randomIndex = Math.floor(Math.random() * pool.length);
-          setReels(prev => ({
-            ...prev,
-            [cat]: { ...prev[cat], current: pool[randomIndex] }
-          }));
+          if (pool.length > 0) {
+            const randomIndex = Math.floor(Math.random() * pool.length);
+            setReels(prev => ({
+              ...prev,
+              [cat]: { ...prev[cat], current: pool[randomIndex] }
+            }));
+          }
         }, 80);
+        activeIntervalsRef.current.push(intervals[cat]);
       }
     });
 
@@ -711,10 +741,10 @@ export default function StoryMachine() {
 
     categories.forEach((cat, index) => {
       if (!reels[cat].locked) {
-        setTimeout(() => {
+        const timeoutId = setTimeout(() => {
           clearInterval(intervals[cat]);
           const pool = getFilteredItems(cat);
-          const finalItem = pool[Math.floor(Math.random() * pool.length)];
+          const finalItem = pool.length > 0 ? pool[Math.floor(Math.random() * pool.length)] : reels[cat].current;
           
           setReels(prev => ({
             ...prev,
@@ -726,11 +756,13 @@ export default function StoryMachine() {
           const remainingSpinning = spinningCategories.filter((_, idx) => idx > index);
           if (remainingSpinning.length === 0) {
             setIsAnyReelSpinning(false);
-            setTimeout(() => {
+            const victoryTimeout = setTimeout(() => {
               playSynthesizedSound('success');
             }, 100);
+            activeTimeoutsRef.current.push(victoryTimeout);
           }
         }, stopTimes[cat]);
+        activeTimeoutsRef.current.push(timeoutId);
       }
     });
   };
@@ -1252,7 +1284,7 @@ export default function StoryMachine() {
               </div>
 
               <div className="sm-prompt-actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <button className="sm-spin-btn" onClick={copyToClipboard} style={{ fontSize: '1rem', padding: '0.75rem 2rem' }}>
+                <button className="sm-spin-btn" onClick={copyToClipboard} style={{ fontSize: '1rem', padding: '0.75rem 1.75rem' }}>
                   {copied ? '✅ ¡Copiado!' : '📋 Copiar Prompt'}
                 </button>
                 <button 
@@ -1261,12 +1293,56 @@ export default function StoryMachine() {
                   disabled={isPdfGenerating}
                   style={{ 
                     fontSize: '1rem', 
-                    padding: '0.75rem 2rem', 
+                    padding: '0.75rem 1.75rem', 
                     background: 'linear-gradient(135deg, #10b981, #059669)',
                     boxShadow: '0 4px 15px rgba(16, 185, 129, 0.4)'
                   }}
                 >
-                  {isPdfGenerating ? '⏳ Generando PDF...' : '📄 Descargar Manuscrito en PDF'}
+                  {isPdfGenerating ? '⏳ Generando PDF...' : '📄 Descargar PDF'}
+                </button>
+                <button
+                  className="sm-spin-btn"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    navigate('/creatika/construyendo-personaje', {
+                      state: {
+                        characterName: reels.personaje.current.title,
+                        description: reels.personaje.current.description,
+                        emoji: reels.personaje.current.emoji
+                      }
+                    });
+                  }}
+                  style={{
+                    fontSize: '1rem',
+                    padding: '0.75rem 1.75rem',
+                    background: 'linear-gradient(135deg, #8b5cf6, #6366f1)',
+                    boxShadow: '0 4px 15px rgba(139, 92, 246, 0.35)'
+                  }}
+                  title="Llevar este personaje a la Forja de Creatika para diseñarlo en detalle"
+                >
+                  🎨 Forjar Personaje
+                </button>
+                <button
+                  className="sm-spin-btn"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    navigate('/gran-galeria', {
+                      state: {
+                        initialPrompt: getCombinedPrompt(),
+                        category: 'cuento',
+                        titleSuggestion: `La Odisea del ${reels.personaje.current.title}`
+                      }
+                    });
+                  }}
+                  style={{
+                    fontSize: '1rem',
+                    padding: '0.75rem 1.75rem',
+                    background: 'linear-gradient(135deg, #f59e0b, #d97706)',
+                    boxShadow: '0 4px 15px rgba(245, 158, 11, 0.35)'
+                  }}
+                  title="Publicar o escribir este cuento en el Salón de Escritura de la Gran Galería"
+                >
+                  🏛️ Escribir en Gran Galería
                 </button>
               </div>
             </div>

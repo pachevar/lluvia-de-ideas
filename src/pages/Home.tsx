@@ -647,12 +647,13 @@ export default function Home() {
                 className="btn btn-primary"
                 onClick={() => handleNavigate('/mercado')}
                 style={{ background: 'linear-gradient(90deg, #f59e0b, #d97706)', color: '#0f172a', fontWeight: 800, padding: '12px 24px', borderRadius: '12px' }}
+                title="Ir a la Tienda Oficial Volckan"
               >
-                🛍️ Entrar a la Tienda ➔
+                🛍️ Tienda Oficial Volckan ➔
               </button>
               <button
                 className="btn btn-glass"
-                onClick={() => handleNavigate('/mercado?cat=cuentos&sub=colecciones')}
+                onClick={() => handleNavigate('/libros')}
                 style={{ 
                   padding: '12px 22px', 
                   borderRadius: '12px',
@@ -662,8 +663,9 @@ export default function Home() {
                   fontWeight: 700,
                   boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
                 }}
+                title="Explorar el catálogo interactivo de libros y cuentos del portal"
               >
-                📚 Ver Colecciones Popol Vuh
+                📚 Catálogo y Cuentos Popol Vuh
               </button>
             </div>
           </div>

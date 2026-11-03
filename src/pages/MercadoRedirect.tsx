@@ -115,7 +115,7 @@ export default function MercadoRedirect() {
                   gap: '0.5rem'
                 }}
               >
-                <span>Ir a la Nueva Tienda</span>
+                <span>Ir a la Tienda Volckan</span>
                 <span>↗</span>
               </a>
             ) : (
@@ -145,6 +145,32 @@ export default function MercadoRedirect() {
                 <span>💬</span>
               </a>
             )}
+
+            <button
+              type="button"
+              onClick={() => {
+                soundEffects.playClick();
+                navigate('/libros');
+              }}
+              style={{
+                width: '100%',
+                maxWidth: '320px',
+                padding: '0.8rem 1.5rem',
+                borderRadius: '12px',
+                background: 'rgba(56, 189, 248, 0.12)',
+                border: '1px solid rgba(56, 189, 248, 0.3)',
+                color: '#38bdf8',
+                fontWeight: 600,
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: '0.5rem'
+              }}
+            >
+              <span>📖 Ver Libros y Cuentos del Portal</span>
+            </button>
 
             <button
               type="button"

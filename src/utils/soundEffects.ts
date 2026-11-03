@@ -39,7 +39,7 @@ class SoundManager {
         const silent = new SpeechSynthesisUtterance('');
         silent.volume = 0;
         window.speechSynthesis.speak(silent);
-      } catch (_e) {
+      } catch {
         // Silencio intencional
       }
     }
@@ -93,7 +93,7 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.05);
-    } catch (_e) {
+    } catch {
       // Ignorar fallos de audio temporal
     }
   }
@@ -120,7 +120,7 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.04);
-    } catch (_e) {
+    } catch {
       // Ignorar
     }
   }
@@ -151,7 +151,7 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.12);
-    } catch (_e) {
+    } catch {
       // Ignorar
     }
   }
@@ -178,7 +178,7 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.08);
-    } catch (_e) {
+    } catch {
       // Ignorar
     }
   }
@@ -211,7 +211,7 @@ class SoundManager {
         osc.start(startTime);
         osc.stop(startTime + duration);
       });
-    } catch (_e) {
+    } catch {
       // Ignorar
     }
   }
@@ -242,7 +242,7 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.2);
-    } catch (_e) {
+    } catch {
       // Ignorar
     }
   }
@@ -269,7 +269,7 @@ class SoundManager {
 
       osc.start(now);
       osc.stop(now + 0.4);
-    } catch (_e) {
+    } catch {
       // Ignorar
     }
   }
@@ -305,7 +305,7 @@ class SoundManager {
         osc.start(now);
         osc.stop(now + 0.25);
       }
-    } catch (_e) {
+    } catch {
       // Ignorar
     }
   }

@@ -133,7 +133,7 @@ export async function uploadCustomIcon(
 ): Promise<SutzCustomIcon> {
   const cleanBaseName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_');
   const timestamp = Date.now();
-  let downloadUrl = '';
+  let downloadUrl: string;
   let isBase64 = false;
 
   const isSvg = file.type === 'image/svg+xml' || file.name.toLowerCase().endsWith('.svg');
@@ -172,7 +172,7 @@ export async function uploadCustomIcon(
       }
     } catch (compressErr) {
       console.error('[sutzIconService] Error procesando imagen:', compressErr);
-      throw new Error('No se pudo procesar la imagen del icono.');
+      throw new Error('No se pudo procesar la imagen del icono.', { cause: compressErr });
     }
   }
 
