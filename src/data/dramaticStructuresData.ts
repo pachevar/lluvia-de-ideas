@@ -9,6 +9,9 @@ export interface ArcPhase {
   brainRegion: string;
   explanation: string;
   pedagogicalTip: string;
+  nodeRole: string; // Rol narrativo específico del nodo
+  howItDiffers: string; // Qué diferencia a este nodo de los demás en esta y otras estructuras
+  studentState: string; // Estado cognitivo y emocional del estudiante
 }
 
 export interface DramaticStructureData {
@@ -19,6 +22,11 @@ export interface DramaticStructureData {
   categoryBadge: string;
   neuroBadge: string;
   description: string;
+  keyDifference: string; // Diferencia conceptual y técnica principal frente a los demás arcos
+  whenToUse: string; // Cuándo elegir esta estructura en el aula o narrativa
+  tensionPattern: string; // Metáfora de forma de onda / cadencia
+  cognitiveGoal: string; // Meta neurolingüística primordial
+  nodeCount: number;
   svgPath: string; // SVG path data for the tension curve (normalized for 800x260 viewBox)
   phases: ArcPhase[];
   examples: Record<'matematicas' | 'ciencias' | 'historia' | 'crecimiento', Array<{ phase: string; text: string }>>;
@@ -33,6 +41,11 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
     categoryBadge: 'Modelo Canónico Aristotélico',
     neuroBadge: 'Sincronía EEG Progresiva',
     description: 'Propuesta por Gustav Freytag en 1863, modula la atención del estudiante a través de un ascenso progresivo del estrés cognitivo, alcanzando un clímax que satura la atención y desembocando en una catarsis dopaminérgica.',
+    keyDifference: 'A diferencia de las curvas modernas con múltiples picos (como Fichte o 3 Actos), Freytag concentra toda la energía narrativa en un ÚNICO clímax central simétrico. Es el estándar de oro para comprender la relación directa e irreversible entre causa y efecto.',
+    whenToUse: 'Ideal para fábulas morales, debates éticos, demostraciones formales de teoremas o lecciones lineales donde se busca una catarsis contundente.',
+    tensionPattern: 'Piramidal Simétrico Quíntuple (Ascenso uniforme ➔ Vértice Único ➔ Descompresión gradual).',
+    cognitiveGoal: 'Sincronización gradual de la atención hasta una catarsis de alivio dopaminérgico.',
+    nodeCount: 5,
     svgPath: 'M 50,230 C 150,230 180,180 230,170 C 310,150 360,50 400,50 C 440,50 490,150 570,170 C 620,180 660,230 750,230',
     phases: [
       {
@@ -45,7 +58,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 30,
         brainRegion: 'Corteza Auditiva & Hipocampo',
         explanation: 'Construye la base semántica y homeostasis inicial. Si no hay calma al inicio, el cerebro no tiene punto de referencia.',
-        pedagogicalTip: 'Presenta el personaje y su cotidianidad antes de lanzar el problema.'
+        pedagogicalTip: 'Presenta el personaje y su cotidianidad antes de lanzar el problema.',
+        nodeRole: 'Anclaje de Seguridad y Homeostasis',
+        howItDiffers: 'Es el único nodo de calma absoluta. A diferencia de Fichte (que inicia en caos "in medias res"), Freytag exige que el alumno conozca la norma antes de verla amenazada.',
+        studentState: 'Curiosidad receptiva y calma atencional.'
       },
       {
         id: 'f2',
@@ -57,7 +73,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 50,
         brainRegion: 'Lóbulo Parietal & Amígdala',
         explanation: 'Los obstáculos crecientes elevan el cortisol, cerrando los filtros atencionales para evitar la distracción en el aula.',
-        pedagogicalTip: 'Introduce complicaciones técnicas o errores en la fórmula que amenazan el éxito.'
+        pedagogicalTip: 'Introduce complicaciones técnicas o errores en la fórmula que amenazan el éxito.',
+        nodeRole: 'Acelerador de Estrés Atencional',
+        howItDiffers: 'A diferencia de un simple prólogo, aquí el problema se ramifica y ya no tiene marcha atrás. El cortisol se eleva de forma sostenida para cerrar distractores.',
+        studentState: 'Alerta enfocada y búsqueda activa de soluciones.'
       },
       {
         id: 'f3',
@@ -69,7 +88,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 80,
         brainRegion: 'Corteza Prefrontal Dorsolateral',
         explanation: 'Punto de máxima saturación atencional. Todo el salón de clases unifica sus patrones de electroencefalografía.',
-        pedagogicalTip: 'Es el instante de decisión irreversible donde el alumno debe aplicar el conocimiento clave.'
+        pedagogicalTip: 'Es el instante de decisión irreversible donde el alumno debe aplicar el conocimiento clave.',
+        nodeRole: 'Cúspide / Decisión Irreversible',
+        howItDiffers: 'Es el punto más alto de todo el relato. A diferencia del Viaje del Héroe (que tiene pruebas intermedias y un abismo posterior), aquí convergen todas las tensiones en una sola chispa decisiva.',
+        studentState: 'Máxima saturación cognitiva y unificación del ritmo cerebral del grupo.'
       },
       {
         id: 'f4',
@@ -81,7 +103,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 70,
         brainRegion: 'Ínsula Anterior & Giro Cingulado',
         explanation: 'Descompresión emocional paulatina. El cerebro analiza las consecuencias del clímax y verifica que el peligro pasó.',
-        pedagogicalTip: 'Muestra el efecto inmediato de la solución sobre los personajes secundarios.'
+        pedagogicalTip: 'Muestra el efecto inmediato de la solución sobre los personajes secundarios.',
+        nodeRole: 'Verificación de Consecuencias',
+        howItDiffers: 'No es una resolución inmediata: el cerebro necesita verificar que la solución del clímax funciona y que la amenaza se disipa.',
+        studentState: 'Descompresión paulatina y asimilación de pérdidas o logros.'
       },
       {
         id: 'f5',
@@ -93,7 +118,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 85,
         brainRegion: 'Núcleo Accumbens (Vía Dopaminérgica)',
         explanation: 'Liberación masiva de recompensa química. Se consolida el recuerdo en la memoria episódica a largo plazo.',
-        pedagogicalTip: 'Sintetiza la moraleja o principio pedagógico mientras la mente está receptiva.'
+        pedagogicalTip: 'Sintetiza la moraleja o principio pedagógico mientras la mente está receptiva.',
+        nodeRole: 'Catarsis y Consolidación de Esquemas',
+        howItDiffers: 'Es el nodo de cierre moral o pedagógico. Se libera un pico masivo de dopamina y oxitocina que ancla el aprendizaje en la memoria a largo plazo.',
+        studentState: 'Satisfacción resolutiva y comprensión del sentido global.'
       }
     ],
     examples: {
@@ -136,6 +164,11 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
     categoryBadge: 'Monomito de Campbell & Harmon',
     neuroBadge: 'Reconfiguración de Esquemas',
     description: 'Basado en los estudios de Joseph Campbell y adaptado por Dan Harmon en 8 cuadrantes circulares. El protagonista se desplaza de su zona de confort hacia un territorio caótico, paga un precio de sacrificio y retorna transformado.',
+    keyDifference: 'A diferencia de los arcos orientados al problema exterior (como Freytag o Fichte), el Viaje del Héroe es una metamorfosis interna: el protagonista no solo resuelve un enigma, sino que "muere" a su identidad previa en el Abismo para renacer con un nuevo nivel de conciencia.',
+    whenToUse: 'Narrativas de superación personal, formación de carácter, aprendizaje de nuevos paradigmas donde el alumno debe desaprender prejuicios previos.',
+    tensionPattern: 'Monomito Circular en 8 Cuadrantes con Descenso Abismal (Mundo Ordinario ➔ Umbral ➔ Inframundo ➔ Retorno Elevado).',
+    cognitiveGoal: 'Reconfiguración profunda de la autoimagen y empatía a través del sacrificio y la resiliencia.',
+    nodeCount: 8,
     svgPath: 'M 50,150 C 120,110 200,90 270,120 C 340,150 370,240 430,240 C 490,240 520,140 590,90 C 660,40 700,70 750,150',
     phases: [
       {
@@ -148,7 +181,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 35,
         brainRegion: 'Red Neuronal por Defecto (DMN)',
         explanation: 'Estabilidad conocida. El protagonista vive en rutina pero siente una carencia interna latente.',
-        pedagogicalTip: 'Permite que los alumnos se sientan reflejados en las dudas iniciales del protagonista.'
+        pedagogicalTip: 'Permite que los alumnos se sientan reflejados en las dudas iniciales del protagonista.',
+        nodeRole: 'Mundo Ordinario / Sesgo de Confirmación',
+        howItDiffers: 'Refleja el estado previo del estudiante: cómodo pero limitado. Se diferencia de Freytag en que aquí el entorno es explícitamente insuficiente.',
+        studentState: 'Rutina estable pero con sensación latente de estancamiento.'
       },
       {
         id: 'h2',
@@ -160,7 +196,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 40,
         brainRegion: 'Corteza Cingulada Anterior',
         explanation: 'Aparece un quiebre que obliga al protagonista a desear algo fuera de su zona segura.',
-        pedagogicalTip: 'Plantea una pregunta abierta que no pueda responderse con lo que ya saben.'
+        pedagogicalTip: 'Plantea una pregunta abierta que no pueda responderse con lo que ya saben.',
+        nodeRole: 'La Llamada / Quiebre de Certezas',
+        howItDiffers: 'Introduce una discrepancia que no puede resolverse con el conocimiento actual. El héroe casi siempre duda o rechaza la llamada al inicio.',
+        studentState: 'Incertidumbre, vacilación e inicio de curiosidad.'
       },
       {
         id: 'h3',
@@ -172,7 +211,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 60,
         brainRegion: 'Lóbulo Temporal & Amígdala',
         explanation: 'Entrada a territorio hostil o inexplorado. Se activa la hipervigilancia neuroevolutiva.',
-        pedagogicalTip: 'Crea reglas del juego nuevas: fórmulas distintas, ecosistemas extraños o épocas remotas.'
+        pedagogicalTip: 'Crea reglas del juego nuevas: fórmulas distintas, ecosistemas extraños o épocas remotas.',
+        nodeRole: 'Cruce del Umbral / Ruptura de Seguridad',
+        howItDiffers: 'Aquí se abandonan las reglas familiares. A diferencia del Plot Point 1 de 3 Actos, aquí el entorno físico y psicológico cambia por completo.',
+        studentState: 'Asombro, vulnerabilidad e hipersensibilidad al entorno.'
       },
       {
         id: 'h4',
@@ -184,7 +226,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 75,
         brainRegion: 'Neuronas Espejo & Corteza Premotora',
         explanation: 'Enfrentamiento a desafíos intermedios. El protagonista falla primero y debe aprender a adaptarse.',
-        pedagogicalTip: 'Enseña que el error es parte inherente del método científico y del aprendizaje.'
+        pedagogicalTip: 'Enseña que el error es parte inherente del método científico y del aprendizaje.',
+        nodeRole: 'Laboratorio de Pruebas y Aliados',
+        howItDiffers: 'Una serie de micro-fracasos necesarios. A diferencia de las crisis de Fichte, aquí el objetivo no es solo resolver retos, sino descubrir en quién confiar.',
+        studentState: 'Colaboración, empatía grupal y aprendizaje por ensayo y error.'
       },
       {
         id: 'h5',
@@ -196,7 +241,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 85,
         brainRegion: 'Corteza Prefrontal Ventromedial',
         explanation: 'El momento más oscuro. El héroe debe morir a su antigua identidad o pagar un precio doloroso.',
-        pedagogicalTip: 'Lleva al personaje a elegir entre el beneficio egoísta y el bien colectivo.'
+        pedagogicalTip: 'Lleva al personaje a elegir entre el beneficio egoísta y el bien colectivo.',
+        nodeRole: 'El Abismo / Muerte Iniciática',
+        howItDiffers: 'El nodo más crítico del monomito: el protagonista debe soltar su mayor orgullo o pagar un costo doloroso. Ningún otro arco exige un sacrificio identitario tan explícito.',
+        studentState: 'Tensión existencial, introspección radical y silencio reflexivo.'
       },
       {
         id: 'h6',
@@ -208,7 +256,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 80,
         brainRegion: 'Área Tegmental Ventral',
         explanation: 'Obtención de la clave, la fórmula o el autoconocimiento tras superar la prueba máxima.',
-        pedagogicalTip: 'El premio nunca debe ser material, sino un entendimiento profundo del universo.'
+        pedagogicalTip: 'El premio nunca debe ser material, sino un entendimiento profundo del universo.',
+        nodeRole: 'Conquista del Elixir / Eureka Transformador',
+        howItDiffers: 'La recompensa no es un trofeo externo, sino una sabiduría que cambia la cosmovisión del estudiante.',
+        studentState: 'Alivio triunfal y asimilación de la verdad descubierta.'
       },
       {
         id: 'h7',
@@ -220,7 +271,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 90,
         brainRegion: 'Hipocampo & Corteza Motora',
         explanation: 'El protagonista vuelve al punto de partida, pero su mirada sobre la realidad ha cambiado para siempre.',
-        pedagogicalTip: 'Demuestra cómo el nuevo aprendizaje beneficia a toda la comunidad escolar.'
+        pedagogicalTip: 'Demuestra cómo el nuevo aprendizaje beneficia a toda la comunidad escolar.',
+        nodeRole: 'El Camino de Regreso / Prueba de Integración',
+        howItDiffers: 'Regresar al entorno inicial con la verdad aprendida suele implicar un último reto: explicar lo vivido a quienes no cruzaron el umbral.',
+        studentState: 'Urgencia generosa y deseo de compartir lo aprendido.'
       },
       {
         id: 'h8',
@@ -232,7 +286,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 95,
         brainRegion: 'Red de Control Ejecutivo',
         explanation: 'Cierre armónico. El aprendizaje se integra en la identidad del estudiante.',
-        pedagogicalTip: 'Pide a los alumnos formular cómo aplicarán esta lección en su vida cotidiana.'
+        pedagogicalTip: 'Pide a los alumnos formular cómo aplicarán esta lección en su vida cotidiana.',
+        nodeRole: 'Maestro de Dos Mundos / Círculo Trascendido',
+        howItDiffers: 'El protagonista regresa al mismo lugar del nodo 1, pero él ya no es el mismo. El ciclo se cierra en espiral superior.',
+        studentState: 'Madurez integrada, empoderamiento cívico y paz reflexiva.'
       }
     ],
     examples: {
@@ -287,6 +344,11 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
     categoryBadge: 'Pedagogía Basada en Retos (PBL)',
     neuroBadge: 'Micro-Ciclos de Dopamina',
     description: 'Popularizada en novelas de misterio y diseño de videojuegos educativos. En lugar de un solo ascenso paulatino, introduce una crisis tras otra en oleadas ascendentes, manteniendo al estudiante en constante atención activa sin decaimiento.',
+    keyDifference: 'Elimina por completo el preludio calmo. Comienza directamente en el fuego ("in medias res") y utiliza una cadencia en "dientes de sierra" con crisis sucesivas de intensidad creciente. Cada solución genera una consecuencia inesperada.',
+    whenToUse: 'Aprendizaje Basado en Problemas (ABP), casos de estudio médicos o de ingeniería, gamificación, escape rooms educativos y novelas de suspenso.',
+    tensionPattern: 'Dientes de Sierra Ascendentes (3 o más ciclos de Tensión ➔ Micro-Alivio ➔ Nueva Crisis peor).',
+    cognitiveGoal: 'Mantener la dopamina y la adrenalina en niveles óptimos de hiperfoco sin decaimiento atencional.',
+    nodeCount: 5,
     svgPath: 'M 50,220 C 100,220 120,170 160,170 C 180,170 210,200 240,200 C 290,200 320,130 360,130 C 390,130 420,170 450,170 C 500,170 540,80 590,80 C 640,80 670,220 750,220',
     phases: [
       {
@@ -299,7 +361,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 30,
         brainRegion: 'Sistema Reticular Activador Ascendente',
         explanation: 'Comienza directamente con una emergencia sin preámbulos lentos, capturando de inmediato la atención del grupo.',
-        pedagogicalTip: 'Abre la clase con un problema en llamas antes de dar la teoría.'
+        pedagogicalTip: 'Abre la clase con un problema en llamas antes de dar la teoría.',
+        nodeRole: 'Detonante In Medias Res (Impacto Frontal)',
+        howItDiffers: 'Cero minutos de exposición pasiva. A diferencia de todos los demás arcos, atrapa la atención en los primeros 10 segundos con un peligro inminente.',
+        studentState: 'Sobresalto, foco total inmediato y activación del instinto de supervivencia.'
       },
       {
         id: 'fc2',
@@ -311,7 +376,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 40,
         brainRegion: 'Corteza Motora & Lóbulo Parietal',
         explanation: 'Se resuelve un primer reto, liberando dopamina temprana y dando autoconfianza al alumno.',
-        pedagogicalTip: 'Un acertijo intermedio rápido que valide el concepto básico.'
+        pedagogicalTip: 'Un acertijo intermedio rápido que valide el concepto básico.',
+        nodeRole: 'Crisis 1: Falsa Eficacia',
+        howItDiffers: 'Resuelve el problema inicial pero de forma apresurada. Proporciona una inyección rápida de dopamina para enganchar al alumno con la sensación de competencia.',
+        studentState: 'Optimismo temprano y satisfacción por el primer acierto.'
       },
       {
         id: 'fc3',
@@ -323,7 +391,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 60,
         brainRegion: 'Corteza Frontopolar',
         explanation: 'La solución anterior generó un efecto secundario peor. Exige pensamiento crítico avanzado.',
-        pedagogicalTip: 'Introduce una variable no prevista que desmonte las soluciones mecánicas.'
+        pedagogicalTip: 'Introduce una variable no prevista que desmonte las soluciones mecánicas.',
+        nodeRole: 'Crisis 2: El Efecto Secundario Inesperado',
+        howItDiffers: 'El nodo diferencial de Fichte: la solución del nodo anterior detonó una complicación tres veces mayor. Demuestra que los sistemas complejos no tienen soluciones simples.',
+        studentState: 'Frustración productiva, alerta renovada y pensamiento divergente.'
       },
       {
         id: 'fc4',
@@ -335,7 +406,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 85,
         brainRegion: 'Corteza Prefrontal Bilateral',
         explanation: 'Todas las subtramas y retos convergen en una prueba crítica final simultánea.',
-        pedagogicalTip: 'El reto maestro donde se combinan todos los contenidos de la unidad.'
+        pedagogicalTip: 'El reto maestro donde se combinan todos los contenidos de la unidad.',
+        nodeRole: 'Gran Clímax: Convergencia de Amenazas',
+        howItDiffers: 'A diferencia de Freytag (un solo problema que madura), aquí convergen todas las fallas acumuladas en un único momento de estrés máximo simultáneo.',
+        studentState: 'Máxima demanda de memoria de trabajo y adrenalina enfocada.'
       },
       {
         id: 'fc5',
@@ -347,7 +421,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 90,
         brainRegion: 'Núcleo Accumbens & Hipocampo',
         explanation: 'Frenado veloz tras la victoria. La mente almacena la serie de éxitos encadenados como dominio de competencia.',
-        pedagogicalTip: 'Cierre con felicitación y rúbrica clara de logros alcanzados.'
+        pedagogicalTip: 'Cierre con felicitación y rúbrica clara de logros alcanzados.',
+        nodeRole: 'Resolución Acelerada y Rúbrica',
+        howItDiffers: 'Descompresión vertical rápida. No se detiene en largas despedidas: premia la competencia demostrada.',
+        studentState: 'Euforia de logro y fijación de habilidades técnicas.'
       }
     ],
     examples: {
@@ -390,6 +467,11 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
     categoryBadge: 'Guion Cinematográfico Universal',
     neuroBadge: 'Puntos de Inflexión Cognitiva',
     description: 'La arquitectura cinematográfica por excelencia: Acto I (Planteamiento hasta el Plot Point 1), Acto II (Confrontación, Punto Medio y Todo Perdido) y Acto III (Clímax y Resolución). Administra dos grandes giros que transforman radicalmente las hipótesis del receptor.',
+    keyDifference: 'La arquitectura del guion clásico (Syd Field / McKee). No depende de una sola cumbre ni de saltos constantes, sino de dos puntos de inflexión pivote (Plot Points) que giran el relato en 180° y un "Punto Medio" que redefine el objetivo del protagonista.',
+    whenToUse: 'Narraciones históricas, proyectos de investigación de largo aliento, documentales escolares y producciones teatrales o audiovisuales.',
+    tensionPattern: 'Estructural en Tres Bloques Proporcionales (25% Planteamiento ➔ 50% Confrontación ➔ 25% Resolución).',
+    cognitiveGoal: 'Reorganización lógica de hipótesis y maduración estratégica frente a la adversidad.',
+    nodeCount: 5,
     svgPath: 'M 50,220 C 130,220 180,180 230,180 C 270,180 340,140 420,140 C 470,140 500,190 560,190 C 620,190 650,40 700,40 C 730,40 740,210 750,210',
     phases: [
       {
@@ -402,7 +484,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 30,
         brainRegion: 'Corteza Prefrontal Medial',
         explanation: 'Ruptura del orden inicial. El personaje se resiste al cambio hasta que un suceso lo empuja.',
-        pedagogicalTip: 'Muestra qué ocurre si nadie hace nada respecto al problema planteado.'
+        pedagogicalTip: 'Muestra qué ocurre si nadie hace nada respecto al problema planteado.',
+        nodeRole: 'Incidente Incitador (Acto I)',
+        howItDiffers: 'Altera el statu quo pero aún permite dudar. Plantea la pregunta dramática central que guiará toda la investigación.',
+        studentState: 'Intriga y formulación de primeras conjeturas.'
       },
       {
         id: 'ta2',
@@ -414,7 +499,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 50,
         brainRegion: 'Giro Fusiforme & Ínsula',
         explanation: 'Punto de no retorno. El personaje cruza la frontera y el objetivo queda fijado.',
-        pedagogicalTip: 'Compromete al alumno con una hipótesis de la que no puede retractarse sin comprobarla.'
+        pedagogicalTip: 'Compromete al alumno con una hipótesis de la que no puede retractarse sin comprobarla.',
+        nodeRole: 'Plot Point 1 (Giro Estructural I)',
+        howItDiffers: 'El primer pivote de Syd Field: ocurre al 25% de la historia y gira la dirección 180 grados. El estudiante debe comprometerse con una tesis definitiva.',
+        studentState: 'Compromiso irrevocable y fijación de objetivo.'
       },
       {
         id: 'ta3',
@@ -426,7 +514,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 65,
         brainRegion: 'Corteza Cingulada Posterior',
         explanation: 'Falsa victoria o falsa derrota. Se descubre la verdadera magnitud de la misión.',
-        pedagogicalTip: 'Revela que la respuesta sencilla de libro de texto era insuficiente para el caso real.'
+        pedagogicalTip: 'Revela que la respuesta sencilla de libro de texto era insuficiente para el caso real.',
+        nodeRole: 'Punto Medio (Midpoint / Giro de Espejo)',
+        howItDiffers: 'Nodo exclusivo de esta estructura: divide el Acto II en dos mitades. El héroe pasa de ser reactivo (defenderse) a ser proactivo (atacar la raíz del problema).',
+        studentState: 'Salto de madurez: comprende que el problema es más profundo.'
       },
       {
         id: 'ta4',
@@ -438,7 +529,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 85,
         brainRegion: 'Amígdala Basolateral',
         explanation: 'Todo parece perdido. La estrategia falló y solo queda una única alternativa arriesgada.',
-        pedagogicalTip: 'Obliga a los estudiantes a repensar su marco teórico desde cero.'
+        pedagogicalTip: 'Obliga a los estudiantes a repensar su marco teórico desde cero.',
+        nodeRole: 'Plot Point 2 / Todo Perdido (La Noche Oscura)',
+        howItDiffers: 'La hipótesis inicial colapsa. El alumno descubre que su plan no funcionará y debe encontrar una perspectiva completamente innovadora.',
+        studentState: 'Duda crítica, descarte de dogmas y reevaluación total.'
       },
       {
         id: 'ta5',
@@ -450,7 +544,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 90,
         brainRegion: 'Corteza Orbitofrontal',
         explanation: 'Enfrentamiento final. Aplicación de la lección aprendida y clausura del arco dramático.',
-        pedagogicalTip: 'Conexión del aprendizaje con un propósito ético o social tangible.'
+        pedagogicalTip: 'Conexión del aprendizaje con un propósito ético o social tangible.',
+        nodeRole: 'Acto III: Clímax & Resolución Definitiva',
+        howItDiffers: 'Enfrentamiento final donde se prueba la nueva tesis y se cierran todas las subtramas abiertas.',
+        studentState: 'Claridad conceptual, cierre argumental y catarsis lógica.'
       }
     ],
     examples: {
@@ -493,6 +590,11 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
     categoryBadge: 'Narrativa No Lineal Ancestral',
     neuroBadge: 'Consolidación Holística',
     description: 'A diferencia del modelo occidental lineal, la estructura circular maya (Kʼatun) no busca vencer al enemigo para destruirlo, sino restaurar el equilibrio cósmico. El desenlace regresa al inicio pero con una elevación de conciencia (espiral ascendente).',
+    keyDifference: 'Rompe con la premisa occidental de vencer y aniquilar al adversario. En este arco ancestral, el conflicto es una ruptura del tejido cósmico que se resuelve mediante la complementariedad, la astucia no violenta y la regeneración cíclica (el maíz que muere bajo tierra para alimentarnos como sol).',
+    whenToUse: 'Educación ambiental, ecología profunda, resolución pacífica de conflictos comunitarios, ciencias de la tierra y cosmovisiones de pueblos originarios.',
+    tensionPattern: 'Espiral Cíclica Dual (Amanecer ➔ Ruptura del Eje ➔ Descenso a Xibalbá ➔ Muerte Fecunda ➔ Ascenso al Cenit).',
+    cognitiveGoal: 'Pensamiento ecológico sistémico, humildad biocéntrica e integración comunitaria.',
+    nodeCount: 5,
     svgPath: 'M 50,150 C 150,70 280,70 380,150 C 480,230 610,230 710,150 C 730,130 750,150 750,150',
     phases: [
       {
@@ -505,7 +607,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 50,
         brainRegion: 'Corteza Visual & Temporal',
         explanation: 'Presentación del cosmos en armonía: la tierra, el cielo y las criaturas vivientes.',
-        pedagogicalTip: 'Establece la relación de respeto mutuo entre el ser humano y el entorno.'
+        pedagogicalTip: 'Establece la relación de respeto mutuo entre el ser humano y el entorno.',
+        nodeRole: 'Amanecer Cósmico / Armonía Interconectada',
+        howItDiffers: 'A diferencia del "Mundo Ordinario" individualista, aquí la armonía es colectiva: humanos, animales, maíz y astros forman un solo cuerpo.',
+        studentState: 'Sentimiento de pertenencia a un ecosistema vivo.'
       },
       {
         id: 'cr2',
@@ -517,7 +622,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 40,
         brainRegion: 'Corteza Orbitofrontal',
         explanation: 'Aparece una fuerza que se cree superior al orden universal (como Vucub Caquix creyéndose el sol).',
-        pedagogicalTip: 'Discute las consecuencias del orgullo desmedido y la falta de humildad intelectual.'
+        pedagogicalTip: 'Discute las consecuencias del orgullo desmedido y la falta de humildad intelectual.',
+        nodeRole: 'Pérdida del Eje / La Arrogancia Antropocéntrica',
+        howItDiffers: 'El conflicto no es un monstruo externo, sino la soberbia de quien se cree dueño de la naturaleza (como Vucub Caquix).',
+        studentState: 'Incomodidad moral y detección del desequilibrio sistémico.'
       },
       {
         id: 'cr3',
@@ -529,7 +637,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 80,
         brainRegion: 'Amígdala & Corteza Prefrontal',
         explanation: 'Los gemelos divinos entran a las casas del frío, las navajas y los jaguares con ingenio pacífico.',
-        pedagogicalTip: 'La victoria nunca se logra con fuerza bruta, sino con astucia colectiva y perseverancia.'
+        pedagogicalTip: 'La victoria nunca se logra con fuerza bruta, sino con astucia colectiva y perseverancia.',
+        nodeRole: 'Descenso a Xibalbá / Las Pruebas del Ingenio Colectivo',
+        howItDiffers: 'A diferencia del héroe solitario occidental, los gemelos Hunahpú e Ixbalanqué superan las casas del frío y los jaguares con ayuda de hormigas, luciérnagas y mosquitos.',
+        studentState: 'Asombro por la cooperación biológica y la no violencia.'
       },
       {
         id: 'cr4',
@@ -541,7 +652,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 90,
         brainRegion: 'Giro Angular & Red de Empatía',
         explanation: 'La entrega voluntaria para germinar un orden nuevo: la muerte fecunda de los granos de maíz.',
-        pedagogicalTip: 'Explica cómo las generaciones anteriores siembran los frutos que hoy disfrutamos.'
+        pedagogicalTip: 'Explica cómo las generaciones anteriores siembran los frutos que hoy disfrutamos.',
+        nodeRole: 'El Sacrificio Fecundo / La Semilla bajo Tierra',
+        howItDiffers: 'El nodo más espiritual: los héroes se arrojan al fuego para que sus huesos molidos fertilicen el río. No hay derrota, hay fecundación.',
+        studentState: 'Compasión profunda, respeto intergeneracional y emoción solemne.'
       },
       {
         id: 'cr5',
@@ -553,7 +667,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 98,
         brainRegion: 'Red de Integración Perceptiva',
         explanation: 'Hunahpú e Ixbalanqué ascienden al cielo como el Sol y la Luna. El ciclo vuelve a comenzar iluminado.',
-        pedagogicalTip: 'Cierra vinculando el tema aprendido con la responsabilidad del estudiante hacia su comunidad.'
+        pedagogicalTip: 'Cierra vinculando el tema aprendido con la responsabilidad del estudiante hacia su comunidad.',
+        nodeRole: 'La Espiral Elevada / El Nuevo Ciclo Cósmico',
+        howItDiffers: 'No es un final lineal cerrado, sino el nacimiento del Sol y la Luna. El ciclo volverá a empezar, pero iluminado con mayor conciencia.',
+        studentState: 'Gratitud cósmica, responsabilidad ecológica y trascendencia.'
       }
     ],
     examples: {
@@ -596,6 +713,11 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
     categoryBadge: 'Modelo Neurocognitivo de Randy Olson',
     neuroBadge: 'Error de Predicción Rápido',
     description: 'Diseñada por el biólogo marino y cineasta Randy Olson. Es la herramienta de mayor eficiencia atencional para explicaciones científicas y micro-narrativas escolares: el "Y" construye el acuerdo, el "PERO" genera el error de predicción, y el "POR LO TANTO" libera la dopamina resolutiva.',
+    keyDifference: 'La herramienta de síntesis narrativa más potente del mundo (Randy Olson). A diferencia de los relatos dramáticos de varias horas, el ABT condensa la estructura neurolingüística en 3 únicas cláusulas conectivas: Y (acuerdo contextual) ➔ PERO (contradicción y tensión) ➔ POR LO TANTO (acción resolutiva). Es el antídoto contra el aburrimiento del "Y, y, además, también".',
+    whenToUse: 'Presentaciones académicas, introducciones a clases magistrales, pitches científicos, micro-cuentos de aula y resúmenes de proyectos de grado.',
+    tensionPattern: 'Pulso de Tensión de Impacto Rápido (Meseta Inicial ➔ Salto Angular Inmediato ➔ Consecuencia Directa).',
+    cognitiveGoal: 'Activación instantánea del error de predicción y cierre de la brecha de curiosidad sin fatiga cognitiva.',
+    nodeCount: 3,
     svgPath: 'M 50,200 C 150,200 230,200 300,200 C 320,80 370,80 430,80 C 490,80 550,220 750,220',
     phases: [
       {
@@ -608,7 +730,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 40,
         brainRegion: 'Corteza Temporal Superior',
         explanation: 'Enlaza dos verdades compartidas que la audiencia ya conoce para sincronizar el canal atencional.',
-        pedagogicalTip: 'Usa oraciones simples unidas por "Y" que todos en el salón consideren ciertas.'
+        pedagogicalTip: 'Usa oraciones simples unidas por "Y" que todos en el salón consideren ciertas.',
+        nodeRole: 'Y (AND): Sintonía & Acuerdo Universal',
+        howItDiffers: 'Establece dos afirmaciones indiscutibles que calman los filtros de desconfianza del receptor y alinean el marco conceptual del grupo.',
+        studentState: 'Asentimiento intelectual y comodidad semántica.'
       },
       {
         id: 'ab2',
@@ -620,7 +745,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 65,
         brainRegion: 'Corteza Cingulada Anterior & Amígdala',
         explanation: 'El giro contradictorio. El cerebro detecta una discrepancia entre lo esperado y lo real y focaliza el 100% de la energía.',
-        pedagogicalTip: 'Es el pivote dramático: debe plantear el obstáculo que derriba la complacencia.'
+        pedagogicalTip: 'Es el pivote dramático: debe plantear el obstáculo que derriba la complacencia.',
+        nodeRole: 'PERO (BUT): Ruptura & Error de Predicción',
+        howItDiffers: 'El conector de mayor voltaje en el lenguaje humano. Niega la conclusión lógica esperada y fuerza al cerebro a liberar cortisol y dopamina buscando una respuesta.',
+        studentState: 'Sorpresa repentina, atención concentrada y curiosidad inmediata.'
       },
       {
         id: 'ab3',
@@ -632,7 +760,10 @@ export const DRAMATIC_STRUCTURES: Record<string, DramaticStructureData> = {
         oxytocin: 85,
         brainRegion: 'Corteza Prefrontal Dorsolateral & Striatum',
         explanation: 'La consecuencia lógica. Satisface la brecha de curiosidad y entrega el aprendizaje formal.',
-        pedagogicalTip: 'Aquí se enuncia la conclusión científica o la tesis del estudiante.'
+        pedagogicalTip: 'Aquí se enuncia la conclusión científica o la tesis del estudiante.',
+        nodeRole: 'POR LO TANTO (THEREFORE): Síntesis Resolutiva',
+        howItDiffers: 'Entrega la solución sin rodeos, enlazándola directamente con la causa del "Pero". Consolida la tesis pedagógica en la memoria.',
+        studentState: 'Sensación de claridad reveladora (efecto Eureka) y retención nítida.'
       }
     ],
     examples: {

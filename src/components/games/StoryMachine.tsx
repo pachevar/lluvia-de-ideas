@@ -61,6 +61,8 @@ export default function StoryMachine() {
   const [showPlotTwist, setShowPlotTwist] = useState<boolean>(false);
   const [isTwistSpinning, setIsTwistSpinning] = useState<boolean>(false);
   const [structureSubject, setStructureSubject] = useState<'matematicas' | 'ciencias' | 'historia' | 'crecimiento'>('matematicas');
+  const [structuresSubView, setStructuresSubView] = useState<'diagrama' | 'matriz'>('diagrama');
+  const [hoveredPhaseId, setHoveredPhaseId] = useState<string | null>(null);
   
   // Advanced Coupling Module States
   const [couplingTone, setCouplingTone] = useState<number>(80);
@@ -431,359 +433,715 @@ export default function StoryMachine() {
         </div>
       </div>
 
-      {/* SELECTOR DE LAS 6 ESTRUCTURAS CANÓNICAS */}
-      <div className="structures-interactive-box">
-        <div className="structures-selector-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-          {[
-            { id: 'freytag', label: '⛰️ Pirámide de Freytag (Arco Clásico)' },
-            { id: 'hero', label: '🌌 El Viaje del Héroe (Monomito Circular)' },
-            { id: 'fichte', label: '📈 Curva de Fichte (Escalada de Crisis)' },
-            { id: 'three_act', label: '🎭 Tres Actos (Syd Field)' },
-            { id: 'circular', label: '🌀 Espiral Cíclica (Popol Vuh Maya)' },
-            { id: 'abt', label: '⚡ Estructura ABT (Randy Olson)' }
-          ].map(st => (
-            <button
-              key={st.id}
-              className={`struct-tab-btn ${activeStructure === st.id ? 'active' : ''}`}
-              onClick={() => {
-                soundEffects.playClick();
-                setActiveStructure(st.id as any);
-                setTimelinePercent(20);
-                setIsPlayingArc(false);
-              }}
-            >
-              {st.label}
-            </button>
-          ))}
-        </div>
+      {/* SUB-PESTAÑAS DE VISTA: OSCILOSCOPIO VS MATRIZ COMPARATIVA */}
+      <div className="struct-subview-nav" style={{ margin: '20px 0 16px 0' }}>
+        <button
+          className={`struct-subview-btn ${structuresSubView === 'diagrama' ? 'active' : ''}`}
+          onClick={() => {
+            soundEffects.playClick();
+            setStructuresSubView('diagrama');
+          }}
+        >
+          📊 Osciloscopio & Nodos Dinámicos
+        </button>
+        <button
+          className={`struct-subview-btn ${structuresSubView === 'matriz' ? 'active' : ''}`}
+          onClick={() => {
+            soundEffects.playClick();
+            setStructuresSubView('matriz');
+          }}
+        >
+          ⚖️ Matriz Comparativa de los 6 Arcos
+        </button>
+      </div>
 
-        {/* DETALLE DE LA ESTRUCTURA ACTIVA */}
-        <div className="struct-detail-panel animate-fade-in">
-          <div className="struct-header-info">
-            <div className="struct-badge-row">
-              <span className="struct-badge bg-purple">{currentStruct.categoryBadge}</span>
-              <span className="struct-badge bg-gold">{currentStruct.neuroBadge}</span>
-            </div>
-            <h3>{currentStruct.icon} {currentStruct.name} — <span style={{ fontSize: '1.05rem', fontWeight: 500, color: '#94a3b8' }}>{currentStruct.subtitle}</span></h3>
-            <p>{currentStruct.description}</p>
+      {structuresSubView === 'matriz' ? (
+        /* VISTA DE MATRIZ COMPARATIVA DE TODOS LOS ARCOS */
+        <div className="struct-matrix-section animate-fade-in">
+          <div style={{ background: 'rgba(15, 23, 42, 0.85)', padding: '18px 22px', borderRadius: '14px', border: '1px solid rgba(56, 189, 248, 0.25)', marginBottom: '18px' }}>
+            <h3 style={{ margin: '0 0 6px 0', color: '#f8fafc', fontSize: '1.25rem', fontWeight: 800 }}>
+              ⚖️ Matriz Comparativa: Diferencias y Mecanismos de los 6 Arcos Neurolingüísticos
+            </h3>
+            <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.88rem', lineHeight: 1.5 }}>
+              Cada estructura narrativa modula un tipo diferente de viaje cognitivo. Compara cómo difieren en cantidad de nodos, patrón de tensión dramática, rol de sus hitos críticos y objetivo neurolingüístico.
+            </p>
           </div>
 
-          {/* BARRA DE HERRAMIENTAS DINÁMICAS (TIMELINE SCRUBBER & AUTO-PLAY) */}
-          <div className="arc-timeline-bar-box">
-            <div className="arc-controls-row">
+          <div className="struct-matrix-grid">
+            {Object.values(DRAMATIC_STRUCTURES).map((st) => {
+              const isCurrent = activeStructure === st.id;
+              return (
+                <div
+                  key={st.id}
+                  className={`struct-matrix-card ${isCurrent ? 'current' : ''}`}
+                >
+                  <div className="struct-matrix-header">
+                    <div>
+                      <span style={{ fontSize: '1.5rem', marginRight: '8px' }}>{st.icon}</span>
+                      <strong style={{ fontSize: '1.1rem', color: '#f8fafc' }}>{st.name}</strong>
+                      <div style={{ fontSize: '0.8rem', color: '#94a3b8', marginTop: '2px' }}>{st.subtitle}</div>
+                    </div>
+                    <span className="struct-badge bg-gold" style={{ fontSize: '0.72rem' }}>
+                      {st.nodeCount} Nodos
+                    </span>
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+                    <span className="struct-badge bg-purple" style={{ fontSize: '0.72rem' }}>{st.categoryBadge}</span>
+                    <span className="struct-badge" style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8' }}>
+                      {st.neuroBadge}
+                    </span>
+                  </div>
+
+                  <div style={{ background: 'rgba(2, 6, 23, 0.6)', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #ff007f' }}>
+                    <strong style={{ fontSize: '0.76rem', color: '#f43f5e', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                      ⚡ ¿Por qué es diferente de los otros arcos?
+                    </strong>
+                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                      {st.keyDifference}
+                    </p>
+                  </div>
+
+                  <div style={{ background: 'rgba(2, 6, 23, 0.5)', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #fbbf24' }}>
+                    <strong style={{ fontSize: '0.76rem', color: '#fbbf24', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                      🎯 Cuándo usarlo en el aula / relato:
+                    </strong>
+                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                      {st.whenToUse}
+                    </p>
+                  </div>
+
+                  <div style={{ background: 'rgba(2, 6, 23, 0.5)', padding: '10px 12px', borderRadius: '8px', borderLeft: '3px solid #10b981' }}>
+                    <strong style={{ fontSize: '0.76rem', color: '#34d399', textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                      🧬 Meta Neurolingüística:
+                    </strong>
+                    <p style={{ margin: 0, fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                      {st.cognitiveGoal}
+                    </p>
+                  </div>
+
+                  <div>
+                    <span style={{ fontSize: '0.74rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                      Secuencia de Hitos ({st.phases.length}):
+                    </span>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '6px' }}>
+                      {st.phases.map((ph, idx) => (
+                        <span
+                          key={ph.id}
+                          style={{
+                            fontSize: '0.72rem',
+                            background: 'rgba(255, 255, 255, 0.07)',
+                            padding: '3px 8px',
+                            borderRadius: '6px',
+                            color: '#e2e8f0',
+                            border: '1px solid rgba(255, 255, 255, 0.1)'
+                          }}
+                        >
+                          {idx + 1}. {ph.name.split(':')[0]}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setActiveStructure(st.id);
+                      setStructuresSubView('diagrama');
+                      setTimelinePercent(20);
+                      setIsPlayingArc(false);
+                    }}
+                    style={{
+                      marginTop: 'auto',
+                      background: isCurrent ? 'linear-gradient(135deg, #0284c7, #0369a1)' : 'rgba(255, 255, 255, 0.08)',
+                      border: isCurrent ? 'none' : '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#ffffff',
+                      padding: '10px 14px',
+                      borderRadius: '10px',
+                      fontSize: '0.85rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '8px'
+                    }}
+                  >
+                    {isCurrent ? '✅ Arco Activo en Osciloscopio' : '🚀 Cargar en el Osciloscopio'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      ) : (
+        /* VISTA DE DIAGRAMA / OSCILOSCOPIO ACTIVO */
+        <div className="structures-interactive-box">
+          <div className="structures-selector-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+            {[
+              { id: 'freytag', label: '⛰️ Pirámide de Freytag (Arco Clásico)' },
+              { id: 'hero', label: '🌌 El Viaje del Héroe (Monomito Circular)' },
+              { id: 'fichte', label: '📈 Curva de Fichte (Escalada de Crisis)' },
+              { id: 'three_act', label: '🎭 Tres Actos (Syd Field)' },
+              { id: 'circular', label: '🌀 Espiral Cíclica (Popol Vuh Maya)' },
+              { id: 'abt', label: '⚡ Estructura ABT (Randy Olson)' }
+            ].map(st => (
               <button
-                className="btn-play-arc"
+                key={st.id}
+                className={`struct-tab-btn ${activeStructure === st.id ? 'active' : ''}`}
                 onClick={() => {
                   soundEffects.playClick();
-                  if (!isPlayingArc && timelinePercent >= 98) {
-                    setTimelinePercent(5);
-                  }
-                  setIsPlayingArc(!isPlayingArc);
-                }}
-                style={{
-                  background: isPlayingArc ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)',
-                  color: '#fff',
-                  border: 'none',
-                  padding: '8px 16px',
-                  borderRadius: '10px',
-                  fontWeight: 800,
-                  fontSize: '0.9rem',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '6px'
+                  setActiveStructure(st.id as any);
+                  setTimelinePercent(20);
+                  setIsPlayingArc(false);
                 }}
               >
-                {isPlayingArc ? '⏸️ Pausar Recorrido' : '▶️ Reproducir Arco en Tiempo Real'}
+                {st.label}
               </button>
+            ))}
+          </div>
 
-              <div className="arc-slider-wrap" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700 }}>Progreso:</span>
-                <input
-                  type="range"
-                  min="5"
-                  max="98"
-                  value={timelinePercent}
-                  onChange={(e) => {
-                    setIsPlayingArc(false);
-                    setTimelinePercent(parseInt(e.target.value, 10));
+          {/* DETALLE DE LA ESTRUCTURA ACTIVA */}
+          <div className="struct-detail-panel animate-fade-in">
+            <div className="struct-header-info">
+              <div className="struct-badge-row">
+                <span className="struct-badge bg-purple">{currentStruct.categoryBadge}</span>
+                <span className="struct-badge bg-gold">{currentStruct.neuroBadge}</span>
+                <span className="struct-badge" style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8' }}>
+                  {currentStruct.nodeCount} Hitos / Nodos Clave
+                </span>
+              </div>
+              <h3>{currentStruct.icon} {currentStruct.name} — <span style={{ fontSize: '1.05rem', fontWeight: 500, color: '#94a3b8' }}>{currentStruct.subtitle}</span></h3>
+              <p>{currentStruct.description}</p>
+
+              {/* CALLOUT DE DIFERENCIA FUNDAMENTAL Y OBJETIVO */}
+              <div className="struct-diff-callout">
+                <div className="struct-diff-item">
+                  <span className="struct-diff-label">⚡ Diferencia Clave frente a otros Arcos:</span>
+                  <p className="struct-diff-text">{currentStruct.keyDifference}</p>
+                </div>
+                <div className="struct-diff-item">
+                  <span className="struct-diff-label">🎯 Cuándo Utilizarlo en el Aula / Relato:</span>
+                  <p className="struct-diff-text">{currentStruct.whenToUse}</p>
+                </div>
+                <div className="struct-diff-item">
+                  <span className="struct-diff-label">🧬 Dinámica de Tensión & Meta Cognitiva:</span>
+                  <p className="struct-diff-text"><strong>{currentStruct.tensionPattern}</strong>: {currentStruct.cognitiveGoal}</p>
+                </div>
+              </div>
+            </div>
+
+            {/* BARRA DE HERRAMIENTAS DINÁMICAS (TIMELINE SCRUBBER & AUTO-PLAY) */}
+            <div className="arc-timeline-bar-box">
+              <div className="arc-controls-row">
+                <button
+                  className="btn-play-arc"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    if (!isPlayingArc && timelinePercent >= 98) {
+                      setTimelinePercent(5);
+                    }
+                    setIsPlayingArc(!isPlayingArc);
                   }}
-                  className="arc-progress-slider"
-                  style={{ flex: 1, cursor: 'pointer' }}
+                  style={{
+                    background: isPlayingArc ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)',
+                    color: '#fff',
+                    border: 'none',
+                    padding: '8px 16px',
+                    borderRadius: '10px',
+                    fontWeight: 800,
+                    fontSize: '0.9rem',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '6px'
+                  }}
+                >
+                  {isPlayingArc ? '⏸️ Pausar Recorrido' : '▶️ Reproducir Arco en Tiempo Real'}
+                </button>
+
+                <div className="arc-slider-wrap" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700 }}>Progreso:</span>
+                  <input
+                    type="range"
+                    min="5"
+                    max="98"
+                    value={timelinePercent}
+                    onChange={(e) => {
+                      setIsPlayingArc(false);
+                      setTimelinePercent(parseInt(e.target.value, 10));
+                    }}
+                    className="arc-progress-slider"
+                    style={{ flex: 1, cursor: 'pointer' }}
+                  />
+                  <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#38bdf8', minWidth: '45px' }}>
+                    {timelinePercent}%
+                  </span>
+                </div>
+
+                {/* Selector Comparativo Multi-Curva */}
+                <div className="arc-compare-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700 }}>Comparar:</span>
+                  <select
+                    value={compareStructure}
+                    onChange={(e) => setCompareStructure(e.target.value as any)}
+                    style={{
+                      background: 'rgba(15, 23, 42, 0.9)',
+                      border: '1px solid rgba(255, 255, 255, 0.2)',
+                      color: '#f8fafc',
+                      borderRadius: '8px',
+                      padding: '6px 10px',
+                      fontSize: '0.82rem',
+                      fontWeight: 600
+                    }}
+                  >
+                    <option value="none">Ninguna (Solo actual)</option>
+                    <option value="freytag">Freytag (Clásico)</option>
+                    <option value="hero">Viaje del Héroe</option>
+                    <option value="fichte">Curva de Fichte</option>
+                    <option value="three_act">Tres Actos</option>
+                    <option value="circular">Espiral Popol Vuh</option>
+                    <option value="abt">Fórmula ABT</option>
+                  </select>
+                </div>
+              </div>
+            </div>
+
+            {/* BANNER DE CONTRASTE ACTIVO (SI SE ELIGIÓ COMPARAR) */}
+            {compareStruct && (
+              <div className="struct-compare-banner animate-fade-in">
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
+                  <strong style={{ color: '#c084fc', fontSize: '0.95rem' }}>
+                    ⚖️ Análisis Comparativo: {currentStruct.name} (Línea Continua) vs {compareStruct.name} (Línea Punteada)
+                  </strong>
+                  <button
+                    onClick={() => setCompareStructure('none')}
+                    style={{ background: 'rgba(255, 255, 255, 0.1)', border: 'none', color: '#cbd5e1', padding: '3px 8px', borderRadius: '6px', cursor: 'pointer', fontSize: '0.78rem' }}
+                  >
+                    ✖ Cerrar Comparativa
+                  </button>
+                </div>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '12px' }}>
+                  <div style={{ background: 'rgba(2, 6, 23, 0.6)', padding: '10px 14px', borderRadius: '10px', borderLeft: '3px solid #ff007f' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#ff007f', fontWeight: 800 }}>{currentStruct.icon} {currentStruct.name} ({currentStruct.nodeCount} Nodos):</span>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>{currentStruct.keyDifference}</p>
+                  </div>
+                  <div style={{ background: 'rgba(2, 6, 23, 0.6)', padding: '10px 14px', borderRadius: '10px', borderLeft: '3px solid #38bdf8' }}>
+                    <span style={{ fontSize: '0.78rem', color: '#38bdf8', fontWeight: 800 }}>{compareStruct.icon} {compareStruct.name} ({compareStruct.nodeCount} Nodos):</span>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '0.82rem', color: '#cbd5e1', lineHeight: 1.45 }}>{compareStruct.keyDifference}</p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* SVG DIAGRAMA VECTORIAL DINÁMICO CON TRAZADOR EN VIVO */}
+            <div className="struct-svg-container" style={{ position: 'relative' }}>
+              <svg viewBox="0 0 800 280" className="struct-svg">
+                <defs>
+                  <linearGradient id="mainArcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                    <stop offset="0%" stopColor="#38bdf8" />
+                    <stop offset="35%" stopColor="#fbbf24" />
+                    <stop offset="60%" stopColor="#ff007f" />
+                    <stop offset="85%" stopColor="#c084fc" />
+                    <stop offset="100%" stopColor="#10b981" />
+                  </linearGradient>
+                  <filter id="svgArcGlow" x="-20%" y="-20%" width="140%" height="140%">
+                    <feGaussianBlur stdDeviation="4" result="blur" />
+                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                  </filter>
+                </defs>
+
+                {/* LÍNEAS GUÍA DE FONDO */}
+                <line x1="50" y1="220" x2="750" y2="220" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1" strokeDasharray="4 4" />
+                <line x1="50" y1="135" x2="750" y2="135" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="1" strokeDasharray="2 4" />
+                <line x1="50" y1="50" x2="750" y2="50" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" strokeDasharray="3 3" />
+                
+                <text x="750" y="238" textAnchor="end" fill="rgba(255, 255, 255, 0.45)" fontSize="11" fontWeight="700">Tiempo / Recorrido Narrativo ➔</text>
+                <text x="50" y="44" textAnchor="start" fill="#f43f5e" fontSize="10" fontWeight="800">▲ Tensión Máxima (100%)</text>
+                <text x="50" y="214" textAnchor="start" fill="#38bdf8" fontSize="10" fontWeight="700">Calma (0%)</text>
+
+                {/* CURVA COMPARATIVA SUPERPUESTA (SI ESTÁ ACTIVA) */}
+                {compareStruct && (
+                  <path
+                    d={compareStruct.svgPath}
+                    fill="none"
+                    stroke="#38bdf8"
+                    strokeWidth="2.5"
+                    strokeDasharray="6 4"
+                    opacity="0.6"
+                  />
+                )}
+
+                {/* CURVA PRINCIPAL DE TENSIÓN */}
+                <path
+                  d={currentStruct.svgPath}
+                  fill="none"
+                  stroke="url(#mainArcGrad)"
+                  strokeWidth="5"
+                  filter="url(#svgArcGlow)"
                 />
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#38bdf8', minWidth: '45px' }}>
-                  {timelinePercent}%
+
+                {/* LÍNEA GUÍA VERTICAL DEL PUNTO VIAJERO */}
+                <line
+                  x1={trackerX}
+                  y1="35"
+                  x2={trackerX}
+                  y2="220"
+                  stroke="rgba(255, 255, 255, 0.3)"
+                  strokeWidth="1.5"
+                  strokeDasharray="3 3"
+                />
+
+                {/* NODOS DE CADA FASE DE LA ESTRUCTURA */}
+                {currentStruct.phases.map((ph, idx) => {
+                  const nodeX = 50 + (ph.percent / 100) * 700;
+                  const nodeY = 220 - (ph.tension / 100) * 170;
+                  const isCurrent = currentPhase.id === ph.id;
+                  const isHovered = hoveredPhaseId === ph.id;
+                  const isLast = idx === currentStruct.phases.length - 1;
+
+                  // Color semántico según nivel de tensión y fase
+                  const nodeColor = (isLast && ph.tension < 30)
+                    ? '#10b981'
+                    : ph.tension >= 75
+                    ? '#f43f5e'
+                    : ph.tension >= 45
+                    ? '#fbbf24'
+                    : '#38bdf8';
+
+                  return (
+                    <g
+                      key={ph.id}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setTimelinePercent(ph.percent);
+                        setIsPlayingArc(false);
+                      }}
+                      onMouseEnter={() => setHoveredPhaseId(ph.id)}
+                      onMouseLeave={() => setHoveredPhaseId(null)}
+                      style={{ cursor: 'pointer' }}
+                    >
+                      {isCurrent && (
+                        <circle cx={nodeX} cy={nodeY} r="22" fill="none" stroke={nodeColor} strokeWidth="2.5" className="animated-target-ring" opacity="0.85" />
+                      )}
+                      <circle
+                        cx={nodeX}
+                        cy={nodeY}
+                        r={isCurrent ? 13 : (isHovered ? 11 : 9)}
+                        fill={nodeColor}
+                        stroke={isCurrent ? '#ffffff' : 'rgba(255, 255, 255, 0.8)'}
+                        strokeWidth={isCurrent ? '3' : '2'}
+                      />
+                      {/* Número del nodo en el centro */}
+                      <text
+                        x={nodeX}
+                        y={nodeY + 3.5}
+                        textAnchor="middle"
+                        fill="#0f172a"
+                        fontSize={isCurrent ? '10' : '9'}
+                        fontWeight="900"
+                        pointerEvents="none"
+                      >
+                        {idx + 1}
+                      </text>
+
+                      {/* Título de fase */}
+                      <text
+                        x={nodeX}
+                        y={nodeY - 16}
+                        textAnchor="middle"
+                        fill={isCurrent ? '#38bdf8' : (isHovered ? '#ffffff' : '#e2e8f0')}
+                        fontSize="10"
+                        fontWeight={isCurrent ? '900' : '700'}
+                      >
+                        {ph.name.split(':')[0]}
+                      </text>
+
+                      {/* Tooltip flotante si está seleccionado o con hover */}
+                      {(isCurrent || isHovered) && (
+                        <g pointerEvents="none">
+                          <rect
+                            x={Math.max(10, Math.min(nodeX - 85, 620))}
+                            y={nodeY > 120 ? nodeY - 60 : nodeY + 22}
+                            width="170"
+                            height="36"
+                            rx="6"
+                            fill="rgba(15, 23, 42, 0.95)"
+                            stroke={nodeColor}
+                            strokeWidth="1.5"
+                          />
+                          <text
+                            x={Math.max(10, Math.min(nodeX - 85, 620)) + 85}
+                            y={nodeY > 120 ? nodeY - 44 : nodeY + 37}
+                            textAnchor="middle"
+                            fill="#ffffff"
+                            fontSize="9"
+                            fontWeight="800"
+                          >
+                            Tensión: {ph.tension}% • Cortisol: {ph.cortisol}%
+                          </text>
+                          <text
+                            x={Math.max(10, Math.min(nodeX - 85, 620)) + 85}
+                            y={nodeY > 120 ? nodeY - 30 : nodeY + 50}
+                            textAnchor="middle"
+                            fill="#fbbf24"
+                            fontSize="8.5"
+                            fontWeight="700"
+                          >
+                            {ph.nodeRole}
+                          </text>
+                        </g>
+                      )}
+                    </g>
+                  );
+                })}
+
+                {/* TRAZADOR EN VIVO (GLOW DOT VIAJERO) */}
+                <g pointerEvents="none">
+                  <circle cx={trackerX} cy={trackerY} r="14" fill="rgba(244, 63, 94, 0.25)" className="pulse-aura" />
+                  <circle cx={trackerX} cy={trackerY} r="7" fill="#ffffff" stroke="#ff007f" strokeWidth="3" />
+                </g>
+              </svg>
+
+              {/* LEYENDA DEL COMPARADOR */}
+              {compareStruct && (
+                <div style={{ position: 'absolute', top: '16px', right: '20px', background: 'rgba(15, 23, 42, 0.85)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.3)', fontSize: '0.78rem' }}>
+                  <span style={{ color: '#38bdf8', fontWeight: 700 }}>--- {compareStruct.name} (Comparativa)</span>
+                </div>
+              )}
+            </div>
+
+            {/* PANEL DE TELEMETRÍA CEREBRAL & NEUROQUÍMICA EN VIVO */}
+            <div className="arc-telemetry-hud glass-panel" style={{ marginTop: '16px', padding: '20px', borderRadius: '16px', border: '1.5px solid rgba(168, 85, 247, 0.3)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+                <div>
+                  <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#c084fc', fontWeight: 800 }}>
+                    📍 Fase Activa ({timelinePercent}% del Relato):
+                  </span>
+                  <h4 style={{ fontSize: '1.25rem', color: '#f8fafc', margin: '2px 0 0 0', fontWeight: 800 }}>
+                    {currentPhase.name}
+                  </h4>
+                  <div style={{ marginTop: '4px' }}>
+                    <span className="struct-node-role-tag">
+                      🏷️ Rol: {currentPhase.nodeRole}
+                    </span>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                  <span className="brain-region-badge" style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>
+                    🧠 {currentPhase.brainRegion}
+                  </span>
+                </div>
+              </div>
+
+              {/* BARRAS DE NEUROTRANSMISORES EN TIEMPO REAL */}
+              <div className="neurochemical-gauges-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px', marginBottom: '18px' }}>
+                {/* CORTISOL */}
+                <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#f87171' }}>🔴 Cortisol (Estrés & Alerta)</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f87171' }}>{currentPhase.cortisol}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${currentPhase.cortisol}%`, height: '100%', background: 'linear-gradient(90deg, #f87171, #ef4444)', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+
+                {/* DOPAMINA */}
+                <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fbbf24' }}>⚡ Dopamina (Expectativa & Aprendizaje)</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#fbbf24' }}>{currentPhase.dopamine}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${currentPhase.dopamine}%`, height: '100%', background: 'linear-gradient(90deg, #fbbf24, #f59e0b)', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+
+                {/* OXITOCINA */}
+                <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                    <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#34d399' }}>🟢 Oxitocina (Empatía & Transporte)</span>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#34d399' }}>{currentPhase.oxytocin}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{ width: `${currentPhase.oxytocin}%`, height: '100%', background: 'linear-gradient(90deg, #34d399, #10b981)', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+              </div>
+
+              {/* EXPLICACIÓN CIENTÍFICA & CONSEJO PEDAGÓGICO */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+                <div style={{ background: 'rgba(2, 6, 23, 0.7)', padding: '12px 16px', borderRadius: '10px', borderLeft: '3px solid #38bdf8' }}>
+                  <strong style={{ fontSize: '0.85rem', color: '#38bdf8', display: 'block', marginBottom: '4px' }}>
+                    🔬 En la Mente del Alumno:
+                  </strong>
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    {currentPhase.explanation}
+                  </p>
+                </div>
+
+                <div style={{ background: 'rgba(2, 6, 23, 0.7)', padding: '12px 16px', borderRadius: '10px', borderLeft: '3px solid #f59e0b' }}>
+                  <strong style={{ fontSize: '0.85rem', color: '#fbbf24', display: 'block', marginBottom: '4px' }}>
+                    💡 Estrategia para el Docente en Aula:
+                  </strong>
+                  <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                    {currentPhase.pedagogicalTip}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            {/* NUEVO: EXPLORADOR INTEGRAL DE NODOS E HITOS NARRATIVOS */}
+            <div className="struct-nodes-section">
+              <div className="struct-nodes-header">
+                <div>
+                  <span style={{ fontSize: '0.78rem', color: '#c084fc', textTransform: 'uppercase', letterSpacing: '0.08em', fontWeight: 800 }}>
+                    🔍 Desglose Anatómico de Nodos:
+                  </span>
+                  <h4 style={{ margin: '4px 0 0 0', color: '#f8fafc', fontSize: '1.2rem', fontWeight: 800 }}>
+                    Mapa Completo de Nodos e Hitos ({currentStruct.phases.length} Fases)
+                  </h4>
+                </div>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                  💡 Haz clic en cualquier tarjeta para saltar a ese hito en la curva
                 </span>
               </div>
 
-              {/* Selector Comparativo Multi-Curva */}
-              <div className="arc-compare-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700 }}>Comparar:</span>
-                <select
-                  value={compareStructure}
-                  onChange={(e) => setCompareStructure(e.target.value as any)}
-                  style={{
-                    background: 'rgba(15, 23, 42, 0.9)',
-                    border: '1px solid rgba(255, 255, 255, 0.2)',
-                    color: '#f8fafc',
-                    borderRadius: '8px',
-                    padding: '6px 10px',
-                    fontSize: '0.82rem',
-                    fontWeight: 600
-                  }}
-                >
-                  <option value="none">Ninguna (Solo actual)</option>
-                  <option value="freytag">Freytag (Clásico)</option>
-                  <option value="hero">Viaje del Héroe</option>
-                  <option value="fichte">Curva de Fichte</option>
-                  <option value="three_act">Tres Actos</option>
-                  <option value="circular">Espiral Popol Vuh</option>
-                  <option value="abt">Fórmula ABT</option>
-                </select>
+              <div className="struct-nodes-grid">
+                {currentStruct.phases.map((ph, idx) => {
+                  const isCurrent = currentPhase.id === ph.id;
+                  const isLast = idx === currentStruct.phases.length - 1;
+                  const tensionColor = (isLast && ph.tension < 30) ? '#10b981' : ph.tension >= 75 ? '#f43f5e' : ph.tension >= 45 ? '#fbbf24' : '#38bdf8';
+                  
+                  return (
+                    <div
+                      key={ph.id}
+                      className={`struct-node-card ${isCurrent ? 'active' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setTimelinePercent(ph.percent);
+                        setIsPlayingArc(false);
+                      }}
+                    >
+                      <div className="struct-node-top">
+                        <span
+                          className="struct-node-badge"
+                          style={{
+                            background: `${tensionColor}20`,
+                            color: tensionColor,
+                            border: `1px solid ${tensionColor}50`
+                          }}
+                        >
+                          Hito #{idx + 1} • {ph.percent}% del relato
+                        </span>
+                        <span
+                          style={{
+                            fontSize: '0.78rem',
+                            fontWeight: 800,
+                            color: tensionColor
+                          }}
+                        >
+                          Tensión: {ph.tension}%
+                        </span>
+                      </div>
+
+                      <h5 className="struct-node-title">
+                        {ph.name}
+                      </h5>
+
+                      <span className="struct-node-role-tag">
+                        🏷️ {ph.nodeRole}
+                      </span>
+
+                      <div className="struct-node-diff-box">
+                        <strong style={{ fontSize: '0.74rem', color: '#f43f5e', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>
+                          ⚡ Diferencia frente a otros hitos:
+                        </strong>
+                        {ph.howItDiffers}
+                      </div>
+
+                      <div className="struct-node-state-box">
+                        <strong style={{ fontSize: '0.74rem', color: '#34d399', textTransform: 'uppercase', display: 'block', marginBottom: '2px' }}>
+                          🧠 En la mente del estudiante:
+                        </strong>
+                        {ph.studentState}
+                      </div>
+
+                      <div style={{ marginTop: 'auto', paddingTop: '8px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderTop: '1px solid rgba(255, 255, 255, 0.08)' }}>
+                        <span style={{ fontSize: '0.75rem', color: '#38bdf8', fontWeight: 600 }}>
+                          {ph.brainRegion}
+                        </span>
+                        {isCurrent ? (
+                          <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#38bdf8' }}>
+                            ✨ [Hito Activo]
+                          </span>
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                            Tocar para ver ➔
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
             </div>
-          </div>
 
-          {/* SVG DIAGRAMA VECTORIAL DINÁMICO CON TRAZADOR EN VIVO */}
-          <div className="struct-svg-container" style={{ position: 'relative' }}>
-            <svg viewBox="0 0 800 280" className="struct-svg">
-              <defs>
-                <linearGradient id="mainArcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
-                  <stop offset="0%" stopColor="#38bdf8" />
-                  <stop offset="35%" stopColor="#fbbf24" />
-                  <stop offset="60%" stopColor="#ff007f" />
-                  <stop offset="85%" stopColor="#c084fc" />
-                  <stop offset="100%" stopColor="#10b981" />
-                </linearGradient>
-                <filter id="svgArcGlow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="4" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
-              </defs>
+            {/* EJEMPLOS DIDÁCTICOS POR MATERIA CURRICULAR */}
+            <div className="struct-example-box" style={{ marginTop: '24px' }}>
+              <div className="ex-subject-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+                <span className="ex-label" style={{ fontWeight: 800, color: '#f8fafc' }}>
+                  📚 Aplicación Práctica en el Aula ({currentStruct.name}):
+                </span>
+                <div className="ex-btns" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                  {[
+                    { id: 'matematicas', label: '📐 Matemáticas' },
+                    { id: 'ciencias', label: '🧪 Ciencias' },
+                    { id: 'historia', label: '📜 Historia' },
+                    { id: 'crecimiento', label: '🌱 Crecimiento' }
+                  ].map(s => (
+                    <button
+                      key={s.id}
+                      className={`ex-btn ${structureSubject === s.id ? 'active' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setStructureSubject(s.id as any);
+                      }}
+                    >
+                      {s.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-              {/* LÍNEAS GUÍA DE FONDO */}
-              <line x1="50" y1="220" x2="750" y2="220" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1" strokeDasharray="4 4" />
-              <line x1="50" y1="135" x2="750" y2="135" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="1" strokeDasharray="2 4" />
-              <line x1="50" y1="50" x2="750" y2="50" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" strokeDasharray="3 3" />
-              
-              <text x="750" y="238" textAnchor="end" fill="rgba(255, 255, 255, 0.45)" fontSize="11" fontWeight="700">Tiempo / Recorrido Narrativo ➔</text>
-              <text x="50" y="44" textAnchor="start" fill="#f43f5e" fontSize="10" fontWeight="800">▲ Tensión Máxima (100%)</text>
-              <text x="50" y="214" textAnchor="start" fill="#38bdf8" fontSize="10" fontWeight="700">Calma (0%)</text>
-
-              {/* CURVA COMPARATIVA SUPERPUESTA (SI ESTÁ ACTIVA) */}
-              {compareStruct && (
-                <path
-                  d={compareStruct.svgPath}
-                  fill="none"
-                  stroke="#38bdf8"
-                  strokeWidth="2.5"
-                  strokeDasharray="6 4"
-                  opacity="0.6"
-                />
-              )}
-
-              {/* CURVA PRINCIPAL DE TENSIÓN */}
-              <path
-                d={currentStruct.svgPath}
-                fill="none"
-                stroke="url(#mainArcGrad)"
-                strokeWidth="5"
-                filter="url(#svgArcGlow)"
-              />
-
-              {/* LÍNEA GUÍA VERTICAL DEL PUNTO VIAJERO */}
-              <line
-                x1={trackerX}
-                y1="35"
-                x2={trackerX}
-                y2="220"
-                stroke="rgba(255, 255, 255, 0.3)"
-                strokeWidth="1.5"
-                strokeDasharray="3 3"
-              />
-
-              {/* NODOS DE CADA FASE DE LA ESTRUCTURA */}
-              {currentStruct.phases.map((ph) => {
-                const nodeX = 50 + (ph.percent / 100) * 700;
-                const nodeY = 220 - (ph.tension / 100) * 170;
-                const isCurrent = currentPhase.id === ph.id;
-                return (
-                  <g
-                    key={ph.id}
+              {/* TARJETAS DE PASOS DEL EJEMPLO */}
+              <div className="freytag-steps-grid">
+                {(currentStruct.examples[structureSubject] || []).map((st, i) => (
+                  <div
+                    key={i}
+                    className={`step-card ${currentPhase.name.includes(st.phase.split(':')[0]) || currentPhase.name.includes(st.phase.split(' ')[0]) ? 'highlight' : ''}`}
                     onClick={() => {
                       soundEffects.playClick();
-                      setTimelinePercent(ph.percent);
-                      setIsPlayingArc(false);
+                      if (currentStruct.phases[i]) {
+                        setTimelinePercent(currentStruct.phases[i].percent);
+                      }
                     }}
                     style={{ cursor: 'pointer' }}
                   >
-                    {isCurrent && (
-                      <circle cx={nodeX} cy={nodeY} r="18" fill="none" stroke="#f43f5e" strokeWidth="2" className="animated-target-ring" />
-                    )}
-                    <circle
-                      cx={nodeX}
-                      cy={nodeY}
-                      r={isCurrent ? 9 : 6}
-                      fill={isCurrent ? '#ffffff' : '#fbbf24'}
-                      stroke={isCurrent ? '#ff007f' : '#b45309'}
-                      strokeWidth={isCurrent ? '3' : '2'}
-                    />
-                    <text
-                      x={nodeX}
-                      y={nodeY - 14}
-                      textAnchor="middle"
-                      fill={isCurrent ? '#38bdf8' : '#e2e8f0'}
-                      fontSize="10"
-                      fontWeight={isCurrent ? '900' : '700'}
-                    >
-                      {ph.name.split(':')[0]}
-                    </text>
-                  </g>
-                );
-              })}
-
-              {/* TRAZADOR EN VIVO (GLOW DOT VIAJERO) */}
-              <g pointerEvents="none">
-                <circle cx={trackerX} cy={trackerY} r="14" fill="rgba(244, 63, 94, 0.25)" className="pulse-aura" />
-                <circle cx={trackerX} cy={trackerY} r="7" fill="#ffffff" stroke="#ff007f" strokeWidth="3" />
-              </g>
-            </svg>
-
-            {/* LEYENDA DEL COMPARADOR */}
-            {compareStruct && (
-              <div style={{ position: 'absolute', top: '16px', right: '20px', background: 'rgba(15, 23, 42, 0.85)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.3)', fontSize: '0.78rem' }}>
-                <span style={{ color: '#38bdf8', fontWeight: 700 }}>--- {compareStruct.name} (Comparativa)</span>
-              </div>
-            )}
-          </div>
-
-          {/* PANEL DE TELEMETRÍA CEREBRAL & NEUROQUÍMICA EN VIVO */}
-          <div className="arc-telemetry-hud glass-panel" style={{ marginTop: '16px', padding: '20px', borderRadius: '16px', border: '1.5px solid rgba(168, 85, 247, 0.3)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
-              <div>
-                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#c084fc', fontWeight: 800 }}>
-                  📍 Fase Activa ({timelinePercent}% del Relato):
-                </span>
-                <h4 style={{ fontSize: '1.25rem', color: '#f8fafc', margin: '2px 0 0 0', fontWeight: 800 }}>
-                  {currentPhase.name}
-                </h4>
-              </div>
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
-                <span className="brain-region-badge" style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>
-                  🧠 {currentPhase.brainRegion}
-                </span>
-              </div>
-            </div>
-
-            {/* BARRAS DE NEUROTRANSMISORES EN TIEMPO REAL */}
-            <div className="neurochemical-gauges-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px', marginBottom: '18px' }}>
-              {/* CORTISOL */}
-              <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#f87171' }}>🔴 Cortisol (Estrés & Alerta)</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f87171' }}>{currentPhase.cortisol}%</span>
-                </div>
-                <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${currentPhase.cortisol}%`, height: '100%', background: 'linear-gradient(90deg, #f87171, #ef4444)', transition: 'width 0.3s ease' }} />
-                </div>
-              </div>
-
-              {/* DOPAMINA */}
-              <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fbbf24' }}>⚡ Dopamina (Expectativa & Aprendizaje)</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#fbbf24' }}>{currentPhase.dopamine}%</span>
-                </div>
-                <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${currentPhase.dopamine}%`, height: '100%', background: 'linear-gradient(90deg, #fbbf24, #f59e0b)', transition: 'width 0.3s ease' }} />
-                </div>
-              </div>
-
-              {/* OXITOCINA */}
-              <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
-                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#34d399' }}>🟢 Oxitocina (Empatía & Transporte)</span>
-                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#34d399' }}>{currentPhase.oxytocin}%</span>
-                </div>
-                <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
-                  <div style={{ width: `${currentPhase.oxytocin}%`, height: '100%', background: 'linear-gradient(90deg, #34d399, #10b981)', transition: 'width 0.3s ease' }} />
-                </div>
-              </div>
-            </div>
-
-            {/* EXPLICACIÓN CIENTÍFICA & CONSEJO PEDAGÓGICO */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
-              <div style={{ background: 'rgba(2, 6, 23, 0.7)', padding: '12px 16px', borderRadius: '10px', borderLeft: '3px solid #38bdf8' }}>
-                <strong style={{ fontSize: '0.85rem', color: '#38bdf8', display: 'block', marginBottom: '4px' }}>
-                  🔬 En la Mente del Alumno:
-                </strong>
-                <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-                  {currentPhase.explanation}
-                </p>
-              </div>
-
-              <div style={{ background: 'rgba(2, 6, 23, 0.7)', padding: '12px 16px', borderRadius: '10px', borderLeft: '3px solid #f59e0b' }}>
-                <strong style={{ fontSize: '0.85rem', color: '#fbbf24', display: 'block', marginBottom: '4px' }}>
-                  💡 Estrategia para el Docente en Aula:
-                </strong>
-                <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-                  {currentPhase.pedagogicalTip}
-                </p>
-              </div>
-            </div>
-          </div>
-
-          {/* EJEMPLOS DIDÁCTICOS POR MATERIA CURRICULAR */}
-          <div className="struct-example-box" style={{ marginTop: '20px' }}>
-            <div className="ex-subject-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
-              <span className="ex-label" style={{ fontWeight: 800, color: '#f8fafc' }}>
-                📚 Aplicación Práctica en el Aula ({currentStruct.name}):
-              </span>
-              <div className="ex-btns" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {[
-                  { id: 'matematicas', label: '📐 Matemáticas' },
-                  { id: 'ciencias', label: '🧪 Ciencias' },
-                  { id: 'historia', label: '📜 Historia' },
-                  { id: 'crecimiento', label: '🌱 Crecimiento' }
-                ].map(s => (
-                  <button
-                    key={s.id}
-                    className={`ex-btn ${structureSubject === s.id ? 'active' : ''}`}
-                    onClick={() => {
-                      soundEffects.playClick();
-                      setStructureSubject(s.id as any);
-                    }}
-                  >
-                    {s.label}
-                  </button>
+                    <span className="step-phase">📍 {st.phase}</span>
+                    <p className="step-text">{st.text}</p>
+                  </div>
                 ))}
               </div>
             </div>
-
-            {/* TARJETAS DE PASOS DEL EJEMPLO */}
-            <div className="freytag-steps-grid">
-              {(currentStruct.examples[structureSubject] || []).map((st, i) => (
-                <div
-                  key={i}
-                  className={`step-card ${currentPhase.name.includes(st.phase.split(':')[0]) || currentPhase.name.includes(st.phase.split(' ')[0]) ? 'highlight' : ''}`}
-                  onClick={() => {
-                    soundEffects.playClick();
-                    if (currentStruct.phases[i]) {
-                      setTimelinePercent(currentStruct.phases[i].percent);
-                    }
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  <span className="step-phase">📍 {st.phase}</span>
-                  <p className="step-text">{st.text}</p>
-                </div>
-              ))}
-            </div>
           </div>
         </div>
-      </div>
+      )}
     </div>
-  );  return (
+  );
+
+  return (
     <div className={`sm-container animate-fade-in ${isProjectorMode ? 'projector-mode' : ''}`}>
       
       {/* NAVEGACIÓN SUPERIOR DE MÓDULOS PRINCIPALES */}
