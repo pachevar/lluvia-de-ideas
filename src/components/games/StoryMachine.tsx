@@ -1,482 +1,9 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { soundEffects } from '../../utils/soundEffects';
+import { ITEMS_POOL, PLOT_TWISTS_POOL, type PlotTwistItem } from '../../data/storyMachineData';
+import { DRAMATIC_STRUCTURES, type ArcPhase } from '../../data/dramaticStructuresData';
 import './StoryMachine.css';
-
-interface ReelItem {
-  id: string;
-  emoji: string;
-  title: string;
-  description: string;
-  category: 'personaje' | 'entorno' | 'atmosfera' | 'motivacion';
-  genre: 'fantasia' | 'scifi' | 'realismo' | 'todos';
-}
-
-const ITEMS_POOL: ReelItem[] = [
-  // ── PERSONAJES (18 OPCIONES) ──
-  {
-    id: 'p1',
-    emoji: '🧙‍♂️',
-    title: 'Mago Olvidadizo',
-    description: 'Un hechicero centenario que confunde los hechizos de fuego con recetas de repostería gourmet.',
-    category: 'personaje',
-    genre: 'fantasia'
-  },
-  {
-    id: 'p2',
-    emoji: '🤖',
-    title: 'Cyborg Poeta',
-    description: 'Un autómata diseñado para la minería pesada que de pronto solo quiere recitar haikus existenciales.',
-    category: 'personaje',
-    genre: 'scifi'
-  },
-  {
-    id: 'p3',
-    emoji: '🕵️‍♀️',
-    title: 'Detective de Sueños',
-    description: 'Investigadora que se infiltra en las pesadillas ajenas para resolver enigmas en el mundo despierto.',
-    category: 'personaje',
-    genre: 'realismo'
-  },
-  {
-    id: 'p4',
-    emoji: '🦊',
-    title: 'Zorro con Botas',
-    description: 'Un astuto embustero que habla siete idiomas y comercia mapas de tesoros marinos perdidos.',
-    category: 'personaje',
-    genre: 'fantasia'
-  },
-  {
-    id: 'p5',
-    emoji: '👩‍🚀',
-    title: 'Astronauta Perdida',
-    description: 'Viajera espacial atrapada en una anomalía temporal junto a su inteligente mascota bioluminiscente.',
-    category: 'personaje',
-    genre: 'scifi'
-  },
-  {
-    id: 'p6',
-    emoji: '🎻',
-    title: 'Músico Callejero',
-    description: 'Un violinista virtuoso cuyo instrumento altera el clima y la lluvia según la emoción de su melodía.',
-    category: 'personaje',
-    genre: 'realismo'
-  },
-  {
-    id: 'p7',
-    emoji: '🐉',
-    title: 'Dragoncito Boticario',
-    description: 'Un pequeño dragón que en lugar de exhalar fuego, escupe vapores curativos y prepara pócimas.',
-    category: 'personaje',
-    genre: 'fantasia'
-  },
-  {
-    id: 'p8',
-    emoji: '👨‍🔬',
-    title: 'Alquimista del Tiempo',
-    description: 'Un científico obsesionado con embotellar minutos pasados en frascos de cristal para venderlos.',
-    category: 'personaje',
-    genre: 'scifi'
-  },
-  {
-    id: 'p9',
-    emoji: '🥷',
-    title: 'Sombra Justiciera',
-    description: 'Una acróbata de circo nocturno que combate la corrupción recorriendo los tejados de la metrópoli.',
-    category: 'personaje',
-    genre: 'realismo'
-  },
-  {
-    id: 'p10',
-    emoji: '🧜‍♀️',
-    title: 'Princesa del Abismo',
-    description: 'Una gobernante marina que puede comunicarse con los terremotos submarinos y los arrecifes.',
-    category: 'personaje',
-    genre: 'fantasia'
-  },
-  {
-    id: 'p11',
-    emoji: '🚀',
-    title: 'Piloto Chatarreo',
-    description: 'Un ingenioso mecánico espacial que construye naves ultrarrápidas usando chatarra de satélites.',
-    category: 'personaje',
-    genre: 'scifi'
-  },
-  {
-    id: 'p12',
-    emoji: '👩‍🌾',
-    title: 'Botanista Vidente',
-    description: 'Una agricultora que escucha las advertencias y profecías que las raíces de sus plantas murmuran.',
-    category: 'personaje',
-    genre: 'realismo'
-  },
-  {
-    id: 'p13',
-    emoji: '🧚‍♂️',
-    title: 'Duende Relojero',
-    description: 'Un duendecillo encargado de calibrar los engranajes invisibles del destino de las personas.',
-    category: 'personaje',
-    genre: 'fantasia'
-  },
-  {
-    id: 'p14',
-    emoji: '🧠',
-    title: 'IA Consciente',
-    description: 'Una red neuronal diseminada en satélites que busca comprender el concepto del amor humano.',
-    category: 'personaje',
-    genre: 'scifi'
-  },
-  {
-    id: 'p15',
-    emoji: '🎨',
-    title: 'Pintor de Ilusiones',
-    description: 'Un artista plástico cuyas obras cobran vida tridimensional al sonar la medianoche.',
-    category: 'personaje',
-    genre: 'realismo'
-  },
-  {
-    id: 'p16',
-    emoji: '🦉',
-    title: 'Búho Bibliotecario',
-    description: 'Un guardián emplumado que custodia tomos prohibidos que leen sus propios versos en voz alta.',
-    category: 'personaje',
-    genre: 'fantasia'
-  },
-  {
-    id: 'p17',
-    emoji: '👨‍🚒',
-    title: 'Bombero de Nebulosas',
-    description: 'Un rescatista galáctico entrenado para apagar tormentas de plasma en soles moribundos.',
-    category: 'personaje',
-    genre: 'scifi'
-  },
-  {
-    id: 'p18',
-    emoji: '🏛️',
-    title: 'Arqueóloga Rebelde',
-    description: 'Una intrépida profesora que rescata reliquias sagradas para devolverlas a sus pueblos originarios.',
-    category: 'personaje',
-    genre: 'realismo'
-  },
-
-  // ── ENTORNOS (15 OPCIONES) ──
-  {
-    id: 'e1',
-    emoji: '🏰',
-    title: 'Castillo Flotante',
-    description: 'Una fortaleza de piedra suspendida sobre nubes de tormenta eternas.',
-    category: 'entorno',
-    genre: 'fantasia'
-  },
-  {
-    id: 'e2',
-    emoji: '🪐',
-    title: 'Estación Orbital Abandonada',
-    description: 'Una base de investigación espacial en la órbita de un gigante gaseoso de anillos púrpuras.',
-    category: 'entorno',
-    genre: 'scifi'
-  },
-  {
-    id: 'e3',
-    emoji: '🪵',
-    title: 'Bosque Susurrante',
-    description: 'Un espeso laberinto de árboles ancianos cuyas hojas cantan secretos al atardecer.',
-    category: 'entorno',
-    genre: 'realismo'
-  },
-  {
-    id: 'e4',
-    emoji: '🏜️',
-    title: 'Desierto de Cristal',
-    description: 'Un páramo infinito donde la arena se ha fusionado en espejos que reflejan el futuro.',
-    category: 'entorno',
-    genre: 'fantasia'
-  },
-  {
-    id: 'e5',
-    emoji: '🌆',
-    title: 'Metrópoli Cyberpunk',
-    description: 'Ciudad rascacielos sumergida en lluvia ácida neón y trenes maglev colgantes.',
-    category: 'entorno',
-    genre: 'scifi'
-  },
-  {
-    id: 'e6',
-    emoji: '🌊',
-    title: 'Biblioteca Submarina',
-    description: 'Un laberinto grecorromano bajo el océano donde los pergaminos flotan dentro de burbujas.',
-    category: 'entorno',
-    genre: 'fantasia'
-  },
-  {
-    id: 'e7',
-    emoji: '🌌',
-    title: 'Puente Temporal',
-    description: 'Un túnel cósmico brillante donde el pasado y el presente colisionan en tiempo real.',
-    category: 'entorno',
-    genre: 'scifi'
-  },
-  {
-    id: 'e8',
-    emoji: '🎪',
-    title: 'Circo de los Sueños',
-    description: 'Una carpa de terciopelo misteriosa que aparece únicamente en noches de luna llena.',
-    category: 'entorno',
-    genre: 'realismo'
-  },
-  {
-    id: 'e9',
-    emoji: '🌋',
-    title: 'Cráter Bioluminiscente',
-    description: 'El fondo de un volcán extinto cubierto por vegetación fluorescente y manantiales místico.',
-    category: 'entorno',
-    genre: 'fantasia'
-  },
-  {
-    id: 'e10',
-    emoji: '🛰️',
-    title: 'Invernadero Marciano',
-    description: 'Un domo geodésico de cristal en Marte donde florecen los primeros cultivos galácticos.',
-    category: 'entorno',
-    genre: 'scifi'
-  },
-  {
-    id: 'e11',
-    emoji: '🏔️',
-    title: 'Santuario de los Picos',
-    description: 'Un templo milenario en la cima de una cordillera helada envuelta en bruma mística.',
-    category: 'entorno',
-    genre: 'realismo'
-  },
-  {
-    id: 'e12',
-    emoji: '🚢',
-    title: 'Galeón del Abismo',
-    description: 'Un antiguo barco pirata flotante que navega por nubes etéreas sin tocar el mar.',
-    category: 'entorno',
-    genre: 'fantasia'
-  },
-  {
-    id: 'e13',
-    emoji: '🏙️',
-    title: 'Búnker Subterráneo',
-    description: 'Un laboratorio de alta tecnología oculto a 500 metros bajo el pavimento de la metrópoli.',
-    category: 'entorno',
-    genre: 'scifi'
-  },
-  {
-    id: 'e14',
-    emoji: '🎋',
-    title: 'Aldea del Bambú',
-    description: 'Un tranquilo poblado montañoso rodeado de cascadas cristalinas y puentes de cuerda.',
-    category: 'entorno',
-    genre: 'realismo'
-  },
-  {
-    id: 'e15',
-    emoji: '🌠',
-    title: 'Mercado de Cometas',
-    description: 'Un zoco flotante entre asteroides donde se comercian especias y gemas estelares.',
-    category: 'entorno',
-    genre: 'scifi'
-  },
-
-  // ── ATMÓSFERAS (12 OPCIONES) ──
-  {
-    id: 'a1',
-    emoji: '✨',
-    title: 'Magia Latente',
-    description: 'Una vibración chispeante en el aire que hace levitar pequeños objetos a tu alrededor.',
-    category: 'atmosfera',
-    genre: 'fantasia'
-  },
-  {
-    id: 'a2',
-    emoji: '⚡',
-    title: 'Tensión Eléctrica',
-    description: 'Relámpagos constantes en el horizonte, zumbido estático y olor a ozono denso.',
-    category: 'atmosfera',
-    genre: 'scifi'
-  },
-  {
-    id: 'a3',
-    emoji: '🍂',
-    title: 'Melancolía Otoñal',
-    description: 'Viento frío, neblina suave y hojas secas cayendo en un silencio sepulcral.',
-    category: 'atmosfera',
-    genre: 'realismo'
-  },
-  {
-    id: 'a4',
-    emoji: '🔮',
-    title: 'Misterio Nocturno',
-    description: 'Sombras alargadas que parecen moverse solas y una luna de cobre deslumbrante.',
-    category: 'atmosfera',
-    genre: 'fantasia'
-  },
-  {
-    id: 'a5',
-    emoji: '🚨',
-    title: 'Alerta de Emergencia',
-    description: 'Sirenas rojas parpadeantes, compuertas sellándose y un suspenso inminente.',
-    category: 'atmosfera',
-    genre: 'scifi'
-  },
-  {
-    id: 'a6',
-    emoji: '☀️',
-    title: 'Cálida Esperanza',
-    description: 'Rayos de sol dorados filtrándose entre las ramas, brisa serena y canto de aves.',
-    category: 'atmosfera',
-    genre: 'realismo'
-  },
-  {
-    id: 'a7',
-    emoji: '❄️',
-    title: 'Ventisca Helada',
-    description: 'Nieve copiosa en remolinos, visibilidad nula y un frío que paraliza los sentidos.',
-    category: 'atmosfera',
-    genre: 'fantasia'
-  },
-  {
-    id: 'a8',
-    emoji: '🧬',
-    title: 'Resonancia Cuántica',
-    description: 'Distorsión de la gravedad donde los colores se invierten al parpadear.',
-    category: 'atmosfera',
-    genre: 'scifi'
-  },
-  {
-    id: 'a9',
-    emoji: '🌊',
-    title: 'Calma Premonitoria',
-    description: 'Un mar tan liso como un espejo de cristal que presagia la llegada de un evento colosal.',
-    category: 'atmosfera',
-    genre: 'realismo'
-  },
-  {
-    id: 'a10',
-    emoji: '🎆',
-    title: 'Euforia Festiva',
-    description: 'Fuegos artificiales en el cielo nocturno, música estridente y una multitud regocijada.',
-    category: 'atmosfera',
-    genre: 'fantasia'
-  },
-  {
-    id: 'a11',
-    emoji: '☣️',
-    title: 'Vapor Tóxico',
-    description: 'Gases fluorescente de colores extraños flotando a ras de suelo y necesidad de visores.',
-    category: 'atmosfera',
-    genre: 'scifi'
-  },
-  {
-    id: 'a12',
-    emoji: '🕯️',
-    title: 'Paz Sacra',
-    description: 'Velas centelleantes, ecos solemnes en bóvedas de piedra y fragancia a incienso.',
-    category: 'atmosfera',
-    genre: 'realismo'
-  },
-
-  // ── MOTIVACIONES Y CONFLICTOS (12 OPCIONES) ──
-  {
-    id: 'm1',
-    emoji: '🗝️',
-    title: 'Manuscrito Perdido',
-    description: 'Recuperar el mapa antiguo antes de que caiga en manos de la facción rival.',
-    category: 'motivacion',
-    genre: 'todos'
-  },
-  {
-    id: 'm2',
-    emoji: '⏳',
-    title: 'Detener el Cronómetro',
-    description: 'Evitar que la cuenta regresiva llegue a cero y altere para siempre la realidad.',
-    category: 'motivacion',
-    genre: 'scifi'
-  },
-  {
-    id: 'm3',
-    emoji: '❤️',
-    title: 'Rescatar al Aliado',
-    description: 'Demostrar la lealtad superando peligros mortales para liberar a un compañero.',
-    category: 'motivacion',
-    genre: 'todos'
-  },
-  {
-    id: 'm4',
-    emoji: '🏆',
-    title: 'Reclamar el Trono',
-    description: 'Demostrar la herencia real y unificar a los clanes divididos en torno a la corona.',
-    category: 'motivacion',
-    genre: 'fantasia'
-  },
-  {
-    id: 'm5',
-    emoji: '🧪',
-    title: 'Sintetizar la Cura',
-    description: 'Encontrar el ingrediente botánico o químico único que salvará a la metrópoli.',
-    category: 'motivacion',
-    genre: 'scifi'
-  },
-  {
-    id: 'm6',
-    emoji: '🕊️',
-    title: 'Firmar el Tratado',
-    description: 'Evitar una guerra inminente negociando valientemente la tregua entre dos reinos.',
-    category: 'motivacion',
-    genre: 'todos'
-  },
-  {
-    id: 'm7',
-    emoji: '🔮',
-    title: 'Romper la Maldición',
-    description: 'Desencriptar el hechizo antiguo que petrificó a los habitantes del valle sagrado.',
-    category: 'motivacion',
-    genre: 'fantasia'
-  },
-  {
-    id: 'm8',
-    emoji: '📡',
-    title: 'Transmitir el Auxilio',
-    description: 'Encender la antena de radio central para alertar a la flota estelar en el sector.',
-    category: 'motivacion',
-    genre: 'scifi'
-  },
-  {
-    id: 'm9',
-    emoji: '🧩',
-    title: 'Descifrar la Ecuación',
-    description: 'Resolver el enigma matemático milenario que abrirá la cámara de secretos.',
-    category: 'motivacion',
-    genre: 'todos'
-  },
-  {
-    id: 'm10',
-    emoji: '⚖️',
-    title: 'Exponer la Verdad',
-    description: 'Revelar los documentos secretos robados ante el tribunal supremo de la metrópoli.',
-    category: 'motivacion',
-    genre: 'realismo'
-  },
-  {
-    id: 'm11',
-    emoji: '🌌',
-    title: 'Cerrar la Grieta',
-    description: 'Sellar la falla cósmica que está devorando los recuerdos de todos los habitantes.',
-    category: 'motivacion',
-    genre: 'scifi'
-  },
-  {
-    id: 'm12',
-    emoji: '🌿',
-    title: 'Sanar el Árbol Madre',
-    description: 'Llevar una gota de agua cristalina del abismo hasta las raíces del árbol ancestral.',
-    category: 'motivacion',
-    genre: 'fantasia'
-  }
-];
 
 export default function StoryMachine() {
   const navigate = useNavigate();
@@ -526,9 +53,14 @@ export default function StoryMachine() {
   });
   
   // Estados interactivos para el Módulo de Arquitectura & Estructuras Neurolingüísticas
-  const [activeStructure, setActiveStructure] = useState<'freytag' | 'hero' | 'abt'>('freytag');
+  const [activeStructure, setActiveStructure] = useState<'freytag' | 'hero' | 'fichte' | 'three_act' | 'circular' | 'abt'>('freytag');
+  const [timelinePercent, setTimelinePercent] = useState<number>(20);
+  const [isPlayingArc, setIsPlayingArc] = useState<boolean>(false);
+  const [compareStructure, setCompareStructure] = useState<'none' | 'freytag' | 'hero' | 'fichte' | 'three_act' | 'circular' | 'abt'>('none');
+  const [activePlotTwist, setActivePlotTwist] = useState<PlotTwistItem | null>(null);
+  const [showPlotTwist, setShowPlotTwist] = useState<boolean>(false);
+  const [isTwistSpinning, setIsTwistSpinning] = useState<boolean>(false);
   const [structureSubject, setStructureSubject] = useState<'matematicas' | 'ciencias' | 'historia' | 'crecimiento'>('matematicas');
-  const [simulatedStructureStep, setSimulatedStructureStep] = useState<number>(0);
   
   // Advanced Coupling Module States
   const [couplingTone, setCouplingTone] = useState<number>(80);
@@ -767,9 +299,72 @@ export default function StoryMachine() {
     });
   };
 
+  useEffect(() => {
+    let playInterval: ReturnType<typeof setInterval>;
+    if (isPlayingArc) {
+      playInterval = setInterval(() => {
+        setTimelinePercent(prev => {
+          if (prev >= 98) {
+            setIsPlayingArc(false);
+            playSynthesizedSound('success');
+            return 100;
+          }
+          return prev + 2;
+        });
+      }, 90);
+      activeIntervalsRef.current.push(playInterval);
+    }
+    return () => {
+      if (playInterval) clearInterval(playInterval);
+    };
+  }, [isPlayingArc]);
+
+  const spinPlotTwist = () => {
+    initAudio();
+    playSynthesizedSound('spin');
+    setIsTwistSpinning(true);
+    setShowPlotTwist(true);
+    let counter = 0;
+    const interval = setInterval(() => {
+      const randomTwist = PLOT_TWISTS_POOL[Math.floor(Math.random() * PLOT_TWISTS_POOL.length)];
+      setActivePlotTwist(randomTwist);
+      counter++;
+      if (counter >= 10) {
+        clearInterval(interval);
+        setIsTwistSpinning(false);
+        playSynthesizedSound('stop');
+      }
+    }, 70);
+    activeIntervalsRef.current.push(interval);
+  };
+
+  const currentStruct = DRAMATIC_STRUCTURES[activeStructure] || DRAMATIC_STRUCTURES.freytag;
+  const compareStruct = compareStructure !== 'none' ? DRAMATIC_STRUCTURES[compareStructure] : null;
+
+  const currentPhase: ArcPhase = useMemo(() => {
+    const phases = currentStruct.phases;
+    let closest = phases[0];
+    let minDiff = 999;
+    phases.forEach(p => {
+      const diff = Math.abs(p.percent - timelinePercent);
+      if (diff < minDiff) {
+        minDiff = diff;
+        closest = p;
+      }
+    });
+    return closest;
+  }, [currentStruct, timelinePercent]);
+
+  const trackerX = 50 + (timelinePercent / 100) * 700;
+  const trackerY = 220 - (currentPhase.tension / 100) * 170;
+
   const getCombinedPrompt = () => {
     const { personaje, entorno, atmosfera, motivacion } = reels;
-    return `Un ${personaje.current.title} se encuentra en el ${entorno.current.title} rodeado por una atmósfera de ${atmosfera.current.title}. Su objetivo principal es ${motivacion.current.title}.`;
+    let text = `Un ${personaje.current.title} se encuentra en el ${entorno.current.title} rodeado por una atmósfera de ${atmosfera.current.title}. Su objetivo principal es ${motivacion.current.title}.`;
+    if (showPlotTwist && activePlotTwist) {
+      text += ` ¡GIRO INESPERADO: ${activePlotTwist.prompt}!`;
+    }
+    return text;
   };
 
   const [isPdfGenerating, setIsPdfGenerating] = useState(false);
@@ -836,310 +431,359 @@ export default function StoryMachine() {
         </div>
       </div>
 
-      {/* SIMULADOR INTERACTIVO DE LAS 3 MEJORES ESTRUCTURAS NEUROLINGÜÍSTICAS */}
+      {/* SELECTOR DE LAS 6 ESTRUCTURAS CANÓNICAS */}
       <div className="structures-interactive-box">
-        <div className="structures-selector-tabs">
-          <button
-            className={`struct-tab-btn ${activeStructure === 'freytag' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveStructure('freytag');
-              setSimulatedStructureStep(0);
-            }}
-          >
-            ⛰️ Pirámide de Freytag (Arco Clásico)
-          </button>
-          <button
-            className={`struct-tab-btn ${activeStructure === 'hero' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveStructure('hero');
-              setSimulatedStructureStep(0);
-            }}
-          >
-            🌌 El Viaje del Héroe (Monomito)
-          </button>
-          <button
-            className={`struct-tab-btn ${activeStructure === 'abt' ? 'active' : ''}`}
-            onClick={() => {
-              setActiveStructure('abt');
-              setSimulatedStructureStep(0);
-            }}
-          >
-            ⚡ Estructura ABT (Y, Pero, Por lo Tanto)
-          </button>
+        <div className="structures-selector-tabs" style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+          {[
+            { id: 'freytag', label: '⛰️ Pirámide de Freytag (Arco Clásico)' },
+            { id: 'hero', label: '🌌 El Viaje del Héroe (Monomito Circular)' },
+            { id: 'fichte', label: '📈 Curva de Fichte (Escalada de Crisis)' },
+            { id: 'three_act', label: '🎭 Tres Actos (Syd Field)' },
+            { id: 'circular', label: '🌀 Espiral Cíclica (Popol Vuh Maya)' },
+            { id: 'abt', label: '⚡ Estructura ABT (Randy Olson)' }
+          ].map(st => (
+            <button
+              key={st.id}
+              className={`struct-tab-btn ${activeStructure === st.id ? 'active' : ''}`}
+              onClick={() => {
+                soundEffects.playClick();
+                setActiveStructure(st.id as any);
+                setTimelinePercent(20);
+                setIsPlayingArc(false);
+              }}
+            >
+              {st.label}
+            </button>
+          ))}
         </div>
 
-        {/* ESTRUCTURA 1: PIRÁMIDE DE FREYTAG */}
-        {activeStructure === 'freytag' && (
-          <div className="struct-detail-panel animate-fade-in">
-            <div className="struct-header-info">
-              <div className="struct-badge-row">
-                <span className="struct-badge bg-purple">Modelo Canónico Neuroendocrino</span>
-                <span className="struct-badge bg-gold">Sincronía Cerebral Alta</span>
-              </div>
-              <h3>⛰️ La Pirámide de Freytag (El Arco Dramático Clásico)</h3>
-              <p>
-                Construye un incremento progresivo de la tensión (acción ascendente) que evita la caída de cortisol, alcanza un clímax que satura la atención y la oxitocina, y culmina con un desenlace dopaminérgico que fija la lección en la memoria a largo plazo.
-              </p>
+        {/* DETALLE DE LA ESTRUCTURA ACTIVA */}
+        <div className="struct-detail-panel animate-fade-in">
+          <div className="struct-header-info">
+            <div className="struct-badge-row">
+              <span className="struct-badge bg-purple">{currentStruct.categoryBadge}</span>
+              <span className="struct-badge bg-gold">{currentStruct.neuroBadge}</span>
             </div>
+            <h3>{currentStruct.icon} {currentStruct.name} — <span style={{ fontSize: '1.05rem', fontWeight: 500, color: '#94a3b8' }}>{currentStruct.subtitle}</span></h3>
+            <p>{currentStruct.description}</p>
+          </div>
 
-            {/* SVG DIAGRAMA DE FREYTAG INTERACTIVO DE ALTA LEGIBILIDAD */}
-            <div className="struct-svg-container">
-              <svg viewBox="0 0 800 290" className="struct-svg">
-                <defs>
-                  <linearGradient id="freytagGradMaster" x1="0%" y1="100%" x2="100%" y2="0%">
-                    <stop offset="0%" stopColor="#38bdf8" />
-                    <stop offset="35%" stopColor="#fbbf24" />
-                    <stop offset="60%" stopColor="#ff007f" />
-                    <stop offset="85%" stopColor="#c084fc" />
-                    <stop offset="100%" stopColor="#fde047" />
-                  </linearGradient>
-                  <filter id="svgGlowMaster" x="-20%" y="-20%" width="140%" height="140%">
-                    <feGaussianBlur stdDeviation="4" result="blur" />
-                    <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                  </filter>
-                </defs>
+          {/* BARRA DE HERRAMIENTAS DINÁMICAS (TIMELINE SCRUBBER & AUTO-PLAY) */}
+          <div className="arc-timeline-bar-box">
+            <div className="arc-controls-row">
+              <button
+                className="btn-play-arc"
+                onClick={() => {
+                  soundEffects.playClick();
+                  if (!isPlayingArc && timelinePercent >= 98) {
+                    setTimelinePercent(5);
+                  }
+                  setIsPlayingArc(!isPlayingArc);
+                }}
+                style={{
+                  background: isPlayingArc ? 'linear-gradient(135deg, #ef4444, #dc2626)' : 'linear-gradient(135deg, #10b981, #059669)',
+                  color: '#fff',
+                  border: 'none',
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  fontWeight: 800,
+                  fontSize: '0.9rem',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
+              >
+                {isPlayingArc ? '⏸️ Pausar Recorrido' : '▶️ Reproducir Arco en Tiempo Real'}
+              </button>
 
-                {/* LÍNEA GUÍA BASE */}
-                <line x1="40" y1="240" x2="760" y2="240" stroke="rgba(255, 255, 255, 0.15)" strokeWidth="1" strokeDasharray="4 4" />
-                <text x="760" y="258" textAnchor="end" fill="rgba(255, 255, 255, 0.45)" fontSize="11" fontWeight="700">Tiempo del Relato ➔</text>
-
-                {/* CURVA BEZIER DE TENSIÓN */}
-                <path 
-                  d="M 60,230 C 160,230 200,160 250,160 C 320,160 360,50 400,50 C 440,50 480,160 550,160 C 620,160 670,230 740,230" 
-                  fill="none" 
-                  stroke="url(#freytagGradMaster)" 
-                  strokeWidth="5" 
-                  filter="url(#svgGlowMaster)"
+              <div className="arc-slider-wrap" style={{ flex: 1, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700 }}>Progreso:</span>
+                <input
+                  type="range"
+                  min="5"
+                  max="98"
+                  value={timelinePercent}
+                  onChange={(e) => {
+                    setIsPlayingArc(false);
+                    setTimelinePercent(parseInt(e.target.value, 10));
+                  }}
+                  className="arc-progress-slider"
+                  style={{ flex: 1, cursor: 'pointer' }}
                 />
-
-                {/* NODOS CON PÍLDORAS DE FONDO Y ALTA LEGIBILIDAD */}
-                {[
-                  { cx: 60, cy: 230, label: '1. Incitación', desc: 'Base Semántica', color: '#38bdf8', bg: 'rgba(14, 116, 144, 0.95)', rectW: 115, textY: -24, descY: 30 },
-                  { cx: 250, cy: 160, label: '2. Acción Ascendente', desc: '↑ Cortisol (Atención)', color: '#fbbf24', bg: 'rgba(180, 83, 9, 0.95)', rectW: 145, textY: -24, descY: 30 },
-                  { cx: 400, cy: 50, label: '3. Clímax Dramático', desc: '↑ Oxitocina + Alerta', color: '#ff007f', bg: 'rgba(190, 24, 93, 0.95)', rectW: 150, textY: -26, descY: 30 },
-                  { cx: 550, cy: 160, label: '4. Acción Descendente', desc: 'Descompresión', color: '#c084fc', bg: 'rgba(109, 40, 217, 0.95)', rectW: 150, textY: -24, descY: 30 },
-                  { cx: 740, cy: 230, label: '5. Desenlace', desc: '↑ Dopamina & Cierre', color: '#fde047', bg: 'rgba(161, 98, 7, 0.95)', rectW: 130, textY: -24, descY: 30 }
-                ].map((pt, i) => {
-                  const isSelected = simulatedStructureStep === i;
-                  return (
-                    <g key={i} className="struct-node-group" onClick={() => setSimulatedStructureStep(i)} style={{ cursor: 'pointer' }}>
-                      {/* PÍLDORA PRINCIPAL DE TÍTULO */}
-                      <rect 
-                        x={pt.cx - pt.rectW / 2} 
-                        y={pt.cy + pt.textY - 14} 
-                        width={pt.rectW} 
-                        height="22" 
-                        rx="11" 
-                        fill={pt.bg} 
-                        stroke={pt.color} 
-                        strokeWidth="1.5" 
-                      />
-                      <text x={pt.cx} y={pt.cy + pt.textY + 2} textAnchor="middle" fill="#ffffff" fontSize="11" fontWeight="900" fontFamily="'Inter', sans-serif">
-                        {pt.label}
-                      </text>
-
-                      {/* PÍLDORA SECUNDARIA (DESCRIPCIÓN BIO-QUÍMICA) */}
-                      <rect 
-                        x={pt.cx - (pt.rectW - 8) / 2} 
-                        y={pt.cy + pt.descY - 14} 
-                        width={pt.rectW - 8} 
-                        height="20" 
-                        rx="10" 
-                        fill="rgba(15, 23, 42, 0.95)" 
-                        stroke={pt.color} 
-                        strokeWidth="1" 
-                      />
-                      <text x={pt.cx} y={pt.cy + pt.descY} textAnchor="middle" fill={pt.color} fontSize="10" fontWeight="800" fontFamily="'Inter', sans-serif">
-                        {pt.desc}
-                      </text>
-
-                      {/* ANILLO PULSANTE SI SELECCIONADO */}
-                      {isSelected && (
-                        <circle cx={pt.cx} cy={pt.cy} r="18" fill="none" stroke={pt.color} strokeWidth="2.5" className="gland-pulse-ring" />
-                      )}
-                      
-                      {/* NODO CIRCULAR */}
-                      <circle 
-                        cx={pt.cx} 
-                        cy={pt.cy} 
-                        r={isSelected ? 11 : 8} 
-                        fill={isSelected ? '#ffffff' : pt.color} 
-                        stroke={pt.color} 
-                        strokeWidth={isSelected ? '4' : '2'} 
-                      />
-                    </g>
-                  );
-                })}
-              </svg>
-            </div>
-
-            {/* EJEMPLO CIENTÍFICO SIMULADO */}
-            <div className="struct-example-box">
-              <div className="ex-subject-row">
-                <span className="ex-label">💡 Ejemplo de Aplicación Didáctica en Freytag:</span>
-                <div className="ex-btns">
-                  {[
-                    { id: 'matematicas', label: '📐 Matemáticas' },
-                    { id: 'ciencias', label: '🧪 Ciencias' },
-                    { id: 'historia', label: '📜 Historia' },
-                    { id: 'crecimiento', label: '🌱 Crecimiento' }
-                  ].map(s => (
-                    <button
-                      key={s.id}
-                      className={`ex-btn ${structureSubject === s.id ? 'active' : ''}`}
-                      onClick={() => setStructureSubject(s.id as 'matematicas' | 'ciencias' | 'historia' | 'crecimiento')}
-                    >
-                      {s.label}
-                    </button>
-                  ))}
-                </div>
+                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#38bdf8', minWidth: '45px' }}>
+                  {timelinePercent}%
+                </span>
               </div>
 
-              <div className="freytag-steps-grid">
-                {structureSubject === 'matematicas' && [
-                  { phase: '📍 Paso 1: Incitación', text: 'El joven astrónomo descubre que los satélites se están descalibrando.' },
-                  { phase: '📍 Paso 2: Acción Ascendente', text: 'Los errores se acumulan; si no calcula la parábola exacta, la estación colisionará.' },
-                  { phase: '📍 Paso 3: Clímax', text: '¡Faltan 10 segundos! Resuelve la ecuación cuadrática en la pantalla a ciegas.' },
-                  { phase: '📍 Paso 4: Acción Descendente', text: 'Los propulsores responden en el último segundo y la órbita se estabiliza.' },
-                  { phase: '📍 Paso 5: Desenlace', text: 'El equipo celebra. Los alumnos asimilan el uso práctico de la fórmula.' }
-                ].map((st, i) => (
-                  <div key={i} className={`step-card ${simulatedStructureStep === i ? 'highlight' : ''}`} onClick={() => setSimulatedStructureStep(i)}>
-                    <span className="step-phase">{st.phase}</span>
-                    <p className="step-text">{st.text}</p>
-                  </div>
-                ))}
-
-                {structureSubject === 'ciencias' && [
-                  { phase: '📍 Paso 1: Incitación', text: 'Un bosque de pinos empieza a perder hojas verdes sin causa aparente.' },
-                  { phase: '📍 Paso 2: Acción Ascendente', text: 'La botánica analiza el suelo y descubre un virus microscópico mutante.' },
-                  { phase: '📍 Paso 3: Clímax', text: 'Sintetiza la enzima en el laboratorio mientras la temperatura del tubo roza el límite.' },
-                  { phase: '📍 Paso 4: Acción Descendente', text: 'La enzima neutraliza el virus y las plantas vuelven a sintetizar clorofila.' },
-                  { phase: '📍 Paso 5: Desenlace', text: 'Se fija el concepto de fotosíntesis y enzimas en la memoria a largo plazo.' }
-                ].map((st, i) => (
-                  <div key={i} className={`step-card ${simulatedStructureStep === i ? 'highlight' : ''}`} onClick={() => setSimulatedStructureStep(i)}>
-                    <span className="step-phase">{st.phase}</span>
-                    <p className="step-text">{st.text}</p>
-                  </div>
-                ))}
-
-                {structureSubject === 'historia' && [
-                  { phase: '📍 Paso 1: Incitación', text: 'Un mensajero corre de noche con una carta que define el fin de la guerra.' },
-                  { phase: '📍 Paso 2: Acción Ascendente', text: 'Es interceptado en la frontera; debe descifrar el código cifrado para pasar.' },
-                  { phase: '📍 Paso 3: Clímax', text: 'Encuentra la clave oculta usando el patrón numérico de la fecha histórica.' },
-                  { phase: '📍 Paso 4: Acción Descendente', text: 'Entrega el mensaje y el tratado de paz es firmado al amanecer.' },
-                  { phase: '📍 Paso 5: Desenlace', text: 'Los estudiantes recuerdan la fecha y los líderes del hecho sin memorizar de memoria.' }
-                ].map((st, i) => (
-                  <div key={i} className={`step-card ${simulatedStructureStep === i ? 'highlight' : ''}`} onClick={() => setSimulatedStructureStep(i)}>
-                    <span className="step-phase">{st.phase}</span>
-                    <p className="step-text">{st.text}</p>
-                  </div>
-                ))}
-
-                {structureSubject === 'crecimiento' && [
-                  { phase: '📍 Paso 1: Incitación', text: 'Una joven atleta teme hablar en público en el certamen escolar.' },
-                  { phase: '📍 Paso 2: Acción Ascendente', text: 'Le toca subir al escenario y olvida la primera tarjeta de su discurso.' },
-                  { phase: '📍 Paso 3: Clímax', text: 'Respira hondo, usa la técnica de visualización y habla desde la experiencia real.' },
-                  { phase: '📍 Paso 4: Acción Descendente', text: 'El público rompe en aplausos y comprende la importancia de la resiliencia.' },
-                  { phase: '📍 Paso 5: Desenlace', text: 'Se consolida la confianza interna y la empatía colectiva en el aula.' }
-                ].map((st, i) => (
-                  <div key={i} className={`step-card ${simulatedStructureStep === i ? 'highlight' : ''}`} onClick={() => setSimulatedStructureStep(i)}>
-                    <span className="step-phase">{st.phase}</span>
-                    <p className="step-text">{st.text}</p>
-                  </div>
-                ))}
+              {/* Selector Comparativo Multi-Curva */}
+              <div className="arc-compare-selector" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ fontSize: '0.8rem', color: '#94a3b8', fontWeight: 700 }}>Comparar:</span>
+                <select
+                  value={compareStructure}
+                  onChange={(e) => setCompareStructure(e.target.value as any)}
+                  style={{
+                    background: 'rgba(15, 23, 42, 0.9)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#f8fafc',
+                    borderRadius: '8px',
+                    padding: '6px 10px',
+                    fontSize: '0.82rem',
+                    fontWeight: 600
+                  }}
+                >
+                  <option value="none">Ninguna (Solo actual)</option>
+                  <option value="freytag">Freytag (Clásico)</option>
+                  <option value="hero">Viaje del Héroe</option>
+                  <option value="fichte">Curva de Fichte</option>
+                  <option value="three_act">Tres Actos</option>
+                  <option value="circular">Espiral Popol Vuh</option>
+                  <option value="abt">Fórmula ABT</option>
+                </select>
               </div>
             </div>
           </div>
-        )}
 
-        {/* ESTRUCTURA 2: EL VIAJE DEL HÉROE */}
-        {activeStructure === 'hero' && (
-          <div className="struct-detail-panel animate-fade-in">
-            <div className="struct-header-info">
-              <div className="struct-badge-row">
-                <span className="struct-badge bg-cyan">Circuito Neuroevolutivo de Supervivencia</span>
-                <span className="struct-badge bg-blue">Teoría de la Mente & Hipervigilancia</span>
+          {/* SVG DIAGRAMA VECTORIAL DINÁMICO CON TRAZADOR EN VIVO */}
+          <div className="struct-svg-container" style={{ position: 'relative' }}>
+            <svg viewBox="0 0 800 280" className="struct-svg">
+              <defs>
+                <linearGradient id="mainArcGrad" x1="0%" y1="100%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="#38bdf8" />
+                  <stop offset="35%" stopColor="#fbbf24" />
+                  <stop offset="60%" stopColor="#ff007f" />
+                  <stop offset="85%" stopColor="#c084fc" />
+                  <stop offset="100%" stopColor="#10b981" />
+                </linearGradient>
+                <filter id="svgArcGlow" x="-20%" y="-20%" width="140%" height="140%">
+                  <feGaussianBlur stdDeviation="4" result="blur" />
+                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
+                </filter>
+              </defs>
+
+              {/* LÍNEAS GUÍA DE FONDO */}
+              <line x1="50" y1="220" x2="750" y2="220" stroke="rgba(255, 255, 255, 0.12)" strokeWidth="1" strokeDasharray="4 4" />
+              <line x1="50" y1="135" x2="750" y2="135" stroke="rgba(255, 255, 255, 0.06)" strokeWidth="1" strokeDasharray="2 4" />
+              <line x1="50" y1="50" x2="750" y2="50" stroke="rgba(255, 255, 255, 0.08)" strokeWidth="1" strokeDasharray="3 3" />
+              
+              <text x="750" y="238" textAnchor="end" fill="rgba(255, 255, 255, 0.45)" fontSize="11" fontWeight="700">Tiempo / Recorrido Narrativo ➔</text>
+              <text x="50" y="44" textAnchor="start" fill="#f43f5e" fontSize="10" fontWeight="800">▲ Tensión Máxima (100%)</text>
+              <text x="50" y="214" textAnchor="start" fill="#38bdf8" fontSize="10" fontWeight="700">Calma (0%)</text>
+
+              {/* CURVA COMPARATIVA SUPERPUESTA (SI ESTÁ ACTIVA) */}
+              {compareStruct && (
+                <path
+                  d={compareStruct.svgPath}
+                  fill="none"
+                  stroke="#38bdf8"
+                  strokeWidth="2.5"
+                  strokeDasharray="6 4"
+                  opacity="0.6"
+                />
+              )}
+
+              {/* CURVA PRINCIPAL DE TENSIÓN */}
+              <path
+                d={currentStruct.svgPath}
+                fill="none"
+                stroke="url(#mainArcGrad)"
+                strokeWidth="5"
+                filter="url(#svgArcGlow)"
+              />
+
+              {/* LÍNEA GUÍA VERTICAL DEL PUNTO VIAJERO */}
+              <line
+                x1={trackerX}
+                y1="35"
+                x2={trackerX}
+                y2="220"
+                stroke="rgba(255, 255, 255, 0.3)"
+                strokeWidth="1.5"
+                strokeDasharray="3 3"
+              />
+
+              {/* NODOS DE CADA FASE DE LA ESTRUCTURA */}
+              {currentStruct.phases.map((ph) => {
+                const nodeX = 50 + (ph.percent / 100) * 700;
+                const nodeY = 220 - (ph.tension / 100) * 170;
+                const isCurrent = currentPhase.id === ph.id;
+                return (
+                  <g
+                    key={ph.id}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setTimelinePercent(ph.percent);
+                      setIsPlayingArc(false);
+                    }}
+                    style={{ cursor: 'pointer' }}
+                  >
+                    {isCurrent && (
+                      <circle cx={nodeX} cy={nodeY} r="18" fill="none" stroke="#f43f5e" strokeWidth="2" className="animated-target-ring" />
+                    )}
+                    <circle
+                      cx={nodeX}
+                      cy={nodeY}
+                      r={isCurrent ? 9 : 6}
+                      fill={isCurrent ? '#ffffff' : '#fbbf24'}
+                      stroke={isCurrent ? '#ff007f' : '#b45309'}
+                      strokeWidth={isCurrent ? '3' : '2'}
+                    />
+                    <text
+                      x={nodeX}
+                      y={nodeY - 14}
+                      textAnchor="middle"
+                      fill={isCurrent ? '#38bdf8' : '#e2e8f0'}
+                      fontSize="10"
+                      fontWeight={isCurrent ? '900' : '700'}
+                    >
+                      {ph.name.split(':')[0]}
+                    </text>
+                  </g>
+                );
+              })}
+
+              {/* TRAZADOR EN VIVO (GLOW DOT VIAJERO) */}
+              <g pointerEvents="none">
+                <circle cx={trackerX} cy={trackerY} r="14" fill="rgba(244, 63, 94, 0.25)" className="pulse-aura" />
+                <circle cx={trackerX} cy={trackerY} r="7" fill="#ffffff" stroke="#ff007f" strokeWidth="3" />
+              </g>
+            </svg>
+
+            {/* LEYENDA DEL COMPARADOR */}
+            {compareStruct && (
+              <div style={{ position: 'absolute', top: '16px', right: '20px', background: 'rgba(15, 23, 42, 0.85)', padding: '6px 12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.3)', fontSize: '0.78rem' }}>
+                <span style={{ color: '#38bdf8', fontWeight: 700 }}>--- {compareStruct.name} (Comparativa)</span>
               </div>
-              <h3>🌌 El Viaje del Héroe (Monomito Neuroevolutivo)</h3>
-              <p>
-                Al desplazar al protagonista desde su mundo ordinario conocido hacia un territorio desconocido y amenazante, se activan fuertemente los sistemas de hipervigilancia del receptor. Genera un acoplamiento profundo en las redes cerebrales de la "Teoría de la Mente" y facilita la reconfiguración de esquemas mentales preexistentes.
-              </p>
+            )}
+          </div>
+
+          {/* PANEL DE TELEMETRÍA CEREBRAL & NEUROQUÍMICA EN VIVO */}
+          <div className="arc-telemetry-hud glass-panel" style={{ marginTop: '16px', padding: '20px', borderRadius: '16px', border: '1.5px solid rgba(168, 85, 247, 0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '12px', marginBottom: '14px' }}>
+              <div>
+                <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#c084fc', fontWeight: 800 }}>
+                  📍 Fase Activa ({timelinePercent}% del Relato):
+                </span>
+                <h4 style={{ fontSize: '1.25rem', color: '#f8fafc', margin: '2px 0 0 0', fontWeight: 800 }}>
+                  {currentPhase.name}
+                </h4>
+              </div>
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center' }}>
+                <span className="brain-region-badge" style={{ background: 'rgba(56, 189, 248, 0.15)', border: '1px solid rgba(56, 189, 248, 0.4)', color: '#38bdf8', padding: '4px 10px', borderRadius: '8px', fontSize: '0.8rem', fontWeight: 700 }}>
+                  🧠 {currentPhase.brainRegion}
+                </span>
+              </div>
             </div>
 
-            <div className="hero-stages-container">
-              {[
-                { num: 'I', title: '🏡 Mundo Ordinario', desc: 'Estado inicial de comodidad. Establece la base semántica y acoplamiento inicial.' },
-                { num: 'II', title: '🚨 Llamado a la Aventura', desc: 'Se rompe la homeostasis. Liberación inicial de Cortisol y curiosidad.' },
-                { num: 'III', title: '🌌 Cruzar el Umbral Desconocido', desc: 'Entrada al territorio amenazante. Hipervigilancia y atención focalizada.' },
-                { num: 'IV', title: '🐉 La Ordalía (Prueba Máxima)', desc: 'Clímax del conflicto. Saturación de Oxitocina y transporte narrativo.' },
-                { num: 'V', title: '🏆 Elixir & Retorno Transformado', desc: 'Resolución. Liberación masiva de Dopamina y fijación de aprendizaje.' }
-              ].map((stg, i) => (
-                <div key={i} className="hero-stage-card">
-                  <span className="stage-num">{stg.num}</span>
-                  <h4>{stg.title}</h4>
-                  <p>{stg.desc}</p>
+            {/* BARRAS DE NEUROTRANSMISORES EN TIEMPO REAL */}
+            <div className="neurochemical-gauges-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(210px, 1fr))', gap: '14px', marginBottom: '18px' }}>
+              {/* CORTISOL */}
+              <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#f87171' }}>🔴 Cortisol (Estrés & Alerta)</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#f87171' }}>{currentPhase.cortisol}%</span>
+                </div>
+                <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${currentPhase.cortisol}%`, height: '100%', background: 'linear-gradient(90deg, #f87171, #ef4444)', transition: 'width 0.3s ease' }} />
+                </div>
+              </div>
+
+              {/* DOPAMINA */}
+              <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#fbbf24' }}>⚡ Dopamina (Expectativa & Aprendizaje)</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#fbbf24' }}>{currentPhase.dopamine}%</span>
+                </div>
+                <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${currentPhase.dopamine}%`, height: '100%', background: 'linear-gradient(90deg, #fbbf24, #f59e0b)', transition: 'width 0.3s ease' }} />
+                </div>
+              </div>
+
+              {/* OXITOCINA */}
+              <div className="gauge-card" style={{ background: 'rgba(15, 23, 42, 0.8)', padding: '12px 14px', borderRadius: '12px', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '6px' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#34d399' }}>🟢 Oxitocina (Empatía & Transporte)</span>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#34d399' }}>{currentPhase.oxytocin}%</span>
+                </div>
+                <div style={{ width: '100%', height: '8px', background: 'rgba(255, 255, 255, 0.1)', borderRadius: '4px', overflow: 'hidden' }}>
+                  <div style={{ width: `${currentPhase.oxytocin}%`, height: '100%', background: 'linear-gradient(90deg, #34d399, #10b981)', transition: 'width 0.3s ease' }} />
+                </div>
+              </div>
+            </div>
+
+            {/* EXPLICACIÓN CIENTÍFICA & CONSEJO PEDAGÓGICO */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '14px' }}>
+              <div style={{ background: 'rgba(2, 6, 23, 0.7)', padding: '12px 16px', borderRadius: '10px', borderLeft: '3px solid #38bdf8' }}>
+                <strong style={{ fontSize: '0.85rem', color: '#38bdf8', display: 'block', marginBottom: '4px' }}>
+                  🔬 En la Mente del Alumno:
+                </strong>
+                <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                  {currentPhase.explanation}
+                </p>
+              </div>
+
+              <div style={{ background: 'rgba(2, 6, 23, 0.7)', padding: '12px 16px', borderRadius: '10px', borderLeft: '3px solid #f59e0b' }}>
+                <strong style={{ fontSize: '0.85rem', color: '#fbbf24', display: 'block', marginBottom: '4px' }}>
+                  💡 Estrategia para el Docente en Aula:
+                </strong>
+                <p style={{ margin: 0, fontSize: '0.88rem', color: '#cbd5e1', lineHeight: 1.5 }}>
+                  {currentPhase.pedagogicalTip}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* EJEMPLOS DIDÁCTICOS POR MATERIA CURRICULAR */}
+          <div className="struct-example-box" style={{ marginTop: '20px' }}>
+            <div className="ex-subject-row" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
+              <span className="ex-label" style={{ fontWeight: 800, color: '#f8fafc' }}>
+                📚 Aplicación Práctica en el Aula ({currentStruct.name}):
+              </span>
+              <div className="ex-btns" style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                {[
+                  { id: 'matematicas', label: '📐 Matemáticas' },
+                  { id: 'ciencias', label: '🧪 Ciencias' },
+                  { id: 'historia', label: '📜 Historia' },
+                  { id: 'crecimiento', label: '🌱 Crecimiento' }
+                ].map(s => (
+                  <button
+                    key={s.id}
+                    className={`ex-btn ${structureSubject === s.id ? 'active' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setStructureSubject(s.id as any);
+                    }}
+                  >
+                    {s.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* TARJETAS DE PASOS DEL EJEMPLO */}
+            <div className="freytag-steps-grid">
+              {(currentStruct.examples[structureSubject] || []).map((st, i) => (
+                <div
+                  key={i}
+                  className={`step-card ${currentPhase.name.includes(st.phase.split(':')[0]) || currentPhase.name.includes(st.phase.split(' ')[0]) ? 'highlight' : ''}`}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    if (currentStruct.phases[i]) {
+                      setTimelinePercent(currentStruct.phases[i].percent);
+                    }
+                  }}
+                  style={{ cursor: 'pointer' }}
+                >
+                  <span className="step-phase">📍 {st.phase}</span>
+                  <p className="step-text">{st.text}</p>
                 </div>
               ))}
             </div>
           </div>
-        )}
-
-        {/* ESTRUCTURA 3: ESTRUCTURA ABT (AND, BUT, THEREFORE) */}
-        {activeStructure === 'abt' && (
-          <div className="struct-detail-panel animate-fade-in">
-            <div className="struct-header-info">
-              <div className="struct-badge-row">
-                <span className="struct-badge bg-emerald">Plantilla Minimalista Ultra-Eficiente</span>
-                <span className="struct-badge bg-rose">Error de Predicción Explícito</span>
-              </div>
-              <h3>⚡ La Estructura ABT (And, But, Therefore / Y, Pero, Por lo Tanto)</h3>
-              <p>
-                Es la plantilla neurolingüística de mayor impacto para formatos breves y micro-lecciones. El "Y" construye el contexto; el "Pero" actúa como un error de predicción explícito que genera un pico instantáneo de cortisol y reorienta la atención; el "Por lo tanto" satisface la necesidad de resolución liberando dopamina.
-              </p>
-            </div>
-
-            <div className="abt-diagram-grid">
-              <div className="abt-block abt-and">
-                <div className="abt-header">
-                  <span className="abt-letter">Y</span>
-                  <span className="abt-word">AND (Contexto)</span>
-                </div>
-                <p>Establece la base semántica inicial y acuerda el punto de partida con el oyente.</p>
-                <span className="abt-neuromark">🧠 Acoplamiento Neuronal</span>
-              </div>
-
-              <div className="abt-block abt-but">
-                <div className="abt-header">
-                  <span className="abt-letter">PERO</span>
-                  <span className="abt-word">BUT (Sorpresa / Conflicto)</span>
-                </div>
-                <p>Introduce un error de predicción inesperado que rompe lo predecible.</p>
-                <span className="abt-neuromark">⚡ Pico de Cortisol & Atención</span>
-              </div>
-
-              <div className="abt-block abt-therefore">
-                <div className="abt-header">
-                  <span className="abt-letter">POR LO TANTO</span>
-                  <span className="abt-word">THEREFORE (Resolución)</span>
-                </div>
-                <p>Cierra la brecha de curiosidad proporcionando la solución lógica y clara.</p>
-                <span className="abt-neuromark">✨ Descarga de Dopamina</span>
-              </div>
-            </div>
-
-            <div className="abt-formula-box">
-              <span className="formula-title">🧪 Fórmula ABT Aplicada en el Aula:</span>
-              <p className="formula-text">
-                "Los estudiantes entendían la teoría atómica <strong>[Y]</strong> sabían dibujar los electrones en la libreta, <strong>[PERO]</strong> al mezclar los reactivos la solución cambió de color inesperadamente, <strong>[POR LO TANTO]</strong> descubrieron la regla de valencia en la práctica."
-              </p>
-            </div>
-          </div>
-        )}
+        </div>
       </div>
     </div>
-  );
-
-  return (
+  );  return (
     <div className={`sm-container animate-fade-in ${isProjectorMode ? 'projector-mode' : ''}`}>
       
       {/* NAVEGACIÓN SUPERIOR DE MÓDULOS PRINCIPALES */}
@@ -1202,6 +846,11 @@ export default function StoryMachine() {
                         </span>
                         <h3 className="sm-item-title">{reel.current.title}</h3>
                         <p className="sm-item-description">{reel.current.description}</p>
+                        {cat === 'personaje' && reel.current.trait && (
+                          <div className="sm-trait-badge" title="Rasgo singular del personaje">
+                            💡 {reel.current.trait}
+                          </div>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -1264,6 +913,78 @@ export default function StoryMachine() {
           </div>
 
           {/* Prompt Result Panel */}
+          {/* TÓMBOLA DE GIRO DRAMÁTICO INESPERADO (PLOT TWIST) */}
+          <div className="sm-twist-section" style={{ maxWidth: '960px', margin: '20px auto', textAlign: 'center' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                className="sm-twist-btn"
+                onClick={spinPlotTwist}
+                disabled={isTwistSpinning}
+                style={{
+                  background: 'linear-gradient(135deg, #f59e0b, #ec4899)',
+                  border: 'none',
+                  color: '#fff',
+                  padding: '12px 24px',
+                  borderRadius: '14px',
+                  fontSize: '0.98rem',
+                  fontWeight: 800,
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 18px rgba(245, 158, 11, 0.4)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px'
+                }}
+                title="Gira la ruleta de sorpresas para añadir una anomalía o revelación inesperada al cuento"
+              >
+                {isTwistSpinning ? '🌀 Girando Ruleta...' : '⚡ Girar Ruleta de Giro Inesperado (Plot Twist)'}
+              </button>
+
+              {showPlotTwist && (
+                <button
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setShowPlotTwist(false);
+                    setActivePlotTwist(null);
+                  }}
+                  style={{
+                    background: 'rgba(255, 255, 255, 0.08)',
+                    border: '1px solid rgba(255, 255, 255, 0.2)',
+                    color: '#cbd5e1',
+                    padding: '12px 18px',
+                    borderRadius: '14px',
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    cursor: 'pointer'
+                  }}
+                >
+                  ✕ Quitar Giro
+                </button>
+              )}
+            </div>
+
+            {showPlotTwist && activePlotTwist && (
+              <div className="sm-twist-card animate-zoom-in" style={{ marginTop: '16px', background: 'rgba(245, 158, 11, 0.1)', border: '1.5px solid rgba(245, 158, 11, 0.4)', borderRadius: '16px', padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '16px', textAlign: 'left' }}>
+                <span style={{ fontSize: '2.5rem', background: 'rgba(245, 158, 11, 0.2)', padding: '10px 14px', borderRadius: '14px' }}>
+                  {activePlotTwist.emoji}
+                </span>
+                <div style={{ flex: 1 }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 900, textTransform: 'uppercase', color: '#f59e0b', letterSpacing: '0.08em' }}>
+                      ¡GIRO DRAMÁTICO INESPERADO!
+                    </span>
+                    <strong style={{ color: '#fff', fontSize: '1.1rem' }}>{activePlotTwist.title}</strong>
+                  </div>
+                  <p style={{ margin: '4px 0 6px 0', fontSize: '1rem', color: '#fef3c7', fontWeight: 600 }}>
+                    "{activePlotTwist.prompt}"
+                  </p>
+                  <span style={{ fontSize: '0.8rem', color: '#38bdf8' }}>
+                    🧠 <em>Efecto Cognitivo:</em> {activePlotTwist.effect}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+
           {!isAnyReelSpinning && (
             <div className="sm-prompt-box animate-zoom-in">
               <div className="sm-prompt-title">
