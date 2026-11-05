@@ -53,6 +53,7 @@ class SoundManager {
     this.muted = muted;
     if (typeof window !== 'undefined') {
       localStorage.setItem('sutz_portal_sound_muted', String(muted));
+      localStorage.setItem('sutz_audio_muted', String(muted));
     }
     this.listeners.forEach((fn) => fn(muted));
   }

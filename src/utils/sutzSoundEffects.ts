@@ -15,7 +15,7 @@ class SutzAudioManager {
 
   constructor() {
     if (typeof window !== 'undefined') {
-      const storedMute = localStorage.getItem('sutz_audio_muted');
+      const storedMute = localStorage.getItem('sutz_portal_sound_muted') ?? localStorage.getItem('sutz_audio_muted');
       this.isMuted = storedMute === 'true';
 
       const storedMusic = localStorage.getItem('sutz_music_enabled');
@@ -47,6 +47,7 @@ class SutzAudioManager {
     this.isMuted = !enabled;
     if (typeof window !== 'undefined') {
       localStorage.setItem('sutz_audio_muted', String(this.isMuted));
+      localStorage.setItem('sutz_portal_sound_muted', String(this.isMuted));
     }
     if (!this.isMuted) {
       this.playClick();

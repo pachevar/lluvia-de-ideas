@@ -105,7 +105,8 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
       resetForm();
     } catch (err: unknown) {
       console.error('Error inicio con Google:', err);
-      setError('No se pudo completar el inicio de sesión con Google.');
+      const msg = (err as Error)?.message || 'No se pudo completar el inicio de sesión con Google.';
+      setError(msg);
     } finally {
       setLoading(false);
     }
@@ -134,6 +135,24 @@ export const AuthModal: React.FC<AuthModalProps> = ({ isOpen, onClose, initialMo
             {mode === 'register' && 'Únete a la comunidad de docentes y estudiantes de Lluvia de Ideas.'}
             {mode === 'forgot' && 'Ingresa tu correo para recibir las instrucciones de recuperación.'}
           </p>
+        </div>
+
+        {/* Development Lock Alert */}
+        <div style={{
+          background: 'rgba(245, 158, 11, 0.12)',
+          border: '1px solid rgba(245, 158, 11, 0.35)',
+          borderRadius: '10px',
+          padding: '8px 12px',
+          margin: '0 0 16px 0',
+          fontSize: '0.8rem',
+          color: '#fbbf24',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          lineHeight: 1.35
+        }}>
+          <span style={{ fontSize: '1.1rem' }}>🚧</span>
+          <span><strong>Fase de Desarrollo Activo:</strong> Acceso restringido temporalmente a la cuenta editorial oficial (<code>lluviadeideaseditorial@gmail.com</code>).</span>
         </div>
 
         {/* Tabs for Login / Register */}

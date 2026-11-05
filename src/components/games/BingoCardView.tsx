@@ -6,7 +6,6 @@ import { db } from '../../firebase';
 import type { BingoCard, BingoGame, BingoPrize, Sponsor } from '../../types';
 import { validateBingoCard } from '../../utils/bingoGenerator';
 import { soundEffects } from '../../utils/soundEffects';
-import html2canvas from 'html2canvas';
 import { BingoDemoInviteModal } from './BingoDemoInviteModal';
 import './Bingo.css';
 
@@ -135,6 +134,7 @@ export default function BingoCardView() {
     if (!ticketRef.current || !cardData || !gameData) return;
     setIsDownloading(true);
     try {
+      const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(ticketRef.current, {
         scale: 3,
         backgroundColor: null,

@@ -14,6 +14,16 @@ import {
 import { doc, getDoc, setDoc, updateDoc, serverTimestamp } from 'firebase/firestore';
 import { auth, db } from '../firebase';
 
+export const DEV_ALLOWED_EMAILS = [
+  'lluviadeideaseditorial@gmail.com',
+  'admin@lluviadeideasgt.com'
+];
+
+export const isDevAllowedEmail = (email: string | null | undefined): boolean => {
+  if (!email) return false;
+  return DEV_ALLOWED_EMAILS.includes(email.toLowerCase().trim());
+};
+
 export interface UserProfile {
   uid: string;
   email: string | null;
@@ -114,12 +124,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
-      setUser(currentUser);
       try {
         if (currentUser) {
+          // Bloqueo estricto durante desarrollo: solo la cuenta editorial oficial tiene acceso
+          if (!isDevAllowedEmail(currentUser.email)) {
+            console.warn(`[AuthContext] Acceso bloqueado en desarrollo para: ${currentUser.email}. Cerrando sesión.`);
+            await signOut(auth);
+            setUser(null);
+            setUserProfile(null);
+            setIsAdmin(false);
+            setLoading(false);
+            return;
+          }
+
+          setUser(currentUser);
           const profile = await syncUserProfile(currentUser);
           await resolveAdminStatus(currentUser, profile);
         } else {
+          setUser(null);
           setUserProfile(null);
           setIsAdmin(false);
         }
@@ -134,14 +156,28 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const login = async (email: string, pass: string) => {
+    if (!isDevAllowedEmail(email)) {
+      throw new Error(
+        'Acceso restringido temporalmente: El portal está en fase de desarrollo activo. Por ahora solo se permite el acceso a la cuenta editorial oficial (lluviadeideaseditorial@gmail.com).'
+      );
+    }
     const res = await signInWithEmailAndPassword(auth, email, pass);
     if (res.user) {
+      if (!isDevAllowedEmail(res.user.email)) {
+        await signOut(auth);
+        throw new Error('Cuenta no autorizada durante el desarrollo.');
+      }
       const profile = await syncUserProfile(res.user);
       await resolveAdminStatus(res.user, profile);
     }
   };
 
   const register = async (email: string, pass: string, name: string, role: 'student' | 'teacher' = 'student') => {
+    if (!isDevAllowedEmail(email)) {
+      throw new Error(
+        'Registro deshabilitado temporalmente: La creación de cuentas públicas está pausada mientras se calibran los módulos didácticos y de laboratorio.'
+      );
+    }
     const res = await createUserWithEmailAndPassword(auth, email, pass);
     if (res.user) {
       await updateProfile(res.user, { displayName: name });
@@ -155,6 +191,12 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     provider.setCustomParameters({ prompt: 'select_account' });
     const res = await signInWithPopup(auth, provider);
     if (res.user) {
+      if (!isDevAllowedEmail(res.user.email)) {
+        await signOut(auth);
+        throw new Error(
+          `Acceso restringido: El correo (${res.user.email || 'desconocido'}) no está autorizado durante el desarrollo. Solo se permite el acceso a la cuenta editorial oficial (lluviadeideaseditorial@gmail.com).`
+        );
+      }
       const profile = await syncUserProfile(res.user);
       await resolveAdminStatus(res.user, profile);
     }

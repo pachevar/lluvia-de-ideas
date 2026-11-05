@@ -9,7 +9,6 @@ import {
   type GameColorTarget
 } from '../utils/colorUtils';
 import { useNavigate } from 'react-router-dom';
-import html2canvas from 'html2canvas';
 import { ColorRabbit } from '../components/color/ColorRabbit';
 import { soundEffects } from '../utils/soundEffects';
 import './ColorTheory.css';
@@ -406,6 +405,7 @@ export default function ColorTheory() {
     if (!paletteExportRef.current) return;
     setIsExporting(true);
     try {
+      const { default: html2canvas } = await import('html2canvas');
       const canvas = await html2canvas(paletteExportRef.current, {
         scale: 3,
         backgroundColor: '#0d061c',

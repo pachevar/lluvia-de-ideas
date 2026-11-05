@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { signInWithEmailAndPassword, sendPasswordResetEmail } from 'firebase/auth';
 import { auth } from '../../firebase';
+import { isDevAllowedEmail } from '../../context/AuthContext';
 
 interface AdminLoginProps {
   onBackToPortal: () => void;
@@ -18,6 +19,12 @@ export default function AdminLogin({ onBackToPortal }: AdminLoginProps) {
     e.preventDefault();
     setLoginError('');
     setResetMessage('');
+
+    if (!isDevAllowedEmail(email)) {
+      setLoginError('Acceso restringido: En modo desarrollo solo está habilitado el acceso para la cuenta editorial oficial (lluviadeideaseditorial@gmail.com).');
+      return;
+    }
+
     setLoginLoading(true);
     try {
       await signInWithEmailAndPassword(auth, email, password);
