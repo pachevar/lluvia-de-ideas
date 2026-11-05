@@ -2,6 +2,7 @@ import { useState, useRef, useEffect, useMemo } from 'react';
 import type { PortalConfig, CustomHexagon, HexLayer } from '../../types';
 import { DEFAULT_CONFIG, usePortalConfig } from '../../context/PortalConfigContext';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
+import ImageFramingModal from '../common/ImageFramingModal';
 import { getCandidateHexes } from '../../utils/hexUtils';
 import { HexagonGrid } from '../map/HexagonGrid';
 import GradientBuilder from './GradientBuilder';
@@ -94,6 +95,7 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
   const [showIconPicker, setShowIconPicker] = useState(false);
   const [iconPickerTargetLayer, setIconPickerTargetLayer] = useState<'layerInteractive' | 'layerDeco'>('layerInteractive');
   const [showCartesianAxes, setShowCartesianAxes] = useState(true);
+  const [characterFramingSrc, setCharacterFramingSrc] = useState<string | File | null>(null);
 
   const inspectorSectionRef = useRef<HTMLDivElement>(null);
   const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -289,14 +291,20 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
     }
   };
 
-  const handleUploadCharacter = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadCharacter = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editingHex) return;
+    setCharacterFramingSrc(file);
+    e.target.value = '';
+  };
 
+  const handleCharacterFramingSave = async (framedFile: File) => {
+    if (!editingHex) return;
+    setCharacterFramingSrc(null);
     setUploadingLayer('characterImage');
     setUploadStatusMsg('⚡ Comprimiendo personaje a WebP optimizado...');
     try {
-      const { url } = await uploadImageWithFallback(file, 'character-avatars', 600, 600, 0.82);
+      const { url } = await uploadImageWithFallback(framedFile, 'character-avatars', 600, 600, 0.82);
 
       const updatedHex: CustomHexagon = {
         ...editingHex,
@@ -309,10 +317,10 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
 
       setEditingHex(updatedHex);
       updateHexInGlobalConfig(updatedHex, true, true);
-      setUploadStatusMsg('✨ ¡Personaje subido y guardado exitosamente!');
+      setUploadStatusMsg('✨ ¡Personaje encuadrado y guardado permanentemente!');
       setTimeout(() => setUploadStatusMsg(null), 4000);
     } catch (err) {
-      console.error("Error subiendo personaje:", err);
+      console.error("Error subiendo personaje encuadrado:", err);
       alert("Error al comprimir o subir la imagen del personaje.");
       setUploadStatusMsg(null);
     } finally {
@@ -1844,16 +1852,29 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                       {/* Subida de Imagen Propia */}
                       <div className="inspector-form-group" style={{ marginTop: '12px' }}>
                         <label className="inspector-label">O Subir Imagen Personalizada (WebP / SVG / PNG):</label>
-                        <label className="upload-btn-label" style={{ marginTop: '4px', textAlign: 'center' }}>
-                          {uploadingLayer === 'characterImage' ? '⏳ Comprimiendo a WebP...' : '📤 Subir Personaje Propio (WebP Auto)'}
-                          <input 
-                            type="file" 
-                            style={{ display: 'none' }} 
-                            accept="image/*" 
-                            onChange={handleUploadCharacter} 
-                            disabled={uploadingLayer === 'characterImage'} 
-                          />
-                        </label>
+                        <div style={{ display: 'flex', gap: '8px', marginTop: '4px' }}>
+                          <label className="upload-btn-label" style={{ flex: 1, margin: 0, textAlign: 'center' }}>
+                            {uploadingLayer === 'characterImage' ? '⏳ Comprimiendo a WebP...' : '📤 Subir Personaje Propio'}
+                            <input 
+                              type="file" 
+                              style={{ display: 'none' }} 
+                              accept="image/*" 
+                              onChange={handleUploadCharacter} 
+                              disabled={uploadingLayer === 'characterImage'} 
+                            />
+                          </label>
+                          {editingHex.introModal?.characterImage && (
+                            <button
+                              type="button"
+                              className="btn btn-secondary btn-sm"
+                              onClick={() => setCharacterFramingSrc(editingHex.introModal!.characterImage!)}
+                              style={{ margin: 0, padding: '6px 12px', whiteSpace: 'nowrap' }}
+                              title="Encuadrar y centrar imagen actual del personaje"
+                            >
+                              🎯 Centrar
+                            </button>
+                          )}
+                        </div>
                       </div>
 
                       <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr', gap: '8px', marginTop: '12px' }}>
@@ -2335,7 +2356,18 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
         </div>
       )}
 
-
+      {/* Módulo de Encuadre y Centrado Profesional para Personajes y Avatares */}
+      <ImageFramingModal
+        isOpen={!!characterFramingSrc}
+        imageSrc={characterFramingSrc}
+        title="Encuadre y Centrado del Personaje del Hexágono"
+        subtitle="Ajusta el zoom, panea o rota para que el rostro o figura del personaje quede centrado."
+        aspectRatio={1}
+        targetWidth={600}
+        targetHeight={600}
+        onSave={handleCharacterFramingSave}
+        onClose={() => setCharacterFramingSrc(null)}
+      />
     </div>
   );
 }

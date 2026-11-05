@@ -1428,3 +1428,282 @@
   line-height: 1.65 !important;
   color: #ffffff !important;
 }
+
+/* ==========================================================================
+   ILUSTRACIÓN DE ARQUETIPO: INTERACCIÓN DE ZOOM Y LIGHTBOX EXPANDIDO
+   ========================================================================== */
+
+.cp-clickable-portrait {
+  cursor: zoom-in;
+  position: relative;
+  transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.25s ease;
+}
+
+.cp-clickable-portrait:hover {
+  transform: translateY(-2px) scale(1.015);
+  box-shadow: 0 14px 35px rgba(0, 0, 0, 0.65), 0 0 25px rgba(56, 189, 248, 0.25);
+}
+
+.cp-concept-zoom-hint {
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background: rgba(4, 7, 14, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #f8fafc;
+  font-size: 0.72rem;
+  font-weight: 700;
+  padding: 4px 10px;
+  border-radius: 20px;
+  pointer-events: none;
+  opacity: 0.85;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.cp-clickable-portrait:hover .cp-concept-zoom-hint {
+  opacity: 1;
+  transform: scale(1.05);
+}
+
+.cp-btn-expand-artwork {
+  width: 100%;
+  margin-top: 10px;
+  background: #111a2d;
+  border: 1px solid #1e2e4b;
+  color: #38bdf8;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 8px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.2s ease;
+}
+
+.cp-btn-expand-artwork:hover {
+  background: #192742;
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+/* Botón de Encuadre Profesional (Etapa 4) */
+.cp-btn-framing-editor {
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%);
+  border: 1px solid #38bdf8;
+  color: #ffffff;
+  padding: 10px 16px;
+  border-radius: 10px;
+  font-size: 0.86rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.25);
+  transition: all 0.2s ease;
+  margin-bottom: 6px;
+}
+
+.cp-btn-framing-editor:hover {
+  background: linear-gradient(135deg, #0369a1 0%, #075985 100%);
+  transform: translateY(-1px);
+  box-shadow: 0 6px 18px rgba(2, 132, 199, 0.4);
+}
+
+/* Lightbox Modal de Arquetipo */
+.cp-lightbox-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 10000;
+  background-color: rgba(3, 6, 12, 0.92);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  overflow-y: auto;
+  animation: cpFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cpFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.cp-lightbox-card {
+  background: #0d1322;
+  border: 2px solid #243554;
+  border-radius: 20px;
+  width: 100%;
+  max-width: 820px;
+  max-height: 94vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.85);
+  animation: cpScaleUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes cpScaleUp {
+  from { transform: scale(0.96) translateY(12px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
+}
+
+.cp-lightbox-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.1rem 1.5rem;
+  background: #090e1a;
+  border-bottom: 1px solid #1a273e;
+}
+
+.cp-lightbox-header-info {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.cp-lightbox-icon {
+  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #141e30;
+  border: 1px solid #2a3c5d;
+  border-radius: 12px;
+}
+
+.cp-lightbox-title {
+  margin: 0;
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.cp-lightbox-subtitle {
+  font-size: 0.85rem;
+  color: #94a3b8;
+  display: block;
+  margin-top: 2px;
+}
+
+.cp-lightbox-close-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  font-size: 1.4rem;
+  width: 40px;
+  height: 40px;
+  border-radius: 10px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.15s ease;
+}
+
+.cp-lightbox-close-btn:hover {
+  background: #1e293b;
+  color: #f8fafc;
+}
+
+.cp-lightbox-image-container {
+  position: relative;
+  background: #04070e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  max-height: 60vh;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.cp-lightbox-img {
+  max-width: 100%;
+  max-height: 56vh;
+  object-fit: contain;
+  border-radius: 12px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
+}
+
+.cp-lightbox-badge-floating {
+  position: absolute;
+  top: 1.25rem;
+  left: 1.25rem;
+  background: rgba(13, 19, 34, 0.88);
+  border: 1px solid #38bdf8;
+  color: #38bdf8;
+  padding: 6px 14px;
+  border-radius: 30px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.03em;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+.cp-lightbox-footer {
+  padding: 1.25rem 1.5rem;
+  background: #090e1a;
+  border-top: 1px solid #1a273e;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.cp-lightbox-quote {
+  margin: 0;
+  font-style: italic;
+  font-size: 0.95rem;
+  color: #cbd5e1;
+  border-left: 3px solid #38bdf8;
+  padding-left: 12px;
+  line-height: 1.5;
+}
+
+.cp-lightbox-meta-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+@media (max-width: 600px) {
+  .cp-lightbox-meta-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cp-lightbox-meta-item {
+  background: #111a2d;
+  border-radius: 10px;
+  padding: 10px 14px;
+}
+
+.cp-lightbox-meta-item.light {
+  border-left: 3px solid #f59e0b;
+}
+
+.cp-lightbox-meta-item.shadow {
+  border-left: 3px solid #a855f7;
+}
+
+.cp-lightbox-meta-label {
+  display: block;
+  font-size: 0.76rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #94a3b8;
+  margin-bottom: 4px;
+}
+
+.cp-lightbox-meta-item p {
+  margin: 0;
+  font-size: 0.84rem;
+  color: #f1f5f9;
+  line-height: 1.45;
+}

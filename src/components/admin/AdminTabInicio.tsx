@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { usePortalConfig } from '../../context/PortalConfigContext';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
+import ImageFramingModal from '../common/ImageFramingModal';
 import type { PortalConfig, LandingCardConfig, LandingSectionConfig } from '../../types';
 
 interface AdminTabInicioProps {
@@ -24,6 +25,11 @@ export default function AdminTabInicio({ localConfig, setLocalConfig, updateFiel
   const [activeSectionTab, setActiveSectionTab] = useState<SectionKey>('sutz');
   const [uploadingSectionKey, setUploadingSectionKey] = useState<SectionKey | null>(null);
   const [saveBanner, setSaveBanner] = useState<string | null>(null);
+  const [framingSection, setFramingSection] = useState<{
+    key: SectionKey;
+    title: string;
+    imageSrc: string | File;
+  } | null>(null);
 
   const landingConfig = localConfig.landingConfig || {};
   const cards = landingConfig.cards || {};
@@ -43,15 +49,13 @@ export default function AdminTabInicio({ localConfig, setLocalConfig, updateFiel
     handleUpdateSection(key, 'bullets', currentBullets);
   };
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>, key: SectionKey) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleFramingSave = async (framedFile: File) => {
+    if (!framingSection) return;
+    const { key } = framingSection;
+    setFramingSection(null);
     setUploadingSectionKey(key);
     try {
-      // Compresión WebP client-side con respaldo automático si Firebase Storage tiene cuota llena (402)
-      const { url, isBase64 } = await uploadImageWithFallback(file, 'landing-assets', 1280, 720, 0.78);
-
+      const { url, isBase64 } = await uploadImageWithFallback(framedFile, 'landing-assets', 1280, 720, 0.78);
       const updatedConfig: PortalConfig = {
         ...localConfig,
         landingConfig: {
@@ -65,21 +69,17 @@ export default function AdminTabInicio({ localConfig, setLocalConfig, updateFiel
           }
         }
       };
-
-      if (setLocalConfig) {
-        setLocalConfig(updatedConfig);
-      }
+      if (setLocalConfig) setLocalConfig(updatedConfig);
       await saveConfigToFirestore(updatedConfig);
-
       setSaveBanner(
         isBase64
-          ? `⚡ ¡Imagen de fondo para "${key.toUpperCase()}" optimizada (WebP integrado) y guardada permanentemente en Firestore!`
-          : `✨ ¡Imagen de fondo para "${key.toUpperCase()}" subida y guardada permanentemente en Firestore!`
+          ? `⚡ ¡Imagen de fondo para "${key.toUpperCase()}" encuadrada y guardada permanentemente en Firestore!`
+          : `✨ ¡Imagen de fondo para "${key.toUpperCase()}" encuadrada y guardada permanentemente en Firestore!`
       );
       setTimeout(() => setSaveBanner(null), 5000);
     } catch (err) {
-      console.error('Error procesando imagen de fondo:', err);
-      alert('Error al procesar o guardar la imagen de fondo.');
+      console.error('Error procesando imagen encuadrada:', err);
+      alert('Error al guardar la imagen encuadrada.');
     } finally {
       setUploadingSectionKey(null);
     }
@@ -269,10 +269,27 @@ export default function AdminTabInicio({ localConfig, setLocalConfig, updateFiel
                       type="file"
                       accept="image/*"
                       style={{ display: 'none' }}
-                      onChange={(e) => handleImageUpload(e, key)}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFramingSection({ key, title: `Fondo: ${key.toUpperCase()}`, imageSrc: file });
+                          e.target.value = '';
+                        }
+                      }}
                       disabled={uploadingSectionKey === key}
                     />
                   </label>
+                  {sectionData.bgImage && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={() => setFramingSection({ key, title: `Fondo: ${key.toUpperCase()}`, imageSrc: sectionData.bgImage! })}
+                      style={{ margin: 0, padding: '6px 12px' }}
+                      title="Encuadrar y centrar imagen actual"
+                    >
+                      🎯 Centrar
+                    </button>
+                  )}
                   {sectionData.bgImage && (
                     <button 
                       type="button" 
@@ -330,6 +347,18 @@ export default function AdminTabInicio({ localConfig, setLocalConfig, updateFiel
 
       </div>
 
+      {/* Módulo de Encuadre y Centrado Profesional para Fondos de Portada */}
+      <ImageFramingModal
+        isOpen={!!framingSection}
+        imageSrc={framingSection?.imageSrc || null}
+        title={framingSection ? `Encuadrar: ${framingSection.title}` : 'Encuadre Profesional'}
+        subtitle="Ajusta el zoom, panea o rota la imagen panorámica de fondo para tu sección."
+        aspectRatio={16 / 9}
+        targetWidth={1280}
+        targetHeight={720}
+        onSave={handleFramingSave}
+        onClose={() => setFramingSection(null)}
+      />
     </div>
   );
 }

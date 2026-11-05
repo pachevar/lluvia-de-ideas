@@ -371,3 +371,26 @@
   }
 }
 
+.admin-framing-btn {
+  background: #111a2d;
+  border: 1px solid #1e2e4b;
+  color: #38bdf8;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all 0.15s ease;
+}
+
+.admin-framing-btn:hover {
+  background: #192742;
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+

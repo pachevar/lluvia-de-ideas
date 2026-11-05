@@ -8,7 +8,7 @@ import {
   CHARACTER_DIMENSIONS,
   type CharacterArchetype
 } from '../data/archetypesData';
-import { compressImageWebP, blobToDataURL } from '../utils/imageUpload';
+import ImageFramingModal from '../components/common/ImageFramingModal';
 import './CreacionPersonajes.css';
 
 // Ilustraciones base curadas para cada uno de los 12 arquetipos clásicos
@@ -326,11 +326,29 @@ export default function CreacionPersonajes() {
   const [imgPosY, setImgPosY] = useState<number>(50);
 
   const [previewFormat, setPreviewFormat] = useState<'cromo' | 'expediente'>('cromo');
-  const [isUploadingChar, setIsUploadingChar] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
   const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
+
+  // Modal de visualización expandida de la ilustración del arquetipo
+  const [expandedArchetype, setExpandedArchetype] = useState<{
+    id: string;
+    name: string;
+    icon: string;
+    color: string;
+    image: string;
+    quote: string;
+    neuroBadge: string;
+    description: string;
+    role: string;
+    lightAspect: string;
+    shadowAspect: string;
+  } | null>(null);
+
+  // Modal de encuadre y centrado profesional para el avatar del personaje
+  const [framingModalOpen, setFramingModalOpen] = useState<boolean>(false);
+  const [framingImageSrc, setFramingImageSrc] = useState<string | File | null>(null);
 
   // Galería de personajes guardados por el estudiante en clase
   const [savedRoster, setSavedRoster] = useState<SavedCharacterProfile[]>(() => {
@@ -514,38 +532,48 @@ export default function CreacionPersonajes() {
   }, [charLie, charWound, charPhysical, charSocial, threeDimensionalScore, charName, charImage]);
 
   // =========================================================================
-  // SUBIDA Y PERSONALIZACIÓN DE IMAGEN DEL PERSONAJE (ETAPA 4)
+  // SUBIDA Y ENCUADRE PROFESIONAL DE IMAGEN DEL PERSONAJE (ETAPA 4)
   // =========================================================================
 
-  // Subir imagen para el Personaje Final (Etapa 4)
-  const processCharacterFile = async (file: File) => {
-    setIsUploadingChar(true);
+  const openFramingForFile = (file: File) => {
     setUploadError(null);
+    setFramingImageSrc(file);
+    setFramingModalOpen(true);
     soundEffects.playClick();
+  };
 
-    try {
-      const compressedBlob = await compressImageWebP(file, 800, 800, 0.85);
-      const dataUrl = await blobToDataURL(compressedBlob);
-      setCharImage(dataUrl);
-      soundEffects.playSuccess();
-    } catch {
-      setUploadError('No se pudo procesar la imagen. Intenta con un archivo JPG, PNG o WebP válido.');
-      soundEffects.playError();
-    } finally {
-      setIsUploadingChar(false);
-    }
+  const openFramingForCurrent = () => {
+    if (!charImage) return;
+    setUploadError(null);
+    setFramingImageSrc(charImage);
+    setFramingModalOpen(true);
+    soundEffects.playClick();
+  };
+
+  const handleFramingSave = (_framedFile: File, dataUrl: string) => {
+    setCharImage(dataUrl);
+    setImgZoom(100);
+    setImgPosY(50);
+    setFramingModalOpen(false);
+    setFramingImageSrc(null);
+    soundEffects.playSuccess();
   };
 
   const handleCharacterImageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) processCharacterFile(file);
+    if (file) {
+      openFramingForFile(file);
+      e.target.value = '';
+    }
   };
 
   const handleCharacterDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     const file = e.dataTransfer.files?.[0];
-    if (file) processCharacterFile(file);
+    if (file) {
+      openFramingForFile(file);
+    }
   };
 
   // Adoptar el arquetipo de Etapa 1 para nuestro personaje y avanzar
@@ -930,8 +958,45 @@ FRASE INSIGNIA: ${charQuote}
               {/* Columna Izquierda: Retrato Canónico Oficial */}
               <div className="cp-spotlight-visual-col">
                 <div
-                  className="cp-concept-portrait-frame"
+                  className="cp-concept-portrait-frame cp-clickable-portrait"
                   style={{ borderColor: spotlightArchetype.color }}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setExpandedArchetype({
+                      id: spotlightArchetype.id,
+                      name: spotlightArchetype.name,
+                      icon: spotlightArchetype.icon,
+                      color: spotlightArchetype.color,
+                      image: spotlightArchetypeImg,
+                      quote: spotlightArchetype.quote,
+                      neuroBadge: spotlightArchetype.neuroBadge,
+                      description: spotlightArchetype.functionDesc,
+                      role: spotlightArchetype.roleSubtitle,
+                      lightAspect: spotlightArchetype.coreDesire,
+                      shadowAspect: spotlightArchetype.shadowWeakness
+                    });
+                  }}
+                  title="Haz clic sobre la imagen para verla en pantalla completa"
+                  role="button"
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setExpandedArchetype({
+                        id: spotlightArchetype.id,
+                        name: spotlightArchetype.name,
+                        icon: spotlightArchetype.icon,
+                        color: spotlightArchetype.color,
+                        image: spotlightArchetypeImg,
+                        quote: spotlightArchetype.quote,
+                        neuroBadge: spotlightArchetype.neuroBadge,
+                        description: spotlightArchetype.functionDesc,
+                        role: spotlightArchetype.roleSubtitle,
+                        lightAspect: spotlightArchetype.coreDesire,
+                        shadowAspect: spotlightArchetype.shadowWeakness
+                      });
+                    }
+                  }}
                 >
                   <img
                     src={spotlightArchetypeImg}
@@ -942,7 +1007,34 @@ FRASE INSIGNIA: ${charQuote}
                     <span>{spotlightArchetype.icon}</span>
                     <span>{spotlightArchetype.name.split('/')[0]}</span>
                   </div>
+                  <div className="cp-concept-zoom-hint">
+                    <span>🔍 Clic para expandir imagen</span>
+                  </div>
                 </div>
+
+                {/* Botón rápido para expandir */}
+                <button
+                  type="button"
+                  className="cp-btn-expand-artwork"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setExpandedArchetype({
+                      id: spotlightArchetype.id,
+                      name: spotlightArchetype.name,
+                      icon: spotlightArchetype.icon,
+                      color: spotlightArchetype.color,
+                      image: spotlightArchetypeImg,
+                      quote: spotlightArchetype.quote,
+                      neuroBadge: spotlightArchetype.neuroBadge,
+                      description: spotlightArchetype.functionDesc,
+                      role: spotlightArchetype.roleSubtitle,
+                      lightAspect: spotlightArchetype.coreDesire,
+                      shadowAspect: spotlightArchetype.shadowWeakness
+                    });
+                  }}
+                >
+                  <span>🔍</span> Ver Ilustración en Alta Resolución
+                </button>
 
                 {/* Aviso Editorial Institucional */}
                 <div className="cp-concept-official-notice">
@@ -2028,21 +2120,15 @@ FRASE INSIGNIA: ${charQuote}
                     onChange={handleCharacterImageInput}
                     style={{ display: 'none' }}
                   />
-                  {isUploadingChar ? (
-                    <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '1rem' }}>
-                      ⏳ Procesando y optimizando tu imagen...
-                    </div>
-                  ) : (
-                    <div>
-                      <div style={{ fontSize: '2.2rem', marginBottom: '6px' }}>📤</div>
-                      <strong style={{ display: 'block', fontSize: '1rem', color: '#f8fafc', marginBottom: '4px' }}>
-                        Haz clic aquí para subir tu imagen o arrástrala desde tu carpeta
-                      </strong>
-                      <span style={{ fontSize: '0.84rem', color: '#94a3b8' }}>
-                        Formatos JPG, PNG o WebP · Se optimiza automáticamente sin salir de la plataforma
-                      </span>
-                    </div>
-                  )}
+                  <div>
+                    <div style={{ fontSize: '2.2rem', marginBottom: '6px' }}>📤</div>
+                    <strong style={{ display: 'block', fontSize: '1rem', color: '#f8fafc', marginBottom: '4px' }}>
+                      Haz clic aquí para subir tu imagen o arrástrala desde tu carpeta
+                    </strong>
+                    <span style={{ fontSize: '0.84rem', color: '#94a3b8' }}>
+                      Formatos JPG, PNG o WebP · Se abrirá el editor para encuadrar y centrar a la perfección
+                    </span>
+                  </div>
                 </div>
 
                 {uploadError && (
@@ -2050,6 +2136,17 @@ FRASE INSIGNIA: ${charQuote}
                     ⚠️ {uploadError}
                   </div>
                 )}
+
+                {/* Botón de apertura de módulo de encuadre profesional */}
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    onClick={openFramingForCurrent}
+                    className="cp-btn-framing-editor"
+                  >
+                    <span>🎯</span> Abrir Editor de Encuadre, Zoom y Rotación Profesional
+                  </button>
+                </div>
 
                 {/* Controles de Encuadre (Zoom y Posición Vertical) */}
                 <div style={{
@@ -2424,6 +2521,98 @@ FRASE INSIGNIA: ${charQuote}
           </section>
         )}
       </main>
+
+      {/* =========================================================================
+          LIGHTBOX EXPANDIDO: VISUALIZACIÓN DE ILUSTRACIÓN DE ARQUETIPO
+          ========================================================================= */}
+      {expandedArchetype && (
+        <div
+          className="cp-lightbox-backdrop"
+          onClick={() => {
+            soundEffects.playClick();
+            setExpandedArchetype(null);
+          }}
+          role="dialog"
+          aria-modal="true"
+        >
+          <div
+            className="cp-lightbox-card"
+            style={{ borderColor: `${expandedArchetype.color}99` }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header del Lightbox */}
+            <div className="cp-lightbox-header">
+              <div className="cp-lightbox-header-info">
+                <span className="cp-lightbox-icon">{expandedArchetype.icon}</span>
+                <div>
+                  <h3 className="cp-lightbox-title" style={{ color: expandedArchetype.color }}>
+                    {expandedArchetype.name}
+                  </h3>
+                  <span className="cp-lightbox-subtitle">{expandedArchetype.role}</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className="cp-lightbox-close-btn"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setExpandedArchetype(null);
+                }}
+                aria-label="Cerrar vista expandida"
+              >
+                ✕
+              </button>
+            </div>
+
+            {/* Imagen Principal en Alta Definición */}
+            <div className="cp-lightbox-image-container">
+              <img
+                src={expandedArchetype.image}
+                alt={expandedArchetype.name}
+                className="cp-lightbox-img"
+              />
+              <div className="cp-lightbox-badge-floating">
+                <span>🧠 {expandedArchetype.neuroBadge}</span>
+              </div>
+            </div>
+
+            {/* Cita y Cimentación Arquetípica */}
+            <div className="cp-lightbox-footer">
+              <blockquote className="cp-lightbox-quote">
+                {expandedArchetype.quote}
+              </blockquote>
+              <div className="cp-lightbox-meta-grid">
+                <div className="cp-lightbox-meta-item light">
+                  <span className="cp-lightbox-meta-label">☀️ Expresión Luminosa:</span>
+                  <p>{expandedArchetype.lightAspect}</p>
+                </div>
+                <div className="cp-lightbox-meta-item shadow">
+                  <span className="cp-lightbox-meta-label">🌑 Sombra / Riesgo:</span>
+                  <p>{expandedArchetype.shadowAspect}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* =========================================================================
+          MÓDULO DE ENCUADRE Y CENTRADO PROFESIONAL DE IMAGEN
+          ========================================================================= */}
+      <ImageFramingModal
+        isOpen={framingModalOpen}
+        imageSrc={framingImageSrc}
+        title="Encuadre y Centrado Profesional del Retrato"
+        subtitle="Ajusta el zoom, arrastra para centrar el área focal perfecta y rota tu personaje."
+        aspectRatio={1}
+        targetWidth={800}
+        targetHeight={800}
+        onSave={handleFramingSave}
+        onClose={() => {
+          setFramingModalOpen(false);
+          setFramingImageSrc(null);
+        }}
+      />
     </div>
   );
 }

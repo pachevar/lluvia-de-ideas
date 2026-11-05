@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from 'react';
 import type { PortalConfig } from '../../types';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
 import { saveArchetypeAsset, deleteArchetypeAsset } from '../../services/archetypeAssetsService';
+import ImageFramingModal from '../common/ImageFramingModal';
 import './AdminTabViajeDelHeroe.css';
 
 interface AdminTabViajeDelHeroeProps {
@@ -138,6 +139,14 @@ export default function AdminTabViajeDelHeroe({
   const [savingGlobal, setSavingGlobal] = useState(false);
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
 
+  // Estado del modal interactivo de encuadre y centrado
+  const [framingItem, setFramingItem] = useState<{
+    id: string;
+    type: 'archetype' | 'journey';
+    title: string;
+    imageSrc: string | File;
+  } | null>(null);
+
   const fileInputRefs = useRef<Record<string, HTMLInputElement | null>>({});
 
   // Auto-migración silenciosa y sincronización de alias al montar
@@ -225,6 +234,13 @@ export default function AdminTabViajeDelHeroe({
     } finally {
       setUploadingId(null);
     }
+  };
+
+  const handleFramingSave = async (framedFile: File) => {
+    if (!framingItem) return;
+    const { id, type } = framingItem;
+    setFramingItem(null);
+    await handleFileUpload(id, framedFile, type);
   };
 
   const handleUrlChange = (id: string, url: string, type: 'archetype' | 'journey') => {
@@ -523,6 +539,21 @@ export default function AdminTabViajeDelHeroe({
 
                       {currentImg && (
                         <button
+                          className="admin-framing-btn"
+                          onClick={() => setFramingItem({
+                            id: arch.id,
+                            type: 'archetype',
+                            title: `Encuadrar y Centrar: ${arch.name}`,
+                            imageSrc: currentImg
+                          })}
+                          title="Ajustar encuadre, zoom y rotación de esta imagen"
+                        >
+                          <span>🎯</span> Centrar
+                        </button>
+                      )}
+
+                      {currentImg && (
+                        <button
                           className="admin-delete-img-btn"
                           onClick={() => handleRemove(arch.id, 'archetype')}
                           title="Eliminar imagen personalizada de la base de datos"
@@ -538,7 +569,15 @@ export default function AdminTabViajeDelHeroe({
                         style={{ display: 'none' }}
                         onChange={(e) => {
                           const file = e.target.files?.[0];
-                          if (file) handleFileUpload(arch.id, file, 'archetype');
+                          if (file) {
+                            setFramingItem({
+                              id: arch.id,
+                              type: 'archetype',
+                              title: `Encuadrar y Centrar: ${arch.name}`,
+                              imageSrc: file
+                            });
+                            e.target.value = '';
+                          }
                         }}
                       />
                     </div>
@@ -621,6 +660,21 @@ export default function AdminTabViajeDelHeroe({
 
                     {currentImg && (
                       <button
+                        className="admin-framing-btn"
+                        onClick={() => setFramingItem({
+                          id: stage.id,
+                          type: 'journey',
+                          title: `Encuadrar y Centrar: ${stage.name}`,
+                          imageSrc: currentImg
+                        })}
+                        title="Ajustar encuadre, zoom y rotación de esta etapa"
+                      >
+                        <span>🎯</span> Centrar
+                      </button>
+                    )}
+
+                    {currentImg && (
+                      <button
                         className="admin-delete-img-btn"
                         onClick={() => handleRemove(stage.id, 'journey')}
                         title="Eliminar imagen de la etapa"
@@ -636,7 +690,15 @@ export default function AdminTabViajeDelHeroe({
                       style={{ display: 'none' }}
                       onChange={(e) => {
                         const file = e.target.files?.[0];
-                        if (file) handleFileUpload(stage.id, file, 'journey');
+                        if (file) {
+                          setFramingItem({
+                            id: stage.id,
+                            type: 'journey',
+                            title: `Encuadrar y Centrar: ${stage.name}`,
+                            imageSrc: file
+                          });
+                          e.target.value = '';
+                        }
                       }}
                     />
                   </div>
@@ -669,6 +731,19 @@ export default function AdminTabViajeDelHeroe({
           })}
         </div>
       )}
+
+      {/* Módulo de Encuadre y Centrado Profesional */}
+      <ImageFramingModal
+        isOpen={!!framingItem}
+        imageSrc={framingItem?.imageSrc || null}
+        title={framingItem?.title || 'Encuadre y Centrado Profesional'}
+        subtitle="Arrastra la imagen para centrar el área focal, haz zoom o rota según sea necesario."
+        aspectRatio={1}
+        targetWidth={800}
+        targetHeight={800}
+        onSave={handleFramingSave}
+        onClose={() => setFramingItem(null)}
+      />
     </div>
   );
 }

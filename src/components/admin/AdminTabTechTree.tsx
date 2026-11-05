@@ -3,6 +3,7 @@ import type { PortalConfig, TechNode } from '../../types';
 import { generateDefaultTechTree } from '../../utils/techTreeUtils';
 import { usePortalConfig } from '../../context/PortalConfigContext';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
+import ImageFramingModal from '../common/ImageFramingModal';
 
 interface AdminTabTechTreeProps {
   localConfig: PortalConfig;
@@ -13,6 +14,11 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
   const { saveConfigToFirestore } = usePortalConfig();
   const [selectedColumn, setSelectedColumn] = useState<number>(1);
   const [uploadingNodeId, setUploadingNodeId] = useState<string | null>(null);
+  const [framingNode, setFramingNode] = useState<{
+    nodeId: string;
+    title: string;
+    imageSrc: string | File;
+  } | null>(null);
 
   const techNodes: Record<string, TechNode> = localConfig.techTreeNodes || generateDefaultTechTree();
 
@@ -40,16 +46,16 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
     }
   };
 
-  const handleImageUpload = async (nodeId: string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
+  const handleFramingSave = async (framedFile: File) => {
+    if (!framingNode) return;
+    const { nodeId } = framingNode;
+    setFramingNode(null);
     setUploadingNodeId(nodeId);
     try {
-      const { url } = await uploadImageWithFallback(file, 'tech_tree_images', 600, 600, 0.78);
+      const { url } = await uploadImageWithFallback(framedFile, 'tech_tree_images', 600, 600, 0.78);
       handleNodeChange(nodeId, 'image', url, true);
     } catch (err) {
-      console.error("Error subiendo imagen de tecnología:", err);
+      console.error("Error subiendo imagen encuadrada de tecnología:", err);
       alert("Error al procesar la imagen de tecnología.");
     } finally {
       setUploadingNodeId(null);
@@ -164,28 +170,63 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
                   )}
                 </div>
 
-                <label 
-                  className="btn btn-glass"
-                  style={{
-                    fontSize: '0.68rem',
-                    padding: '4px 6px',
-                    width: '100%',
-                    textAlign: 'center',
-                    cursor: 'pointer',
-                    borderColor: 'rgba(56, 189, 248, 0.4)',
-                    color: '#38bdf8',
-                    fontWeight: 700
-                  }}
-                >
-                  {uploadingNodeId === node.id ? '⏳ Subiendo...' : '📁 Subir Imagen'}
-                  <input 
-                    type="file" 
-                    accept="image/*"
-                    onChange={(e) => handleImageUpload(node.id, e)}
-                    disabled={uploadingNodeId === node.id}
-                    style={{ display: 'none' }}
-                  />
-                </label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '100%' }}>
+                  <label 
+                    className="btn btn-glass"
+                    style={{
+                      fontSize: '0.68rem',
+                      padding: '4px 6px',
+                      width: '100%',
+                      textAlign: 'center',
+                      cursor: 'pointer',
+                      borderColor: 'rgba(56, 189, 248, 0.4)',
+                      color: '#38bdf8',
+                      fontWeight: 700
+                    }}
+                  >
+                    {uploadingNodeId === node.id ? '⏳ Subiendo...' : '📁 Subir Imagen'}
+                    <input 
+                      type="file" 
+                      accept="image/*"
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          setFramingNode({
+                            nodeId: node.id,
+                            title: node.title || 'Tecnología',
+                            imageSrc: file
+                          });
+                          e.target.value = '';
+                        }
+                      }}
+                      disabled={uploadingNodeId === node.id}
+                      style={{ display: 'none' }}
+                    />
+                  </label>
+                  {node.image && (
+                    <button
+                      type="button"
+                      className="btn btn-glass"
+                      style={{
+                        fontSize: '0.68rem',
+                        padding: '3px 6px',
+                        width: '100%',
+                        textAlign: 'center',
+                        color: '#fbbf24',
+                        borderColor: 'rgba(251, 191, 36, 0.4)',
+                        fontWeight: 700
+                      }}
+                      onClick={() => setFramingNode({
+                        nodeId: node.id,
+                        title: node.title || 'Tecnología',
+                        imageSrc: node.image!
+                      })}
+                      title="Encuadrar y centrar imagen actual"
+                    >
+                      🎯 Centrar
+                    </button>
+                  )}
+                </div>
               </div>
 
               {/* Lado Derecho: Campos Principales */}
@@ -252,6 +293,19 @@ export default function AdminTabTechTree({ localConfig, updateField }: AdminTabT
           </div>
         ))}
       </div>
+
+      {/* Módulo de Encuadre y Centrado Profesional para Nodos Tecnológicos */}
+      <ImageFramingModal
+        isOpen={!!framingNode}
+        imageSrc={framingNode?.imageSrc || null}
+        title={framingNode ? `Encuadrar: ${framingNode.title}` : 'Encuadre Profesional'}
+        subtitle="Ajusta el zoom, panea o rota para que el icono/ilustración quede perfectamente centrado."
+        aspectRatio={1}
+        targetWidth={600}
+        targetHeight={600}
+        onSave={handleFramingSave}
+        onClose={() => setFramingNode(null)}
+      />
     </div>
   );
 }

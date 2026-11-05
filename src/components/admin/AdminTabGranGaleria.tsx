@@ -14,6 +14,7 @@ import { DEFAULT_GRAN_GALERIA } from '../../data/defaultGranGaleriaData';
 import { extractYouTubeId } from './AdminTabVideos';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
 import AdminTabPozoDeIdeas from './AdminTabPozoDeIdeas';
+import ImageFramingModal from '../common/ImageFramingModal';
 
 interface AdminTabGranGaleriaProps {
   localConfig: PortalConfig;
@@ -100,6 +101,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
   // --- STATE FOR EDITING ARTWORKS (MUSEO) ---
   const [editingArt, setEditingArt] = useState<Partial<StudentArtItem> | null>(null);
   const [isNewArt, setIsNewArt] = useState<boolean>(false);
+  const [artFramingSource, setArtFramingSource] = useState<string | File | null>(null);
 
   const handleSaveArt = (e: React.FormEvent) => {
     e.preventDefault();
@@ -149,12 +151,18 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
     }));
   };
 
-  const handleUploadArtImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleUploadArtImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    setArtFramingSource(file);
+    e.target.value = '';
+  };
+
+  const handleArtFramingSave = async (framedFile: File) => {
     setIsUploading(true);
+    setArtFramingSource(null);
     try {
-      const { url } = await uploadImageWithFallback(file, 'gran_galeria_arte');
+      const { url } = await uploadImageWithFallback(framedFile, 'gran_galeria_arte');
       setEditingArt(prev => ({ ...prev, imageUrl: url }));
     } catch (err) {
       console.error('Error subiendo imagen de arte:', err);
@@ -711,6 +719,17 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                       disabled={isUploading}
                     />
                   </label>
+                  {editingArt.imageUrl && (
+                    <button
+                      type="button"
+                      className="btn btn-secondary"
+                      onClick={() => setArtFramingSource(editingArt.imageUrl!)}
+                      style={{ whiteSpace: 'nowrap' }}
+                      title="Ajustar encuadre, zoom y rotación de esta obra"
+                    >
+                      🎯 Centrar
+                    </button>
+                  )}
                 </div>
                 {editingArt.imageUrl && (
                   <div style={{ marginTop: '8px' }}>
@@ -1163,6 +1182,19 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           <AdminTabPozoDeIdeas localConfig={localConfig} setLocalConfig={setLocalConfig} />
         </div>
       )}
+
+      {/* Módulo de Encuadre y Centrado Profesional para Obras de Arte */}
+      <ImageFramingModal
+        isOpen={!!artFramingSource}
+        imageSrc={artFramingSource}
+        title="Encuadre y Centrado de Obra de Arte"
+        subtitle="Ajusta el zoom, panea o rota para encuadrar la pieza de arte a la perfección."
+        aspectRatio={null} // Libre / original para obras de arte
+        targetWidth={1000}
+        targetHeight={1000}
+        onSave={handleArtFramingSave}
+        onClose={() => setArtFramingSource(null)}
+      />
     </div>
   );
 }
