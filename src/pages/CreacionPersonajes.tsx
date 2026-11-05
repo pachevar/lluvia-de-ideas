@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
+import { usePortalConfig } from '../context/PortalConfigContext';
 import { soundEffects } from '../utils/soundEffects';
 import {
   CLASSIC_ARCHETYPES,
@@ -268,35 +269,27 @@ export default function CreacionPersonajes() {
   // Modo Pizarra / Proyector de Aula
   const [isProjectorMode, setIsProjectorMode] = useState<boolean>(false);
 
+  // Conexión en tiempo real con la configuración de Gerencia
+  const { config } = usePortalConfig();
+  const archetypeImages = config?.archetypeImages || {};
+
+  // Resuelve la imagen del arquetipo desde Firestore / Gerencia, con soporte de alias
+  const getArchetypeImage = (id: string): string => {
+    if (archetypeImages[id]) return archetypeImages[id];
+    if (id === 'heroe' && archetypeImages['protagonista']) return archetypeImages['protagonista'];
+    if (id === 'protagonista' && archetypeImages['heroe']) return archetypeImages['heroe'];
+    if (id === 'picaro' && archetypeImages['embaucador']) return archetypeImages['embaucador'];
+    if (id === 'embaucador' && archetypeImages['picaro']) return archetypeImages['picaro'];
+    return DEFAULT_ARCHETYPE_IMAGES[id] || DEFAULT_ARCHETYPE_IMAGES.heroe;
+  };
+
   // =========================================================================
-  // ESTADO ETAPA 1: EXPLORADOR DE ARQUETIPOS Y PERSONALIZACIÓN VISUAL
+  // ESTADO ETAPA 1: EXPLORADOR DE ARQUETIPOS
   // =========================================================================
   const [archetypeCategory, setArchetypeCategory] = useState<'todos' | 'luz' | 'sombra' | 'catalizador'>('todos');
   const [selectedSpotArchetypeId, setSelectedSpotArchetypeId] = useState<string>('heroe');
   const [polarityView, setPolarityView] = useState<'ambos' | 'luz' | 'sombra'>('ambos');
   const [archSubTab, setArchSubTab] = useState<'ejemplos' | 'relaciones' | 'crisol'>('ejemplos');
-
-  // Imágenes y filtros personalizados para cada uno de los 12 arquetipos (Conceptos personalizados)
-  const [customArchetypeImages, setCustomArchetypeImages] = useState<Record<string, string>>(() => {
-    try {
-      const saved = localStorage.getItem('cp_custom_archetype_images');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const [customArchetypeFilters, setCustomArchetypeFilters] = useState<Record<string, ArtFilterType>>(() => {
-    try {
-      const saved = localStorage.getItem('cp_custom_archetype_filters');
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
-  const conceptFileInputRef = useRef<HTMLInputElement | null>(null);
-  const [isUploadingConcept, setIsUploadingConcept] = useState<boolean>(false);
 
   // =========================================================================
   // ESTADO ETAPA 2: LABORATORIO NEUROCOGNITIVO
@@ -357,23 +350,6 @@ export default function CreacionPersonajes() {
     localStorage.setItem('cp_active_stage', String(activeStage));
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }, [activeStage]);
-
-  // Persistir imágenes y filtros personalizados de los arquetipos
-  useEffect(() => {
-    try {
-      localStorage.setItem('cp_custom_archetype_images', JSON.stringify(customArchetypeImages));
-    } catch {
-      // Si excede quota local, mantener en memoria de sesión
-    }
-  }, [customArchetypeImages]);
-
-  useEffect(() => {
-    try {
-      localStorage.setItem('cp_custom_archetype_filters', JSON.stringify(customArchetypeFilters));
-    } catch {
-      // Ignorar
-    }
-  }, [customArchetypeFilters]);
 
   // Restaurar borrador o recibir datos desde la Máquina de Cuentos
   useEffect(() => {
@@ -457,9 +433,8 @@ export default function CreacionPersonajes() {
     return CLASSIC_ARCHETYPES.find(a => a.id === selectedSpotArchetypeId) || CLASSIC_ARCHETYPES[0];
   }, [selectedSpotArchetypeId]);
 
-  // Imagen y filtro vigentes para el arquetipo en Etapa 1
-  const spotlightArchetypeImg = customArchetypeImages[spotlightArchetype.id] || DEFAULT_ARCHETYPE_IMAGES[spotlightArchetype.id] || DEFAULT_ARCHETYPE_IMAGES.heroe;
-  const spotlightArchetypeFilter: ArtFilterType = customArchetypeFilters[spotlightArchetype.id] || 'normal';
+  // Imagen oficial del arquetipo en Etapa 1 (resuelta desde Firestore / Gerencia)
+  const spotlightArchetypeImg = getArchetypeImage(spotlightArchetype.id);
 
   // Arquetipo asignado al personaje del estudiante
   const currentCharacterArchetype = useMemo(() => {
@@ -539,35 +514,8 @@ export default function CreacionPersonajes() {
   }, [charLie, charWound, charPhysical, charSocial, threeDimensionalScore, charName, charImage]);
 
   // =========================================================================
-  // MANEJADORES DE SUBIDA DE IMAGEN (ETAPA 1 Y ETAPA 4)
+  // SUBIDA Y PERSONALIZACIÓN DE IMAGEN DEL PERSONAJE (ETAPA 4)
   // =========================================================================
-
-  // Subir imagen personalizada para un Arquetipo (Etapa 1)
-  const handleConceptImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploadingConcept(true);
-    soundEffects.playClick();
-
-    try {
-      const compressedBlob = await compressImageWebP(file, 720, 720, 0.84);
-      const dataUrl = await blobToDataURL(compressedBlob);
-      setCustomArchetypeImages(prev => ({
-        ...prev,
-        [spotlightArchetype.id]: dataUrl
-      }));
-      // Si el personaje actual usa este arquetipo, actualizar también su retrato
-      if (charArchetypeId === spotlightArchetype.id) {
-        setCharImage(dataUrl);
-      }
-      soundEffects.playSuccess();
-    } catch {
-      soundEffects.playError();
-    } finally {
-      setIsUploadingConcept(false);
-    }
-  };
 
   // Subir imagen para el Personaje Final (Etapa 4)
   const processCharacterFile = async (file: File) => {
@@ -608,10 +556,9 @@ export default function CreacionPersonajes() {
     setCharQuote(arc.quote);
     setCharDesire(arc.coreDesire);
     setCharNeed(`Superar su sombra: ${arc.shadowWeakness}`);
-    const customImg = customArchetypeImages[arc.id] || DEFAULT_ARCHETYPE_IMAGES[arc.id];
-    if (customImg) setCharImage(customImg);
-    const customFlt = customArchetypeFilters[arc.id];
-    if (customFlt) setActiveFilter(customFlt);
+    // Asignar la ilustración oficial canónica del arquetipo como base para el personaje
+    const officialImg = getArchetypeImage(arc.id);
+    if (officialImg) setCharImage(officialImg);
 
     if (advanceStage) {
       setActiveStage(2);
@@ -850,7 +797,7 @@ FRASE INSIGNIA: ${charQuote}
                 stage: 1 as const,
                 kicker: 'ETAPA 1 · CIMIENTO',
                 title: 'Arquetipos Clásicos',
-                desc: 'Explora los 12 moldes universales y personalízalos con imágenes.'
+                desc: 'Explora los 12 moldes universales y elige la base de tu personaje.'
               },
               {
                 stage: 2 as const,
@@ -897,7 +844,7 @@ FRASE INSIGNIA: ${charQuote}
         </nav>
 
         {/* =====================================================================
-            ETAPA 1: EXPLORADOR DE ARQUETIPOS Y PERSONALIZACIÓN VISUAL
+            ETAPA 1: EXPLORADOR DE ARQUETIPOS CANÓNICOS
            ===================================================================== */}
         {activeStage === 1 && (
           <section className="animate-fade-in">
@@ -905,17 +852,17 @@ FRASE INSIGNIA: ${charQuote}
             <div className="cp-stage-guide-banner">
               <div className="cp-stage-guide-info">
                 <h2>
-                  <span>🎭</span> Etapa 1: Los 12 Arquetipos Universales y su Personalización Visual
+                  <span>🎭</span> Etapa 1: Los 12 Arquetipos Universales (Galería Oficial)
                 </h2>
                 <p>
                   Un <strong>arquetipo</strong> es un modelo ancestral de comportamiento humano presente en los mitos de todas las culturas
-                  (desde el <em>Popol Vuh</em> hasta el cine actual). Selecciona un arquetipo abajo para examinar su <strong>Luz</strong> y su <strong>Sombra</strong>,
-                  y <strong>sube tu propia imagen</strong> para personalizar visualmente el concepto.
+                  (desde el <em>Popol Vuh</em> hasta la literatura contemporánea). Examina la <strong>Luz</strong> y la <strong>Sombra</strong> de cada modelo,
+                  sus detonantes neuroquímicos y selecciona el arquetipo base que moldeará a tu personaje.
                 </p>
               </div>
               <div className="cp-stage-goal-box">
                 <span>🎯 Meta Práctica de esta Etapa</span>
-                <strong>Explora los arquetipos, personaliza su retrato si lo deseas y elige uno como base para tu personaje.</strong>
+                <strong>Explora los 12 moldes canónicos y elige el arquetipo que mejor resuene con tu historia para avanzar a la Etapa 2.</strong>
               </div>
             </div>
 
@@ -946,7 +893,6 @@ FRASE INSIGNIA: ${charQuote}
             <div className="cp-archetype-selector-strip">
               {filteredArchetypes.map(arc => {
                 const isSelected = spotlightArchetype.id === arc.id;
-                const hasCustomImg = Boolean(customArchetypeImages[arc.id]);
                 return (
                   <button
                     key={arc.id}
@@ -963,16 +909,12 @@ FRASE INSIGNIA: ${charQuote}
                       className="cp-arch-select-icon"
                       style={{ border: `2px solid ${arc.color}` }}
                     >
-                      {hasCustomImg ? (
-                        <img src={customArchetypeImages[arc.id]} alt={arc.name} />
-                      ) : (
-                        <span>{arc.icon}</span>
-                      )}
+                      <img src={getArchetypeImage(arc.id)} alt={arc.name} />
                     </div>
                     <div className="cp-arch-select-meta">
                       <strong>{arc.name.split('/')[0].trim()}</strong>
                       <span style={{ color: isSelected ? arc.color : undefined }}>
-                        {hasCustomImg ? '🖼️ Imagen propia' : arc.neuroBadge.split('·')[0].trim()}
+                        {arc.neuroBadge.split('·')[0].trim()}
                       </span>
                     </div>
                   </button>
@@ -985,7 +927,7 @@ FRASE INSIGNIA: ${charQuote}
               className="cp-archetype-spotlight"
               style={{ borderColor: `${spotlightArchetype.color}88` }}
             >
-              {/* Columna Izquierda: Retrato Personalizable del Concepto */}
+              {/* Columna Izquierda: Retrato Canónico Oficial */}
               <div className="cp-spotlight-visual-col">
                 <div
                   className="cp-concept-portrait-frame"
@@ -994,105 +936,36 @@ FRASE INSIGNIA: ${charQuote}
                   <img
                     src={spotlightArchetypeImg}
                     alt={spotlightArchetype.name}
-                    className={`cp-concept-portrait-img filter-${spotlightArchetypeFilter}`}
+                    className="cp-concept-portrait-img"
                   />
                   <div className="cp-concept-overlay-badge">
                     <span>{spotlightArchetype.icon}</span>
                     <span>{spotlightArchetype.name.split('/')[0]}</span>
                   </div>
-                  {customArchetypeImages[spotlightArchetype.id] && (
-                    <div
-                      style={{
-                        position: 'absolute',
-                        bottom: '10px',
-                        right: '10px',
-                        background: 'rgba(16, 185, 129, 0.92)',
-                        color: '#04130d',
-                        padding: '4px 10px',
-                        borderRadius: '999px',
-                        fontSize: '0.74rem',
-                        fontWeight: 900
-                      }}
-                    >
-                      ✓ Personalizado en Plataforma
-                    </div>
-                  )}
                 </div>
 
-                {/* Caja Interactiva para Subir Imagen al Concepto */}
-                <div className="cp-concept-upload-bar">
-                  <div className="cp-concept-upload-title">
-                    <span>📷</span> Personaliza la Imagen de este Concepto
+                {/* Aviso Editorial Institucional */}
+                <div className="cp-concept-official-notice">
+                  <div className="cp-concept-official-header">
+                    <span className="cp-official-badge">🏛️ ILUSTRACIÓN CANÓNICA OFICIAL</span>
+                    <span style={{ fontSize: '0.74rem', color: '#38bdf8', fontWeight: 800 }}>GERENCIA EDITORIAL</span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.45 }}>
-                    Sube un dibujo, fotografía o ilustración desde tu equipo para representar a <strong>{spotlightArchetype.name.split('/')[0]}</strong> con tu propio estilo visual:
+                  <p style={{ margin: 0, fontSize: '0.86rem', color: '#cbd5e1', lineHeight: 1.55 }}>
+                    Esta es la ilustración canónica oficial de <strong>{spotlightArchetype.name.split('/')[0]}</strong>,
+                    gestionada y respaldada en la base de datos de Gerencia.
                   </p>
-
-                  <input
-                    type="file"
-                    ref={conceptFileInputRef}
-                    accept="image/png, image/jpeg, image/webp"
-                    onChange={handleConceptImageUpload}
-                    style={{ display: 'none' }}
-                  />
-
-                  <div className="cp-concept-upload-actions">
-                    <button
-                      className="cp-btn-upload-concept"
-                      onClick={() => conceptFileInputRef.current?.click()}
-                      disabled={isUploadingConcept}
-                    >
-                      <span>{isUploadingConcept ? '⏳' : '📤'}</span>
-                      {isUploadingConcept ? 'Optimizando...' : 'Subir Mi Imagen'}
-                    </button>
-
-                    {customArchetypeImages[spotlightArchetype.id] && (
-                      <button
-                        className="cp-btn-reset-concept"
-                        onClick={() => {
-                          soundEffects.playClick();
-                          setCustomArchetypeImages(prev => {
-                            const copy = { ...prev };
-                            delete copy[spotlightArchetype.id];
-                            return copy;
-                          });
-                        }}
-                        title="Restaurar imagen original del arquetipo"
-                      >
-                        🔄 Restaurar
-                      </button>
-                    )}
-                  </div>
-
-                  {/* Filtros Artísticos Rápidos para el Concepto */}
-                  <div>
-                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>
-                      Acabado Artístico de la Imagen:
-                    </span>
-                    <div className="cp-filter-chips-row">
-                      {[
-                        { id: 'normal', label: 'Natural' },
-                        { id: 'codice', label: '🏺 Códice' },
-                        { id: 'cyber', label: '⚡ Neón' },
-                        { id: 'pergamino', label: '📜 Pergamino' },
-                        { id: 'acuarela', label: '🎨 Acuarela' }
-                      ].map(f => (
-                        <button
-                          key={f.id}
-                          className={`cp-filter-chip ${spotlightArchetypeFilter === f.id ? 'active' : ''}`}
-                          style={{ padding: '5px 10px', fontSize: '0.78rem' }}
-                          onClick={() => {
-                            soundEffects.playClick();
-                            setCustomArchetypeFilters(prev => ({
-                              ...prev,
-                              [spotlightArchetype.id]: f.id as ArtFilterType
-                            }));
-                          }}
-                        >
-                          {f.label}
-                        </button>
-                      ))}
-                    </div>
+                  <div style={{
+                    background: 'rgba(56, 189, 248, 0.08)',
+                    border: '1px solid rgba(56, 189, 248, 0.25)',
+                    padding: '10px 12px',
+                    borderRadius: '10px',
+                    fontSize: '0.8rem',
+                    color: '#7dd3fc',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}>
+                    <span>💡</span> En la <strong>Etapa 4</strong> podrás subir y personalizar la ilustración de tu propio héroe.
                   </div>
                 </div>
               </div>
