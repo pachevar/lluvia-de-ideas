@@ -2666,9 +2666,9 @@ FRASE INSIGNIA: ${charQuote}
         imageSrc={framingImageSrc}
         title="Encuadre y Centrado Profesional del Retrato"
         subtitle="Ajusta el zoom, arrastra para centrar el área focal perfecta y rota tu personaje."
-        aspectRatio={1}
-        targetWidth={800}
-        targetHeight={800}
+        aspectRatio={null}
+        targetWidth={1000}
+        targetHeight={1000}
         onSave={handleFramingSave}
         onClose={() => {
           setFramingModalOpen(false);

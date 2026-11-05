@@ -7,13 +7,20 @@
 /* Backdrop que cubre toda la pantalla */
 .ifm-backdrop {
   position: fixed;
-  inset: 0;
-  z-index: 100000;
-  background-color: rgba(3, 6, 12, 0.92);
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  background-color: rgba(3, 6, 12, 0.95);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 1rem;
+  padding: 1.25rem;
   overflow: hidden; /* Evita que el fondo exterior se desplace */
   box-sizing: border-box;
   animation: ifmFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
@@ -28,18 +35,18 @@
 .ifm-dialog {
   background: #0d1322;
   border: 1px solid #243554;
-  border-radius: 18px;
-  width: 95vw;
-  max-width: 980px;
-  height: 90vh;
-  max-height: 840px;
+  border-radius: 16px;
+  width: 94vw;
+  max-width: 960px;
+  height: 86vh;
+  max-height: 700px;
   display: flex;
   flex-direction: column;
-  box-shadow: 0 25px 70px -10px rgba(0, 0, 0, 0.9), 0 0 0 1px rgba(255, 255, 255, 0.05);
+  box-shadow: 0 25px 70px -10px rgba(0, 0, 0, 0.95), 0 0 0 1px rgba(255, 255, 255, 0.06);
   color: #f1f5f9;
   overflow: hidden;
   box-sizing: border-box;
-  animation: ifmSlideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+  animation: ifmSlideUp 0.22s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
 @keyframes ifmSlideUp {

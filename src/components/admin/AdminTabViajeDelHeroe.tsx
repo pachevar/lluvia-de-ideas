@@ -195,8 +195,8 @@ export default function AdminTabViajeDelHeroe({
       setUploadingId(id);
 
       const folder = type === 'archetype' ? 'archetypes-assets' : 'journey-assets';
-      // Compresión WebP optimizada: 800x800 con calidad 0.78, asegurando nitidez y peso liviano (~30-50KB)
-      const { url } = await uploadImageWithFallback(file, folder, 800, 800, 0.78);
+      // Compresión WebP optimizada respetando proporciones: 1200x1200 max con calidad 0.82
+      const { url } = await uploadImageWithFallback(file, folder, 1200, 1200, 0.82);
 
       // Guardar en su propio documento individual en Firestore (hasta 1 MiB libre por asset)
       await saveArchetypeAsset(id, url, type);
@@ -738,9 +738,9 @@ export default function AdminTabViajeDelHeroe({
         imageSrc={framingItem?.imageSrc || null}
         title={framingItem?.title || 'Encuadre y Centrado Profesional'}
         subtitle="Arrastra la imagen para centrar el área focal, haz zoom o rota según sea necesario."
-        aspectRatio={1}
-        targetWidth={800}
-        targetHeight={800}
+        aspectRatio={null}
+        targetWidth={1000}
+        targetHeight={1000}
         onSave={handleFramingSave}
         onClose={() => setFramingItem(null)}
       />

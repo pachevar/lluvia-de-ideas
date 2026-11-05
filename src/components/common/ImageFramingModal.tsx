@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
+import { createPortal } from 'react-dom';
 import { soundEffects } from '../../utils/soundEffects';
 import './ImageFramingModal.css';
 
@@ -13,7 +14,7 @@ export interface ImageFramingModalProps {
   imageSrc: string | File | null;
   title?: string;
   subtitle?: string;
-  aspectRatio?: number | null; // e.g. 1 for 1:1 square
+  aspectRatio?: number | null; // null = libre / original
   allowedAspectRatios?: AspectRatioOption[];
   targetWidth?: number;
   targetHeight?: number;
@@ -21,12 +22,12 @@ export interface ImageFramingModalProps {
   onClose: () => void;
 }
 
-const DEFAULT_ASPECT_RATIOS: AspectRatioOption[] = [
+export const DEFAULT_ASPECT_RATIOS: AspectRatioOption[] = [
+  { label: 'Libre / Original', ratio: null, icon: '🔄' },
   { label: '1:1 Cuadrado', ratio: 1, icon: '⏹️' },
   { label: '4:5 Retrato / Ficha', ratio: 4 / 5, icon: '📱' },
   { label: '4:3 Clásico', ratio: 4 / 3, icon: '🖼️' },
-  { label: '16:9 Panorámico', ratio: 16 / 9, icon: '🖥️' },
-  { label: 'Libre / Original', ratio: null, icon: '🔄' }
+  { label: '16:9 Panorámico', ratio: 16 / 9, icon: '🖥️' }
 ];
 
 export default function ImageFramingModal({
@@ -34,7 +35,7 @@ export default function ImageFramingModal({
   imageSrc,
   title = 'Encuadre y Centrado Profesional de Imagen',
   subtitle = 'Arrastra para encuadrar, haz zoom o rota para posicionar el área focal perfecta.',
-  aspectRatio: initialRatio = 1,
+  aspectRatio: initialRatio = null, // Por defecto libre/original para respetar cualquier formato
   allowedAspectRatios = DEFAULT_ASPECT_RATIOS,
   targetWidth = 800,
   targetHeight = 800,
@@ -54,7 +55,7 @@ export default function ImageFramingModal({
   const [flipH, setFlipH] = useState<boolean>(false);
   const [showGrid, setShowGrid] = useState<boolean>(true); // Regla de tercios
 
-  // Relación de aspecto seleccionada
+  // Relación de aspecto seleccionada (null = libre / original)
   const [selectedRatio, setSelectedRatio] = useState<number | null>(initialRatio);
 
   // Estado de interacción de arrastre
@@ -70,6 +71,19 @@ export default function ImageFramingModal({
 
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
+
+  // Bloqueo estricto del scroll del fondo mientras el modal esté abierto
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevBodyOverflow = document.body.style.overflow;
+    const prevHtmlOverflow = document.documentElement.style.overflow;
+    document.body.style.overflow = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevBodyOverflow;
+      document.documentElement.style.overflow = prevHtmlOverflow;
+    };
+  }, [isOpen]);
 
   // Cargar la imagen cuando cambie `imageSrc`
   useEffect(() => {
@@ -98,12 +112,8 @@ export default function ImageFramingModal({
       setImageObj(img);
       setLoadingImage(false);
 
-      // Calcular relación libre si aplica
-      if (initialRatio === null) {
-        setSelectedRatio(img.width / img.height);
-      } else {
-        setSelectedRatio(initialRatio);
-      }
+      // Si initialRatio es null, respetar la relación natural
+      setSelectedRatio(initialRatio);
 
       // Reiniciar transformaciones centradas
       setScale(1);
@@ -127,6 +137,50 @@ export default function ImageFramingModal({
     };
   }, [isOpen, imageSrc, initialRatio]);
 
+  // Proporción activa calculada
+  const activeRatio = useMemo(() => {
+    if (selectedRatio !== null && selectedRatio !== undefined) return selectedRatio;
+    if (imageObj && imageObj.height > 0) return imageObj.width / imageObj.height;
+    return 1;
+  }, [selectedRatio, imageObj]);
+
+  // Dimensiones calculadas de exportación (sin forzar cuadrado en libre/original)
+  const outputDimensions = useMemo(() => {
+    if (!imageObj) return { w: targetWidth, h: targetHeight };
+
+    // Caso Libre / Original: respetar al 100% las proporciones y dimensiones nativas de la imagen
+    if (selectedRatio === null) {
+      const maxDim = 1200;
+      let w = imageObj.width;
+      let h = imageObj.height;
+
+      if (w > maxDim || h > maxDim) {
+        if (w >= h) {
+          h = Math.round((h * maxDim) / w);
+          w = maxDim;
+        } else {
+          w = Math.round((w * maxDim) / h);
+          h = maxDim;
+        }
+      }
+      return { w, h };
+    }
+
+    // Caso Proporción Predefinida (1:1, 4:5, 4:3, 16:9)
+    const ratio = activeRatio;
+    if (ratio < 1) {
+      // Formato vertical (Retrato)
+      const h = 1000;
+      const w = Math.round(h * ratio);
+      return { w, h };
+    } else {
+      // Formato cuadrado o apaisado
+      const w = ratio === 1 ? 800 : 1000;
+      const h = Math.round(w / ratio);
+      return { w, h };
+    }
+  }, [imageObj, selectedRatio, activeRatio, targetWidth, targetHeight]);
+
   // Dibujar canvas interactivo
   const drawCanvas = useCallback(() => {
     const canvas = canvasRef.current;
@@ -135,7 +189,6 @@ export default function ImageFramingModal({
     const ctx = canvas.getContext('2d');
     if (!ctx) return;
 
-    // Dimensiones lógicas del canvas de visualización
     const cw = canvas.width;
     const ch = canvas.height;
 
@@ -145,7 +198,6 @@ export default function ImageFramingModal({
     ctx.fillRect(0, 0, cw, ch);
 
     // Calcular el marco de recorte visible (Crop Viewport)
-    const activeRatio = selectedRatio || (imageObj.width / imageObj.height);
     let cropBoxW = cw * 0.88;
     let cropBoxH = cropBoxW / activeRatio;
 
@@ -160,12 +212,12 @@ export default function ImageFramingModal({
     // Guardar contexto para dibujar la imagen dentro del marco
     ctx.save();
 
-    // Crear máscara de recorte (solo se ve nítido lo que está dentro del viewport)
+    // Máscara de recorte
     ctx.beginPath();
     ctx.rect(cropBoxX, cropBoxY, cropBoxW, cropBoxH);
     ctx.clip();
 
-    // Transformaciones de la imagen: centro en el marco + pan + rotación + escala
+    // Transformaciones
     const centerX = cropBoxX + cropBoxW / 2 + panX;
     const centerY = cropBoxY + cropBoxH / 2 + panY;
 
@@ -173,7 +225,6 @@ export default function ImageFramingModal({
     ctx.rotate((rotation * Math.PI) / 180);
     ctx.scale(flipH ? -scale : scale, scale);
 
-    // Calcular tamaño base para cubrir el cropBox al 100% de escala
     const imgRatio = imageObj.width / imageObj.height;
     let baseDrawW = cropBoxW;
     let baseDrawH = cropBoxH;
@@ -196,33 +247,33 @@ export default function ImageFramingModal({
 
     ctx.restore();
 
-    // Dibujar oscurecimiento exterior (Mascara tipo Viewfinder)
+    // Oscurecimiento exterior (Viewfinder) solo cuando hay recorte exterior
     ctx.save();
     ctx.fillStyle = 'rgba(2, 6, 23, 0.72)';
-    ctx.fillRect(0, 0, cw, cropBoxY); // Arriba
-    ctx.fillRect(0, cropBoxY + cropBoxH, cw, ch - (cropBoxY + cropBoxH)); // Abajo
-    ctx.fillRect(0, cropBoxY, cropBoxX, cropBoxH); // Izquierda
-    ctx.fillRect(cropBoxX + cropBoxW, cropBoxY, cw - (cropBoxX + cropBoxW), cropBoxH); // Derecha
+    ctx.fillRect(0, 0, cw, cropBoxY);
+    ctx.fillRect(0, cropBoxY + cropBoxH, cw, ch - (cropBoxY + cropBoxH));
+    ctx.fillRect(0, cropBoxY, cropBoxX, cropBoxH);
+    ctx.fillRect(cropBoxX + cropBoxW, cropBoxY, cw - (cropBoxX + cropBoxW), cropBoxH);
 
     // Borde brillante del Viewport de recorte
     ctx.strokeStyle = '#38bdf8';
     ctx.lineWidth = 2.5;
     ctx.strokeRect(cropBoxX, cropBoxY, cropBoxW, cropBoxH);
 
-    // Regla de tercios (3x3 grid) si está activa
+    // Regla de tercios (3x3 grid)
     if (showGrid) {
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.35)';
       ctx.lineWidth = 1;
       ctx.setLineDash([4, 4]);
 
-      // Líneas verticales
+      // Verticales
       ctx.beginPath();
       ctx.moveTo(cropBoxX + cropBoxW / 3, cropBoxY);
       ctx.lineTo(cropBoxX + cropBoxW / 3, cropBoxY + cropBoxH);
       ctx.moveTo(cropBoxX + (cropBoxW * 2) / 3, cropBoxY);
       ctx.lineTo(cropBoxX + (cropBoxW * 2) / 3, cropBoxY + cropBoxH);
 
-      // Líneas horizontales
+      // Horizontales
       ctx.moveTo(cropBoxX, cropBoxY + cropBoxH / 3);
       ctx.lineTo(cropBoxX + cropBoxW, cropBoxY + cropBoxH / 3);
       ctx.moveTo(cropBoxX, cropBoxY + (cropBoxH * 2) / 3);
@@ -231,48 +282,14 @@ export default function ImageFramingModal({
       ctx.setLineDash([]);
     }
 
-    // Esquinas doradas de visor profesional
-    const cornerSize = 18;
-    ctx.strokeStyle = '#fbbf24';
-    ctx.lineWidth = 3.5;
-
-    // Superior Izquierda
-    ctx.beginPath();
-    ctx.moveTo(cropBoxX, cropBoxY + cornerSize);
-    ctx.lineTo(cropBoxX, cropBoxY);
-    ctx.lineTo(cropBoxX + cornerSize, cropBoxY);
-    ctx.stroke();
-
-    // Superior Derecha
-    ctx.beginPath();
-    ctx.moveTo(cropBoxX + cropBoxW - cornerSize, cropBoxY);
-    ctx.lineTo(cropBoxX + cropBoxW, cropBoxY);
-    ctx.lineTo(cropBoxX + cropBoxW, cropBoxY + cornerSize);
-    ctx.stroke();
-
-    // Inferior Izquierda
-    ctx.beginPath();
-    ctx.moveTo(cropBoxX, cropBoxY + cropBoxH - cornerSize);
-    ctx.lineTo(cropBoxX, cropBoxY + cropBoxH);
-    ctx.lineTo(cropBoxX + cornerSize, cropBoxY + cropBoxH);
-    ctx.stroke();
-
-    // Inferior Derecha
-    ctx.beginPath();
-    ctx.moveTo(cropBoxX + cropBoxW - cornerSize, cropBoxY + cropBoxH);
-    ctx.lineTo(cropBoxX + cropBoxW, cropBoxY + cropBoxH);
-    ctx.lineTo(cropBoxX + cropBoxW, cropBoxY + cropBoxH - cornerSize);
-    ctx.stroke();
-
     ctx.restore();
-  }, [imageObj, scale, panX, panY, rotation, flipH, selectedRatio, showGrid]);
+  }, [imageObj, activeRatio, panX, panY, scale, rotation, flipH, showGrid]);
 
-  // Redibujar ante cualquier cambio
   useEffect(() => {
     drawCanvas();
   }, [drawCanvas]);
 
-  // Manejo de arrastre con Ratón / Touch
+  // Gestores de Interacción Mouse / Touch
   const handleMouseDown = (e: React.MouseEvent<HTMLCanvasElement>) => {
     setIsDragging(true);
     dragStartRef.current = {
@@ -315,49 +332,50 @@ export default function ImageFramingModal({
     setPanY(dragStartRef.current.initialPanY + dy);
   };
 
-  // Zoom con rueda del ratón
   const handleWheel = (e: React.WheelEvent<HTMLCanvasElement>) => {
     e.preventDefault();
-    const zoomFactor = e.deltaY < 0 ? 1.08 : 0.92;
-    setScale((prev) => Math.min(3.5, Math.max(0.5, prev * zoomFactor)));
+    const zoomDelta = e.deltaY < 0 ? 0.08 : -0.08;
+    setScale((prev) => Math.min(3.0, Math.max(0.5, Number((prev + zoomDelta).toFixed(2)))));
   };
 
-  // Centrar al medio
+  // Botones de Acción Rápida
   const handleResetCenter = () => {
     soundEffects.playClick();
     setPanX(0);
     setPanY(0);
+    setScale(1);
+    setRotation(0);
+    setFlipH(false);
   };
 
-  // Ajustar todo dentro (fit)
   const handleFit = () => {
     soundEffects.playClick();
-    setScale(0.85);
+    setScale(1);
     setPanX(0);
     setPanY(0);
   };
 
-  // Llenar por completo (fill)
   const handleFill = () => {
     soundEffects.playClick();
-    setScale(1.2);
+    if (!imageObj) return;
+    const imgRatio = imageObj.width / imageObj.height;
+    const fillScale = imgRatio > activeRatio ? imgRatio / activeRatio : activeRatio / imgRatio;
+    setScale(Number(fillScale.toFixed(2)));
     setPanX(0);
     setPanY(0);
   };
 
-  // Rotar 90 grados
   const handleRotate = () => {
     soundEffects.playClick();
     setRotation((prev) => (prev + 90) % 360);
   };
 
-  // Voltear horizontal
   const handleFlip = () => {
     soundEffects.playClick();
     setFlipH((prev) => !prev);
   };
 
-  // Exportar y Guardar con recorte nítido a resolución objetivo
+  // Exportar y Guardar con recorte nítido respetando la proporción elegida
   const handleApplySave = async () => {
     if (!imageObj) return;
 
@@ -365,9 +383,8 @@ export default function ImageFramingModal({
     soundEffects.playClick();
 
     try {
-      const activeRatio = selectedRatio || (imageObj.width / imageObj.height);
-      const outW = targetWidth;
-      const outH = selectedRatio ? Math.round(targetWidth / activeRatio) : targetHeight;
+      const outW = outputDimensions.w;
+      const outH = outputDimensions.h;
 
       // Canvas de exportación fuera de pantalla
       const exportCanvas = document.createElement('canvas');
@@ -377,11 +394,9 @@ export default function ImageFramingModal({
       const eCtx = exportCanvas.getContext('2d');
       if (!eCtx) throw new Error('No se pudo inicializar contexto 2D de exportación');
 
-      // Fondo transparente o neutro
       eCtx.fillStyle = '#060913';
       eCtx.fillRect(0, 0, outW, outH);
 
-      // Calcular factor de escala entre el canvas de preview y el canvas de salida
       const previewCanvas = canvasRef.current;
       const pcw = previewCanvas ? previewCanvas.width : 540;
       const pch = previewCanvas ? previewCanvas.height : 460;
@@ -395,32 +410,21 @@ export default function ImageFramingModal({
 
       const ratioToOut = outW / cropBoxW;
 
-      // Transformar canvas de exportación exactamente igual que el visor
+      const imgRatio = imageObj.width / imageObj.height;
+      const expBaseH = imgRatio > activeRatio ? outH : outW / imgRatio;
+      const expBaseW = imgRatio > activeRatio ? outH * imgRatio : outW;
+
       eCtx.save();
       eCtx.translate(outW / 2 + panX * ratioToOut, outH / 2 + panY * ratioToOut);
       eCtx.rotate((rotation * Math.PI) / 180);
-      eCtx.scale(flipH ? -scale * ratioToOut : scale * ratioToOut, scale * ratioToOut);
-
-      const imgRatio = imageObj.width / imageObj.height;
-      let baseDrawW = cropBoxW;
-      let baseDrawH = cropBoxH;
-
-      if (imgRatio > activeRatio) {
-        baseDrawH = cropBoxH;
-        baseDrawW = cropBoxH * imgRatio;
-      } else {
-        baseDrawW = cropBoxW;
-        baseDrawH = cropBoxW / imgRatio;
-      }
-
+      eCtx.scale(flipH ? -scale : scale, scale);
       eCtx.drawImage(
         imageObj,
-        -baseDrawW / 2,
-        -baseDrawH / 2,
-        baseDrawW,
-        baseDrawH
+        -expBaseW / 2,
+        -expBaseH / 2,
+        expBaseW,
+        expBaseH
       );
-
       eCtx.restore();
 
       // Generar Blob WebP comprimido de alta fidelidad
@@ -465,7 +469,8 @@ export default function ImageFramingModal({
 
   if (!isOpen) return null;
 
-  return (
+  // Montaje mediante React Portal directamente en document.body para evitar distorsiones de ancestros
+  return createPortal(
     <div className="ifm-backdrop" onClick={onClose}>
       <div
         className="ifm-dialog animate-fade-in"
@@ -518,7 +523,7 @@ export default function ImageFramingModal({
             />
 
             <div className="ifm-canvas-hint">
-              <span>👆 Haz clic y arrastra para mover</span>
+              <span>👆 Arrastra para encuadrar</span>
               <span>·</span>
               <span>🔍 Rueda del ratón para Zoom</span>
             </div>
@@ -531,7 +536,9 @@ export default function ImageFramingModal({
               <label className="ifm-control-label">📐 Proporción / Relación de Aspecto</label>
               <div className="ifm-ratios-grid">
                 {allowedAspectRatios.map((item, idx) => {
-                  const isSelected = selectedRatio === item.ratio;
+                  const isSelected = item.ratio === null
+                    ? selectedRatio === null
+                    : selectedRatio === item.ratio;
                   return (
                     <button
                       key={idx}
@@ -593,10 +600,10 @@ export default function ImageFramingModal({
                   <span>🎯</span> Centrar
                 </button>
                 <button type="button" className="ifm-tool-btn" onClick={handleFit}>
-                  <span>🔲</span> Ajustar (Fit)
+                  <span>🔲</span> Ajustar
                 </button>
                 <button type="button" className="ifm-tool-btn" onClick={handleFill}>
-                  <span>🔳</span> Llenar (Fill)
+                  <span>🔳</span> Llenar
                 </button>
                 <button type="button" className="ifm-tool-btn" onClick={handleRotate}>
                   <span>🔄</span> Rotar 90°
@@ -659,7 +666,9 @@ export default function ImageFramingModal({
         {/* Pie de Acciones */}
         <footer className="ifm-footer">
           <div className="ifm-footer-info">
-            <span>Salida optimizada: WebP {targetWidth}x{Math.round(targetWidth / (selectedRatio || 1))}px</span>
+            <span>
+              Salida: WebP {outputDimensions.w}x{outputDimensions.h}px {selectedRatio === null ? '(Proporción Original)' : ''}
+            </span>
           </div>
 
           <div className="ifm-footer-buttons">
@@ -684,7 +693,7 @@ export default function ImageFramingModal({
           </div>
         </footer>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
-
