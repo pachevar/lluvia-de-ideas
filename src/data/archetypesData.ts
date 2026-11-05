@@ -17,6 +17,7 @@ export interface CharacterArchetype {
   neuroExplanation: string;
   functionDesc: string;
   shadowWeakness: string;
+  personalityTraits: string[];
   classicExample: string;
   modernExample: string;
   mayanExample: string;
@@ -42,6 +43,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Dopamina · Sistema Motor',
     functionDesc: 'Es el centro de gravedad moral y emocional del relato. Debe tomar decisiones difíciles bajo presión extrema que revelen quién es realmente.',
     shadowWeakness: 'Arrogancia (hibris), ceguera ante su propia herida o insistencia en perseguir su deseo superficial en lugar de su necesidad interior.',
+    personalityTraits: [
+      'Determinación inquebrantable frente a la adversidad y negativa a rendirse.',
+      'Sentido del honor y necesidad imperativa de proteger a los vulnerables.',
+      'Impulsivo al presenciar injusticias; actúa antes de calcular riesgos personales.',
+      'Autoexigencia implacable: le cuesta pedir ayuda o admitir cansancio físico y mental.',
+      'Sensibilidad moral aguda que le hace cargar con culpas por fracasos ajenos.',
+      'Resiliencia contagiosa que infunde coraje y esperanza en sus compañeros.'
+    ],
     classicExample: 'Odiseo (La Odisea), Hércules, Gilgamesh',
     modernExample: 'Katniss Everdeen (Los Juegos del Hambre), Miles Morales (Spider-Verse)',
     mayanExample: 'Hunahpú e Ixbalanqué (Los Gemelos Divinos en el Popol Vuh)',
@@ -68,6 +77,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Acetilcolina · Hipocampo',
     functionDesc: 'Proporciona entrenamiento, artefactos clave o perspectivas que el héroe aún no puede ver. Suele retirarse antes del clímax para obligar al héroe a volar solo.',
     shadowWeakness: 'Dogmatismo rígido, guardar secretos destructivos o sobreprotección que anula la autonomía del discípulo.',
+    personalityTraits: [
+      'Paciencia pedagógica y serenidad contemplativa frente a las crisis externas.',
+      'Hábito de responder con preguntas socráticas en lugar de imponer órdenes directas.',
+      'Observador meticuloso: lee entre líneas y detecta el potencial oculto en otros.',
+      'Desapego del protagonismo terrenal y de los reconocimientos superfluos.',
+      'Hermetismo cauteloso: retiene verdades difíciles creyendo proteger a los jóvenes.',
+      'Nostalgia reflexiva por fracasos del pasado que moldearon su propia prudencia.'
+    ],
     classicExample: 'Quirón el centauro (Mitología Griega), Merlín (Ciclo Artúrico)',
     modernExample: 'Gandalf (El Señor de los Anillos), Maestro Yoda (Star Wars)',
     mayanExample: 'Ixmukané (La Abuela Primordial y Maestra de los Códices del Maíz)',
@@ -93,6 +110,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Cortisol · Amígdala Cerebral',
     functionDesc: 'No es simplemente alguien malo: es el héroe de su propia historia. Encarna la antítesis de la lección que el protagonista debe aprender.',
     shadowWeakness: 'Incapacidad absoluta de mostrar vulnerabilidad, obsesión destructiva y aislamiento afectivo.',
+    personalityTraits: [
+      'Voluntad férrea, tenacidad implacable y disciplina estratégica sin concesiones.',
+      'Racionalización convincente: posee una lógica interna sólida que justifica sus actos.',
+      'Aversión extrema a la debilidad: desprecia la compasión considerándola ingenuidad.',
+      'Desconfianza hipervigilante y necesidad patológica de controlarlo todo.',
+      'Presencia intimidante y oratoria persuasiva que explota las dudas morales ajenas.',
+      'Dolor reprimido que transformó una herida original en rencor gélido y calculador.'
+    ],
     classicExample: 'Hades, Medea (Tragedia Griega), Lucifer (El Paraíso Perdido)',
     modernExample: 'Killmonger (Black Panther), Darth Vader (Star Wars), Roy Batty (Blade Runner)',
     mayanExample: 'Los Señores de Xibalbá: Hun-Camé y Vucub-Camé (Popol Vuh)',
@@ -118,6 +143,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Endorfinas · Lóbulo Frontopolar',
     functionDesc: 'Cuestiona el statu quo con picardía. Señala las contradicciones de los héroes y tiranos por igual, recordando que el orgullo precede a la caída.',
     shadowWeakness: 'Cinismo destructivo, falta de lealtad profunda o sabotear situaciones serias por pura diversión frívola.',
+    personalityTraits: [
+      'Ingenio verbal chispeante, réplica rápida e ironía mordaz frente a la solemnidad.',
+      'Alérgico a los protocolos rígidos, la rutina asfixiante y las figuras de autoridad vacías.',
+      'Curiosidad insaciable e instinto travieso que lo empuja a tocar lo prohibido.',
+      'Capacidad asombrosa de improvisación y pensamiento lateral en situaciones de apuro.',
+      'Usa el humor y la farsa como escudo protector para ocultar sus verdaderos apegos.',
+      'Lealtad encubierta: finge egoísmo pero rescata a sus amigos cuando nadie lo espera.'
+    ],
     classicExample: 'Loki (Mitología Nórdica), Hermes (Mitología Griega), Lazarillo de Tormes',
     modernExample: 'Jack Sparrow (Piratas del Caribe), Deadpool, El Gato de Cheshire (Alicia)',
     mayanExample: 'El Conejo Tʼul y el Zorro Choj (Fábulas de picardía mesoamericana)',
@@ -143,6 +176,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Corteza Cingulada · Decisión',
     functionDesc: 'No es el villano principal; es la prueba viviente de que cruzar el umbral exige una transformación previa de habilidades o carácter.',
     shadowWeakness: 'Rigidez ciega, incapacidad de discernir excepciones legítimas o actuar por rencor fósil.',
+    personalityTraits: [
+      'Inquebrantable sentido del deber, lealtad jurada a su puesto y resistencia física.',
+      'Presencia sobria, parquedad de palabras y mirada que pesa el carácter del otro.',
+      'Escepticismo sistemático ante forasteros: exige hechos probados y no promesas.',
+      'Inflexible ante súplicas sentimentales, pero profundamente respetuoso del honor auténtico.',
+      'Disciplina espartana y tolerancia extrema a la soledad y a las inclemencias.',
+      'Capacidad de reconocer la valía del adversario y ceder el paso cuando este madura.'
+    ],
     classicExample: 'La Esfinge de Tebas, Cerbero en las puertas del Hades',
     modernExample: 'El Caballero Negro (Monty Python), Los centinelas de Moria (Tolkien)',
     mayanExample: 'Camazotz y los murciélagos guardianes de la Casa de las Navajas (Popol Vuh)',
@@ -167,6 +208,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Oxitocina · Conexión Social',
     functionDesc: 'Humaniza al héroe. Aporta habilidades complementarias, consuelo en la derrota y una perspectiva grounded cuando el protagonista pierde el rumbo.',
     shadowWeakness: 'Codependencia, rencor silencioso si se siente ignorado o sacrificarse innecesariamente por culpa.',
+    personalityTraits: [
+      'Lealtad incondicional a prueba de fuego, tiempo y desastres compartidos.',
+      'Sentido común práctico y arraigo terrenal que equilibra los delirios del líder.',
+      'Calidez empática y talento natural para infundir consuelo con gestos sencillos.',
+      'Humildad genuina: no le interesa figurar en monumentos ni competir por liderazgo.',
+      'Coraje feroz en la defensa: multiplica sus fuerzas cuando un amigo está en peligro.',
+      'Tendencia a ocultar sus propias heridas y agotamiento para no sobrecargar al grupo.'
+    ],
     classicExample: 'Patroclo (Ilíada de Homero), Enkidu (Epopeya de Gilgamesh)',
     modernExample: 'Samwise Gamgee (El Señor de los Anillos), Hermione Granger y Ron Weasley',
     mayanExample: 'Los animales aliados de Xibalbá: la hormiga cortadora, el mosquito explorador y la luciérnaga',
@@ -191,6 +240,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Teoría de la Mente · TPJ',
     functionDesc: 'Mantiene viva la tensión y la sospecha. Puede ser un interés romántico, un informante ambiguo o un aliado cuya lealtad oscila con el viento.',
     shadowWeakness: 'Pérdida de su propio ser genuino, deslealtad patológica y soledad existencial.',
+    personalityTraits: [
+      'Carisma magnético y capacidad camaleónica de ajustar su tono según el interlocutor.',
+      'Intuición psicológica prodigiosa para descifrar deseos reprimidos y flaquezas ajenas.',
+      'Celoso defensor de su libertad personal: rechaza etiquetas y ataduras definitivas.',
+      'Misterio intencional: comparte detalles personales ambiguos para protegerse.',
+      'Dilema interno silencioso: a veces duda de quién es realmente tras tantas imposturas.',
+      'Instinto táctico agudo para cambiar de estrategia en milésimas de segundo.'
+    ],
     classicExample: 'Circe (La Odisea), Helena de Troya',
     modernExample: 'Severus Snape (Harry Potter), Catwoman (Batman), Gollum / Sméagol',
     mayanExample: 'Ixkikʼ (La doncella que baja al árbol de jícaras y engaña a los búhos de Xibalbá)',
@@ -215,6 +272,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'SRAA · Atención Fásica',
     functionDesc: 'Aparece al inicio del relato para comunicar la noticia que rompe el mundo ordinario: una carta, un cataclismo, un eclipse o una visita inesperada.',
     shadowWeakness: 'Ser portador de noticias falsas, alarmismo innecesario o desentenderse de las consecuencias del mensaje que entrega.',
+    personalityTraits: [
+      'Inquietud motora y energía vibrante que sacude el ambiente dondequiera que llega.',
+      'Franqueza directa y tajante: entrega la verdad sin edulcorantes diplomáticos.',
+      'Sentido de urgencia cósmica: percibe que cada segundo perdido acerca la catástrofe.',
+      'Determinación estoica para entregar el mensaje a pesar del rechazo o la hostilidad.',
+      'Indiferente al qué dirán; no busca agradar, sino sacudir conciencias dormidas.',
+      'Siente el peso moral de ser la chispa que incendia la tranquilidad de otros.'
+    ],
     classicExample: 'Hermes / Mercurio, Casandra en Troya',
     modernExample: 'Hagrid («Eres un mago, Harry»), La Princesa Leia vía R2-D2 («Ayúdame, Obi-Wan»)',
     mayanExample: 'Tukur (El Búho Mensajero de Xibalbá en el Popol Vuh)',
@@ -239,6 +304,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Oxitocina · Circuito de Protección',
     functionDesc: 'Representa lo que está en juego en la historia: la inocencia que debe ser protegida o la pureza que el mundo corre el riesgo de corromper.',
     shadowWeakness: 'Negación ingenua del peligro, victimismo paralizante o caer en garras de manipuladores.',
+    personalityTraits: [
+      'Optimismo transparente y fe incorruptible en que las personas pueden mejorar.',
+      'Capacidad de asombro genuino ante la naturaleza, el arte y los pequeños detalles.',
+      'Vulnerabilidad emocional evidente: sufre profundamente ante la falsedad o el desdén.',
+      'Incapacidad para maquinar segundas intenciones; sus emociones se reflejan en su rostro.',
+      'Fuerza moral desarmante: su franqueza avergüenza el cinismo de los corruptos.',
+      'Tendencia a confiar ciegamente en personas que no han demostrado lealtad.'
+    ],
     classicExample: 'Dorothy Gale (El Mago de Oz), Cenicienta, Blancanieves',
     modernExample: 'Frodo Bolsón en La Comarca, Grogu (The Mandalorian), Oliver Twist',
     mayanExample: 'Las semillas de maíz tierno esperando el primer rayo de sol en la milpa',
@@ -263,6 +336,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Adrenalina · Liberación Motora',
     functionDesc: 'Encarna la ira justa. Se niega a aceptar las cosas como son y está dispuesto a dinamitar los cimientos para que brote algo nuevo.',
     shadowWeakness: 'Violencia desmedida, fanatismo ciego, destruir sin un plan para reconstruir.',
+    personalityTraits: [
+      'Intolerancia visceral ante el abuso de poder, el autoritarismo y la sumisión forzada.',
+      'Coraje desafiante: no teme romper tradiciones reverenciadas si las considera injustas.',
+      'Pasión electrizante y elocuencia ardiente que contagia rebelión a los oprimidos.',
+      'Desapego radical de las comodidades materiales y del aplauso institucional.',
+      'Terquedad indomable: se resiste a acatar órdenes sin comprender su fundamento ético.',
+      'Riesgo de amargura si confunde la sed de justicia con la venganza destructiva.'
+    ],
     classicExample: 'Prometeo (Robando el fuego a los dioses), Robin Hood, Antígona',
     modernExample: 'V (V de Vendetta), Han Solo (etapa inicial), Magneto (X-Men)',
     mayanExample: 'Atanasio Tzul (Líder indígena del levantamiento comunal de Totonicapán)',
@@ -287,6 +368,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Oxitocina · Apego Seguro',
     functionDesc: 'Representa el motivo por el cual la vida merece ser vivida: la belleza, el amor filial, romántico o comunitario que trasciende el ego.',
     shadowWeakness: 'Celos destructivos, perder su propia identidad por complacer al otro, obsesión absorbente.',
+    personalityTraits: [
+      'Sensibilidad estética exquisita: percibe matices de belleza que otros pasan por alto.',
+      'Generosidad afectiva desbordante y entrega incondicional a las personas que ama.',
+      'Mediador intuitivo: busca la reconciliación y el diálogo antes que la confrontación.',
+      'Conexión visceral con la música, la poesía y los símbolos afectivos.',
+      'Vulnerabilidad aguda al rechazo, la frialdad emocional o la indiferencia ajena.',
+      'Capacidad conmovedora de perdón y reconstrucción de puentes rotos.'
+    ],
     classicExample: 'Romeo y Julieta, Orfeo y Eurídice, Tristán e Isolda',
     modernExample: 'Peeta Mellark (Los Juegos del Hambre), Rose Dawson (Titanic)',
     mayanExample: 'Ixchel y Zamná (Las deidades del amor, la luna y los tejidos sagrados)',
@@ -311,6 +400,14 @@ export const CLASSIC_ARCHETYPES: CharacterArchetype[] = [
     neuroBadge: 'Control Ejecutivo · Prefrontal',
     functionDesc: 'Encarna la institución y el bien común. Debe tomar decisiones difíciles donde no hay soluciones perfectas, solo compensaciones éticas.',
     shadowWeakness: 'Tiranía autoritaria, paranoia de perder el control, incapacidad de delegar poder.',
+    personalityTraits: [
+      'Presencia regia y aplomo sereno: transmite seguridad en medio de la tormenta.',
+      'Pensamiento sistémico y visión a largo plazo centrada en el porvenir colectivo.',
+      'Sentido mayúsculo del deber cívico: sacrifica deseos privados por el bien común.',
+      'Capacidad templada para tomar resoluciones dolorosas sin perder la compostura.',
+      'Soledad interior derivada de la investidura y la sospecha constante de adulación falsa.',
+      'Rigor ético inflexible que valora la palabra dada por encima de cualquier contrato.'
+    ],
     classicExample: 'El Rey Arturo, Salomón, Creonte en Tebas',
     modernExample: 'Mufasa (El Rey León), Aragorn (El Retorno del Rey), TʼChalla (Black Panther)',
     mayanExample: 'Kʼinich Janaabʼ Pakal (El gran gobernante y constructor de Palenque)',
@@ -382,4 +479,3 @@ export const CHARACTER_DIMENSIONS: DimensionPillar[] = [
     scientificMechanism: 'Dispara la Teoría de la Mente (ToM) y la liberación de Oxitocina. La mente del lector solo genera apego empático ante la vulnerabilidad y la contradicción humana.'
   }
 ];
-

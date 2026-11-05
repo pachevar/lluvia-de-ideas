@@ -344,6 +344,7 @@ export default function CreacionPersonajes() {
     role: string;
     lightAspect: string;
     shadowAspect: string;
+    personalityTraits: string[];
   } | null>(null);
 
   // Modal de encuadre y centrado profesional para el avatar del personaje
@@ -973,7 +974,8 @@ FRASE INSIGNIA: ${charQuote}
                       description: spotlightArchetype.functionDesc,
                       role: spotlightArchetype.roleSubtitle,
                       lightAspect: spotlightArchetype.coreDesire,
-                      shadowAspect: spotlightArchetype.shadowWeakness
+                      shadowAspect: spotlightArchetype.shadowWeakness,
+                      personalityTraits: spotlightArchetype.personalityTraits
                     });
                   }}
                   title="Haz clic sobre la imagen para verla en pantalla completa"
@@ -993,7 +995,8 @@ FRASE INSIGNIA: ${charQuote}
                         description: spotlightArchetype.functionDesc,
                         role: spotlightArchetype.roleSubtitle,
                         lightAspect: spotlightArchetype.coreDesire,
-                        shadowAspect: spotlightArchetype.shadowWeakness
+                        shadowAspect: spotlightArchetype.shadowWeakness,
+                        personalityTraits: spotlightArchetype.personalityTraits
                       });
                     }
                   }}
@@ -1029,7 +1032,8 @@ FRASE INSIGNIA: ${charQuote}
                       description: spotlightArchetype.functionDesc,
                       role: spotlightArchetype.roleSubtitle,
                       lightAspect: spotlightArchetype.coreDesire,
-                      shadowAspect: spotlightArchetype.shadowWeakness
+                      shadowAspect: spotlightArchetype.shadowWeakness,
+                      personalityTraits: spotlightArchetype.personalityTraits
                     });
                   }}
                 >
@@ -1145,6 +1149,49 @@ FRASE INSIGNIA: ${charQuote}
                       </div>
                     </div>
                   )}
+                </div>
+
+                {/* LISTA DE CARACTERÍSTICAS Y RASGOS DE PERSONALIDAD */}
+                <div
+                  className="cp-personality-traits-box"
+                  style={{
+                    borderLeftColor: spotlightArchetype.color,
+                    boxShadow: `0 8px 24px -6px ${spotlightArchetype.color}18`
+                  }}
+                >
+                  <div className="cp-personality-traits-header">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                      <span
+                        className="cp-traits-badge"
+                        style={{
+                          background: `${spotlightArchetype.color}1c`,
+                          color: spotlightArchetype.color,
+                          borderColor: `${spotlightArchetype.color}55`
+                        }}
+                      >
+                        🎭 RASGOS Y PATRONES DE PERSONALIDAD
+                      </span>
+                      <span className="cp-traits-count">
+                        {spotlightArchetype.personalityTraits?.length || 0} características clave
+                      </span>
+                    </div>
+                    <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>
+                      Conducta observable, temperamento y actitudes ante la vida
+                    </span>
+                  </div>
+
+                  <div className="cp-personality-traits-grid">
+                    {(spotlightArchetype.personalityTraits || []).map((trait, idx) => (
+                      <div
+                        key={idx}
+                        className="cp-trait-pill"
+                        style={{ borderLeftColor: spotlightArchetype.color }}
+                      >
+                        <span className="cp-trait-bullet" style={{ color: spotlightArchetype.color }}>✦</span>
+                        <span className="cp-trait-text">{trait}</span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Sub-pestañas para no saturar la vista */}
@@ -2591,6 +2638,21 @@ FRASE INSIGNIA: ${charQuote}
                   <p>{expandedArchetype.shadowAspect}</p>
                 </div>
               </div>
+
+              {/* Características de Personalidad en Lightbox */}
+              {expandedArchetype.personalityTraits && expandedArchetype.personalityTraits.length > 0 && (
+                <div className="cp-lightbox-traits-block">
+                  <span className="cp-lightbox-traits-title">🎭 Rasgos Clave de Personalidad:</span>
+                  <div className="cp-lightbox-traits-list">
+                    {expandedArchetype.personalityTraits.map((t, idx) => (
+                      <div key={idx} className="cp-lightbox-trait-badge">
+                        <span style={{ color: expandedArchetype.color }}>✦</span>
+                        <span>{t}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
