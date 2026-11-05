@@ -1,0 +1,713 @@
+/* ==========================================================================
+   CREACIÓN DE PERSONAJES: LABORATORIO NEUROCREATIVO & FORJA DE ARQUETIPOS
+   Estándar de Neurodiseño Sutz - HSL Tokens, Alta Legibilidad y Ergonomía
+   ========================================================================== */
+
+.cp-container {
+  min-height: 100vh;
+  background: radial-gradient(circle at 50% 10%, #0d1527 0%, #060913 100%);
+  color: #f8fafc;
+  font-family: 'Outfit', system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+  padding-bottom: 80px;
+}
+
+.cp-main-content {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 24px 20px;
+}
+
+/* ── CABECERA Y SUB-NAVEGACIÓN ── */
+.cp-hero-header {
+  text-align: center;
+  margin-bottom: 28px;
+}
+
+.cp-badge-top {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(168, 85, 247, 0.15);
+  border: 1px solid rgba(168, 85, 247, 0.4);
+  color: #c084fc;
+  font-size: 0.82rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  padding: 6px 14px;
+  border-radius: 9999px;
+  margin-bottom: 12px;
+}
+
+.cp-hero-title {
+  font-size: 2.4rem;
+  font-weight: 900;
+  color: #f8fafc;
+  margin: 0 0 10px 0;
+  letter-spacing: -0.02em;
+  line-height: 1.15;
+}
+
+.cp-hero-title span {
+  background: linear-gradient(135deg, #38bdf8 0%, #c084fc 50%, #f43f5e 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.cp-hero-subtitle {
+  max-width: 820px;
+  margin: 0 auto;
+  color: #94a3b8;
+  font-size: 1.05rem;
+  line-height: 1.6;
+}
+
+/* ── BARRA DE NAVEGACIÓN MODULAR ── */
+.cp-nav-bar {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 24px 0 32px 0;
+  background: rgba(15, 23, 42, 0.7);
+  backdrop-filter: blur(12px);
+  padding: 8px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  width: fit-content;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.cp-nav-btn {
+  background: transparent;
+  color: #94a3b8;
+  border: none;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-size: 0.92rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.cp-nav-btn:hover {
+  color: #f8fafc;
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.cp-nav-btn.active {
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #020617;
+  font-weight: 800;
+  box-shadow: 0 4px 18px rgba(56, 189, 248, 0.35);
+}
+
+.cp-projector-toggle {
+  background: rgba(245, 158, 11, 0.15) !important;
+  color: #fbbf24 !important;
+  border: 1px solid rgba(245, 158, 11, 0.35) !important;
+}
+
+.cp-projector-toggle.active {
+  background: linear-gradient(135deg, #f59e0b, #d97706) !important;
+  color: #020617 !important;
+  box-shadow: 0 4px 18px rgba(245, 158, 11, 0.4) !important;
+}
+
+/* ==========================================================================
+   SECCIÓN 1: GALERÍA DE ARQUETIPOS CLÁSICOS
+   ========================================================================== */
+
+.cp-archetypes-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  gap: 20px;
+}
+
+.cp-archetype-card {
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 18px;
+  padding: 22px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-archetype-card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(56, 189, 248, 0.45);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.45), 0 0 25px rgba(56, 189, 248, 0.15);
+}
+
+.cp-archetype-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.cp-archetype-icon-box {
+  width: 56px;
+  height: 56px;
+  border-radius: 14px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.cp-archetype-titles h3 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f8fafc;
+}
+
+.cp-archetype-titles p {
+  margin: 2px 0 0 0;
+  font-size: 0.82rem;
+  color: #94a3b8;
+}
+
+.cp-quote-box {
+  background: rgba(2, 6, 23, 0.5);
+  border-left: 3px solid #38bdf8;
+  padding: 10px 14px;
+  border-radius: 8px;
+  font-size: 0.86rem;
+  font-style: italic;
+  color: #cbd5e1;
+  line-height: 1.45;
+}
+
+.cp-neuro-badge-row {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cp-badge-pill {
+  font-size: 0.74rem;
+  font-weight: 800;
+  padding: 3px 10px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.cp-detail-block {
+  background: rgba(2, 6, 23, 0.4);
+  padding: 12px 14px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  line-height: 1.5;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cp-detail-block strong {
+  display: block;
+  font-size: 0.76rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  margin-bottom: 4px;
+}
+
+.cp-examples-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  font-size: 0.8rem;
+}
+
+.cp-example-box {
+  background: rgba(255, 255, 255, 0.03);
+  padding: 8px 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.cp-example-box span {
+  display: block;
+  font-size: 0.72rem;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+}
+
+.cp-example-box p {
+  margin: 3px 0 0 0;
+  color: #e2e8f0;
+  line-height: 1.35;
+}
+
+/* ==========================================================================
+   SECCIÓN 2: NEUROCIENCIA Y DIMENSIONES
+   ========================================================================== */
+
+.cp-neuro-section {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+}
+
+.cp-neuro-intro-card {
+  background: linear-gradient(135deg, rgba(30, 27, 75, 0.6) 0%, rgba(15, 23, 42, 0.9) 100%);
+  border: 1px solid rgba(192, 132, 252, 0.3);
+  border-radius: 20px;
+  padding: 28px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+}
+
+.cp-neuro-grid-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+  gap: 20px;
+}
+
+.cp-neuro-concept-card {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: transform 0.2s ease;
+}
+
+.cp-neuro-concept-card:hover {
+  transform: translateY(-3px);
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.cp-concept-icon {
+  font-size: 2.2rem;
+  margin-bottom: 2px;
+}
+
+.cp-concept-title {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+}
+
+.cp-concept-desc {
+  font-size: 0.88rem;
+  color: #94a3b8;
+  line-height: 1.55;
+  margin: 0;
+}
+
+/* ==========================================================================
+   SECCIÓN 3: EL DIMENSIONADOR TRIDIMENSIONAL (SIMULADOR)
+   ========================================================================== */
+
+.cp-dimensioner-panel {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1.5px solid rgba(56, 189, 248, 0.3);
+  border-radius: 24px;
+  padding: 28px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 32px;
+  align-items: center;
+}
+
+@media (max-width: 980px) {
+  .cp-dimensioner-panel {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cp-sliders-column {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+.cp-slider-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.cp-slider-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.cp-slider-title {
+  font-size: 0.95rem;
+  font-weight: 800;
+  color: #f8fafc;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.cp-slider-val {
+  font-size: 0.95rem;
+  font-weight: 900;
+  min-width: 45px;
+  text-align: right;
+}
+
+.cp-slider-input {
+  appearance: none;
+  -webkit-appearance: none;
+  height: 8px;
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.cp-slider-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #ffffff;
+  border: 3px solid #38bdf8;
+  cursor: pointer;
+  box-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+  transition: transform 0.15s ease;
+}
+
+.cp-slider-input::-webkit-slider-thumb:hover {
+  transform: scale(1.25);
+}
+
+.cp-radar-telemetry-box {
+  background: rgba(2, 6, 23, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 20px;
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 16px;
+}
+
+.cp-brain-visualizer {
+  position: relative;
+  width: 220px;
+  height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cp-brain-glow {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  filter: blur(25px);
+  transition: all 0.4s ease;
+  pointer-events: none;
+}
+
+.cp-resonance-badge {
+  padding: 8px 18px;
+  border-radius: 12px;
+  font-size: 0.9rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  transition: all 0.3s ease;
+}
+
+/* ==========================================================================
+   SECCIÓN 4: TALLER & FORJA DEL PERSONAJE (CON SUBIDA DE IMAGEN)
+   ========================================================================== */
+
+.cp-forge-layout {
+  display: grid;
+  grid-template-columns: 1.15fr 0.85fr;
+  gap: 28px;
+}
+
+@media (max-width: 980px) {
+  .cp-forge-layout {
+    grid-template-columns: 1fr;
+  }
+}
+
+.cp-form-panel {
+  background: rgba(15, 23, 42, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 20px;
+  padding: 26px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.cp-form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.cp-form-group label {
+  font-size: 0.85rem;
+  font-weight: 800;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.cp-form-group input,
+.cp-form-group select,
+.cp-form-group textarea {
+  background: rgba(2, 6, 23, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: #f8fafc;
+  padding: 10px 14px;
+  font-size: 0.92rem;
+  font-family: inherit;
+  transition: border-color 0.2s ease;
+}
+
+.cp-form-group input:focus,
+.cp-form-group select:focus,
+.cp-form-group textarea:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 12px rgba(56, 189, 248, 0.25);
+}
+
+/* Zona de Carga de Imagen */
+.cp-upload-dropzone {
+  border: 2px dashed rgba(56, 189, 248, 0.4);
+  background: rgba(2, 6, 23, 0.5);
+  border-radius: 14px;
+  padding: 22px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  position: relative;
+}
+
+.cp-upload-dropzone:hover {
+  border-color: #38bdf8;
+  background: rgba(14, 116, 144, 0.15);
+}
+
+.cp-filter-chips-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.cp-filter-chip {
+  background: rgba(255, 255, 255, 0.06);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.cp-filter-chip:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #fff;
+}
+
+.cp-filter-chip.active {
+  background: linear-gradient(135deg, #0284c7, #38bdf8);
+  color: #020617;
+  font-weight: 800;
+  border-color: #38bdf8;
+}
+
+/* Tarjeta Coleccionable / Ficha de Personaje */
+.cp-card-preview-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.cp-collectible-card {
+  width: 100%;
+  max-width: 380px;
+  background: linear-gradient(145deg, #1e1b4b 0%, #0f172a 60%, #020617 100%);
+  border: 2.5px solid #a855f7;
+  border-radius: 22px;
+  padding: 20px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 30px rgba(168, 85, 247, 0.2);
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  position: relative;
+  overflow: hidden;
+}
+
+.cp-card-art-holder {
+  width: 100%;
+  height: 220px;
+  border-radius: 14px;
+  background: rgba(2, 6, 23, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cp-card-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transition: filter 0.3s ease;
+}
+
+/* Filtros de Arte */
+.filter-codice {
+  filter: sepia(0.35) contrast(1.15) saturate(1.2);
+}
+
+.filter-cyber {
+  filter: hue-rotate(180deg) saturate(1.6) contrast(1.1);
+}
+
+.filter-pergamino {
+  filter: sepia(0.8) contrast(1.05) brightness(0.9);
+}
+
+.filter-acuarela {
+  filter: saturate(1.3) contrast(0.95) brightness(1.05);
+}
+
+.cp-card-name-title {
+  font-size: 1.35rem;
+  font-weight: 900;
+  color: #f8fafc;
+  margin: 0;
+  line-height: 1.2;
+}
+
+.cp-card-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  font-size: 0.76rem;
+}
+
+.cp-card-stat {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 6px 8px;
+  border-radius: 6px;
+}
+
+.cp-card-stat span {
+  display: block;
+  color: #94a3b8;
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 0.68rem;
+}
+
+.cp-card-stat strong {
+  color: #f8fafc;
+  font-size: 0.8rem;
+}
+
+/* Botones de Exportación */
+.cp-export-actions {
+  display: flex;
+  gap: 10px;
+  width: 100%;
+  max-width: 380px;
+}
+
+.cp-btn-export {
+  flex: 1;
+  padding: 12px;
+  border-radius: 12px;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  transition: all 0.2s ease;
+}
+
+.cp-btn-primary {
+  background: linear-gradient(135deg, #10b981, #059669);
+  color: #ffffff;
+  border: none;
+  box-shadow: 0 4px 16px rgba(16, 185, 129, 0.35);
+}
+
+.cp-btn-glass {
+  background: rgba(255, 255, 255, 0.08);
+  color: #f8fafc;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* ==========================================================================
+   MODO PROYECTOR / PIZARRA INTERACTIVA
+   ========================================================================== */
+
+.cp-container.projector-mode {
+  background: #020617 !important;
+}
+
+.cp-container.projector-mode .cp-hero-title {
+  font-size: 3rem !important;
+}
+
+.cp-container.projector-mode .cp-hero-subtitle {
+  font-size: 1.25rem !important;
+  color: #cbd5e1 !important;
+}
+
+.cp-container.projector-mode .cp-nav-btn {
+  font-size: 1.1rem !important;
+  padding: 12px 24px !important;
+}
+
+.cp-container.projector-mode .cp-archetype-card,
+.cp-container.projector-mode .cp-neuro-concept-card,
+.cp-container.projector-mode .cp-dimensioner-panel,
+.cp-container.projector-mode .cp-form-panel {
+  border-width: 2px !important;
+  box-shadow: 0 0 35px rgba(0, 0, 0, 0.8) !important;
+}
+
+.cp-container.projector-mode .cp-archetype-titles h3 {
+  font-size: 1.45rem !important;
+}
+
+.cp-container.projector-mode p,
+.cp-container.projector-mode .cp-detail-block {
+  font-size: 1rem !important;
+  line-height: 1.6 !important;
+}
+

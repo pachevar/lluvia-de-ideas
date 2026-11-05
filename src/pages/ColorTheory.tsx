@@ -1,9 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { 
-  mixWeightedPaintColors, 
-  GAME_TARGET_COLORS, 
-  calculateColorMatch, 
-  generateRandomTargetColor, 
+import {
+  mixWeightedPaintColors,
+  GAME_TARGET_COLORS,
+  calculateColorMatch,
+  generateRandomTargetColor,
   rgbToHex,
   generateColorShadesAndTints,
   type GameColorTarget
@@ -173,8 +173,8 @@ export default function ColorTheory() {
       const existing = prev.find(item => item.guardian.id === guardian.id);
       let updated;
       if (existing) {
-        updated = prev.map(item => 
-          item.guardian.id === guardian.id 
+        updated = prev.map(item =>
+          item.guardian.id === guardian.id
             ? { ...item, weight: Math.min(5, item.weight + 1) }
             : item
         );
@@ -290,7 +290,7 @@ export default function ColorTheory() {
   };
 
   // --- Estados de Rueda de Armonías Cromáticas ---
-  const [harmonyBaseAngle, setHarmonyBaseAngle] = useState(0); 
+  const [harmonyBaseAngle, setHarmonyBaseAngle] = useState(0);
   const [harmonyType, setHarmonyType] = useState<'complementaria' | 'triadica' | 'analoga' | 'tetradica' | 'monocromatica'>('complementaria');
   const wheelSvgRef = useRef<SVGSVGElement>(null);
   const paletteExportRef = useRef<HTMLDivElement>(null);
@@ -312,7 +312,7 @@ export default function ColorTheory() {
   const getHarmonyColors = () => {
     const angle = harmonyBaseAngle;
     const baseColor = HslToHex(angle, 85, 52);
-    
+
     if (harmonyType === 'complementaria') {
       return [
         { role: 'Base', angle: angle, hex: baseColor },
@@ -324,7 +324,7 @@ export default function ColorTheory() {
         { role: 'Armónico 1', angle: (angle + 120) % 360, hex: HslToHex((angle + 120) % 360, 85, 52) },
         { role: 'Armónico 2', angle: (angle + 240) % 360, hex: HslToHex((angle + 240) % 360, 85, 52) }
       ];
-    } else if (harmonyType === 'analoga') { 
+    } else if (harmonyType === 'analoga') {
       return [
         { role: 'Análogo Izq', angle: (angle - 30 + 360) % 360, hex: HslToHex((angle - 30 + 360) % 360, 85, 52) },
         { role: 'Base', angle: angle, hex: baseColor },
@@ -353,15 +353,15 @@ export default function ColorTheory() {
     const rect = wheelSvgRef.current.getBoundingClientRect();
     const centerX = rect.left + rect.width / 2;
     const centerY = rect.top + rect.height / 2;
-    
+
     const dx = clientX - centerX;
     const dy = clientY - centerY;
-    
+
     const angleRad = Math.atan2(dy, dx);
     let angleDeg = (angleRad * 180) / Math.PI + 90;
     if (angleDeg < 0) angleDeg += 360;
     if (angleDeg >= 360) angleDeg -= 360;
-    
+
     setHarmonyBaseAngle(Math.round(angleDeg));
   };
 
@@ -464,8 +464,8 @@ export default function ColorTheory() {
   return (
     <div className="colortheory-container">
       {/* Botón flotante permanente para volver al mapa desde cualquier altura de la página */}
-      <button 
-        type="button" 
+      <button
+        type="button"
         className="colortheory-floating-map-btn"
         onClick={() => {
           soundEffects.playClick();
@@ -487,12 +487,12 @@ export default function ColorTheory() {
       </div>
 
       <div className="colortheory-content">
-        
+
         {/* Encabezado Principal */}
         <header className="colortheory-header">
           <div className="colortheory-top-bar">
-            <button 
-              type="button" 
+            <button
+              type="button"
               className="colortheory-back-map-btn"
               onClick={() => {
                 soundEffects.playClick();
@@ -518,7 +518,7 @@ export default function ColorTheory() {
 
           {/* Navegación rápida por pestañas */}
           <nav className="quick-nav-pills">
-            <button 
+            <button
               className={`pill-item ${activeTabSection === 'guardianes' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTabSection('guardianes');
@@ -527,7 +527,7 @@ export default function ColorTheory() {
             >
               🐰 1. Guardianes
             </button>
-            <button 
+            <button
               className={`pill-item ${activeTabSection === 'mezcla' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTabSection('mezcla');
@@ -536,7 +536,7 @@ export default function ColorTheory() {
             >
               🧪 2. Caldera RYB
             </button>
-            <button 
+            <button
               className={`pill-item ${activeTabSection === 'tonos' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTabSection('tonos');
@@ -545,7 +545,7 @@ export default function ColorTheory() {
             >
               🎨 3. Tonalidades & Sombras
             </button>
-            <button 
+            <button
               className={`pill-item ${activeTabSection === 'luz' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTabSection('luz');
@@ -554,7 +554,7 @@ export default function ColorTheory() {
             >
               💡 4. Luz RGB
             </button>
-            <button 
+            <button
               className={`pill-item ${activeTabSection === 'armonias' ? 'active' : ''}`}
               onClick={() => {
                 setActiveTabSection('armonias');
@@ -638,28 +638,28 @@ export default function ColorTheory() {
                     }}
                   >
                     <div className="guardian-rabbit-holder">
-                      <ColorRabbit 
+                      <ColorRabbit
                         color={guardian.hex}
                         complementaryColor={guardian.complementaryHex}
-                        size={86} 
-                        animClass={isSelected ? 'jump-loop' : 'wiggle-hover'} 
+                        size={86}
+                        animClass={isSelected ? 'jump-loop' : 'wiggle-hover'}
                       />
                     </div>
                     <span className="guardian-card-name">{guardian.name}</span>
-                    
+
                     <div className="guardian-badges-stack">
                       <span className="guardian-card-badge" style={{ backgroundColor: guardian.hex, color: guardian.hex === '#FFFFFF' || guardian.hex === '#FBE903' ? '#000' : '#fff' }}>
                         {guardian.category}
                       </span>
-                      <span 
-                        className="guardian-comp-badge" 
+                      <span
+                        className="guardian-comp-badge"
                         title={`Adorno complementario: ${guardian.complementaryName}`}
                       >
                         <span className="comp-dot" style={{ backgroundColor: guardian.complementaryHex }} />
                         <span className="comp-label">Adorno</span>
                       </span>
                     </div>
-                    
+
                     <button
                       className="add-to-mix-btn"
                       onClick={(e) => {
@@ -677,39 +677,39 @@ export default function ColorTheory() {
             </div>
 
             {/* Ficha Lateral Neón: Santuario y Espejo Complementario */}
-            <div 
-              className="color-info-panel animate-zoom-in" 
-              style={{ 
-                borderColor: selectedGuardian.hex, 
-                boxShadow: `0 0 35px ${selectedGuardian.hex}44` 
+            <div
+              className="color-info-panel animate-zoom-in"
+              style={{
+                borderColor: selectedGuardian.hex,
+                boxShadow: `0 0 35px ${selectedGuardian.hex}44`
               }}
             >
               {/* Pedestal Mágico con Halo de Luz */}
-              <div 
-                className="shrine-pedestal-container" 
+              <div
+                className="shrine-pedestal-container"
                 style={{ background: `radial-gradient(circle at 50% 55%, ${selectedGuardian.hex}2e 0%, transparent 70%)` }}
               >
-                <div 
-                  className="shrine-halo" 
+                <div
+                  className="shrine-halo"
                   style={{ borderColor: `${selectedGuardian.hex}66`, boxShadow: `0 0 30px ${selectedGuardian.hex}44` }}
                 >
-                  <ColorRabbit 
-                    color={selectedGuardian.hex} 
-                    complementaryColor={selectedGuardian.complementaryHex} 
-                    size={135} 
-                    animClass="jump-loop" 
+                  <ColorRabbit
+                    color={selectedGuardian.hex}
+                    complementaryColor={selectedGuardian.complementaryHex}
+                    size={135}
+                    animClass="jump-loop"
                   />
                 </div>
-                <div 
-                  className="shrine-base-plate" 
-                  style={{ background: `linear-gradient(90deg, transparent, ${selectedGuardian.hex}aa, transparent)` }} 
+                <div
+                  className="shrine-base-plate"
+                  style={{ background: `linear-gradient(90deg, transparent, ${selectedGuardian.hex}aa, transparent)` }}
                 />
               </div>
 
               <div className="info-title-block">
                 <h3 className="info-color-title">{selectedGuardian.name}</h3>
-                <div 
-                  className="hex-copy-tag" 
+                <div
+                  className="hex-copy-tag"
                   onClick={() => {
                     navigator.clipboard.writeText(selectedGuardian.hex);
                     soundEffects.playClick();
@@ -744,11 +744,11 @@ export default function ColorTheory() {
                   {/* Guardián Principal */}
                   <div className="mirror-actor-card">
                     <div className="mirror-rabbit-box" style={{ background: `${selectedGuardian.hex}18`, borderColor: `${selectedGuardian.hex}44` }}>
-                      <ColorRabbit 
-                        color={selectedGuardian.hex} 
-                        complementaryColor={selectedGuardian.complementaryHex} 
-                        size={72} 
-                        animClass="float-loop" 
+                      <ColorRabbit
+                        color={selectedGuardian.hex}
+                        complementaryColor={selectedGuardian.complementaryHex}
+                        size={72}
+                        animClass="float-loop"
                       />
                     </div>
                     <span className="mirror-actor-name">{selectedGuardian.name}</span>
@@ -764,11 +764,11 @@ export default function ColorTheory() {
                   {/* Guardián Complementario */}
                   <div className="mirror-actor-card">
                     <div className="mirror-rabbit-box" style={{ background: `${selectedGuardian.complementaryHex}18`, borderColor: `${selectedGuardian.complementaryHex}44` }}>
-                      <ColorRabbit 
-                        color={selectedGuardian.complementaryHex} 
-                        complementaryColor={selectedGuardian.hex} 
-                        size={72} 
-                        animClass="float-loop" 
+                      <ColorRabbit
+                        color={selectedGuardian.complementaryHex}
+                        complementaryColor={selectedGuardian.hex}
+                        size={72}
+                        animClass="float-loop"
                       />
                     </div>
                     <span className="mirror-actor-name">{selectedGuardian.complementaryName}</span>
@@ -782,8 +782,8 @@ export default function ColorTheory() {
               </div>
 
               <div className="panel-actions-row">
-                <button 
-                  className="btn-send-to-lab" 
+                <button
+                  className="btn-send-to-lab"
                   style={{ background: `linear-gradient(135deg, ${selectedGuardian.hex} 0%, #3b82f6 100%)` }}
                   onClick={() => {
                     soundEffects.playClick();
@@ -792,7 +792,7 @@ export default function ColorTheory() {
                 >
                   🎨 Tonalidades y Sombras ➔
                 </button>
-                <button 
+                <button
                   className="btn-panel-add-mix"
                   onClick={() => {
                     soundEffects.playBingoBall();
@@ -849,7 +849,7 @@ export default function ColorTheory() {
                   <div key={item.guardian.id} className="passenger-pill animate-zoom-in" style={{ borderColor: item.guardian.hex }}>
                     <span className="passenger-dot" style={{ backgroundColor: item.guardian.hex }} />
                     <span className="passenger-name">{item.guardian.name}</span>
-                    
+
                     {/* Controles de Dosis Proporcional */}
                     <div className="dose-controls">
                       <button className="dose-btn" onClick={() => handleUpdateWeight(item.guardian.id, -1)}>-</button>
@@ -887,8 +887,8 @@ export default function ColorTheory() {
                       <span>Hex: <span className="monospace">{mixResult.hex}</span></span>
                     </div>
 
-                    <button 
-                      className="btn-send-to-lab" 
+                    <button
+                      className="btn-send-to-lab"
                       style={{ marginTop: '15px', background: mixResult.hex, color: mixResult.hex === '#FFFFFF' || mixResult.hex === '#FBE903' ? '#000' : '#fff' }}
                       onClick={() => handleSendToLab(mixResult.hex)}
                     >
@@ -919,14 +919,14 @@ export default function ColorTheory() {
             <div className="lab-color-picker-box">
               <span className="lab-picker-label">Elige un color base para analizar:</span>
               <div className="lab-color-input-wrapper">
-                <input 
-                  type="color" 
-                  value={labHexColor} 
+                <input
+                  type="color"
+                  value={labHexColor}
                   onChange={(e) => setLabHexColor(e.target.value.toUpperCase())}
                   className="lab-color-input"
                 />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   value={labHexColor}
                   onChange={(e) => setLabHexColor(e.target.value.toUpperCase())}
                   className="lab-hex-text-input monospace"
@@ -935,7 +935,7 @@ export default function ColorTheory() {
 
               <div className="lab-guardian-quick-palette">
                 {GUARDIANS.slice(0, 8).map(g => (
-                  <button 
+                  <button
                     key={g.id}
                     className="quick-swatch-btn"
                     style={{ backgroundColor: g.hex }}
@@ -949,8 +949,8 @@ export default function ColorTheory() {
             {/* Tira de Paleta Monocromática de 5 Tonos */}
             <div className="lab-shades-strip">
               {labShades.map((shade, idx) => (
-                <div 
-                  key={idx} 
+                <div
+                  key={idx}
                   className="lab-shade-card animate-zoom-in"
                   style={{ backgroundColor: shade.hex, color: idx <= 1 ? '#000' : '#fff' }}
                   onClick={() => {
@@ -976,7 +976,7 @@ export default function ColorTheory() {
           <div className="section-header-box">
             <h2 className="section-title">💡 4. Las Luciérnagas RGB de la Madriguera</h2>
             <p className="section-desc">
-              Las luces en pantalla se mezclan de forma aditiva: **Rojo (Red)**, **Verde (Green)** y **Azul (Blue)**. 
+              Las luces en pantalla se mezclan de forma aditiva: **Rojo (Red)**, **Verde (Green)** y **Azul (Blue)**.
               Mueve los cristales deslizadores para sincronizar el cristal de luz con la gema objetivo.
             </p>
           </div>
@@ -990,8 +990,8 @@ export default function ColorTheory() {
               </div>
 
               <div className="challenge-target-preview">
-                <div 
-                  className="target-circle" 
+                <div
+                  className="target-circle"
                   style={{ backgroundColor: rgbToHex(gameTarget.rgb[0], gameTarget.rgb[1], gameTarget.rgb[2]), boxShadow: `0 0 20px ${rgbToHex(gameTarget.rgb[0], gameTarget.rgb[1], gameTarget.rgb[2])}` }}
                 />
                 <span className="target-label-hex">HEX: {rgbToHex(gameTarget.rgb[0], gameTarget.rgb[1], gameTarget.rgb[2])}</span>
@@ -1032,7 +1032,7 @@ export default function ColorTheory() {
               <div className="sliders-grid">
                 <div className="slider-group">
                   <span className="slider-label-color" style={{ color: '#ef4444' }}>❤️ Luz Roja (R)</span>
-                  <input 
+                  <input
                     type="range" min="0" max="255" value={userR}
                     onChange={(e) => setUserR(parseInt(e.target.value))}
                     className="slider-range-input input-red"
@@ -1042,7 +1042,7 @@ export default function ColorTheory() {
 
                 <div className="slider-group">
                   <span className="slider-label-color" style={{ color: '#22c55e' }}>💚 Luz Verde (G)</span>
-                  <input 
+                  <input
                     type="range" min="0" max="255" value={userG}
                     onChange={(e) => setUserG(parseInt(e.target.value))}
                     className="slider-range-input input-green"
@@ -1052,7 +1052,7 @@ export default function ColorTheory() {
 
                 <div className="slider-group">
                   <span className="slider-label-color" style={{ color: '#3b82f6' }}>💙 Luz Azul (B)</span>
-                  <input 
+                  <input
                     type="range" min="0" max="255" value={userB}
                     onChange={(e) => setUserB(parseInt(e.target.value))}
                     className="slider-range-input input-blue"
@@ -1263,8 +1263,8 @@ export default function ColorTheory() {
                 </div>
               </div>
 
-              <button 
-                className="btn-export-palette" 
+              <button
+                className="btn-export-palette"
                 onClick={exportPaletteImage}
                 disabled={isExporting}
               >

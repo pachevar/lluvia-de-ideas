@@ -40,13 +40,13 @@ const CREATIKA_APPS: CreatikaApp[] = [
     gradient: 'linear-gradient(135deg, rgba(236,72,153,0.2) 0%, rgba(190,24,93,0.05) 100%)'
   },
   {
-    id: 'construyendo-personaje',
-    title: 'Construyendo el Personaje',
-    badge: 'Diseño de Arquetipos',
-    tag: 'NARRATIVA & PSICOLOGÍA',
-    desc: 'Crea fichas completas de personajes con virtudes, defectos, motivaciones secretas y arcos de transformación.',
+    id: 'creacion-personajes',
+    title: 'Creación de Personajes',
+    badge: 'Arquetipos, Neurociencia & Imagen',
+    tag: 'NARRATIVA & NEURODISEÑO',
+    desc: 'Explora arquetipos universales, la neurociencia de la empatía, modulador 3D de dimensiones y forja de cromos con imágenes personalizadas.',
     icon: '🎭',
-    path: '/creatika/construyendo-el-personaje',
+    path: '/creatika/creacion-de-personajes',
     accentColor: '#a855f7',
     gradient: 'linear-gradient(135deg, rgba(168,85,247,0.2) 0%, rgba(126,34,206,0.05) 100%)'
   },

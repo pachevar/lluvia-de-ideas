@@ -29,6 +29,7 @@ const NotFound = React.lazy(() => import('./pages/NotFound'));
 const NuestrosLibros = React.lazy(() => import('./pages/NuestrosLibros'));
 const Neurociencia = React.lazy(() => import('./pages/Neurociencia'));
 const ConstruyendoPersonaje = React.lazy(() => import('./pages/ConstruyendoPersonaje'));
+const CreacionPersonajes = React.lazy(() => import('./pages/CreacionPersonajes'));
 const BingoBoletos = React.lazy(() => import('./pages/BingoBoletos'));
 const BingoBoletosConfirmacion = React.lazy(() => import('./pages/BingoBoletosConfirmacion'));
 const GranGaleria = React.lazy(() => import('./pages/GranGaleria'));
@@ -86,6 +87,10 @@ function App() {
             <Route path="/cuento/:storyId" element={<NuestrosLibros />} />
             <Route path="/creatika/maquina-de-cuentos" element={<StoryMachine />} />
             <Route path="/creatika/teoria-del-color" element={<ColorTheory />} />
+            <Route path="/creatika/creacion-de-personajes" element={<CreacionPersonajes />} />
+            <Route path="/creatika/creacion-personajes" element={<CreacionPersonajes />} />
+            <Route path="/creacion-de-personajes" element={<CreacionPersonajes />} />
+            <Route path="/creacion-personajes" element={<CreacionPersonajes />} />
             <Route path="/creatika/construyendo-el-personaje" element={<ConstruyendoPersonaje />} />
             <Route path="/creatika/construyendo-personaje" element={<ConstruyendoPersonaje />} />
             <Route path="/construyendo-el-personaje" element={<ConstruyendoPersonaje />} />
