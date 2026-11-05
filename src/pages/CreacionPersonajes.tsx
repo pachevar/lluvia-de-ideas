@@ -1645,10 +1645,10 @@ FRASE INSIGNIA: ${charQuote}
                       activeCircuit.fieldKey === 'lie'
                         ? charLie
                         : activeCircuit.fieldKey === 'wound'
-                        ? charWound
-                        : activeCircuit.fieldKey === 'contradiction'
-                        ? charContradiction
-                        : charPhysical
+                          ? charWound
+                          : activeCircuit.fieldKey === 'contradiction'
+                            ? charContradiction
+                            : charPhysical
                     }
                     onChange={(e) => {
                       const val = e.target.value;
@@ -1876,8 +1876,8 @@ FRASE INSIGNIA: ${charQuote}
                           {activeDimensionTab === 'fisiologica'
                             ? dimPhysiological
                             : activeDimensionTab === 'sociologica'
-                            ? dimSociological
-                            : dimPsychological}%
+                              ? dimSociological
+                              : dimPsychological}%
                         </strong>
                       </div>
                       <input
@@ -1889,8 +1889,8 @@ FRASE INSIGNIA: ${charQuote}
                           activeDimensionTab === 'fisiologica'
                             ? dimPhysiological
                             : activeDimensionTab === 'sociologica'
-                            ? dimSociological
-                            : dimPsychological
+                              ? dimSociological
+                              : dimPsychological
                         }
                         onChange={(e) => {
                           const val = Number(e.target.value);
