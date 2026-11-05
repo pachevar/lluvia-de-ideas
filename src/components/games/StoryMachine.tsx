@@ -1383,7 +1383,7 @@ export default function StoryMachine() {
                   className="sm-spin-btn"
                   onClick={() => {
                     soundEffects.playClick();
-                    navigate('/creatika/construyendo-personaje', {
+                    navigate('/creatika/creacion-de-personajes', {
                       state: {
                         characterName: reels.personaje.current.title,
                         description: reels.personaje.current.description,

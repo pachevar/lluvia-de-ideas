@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useLocation } from 'react-router-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { soundEffects } from '../utils/soundEffects';
 import {
@@ -10,146 +10,415 @@ import {
 import { compressImageWebP, blobToDataURL } from '../utils/imageUpload';
 import './CreacionPersonajes.css';
 
-// Preset avatars para estudiantes que no tengan una foto a mano
-const PRESET_AVATARS = [
+// Ilustraciones base curadas para cada uno de los 12 arquetipos clásicos
+const DEFAULT_ARCHETYPE_IMAGES: Record<string, string> = {
+  heroe: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=700&q=80',
+  mentor: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=700&q=80',
+  sombra: 'https://images.unsplash.com/photo-1509198397868-475647b2a1e5?auto=format&fit=crop&w=700&q=80',
+  picaro: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=700&q=80',
+  guardian: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=700&q=80',
+  aliado: 'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=700&q=80',
+  camaleon: 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?auto=format&fit=crop&w=700&q=80',
+  heraldo: 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&w=700&q=80',
+  inocente: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=700&q=80',
+  rebelde: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=700&q=80',
+  amante: 'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?auto=format&fit=crop&w=700&q=80',
+  soberano: 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&w=700&q=80'
+};
+
+type ArtFilterType = 'normal' | 'codice' | 'cyber' | 'pergamino' | 'acuarela';
+
+interface SavedCharacterProfile {
+  id: string;
+  name: string;
+  title: string;
+  archetypeId: string;
+  quote: string;
+  wound: string;
+  lie: string;
+  desire: string;
+  need: string;
+  contradiction: string;
+  physical: string;
+  social: string;
+  image: string;
+  filter: ArtFilterType;
+  imgZoom: number;
+  imgPosY: number;
+  physiological: number;
+  sociological: number;
+  psychological: number;
+}
+
+// Perfiles de ejemplo listos para explorar en clase
+const PRESET_PROFILES: SavedCharacterProfile[] = [
   {
     id: 'hunahpu',
-    label: 'Hunahpú (Gemelo Sagrado)',
-    url: 'https://images.unsplash.com/photo-1544717305-2782549b5136?auto=format&fit=crop&w=600&q=80',
-    archetypeId: 'heroe',
-    title: 'Héroe Solar del Popol Vuh',
     name: 'Hunahpú',
-    quote: '«El inframundo de Xibalbá no podrá devorar la luz de los hermanos.»',
-    wound: 'La decapitación de su padre por los Señores del Miedo.',
-    desire: 'Vencer en el juego de pelota y humillar a la muerte.',
-    need: 'Aprender que la astucia y el sacrificio colectivo valen más que la fuerza bruta.',
-    lie: '«Debo cargar solo el peso de vengar a mi linaje.»',
-    contradiction: 'Es un semidiós todopoderoso, pero teme a los mosquitos espía.'
+    title: 'Héroe Solar del Popol Vuh',
+    archetypeId: 'heroe',
+    quote: '«El inframundo de Xibalbá no podrá apagar la luz de nuestra memoria.»',
+    wound: 'La derrota de su padre y su tío en el juego de pelota ante los Señores del Miedo.',
+    lie: '«Debo cargar solo el destino de mi linaje sin mostrar jamás temor.»',
+    desire: 'Vencer en la cancha de Xibalbá y recuperar el honor familiar.',
+    need: 'Aprender que la sabiduría colectiva y el sacrificio compartido superan a la fuerza individual.',
+    contradiction: 'Es un semidiós certero con la cerbatana, pero duda en silencio antes de cada prueba nocturna.',
+    physical: 'Complexión ágil de jugador de pelota, marca solar en el hombro y mirada color ámbar.',
+    social: 'Criado en la casa de la abuela Ixmukané bajo las leyes sagradas del maíz y la selva.',
+    image: DEFAULT_ARCHETYPE_IMAGES.heroe,
+    filter: 'codice',
+    imgZoom: 100,
+    imgPosY: 50,
+    physiological: 85,
+    sociological: 85,
+    psychological: 92
   },
   {
-    id: 'guardiana',
-    label: 'Ikal (Guardiana de la Selva)',
-    url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=600&q=80',
-    archetypeId: 'guardian',
-    title: 'Vigía del Umbral Verde',
+    id: 'ikal',
     name: 'Ikal Chan',
-    quote: '«Nadie cruza las ceibas antiguas sin dejar atrás sus mentiras.»',
-    wound: 'Dejó pasar a unos cazadores que talaron el árbol sagrado de su niñez.',
-    desire: 'Aislar el bosque de cualquier intruso humano.',
-    need: 'Descubrir que proteger requiere abrir puentes, no solo levantar murallas.',
-    lie: '«Todo forastero trae consigo la ruina.»',
-    contradiction: 'Tiene una coraza de jade impenetrable, pero colecciona orquídeas frágiles.'
+    title: 'Guardiana del Ceibal Antiguo',
+    archetypeId: 'guardian',
+    quote: '«Nadie cruza las raíces sagradas sin enfrentar primero sus propias intenciones.»',
+    wound: 'Confiar en un expedicionario que robó las semillas luminosas de su santuario.',
+    lie: '«Todo forastero trae consigo la destrucción; abrir la puerta es traicionar al bosque.»',
+    desire: 'Mantener la frontera de niebla cerrada para siempre.',
+    need: 'Distinguir entre quienes buscan saquear y quienes vienen a sanar la tierra.',
+    contradiction: 'Porta una lanza de obsidiana intimidante, pero rescata y cura insectos heridos en secreto.',
+    physical: 'Postura firme de centinela, cicatriz de corteza en el antebrazo, capa tejida con musgo.',
+    social: 'Última integrante de la orden de vigías del Petén; respetada pero aislada de las aldeas.',
+    image: DEFAULT_ARCHETYPE_IMAGES.guardian,
+    filter: 'acuarela',
+    imgZoom: 105,
+    imgPosY: 40,
+    physiological: 80,
+    sociological: 78,
+    psychological: 88
   },
   {
-    id: 'sabio',
-    label: 'Najab (El Mentor Alquimista)',
-    url: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=600&q=80',
+    id: 'najab',
+    name: 'Maestro Najab',
+    title: 'Astrónomo de las Pléyades',
     archetypeId: 'mentor',
-    title: 'Astrónomo de las Alturas',
-    name: 'Najab del Ceibal',
-    quote: '«Las estrellas no deciden tu camino, solo iluminan las piedras del suelo.»',
-    wound: 'No pudo predecir el eclipse que causó la gran sequía de su juventud.',
-    desire: 'Codificar todo el conocimiento del cosmos en un solo libro.',
-    need: 'Confiar en la intuición de la nueva generación y dejar partir su rol rector.',
-    lie: '«Si comprendo todas las leyes celestes, podré evitar el sufrimiento humano.»',
-    contradiction: 'Es ciego de un ojo pero ve constelaciones invisibles para los demás.'
+    quote: '«Las estrellas no dictan tu destino, solo iluminan las piedras del sendero.»',
+    wound: 'Su mejor aprendiz se perdió en la montaña por seguir un cálculo erróneo suyo.',
+    lie: '«Si no tengo la respuesta exacta para todo, volveré a poner en peligro a mis alumnos.»',
+    desire: 'Completar el gran códice de los eclipses antes de perder la vista.',
+    need: 'Soltar el control y confiar en que sus discípulos sabrán encontrar su propio rumbo.',
+    contradiction: 'Conoce la ruta de mil constelaciones lejanas, pero suele olvidar dónde dejó su bastón.',
+    physical: 'Cabello cano recogido, manos manchadas de tinta de carbón y andar pausado.',
+    social: 'Consejero del observatorio escolar; venerado por los jóvenes pero cuestionado por el consejo.',
+    image: DEFAULT_ARCHETYPE_IMAGES.mentor,
+    filter: 'pergamino',
+    imgZoom: 100,
+    imgPosY: 45,
+    physiological: 76,
+    sociological: 84,
+    psychological: 90
   },
   {
-    id: 'picara',
-    label: 'Ixchel (Pícara Cibernética)',
-    url: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=600&q=80',
+    id: 'ixchel_net',
+    name: 'Ixchel Cyber',
+    title: 'Tejedora de Códigos Libres',
     archetypeId: 'picaro',
-    title: 'Hacker de Datos Ancestrales',
-    name: 'Ixchel Maya-Net',
-    quote: '«La gravedad es solo una sugerencia si conoces el código fuente.»',
-    wound: 'Fue expulsada de la academia por alterar las calificaciones de sus compañeros humildes.',
-    desire: 'Demostrar que ninguna bóveda digital es impenetrable.',
-    need: 'Usar su ingenio para defender una causa colectiva en vez de solo alimentar su ego.',
-    lie: '«El compromiso con los demás es una trampa que te vuelve predecible.»',
-    contradiction: 'Broma constantemente cuando está aterrorizada.'
+    quote: '«Las reglas rígidas son solo acertijos esperando a que alguien les encuentre el truco.»',
+    wound: 'Fue expulsada del taller real por modificar los telares para ayudar a las familias sin recursos.',
+    lie: '«Tomarse las cosas en serio solo sirve para que te atrapen.»',
+    desire: 'Descifrar la bóveda central de datos y demostrar su ingenio ante todos.',
+    need: 'Comprometerse de verdad con una comunidad cuando sus amigos más la necesitan.',
+    contradiction: 'Hace bromas sarcásticas constantemente justo cuando siente más miedo por dentro.',
+    physical: 'Dedos veloces, lentes con reflejos cian y un brazalete tejido con hilos de cobre.',
+    social: 'Habita entre los mercados populares y las redes subterráneas de inventores.',
+    image: DEFAULT_ARCHETYPE_IMAGES.picaro,
+    filter: 'cyber',
+    imgZoom: 100,
+    imgPosY: 50,
+    physiological: 82,
+    sociological: 80,
+    psychological: 89
   }
 ];
 
-export default function CreacionPersonajes() {
-  const navigate = useNavigate();
+// Bancos de ideas rápidas para que el estudiante construya con clics prácticos
+const NEURO_CIRCUITS_DATA = [
+  {
+    id: 'tom',
+    stepNum: 'Circuito 1',
+    name: 'Teoría de la Mente (ToM)',
+    subtitle: 'La Mentira Nuclear del Personaje',
+    brainRegion: 'Córtex Prefrontal Medial y Unión Temporoparietal',
+    neurotransmitter: 'Sincronización Cognitiva',
+    color: '#38bdf8',
+    icon: '🔮',
+    conceptExplanation:
+      'Nuestro cerebro intenta adivinar todo el tiempo qué piensa el otro. Cuando un personaje actúa guiado por una «Mentira Nuclear» (una creencia equivocada sobre sí mismo o el mundo), el lector detecta el error antes que el personaje y siente una urgencia magnética por ver cuándo descubrirá la verdad.',
+    classroomQuestion: '¿Qué creencia falsa tiene tu personaje al inicio de la historia que le impide ser plenamente feliz?',
+    fieldKey: 'lie' as const,
+    fieldLabel: 'Mentira Nuclear de tu Personaje',
+    quickIdeas: [
+      '«Si pido ayuda o muestro duda, todos descubrirán que soy débil.»',
+      '«Solo tengo valor para mi familia si logro ser perfecto en todo.»',
+      '«Confiar en los demás siempre termina en traición; es mejor caminar solo.»',
+      '«El fin justifica cualquier medio cuando se trata de proteger a los míos.»'
+    ]
+  },
+  {
+    id: 'oxitocina',
+    stepNum: 'Circuito 2',
+    name: 'Química de la Empatía',
+    subtitle: 'La Herida del Pasado (Vulnerabilidad)',
+    brainRegion: 'Sistema Límbico, Amígdala e Hipotálamo',
+    neurotransmitter: 'Liberación de Oxitocina',
+    color: '#f43f5e',
+    icon: '💓',
+    conceptExplanation:
+      'Los estudios del neuroeconomista Paul Zak demostraron que el cerebro no libera oxitocina ante héroes perfectos o invencibles. La oxitocina (la molécula del vínculo empático) solo se activa cuando presenciamos una herida emocional genuina, una pérdida o un temor oculto.',
+    classroomQuestion: '¿Qué suceso doloroso del pasado dejó una huella que tu personaje aún intenta ocultar o superar?',
+    fieldKey: 'wound' as const,
+    fieldLabel: 'Herida del Pasado (El Fantasma)',
+    quickIdeas: [
+      'Rompió una promesa importante y alguien querido pagó las consecuencias.',
+      'Perdió su hogar en una catástrofe y siente culpa por haber sobrevivido.',
+      'Fue rechazado por su propio maestro cuando cometió su primer gran error.',
+      'Guardó silencio ante una injusticia por miedo y aún busca redimirse.'
+    ]
+  },
+  {
+    id: 'dopamina',
+    stepNum: 'Circuito 3',
+    name: 'Error de Predicción',
+    subtitle: 'La Contradicción Neurocreativa',
+    brainRegion: 'Estriado Ventral y Núcleo Accumbens',
+    neurotransmitter: 'Pico de Dopamina Curiosa',
+    color: '#f59e0b',
+    icon: '⚡',
+    conceptExplanation:
+      'El cerebro se aburre de inmediato ante los estereotipos porque ya sabe qué va a pasar (predicción = 0 sorpresa). Cuando le das al personaje una contradicción humana inesperada, provocas un «Error de Predicción» positivo que despierta la dopamina y fija al personaje en la memoria a largo plazo.',
+    classroomQuestion: '¿Qué hábito, gusto o reacción tiene tu personaje que rompe por completo con su apariencia inicial?',
+    fieldKey: 'contradiction' as const,
+    fieldLabel: 'Contradicción que Rompe el Cliché',
+    quickIdeas: [
+      'Un guerrero imponente que escribe poesía botánica y cuida semillas frágiles.',
+      'Una líder brillante y valiente en público que le teme profundamente a la oscuridad.',
+      'Un villano calculador que jamás miente a los niños y respeta la naturaleza.',
+      'Un sabio anciano y solemne que se emociona como un niño con los juegos de ingenio.'
+    ]
+  },
+  {
+    id: 'espejo',
+    stepNum: 'Circuito 4',
+    name: 'Neuronas Espejo',
+    subtitle: 'El Anclaje Físico y Sensorial',
+    brainRegion: 'Corteza Premotora y Corteza Somatosensorial',
+    neurotransmitter: 'Simulación Motora Directa',
+    color: '#10b981',
+    icon: '🧬',
+    conceptExplanation:
+      'Las neuronas espejo hacen que el lector sienta en su propio cuerpo los gestos, el cansancio o la tensión del personaje. Para activarlas, no uses adjetivos vagos («era nervioso»); describe acciones y marcas concretas («frotaba la cicatriz de su pulgar cada vez que mentía»).',
+    classroomQuestion: '¿Qué rasgo físico, cicatriz, objeto o gesto corporal hace único e inolvidable a tu personaje?',
+    fieldKey: 'physical' as const,
+    fieldLabel: 'Anclaje Físico y Gesto Característico',
+    quickIdeas: [
+      'Toca inconscientemente un amuleto de jade en su cuello cuando presiente peligro.',
+      'Tiene una cicatriz luminosa en el antebrazo y camina sin hacer el menor ruido.',
+      'Su voz baja de volumen hasta volverse un susurro cuando está verdaderamente furioso.',
+      'Lleva siempre los dedos manchados de carbón y ajusta sus lentes antes de hablar.'
+    ]
+  }
+];
 
-  // Sub-tabs principales
-  const [activeTab, setActiveTab] = useState<'arquetipos' | 'neurociencia' | 'dimensionador' | 'taller'>(() => {
-    const saved = localStorage.getItem('cp_active_tab');
-    return (saved === 'arquetipos' || saved === 'neurociencia' || saved === 'dimensionador' || saved === 'taller')
-      ? saved
-      : 'arquetipos';
+const DIMENSION_QUICK_CHIPS: Record<'fisiologica' | 'sociologica' | 'psicologica', string[]> = {
+  fisiologica: [
+    'Mirada aguda color ámbar',
+    'Cicatriz antigua en el hombro',
+    'Andar silencioso y ágil',
+    'Manos curtidas por el trabajo artesanal',
+    'Voz pausada que transmite calma',
+    'Amuleto familiar que nunca se quita'
+  ],
+  sociologica: [
+    'Criado por los sabios de su aldea',
+    'Exiliado injustamente de su gremio',
+    'Defensor de las tradiciones del bosque',
+    'Puente entre dos culturas enfrentadas',
+    'Aprendiz rebelde de una academia estricta',
+    'Huérfano adoptado por comerciantes viajeros'
+  ],
+  psicologica: [
+    'Desea proteger a su comunidad a cualquier costo',
+    'Necesita aprender a perdonarse un error pasado',
+    'Oculta su inseguridad detrás del humor irónico',
+    'Teme convertirse en aquello que más combate',
+    'Le cuesta pedir ayuda aunque esté al límite',
+    'Su lealtad es puesta a prueba en momentos críticos'
+  ]
+};
+
+export default function CreacionPersonajes() {
+  const location = useLocation();
+
+  // Etapa activa del desarrollo pedagógico (1 a 4)
+  const [activeStage, setActiveStage] = useState<1 | 2 | 3 | 4>(() => {
+    const saved = localStorage.getItem('cp_active_stage');
+    if (saved === '1' || saved === '2' || saved === '3' || saved === '4') {
+      return Number(saved) as 1 | 2 | 3 | 4;
+    }
+    return 1;
   });
 
-  // Modo Proyector Aula (Pizarra interactiva)
+  // Modo Pizarra / Proyector de Aula
   const [isProjectorMode, setIsProjectorMode] = useState<boolean>(false);
 
-  // Tab 1: Filtro de Arquetipos
-  const [archetypeFilter, setArchetypeFilter] = useState<string>('todos');
-  const [searchQuery, setSearchQuery] = useState<string>('');
-  const [expandedArchetype, setExpandedArchetype] = useState<string | null>('heroe');
+  // =========================================================================
+  // ESTADO ETAPA 1: EXPLORADOR DE ARQUETIPOS Y PERSONALIZACIÓN VISUAL
+  // =========================================================================
+  const [archetypeCategory, setArchetypeCategory] = useState<'todos' | 'luz' | 'sombra' | 'catalizador'>('todos');
+  const [selectedSpotArchetypeId, setSelectedSpotArchetypeId] = useState<string>('heroe');
+  const [polarityView, setPolarityView] = useState<'ambos' | 'luz' | 'sombra'>('ambos');
+  const [archSubTab, setArchSubTab] = useState<'ejemplos' | 'relaciones' | 'crisol'>('ejemplos');
 
-  // Tab 3: Sliders del Dimensionador
-  const [dimPhysiological, setDimPhysiological] = useState<number>(75);
-  const [dimSociological, setDimSociological] = useState<number>(70);
-  const [dimPsychological, setDimPsychological] = useState<number>(85);
+  // Imágenes y filtros personalizados para cada uno de los 12 arquetipos (Conceptos personalizados)
+  const [customArchetypeImages, setCustomArchetypeImages] = useState<Record<string, string>>(() => {
+    try {
+      const saved = localStorage.getItem('cp_custom_archetype_images');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  // Tab 4: Taller y Forja de Personaje
-  const [charName, setCharName] = useState<string>('Hunahpú');
-  const [charTitle, setCharTitle] = useState<string>('Héroe Solar del Popol Vuh');
-  const [charArchetypeId, setCharArchetypeId] = useState<string>('heroe');
-  const [charQuote, setCharQuote] = useState<string>('«El inframundo de Xibalbá no podrá devorar la luz de los hermanos.»');
-  const [charWound, setCharWound] = useState<string>('La pérdida de sus ancestros en el juego de pelota oscuro.');
-  const [charLie, setCharLie] = useState<string>('«Debo cargar solo el destino del mundo sin pedir auxilio.»');
-  const [charDesire, setCharDesire] = useState<string>('Destruir a los Señores de Xibalbá con gloria personal.');
-  const [charNeed, setCharNeed] = useState<string>('Aprender a cooperar con su hermano Ixbalanqué y sacrificarse por la humanidad.');
-  const [charContradiction, setCharContradiction] = useState<string>('Es un semidiós valiente pero duda profundamente de su valor cuando no tiene armas.');
-  const [charPhysical, setCharPhysical] = useState<string>('Cicatriz de obsidiana en el antebrazo derecho, mirada ámbar, complexión ágil.');
-  const [charSocial, setCharSocial] = useState<string>('Linaje de cazadores con cerbatana, venerado por su aldea pero considerado una amenaza por los ancianos.');
+  const [customArchetypeFilters, setCustomArchetypeFilters] = useState<Record<string, ArtFilterType>>(() => {
+    try {
+      const saved = localStorage.getItem('cp_custom_archetype_filters');
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
 
-  // Subida de Imagen y Filtros
-  const [charImage, setCharImage] = useState<string>(PRESET_AVATARS[0].url);
-  const [activeFilter, setActiveFilter] = useState<'normal' | 'codice' | 'cyber' | 'pergamino' | 'acuarela'>('codice');
-  const [isUploading, setIsUploading] = useState<boolean>(false);
+  const conceptFileInputRef = useRef<HTMLInputElement | null>(null);
+  const [isUploadingConcept, setIsUploadingConcept] = useState<boolean>(false);
+
+  // =========================================================================
+  // ESTADO ETAPA 2: LABORATORIO NEUROCOGNITIVO
+  // =========================================================================
+  const [experimentMode, setExperimentMode] = useState<'plano' | 'tridimensional'>('tridimensional');
+  const [activeCircuitId, setActiveCircuitId] = useState<string>('tom');
+
+  // =========================================================================
+  // ESTADO ETAPA 3: LAS 3 DIMENSIONES (CONSTRUCTOR POR CAPAS)
+  // =========================================================================
+  const [activeDimensionTab, setActiveDimensionTab] = useState<'fisiologica' | 'sociologica' | 'psicologica'>('psicologica');
+  const [dimPhysiological, setDimPhysiological] = useState<number>(85);
+  const [dimSociological, setDimSociological] = useState<number>(82);
+  const [dimPsychological, setDimPsychological] = useState<number>(90);
+
+  // =========================================================================
+  // ESTADO ETAPA 4: PERSONAJE ACTIVO Y ESTUDIO VISUAL
+  // =========================================================================
+  const [charName, setCharName] = useState<string>(PRESET_PROFILES[0].name);
+  const [charTitle, setCharTitle] = useState<string>(PRESET_PROFILES[0].title);
+  const [charArchetypeId, setCharArchetypeId] = useState<string>(PRESET_PROFILES[0].archetypeId);
+  const [charQuote, setCharQuote] = useState<string>(PRESET_PROFILES[0].quote);
+  const [charWound, setCharWound] = useState<string>(PRESET_PROFILES[0].wound);
+  const [charLie, setCharLie] = useState<string>(PRESET_PROFILES[0].lie);
+  const [charDesire, setCharDesire] = useState<string>(PRESET_PROFILES[0].desire);
+  const [charNeed, setCharNeed] = useState<string>(PRESET_PROFILES[0].need);
+  const [charContradiction, setCharContradiction] = useState<string>(PRESET_PROFILES[0].contradiction);
+  const [charPhysical, setCharPhysical] = useState<string>(PRESET_PROFILES[0].physical);
+  const [charSocial, setCharSocial] = useState<string>(PRESET_PROFILES[0].social);
+
+  const [charImage, setCharImage] = useState<string>(PRESET_PROFILES[0].image);
+  const [activeFilter, setActiveFilter] = useState<ArtFilterType>(PRESET_PROFILES[0].filter);
+  const [imgZoom, setImgZoom] = useState<number>(100);
+  const [imgPosY, setImgPosY] = useState<number>(50);
+
+  const [previewFormat, setPreviewFormat] = useState<'cromo' | 'expediente'>('cromo');
+  const [isUploadingChar, setIsUploadingChar] = useState<boolean>(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [saveSuccess, setSaveSuccess] = useState<boolean>(false);
   const [isExporting, setIsExporting] = useState<boolean>(false);
 
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
+  // Galería de personajes guardados por el estudiante en clase
+  const [savedRoster, setSavedRoster] = useState<SavedCharacterProfile[]>(() => {
+    try {
+      const saved = localStorage.getItem('cp_student_roster');
+      return saved ? JSON.parse(saved) : PRESET_PROFILES;
+    } catch {
+      return PRESET_PROFILES;
+    }
+  });
+
+  const charFileInputRef = useRef<HTMLInputElement | null>(null);
   const cardExportRef = useRef<HTMLDivElement | null>(null);
 
-  // Guardar pestaña en localStorage
+  // Persistir etapa activa
   useEffect(() => {
-    localStorage.setItem('cp_active_tab', activeTab);
-  }, [activeTab]);
+    localStorage.setItem('cp_active_stage', String(activeStage));
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [activeStage]);
 
-  // Cargar borrador persistente si existe
+  // Persistir imágenes y filtros personalizados de los arquetipos
   useEffect(() => {
     try {
-      const savedDraft = localStorage.getItem('cp_draft_character');
+      localStorage.setItem('cp_custom_archetype_images', JSON.stringify(customArchetypeImages));
+    } catch {
+      // Si excede quota local, mantener en memoria de sesión
+    }
+  }, [customArchetypeImages]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('cp_custom_archetype_filters', JSON.stringify(customArchetypeFilters));
+    } catch {
+      // Ignorar
+    }
+  }, [customArchetypeFilters]);
+
+  // Restaurar borrador o recibir datos desde la Máquina de Cuentos
+  useEffect(() => {
+    const navState = location.state as { characterName?: string; description?: string } | null;
+    if (navState?.characterName) {
+      setCharName(navState.characterName);
+      if (navState.description) {
+        setCharTitle(navState.description);
+      }
+      setActiveStage(4);
+      return;
+    }
+
+    try {
+      const savedDraft = localStorage.getItem('cp_draft_character_v2');
       if (savedDraft) {
         const parsed = JSON.parse(savedDraft);
         if (parsed.name) setCharName(parsed.name);
         if (parsed.title) setCharTitle(parsed.title);
-        if (parsed.archetypeId) setCharArchetypeId(parsed.archetypeId);
+        if (parsed.archetypeId) {
+          setCharArchetypeId(parsed.archetypeId);
+          setSelectedSpotArchetypeId(parsed.archetypeId);
+        }
         if (parsed.quote) setCharQuote(parsed.quote);
         if (parsed.wound) setCharWound(parsed.wound);
         if (parsed.lie) setCharLie(parsed.lie);
         if (parsed.desire) setCharDesire(parsed.desire);
         if (parsed.need) setCharNeed(parsed.need);
         if (parsed.contradiction) setCharContradiction(parsed.contradiction);
+        if (parsed.physical) setCharPhysical(parsed.physical);
+        if (parsed.social) setCharSocial(parsed.social);
         if (parsed.image) setCharImage(parsed.image);
         if (parsed.filter) setActiveFilter(parsed.filter);
-        if (parsed.physiological) setDimPhysiological(parsed.physiological);
-        if (parsed.sociological) setDimSociological(parsed.sociological);
-        if (parsed.psychological) setDimPsychological(parsed.psychological);
+        if (typeof parsed.imgZoom === 'number') setImgZoom(parsed.imgZoom);
+        if (typeof parsed.imgPosY === 'number') setImgPosY(parsed.imgPosY);
+        if (typeof parsed.physiological === 'number') setDimPhysiological(parsed.physiological);
+        if (typeof parsed.sociological === 'number') setDimSociological(parsed.sociological);
+        if (typeof parsed.psychological === 'number') setDimPsychological(parsed.psychological);
       }
-    } catch (e) {
-      console.warn('Could not restore character draft', e);
+    } catch {
+      // Ignorar errores de lectura
     }
-  }, []);
+  }, [location.state]);
 
-  // Guardar borrador en localStorage cuando cambie
+  // Autoguardado del personaje actual
   useEffect(() => {
     const draft = {
       name: charName,
@@ -161,182 +430,255 @@ export default function CreacionPersonajes() {
       desire: charDesire,
       need: charNeed,
       contradiction: charContradiction,
+      physical: charPhysical,
+      social: charSocial,
       image: charImage,
       filter: activeFilter,
+      imgZoom,
+      imgPosY,
       physiological: dimPhysiological,
       sociological: dimSociological,
       psychological: dimPsychological
     };
     try {
-      localStorage.setItem('cp_draft_character', JSON.stringify(draft));
-    } catch (e) {
-      // Ignorar quota exceeded si es un base64 muy grande
+      localStorage.setItem('cp_draft_character_v2', JSON.stringify(draft));
+    } catch {
+      // Ignorar quota exceeded
     }
   }, [
     charName, charTitle, charArchetypeId, charQuote, charWound, charLie,
-    charDesire, charNeed, charContradiction, charImage, activeFilter,
+    charDesire, charNeed, charContradiction, charPhysical, charSocial,
+    charImage, activeFilter, imgZoom, imgPosY,
     dimPhysiological, dimSociological, dimPsychological
   ]);
 
-  // Arquetipo seleccionado en Taller
-  const currentArchetype = useMemo(() => {
+  // Arquetipo activo en el Escenario de Etapa 1
+  const spotlightArchetype = useMemo(() => {
+    return CLASSIC_ARCHETYPES.find(a => a.id === selectedSpotArchetypeId) || CLASSIC_ARCHETYPES[0];
+  }, [selectedSpotArchetypeId]);
+
+  // Imagen y filtro vigentes para el arquetipo en Etapa 1
+  const spotlightArchetypeImg = customArchetypeImages[spotlightArchetype.id] || DEFAULT_ARCHETYPE_IMAGES[spotlightArchetype.id] || DEFAULT_ARCHETYPE_IMAGES.heroe;
+  const spotlightArchetypeFilter: ArtFilterType = customArchetypeFilters[spotlightArchetype.id] || 'normal';
+
+  // Arquetipo asignado al personaje del estudiante
+  const currentCharacterArchetype = useMemo(() => {
     return CLASSIC_ARCHETYPES.find(a => a.id === charArchetypeId) || CLASSIC_ARCHETYPES[0];
   }, [charArchetypeId]);
 
-  // Filtrado de Arquetipos en la Galería
+  // Lista filtrada de arquetipos en Etapa 1
   const filteredArchetypes = useMemo(() => {
     return CLASSIC_ARCHETYPES.filter(arc => {
-      const matchesSearch =
-        arc.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        arc.roleSubtitle.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        arc.shadowWeakness.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        arc.classicExample.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        arc.mayanExample.toLowerCase().includes(searchQuery.toLowerCase());
-
-      if (!matchesSearch) return false;
-      if (archetypeFilter === 'todos') return true;
-      if (archetypeFilter === 'luz') return ['heroe', 'mentor', 'aliado', 'inocente', 'soberano'].includes(arc.id);
-      if (archetypeFilter === 'sombra') return ['sombra', 'guardian', 'camaleon', 'rebelde'].includes(arc.id);
-      if (archetypeFilter === 'catalizador') return ['picaro', 'heraldo', 'amante'].includes(arc.id);
+      if (archetypeCategory === 'todos') return true;
+      if (archetypeCategory === 'luz') return ['heroe', 'mentor', 'aliado', 'inocente', 'soberano'].includes(arc.id);
+      if (archetypeCategory === 'sombra') return ['sombra', 'guardian', 'camaleon', 'rebelde'].includes(arc.id);
+      if (archetypeCategory === 'catalizador') return ['picaro', 'heraldo', 'amante'].includes(arc.id);
       return true;
     });
-  }, [searchQuery, archetypeFilter]);
+  }, [archetypeCategory]);
 
-  // Cálculo de Tridimensionalidad y Telemetría Neurocognitiva
+  // Circuito neurocognitivo activo en Etapa 2
+  const activeCircuit = useMemo(() => {
+    return NEURO_CIRCUITS_DATA.find(c => c.id === activeCircuitId) || NEURO_CIRCUITS_DATA[0];
+  }, [activeCircuitId]);
+
+  // Cálculo de Tridimensionalidad y Diagnóstico Semántico
   const threeDimensionalScore = useMemo(() => {
-    // Media ponderada: la dimensión psicológica tiene un peso crucial en el cerebro (40%), fisiológica (30%), sociológica (30%)
-    const score = Math.round((dimPhysiological * 0.3) + (dimSociological * 0.3) + (dimPsychological * 0.4));
-    return Math.min(100, Math.max(0, score));
+    const raw = (dimPhysiological * 0.3) + (dimSociological * 0.3) + (dimPsychological * 0.4);
+    return Math.min(100, Math.max(0, Math.round(raw)));
   }, [dimPhysiological, dimSociological, dimPsychological]);
 
-  // Diagnóstico Neurocognitivo
   const neuroDiagnostic = useMemo(() => {
-    if (dimPsychological < 35) {
+    if (dimPsychological < 40) {
       return {
-        level: 'Alerta: Personaje Plano (Cliché)',
-        badgeColor: '#f43f5e',
-        glowColor: 'rgba(244, 63, 94, 0.4)',
-        summary: 'Cerebro desconectado por falta de conflicto interno y contradicción.',
-        explanation: 'Sin una herida oculta ni una mentira nuclear, el sistema límbico del lector no genera empatía ToM (Teoría de la Mente). Se percibe como un estereotipo predecible.'
+        level: 'Alerta: Personaje Plano (Falta Conflicto Interior)',
+        color: '#f43f5e',
+        summary: 'El cerebro lector se desconecta cuando no percibe vulnerabilidad ni contradicción.',
+        tip: 'Fortalece la Dimensión Psicológica definiendo su Mentira Nuclear y su Herida del Pasado.'
       };
     }
-    if (dimPhysiological < 35) {
+    if (dimPhysiological < 40) {
       return {
-        level: 'Incorpóreo / Desanclado',
-        badgeColor: '#fbbf24',
-        glowColor: 'rgba(251, 191, 36, 0.4)',
-        summary: 'Falta de anclaje físico y sensorial en las neuronas espejo motoras.',
-        explanation: 'El lector no puede "sentir" el peso del personaje en el espacio físico. Añade cicatrices, postura, fatiga corporal o gestos específicos bajo estrés.'
+        level: 'Atención: Falta Anclaje Sensorial y Físico',
+        color: '#f59e0b',
+        summary: 'Las neuronas espejo necesitan gestos, postura o marcas visibles para simular al personaje.',
+        tip: 'Añade detalles en la Dimensión Fisiológica (cómo se mueve, qué objeto porta, cómo reacciona su cuerpo).'
       };
     }
-    if (dimSociological < 35) {
+    if (dimSociological < 40) {
       return {
-        level: 'Desarraigado / Vacío Social',
-        badgeColor: '#a855f7',
-        glowColor: 'rgba(168, 85, 247, 0.4)',
-        summary: 'El personaje existe en el vacío; carece de presión cultural o de grupo.',
-        explanation: 'La cognición social humana evalúa el valor ético de los actos según las normas del clan. Define a quién le debe lealtad y qué grupo lo considera un traidor.'
+        level: 'Atención: Personaje sin Contexto Cultural',
+        color: '#f59e0b',
+        summary: 'El personaje parece flotar en el vacío sin comunidad, reglas ni lealtades que lo presionen.',
+        tip: 'Enriquece la Dimensión Sociológica indicando su origen, su rol en el grupo y sus alianzas.'
       };
     }
-    if (threeDimensionalScore >= 80) {
+    if (threeDimensionalScore >= 78) {
       return {
-        level: '🌟 Tridimensionalidad Óptima (Alta Inmersión)',
-        badgeColor: '#10b981',
-        glowColor: 'rgba(16, 185, 129, 0.5)',
-        summary: 'Resonancia empática completa: ToM activa, oxitocina por vulnerabilidad y dopamina motora.',
-        explanation: 'El personaje cuenta con un vehículo físico memorable, tensiones sociales complejas y un abismo interno conmovedor. El cerebro del lector lo adoptará como un ser vivo.'
+        level: 'Óptimo: Personaje Tridimensional de Alta Empatía',
+        color: '#10b981',
+        summary: 'Las 3 dimensiones están en equilibrio. Activa Teoría de la Mente, Oxitocina y Dopamina.',
+        tip: 'Tu personaje está listo para protagonizar una gran historia y ser exportado en la Etapa 4.'
       };
     }
     return {
-      level: 'En Desarrollo Tridimensional',
-      badgeColor: '#38bdf8',
-      glowColor: 'rgba(56, 189, 248, 0.4)',
-      summary: 'Estructura sólida con buen potencial de resonancia narrativa.',
-      explanation: 'Las tres dimensiones dialogan entre sí. Puedes aumentar la contradicción psicológica para potenciar el error de predicción.'
+      level: 'En Progreso: Estructura Tridimensional en Construcción',
+      color: '#38bdf8',
+      summary: 'Buen balance inicial entre cuerpo, entorno social y mundo interior.',
+      tip: 'Puedes usar las fichas rápidas de inspiración para elevar el relieve de cada dimensión.'
     };
   }, [threeDimensionalScore, dimPhysiological, dimSociological, dimPsychological]);
 
-  // Manejo de Carga de Imagen Local
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  // Progreso pedagógico general
+  const completionPercentage = useMemo(() => {
+    let points = 25; // Etapa 1 base
+    if (charLie.trim().length > 5 && charWound.trim().length > 5) points += 25;
+    if (charPhysical.trim().length > 5 && charSocial.trim().length > 5 && threeDimensionalScore >= 60) points += 25;
+    if (charName.trim().length > 1 && charImage) points += 25;
+    return points;
+  }, [charLie, charWound, charPhysical, charSocial, threeDimensionalScore, charName, charImage]);
+
+  // =========================================================================
+  // MANEJADORES DE SUBIDA DE IMAGEN (ETAPA 1 Y ETAPA 4)
+  // =========================================================================
+
+  // Subir imagen personalizada para un Arquetipo (Etapa 1)
+  const handleConceptImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    setIsUploading(true);
+    setIsUploadingConcept(true);
+    soundEffects.playClick();
+
+    try {
+      const compressedBlob = await compressImageWebP(file, 720, 720, 0.84);
+      const dataUrl = await blobToDataURL(compressedBlob);
+      setCustomArchetypeImages(prev => ({
+        ...prev,
+        [spotlightArchetype.id]: dataUrl
+      }));
+      // Si el personaje actual usa este arquetipo, actualizar también su retrato
+      if (charArchetypeId === spotlightArchetype.id) {
+        setCharImage(dataUrl);
+      }
+      soundEffects.playSuccess();
+    } catch {
+      soundEffects.playError();
+    } finally {
+      setIsUploadingConcept(false);
+    }
+  };
+
+  // Subir imagen para el Personaje Final (Etapa 4)
+  const processCharacterFile = async (file: File) => {
+    setIsUploadingChar(true);
     setUploadError(null);
     soundEffects.playClick();
 
     try {
-      // Comprimir la imagen a WebP para que sea liviana y fluida
       const compressedBlob = await compressImageWebP(file, 800, 800, 0.85);
       const dataUrl = await blobToDataURL(compressedBlob);
       setCharImage(dataUrl);
       soundEffects.playSuccess();
-    } catch (err: any) {
-      console.error('Error al procesar la imagen:', err);
-      setUploadError('No se pudo procesar la imagen. Intenta con un archivo JPG o PNG de menor peso.');
+    } catch {
+      setUploadError('No se pudo procesar la imagen. Intenta con un archivo JPG, PNG o WebP válido.');
       soundEffects.playError();
     } finally {
-      setIsUploading(false);
+      setIsUploadingChar(false);
     }
   };
 
-  // Manejador Drag and Drop
-  const handleDrop = async (e: React.DragEvent<HTMLDivElement>) => {
+  const handleCharacterImageInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) processCharacterFile(file);
+  };
+
+  const handleCharacterDrop = (e: React.DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     e.stopPropagation();
     const file = e.dataTransfer.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    setUploadError(null);
-    soundEffects.playClick();
-
-    try {
-      const compressedBlob = await compressImageWebP(file, 800, 800, 0.85);
-      const dataUrl = await blobToDataURL(compressedBlob);
-      setCharImage(dataUrl);
-      soundEffects.playSuccess();
-    } catch (err: any) {
-      console.error('Error al procesar la imagen arrastrada:', err);
-      setUploadError('Formato no soportado o archivo dañado.');
-      soundEffects.playError();
-    } finally {
-      setIsUploading(false);
-    }
+    if (file) processCharacterFile(file);
   };
 
-  // Aplicar Preset de Ejemplo
-  const handleApplyPreset = (preset: typeof PRESET_AVATARS[0]) => {
-    soundEffects.playClick();
-    setCharName(preset.name);
-    setCharTitle(preset.title);
-    setCharArchetypeId(preset.archetypeId);
-    setCharQuote(preset.quote);
-    setCharWound(preset.wound);
-    setCharLie(preset.lie);
-    setCharDesire(preset.desire);
-    setCharNeed(preset.need);
-    setCharContradiction(preset.contradiction);
-    setCharImage(preset.url);
-    setActiveFilter('codice');
-    setDimPhysiological(85);
-    setDimSociological(80);
-    setDimPsychological(90);
-  };
-
-  // Enviar arquetipo desde la galería directamente a la forja
-  const handleForgeWithArchetype = (arc: CharacterArchetype) => {
-    soundEffects.playClick();
+  // Adoptar el arquetipo de Etapa 1 para nuestro personaje y avanzar
+  const handleSelectArchetypeForCharacter = (arc: CharacterArchetype, advanceStage = false) => {
+    soundEffects.playSuccess();
     setCharArchetypeId(arc.id);
     setCharTitle(arc.roleSubtitle);
     setCharQuote(arc.quote);
-    setCharLie(arc.writingTip);
     setCharDesire(arc.coreDesire);
     setCharNeed(`Superar su sombra: ${arc.shadowWeakness}`);
-    setActiveTab('taller');
+    const customImg = customArchetypeImages[arc.id] || DEFAULT_ARCHETYPE_IMAGES[arc.id];
+    if (customImg) setCharImage(customImg);
+    const customFlt = customArchetypeFilters[arc.id];
+    if (customFlt) setActiveFilter(customFlt);
+
+    if (advanceStage) {
+      setActiveStage(2);
+    }
   };
 
-  // Exportar Ficha a Imagen PNG con html2canvas dinámico
+  // Cargar un personaje de la galería
+  const handleLoadProfile = (profile: SavedCharacterProfile) => {
+    soundEffects.playClick();
+    setCharName(profile.name);
+    setCharTitle(profile.title);
+    setCharArchetypeId(profile.archetypeId);
+    setSelectedSpotArchetypeId(profile.archetypeId);
+    setCharQuote(profile.quote);
+    setCharWound(profile.wound);
+    setCharLie(profile.lie);
+    setCharDesire(profile.desire);
+    setCharNeed(profile.need);
+    setCharContradiction(profile.contradiction);
+    setCharPhysical(profile.physical);
+    setCharSocial(profile.social);
+    setCharImage(profile.image);
+    setActiveFilter(profile.filter);
+    setImgZoom(profile.imgZoom || 100);
+    setImgPosY(profile.imgPosY || 50);
+    setDimPhysiological(profile.physiological);
+    setDimSociological(profile.sociological);
+    setDimPsychological(profile.psychological);
+  };
+
+  // Guardar personaje actual en la Galería de Clase
+  const handleSaveToRoster = () => {
+    soundEffects.playSuccess();
+    const newEntry: SavedCharacterProfile = {
+      id: `char_${Date.now()}`,
+      name: charName || 'Personaje sin nombre',
+      title: charTitle || currentCharacterArchetype.roleSubtitle,
+      archetypeId: charArchetypeId,
+      quote: charQuote,
+      wound: charWound,
+      lie: charLie,
+      desire: charDesire,
+      need: charNeed,
+      contradiction: charContradiction,
+      physical: charPhysical,
+      social: charSocial,
+      image: charImage,
+      filter: activeFilter,
+      imgZoom,
+      imgPosY,
+      physiological: dimPhysiological,
+      sociological: dimSociological,
+      psychological: dimPsychological
+    };
+
+    const updated = [newEntry, ...savedRoster.filter(p => p.name !== newEntry.name)].slice(0, 8);
+    setSavedRoster(updated);
+    try {
+      localStorage.setItem('cp_student_roster', JSON.stringify(updated));
+    } catch {
+      // Ignorar si la imagen base64 llena el storage
+    }
+    setSaveSuccess(true);
+    setTimeout(() => setSaveSuccess(false), 2500);
+  };
+
+  // Exportar a PNG
   const handleExportPNG = async () => {
     if (!cardExportRef.current) return;
     setIsExporting(true);
@@ -348,57 +690,56 @@ export default function CreacionPersonajes() {
         scale: 2,
         useCORS: true,
         allowTaint: true,
-        backgroundColor: '#020617'
+        backgroundColor: '#090e1a'
       });
 
       const dataUrl = canvas.toDataURL('image/png');
       const link = document.createElement('a');
-      link.download = `Cromo-Personaje-${charName.replace(/\s+/g, '_')}.png`;
+      link.download = `Personaje-${(charName || 'Creatika').replace(/\s+/g, '_')}.png`;
       link.href = dataUrl;
       link.click();
       soundEffects.playSuccess();
-    } catch (err) {
-      console.error('Error al exportar cromo:', err);
+    } catch {
       soundEffects.playError();
     } finally {
       setIsExporting(false);
     }
   };
 
-  // Copiar Ficha Pedagógica en formato Markdown/Texto
+  // Copiar Ficha Pedagógica Completa
   const handleCopySheet = () => {
     soundEffects.playClick();
-    const sheetText = `
+    const text = `
 ══════════════════════════════════════════════════════════
-🎭 FICHA TÉCNICA DEL PERSONAJE · SUITE CREATIKA
+🎭 EXPEDIENTE DE PERSONAJE · SUITE CREATIKA
 ══════════════════════════════════════════════════════════
 NOMBRE: ${charName}
-TÍTULO / EPÍTETO: ${charTitle}
-ARQUETIPO CANÓNICO: ${currentArchetype.name} (${currentArchetype.roleSubtitle})
-LEMA / CITA: "${charQuote}"
+EPÍTETO / ROL: ${charTitle}
+ARQUETIPO BASE: ${currentCharacterArchetype.name} (${currentCharacterArchetype.roleSubtitle})
+FRASE INSIGNIA: ${charQuote}
 
-🧬 1. DIMENSIÓN FISIOLÓGICA (${dimPhysiological}%):
-- Rasgos Visibles / Anclaje Somático: ${charPhysical || 'No especificado'}
+─── 1. DIMENSIÓN FISIOLÓGICA (${dimPhysiological}%) ───
+• Cuerpo, Gestos y Anclaje Sensorial:
+  ${charPhysical}
 
-🌍 2. DIMENSIÓN SOCIOLÓGICA (${dimSociological}%):
-- Ecosistema, Cultura y Lealtades: ${charSocial || 'No especificado'}
+─── 2. DIMENSIÓN SOCIOLÓGICA (${dimSociological}%) ───
+• Comunidad, Cultura y Reglas de su Entorno:
+  ${charSocial}
 
-🧠 3. DIMENSIÓN PSICOLÓGICA (${dimPsychological}%):
-- Herida del Pasado (The Ghost): ${charWound}
-- La Mentira Nuclear: ${charLie}
-- Deseo Consciente (Superficial): ${charDesire}
-- Necesidad Inconsciente (Espiritual): ${charNeed}
-- Contradicción Neurocreativa (Error de Predicción): ${charContradiction}
+─── 3. DIMENSIÓN PSICOLÓGICA Y NEUROCIENCIA (${dimPsychological}%) ───
+• Mentira Nuclear (Teoría de la Mente): ${charLie}
+• Herida del Pasado (Oxitocina / Empatía): ${charWound}
+• Deseo Consciente (Meta Externa): ${charDesire}
+• Necesidad Profunda (Aprendizaje Interno): ${charNeed}
+• Contradicción Neurocreativa (Dopamina / Sorpresa): ${charContradiction}
 
-⚡ ÍNDICE DE TRIDIMENSIONALIDAD: ${threeDimensionalScore}%
-- Diagnóstico Neurocognitivo: ${neuroDiagnostic.level}
-- Mecanismo Cerebral: ${currentArchetype.neuroTrigger}
-
-Generado en el Laboratorio de Creación de Personajes · Editorial Lluvia de Ideas
+─── DIAGNÓSTICO DE TRIDIMENSIONALIDAD: ${threeDimensionalScore}% ───
+• Nivel: ${neuroDiagnostic.level}
+• Mecanismo Cerebral del Arquetipo: ${currentCharacterArchetype.neuroTrigger}
 ══════════════════════════════════════════════════════════
     `.trim();
 
-    navigator.clipboard.writeText(sheetText).then(() => {
+    navigator.clipboard.writeText(text).then(() => {
       setCopySuccess(true);
       soundEffects.playSuccess();
       setTimeout(() => setCopySuccess(false), 2600);
@@ -407,143 +748,192 @@ Generado en el Laboratorio de Creación de Personajes · Editorial Lluvia de Ide
     });
   };
 
-  // Alternar modo proyector de aula
-  const toggleProjectorMode = () => {
-    soundEffects.playClick();
-    setIsProjectorMode(prev => !prev);
-  };
+  // Coordenadas dinámicas del polígono en el radar triangular (Etapa 3)
+  const radarPoints = useMemo(() => {
+    // Centro del triángulo en (130, 115), radio máximo 80
+    const cx = 130;
+    const cy = 115;
+    const rMax = 78;
+
+    // Arriba: Psicológica (-90 deg)
+    const rPsico = (dimPsychological / 100) * rMax;
+    const x1 = cx;
+    const y1 = cy - rPsico;
+
+    // Abajo Izquierda: Fisiológica (150 deg)
+    const rFisio = (dimPhysiological / 100) * rMax;
+    const x2 = cx - rFisio * Math.cos(Math.PI / 6);
+    const y2 = cy + rFisio * Math.sin(Math.PI / 6);
+
+    // Abajo Derecha: Sociológica (30 deg)
+    const rSocio = (dimSociological / 100) * rMax;
+    const x3 = cx + rSocio * Math.cos(Math.PI / 6);
+    const y3 = cy + rSocio * Math.sin(Math.PI / 6);
+
+    return `${x1},${y1} ${x2},${y2} ${x3},${y3}`;
+  }, [dimPhysiological, dimSociological, dimPsychological]);
 
   return (
-    <div className={`cp-container ${isProjectorMode ? 'projector-mode' : ''} animate-fade-in`}>
+    <div className={`cp-container ${isProjectorMode ? 'projector-mode' : ''}`}>
       <LandingTopBar
-        slogan="Suite Creatika · Laboratorio Neurocreativo y Diseño de Arquetipos"
+        slogan="Suite Creatika · Laboratorio Pedagógico de Creación de Personajes"
         showHomeButton
       />
 
       <main className="cp-main-content">
-        {/* Cabecera Heroica */}
-        <header className="cp-hero-header">
-          <div className="cp-badge-top">
-            <span>✨ SUITE CREATIKA</span> · NARRATIVA, PSICOLOGÍA & NEURODISEÑO
+        {/* =====================================================================
+            CABECERA PRINCIPAL CON PERSONAJE EN CONSTRUCCIÓN Y MODO PIZARRA
+           ===================================================================== */}
+        <header className="cp-hero-bar">
+          <div className="cp-hero-left">
+            <div className="cp-badge-top">
+              <span>🎭 SUITE CREATIKA</span> · RUTA GUIADA EN 4 ETAPAS
+            </div>
+            <h1 className="cp-hero-title">
+              Laboratorio de <span>Creación de Personajes</span>
+            </h1>
+            <p className="cp-hero-subtitle">
+              Aprende paso a paso cómo transformar una idea básica en un personaje inolvidable:
+              explora los <strong>arquetipos clásicos</strong>, comprende su impacto en el <strong>cerebro lector</strong>,
+              equilibra sus <strong>3 dimensiones</strong> y personalízalo con <strong>tus propias imágenes</strong>.
+            </p>
           </div>
-          <h1 className="cp-hero-title">
-            Forja de <span>Personajes Tridimensionales</span>
-          </h1>
-          <p className="cp-hero-subtitle">
-            Combina los 12 arquetipos clásicos universales con las 3 dimensiones del drama (Lajos Egri)
-            y la neurociencia de la empatía. Crea personajes que no solo se lean, sino que cobren vida en la mente del lector.
-          </p>
+
+          <div className="cp-hero-right">
+            <div className="cp-active-char-pill" title="Personaje actualmente en desarrollo">
+              <img
+                src={charImage}
+                alt={charName}
+                className={`cp-active-char-avatar filter-${activeFilter}`}
+              />
+              <div className="cp-active-char-info">
+                <span>Personaje en Forja ({threeDimensionalScore}% 3D)</span>
+                <strong>{charName || 'Sin nombre'} · {currentCharacterArchetype.icon} {currentCharacterArchetype.name.split('/')[0]}</strong>
+              </div>
+            </div>
+
+            <button
+              className={`cp-projector-btn ${isProjectorMode ? 'active' : ''}`}
+              onClick={() => {
+                soundEffects.playClick();
+                setIsProjectorMode(prev => !prev);
+              }}
+            >
+              <span>{isProjectorMode ? '🖥️' : '📺'}</span>
+              {isProjectorMode ? 'Modo Pizarra Activo (Salir)' : 'Modo Pizarra / Aula'}
+            </button>
+          </div>
         </header>
 
-        {/* Barra de Navegación Modular */}
-        <nav className="cp-nav-bar" aria-label="Navegación de módulos de personajes">
-          <button
-            className={`cp-nav-btn ${activeTab === 'arquetipos' ? 'active' : ''}`}
-            onClick={() => {
-              soundEffects.playClick();
-              setActiveTab('arquetipos');
-            }}
-          >
-            <span>🎭</span> 1. Arquetipos Clásicos
-          </button>
-          <button
-            className={`cp-nav-btn ${activeTab === 'neurociencia' ? 'active' : ''}`}
-            onClick={() => {
-              soundEffects.playClick();
-              setActiveTab('neurociencia');
-            }}
-          >
-            <span>🧠</span> 2. Neurociencia del Carácter
-          </button>
-          <button
-            className={`cp-nav-btn ${activeTab === 'dimensionador' ? 'active' : ''}`}
-            onClick={() => {
-              soundEffects.playClick();
-              setActiveTab('dimensionador');
-            }}
-          >
-            <span>🧬</span> 3. Simulador 3D de Dimensiones
-          </button>
-          <button
-            className={`cp-nav-btn ${activeTab === 'taller' ? 'active' : ''}`}
-            onClick={() => {
-              soundEffects.playClick();
-              setActiveTab('taller');
-            }}
-          >
-            <span>🎨</span> 4. Taller & Forja con Imagen
-          </button>
-          <button
-            className={`cp-nav-btn cp-projector-toggle ${isProjectorMode ? 'active' : ''}`}
-            onClick={toggleProjectorMode}
-            title="Activa el modo de alto contraste para pizarras electrónicas o proyectores escolares"
-          >
-            <span>{isProjectorMode ? '🖥️' : '📺'}</span>
-            {isProjectorMode ? 'Salir de Proyector' : 'Modo Pizarra Aula'}
-          </button>
-        </nav>
-
-        {/* =========================================================================
-            SECCIÓN 1: GALERÍA DE ARQUETIPOS CLÁSICOS
-           ========================================================================= */}
-        {activeTab === 'arquetipos' && (
-          <div className="animate-fade-in">
-            {/* Barra de Controles y Búsqueda */}
-            <div style={{
-              display: 'flex',
-              flexWrap: 'wrap',
-              gap: '14px',
-              justifyContent: 'space-between',
-              alignItems: 'center',
-              marginBottom: '24px',
-              background: 'rgba(15, 23, 42, 0.6)',
-              padding: '16px 20px',
-              borderRadius: '16px',
-              border: '1px solid rgba(255, 255, 255, 0.08)'
-            }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: '1 1 280px' }}>
-                <span style={{ fontSize: '1.2rem' }}>🔍</span>
-                <input
-                  type="text"
-                  placeholder="Buscar por arquetipo, deseo, sombra o ejemplo mítico..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  style={{
-                    background: 'rgba(2, 6, 23, 0.7)',
-                    border: '1px solid rgba(255, 255, 255, 0.15)',
-                    borderRadius: '10px',
-                    color: '#fff',
-                    padding: '8px 14px',
-                    width: '100%',
-                    fontSize: '0.9rem',
-                    outline: 'none'
-                  }}
+        {/* =====================================================================
+            STEPPER DE DESARROLLO POR ETAPAS (1 -> 2 -> 3 -> 4)
+           ===================================================================== */}
+        <nav className="cp-stages-stepper" aria-label="Etapas de desarrollo del personaje">
+          <div className="cp-stepper-header">
+            <div className="cp-stepper-label">
+              <span>🧭</span> Ruta Pedagógica Paso a Paso · Etapa {activeStage} de 4
+            </div>
+            <div className="cp-stepper-progress-wrap">
+              <div className="cp-stepper-progress-bar">
+                <div
+                  className="cp-stepper-progress-fill"
+                  style={{ width: `${completionPercentage}%` }}
                 />
               </div>
+              <span className="cp-stepper-progress-text">{completionPercentage}% Completado</span>
+            </div>
+          </div>
 
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="cp-stages-grid">
+            {[
+              {
+                stage: 1 as const,
+                kicker: 'ETAPA 1 · CIMIENTO',
+                title: 'Arquetipos Clásicos',
+                desc: 'Explora los 12 moldes universales y personalízalos con imágenes.'
+              },
+              {
+                stage: 2 as const,
+                kicker: 'ETAPA 2 · EMPATÍA',
+                title: 'Neurociencia del Carácter',
+                desc: 'Descubre por qué las heridas y contradicciones conectan al cerebro.'
+              },
+              {
+                stage: 3 as const,
+                kicker: 'ETAPA 3 · ESTRUCTURA',
+                title: 'Las 3 Dimensiones',
+                desc: 'Construye Cuerpo, Entorno Social y Mundo Interior en equilibrio.'
+              },
+              {
+                stage: 4 as const,
+                kicker: 'ETAPA 4 · IDENTIDAD',
+                title: 'Estudio Visual y Ficha',
+                desc: 'Sube tu ilustración, aplica filtros y descarga tu Cromo o Expediente.'
+              }
+            ].map((item) => {
+              const isCurrent = activeStage === item.stage;
+              const isDone = activeStage > item.stage;
+              return (
+                <button
+                  key={item.stage}
+                  className={`cp-stage-step-btn ${isCurrent ? 'active' : ''} ${isDone ? 'completed' : ''}`}
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setActiveStage(item.stage);
+                  }}
+                >
+                  <div className="cp-stage-num-badge">
+                    {isDone ? '✓' : item.stage}
+                  </div>
+                  <div className="cp-stage-step-text">
+                    <span className="cp-stage-step-kicker">{item.kicker}</span>
+                    <h3 className="cp-stage-step-title">{item.title}</h3>
+                    <p className="cp-stage-step-desc">{item.desc}</p>
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+        </nav>
+
+        {/* =====================================================================
+            ETAPA 1: EXPLORADOR DE ARQUETIPOS Y PERSONALIZACIÓN VISUAL
+           ===================================================================== */}
+        {activeStage === 1 && (
+          <section className="animate-fade-in">
+            {/* Guía clara de la Etapa 1 */}
+            <div className="cp-stage-guide-banner">
+              <div className="cp-stage-guide-info">
+                <h2>
+                  <span>🎭</span> Etapa 1: Los 12 Arquetipos Universales y su Personalización Visual
+                </h2>
+                <p>
+                  Un <strong>arquetipo</strong> es un modelo ancestral de comportamiento humano presente en los mitos de todas las culturas
+                  (desde el <em>Popol Vuh</em> hasta el cine actual). Selecciona un arquetipo abajo para examinar su <strong>Luz</strong> y su <strong>Sombra</strong>,
+                  y <strong>sube tu propia imagen</strong> para personalizar visualmente el concepto.
+                </p>
+              </div>
+              <div className="cp-stage-goal-box">
+                <span>🎯 Meta Práctica de esta Etapa</span>
+                <strong>Explora los arquetipos, personaliza su retrato si lo deseas y elige uno como base para tu personaje.</strong>
+              </div>
+            </div>
+
+            {/* Filtro por Familia Dramática */}
+            <div className="cp-archetype-filter-bar">
+              <div className="cp-category-pills">
                 {[
-                  { id: 'todos', label: 'Todos (12)' },
-                  { id: 'luz', label: '☀️ Motores de Orden' },
-                  { id: 'sombra', label: '🌑 Antagónicos & Sombras' },
-                  { id: 'catalizador', label: '⚡ Catalizadores & Caos' }
+                  { id: 'todos', label: '🌟 Todos los Arquetipos (12)' },
+                  { id: 'luz', label: '☀️ Motores de Orden y Guía (5)' },
+                  { id: 'sombra', label: '🌑 Sombras, Retos y Fronteras (4)' },
+                  { id: 'catalizador', label: '⚡ Catalizadores de Cambio (3)' }
                 ].map(cat => (
                   <button
                     key={cat.id}
+                    className={`cp-cat-pill ${archetypeCategory === cat.id ? 'active' : ''}`}
                     onClick={() => {
                       soundEffects.playClick();
-                      setArchetypeFilter(cat.id);
-                    }}
-                    style={{
-                      background: archetypeFilter === cat.id ? '#38bdf8' : 'rgba(255, 255, 255, 0.06)',
-                      color: archetypeFilter === cat.id ? '#020617' : '#cbd5e1',
-                      border: 'none',
-                      padding: '8px 14px',
-                      borderRadius: '10px',
-                      fontSize: '0.82rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      transition: 'all 0.2s ease'
+                      setArchetypeCategory(cat.id as any);
                     }}
                   >
                     {cat.label}
@@ -552,591 +942,1287 @@ Generado en el Laboratorio de Creación de Personajes · Editorial Lluvia de Ide
               </div>
             </div>
 
-            {/* Cuadrícula de Arquetipos */}
-            <div className="cp-archetypes-grid">
-              {filteredArchetypes.map((arc) => {
-                const isExpanded = expandedArchetype === arc.id;
+            {/* Tira Visual de Selección de Arquetipo */}
+            <div className="cp-archetype-selector-strip">
+              {filteredArchetypes.map(arc => {
+                const isSelected = spotlightArchetype.id === arc.id;
+                const hasCustomImg = Boolean(customArchetypeImages[arc.id]);
                 return (
-                  <div
+                  <button
                     key={arc.id}
-                    className="cp-archetype-card"
-                    style={{ borderColor: isExpanded ? arc.color : undefined }}
+                    className={`cp-arch-select-btn ${isSelected ? 'selected' : ''}`}
+                    style={{
+                      borderColor: isSelected ? arc.color : undefined
+                    }}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setSelectedSpotArchetypeId(arc.id);
+                    }}
                   >
-                    <div className="cp-archetype-header">
-                      <div className="cp-archetype-icon-box" style={{ borderColor: `${arc.color}66` }}>
-                        {arc.icon}
-                      </div>
-                      <div className="cp-archetype-titles">
-                        <h3>{arc.name}</h3>
-                        <p>{arc.roleSubtitle}</p>
-                      </div>
+                    <div
+                      className="cp-arch-select-icon"
+                      style={{ border: `2px solid ${arc.color}` }}
+                    >
+                      {hasCustomImg ? (
+                        <img src={customArchetypeImages[arc.id]} alt={arc.name} />
+                      ) : (
+                        <span>{arc.icon}</span>
+                      )}
                     </div>
-
-                    <div className="cp-quote-box" style={{ borderLeftColor: arc.color }}>
-                      {arc.quote}
-                    </div>
-
-                    <div className="cp-neuro-badge-row">
-                      <span className="cp-badge-pill" style={{ background: `${arc.color}22`, color: arc.color, border: `1px solid ${arc.color}66` }}>
-                        🧠 {arc.neuroBadge}
+                    <div className="cp-arch-select-meta">
+                      <strong>{arc.name.split('/')[0].trim()}</strong>
+                      <span style={{ color: isSelected ? arc.color : undefined }}>
+                        {hasCustomImg ? '🖼️ Imagen propia' : arc.neuroBadge.split('·')[0].trim()}
                       </span>
                     </div>
+                  </button>
+                );
+              })}
+            </div>
 
-                    <div className="cp-detail-block">
-                      <strong style={{ color: '#38bdf8' }}>🎯 Deseo Central:</strong>
-                      {arc.coreDesire}
+            {/* ESCENARIO PRINCIPAL (MASTER-DETAIL) DEL ARQUETIPO SELECCIONADO */}
+            <div
+              className="cp-archetype-spotlight"
+              style={{ borderColor: `${spotlightArchetype.color}88` }}
+            >
+              {/* Columna Izquierda: Retrato Personalizable del Concepto */}
+              <div className="cp-spotlight-visual-col">
+                <div
+                  className="cp-concept-portrait-frame"
+                  style={{ borderColor: spotlightArchetype.color }}
+                >
+                  <img
+                    src={spotlightArchetypeImg}
+                    alt={spotlightArchetype.name}
+                    className={`cp-concept-portrait-img filter-${spotlightArchetypeFilter}`}
+                  />
+                  <div className="cp-concept-overlay-badge">
+                    <span>{spotlightArchetype.icon}</span>
+                    <span>{spotlightArchetype.name.split('/')[0]}</span>
+                  </div>
+                  {customArchetypeImages[spotlightArchetype.id] && (
+                    <div
+                      style={{
+                        position: 'absolute',
+                        bottom: '10px',
+                        right: '10px',
+                        background: 'rgba(16, 185, 129, 0.92)',
+                        color: '#04130d',
+                        padding: '4px 10px',
+                        borderRadius: '999px',
+                        fontSize: '0.74rem',
+                        fontWeight: 900
+                      }}
+                    >
+                      ✓ Personalizado en Plataforma
                     </div>
+                  )}
+                </div>
 
-                    <div className="cp-detail-block" style={{ borderLeft: '3px solid #f43f5e' }}>
-                      <strong style={{ color: '#f43f5e' }}>🌑 La Sombra / Debilidad Trágica:</strong>
-                      {arc.shadowWeakness}
+                {/* Caja Interactiva para Subir Imagen al Concepto */}
+                <div className="cp-concept-upload-bar">
+                  <div className="cp-concept-upload-title">
+                    <span>📷</span> Personaliza la Imagen de este Concepto
+                  </div>
+                  <p style={{ margin: 0, fontSize: '0.84rem', color: '#cbd5e1', lineHeight: 1.45 }}>
+                    Sube un dibujo, fotografía o ilustración desde tu equipo para representar a <strong>{spotlightArchetype.name.split('/')[0]}</strong> con tu propio estilo visual:
+                  </p>
+
+                  <input
+                    type="file"
+                    ref={conceptFileInputRef}
+                    accept="image/png, image/jpeg, image/webp"
+                    onChange={handleConceptImageUpload}
+                    style={{ display: 'none' }}
+                  />
+
+                  <div className="cp-concept-upload-actions">
+                    <button
+                      className="cp-btn-upload-concept"
+                      onClick={() => conceptFileInputRef.current?.click()}
+                      disabled={isUploadingConcept}
+                    >
+                      <span>{isUploadingConcept ? '⏳' : '📤'}</span>
+                      {isUploadingConcept ? 'Optimizando...' : 'Subir Mi Imagen'}
+                    </button>
+
+                    {customArchetypeImages[spotlightArchetype.id] && (
+                      <button
+                        className="cp-btn-reset-concept"
+                        onClick={() => {
+                          soundEffects.playClick();
+                          setCustomArchetypeImages(prev => {
+                            const copy = { ...prev };
+                            delete copy[spotlightArchetype.id];
+                            return copy;
+                          });
+                        }}
+                        title="Restaurar imagen original del arquetipo"
+                      >
+                        🔄 Restaurar
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Filtros Artísticos Rápidos para el Concepto */}
+                  <div>
+                    <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>
+                      Acabado Artístico de la Imagen:
+                    </span>
+                    <div className="cp-filter-chips-row">
+                      {[
+                        { id: 'normal', label: 'Natural' },
+                        { id: 'codice', label: '🏺 Códice' },
+                        { id: 'cyber', label: '⚡ Neón' },
+                        { id: 'pergamino', label: '📜 Pergamino' },
+                        { id: 'acuarela', label: '🎨 Acuarela' }
+                      ].map(f => (
+                        <button
+                          key={f.id}
+                          className={`cp-filter-chip ${spotlightArchetypeFilter === f.id ? 'active' : ''}`}
+                          style={{ padding: '5px 10px', fontSize: '0.78rem' }}
+                          onClick={() => {
+                            soundEffects.playClick();
+                            setCustomArchetypeFilters(prev => ({
+                              ...prev,
+                              [spotlightArchetype.id]: f.id as ArtFilterType
+                            }));
+                          }}
+                        >
+                          {f.label}
+                        </button>
+                      ))}
                     </div>
+                  </div>
+                </div>
+              </div>
 
-                    <div className="cp-examples-row">
-                      <div className="cp-example-box">
-                        <span>Clásico / Pop</span>
-                        <p>{arc.classicExample}</p>
+              {/* Columna Derecha: Conceptos Claros y Dinámicos */}
+              <div className="cp-spotlight-content-col">
+                <div className="cp-spotlight-header">
+                  <div className="cp-spotlight-title-block">
+                    <h3>
+                      <span>{spotlightArchetype.icon}</span> {spotlightArchetype.name}
+                    </h3>
+                    <p>{spotlightArchetype.roleSubtitle}</p>
+                  </div>
+
+                  {/* Conmutador de Polaridad: Luz vs Sombra */}
+                  <div className="cp-polarity-toggle" role="group" aria-label="Filtro de polaridad del arquetipo">
+                    <button
+                      className={`cp-polarity-btn ${polarityView === 'ambos' ? 'active-both' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setPolarityView('ambos');
+                      }}
+                    >
+                      ⚖️ Luz y Sombra
+                    </button>
+                    <button
+                      className={`cp-polarity-btn ${polarityView === 'luz' ? 'active-light' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setPolarityView('luz');
+                      }}
+                    >
+                      ☀️ Solo Luz
+                    </button>
+                    <button
+                      className={`cp-polarity-btn ${polarityView === 'sombra' ? 'active-shadow' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setPolarityView('sombra');
+                      }}
+                    >
+                      🌑 Solo Sombra
+                    </button>
+                  </div>
+                </div>
+
+                {/* Frase Insignia y Disparador Cerebral */}
+                <div className="cp-spotlight-quote" style={{ borderLeftColor: spotlightArchetype.color }}>
+                  {spotlightArchetype.quote}
+                  <div style={{ marginTop: '8px', fontSize: '0.86rem', fontStyle: 'normal', color: '#38bdf8', fontWeight: 700 }}>
+                    🧠 Efecto en el Cerebro Lector: {spotlightArchetype.neuroTrigger} — {spotlightArchetype.neuroExplanation}
+                  </div>
+                </div>
+
+                {/* Tarjetas de Contraste: Cara Luminosa vs Sombra Trágica */}
+                <div className="cp-dual-polarity-grid">
+                  {(polarityView === 'ambos' || polarityView === 'luz') && (
+                    <div className="cp-polarity-card light-card animate-fade-in">
+                      <div className="cp-polarity-card-header">
+                        <span>☀️</span> DIMENSIÓN LUMINOSA (VIRTUD Y MOTOR)
                       </div>
-                      <div className="cp-example-box" style={{ borderColor: 'rgba(234, 179, 8, 0.3)' }}>
-                        <span style={{ color: '#fbbf24' }}>🌿 Raíz Maya (Popol Vuh)</span>
-                        <p>{arc.mayanExample}</p>
+                      <div className="cp-polarity-item">
+                        <strong>Función en la Historia:</strong>
+                        <p>{spotlightArchetype.functionDesc}</p>
+                      </div>
+                      <div className="cp-polarity-item">
+                        <strong>Deseo Central Consciente:</strong>
+                        <p>{spotlightArchetype.coreDesire}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {(polarityView === 'ambos' || polarityView === 'sombra') && (
+                    <div className="cp-polarity-card shadow-card animate-fade-in">
+                      <div className="cp-polarity-card-header">
+                        <span>🌑</span> LA SOMBRA (DEBILIDAD Y RIESGO DE CAÍDA)
+                      </div>
+                      <div className="cp-polarity-item">
+                        <strong>Mayor Miedo Oculto:</strong>
+                        <p>{spotlightArchetype.greatestFear}</p>
+                      </div>
+                      <div className="cp-polarity-item">
+                        <strong>Defecto Trágico (Cuando pierde el equilibrio):</strong>
+                        <p>{spotlightArchetype.shadowWeakness}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Sub-pestañas para no saturar la vista */}
+                <div>
+                  <div className="cp-arch-subtabs">
+                    <button
+                      className={`cp-arch-subtab-btn ${archSubTab === 'ejemplos' ? 'active' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setArchSubTab('ejemplos');
+                      }}
+                    >
+                      🏛️ Ejemplos (Popol Vuh y Literatura)
+                    </button>
+                    <button
+                      className={`cp-arch-subtab-btn ${archSubTab === 'relaciones' ? 'active' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setArchSubTab('relaciones');
+                      }}
+                    >
+                      ⚡ Chispas con Otros Personajes ({spotlightArchetype.relations.length})
+                    </button>
+                    <button
+                      className={`cp-arch-subtab-btn ${archSubTab === 'crisol' ? 'active' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setArchSubTab('crisol');
+                      }}
+                    >
+                      🔥 Prueba de Fuego y Consejo Práctico
+                    </button>
+                  </div>
+
+                  {archSubTab === 'ejemplos' && (
+                    <div className="cp-examples-showcase animate-fade-in">
+                      <div className="cp-example-showcase-card" style={{ borderColor: 'rgba(245, 158, 11, 0.45)' }}>
+                        <span style={{ color: '#fbbf24' }}>🌿 Raíz Mesoamericana (Popol Vuh)</span>
+                        <p>{spotlightArchetype.mayanExample}</p>
+                      </div>
+                      <div className="cp-example-showcase-card">
+                        <span>📜 Literatura Clásica Universal</span>
+                        <p>{spotlightArchetype.classicExample}</p>
+                      </div>
+                      <div className="cp-example-showcase-card">
+                        <span>🎬 Narrativa Contemporánea</span>
+                        <p>{spotlightArchetype.modernExample}</p>
+                      </div>
+                    </div>
+                  )}
+
+                  {archSubTab === 'relaciones' && (
+                    <div className="cp-examples-showcase animate-fade-in">
+                      {spotlightArchetype.relations.map((rel, idx) => (
+                        <div key={idx} className="cp-example-showcase-card">
+                          <span>⚡ Frente a {rel.targetArchetype} ({rel.relationRole})</span>
+                          <p>{rel.sparkDescription}</p>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {archSubTab === 'crisol' && (
+                    <div className="cp-dual-polarity-grid animate-fade-in">
+                      <div className="cp-example-showcase-card" style={{ borderColor: 'rgba(245, 158, 11, 0.45)' }}>
+                        <span style={{ color: '#fbbf24' }}>🔥 La Prueba del Crisol (Momento Clímax)</span>
+                        <p>{spotlightArchetype.crucibleTrial}</p>
+                      </div>
+                      <div className="cp-example-showcase-card" style={{ borderColor: 'rgba(56, 189, 248, 0.45)' }}>
+                        <span>💡 Consejo de Oro para el Estudiante</span>
+                        <p>{spotlightArchetype.writingTip}</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Acción directa para usar este arquetipo */}
+                <div style={{
+                  marginTop: 'auto',
+                  paddingTop: '12px',
+                  display: 'flex',
+                  flexWrap: 'wrap',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '12px'
+                }}>
+                  <div style={{ fontSize: '0.9rem', color: '#cbd5e1' }}>
+                    Arquetipo actual de tu personaje: <strong style={{ color: '#38bdf8' }}>{currentCharacterArchetype.icon} {currentCharacterArchetype.name}</strong>
+                  </div>
+
+                  <button
+                    className="cp-btn-stage-next"
+                    onClick={() => handleSelectArchetypeForCharacter(spotlightArchetype, true)}
+                  >
+                    <span>✨</span> Elegir «{spotlightArchetype.name.split('/')[0].trim()}» y Avanzar a Etapa 2 →
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            {/* Pie de Navegación Etapa 1 */}
+            <div className="cp-stage-footer-nav">
+              <div>
+                <strong style={{ color: '#f8fafc', display: 'block', fontSize: '1rem' }}>
+                  ¿Ya exploraste los arquetipos clásicos?
+                </strong>
+                <span style={{ color: '#94a3b8', fontSize: '0.9rem' }}>
+                  En la Etapa 2 descubrirás cómo hacer que el cerebro del lector sienta empatía real por tu personaje.
+                </span>
+              </div>
+              <button
+                className="cp-btn-stage-next"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setActiveStage(2);
+                }}
+              >
+                Continuar a Etapa 2: Neurociencia del Carácter →
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================================
+            ETAPA 2: LABORATORIO NEUROCOGNITIVO DEL CARÁCTER
+           ===================================================================== */}
+        {activeStage === 2 && (
+          <section className="animate-fade-in">
+            {/* Guía clara de la Etapa 2 */}
+            <div className="cp-stage-guide-banner">
+              <div className="cp-stage-guide-info">
+                <h2>
+                  <span>🧠</span> Etapa 2: ¿Por qué el Cerebro Necesita Personajes con Carácter y Dimensiones?
+                </h2>
+                <p>
+                  Un error común al empezar a escribir es crear personajes <strong>perfectos e invencibles</strong>.
+                  Sin embargo, la neurociencia demuestra que el cerebro humano es un simulador de supervivencia:
+                  si no hay vulnerabilidad, error ni contradicción, <strong>la atención cerebral se apaga</strong>.
+                </p>
+              </div>
+              <div className="cp-stage-goal-box">
+                <span>🎯 Meta Práctica de esta Etapa</span>
+                <strong>Compara un personaje plano contra uno profundo y activa los 4 circuitos cerebrales en tu propio personaje.</strong>
+              </div>
+            </div>
+
+            {/* EXPERIMENTO INTERACTIVO A/B: PERSONAJE PLANO VS TRIDIMENSIONAL */}
+            <div className="cp-neuro-experiment-box">
+              <div className="cp-experiment-header">
+                <div>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    🔬 SIMULADOR EXPERIMENTAL DE LECTURA
+                  </span>
+                  <h3 style={{ margin: '4px 0 0 0', fontSize: '1.4rem', color: '#f8fafc', fontWeight: 900 }}>
+                    Prueba cómo reacciona el cerebro ante dos versiones de la misma escena
+                  </h3>
+                </div>
+
+                <div className="cp-experiment-switch">
+                  <button
+                    className={`cp-exp-mode-btn ${experimentMode === 'plano' ? 'active-flat' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setExperimentMode('plano');
+                    }}
+                  >
+                    🔴 Versión A: Héroe Perfecto (Plano)
+                  </button>
+                  <button
+                    className={`cp-exp-mode-btn ${experimentMode === 'tridimensional' ? 'active-deep' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setExperimentMode('tridimensional');
+                    }}
+                  >
+                    🟢 Versión B: Héroe con Carácter y Dimensiones
+                  </button>
+                </div>
+              </div>
+
+              <div className="cp-experiment-comparison-grid">
+                {/* Muestra Narrativa */}
+                <div
+                  className="cp-exp-narrative-sample"
+                  style={{
+                    borderLeft: `5px solid ${experimentMode === 'plano' ? '#f43f5e' : '#10b981'}`
+                  }}
+                >
+                  <span style={{
+                    display: 'inline-block',
+                    padding: '4px 10px',
+                    borderRadius: '6px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    marginBottom: '12px',
+                    background: experimentMode === 'plano' ? 'rgba(244, 63, 94, 0.15)' : 'rgba(16, 185, 129, 0.15)',
+                    color: experimentMode === 'plano' ? '#fda4af' : '#6ee7b7'
+                  }}>
+                    {experimentMode === 'plano'
+                      ? '❌ TEXTO PLANO (CERO TENSIÓN COGNITIVA)'
+                      : '✅ TEXTO TRIDIMENSIONAL (ALTA RESONANCIA EMPÁTICA)'}
+                  </span>
+
+                  <p style={{ fontSize: '1.08rem', lineHeight: 1.7, color: '#f8fafc', fontStyle: 'italic', margin: '0 0 16px 0' }}>
+                    {experimentMode === 'plano'
+                      ? '«El capitán Kael entró a la cueva oscura sin sentir ningún miedo. Como era el guerrero más fuerte y perfecto del reino, derrotó a los guardias de un solo golpe sin despeinarse, tomó el cristal sagrado y salió sonriendo hacia su siguiente victoria.»'
+                      : '«Antes de entrar a la cueva, Kael apretó con dedos temblorosos el amuleto roto de su hermano menor. Sabía que si el fuego volvía a rodearlo, sus pulmones recordarían el incendio del que huyó años atrás. Aun así, ocultó su miedo tras una broma seca para no alarmar a su aprendiz y dio el primer paso en la sombra.»'}
+                  </p>
+
+                  <div style={{
+                    background: 'rgba(9, 14, 26, 0.65)',
+                    padding: '14px 16px',
+                    borderRadius: '12px',
+                    fontSize: '0.94rem',
+                    color: '#cbd5e1',
+                    lineHeight: 1.55
+                  }}>
+                    <strong style={{ color: experimentMode === 'plano' ? '#fb7185' : '#34d399', display: 'block', marginBottom: '4px' }}>
+                      {experimentMode === 'plano' ? '¿Qué ocurre en el cerebro del lector?' : '¿Por qué este fragmento sí atrapa al cerebro?'}
+                    </strong>
+                    {experimentMode === 'plano'
+                      ? 'Al no existir riesgo real, duda interna ni rastro sensorial, el cerebro predice el final desde la primera línea. No se libera oxitocina ni dopamina; el lector olvida al personaje en pocos minutos.'
+                      : '1) El amuleto y los dedos temblorosos activan las Neuronas Espejo. 2) El trauma del incendio despierta Oxitocina por empatía. 3) Ocultar el terror con una broma activa la Teoría de la Mente (subtexto emocional).'}
+                  </div>
+                </div>
+
+                {/* Barras de Telemetría Cerebral en Vivo */}
+                <div className="cp-exp-telemetry-bars">
+                  <h4 style={{ margin: '0 0 6px 0', fontSize: '1.05rem', color: '#f8fafc', fontWeight: 800 }}>
+                    📊 Respuesta Neurobiológica del Lector
+                  </h4>
+
+                  {[
+                    {
+                      label: '🔮 Teoría de la Mente (Subtexto e Intención)',
+                      val: experimentMode === 'plano' ? 15 : 94,
+                      color: '#38bdf8'
+                    },
+                    {
+                      label: '💓 Oxitocina (Vínculo por Vulnerabilidad)',
+                      val: experimentMode === 'plano' ? 10 : 92,
+                      color: '#f43f5e'
+                    },
+                    {
+                      label: '⚡ Dopamina (Curiosidad y Error de Predicción)',
+                      val: experimentMode === 'plano' ? 20 : 88,
+                      color: '#f59e0b'
+                    },
+                    {
+                      label: '🧬 Neuronas Espejo (Sensación Corporal)',
+                      val: experimentMode === 'plano' ? 18 : 90,
+                      color: '#10b981'
+                    }
+                  ].map((metric, idx) => (
+                    <div key={idx} className="cp-telemetry-row">
+                      <div className="cp-telemetry-label-row">
+                        <span style={{ color: '#e2e8f0' }}>{metric.label}</span>
+                        <span style={{ color: metric.color, fontWeight: 900 }}>{metric.val}%</span>
+                      </div>
+                      <div className="cp-telemetry-track">
+                        <div
+                          className="cp-telemetry-fill"
+                          style={{
+                            width: `${metric.val}%`,
+                            background: metric.color
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+
+            {/* TALLER PRÁCTICO DE LOS 4 INTERRUPTORES CEREBRALES */}
+            <div className="cp-neuro-circuits-layout">
+              {/* Columna Izquierda: Selector de Circuito + Mapa Cerebral SVG */}
+              <div className="cp-circuit-selector-col">
+                <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#38bdf8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                  Activa cada circuito en tu personaje:
+                </span>
+
+                {NEURO_CIRCUITS_DATA.map((circ) => {
+                  const isActive = activeCircuit.id === circ.id;
+                  return (
+                    <button
+                      key={circ.id}
+                      className={`cp-circuit-btn ${isActive ? 'active' : ''}`}
+                      style={{ borderColor: isActive ? circ.color : undefined }}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setActiveCircuitId(circ.id);
+                      }}
+                    >
+                      <span style={{ fontSize: '1.7rem' }}>{circ.icon}</span>
+                      <div>
+                        <span style={{ fontSize: '0.72rem', fontWeight: 800, color: circ.color, textTransform: 'uppercase', display: 'block' }}>
+                          {circ.stepNum} · {circ.neurotransmitter}
+                        </span>
+                        <strong style={{ fontSize: '0.98rem', color: '#f8fafc', display: 'block' }}>
+                          {circ.name}
+                        </strong>
+                        <span style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                          {circ.subtitle}
+                        </span>
+                      </div>
+                    </button>
+                  );
+                })}
+
+                {/* Mapa Cerebral Interactivo que ilumina la región activa */}
+                <div style={{
+                  background: 'var(--cp-surface-2)',
+                  borderRadius: '16px',
+                  padding: '16px',
+                  border: '1px solid var(--cp-border-subtle)',
+                  textAlign: 'center',
+                  marginTop: '6px'
+                }}>
+                  <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                    Región Cerebral Estimulada
+                  </span>
+                  <svg viewBox="0 0 240 160" width="210" height="140" style={{ margin: '0 auto', display: 'block' }}>
+                    {/* Silueta del Cerebro */}
+                    <path
+                      d="M55 45 C30 45, 18 70, 22 98 C25 122, 55 135, 95 135 C120 135, 145 142, 172 128 C202 112, 212 72, 185 45 C160 22, 95 20, 55 45 Z"
+                      fill="#0d1526"
+                      stroke="#475569"
+                      strokeWidth="3"
+                    />
+                    {/* Surcos corticales */}
+                    <path d="M60 75 Q110 60 160 80" fill="none" stroke="#334155" strokeWidth="2" />
+                    <path d="M85 40 Q105 85 95 130" fill="none" stroke="#334155" strokeWidth="2" />
+
+                    {/* Nodo 1: Córtex Prefrontal (ToM) */}
+                    <circle
+                      cx="52"
+                      cy="75"
+                      r={activeCircuit.id === 'tom' ? 22 : 12}
+                      fill="#38bdf8"
+                      opacity={activeCircuit.id === 'tom' ? 0.85 : 0.25}
+                    />
+                    <text x="52" y="79" fill="#090e1a" fontSize="10" fontWeight="900" textAnchor="middle">ToM</text>
+
+                    {/* Nodo 2: Sistema Límbico (Oxitocina) */}
+                    <circle
+                      cx="118"
+                      cy="95"
+                      r={activeCircuit.id === 'oxitocina' ? 22 : 12}
+                      fill="#f43f5e"
+                      opacity={activeCircuit.id === 'oxitocina' ? 0.85 : 0.25}
+                    />
+                    <text x="118" y="99" fill="#ffffff" fontSize="10" fontWeight="900" textAnchor="middle">OXI</text>
+
+                    {/* Nodo 3: Estriado Ventral (Dopamina) */}
+                    <circle
+                      cx="105"
+                      cy="65"
+                      r={activeCircuit.id === 'dopamina' ? 22 : 12}
+                      fill="#f59e0b"
+                      opacity={activeCircuit.id === 'dopamina' ? 0.85 : 0.25}
+                    />
+                    <text x="105" y="69" fill="#090e1a" fontSize="10" fontWeight="900" textAnchor="middle">DOP</text>
+
+                    {/* Nodo 4: Corteza Premotora (Espejo) */}
+                    <circle
+                      cx="155"
+                      cy="58"
+                      r={activeCircuit.id === 'espejo' ? 22 : 12}
+                      fill="#10b981"
+                      opacity={activeCircuit.id === 'espejo' ? 0.85 : 0.25}
+                    />
+                    <text x="155" y="62" fill="#090e1a" fontSize="10" fontWeight="900" textAnchor="middle">ESP</text>
+                  </svg>
+                  <strong style={{ fontSize: '0.84rem', color: activeCircuit.color, display: 'block', marginTop: '6px' }}>
+                    {activeCircuit.brainRegion}
+                  </strong>
+                </div>
+              </div>
+
+              {/* Columna Derecha: Explicación Clara + Aplicación Práctica Directa al Personaje */}
+              <div className="cp-circuit-detail-col animate-fade-in" key={activeCircuit.id}>
+                <div>
+                  <span style={{
+                    background: `${activeCircuit.color}22`,
+                    color: activeCircuit.color,
+                    border: `1px solid ${activeCircuit.color}66`,
+                    padding: '4px 12px',
+                    borderRadius: '999px',
+                    fontSize: '0.78rem',
+                    fontWeight: 800,
+                    textTransform: 'uppercase'
+                  }}>
+                    {activeCircuit.stepNum} · {activeCircuit.brainRegion}
+                  </span>
+                  <h3 style={{ margin: '10px 0 6px 0', fontSize: '1.6rem', color: '#f8fafc', fontWeight: 900 }}>
+                    {activeCircuit.icon} {activeCircuit.name}: {activeCircuit.subtitle}
+                  </h3>
+                  <p style={{ margin: 0, fontSize: '1.04rem', color: '#e2e8f0', lineHeight: 1.65 }}>
+                    {activeCircuit.conceptExplanation}
+                  </p>
+                </div>
+
+                {/* Pregunta Guía para el Estudiante */}
+                <div style={{
+                  background: 'rgba(56, 189, 248, 0.08)',
+                  borderLeft: `4px solid ${activeCircuit.color}`,
+                  padding: '14px 18px',
+                  borderRadius: '12px'
+                }}>
+                  <span style={{ fontSize: '0.78rem', fontWeight: 800, color: activeCircuit.color, textTransform: 'uppercase', display: 'block', marginBottom: '4px' }}>
+                    💡 Pregunta Clave para tu Personaje ({charName}):
+                  </span>
+                  <strong style={{ fontSize: '1.02rem', color: '#f8fafc' }}>
+                    {activeCircuit.classroomQuestion}
+                  </strong>
+                </div>
+
+                {/* Chips Clicables de Ideas Rápidas */}
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                    ⚡ Haz clic en una idea de ejemplo o escribe la tuya propia abajo:
+                  </span>
+                  <div className="cp-quick-idea-chips">
+                    {activeCircuit.quickIdeas.map((idea, idx) => (
+                      <button
+                        key={idx}
+                        className="cp-idea-chip"
+                        onClick={() => {
+                          soundEffects.playClick();
+                          if (activeCircuit.fieldKey === 'lie') setCharLie(idea);
+                          if (activeCircuit.fieldKey === 'wound') setCharWound(idea);
+                          if (activeCircuit.fieldKey === 'contradiction') setCharContradiction(idea);
+                          if (activeCircuit.fieldKey === 'physical') setCharPhysical(idea);
+                        }}
+                      >
+                        + {idea}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Campo Directo Conectado al Personaje */}
+                <div className="cp-form-group" style={{ marginTop: 'auto' }}>
+                  <label style={{ color: activeCircuit.color }}>
+                    ✍️ {activeCircuit.fieldLabel} de «{charName}»:
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={
+                      activeCircuit.fieldKey === 'lie'
+                        ? charLie
+                        : activeCircuit.fieldKey === 'wound'
+                        ? charWound
+                        : activeCircuit.fieldKey === 'contradiction'
+                        ? charContradiction
+                        : charPhysical
+                    }
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (activeCircuit.fieldKey === 'lie') setCharLie(val);
+                      if (activeCircuit.fieldKey === 'wound') setCharWound(val);
+                      if (activeCircuit.fieldKey === 'contradiction') setCharContradiction(val);
+                      if (activeCircuit.fieldKey === 'physical') setCharPhysical(val);
+                    }}
+                    placeholder="Escribe aquí o selecciona una de las ideas superiores..."
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Pie de Navegación Etapa 2 */}
+            <div className="cp-stage-footer-nav">
+              <button
+                className="cp-btn-stage-prev"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setActiveStage(1);
+                }}
+              >
+                ← Volver a Etapa 1: Arquetipos
+              </button>
+              <button
+                className="cp-btn-stage-next"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setActiveStage(3);
+                }}
+              >
+                Continuar a Etapa 3: Construir las 3 Dimensiones →
+              </button>
+            </div>
+          </section>
+        )}
+
+        {/* =====================================================================
+            ETAPA 3: ARQUITECTURA DE LAS 3 DIMENSIONES (LAJOS EGRI)
+           ===================================================================== */}
+        {activeStage === 3 && (
+          <section className="animate-fade-in">
+            {/* Guía clara de la Etapa 3 */}
+            <div className="cp-stage-guide-banner">
+              <div className="cp-stage-guide-info">
+                <h2>
+                  <span>🧬</span> Etapa 3: Arquitectura de las 3 Dimensiones del Personaje
+                </h2>
+                <p>
+                  Para que un personaje se sienta tan real como una persona de carne y hueso, el dramaturgo <strong>Lajos Egri</strong>
+                  estableció tres pilares inseparables: <strong>1. Fisiología (Cuerpo)</strong>, <strong>2. Sociología (Entorno)</strong> y
+                  <strong> 3. Psicología (Mente y Corazón)</strong>. Configura cada capa a la izquierda y observa el radar de equilibrio a la derecha.
+                </p>
+              </div>
+              <div className="cp-stage-goal-box">
+                <span>🎯 Meta Práctica de esta Etapa</span>
+                <strong>Completa las 3 capas de tu personaje logrando un Índice de Tridimensionalidad superior al 75%.</strong>
+              </div>
+            </div>
+
+            <div className="cp-dimensions-workspace">
+              {/* Columna Izquierda: Constructor Guiado de las 3 Dimensiones */}
+              <div className="cp-dim-builder-card">
+                {/* Selector de las 3 Capas */}
+                <div className="cp-dim-tabs-row">
+                  {[
+                    {
+                      id: 'fisiologica' as const,
+                      icon: '🧬',
+                      title: '1. Fisiológica',
+                      sub: 'Cuerpo y Sentidos',
+                      val: dimPhysiological,
+                      color: '#38bdf8'
+                    },
+                    {
+                      id: 'sociologica' as const,
+                      icon: '🌍',
+                      title: '2. Sociológica',
+                      sub: 'Cultura y Entorno',
+                      val: dimSociological,
+                      color: '#f59e0b'
+                    },
+                    {
+                      id: 'psicologica' as const,
+                      icon: '🧠',
+                      title: '3. Psicológica',
+                      sub: 'Deseo y Necesidad',
+                      val: dimPsychological,
+                      color: '#f43f5e'
+                    }
+                  ].map(tab => {
+                    const isActive = activeDimensionTab === tab.id;
+                    return (
+                      <button
+                        key={tab.id}
+                        className={`cp-dim-tab-btn ${isActive ? 'active' : ''}`}
+                        style={{ borderColor: isActive ? tab.color : undefined }}
+                        onClick={() => {
+                          soundEffects.playClick();
+                          setActiveDimensionTab(tab.id);
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                          <span style={{ fontSize: '1.4rem' }}>{tab.icon}</span>
+                          <strong style={{ color: tab.color, fontSize: '1rem' }}>{tab.val}%</strong>
+                        </div>
+                        <strong style={{ display: 'block', color: '#f8fafc', fontSize: '0.98rem' }}>{tab.title}</strong>
+                        <span style={{ fontSize: '0.78rem', color: '#94a3b8' }}>{tab.sub}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Contenido Dinámico de la Dimensión Seleccionada */}
+                {CHARACTER_DIMENSIONS.filter(d => d.id === activeDimensionTab).map(dim => (
+                  <div key={dim.id} className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '18px' }}>
+                    <div style={{
+                      background: 'var(--cp-surface-2)',
+                      padding: '18px 20px',
+                      borderRadius: '16px',
+                      borderLeft: `5px solid ${dim.color}`
+                    }}>
+                      <h3 style={{ margin: '0 0 6px 0', fontSize: '1.3rem', color: '#f8fafc', fontWeight: 900 }}>
+                        {dim.icon} {dim.name}
+                      </h3>
+                      <p style={{ margin: '0 0 10px 0', fontSize: '0.98rem', color: '#e2e8f0', lineHeight: 1.6 }}>
+                        {dim.description}
+                      </p>
+                      <div style={{ fontSize: '0.86rem', color: dim.color, fontWeight: 700 }}>
+                        🔬 Fundamento Neurocognitivo: {dim.scientificMechanism}
                       </div>
                     </div>
 
-                    {isExpanded && (
-                      <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '6px' }}>
-                        <div className="cp-detail-block" style={{ background: 'rgba(168, 85, 247, 0.1)', borderColor: 'rgba(168, 85, 247, 0.3)' }}>
-                          <strong style={{ color: '#c084fc' }}>⚡ Disparador Neuroquímico:</strong>
-                          {arc.neuroTrigger} — {arc.neuroExplanation}
-                        </div>
+                    {/* Banco de Píldoras de Inspiración Rápida */}
+                    <div>
+                      <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', display: 'block', marginBottom: '8px' }}>
+                        ✨ Píldoras de Inspiración Rápida (Haz clic para agregar a tu personaje):
+                      </span>
+                      <div className="cp-quick-idea-chips">
+                        {DIMENSION_QUICK_CHIPS[activeDimensionTab].map((chip, idx) => (
+                          <button
+                            key={idx}
+                            className="cp-idea-chip"
+                            onClick={() => {
+                              soundEffects.playClick();
+                              if (activeDimensionTab === 'fisiologica') {
+                                setCharPhysical(prev => prev ? `${prev}. ${chip}` : chip);
+                                setDimPhysiological(prev => Math.min(100, prev + 10));
+                              } else if (activeDimensionTab === 'sociologica') {
+                                setCharSocial(prev => prev ? `${prev}. ${chip}` : chip);
+                                setDimSociological(prev => Math.min(100, prev + 10));
+                              } else {
+                                setCharNeed(prev => prev ? `${prev}. ${chip}` : chip);
+                                setDimPsychological(prev => Math.min(100, prev + 10));
+                              }
+                            }}
+                          >
+                            + {chip}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
 
-                        <div className="cp-detail-block" style={{ background: 'rgba(245, 158, 11, 0.1)', borderColor: 'rgba(245, 158, 11, 0.3)' }}>
-                          <strong style={{ color: '#fbbf24' }}>🔥 La Prueba de Fuego (Crisol):</strong>
-                          {arc.crucibleTrial}
-                        </div>
+                    {/* Campos de Edición según la Dimensión */}
+                    {activeDimensionTab === 'fisiologica' && (
+                      <div className="cp-form-group">
+                        <label>🧬 Describe la Fisonomía, Gestos, Voz y Objetos de «{charName}»:</label>
+                        <textarea
+                          rows={3}
+                          value={charPhysical}
+                          onChange={(e) => setCharPhysical(e.target.value)}
+                          placeholder="¿Cómo luce, cómo se mueve bajo presión, qué objeto o cicatriz lleva consigo?"
+                        />
+                      </div>
+                    )}
 
-                        <div className="cp-detail-block">
-                          <strong style={{ color: '#38bdf8' }}>💡 Consejo para el Escriba / Alumno:</strong>
-                          {arc.writingTip}
-                        </div>
+                    {activeDimensionTab === 'sociologica' && (
+                      <div className="cp-form-group">
+                        <label>🌍 Describe la Comunidad, Origen, Oficio y Reglas Sociales de «{charName}»:</label>
+                        <textarea
+                          rows={3}
+                          value={charSocial}
+                          onChange={(e) => setCharSocial(e.target.value)}
+                          placeholder="¿En qué entorno creció, a quién protege y qué normas de su mundo desafía?"
+                        />
+                      </div>
+                    )}
 
-                        <div style={{ marginTop: '4px' }}>
-                          <strong style={{ fontSize: '0.75rem', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                            ✨ Chispas Dramáticas con otros Arquetipos:
-                          </strong>
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginTop: '6px' }}>
-                            {arc.relations.map((rel, idx) => (
-                              <div
-                                key={idx}
-                                style={{
-                                  background: 'rgba(255, 255, 255, 0.04)',
-                                  padding: '8px 10px',
-                                  borderRadius: '8px',
-                                  fontSize: '0.8rem',
-                                  lineHeight: 1.4
-                                }}
-                              >
-                                <span style={{ color: '#38bdf8', fontWeight: 800 }}>{rel.targetArchetype}</span> ({rel.relationRole}): {rel.sparkDescription}
-                              </div>
-                            ))}
-                          </div>
+                    {activeDimensionTab === 'psicologica' && (
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px' }}>
+                        <div className="cp-form-group">
+                          <label>🎯 Deseo Consciente (Lo que cree querer):</label>
+                          <textarea
+                            rows={2}
+                            value={charDesire}
+                            onChange={(e) => setCharDesire(e.target.value)}
+                            placeholder="La meta visible o externa que persigue..."
+                          />
+                        </div>
+                        <div className="cp-form-group">
+                          <label>🌱 Necesidad Profunda (Lo que debe aprender):</label>
+                          <textarea
+                            rows={2}
+                            value={charNeed}
+                            onChange={(e) => setCharNeed(e.target.value)}
+                            placeholder="La lección interna o transformación moral..."
+                          />
                         </div>
                       </div>
                     )}
 
-                    <div style={{ display: 'flex', gap: '8px', marginTop: 'auto', paddingTop: '10px' }}>
-                      <button
-                        onClick={() => {
-                          soundEffects.playClick();
-                          setExpandedArchetype(isExpanded ? null : arc.id);
+                    {/* Control Deslizante de Nivel de Desarrollo de esta Dimensión */}
+                    <div style={{
+                      background: 'var(--cp-surface-2)',
+                      padding: '16px 18px',
+                      borderRadius: '14px',
+                      border: '1px solid var(--cp-border-subtle)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                        <strong style={{ fontSize: '0.92rem', color: '#f8fafc' }}>
+                          🎚️ Nivel de Profundidad {dim.name.split('(')[0]}:
+                        </strong>
+                        <strong style={{ fontSize: '1.05rem', color: dim.color }}>
+                          {activeDimensionTab === 'fisiologica'
+                            ? dimPhysiological
+                            : activeDimensionTab === 'sociologica'
+                            ? dimSociological
+                            : dimPsychological}%
+                        </strong>
+                      </div>
+                      <input
+                        type="range"
+                        min="10"
+                        max="100"
+                        className="cp-slider-input"
+                        value={
+                          activeDimensionTab === 'fisiologica'
+                            ? dimPhysiological
+                            : activeDimensionTab === 'sociologica'
+                            ? dimSociological
+                            : dimPsychological
+                        }
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (activeDimensionTab === 'fisiologica') setDimPhysiological(val);
+                          if (activeDimensionTab === 'sociologica') setDimSociological(val);
+                          if (activeDimensionTab === 'psicologica') setDimPsychological(val);
                         }}
-                        style={{
-                          flex: 1,
-                          background: 'rgba(255, 255, 255, 0.08)',
-                          color: '#f8fafc',
-                          border: '1px solid rgba(255, 255, 255, 0.15)',
-                          padding: '8px',
-                          borderRadius: '8px',
-                          fontSize: '0.82rem',
-                          fontWeight: 700,
-                          cursor: 'pointer'
-                        }}
-                      >
-                        {isExpanded ? '▲ Menos Detalle' : '▼ Ver Neurociencia & Chispas'}
-                      </button>
-
-                      <button
-                        onClick={() => handleForgeWithArchetype(arc)}
-                        style={{
-                          background: 'linear-gradient(135deg, #0284c7, #38bdf8)',
-                          color: '#020617',
-                          border: 'none',
-                          padding: '8px 14px',
-                          borderRadius: '8px',
-                          fontSize: '0.82rem',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          gap: '4px'
-                        }}
-                        title="Usar este arquetipo como base en el Taller de Forja"
-                      >
-                        <span>🎨</span> Forjar
-                      </button>
+                      />
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        )}
 
-        {/* =========================================================================
-            SECCIÓN 2: NEUROCIENCIA DE LA CARACTERIZACIÓN
-           ========================================================================= */}
-        {activeTab === 'neurociencia' && (
-          <div className="cp-neuro-section animate-fade-in">
-            {/* Introducción Teórica */}
-            <div className="cp-neuro-intro-card">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <span style={{ fontSize: '2.4rem' }}>🧠</span>
-                <div>
-                  <h2 style={{ margin: 0, fontSize: '1.6rem', fontWeight: 900, color: '#f8fafc' }}>
-                    ¿Por qué el Cerebro Rechaza a los Personajes Invencibles?
-                  </h2>
-                  <p style={{ margin: '4px 0 0 0', color: '#c084fc', fontSize: '0.92rem', fontWeight: 700 }}>
-                    La ciencia cognitiva detrás de la empatía, la vulnerabilidad y la arquitectura del apego
-                  </p>
-                </div>
-              </div>
-              <p style={{ color: '#cbd5e1', fontSize: '0.95rem', lineHeight: 1.7, margin: 0 }}>
-                El cerebro humano evolucionó durante millones de años como un simulador de supervivencia biológica.
-                Cuando leemos una historia, no buscamos meramente entretenimiento pasivo: nuestro sistema cognitivo
-                activa la <strong>Red Neuronal por Defecto (DMN)</strong> y las redes de <strong>Teoría de la Mente (ToM)</strong>
-                para ensayar cómo actuaríamos nosotros ante crisis morales extremas. Si un personaje es moralmente perfecto o físicamente invencible,
-                el cerebro desconecta la atención: no hay nada que aprender ni ninguna amenaza real que calcular.
-              </p>
-            </div>
-
-            {/* 4 Pilares Neurocientíficos */}
-            <div className="cp-neuro-grid-cards">
-              <div className="cp-neuro-concept-card" style={{ borderTop: '4px solid #38bdf8' }}>
-                <div className="cp-concept-icon">🔮</div>
-                <h3 className="cp-concept-title">1. Teoría de la Mente (ToM)</h3>
-                <p className="cp-concept-desc">
-                  Ubicada en la unión temporoparietal y el córtex prefrontal medial. Nos permite inferir qué piensa el personaje, qué cree saber
-                  y, sobre todo, <strong>en qué mentira está atrapado</strong>. El conflicto surge cuando el lector sabe la verdad pero el personaje sigue ciego a su defecto.
-                </p>
-                <div style={{ background: 'rgba(56, 189, 248, 0.1)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', color: '#7dd3fc' }}>
-                  <strong>⚡ Aplicación en Aula:</strong> Pide a los alumnos que formulen la "Mentira Nuclear" que su héroe cree firmemente en la página 1.
-                </div>
-              </div>
-
-              <div className="cp-neuro-concept-card" style={{ borderTop: '4px solid #f43f5e' }}>
-                <div className="cp-concept-icon">💓</div>
-                <h3 className="cp-concept-title">2. Oxitocina por Vulnerabilidad</h3>
-                <p className="cp-concept-desc">
-                  Paul Zak y su equipo demostraron que la empatía y la compasión hacia un personaje ficticio dependen de la liberación de oxitocina.
-                  La oxitocina <strong>no se secreta ante los superpoderes o la perfección</strong>, sino ante el dolor compartido, el duelo, la soledad y la herida no sanada.
-                </p>
-                <div style={{ background: 'rgba(244, 63, 94, 0.1)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', color: '#fda4af' }}>
-                  <strong>⚡ Regla de Oro:</strong> Haz que tu personaje sufra una pérdida injusta al inicio; el cerebro del lector lo protegerá de inmediato.
-                </div>
-              </div>
-
-              <div className="cp-neuro-concept-card" style={{ borderTop: '4px solid #fbbf24' }}>
-                <div className="cp-concept-icon">⚡</div>
-                <h3 className="cp-concept-title">3. Error de Predicción (Dopamina)</h3>
-                <p className="cp-concept-desc">
-                  El cerebro es una máquina de predicción bayesiana. Cuando un personaje hace exactamente lo que dicta su cliché, el nivel de dopamina cae a cero.
-                  Pero cuando un rudo mercenario cuida con ternura a un colibrí herido, se genera un <strong>Error de Predicción</strong>: la atención se dispara al 100%.
-                </p>
-                <div style={{ background: 'rgba(251, 191, 36, 0.1)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', color: '#fde68a' }}>
-                  <strong>⚡ Técnica Práctica:</strong> Añade siempre una "Contradicción Neurocreativa": un hábito que desentone por completo con su arquetipo.
-                </div>
-              </div>
-
-              <div className="cp-neuro-concept-card" style={{ borderTop: '4px solid #10b981' }}>
-                <div className="cp-concept-icon">🧬</div>
-                <h3 className="cp-concept-title">4. Neuronas Espejo & Anclaje</h3>
-                <p className="cp-concept-desc">
-                  La corteza premotora e insular se disparan cuando el personaje experimenta sensaciones físicas concretas: el ardor de una herida, el nudo en la garganta
-                  o el chasquido de una rama en la oscuridad. Las descripciones abstractas no activan el cuerpo sensorial del lector.
-                </p>
-                <div style={{ background: 'rgba(16, 185, 129, 0.1)', padding: '10px', borderRadius: '8px', fontSize: '0.8rem', color: '#6ee7b7' }}>
-                  <strong>⚡ Ejercicio Escolar:</strong> Define una cicatriz o talismán físico que el personaje toque involuntariamente al mentir o dudar.
-                </div>
-              </div>
-            </div>
-
-            {/* Las 3 Dimensiones del Drama */}
-            <div style={{ marginTop: '16px' }}>
-              <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#f8fafc', marginBottom: '16px' }}>
-                📐 Las 3 Dimensiones Canónicas de Lajos Egri (El Arte de la Escritura Dramática)
-              </h3>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
-                {CHARACTER_DIMENSIONS.map((dim) => (
-                  <div
-                    key={dim.id}
-                    style={{
-                      background: 'rgba(15, 23, 42, 0.75)',
-                      border: `1.5px solid ${dim.color}44`,
-                      borderRadius: '16px',
-                      padding: '22px',
-                      display: 'flex',
-                      flexDirection: 'column',
-                      gap: '12px'
-                    }}
-                  >
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                      <span style={{ fontSize: '1.8rem' }}>{dim.icon}</span>
-                      <h4 style={{ margin: 0, fontSize: '1.15rem', color: dim.color, fontWeight: 800 }}>{dim.name}</h4>
-                    </div>
-                    <p style={{ margin: 0, color: '#e2e8f0', fontSize: '0.88rem', fontWeight: 700 }}>
-                      {dim.headline}
-                    </p>
-                    <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.85rem', lineHeight: 1.55 }}>
-                      {dim.description}
-                    </p>
-                    <div style={{ marginTop: 'auto', background: 'rgba(2, 6, 23, 0.6)', padding: '12px', borderRadius: '10px' }}>
-                      <strong style={{ fontSize: '0.75rem', color: '#cbd5e1', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                        Preguntas Guía para el Aula:
+                    {/* Preguntas de Verificación para el Aula */}
+                    <div style={{
+                      background: 'var(--cp-bg-base)',
+                      padding: '14px 18px',
+                      borderRadius: '12px',
+                      border: '1px solid var(--cp-border-subtle)'
+                    }}>
+                      <strong style={{ fontSize: '0.8rem', color: '#94a3b8', textTransform: 'uppercase', display: 'block', marginBottom: '6px' }}>
+                        📋 Preguntas Guía para Reflexionar en Clase:
                       </strong>
-                      <ul style={{ margin: '8px 0 0 0', paddingLeft: '18px', color: '#94a3b8', fontSize: '0.8rem', lineHeight: 1.5 }}>
-                        {dim.questions.map((q, idx) => (
-                          <li key={idx} style={{ marginBottom: '4px' }}>{q}</li>
+                      <ul style={{ margin: 0, paddingLeft: '20px', color: '#cbd5e1', fontSize: '0.9rem', lineHeight: 1.6 }}>
+                        {dim.questions.map((q, i) => (
+                          <li key={i}>{q}</li>
                         ))}
                       </ul>
-                    </div>
-                    <div style={{ fontSize: '0.78rem', color: dim.color, fontStyle: 'italic', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '8px' }}>
-                      🔬 {dim.scientificMechanism}
                     </div>
                   </div>
                 ))}
               </div>
-            </div>
-          </div>
-        )}
 
-        {/* =========================================================================
-            SECCIÓN 3: EL DIMENSIONADOR TRIDIMENSIONAL (SIMULADOR)
-           ========================================================================= */}
-        {activeTab === 'dimensionador' && (
-          <div className="animate-fade-in" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-            <div className="cp-dimensioner-panel">
-              {/* Columna de Sliders */}
-              <div className="cp-sliders-column">
-                <div>
-                  <h3 style={{ margin: '0 0 6px 0', fontSize: '1.35rem', fontWeight: 900, color: '#f8fafc' }}>
-                    🎛️ Modulador Tridimensional de Resonancia
-                  </h3>
-                  <p style={{ margin: 0, color: '#94a3b8', fontSize: '0.88rem', lineHeight: 1.5 }}>
-                    Ajusta el peso de cada dimensión para observar en tiempo real cómo cambia la inmersión del cerebro lector.
+              {/* Columna Derecha: Radar Triangular en Tiempo Real y Diagnóstico */}
+              <div className="cp-dim-radar-card">
+                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                    RADAR DE EQUILIBRIO 3D
+                  </span>
+                  <strong style={{ fontSize: '1.4rem', fontWeight: 900, color: neuroDiagnostic.color }}>
+                    {threeDimensionalScore}%
+                  </strong>
+                </div>
+
+                {/* Gráfico SVG de Triángulo de las 3 Dimensiones */}
+                <svg viewBox="0 0 260 220" width="250" height="210">
+                  {/* Triángulos guía concéntricos */}
+                  <polygon
+                    points="130,37 62,154 198,154"
+                    fill="none"
+                    stroke="rgba(148, 163, 184, 0.25)"
+                    strokeWidth="1.5"
+                    strokeDasharray="4 4"
+                  />
+                  <polygon
+                    points="130,76 96,135 164,135"
+                    fill="none"
+                    stroke="rgba(148, 163, 184, 0.2)"
+                    strokeWidth="1"
+                  />
+
+                  {/* Ejes desde el centro */}
+                  <line x1="130" y1="115" x2="130" y2="37" stroke="rgba(148,163,184,0.25)" strokeWidth="1" />
+                  <line x1="130" y1="115" x2="62" y2="154" stroke="rgba(148,163,184,0.25)" strokeWidth="1" />
+                  <line x1="130" y1="115" x2="198" y2="154" stroke="rgba(148,163,184,0.25)" strokeWidth="1" />
+
+                  {/* Polígono Dinámico del Personaje */}
+                  <polygon
+                    points={radarPoints}
+                    fill={`${neuroDiagnostic.color}33`}
+                    stroke={neuroDiagnostic.color}
+                    strokeWidth="3"
+                  />
+
+                  {/* Etiquetas de los 3 Vértices */}
+                  <text x="130" y="24" fill="#f43f5e" fontSize="11" fontWeight="800" textAnchor="middle">
+                    🧠 PSICOLÓGICA ({dimPsychological}%)
+                  </text>
+                  <text x="55" y="178" fill="#38bdf8" fontSize="11" fontWeight="800" textAnchor="middle">
+                    🧬 FISIO ({dimPhysiological}%)
+                  </text>
+                  <text x="205" y="178" fill="#f59e0b" fontSize="11" fontWeight="800" textAnchor="middle">
+                    🌍 SOCIO ({dimSociological}%)
+                  </text>
+                </svg>
+
+                {/* Semáforo de Diagnóstico */}
+                <div style={{
+                  width: '100%',
+                  background: `${neuroDiagnostic.color}18`,
+                  border: `1.5px solid ${neuroDiagnostic.color}`,
+                  borderRadius: '14px',
+                  padding: '14px 16px',
+                  textAlign: 'center'
+                }}>
+                  <strong style={{ color: neuroDiagnostic.color, fontSize: '0.95rem', display: 'block', marginBottom: '4px' }}>
+                    {neuroDiagnostic.level}
+                  </strong>
+                  <p style={{ margin: '0 0 6px 0', fontSize: '0.88rem', color: '#f8fafc', lineHeight: 1.45 }}>
+                    {neuroDiagnostic.summary}
                   </p>
-                </div>
-
-                {/* Slider Fisiológica */}
-                <div className="cp-slider-group">
-                  <div className="cp-slider-header">
-                    <span className="cp-slider-title">
-                      <span>🧬</span> 1. Dimensión Fisiológica (Cuerpo y Sentidos)
-                    </span>
-                    <span className="cp-slider-val" style={{ color: '#38bdf8' }}>{dimPhysiological}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={dimPhysiological}
-                    onChange={(e) => setDimPhysiological(Number(e.target.value))}
-                    className="cp-slider-input"
-                    style={{ accentColor: '#38bdf8' }}
-                  />
-                  <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                    Cicatrices, postura corporal, fatiga física, vestimenta y anclaje sensorial inmediato.
+                  <span style={{ fontSize: '0.8rem', color: '#cbd5e1' }}>
+                    💡 {neuroDiagnostic.tip}
                   </span>
                 </div>
 
-                {/* Slider Sociológica */}
-                <div className="cp-slider-group">
-                  <div className="cp-slider-header">
-                    <span className="cp-slider-title">
-                      <span>🌍</span> 2. Dimensión Sociológica (Clan y Entorno)
-                    </span>
-                    <span className="cp-slider-val" style={{ color: '#fbbf24' }}>{dimSociological}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={dimSociological}
-                    onChange={(e) => setDimSociological(Number(e.target.value))}
-                    className="cp-slider-input"
-                    style={{ accentColor: '#fbbf24' }}
-                  />
-                  <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                    Presión del grupo social, lealtades divididas, prejuicios de época y lenguaje cultural.
-                  </span>
-                </div>
-
-                {/* Slider Psicológica */}
-                <div className="cp-slider-group">
-                  <div className="cp-slider-header">
-                    <span className="cp-slider-title">
-                      <span>🧠</span> 3. Dimensión Psicológica (Herida y Mentira)
-                    </span>
-                    <span className="cp-slider-val" style={{ color: '#f43f5e' }}>{dimPsychological}%</span>
-                  </div>
-                  <input
-                    type="range"
-                    min="0"
-                    max="100"
-                    value={dimPsychological}
-                    onChange={(e) => setDimPsychological(Number(e.target.value))}
-                    className="cp-slider-input"
-                    style={{ accentColor: '#f43f5e' }}
-                  />
-                  <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                    Mentira nuclear, trauma del pasado (*Ghost*), deseo consciente vs necesidad espiritual oculta.
-                  </span>
-                </div>
-
-                <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                {/* Botones rápidos de prueba */}
+                <div style={{ display: 'flex', gap: '8px', width: '100%' }}>
                   <button
                     onClick={() => {
                       soundEffects.playClick();
-                      setDimPhysiological(85);
-                      setDimSociological(80);
-                      setDimPsychological(90);
+                      setDimPhysiological(88);
+                      setDimSociological(85);
+                      setDimPsychological(92);
                     }}
                     style={{
-                      background: 'rgba(255, 255, 255, 0.08)',
-                      border: '1px solid rgba(255, 255, 255, 0.15)',
-                      color: '#cbd5e1',
-                      padding: '8px 14px',
-                      borderRadius: '8px',
+                      flex: 1,
+                      background: 'var(--cp-surface-2)',
+                      border: '1px solid var(--cp-border-strong)',
+                      color: '#34d399',
+                      padding: '9px',
+                      borderRadius: '10px',
                       fontSize: '0.8rem',
-                      fontWeight: 700,
+                      fontWeight: 800,
                       cursor: 'pointer'
                     }}
                   >
-                    ✨ Cargar Configuración Óptima
+                    ✨ Nivelar al Óptimo
                   </button>
-
                   <button
                     onClick={() => {
                       soundEffects.playClick();
-                      setDimPhysiological(20);
+                      setDimPhysiological(25);
                       setDimSociological(30);
                       setDimPsychological(25);
                     }}
                     style={{
-                      background: 'rgba(244, 63, 94, 0.1)',
-                      border: '1px solid rgba(244, 63, 94, 0.3)',
-                      color: '#fda4af',
-                      padding: '8px 14px',
-                      borderRadius: '8px',
+                      flex: 1,
+                      background: 'var(--cp-surface-2)',
+                      border: '1px solid var(--cp-border-strong)',
+                      color: '#fb7185',
+                      padding: '9px',
+                      borderRadius: '10px',
                       fontSize: '0.8rem',
-                      fontWeight: 700,
+                      fontWeight: 800,
                       cursor: 'pointer'
                     }}
                   >
-                    ⚠️ Probar Personaje Plano
+                    ⚠️ Simular Cliché
                   </button>
                 </div>
               </div>
+            </div>
 
-              {/* Columna de Telemetría Cerebral */}
-              <div className="cp-radar-telemetry-box">
-                <div style={{ width: '100%', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.08em' }}>
-                    TELEMETRÍA NEUROCOGNITIVA
-                  </span>
-                  <span style={{ fontSize: '1.25rem', fontWeight: 900, color: neuroDiagnostic.badgeColor }}>
-                    {threeDimensionalScore}%
-                  </span>
-                </div>
+            {/* Pie de Navegación Etapa 3 */}
+            <div className="cp-stage-footer-nav">
+              <button
+                className="cp-btn-stage-prev"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setActiveStage(2);
+                }}
+              >
+                ← Volver a Etapa 2: Neurociencia
+              </button>
+              <button
+                className="cp-btn-stage-next"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setActiveStage(4);
+                }}
+              >
+                Continuar a Etapa 4: Estudio Visual y Exportación →
+              </button>
+            </div>
+          </section>
+        )}
 
-                {/* Visualizador Holográfico de Resonancia */}
-                <div className="cp-brain-visualizer">
-                  <div
-                    className="cp-brain-glow"
-                    style={{
-                      background: neuroDiagnostic.glowColor,
-                      transform: `scale(${0.7 + (threeDimensionalScore / 250)})`
-                    }}
-                  />
-                  <svg viewBox="0 0 200 160" width="160" height="130" style={{ position: 'relative', zIndex: 2 }}>
-                    <path
-                      d="M60 40 C40 40, 20 60, 20 90 C20 120, 50 140, 90 140 C110 140, 140 140, 160 120 C180 100, 180 60, 150 40 C130 25, 90 25, 60 40 Z"
-                      fill="none"
-                      stroke={neuroDiagnostic.badgeColor}
-                      strokeWidth="3.5"
-                      strokeDasharray="6 3"
-                    />
-                    <circle cx="70" cy="70" r="14" fill="#38bdf8" opacity={dimPhysiological / 120} />
-                    <text x="70" y="74" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">F</text>
-
-                    <circle cx="130" cy="70" r="14" fill="#fbbf24" opacity={dimSociological / 120} />
-                    <text x="130" y="74" fill="#020617" fontSize="10" fontWeight="bold" textAnchor="middle">S</text>
-
-                    <circle cx="100" cy="105" r="16" fill="#f43f5e" opacity={dimPsychological / 120} />
-                    <text x="100" y="109" fill="#fff" fontSize="10" fontWeight="bold" textAnchor="middle">P</text>
-
-                    {/* Vínculos de sinapsis */}
-                    <line x1="70" y1="70" x2="130" y2="70" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-                    <line x1="70" y1="70" x2="100" y2="105" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-                    <line x1="130" y1="70" x2="100" y2="105" stroke="rgba(255,255,255,0.2)" strokeWidth="1.5" />
-                  </svg>
-                </div>
-
-                <div
-                  className="cp-resonance-badge"
-                  style={{
-                    background: `${neuroDiagnostic.badgeColor}22`,
-                    color: neuroDiagnostic.badgeColor,
-                    border: `1.5px solid ${neuroDiagnostic.badgeColor}`
-                  }}
-                >
-                  {neuroDiagnostic.level}
-                </div>
-
-                <p style={{ margin: 0, fontSize: '0.86rem', color: '#f8fafc', fontWeight: 700, lineHeight: 1.4 }}>
-                  {neuroDiagnostic.summary}
+        {/* =====================================================================
+            ETAPA 4: ESTUDIO VISUAL, SUBIDA DE IMAGEN Y FICHA MAESTRA
+           ===================================================================== */}
+        {activeStage === 4 && (
+          <section className="animate-fade-in">
+            {/* Guía clara de la Etapa 4 */}
+            <div className="cp-stage-guide-banner">
+              <div className="cp-stage-guide-info">
+                <h2>
+                  <span>🎨</span> Etapa 4: Estudio Visual con Imagen Propia y Ficha Exportable
+                </h2>
+                <p>
+                  ¡Todo lo que construiste en las etapas anteriores está reunido aquí! Ahora dale un <strong>rostro único</strong> a tu personaje:
+                  sube una ilustración o fotografía desde tu dispositivo, ajusta el <strong>encuadre y filtro artístico</strong>, y descarga tu
+                  <strong> Cromo Coleccionable</strong> o el <strong>Expediente Pedagógico Completo</strong>.
                 </p>
-
-                <p style={{ margin: 0, fontSize: '0.78rem', color: '#94a3b8', lineHeight: 1.5 }}>
-                  {neuroDiagnostic.explanation}
-                </p>
+              </div>
+              <div className="cp-stage-goal-box">
+                <span>🎯 Meta Práctica de esta Etapa</span>
+                <strong>Sube y encuadra la imagen de tu personaje, guárdalo en tu galería y descarga su ficha final.</strong>
               </div>
             </div>
 
-            {/* Llamado a la acción: Llevar los valores al Taller */}
+            {/* Galería Rápida de Personajes Guardados / Ejemplos */}
             <div style={{
-              background: 'linear-gradient(135deg, rgba(2, 132, 199, 0.2) 0%, rgba(168, 85, 247, 0.15) 100%)',
-              border: '1px solid rgba(56, 189, 248, 0.3)',
+              background: 'var(--cp-surface-1)',
+              border: '1px solid var(--cp-border-subtle)',
               borderRadius: '16px',
-              padding: '20px',
+              padding: '16px 20px',
+              marginBottom: '24px',
               display: 'flex',
               flexWrap: 'wrap',
-              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '16px'
+              justifyContent: 'space-between',
+              gap: '12px'
             }}>
-              <div>
-                <h4 style={{ margin: '0 0 4px 0', fontSize: '1.1rem', color: '#f8fafc', fontWeight: 800 }}>
-                  ¿Listo para forjar tu personaje con estas dimensiones calibradas?
-                </h4>
-                <p style={{ margin: 0, color: '#cbd5e1', fontSize: '0.86rem' }}>
-                  Pasa al taller para subir una ilustración, aplicar filtros artísticos y generar la ficha coleccionable imprimible.
-                </p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase' }}>
+                  📚 Galería de Personajes (Cargar plantilla o guardado):
+                </span>
+                {savedRoster.map((prof) => (
+                  <button
+                    key={prof.id}
+                    onClick={() => handleLoadProfile(prof)}
+                    style={{
+                      background: charName === prof.name ? 'var(--cp-cyan)' : 'var(--cp-surface-2)',
+                      color: charName === prof.name ? '#090e1a' : '#f8fafc',
+                      border: '1px solid var(--cp-border-strong)',
+                      padding: '7px 14px',
+                      borderRadius: '10px',
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      cursor: 'pointer',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px'
+                    }}
+                  >
+                    <span>🎭</span> {prof.name}
+                  </button>
+                ))}
               </div>
 
               <button
-                onClick={() => {
-                  soundEffects.playClick();
-                  setActiveTab('taller');
+                onClick={handleSaveToRoster}
+                style={{
+                  background: 'rgba(16, 185, 129, 0.16)',
+                  border: '1px solid #10b981',
+                  color: '#34d399',
+                  padding: '8px 16px',
+                  borderRadius: '10px',
+                  fontSize: '0.85rem',
+                  fontWeight: 800,
+                  cursor: 'pointer'
                 }}
-                className="cp-btn-export cp-btn-primary"
-                style={{ maxWidth: '220px' }}
               >
-                <span>🎨</span> Abrir Forja de Personaje
+                {saveSuccess ? '✅ ¡Guardado en Galería!' : '💾 Guardar Personaje Actual en Galería'}
               </button>
             </div>
-          </div>
-        )}
 
-        {/* =========================================================================
-            SECCIÓN 4: TALLER & FORJA DEL PERSONAJE (CON SUBIDA DE IMAGEN)
-           ========================================================================= */}
-        {activeTab === 'taller' && (
-          <div className="animate-fade-in cp-forge-layout">
-            {/* Panel de Formulario / Configuración */}
-            <div className="cp-form-panel">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <h3 style={{ margin: 0, fontSize: '1.3rem', fontWeight: 900, color: '#f8fafc' }}>
-                  🛠️ Forja Creativa del Personaje
+            <div className="cp-forge-layout">
+              {/* Columna Izquierda: Configuración de Imagen y Datos */}
+              <div className="cp-form-panel">
+                <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#f8fafc' }}>
+                  🖼️ 1. Subida y Configuración de Imagen del Personaje
                 </h3>
-                <span style={{ fontSize: '0.78rem', color: '#38bdf8', fontWeight: 700 }}>
-                  AUTOGUARDADO ACTIVO
-                </span>
-              </div>
 
-              {/* Presets Rápidos para Estudiantes */}
-              <div>
-                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: 800, color: '#fbbf24', textTransform: 'uppercase', marginBottom: '8px' }}>
-                  ⚡ Cargar Inspiración de Ejemplo (Aula / Taller):
-                </label>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px' }}>
-                  {PRESET_AVATARS.map((preset) => (
-                    <button
-                      key={preset.id}
-                      onClick={() => handleApplyPreset(preset)}
-                      style={{
-                        background: charName === preset.name ? 'rgba(56, 189, 248, 0.25)' : 'rgba(255, 255, 255, 0.05)',
-                        borderColor: charName === preset.name ? '#38bdf8' : 'rgba(255, 255, 255, 0.1)',
-                        borderWidth: '1px',
-                        borderStyle: 'solid',
-                        color: '#f8fafc',
-                        padding: '6px 10px',
-                        borderRadius: '8px',
-                        fontSize: '0.74rem',
-                        fontWeight: 700,
-                        cursor: 'pointer',
-                        textAlign: 'left'
-                      }}
-                    >
-                      {preset.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Subida y Personalización de Imagen */}
-              <div className="cp-form-group">
-                <label>🖼️ Ilustración / Imagen del Personaje (Sube la tuya)</label>
-                
+                {/* Zona Drag & Drop para subir imagen */}
                 <div
                   className="cp-upload-dropzone"
                   onDragOver={(e) => e.preventDefault()}
-                  onDrop={handleDrop}
-                  onClick={() => fileInputRef.current?.click()}
+                  onDrop={handleCharacterDrop}
+                  onClick={() => charFileInputRef.current?.click()}
                 >
                   <input
                     type="file"
-                    ref={fileInputRef}
+                    ref={charFileInputRef}
                     accept="image/png, image/jpeg, image/webp"
-                    onChange={handleImageUpload}
+                    onChange={handleCharacterImageInput}
                     style={{ display: 'none' }}
                   />
-                  {isUploading ? (
-                    <div style={{ color: '#38bdf8', fontWeight: 800 }}>
-                      <span>⏳</span> Optimizando imagen y comprimiendo a WebP...
+                  {isUploadingChar ? (
+                    <div style={{ color: '#38bdf8', fontWeight: 800, fontSize: '1rem' }}>
+                      ⏳ Procesando y optimizando tu imagen...
                     </div>
                   ) : (
                     <div>
-                      <div style={{ fontSize: '2rem', marginBottom: '6px' }}>📤</div>
-                      <p style={{ margin: '0 0 4px 0', fontSize: '0.88rem', fontWeight: 800, color: '#f8fafc' }}>
-                        Haz clic para subir una foto o arrastra tu archivo aquí
-                      </p>
-                      <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                        PNG, JPG o WebP · Se redimensiona y optimiza automáticamente en el navegador
+                      <div style={{ fontSize: '2.2rem', marginBottom: '6px' }}>📤</div>
+                      <strong style={{ display: 'block', fontSize: '1rem', color: '#f8fafc', marginBottom: '4px' }}>
+                        Haz clic aquí para subir tu imagen o arrástrala desde tu carpeta
+                      </strong>
+                      <span style={{ fontSize: '0.84rem', color: '#94a3b8' }}>
+                        Formatos JPG, PNG o WebP · Se optimiza automáticamente sin salir de la plataforma
                       </span>
                     </div>
                   )}
                 </div>
 
                 {uploadError && (
-                  <p style={{ margin: '6px 0 0 0', color: '#f43f5e', fontSize: '0.8rem', fontWeight: 700 }}>
+                  <div style={{ color: '#fb7185', fontSize: '0.88rem', fontWeight: 700 }}>
                     ⚠️ {uploadError}
-                  </p>
+                  </div>
                 )}
 
+                {/* Controles de Encuadre (Zoom y Posición Vertical) */}
+                <div style={{
+                  background: 'var(--cp-surface-2)',
+                  padding: '14px 16px',
+                  borderRadius: '14px',
+                  border: '1px solid var(--cp-border-subtle)',
+                  display: 'grid',
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                  gap: '14px'
+                }}>
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                      <span>🔍 Zoom de Imagen</span>
+                      <span style={{ color: '#38bdf8' }}>{imgZoom}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="100"
+                      max="160"
+                      value={imgZoom}
+                      onChange={(e) => setImgZoom(Number(e.target.value))}
+                      className="cp-slider-input"
+                    />
+                  </div>
+
+                  <div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.82rem', fontWeight: 700, marginBottom: '6px' }}>
+                      <span>↕️ Encuadre Vertical</span>
+                      <span style={{ color: '#38bdf8' }}>{imgPosY}%</span>
+                    </div>
+                    <input
+                      type="range"
+                      min="0"
+                      max="100"
+                      value={imgPosY}
+                      onChange={(e) => setImgPosY(Number(e.target.value))}
+                      className="cp-slider-input"
+                    />
+                  </div>
+                </div>
+
                 {/* Filtros Artísticos */}
-                <div style={{ marginTop: '10px' }}>
-                  <span style={{ fontSize: '0.76rem', color: '#94a3b8', fontWeight: 700, textTransform: 'uppercase' }}>
-                    🎨 Filtros de Estilo Visual (Cromático & Histórico):
+                <div>
+                  <span style={{ fontSize: '0.82rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>
+                    🎨 Filtro Artístico del Retrato:
                   </span>
                   <div className="cp-filter-chips-row">
                     {[
@@ -1145,13 +2231,13 @@ Generado en el Laboratorio de Creación de Personajes · Editorial Lluvia de Ide
                       { id: 'cyber', label: '⚡ Cyber Neón' },
                       { id: 'pergamino', label: '📜 Pergamino Ancestral' },
                       { id: 'acuarela', label: '🎨 Acuarela Onírica' }
-                    ].map((f) => (
+                    ].map(f => (
                       <button
                         key={f.id}
                         className={`cp-filter-chip ${activeFilter === f.id ? 'active' : ''}`}
                         onClick={() => {
                           soundEffects.playClick();
-                          setActiveFilter(f.id as any);
+                          setActiveFilter(f.id as ArtFilterType);
                         }}
                       >
                         {f.label}
@@ -1159,278 +2245,310 @@ Generado en el Laboratorio de Creación de Personajes · Editorial Lluvia de Ide
                     ))}
                   </div>
                 </div>
-              </div>
 
-              {/* Datos Identitarios */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div className="cp-form-group">
-                  <label>Nombre del Personaje</label>
-                  <input
-                    type="text"
-                    value={charName}
-                    onChange={(e) => setCharName(e.target.value)}
-                    placeholder="Ej. Hunahpú, Nayeli, Dr. Zeno"
-                  />
+                <hr style={{ border: 'none', borderTop: '1px solid var(--cp-border-subtle)', margin: '4px 0' }} />
+
+                <h3 style={{ margin: 0, fontSize: '1.35rem', fontWeight: 900, color: '#f8fafc' }}>
+                  ✍️ 2. Síntesis de Identidad del Personaje
+                </h3>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                  <div className="cp-form-group">
+                    <label>Nombre del Personaje</label>
+                    <input
+                      type="text"
+                      value={charName}
+                      onChange={(e) => setCharName(e.target.value)}
+                      placeholder="Ej. Hunahpú, Ikal, Dr. Zeno..."
+                    />
+                  </div>
+
+                  <div className="cp-form-group">
+                    <label>Título / Vocación</label>
+                    <input
+                      type="text"
+                      value={charTitle}
+                      onChange={(e) => setCharTitle(e.target.value)}
+                      placeholder="Ej. Guardián del Códice..."
+                    />
+                  </div>
                 </div>
 
                 <div className="cp-form-group">
-                  <label>Epíteto / Título</label>
+                  <label>Arquetipo Base (Definido en Etapa 1)</label>
+                  <select
+                    value={charArchetypeId}
+                    onChange={(e) => {
+                      soundEffects.playClick();
+                      setCharArchetypeId(e.target.value);
+                    }}
+                  >
+                    {CLASSIC_ARCHETYPES.map(arc => (
+                      <option key={arc.id} value={arc.id}>
+                        {arc.icon} {arc.name} — {arc.roleSubtitle}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <div className="cp-form-group">
+                  <label>Frase Insignia o Lema</label>
                   <input
                     type="text"
-                    value={charTitle}
-                    onChange={(e) => setCharTitle(e.target.value)}
-                    placeholder="Ej. El Cazador de Sombras"
+                    value={charQuote}
+                    onChange={(e) => setCharQuote(e.target.value)}
+                    placeholder="Una frase que exprese la voz de tu personaje..."
                   />
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px' }}>
+                  <div className="cp-form-group">
+                    <label>🔮 Mentira Nuclear (Etapa 2)</label>
+                    <textarea
+                      rows={2}
+                      value={charLie}
+                      onChange={(e) => setCharLie(e.target.value)}
+                    />
+                  </div>
+                  <div className="cp-form-group">
+                    <label>⚡ Contradicción Única (Etapa 2)</label>
+                    <textarea
+                      rows={2}
+                      value={charContradiction}
+                      onChange={(e) => setCharContradiction(e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
 
-              {/* Selector de Arquetipo Canónico */}
-              <div className="cp-form-group">
-                <label>Arquetipo Canónico Junguiano</label>
-                <select
-                  value={charArchetypeId}
-                  onChange={(e) => {
-                    soundEffects.playClick();
-                    setCharArchetypeId(e.target.value);
-                  }}
+              {/* Columna Derecha: Vista Previa en Tiempo Real (Cromo / Expediente) y Descarga */}
+              <div className="cp-card-preview-container">
+                {/* Selector de Formato Visual */}
+                <div style={{
+                  width: '100%',
+                  maxWidth: '420px',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  gap: '10px'
+                }}>
+                  <span style={{ fontSize: '0.84rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase' }}>
+                    Formato de Ficha:
+                  </span>
+                  <div className="cp-polarity-toggle">
+                    <button
+                      className={`cp-polarity-btn ${previewFormat === 'cromo' ? 'active-both' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setPreviewFormat('cromo');
+                      }}
+                    >
+                      🎴 Cromo Visual
+                    </button>
+                    <button
+                      className={`cp-polarity-btn ${previewFormat === 'expediente' ? 'active-both' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setPreviewFormat('expediente');
+                      }}
+                    >
+                      📋 Expediente Completo
+                    </button>
+                  </div>
+                </div>
+
+                {/* TARJETA EXPORTABLE */}
+                <div
+                  ref={cardExportRef}
+                  className="cp-collectible-card"
+                  style={{ borderColor: currentCharacterArchetype.color }}
                 >
-                  {CLASSIC_ARCHETYPES.map((arc) => (
-                    <option key={arc.id} value={arc.id}>
-                      {arc.icon} {arc.name} — {arc.roleSubtitle}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Cita o Lema */}
-              <div className="cp-form-group">
-                <label>Lema o Frase Característica</label>
-                <input
-                  type="text"
-                  value={charQuote}
-                  onChange={(e) => setCharQuote(e.target.value)}
-                  placeholder="Una frase que condense su visión o dilema vital..."
-                />
-              </div>
-
-              {/* DIMENSIÓN PSICOLÓGICA PROFUNDA */}
-              <div style={{ background: 'rgba(2, 6, 23, 0.4)', padding: '16px', borderRadius: '14px', border: '1px solid rgba(244, 63, 94, 0.25)', display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                  <span style={{ fontSize: '1.2rem' }}>🧠</span>
-                  <strong style={{ color: '#fda4af', fontSize: '0.9rem', textTransform: 'uppercase' }}>
-                    Eje Psicológico (La Máquina de la Empatía)
-                  </strong>
-                </div>
-
-                <div className="cp-form-group">
-                  <label>Mentira Nuclear (Lo que cree erróneamente sobre sí mismo)</label>
-                  <input
-                    type="text"
-                    value={charLie}
-                    onChange={(e) => setCharLie(e.target.value)}
-                    placeholder="Ej. «No merezco ser amado si demuestro debilidad»"
-                  />
-                </div>
-
-                <div className="cp-form-group">
-                  <label>Herida del Pasado (*The Ghost* / Trauma Fundacional)</label>
-                  <input
-                    type="text"
-                    value={charWound}
-                    onChange={(e) => setCharWound(e.target.value)}
-                    placeholder="El evento no resuelto que originó su miedo más profundo..."
-                  />
-                </div>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                  <div className="cp-form-group">
-                    <label>Deseo Consciente (Superficial)</label>
-                    <textarea
-                      rows={2}
-                      value={charDesire}
-                      onChange={(e) => setCharDesire(e.target.value)}
-                      placeholder="Lo que cree querer (riqueza, venganza, trofeo)..."
+                  {/* Marco de Ilustración con Zoom y Posición */}
+                  <div className="cp-card-art-holder">
+                    <img
+                      src={charImage}
+                      alt={charName}
+                      className={`cp-card-art-img filter-${activeFilter}`}
+                      style={{
+                        objectPosition: `50% ${imgPosY}%`,
+                        transform: `scale(${imgZoom / 100})`
+                      }}
+                      crossOrigin="anonymous"
                     />
+                    <div style={{
+                      position: 'absolute',
+                      top: '10px',
+                      left: '10px',
+                      background: 'rgba(9, 14, 26, 0.9)',
+                      padding: '4px 10px',
+                      borderRadius: '999px',
+                      fontSize: '0.76rem',
+                      fontWeight: 800,
+                      color: '#f8fafc',
+                      border: `1px solid ${currentCharacterArchetype.color}`
+                    }}>
+                      {currentCharacterArchetype.icon} {currentCharacterArchetype.name.split('/')[0]}
+                    </div>
+                    <div style={{
+                      position: 'absolute',
+                      bottom: '10px',
+                      right: '10px',
+                      background: 'rgba(9, 14, 26, 0.9)',
+                      padding: '4px 10px',
+                      borderRadius: '8px',
+                      fontSize: '0.75rem',
+                      fontWeight: 900,
+                      color: '#10b981',
+                      border: '1px solid rgba(16, 185, 129, 0.5)'
+                    }}>
+                      {threeDimensionalScore}% 3D
+                    </div>
                   </div>
-                  <div className="cp-form-group">
-                    <label>Necesidad Inconsciente (Espiritual)</label>
-                    <textarea
-                      rows={2}
-                      value={charNeed}
-                      onChange={(e) => setCharNeed(e.target.value)}
-                      placeholder="Lo que realmente necesita para transformarse..."
-                    />
+
+                  {/* Nombre y Epíteto */}
+                  <div>
+                    <h4 className="cp-card-name-title">{charName || 'Personaje Creatika'}</h4>
+                    <span style={{ fontSize: '0.88rem', color: currentCharacterArchetype.color, fontWeight: 700 }}>
+                      {charTitle || currentCharacterArchetype.roleSubtitle}
+                    </span>
+                  </div>
+
+                  {/* Cita */}
+                  <div style={{
+                    background: 'rgba(24, 35, 56, 0.85)',
+                    borderLeft: `4px solid ${currentCharacterArchetype.color}`,
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    fontSize: '0.88rem',
+                    fontStyle: 'italic',
+                    color: '#f8fafc',
+                    lineHeight: 1.45
+                  }}>
+                    {charQuote || '«...»'}
+                  </div>
+
+                  {/* Estadísticas de las 3 Dimensiones */}
+                  <div className="cp-card-stats-grid">
+                    <div className="cp-card-stat">
+                      <span>🧬 Fisiológica</span>
+                      <strong style={{ color: '#38bdf8' }}>{dimPhysiological}%</strong>
+                    </div>
+                    <div className="cp-card-stat">
+                      <span>🌍 Sociológica</span>
+                      <strong style={{ color: '#f59e0b' }}>{dimSociological}%</strong>
+                    </div>
+                    <div className="cp-card-stat">
+                      <span>🧠 Psicológica</span>
+                      <strong style={{ color: '#f43f5e' }}>{dimPsychological}%</strong>
+                    </div>
+                    <div className="cp-card-stat">
+                      <span>⚡ Neuro-Impulso</span>
+                      <strong style={{ color: '#10b981', fontSize: '0.8rem' }}>
+                        {currentCharacterArchetype.neuroBadge.split('·')[0]}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {/* Detalles según formato elegido */}
+                  <div style={{
+                    background: 'rgba(9, 14, 26, 0.75)',
+                    padding: '12px 14px',
+                    borderRadius: '12px',
+                    fontSize: '0.82rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    gap: '8px',
+                    lineHeight: 1.45
+                  }}>
+                    <div>
+                      <strong style={{ color: '#f43f5e' }}>MENTIRA NUCLEAR: </strong>
+                      <span style={{ color: '#e2e8f0' }}>{charLie}</span>
+                    </div>
+                    <div>
+                      <strong style={{ color: '#f59e0b' }}>CONTRADICCIÓN: </strong>
+                      <span style={{ color: '#e2e8f0' }}>{charContradiction}</span>
+                    </div>
+
+                    {previewFormat === 'expediente' && (
+                      <>
+                        <div>
+                          <strong style={{ color: '#fb7185' }}>HERIDA DEL PASADO: </strong>
+                          <span style={{ color: '#e2e8f0' }}>{charWound}</span>
+                        </div>
+                        <div>
+                          <strong style={{ color: '#38bdf8' }}>CUERPO Y GESTOS: </strong>
+                          <span style={{ color: '#e2e8f0' }}>{charPhysical}</span>
+                        </div>
+                        <div>
+                          <strong style={{ color: '#fbbf24' }}>ENTORNO SOCIAL: </strong>
+                          <span style={{ color: '#e2e8f0' }}>{charSocial}</span>
+                        </div>
+                        <div>
+                          <strong style={{ color: '#34d399' }}>NECESIDAD PROFUNDA: </strong>
+                          <span style={{ color: '#e2e8f0' }}>{charNeed}</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    fontSize: '0.68rem',
+                    color: '#94a3b8',
+                    fontWeight: 700,
+                    borderTop: '1px solid rgba(255,255,255,0.08)',
+                    paddingTop: '8px'
+                  }}>
+                    <span>EDITORIAL LLUVIA DE IDEAS</span>
+                    <span>SUITE CREATIKA · FORJA 3D</span>
                   </div>
                 </div>
 
-                <div className="cp-form-group">
-                  <label>Contradicción Neurocreativa (Error de Predicción)</label>
-                  <input
-                    type="text"
-                    value={charContradiction}
-                    onChange={(e) => setCharContradiction(e.target.value)}
-                    placeholder="El rasgo inesperado que rompe el estereotipo y sorprende al cerebro..."
-                  />
-                </div>
-              </div>
+                {/* Botones de Acción Final */}
+                <div className="cp-export-actions">
+                  <button
+                    onClick={handleExportPNG}
+                    disabled={isExporting}
+                    className="cp-btn-export cp-btn-primary"
+                  >
+                    <span>{isExporting ? '⏳' : '📸'}</span>
+                    {isExporting ? 'Renderizando PNG...' : 'Descargar Ficha PNG'}
+                  </button>
 
-              {/* DIMENSIÓN FISIOLÓGICA Y SOCIOLÓGICA */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '14px' }}>
-                <div className="cp-form-group">
-                  <label>🧬 Anclaje Fisiológico (Cuerpo/Gestos)</label>
-                  <textarea
-                    rows={2}
-                    value={charPhysical}
-                    onChange={(e) => setCharPhysical(e.target.value)}
-                    placeholder="Cicatrices, mirada, talismán físico, postura al dudar..."
-                  />
-                </div>
-
-                <div className="cp-form-group">
-                  <label>🌍 Entorno Sociológico (Clan/Reglas)</label>
-                  <textarea
-                    rows={2}
-                    value={charSocial}
-                    onChange={(e) => setCharSocial(e.target.value)}
-                    placeholder="Comunidad de origen, reglas tácitas de su grupo, lealtades..."
-                  />
+                  <button
+                    onClick={handleCopySheet}
+                    className="cp-btn-export cp-btn-glass"
+                  >
+                    <span>{copySuccess ? '✅' : '📋'}</span>
+                    {copySuccess ? '¡Expediente Copiado!' : 'Copiar Texto Completo'}
+                  </button>
                 </div>
               </div>
             </div>
 
-            {/* Vista Previa: Tarjeta Coleccionable Exportable */}
-            <div className="cp-card-preview-container">
-              <div style={{ width: '100%', maxWidth: '380px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                  🎴 Cromo de Personaje (Vista Previa)
-                </span>
-                <span style={{ fontSize: '0.78rem', color: currentArchetype.color, fontWeight: 800 }}>
-                  {currentArchetype.icon} {currentArchetype.name.split('/')[0]}
-                </span>
-              </div>
-
-              {/* El Cromo / Card */}
-              <div
-                ref={cardExportRef}
-                className="cp-collectible-card"
-                style={{ borderColor: currentArchetype.color }}
-              >
-                {/* Marco de Imagen con Filtro */}
-                <div className="cp-card-art-holder">
-                  <img
-                    src={charImage}
-                    alt={charName}
-                    className={`cp-card-art-img filter-${activeFilter}`}
-                    crossOrigin="anonymous"
-                  />
-                  <div style={{
-                    position: 'absolute',
-                    bottom: '8px',
-                    left: '8px',
-                    background: 'rgba(2, 6, 23, 0.85)',
-                    padding: '3px 8px',
-                    borderRadius: '6px',
-                    fontSize: '0.7rem',
-                    fontWeight: 800,
-                    color: currentArchetype.color,
-                    border: `1px solid ${currentArchetype.color}66`
-                  }}>
-                    {currentArchetype.neuroBadge}
-                  </div>
-                </div>
-
-                {/* Títulos y Cita */}
-                <div>
-                  <h4 className="cp-card-name-title">{charName || 'Sin Nombre'}</h4>
-                  <span style={{ fontSize: '0.78rem', color: '#94a3b8', fontWeight: 700 }}>
-                    {charTitle || 'Arquetipo Creatika'}
-                  </span>
-                </div>
-
-                <div className="cp-quote-box" style={{ borderLeftColor: currentArchetype.color, margin: 0, padding: '8px 10px', fontSize: '0.8rem' }}>
-                  {charQuote || '«...»'}
-                </div>
-
-                {/* Cuadrícula de Estadísticas */}
-                <div className="cp-card-stats-grid">
-                  <div className="cp-card-stat">
-                    <span>Fisiológica</span>
-                    <strong style={{ color: '#38bdf8' }}>{dimPhysiological}%</strong>
-                  </div>
-                  <div className="cp-card-stat">
-                    <span>Sociológica</span>
-                    <strong style={{ color: '#fbbf24' }}>{dimSociological}%</strong>
-                  </div>
-                  <div className="cp-card-stat">
-                    <span>Psicológica</span>
-                    <strong style={{ color: '#f43f5e' }}>{dimPsychological}%</strong>
-                  </div>
-                  <div className="cp-card-stat">
-                    <span>Inmersión ToM</span>
-                    <strong style={{ color: '#10b981' }}>{threeDimensionalScore}%</strong>
-                  </div>
-                </div>
-
-                {/* Síntesis Dramática */}
-                <div style={{ background: 'rgba(2, 6, 23, 0.6)', padding: '10px', borderRadius: '8px', fontSize: '0.74rem', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  <div>
-                    <span style={{ color: '#f43f5e', fontWeight: 800 }}>MENTIRA: </span>
-                    <span style={{ color: '#cbd5e1' }}>{charLie || 'No definida'}</span>
-                  </div>
-                  <div>
-                    <span style={{ color: '#38bdf8', fontWeight: 800 }}>CONTRADICCIÓN: </span>
-                    <span style={{ color: '#cbd5e1' }}>{charContradiction || 'No definida'}</span>
-                  </div>
-                </div>
-
-                {/* Pie de Marca de Agua Editorial */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.65rem', color: '#64748b', borderTop: '1px solid rgba(255,255,255,0.06)', paddingTop: '6px' }}>
-                  <span>EDITORIAL LLUVIA DE IDEAS</span>
-                  <span>SUITE CREATIKA 2026</span>
-                </div>
-              </div>
-
-              {/* Botones de Exportación */}
-              <div className="cp-export-actions">
-                <button
-                  onClick={handleExportPNG}
-                  disabled={isExporting}
-                  className="cp-btn-export cp-btn-primary"
-                >
-                  <span>{isExporting ? '⏳' : '📸'}</span>
-                  {isExporting ? 'Generando Cromo...' : 'Descargar Cromo PNG'}
-                </button>
-
-                <button
-                  onClick={handleCopySheet}
-                  className="cp-btn-export cp-btn-glass"
-                >
-                  <span>{copySuccess ? '✅' : '📋'}</span>
-                  {copySuccess ? '¡Ficha Copiada!' : 'Copiar Ficha'}
-                </button>
-              </div>
-
-              {/* Botón de Limpieza */}
+            {/* Pie de Navegación Etapa 4 */}
+            <div className="cp-stage-footer-nav">
               <button
+                className="cp-btn-stage-prev"
                 onClick={() => {
-                  if (window.confirm('¿Seguro que deseas reiniciar el taller con los valores por defecto?')) {
-                    soundEffects.playClick();
-                    handleApplyPreset(PRESET_AVATARS[0]);
-                  }
-                }}
-                style={{
-                  background: 'transparent',
-                  color: '#64748b',
-                  border: 'none',
-                  fontSize: '0.78rem',
-                  cursor: 'pointer',
-                  textDecoration: 'underline'
+                  soundEffects.playClick();
+                  setActiveStage(3);
                 }}
               >
-                Restablecer formulario a valores iniciales
+                ← Volver a Etapa 3: Las 3 Dimensiones
+              </button>
+              <button
+                className="cp-btn-stage-prev"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setActiveStage(1);
+                }}
+              >
+                🔄 Explorar otro Arquetipo en Etapa 1
               </button>
             </div>
-          </div>
+          </section>
         )}
       </main>
     </div>
