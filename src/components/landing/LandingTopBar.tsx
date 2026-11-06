@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom';
 import logoEditorial from '../../assets/logo editorial.png';
 import { useAuth } from '../../context/AuthContext';
 import { AuthModal } from '../auth/AuthModal';
-import { EXTERNAL_STORE_URL } from '../../constants';
 
 interface LandingTopBarProps {
   slogan?: string;
@@ -21,15 +20,6 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
   const go = (path: string) => {
     setIsMobileMenuOpen(false);
     navigate(path);
-  };
-
-  const handleMercadoClick = () => {
-    setIsMobileMenuOpen(false);
-    if (EXTERNAL_STORE_URL && EXTERNAL_STORE_URL.trim() !== '') {
-      window.open(EXTERNAL_STORE_URL, '_blank', 'noopener,noreferrer');
-    } else {
-      go('/mercado');
-    }
   };
 
   return (
@@ -86,16 +76,6 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
                 <span className="top-btn-icon">🧠</span>
                 <span className="btn-text-full">Neurociencia Aula</span>
                 <span className="btn-text-short">Neuro</span>
-              </button>
-
-              <button
-                className="top-btn top-btn-mercado"
-                onClick={handleMercadoClick}
-                title="Tienda en Línea: Cuentos, juegos de mesa, personajes y proyectos STEAM"
-              >
-                <span className="top-btn-icon">🛍️</span>
-                <span className="btn-text-full">Mercado</span>
-                <span className="btn-text-short">Mercado</span>
               </button>
 
               {user ? (
@@ -195,13 +175,6 @@ export default function LandingTopBar({ slogan = 'Ecosistema Educativo', showHom
                       onClick={() => go('/neurociencia')}
                     >
                       <span className="top-btn-icon">🧠</span> Neurociencia Aula
-                    </button>
-
-                    <button
-                      className="top-btn top-btn-mercado"
-                      onClick={handleMercadoClick}
-                    >
-                      <span className="top-btn-icon">🛍️</span> Mercado
                     </button>
 
                     {user ? (
