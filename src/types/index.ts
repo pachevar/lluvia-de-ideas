@@ -386,6 +386,9 @@ export interface StudentVideoItem {
   views: number;
   featured?: boolean;
   publishedAt: string;
+  driveUrl?: string; // Enlace a Google Drive / OneDrive con el archivo master del video
+  status?: 'aprobado' | 'pendiente_revision' | 'procesando'; // Estado en el pipeline editorial
+  authorEmail?: string;
 }
 
 export interface ContestItem {

@@ -15,6 +15,7 @@ import { ArtPieceModal } from '../components/galeria/ArtPieceModal';
 import { VideoTheaterModal } from '../components/galeria/VideoTheaterModal';
 import { EscribaEditorModal } from '../components/galeria/EscribaEditorModal';
 import { ObraEditorModal } from '../components/galeria/ObraEditorModal';
+import { VideoEditorModal } from '../components/galeria/VideoEditorModal';
 import { AuthModal } from '../components/auth/AuthModal';
 import { soundEffects } from '../utils/soundEffects';
 import './GranGaleria.css';
@@ -50,6 +51,7 @@ export const GranGaleria: React.FC = () => {
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
   const [isArtEditorOpen, setIsArtEditorOpen] = useState<boolean>(false);
+  const [isVideoEditorOpen, setIsVideoEditorOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [editorInitialData, setEditorInitialData] = useState<Partial<StudentTextItem> | undefined>(undefined);
 
@@ -73,6 +75,17 @@ export const GranGaleria: React.FC = () => {
       return;
     }
     setIsArtEditorOpen(true);
+  };
+
+  // Apertura segura del taller audiovisual / Gran Sala (requiere sesión activa)
+  const handleOpenVideoEditor = () => {
+    soundEffects.playClick();
+    if (!user) {
+      soundEffects.playSpacePulse();
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsVideoEditorOpen(true);
   };
 
   // Detección de prompt detonador desde la Máquina de Cuentos (Suite Creatika)
@@ -153,6 +166,39 @@ export const GranGaleria: React.FC = () => {
         await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
       } catch (mergeErr) {
         console.error('[GranGaleria] Error persistiendo obra en Firestore:', mergeErr);
+        await saveConfigToFirestore({
+          ...config,
+          granGaleria: updatedGaleria
+        });
+      }
+    }
+  };
+
+  const handleSaveNewVideo = async (newVideo: StudentVideoItem) => {
+    const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
+    const existingIndex = (currentGaleria.videos || []).findIndex(v => v.id === newVideo.id);
+    let updatedVideos: StudentVideoItem[];
+    if (existingIndex >= 0) {
+      updatedVideos = [...(currentGaleria.videos || [])];
+      updatedVideos[existingIndex] = newVideo;
+    } else {
+      updatedVideos = [newVideo, ...(currentGaleria.videos || [])];
+    }
+    const updatedGaleria = {
+      ...currentGaleria,
+      videos: updatedVideos
+    };
+
+    // Actualización atómica en config/portal autorizada para usuarios autenticados
+    const portalDocRef = doc(db, 'config', 'portal');
+    try {
+      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
+    } catch (err) {
+      console.warn('[GranGaleria] updateDoc falló para video, intentando setDoc merge:', err);
+      try {
+        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
+      } catch (mergeErr) {
+        console.error('[GranGaleria] Error persistiendo video en Firestore:', mergeErr);
         await saveConfigToFirestore({
           ...config,
           granGaleria: updatedGaleria
@@ -593,9 +639,25 @@ export const GranGaleria: React.FC = () => {
                   El cine y el periodismo en manos de los estudiantes: cortometrajes de ficción, documentales comunitarios, animaciones y reportajes científicos escolares.
                 </p>
               </div>
-              <span className="gg-results-counter">
-                Mostrando {filteredVideos.length} {filteredVideos.length === 1 ? 'producción' : 'producciones'}
-              </span>
+              <div className="gg-section-header-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary gg-cine-create-btn"
+                  onClick={handleOpenVideoEditor}
+                  title={user ? "Postular o registrar una producción escolar en la Gran Sala" : "Inicia sesión con tu cuenta para postular un video"}
+                >
+                  <span>🎬</span>
+                  <span>Postular Producción</span>
+                  {!user && (
+                    <span className="gg-btn-login-badge" style={{ fontSize: '0.72rem', background: 'rgba(0,0,0,0.3)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)' }}>
+                      🔒 Iniciar Sesión
+                    </span>
+                  )}
+                </button>
+                <span className="gg-results-counter">
+                  Mostrando {filteredVideos.length} {filteredVideos.length === 1 ? 'producción' : 'producciones'}
+                </span>
+              </div>
             </div>
 
             <div className="gg-videos-grid">
@@ -622,6 +684,9 @@ export const GranGaleria: React.FC = () => {
                     )}
                     {v.awardBadge && (
                       <span className="video-award-pill">{v.awardBadge}</span>
+                    )}
+                    {v.status === 'pendiente_revision' && (
+                      <span className="video-status-pipeline-pill">🟡 En Curaduría Oficial</span>
                     )}
                   </div>
 
@@ -826,6 +891,15 @@ export const GranGaleria: React.FC = () => {
         isOpen={isArtEditorOpen}
         onClose={() => setIsArtEditorOpen(false)}
         onSave={handleSaveNewArtwork}
+        currentUser={user}
+        userProfile={userProfile}
+      />
+
+      {/* Modal Taller Audiovisual / Postular Producción */}
+      <VideoEditorModal
+        isOpen={isVideoEditorOpen}
+        onClose={() => setIsVideoEditorOpen(false)}
+        onSave={handleSaveNewVideo}
         currentUser={user}
         userProfile={userProfile}
       />

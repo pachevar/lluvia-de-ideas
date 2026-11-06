@@ -220,13 +220,23 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           concursoId: editingVideo.concursoId || '',
           views: editingVideo.views || 0,
           featured: Boolean(editingVideo.featured),
-          publishedAt: now
+          publishedAt: now,
+          driveUrl: editingVideo.driveUrl || undefined,
+          status: editingVideo.status || (editingVideo.driveUrl && !ytId ? 'pendiente_revision' : 'aprobado'),
+          thumbnailUrl: editingVideo.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : '')
         };
         return { ...prev, videos: [newItem, ...(prev.videos || [])] };
       } else {
         return {
           ...prev,
-          videos: (prev.videos || []).map(v => v.id === editingVideo.id ? { ...v, ...editingVideo, youtubeId: ytId } as StudentVideoItem : v)
+          videos: (prev.videos || []).map(v => v.id === editingVideo.id ? { 
+            ...v, 
+            ...editingVideo, 
+            youtubeId: ytId,
+            driveUrl: editingVideo.driveUrl || v.driveUrl,
+            status: editingVideo.status || v.status || 'aprobado',
+            thumbnailUrl: editingVideo.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/hqdefault.jpg` : v.thumbnailUrl)
+          } as StudentVideoItem : v)
         };
       }
     });
@@ -972,17 +982,28 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.5fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.2fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
                 <div>
-                  <label className="inspector-label">Enlace de YouTube o Vimeo:</label>
+                  <label className="inspector-label">Enlace de YouTube Oficial o Vimeo:</label>
                   <input 
                     type="text" 
                     className="inspector-input"
                     value={editingVideo.videoUrl || ''}
                     onChange={e => setEditingVideo(prev => ({ ...prev, videoUrl: e.target.value }))}
                     placeholder="https://www.youtube.com/watch?v=..."
-                    required
                   />
+                </div>
+                <div>
+                  <label className="inspector-label">Estado de Curaduría / Estreno:</label>
+                  <select
+                    className="inspector-select"
+                    value={editingVideo.status || 'aprobado'}
+                    onChange={e => setEditingVideo(prev => ({ ...prev, status: e.target.value as any }))}
+                  >
+                    <option value="aprobado">🟢 Aprobado / Estrenado en Gran Sala</option>
+                    <option value="pendiente_revision">🟡 Pendiente de Masterización Editorial</option>
+                    <option value="procesando">⚙️ En Proceso de Edición</option>
+                  </select>
                 </div>
                 <div>
                   <label className="inspector-label">Duración:</label>
@@ -994,16 +1015,32 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                     placeholder="Ej: 04:30"
                   />
                 </div>
-                <div>
-                  <label className="inspector-label">Premio o Mención:</label>
-                  <input 
-                    type="text" 
-                    className="inspector-input"
-                    value={editingVideo.awardBadge || ''}
-                    onChange={e => setEditingVideo(prev => ({ ...prev, awardBadge: e.target.value }))}
-                    placeholder="Ej: 🎬 Mejor Corto 2026"
-                  />
+              </div>
+
+              {/* Master en Google Drive / Dropbox */}
+              <div style={{ background: 'rgba(2, 6, 23, 0.6)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(239, 68, 68, 0.3)', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label className="inspector-label" style={{ margin: 0, color: '#f87171' }}>
+                    📁 Archivo Master Original (Google Drive / Dropbox):
+                  </label>
+                  {editingVideo.driveUrl && (
+                    <a 
+                      href={editingVideo.driveUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '0.78rem', color: '#38bdf8', textDecoration: 'none', fontWeight: 'bold' }}
+                    >
+                      📥 Abrir y Descargar Archivo en Drive ↗
+                    </a>
+                  )}
                 </div>
+                <input 
+                  type="text" 
+                  className="inspector-input"
+                  value={editingVideo.driveUrl || ''}
+                  onChange={e => setEditingVideo(prev => ({ ...prev, driveUrl: e.target.value }))}
+                  placeholder="https://drive.google.com/file/d/... o https://dropbox.com/..."
+                />
               </div>
 
               <div style={{ marginBottom: '10px' }}>
@@ -1045,19 +1082,34 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <strong style={{ color: '#f8fafc', fontSize: '1rem' }}>{v.title}</strong>
                     <span style={{ fontSize: '0.72rem', background: 'rgba(239, 68, 68, 0.2)', color: '#f87171', padding: '1px 6px', borderRadius: '4px' }}>
                       {v.category}
                     </span>
+                    {v.status === 'pendiente_revision' && (
+                      <span style={{ fontSize: '0.72rem', background: 'rgba(245, 158, 11, 0.25)', border: '1px solid #f59e0b', color: '#fbbf24', padding: '1px 6px', borderRadius: '4px', fontWeight: 'bold' }}>
+                        🟡 Pendiente de Masterización
+                      </span>
+                    )}
                     {v.duration && (
                       <span style={{ fontSize: '0.72rem', background: 'rgba(255,255,255,0.1)', color: '#cbd5e1', padding: '1px 6px', borderRadius: '4px' }}>
                         {v.duration}
                       </span>
                     )}
                   </div>
-                  <div style={{ fontSize: '0.80rem', color: '#94a3b8', marginTop: '2px' }}>
-                    Por {v.team} · {v.school || 'Equipo Escolar'} · {v.views} vistas
+                  <div style={{ fontSize: '0.80rem', color: '#94a3b8', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                    <span>Por {v.team} · {v.school || 'Equipo Escolar'} · {v.views} vistas</span>
+                    {v.driveUrl && (
+                      <a 
+                        href={v.driveUrl} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        style={{ color: '#38bdf8', textDecoration: 'underline', fontSize: '0.78rem' }}
+                      >
+                        📥 Descargar Master Drive ↗
+                      </a>
+                    )}
                   </div>
                 </div>
 
