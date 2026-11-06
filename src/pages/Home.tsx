@@ -5,6 +5,7 @@ import PromoTipsModal from '../components/landing/PromoTipsModal';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { soundEffects } from '../utils/soundEffects';
+import './HomeSections.css';
 
 export default function Home() {
   const navigate = useNavigate();
@@ -228,349 +229,532 @@ export default function Home() {
         description={landingConfig.promoVideos?.mainDescription}
       />
 
-      {/* SECCIÓN DESCRIPTIVA 1: SUTZ DESCUBRE */}
-      <section id="section-sutz" className="landing-feature-section feature-sutz">
-        <div className="feature-container">
-          <div className="feature-card-left card-glass" onClick={() => handleNavigate('/sutz')} style={{ cursor: 'pointer' }} title="Clic para abrir el Mapa Virtual Sutz">
-            <div 
-              className="sutz-illustration-box section-img-interactive"
-              style={{ 
-                background: sutzSec.bgImage ? undefined : 'radial-gradient(circle at 50% 50%, #00386b 0%, #0f172a 100%)',
-                borderColor: 'rgba(56, 189, 248, 0.4)' 
-              }}
+      {/* =========================================================================
+          SECCIÓN PRINCIPAL 1: SUTZ DESCUBRE (MUNDO VIRTUAL HEXAGONAL)
+          ========================================================================= */}
+      <section id="section-sutz" className="hs-section hs-sutz">
+        <div className="hs-container">
+          {/* Showcase Visual Interactivo */}
+          <div className="hs-showcase-col">
+            <div
+              className="hs-visual-card"
+              onClick={() => handleNavigate('/sutz')}
+              title="Haz clic para explorar el Mundo Virtual Sutz"
             >
               {sutzSec.bgImage && (
-                <div 
-                  className="section-img-bg" 
+                <div
+                  className="hs-visual-bg"
                   style={{ backgroundImage: `url("${sutzSec.bgImage}")` }}
                 />
               )}
-              {sutzSec.bgImage && <div className="section-img-overlay"></div>}
+              <div className="hs-visual-overlay" />
 
-              <div className="section-box-content">
-                <div className="cloud-glow-effect">☁️</div>
-                <div className="sutz-badge-floating">
-                  <span>Idioma K'iche'</span>
-                  <strong>SUTZ = NUBE</strong>
+              <div className="hs-visual-content">
+                <div className="hs-visual-top">
+                  <div className="hs-visual-badge">
+                    <span>☁️</span>
+                    <span>Mundo Virtual Sutz</span>
+                  </div>
+                  <span className="hs-visual-status">✦ Adaptativo</span>
                 </div>
-                <div className="hex-map-preview">
-                  <div className="hex-mini hex-1">🌲</div>
-                  <div className="hex-mini hex-2">📚</div>
-                  <div className="hex-mini hex-3">🌋</div>
-                  <div className="hex-mini hex-4">✨</div>
+
+                <div className="hs-visual-center">
+                  <span className="hs-visual-big-icon">☁️</span>
+                  <div className="hs-visual-label-box">
+                    <strong>Sutz Descubre</strong>
+                    <small>Territorio Hexagonal & Biomas</small>
+                  </div>
+                </div>
+
+                <div className="hs-visual-bottom">
+                  <div className="hs-visual-pills">
+                    <span className="hs-visual-pill-tag">🌲 Bioma Ancestral</span>
+                    <span className="hs-visual-pill-tag">📜 Mitos Popol Vuh</span>
+                    <span className="hs-visual-pill-tag">🗺️ 6 Reinos</span>
+                  </div>
+                  <div className="hs-visual-hint">
+                    <span>Explorar territorio interactivo</span>
+                    <span>➔</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="feature-info-right">
-            <span className="feature-tag">{sutzSec.badge || 'MUNDO VIRTUAL'}</span>
-            <h2 className="feature-title">
-              <span className="gradient-text-blue">{sutzSec.title || 'Sutz Descubre'}</span>
-            </h2>
-            <p className="feature-body">
-              {sutzSec.body || "Un mundo virtual que evoluciona con el estudiante y su aprendizaje. En idioma K'iche', Sutz significa Nube. Es un mapa hexagonal interactivo diseñado para adaptar el conocimiento, las leyendas culturales y las lecciones didácticas al ritmo de cada alumno."}
+          {/* Columna de Texto y Accesos Estructurados */}
+          <div className="hs-content-col">
+            <div className="hs-kicker-badge">
+              <span className="hs-kicker-dot" />
+              <span>{sutzSec.badge || 'Mundo Virtual · Ecosistema Adaptativo'}</span>
+            </div>
+
+            <div className="hs-title-row">
+              <h2 className="hs-title">
+                <span className="hs-title-gradient">{sutzSec.title || 'Sutz Descubre'}</span>
+              </h2>
+              <p className="hs-subtitle">Sutz = Nube en idioma K'iche'</p>
+            </div>
+
+            <p className="hs-body">
+              {sutzSec.body || "Un mundo virtual inmersivo que evoluciona con el estudiante y su aprendizaje. A través de un mapa hexagonal interactivo, articula desafíos pedagógicos, exploración de biomas vivos y la riqueza cosmogónica del Popol Vuh al ritmo de cada aula."}
             </p>
-            <ul className="feature-bullets">
-              {(sutzSec.bullets && sutzSec.bullets.length > 0 ? sutzSec.bullets : [
-                'Aprendizaje Evolutivo: Adaptación constante según el avance del estudiante.',
-                'Navegación Hexagonal: Descubrimiento de biomas, montañas, bosques y desafíos.',
-                'Raíces Culturales: Integración de la mitología del Popol Vuh y saberes ancestrales.'
-              ]).map((bullet, idx) => (
-                <li key={idx}>🔹 {bullet}</li>
-              ))}
-            </ul>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+
+            {/* Matriz de Características Bento */}
+            <div className="hs-highlights-grid">
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🗺️</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Navegación Hexagonal</span>
+                  <span className="hs-highlight-desc">Descubrimiento de biomas, montañas, valles y desafíos gamificados por niveles.</span>
+                </div>
+              </div>
+
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">📜</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Cosmovisión y Raíces Culturales</span>
+                  <span className="hs-highlight-desc">Integración viva de leyendas del Popol Vuh y saberes ancestrales con rigor curricular.</span>
+                </div>
+              </div>
+
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">📈</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Aprendizaje Adaptativo</span>
+                  <span className="hs-highlight-desc">Rutas formativas dinámicas que responden en tiempo real al ritmo de cada alumno.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hub de Accesos Directos */}
+            <div className="hs-actions-hub">
               <button
-                className="btn btn-primary"
+                className="hs-btn-primary"
                 onClick={() => handleNavigate('/sutz')}
-                style={{ background: 'linear-gradient(90deg, #38bdf8, #0284c7)', color: '#fff', fontWeight: 800, padding: '12px 24px', borderRadius: '12px' }}
+                title="Entrar al Mundo Virtual Sutz"
               >
-                ☁️ Explorar Mundo Virtual Sutz ➔
+                <span>☁️ Entrar al Mundo Virtual Sutz</span>
+                <span className="hs-btn-arrow">➔</span>
               </button>
-              <button
-                className="btn btn-glass"
-                onClick={() => handleNavigate('/libros')}
-                style={{ 
-                  padding: '12px 22px', 
-                  borderRadius: '12px',
-                  background: 'rgba(56, 189, 248, 0.12)',
-                  border: '1px solid rgba(56, 189, 248, 0.4)',
-                  color: '#e0f2fe',
-                  fontWeight: 700,
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
-                }}
-              >
-                📖 Cuentos del Popol Vuh
-              </button>
+
+              <div className="hs-submodules-row">
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/libros')}
+                  title="Ver Cuentos del Popol Vuh"
+                >
+                  <span>📖 Cuentos del Popol Vuh</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/sutz')}
+                  title="Ver Mapa Hexagonal"
+                >
+                  <span>🗺️ Explorar Mapa Hexagonal</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECCIÓN DESCRIPTIVA 2: CREATIKA */}
-      <section id="section-creatika" className="landing-feature-section feature-creatika" style={{ background: '#0b1120' }}>
-        <div className="feature-container">
-          <div className="feature-card-left card-glass" onClick={() => handleNavigate('/creatika')} style={{ cursor: 'pointer' }} title="Clic para entrar a la Suite Creatika">
-            <div 
-              className="sutz-illustration-box section-img-interactive" 
-              style={{ 
-                background: creatikaSec.bgImage ? undefined : 'radial-gradient(circle at 50% 50%, #881337 0%, #0f172a 100%)',
-                borderColor: 'rgba(251, 113, 133, 0.4)' 
-              }}
+      {/* =========================================================================
+          SECCIÓN PRINCIPAL 2: CREATIKA (EXPRESIÓN, ARTE & NARRATIVA)
+          ========================================================================= */}
+      <section id="section-creatika" className="hs-section hs-creatika">
+        <div className="hs-container reversed">
+          {/* Showcase Visual Interactivo */}
+          <div className="hs-showcase-col">
+            <div
+              className="hs-visual-card"
+              onClick={() => handleNavigate('/creatika')}
+              title="Haz clic para entrar a la Suite Creatika"
             >
               {creatikaSec.bgImage && (
-                <div 
-                  className="section-img-bg" 
+                <div
+                  className="hs-visual-bg"
                   style={{ backgroundImage: `url("${creatikaSec.bgImage}")` }}
                 />
               )}
-              {creatikaSec.bgImage && <div className="section-img-overlay"></div>}
+              <div className="hs-visual-overlay" />
 
-              <div className="section-box-content">
-                <div className="cloud-glow-effect">🎨</div>
-                <div className="sutz-badge-floating" style={{ borderColor: 'rgba(251, 113, 133, 0.4)' }}>
-                  <span style={{ color: '#fb7185' }}>Herramientas Creativas</span>
-                  <strong>Arte & Narrativa</strong>
+              <div className="hs-visual-content">
+                <div className="hs-visual-top">
+                  <div className="hs-visual-badge">
+                    <span>🎨</span>
+                    <span>Suite Creatika</span>
+                  </div>
+                  <span className="hs-visual-status" style={{ color: '#fb7185', background: 'rgba(251, 113, 133, 0.15)' }}>✦ Creatividad</span>
                 </div>
-                <div className="hex-map-preview">
-                  <div className="hex-mini hex-1">🎨</div>
-                  <div className="hex-mini hex-2">🎰</div>
-                  <div className="hex-mini hex-3">🖌️</div>
-                  <div className="hex-mini hex-4">🎭</div>
+
+                <div className="hs-visual-center">
+                  <span className="hs-visual-big-icon">🎨</span>
+                  <div className="hs-visual-label-box">
+                    <strong>Estudio Creativo</strong>
+                    <small>Arte, Narrativa & Personajes</small>
+                  </div>
+                </div>
+
+                <div className="hs-visual-bottom">
+                  <div className="hs-visual-pills">
+                    <span className="hs-visual-pill-tag">🎭 12 Arquetipos</span>
+                    <span className="hs-visual-pill-tag">🎰 Viaje del Héroe</span>
+                    <span className="hs-visual-pill-tag">🎨 Cromática</span>
+                  </div>
+                  <div className="hs-visual-hint">
+                    <span>Ingresar a la suite creativa</span>
+                    <span>➔</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="feature-info-right">
-            <span className="feature-tag" style={{ color: '#fb7185' }}>{creatikaSec.badge || 'EXPRESIÓN & ARTE'}</span>
-            <h2 className="feature-title">
-              <span className="gradient-text-crimson" style={{ background: 'linear-gradient(90deg, #fb7185, #e11d48)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                {creatikaSec.title || 'Creatika'}
-              </span>
-            </h2>
-            <p className="feature-body">
-              {creatikaSec.body || 'Suite de herramientas para el desarrollo de la creatividad y las habilidades artísticas y estéticas. Estimula el pensamiento divergente, la composición cromática y la creación literaria interactiva.'}
+          {/* Columna de Texto y Accesos Estructurados */}
+          <div className="hs-content-col">
+            <div className="hs-kicker-badge">
+              <span className="hs-kicker-dot" />
+              <span>{creatikaSec.badge || 'Suite Creativa & Narrativa'}</span>
+            </div>
+
+            <div className="hs-title-row">
+              <h2 className="hs-title">
+                <span className="hs-title-gradient">{creatikaSec.title || 'Creatika'}</span>
+              </h2>
+              <p className="hs-subtitle">Expresión, Arte & Pensamiento Divergente</p>
+            </div>
+
+            <p className="hs-body">
+              {creatikaSec.body || 'Laboratorio integral de herramientas para el desarrollo del pensamiento creativo, la sensibilidad plástica y la narrativa literaria. Estimula la composición cromática, la estructura dramática de historias y el modelado dimensional de personajes.'}
             </p>
-            <ul className="feature-bullets">
-              {(creatikaSec.bullets && creatikaSec.bullets.length > 0 ? creatikaSec.bullets : [
-                'Código del Estudiante: Manifiesto de autonomía, criterio ético y pensamiento crítico.',
-                'Código Docente: Marco interactivo de competencias para el maestro contemporáneo.',
-                'Teoría del Color: Explorador interactivo de armonías visuales y sensibilidad estética.',
-                'Máquina de Cuentos: Generador creativo para la escritura de narrativas originales.'
-              ]).map((bullet, idx) => (
-                <li key={idx}>🎨 {bullet}</li>
-              ))}
-            </ul>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'center' }}>
+
+            {/* Matriz de Características Bento */}
+            <div className="hs-highlights-grid">
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🎭</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Creación de Personajes</span>
+                  <span className="hs-highlight-desc">Taller guiado por neurodiseño en 4 etapas: arquetipos, heridas, biografías y dimensiones.</span>
+                </div>
+              </div>
+
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🎰</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Máquina de Cuentos</span>
+                  <span className="hs-highlight-desc">Generador interactivo de tramas dramáticas estructuradas bajo el Viaje del Héroe.</span>
+                </div>
+              </div>
+
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🎨</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Teoría del Color</span>
+                  <span className="hs-highlight-desc">Explorador de armonías visuales, temperaturas cromáticas y sensibilidad estética.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hub de Accesos Directos */}
+            <div className="hs-actions-hub">
               <button
-                className="btn btn-primary"
+                className="hs-btn-primary"
                 onClick={() => handleNavigate('/creatika')}
-                style={{ background: 'linear-gradient(90deg, #fb7185, #e11d48)', color: '#fff', fontWeight: 800, padding: '12px 20px', borderRadius: '12px' }}
+                title="Abrir la Suite Creatika"
               >
-                ✨ Abrir Suite Creatika ➔
+                <span>✨ Abrir Suite Creatika</span>
+                <span className="hs-btn-arrow">➔</span>
               </button>
-              <button
-                className="btn btn-glass"
-                onClick={() => handleNavigate('/creatika/maquina-de-cuentos')}
-                style={{ 
-                  padding: '12px 18px', 
-                  borderRadius: '12px',
-                  background: 'rgba(251, 113, 133, 0.12)',
-                  border: '1px solid rgba(251, 113, 133, 0.4)',
-                  color: '#ffe4e6',
-                  fontWeight: 700,
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
-                }}
-              >
-                🎰 Máquina de Cuentos
-              </button>
-              <button
-                className="btn btn-glass"
-                onClick={() => handleNavigate('/creatika/teoria-del-color')}
-                style={{ 
-                  padding: '12px 18px', 
-                  borderRadius: '12px',
-                  background: 'rgba(251, 113, 133, 0.12)',
-                  border: '1px solid rgba(251, 113, 133, 0.4)',
-                  color: '#ffe4e6',
-                  fontWeight: 700,
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
-                }}
-              >
-                🎨 Teoría del Color
-              </button>
+
+              <div className="hs-submodules-row">
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/creatika/personajes')}
+                  title="Abrir Laboratorio de Creación de Personajes"
+                >
+                  <span>🎭 Creación de Personajes</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/creatika/maquina-de-cuentos')}
+                  title="Abrir Máquina de Cuentos"
+                >
+                  <span>🎰 Máquina de Cuentos</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/creatika/teoria-del-color')}
+                  title="Abrir Laboratorio de Teoría del Color"
+                >
+                  <span>🎨 Teoría del Color</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECCIÓN DESCRIPTIVA 3: 100TEK */}
-      <section id="section-tek100" className="landing-feature-section feature-100tek" style={{ background: '#060913' }}>
-        <div className="feature-container">
-          <div className="feature-card-left card-glass" onClick={() => handleNavigate('/100tek/sistema-solar')} style={{ cursor: 'pointer' }} title="Clic para explorar el Sistema Solar 3D">
-            <div 
-              className="sutz-illustration-box section-img-interactive" 
-              style={{ 
-                background: tek100Sec.bgImage ? undefined : 'radial-gradient(circle at 50% 50%, #581c87 0%, #0f172a 100%)',
-                borderColor: 'rgba(192, 132, 252, 0.4)' 
-              }}
+      {/* =========================================================================
+          SECCIÓN PRINCIPAL 3: 100TEK (CIENCIA, LÓGICA & METODOLOGÍA STEAM)
+          ========================================================================= */}
+      <section id="section-tek100" className="hs-section hs-100tek">
+        <div className="hs-container">
+          {/* Showcase Visual Interactivo */}
+          <div className="hs-showcase-col">
+            <div
+              className="hs-visual-card"
+              onClick={() => handleNavigate('/100tek/sistema-solar')}
+              title="Haz clic para explorar el Sistema Solar 3D"
             >
               {tek100Sec.bgImage && (
-                <div 
-                  className="section-img-bg" 
+                <div
+                  className="hs-visual-bg"
                   style={{ backgroundImage: `url("${tek100Sec.bgImage}")` }}
                 />
               )}
-              {tek100Sec.bgImage && <div className="section-img-overlay"></div>}
+              <div className="hs-visual-overlay" />
 
-              <div className="section-box-content">
-                <div className="cloud-glow-effect">⚡</div>
-                <div className="sutz-badge-floating" style={{ borderColor: 'rgba(192, 132, 252, 0.4)' }}>
-                  <span style={{ color: '#c084fc' }}>Ciencia & Lógica</span>
-                  <strong>Pensamiento STEM</strong>
+              <div className="hs-visual-content">
+                <div className="hs-visual-top">
+                  <div className="hs-visual-badge">
+                    <span>⚡</span>
+                    <span>100TEK · STEAM</span>
+                  </div>
+                  <span className="hs-visual-status" style={{ color: '#c084fc', background: 'rgba(192, 132, 252, 0.15)' }}>✦ Ciencia 3D</span>
                 </div>
-                <div className="hex-map-preview">
-                  <div className="hex-mini hex-1">🪐</div>
-                  <div className="hex-mini hex-2">🔢</div>
-                  <div className="hex-mini hex-3">🧬</div>
-                  <div className="hex-mini hex-4">🔭</div>
+
+                <div className="hs-visual-center">
+                  <span className="hs-visual-big-icon">⚡</span>
+                  <div className="hs-visual-label-box">
+                    <strong>Laboratorio STEAM</strong>
+                    <small>Simulación Espacial & Anatomía</small>
+                  </div>
+                </div>
+
+                <div className="hs-visual-bottom">
+                  <div className="hs-visual-pills">
+                    <span className="hs-visual-pill-tag">🫀 +3,400 Estructuras</span>
+                    <span className="hs-visual-pill-tag">🪐 Órbitas 3D</span>
+                    <span className="hs-visual-pill-tag">🔢 Lógica Numérica</span>
+                  </div>
+                  <div className="hs-visual-hint">
+                    <span>Explorar simulaciones 3D</span>
+                    <span>➔</span>
+                  </div>
                 </div>
               </div>
             </div>
           </div>
 
-          <div className="feature-info-right">
-            <span className="feature-tag" style={{ color: '#c084fc' }}>{tek100Sec.badge || 'CIENCIA, LÓGICA & TECNOLOGÍA'}</span>
-            <h2 className="feature-title">
-              <span className="gradient-text-purple" style={{ background: 'linear-gradient(90deg, #c084fc, #a855f7)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                {tek100Sec.title || '100TEK'}
-              </span>
-            </h2>
-            <p className="feature-body">
-              {tek100Sec.body || 'Entorno interactivo para la exploración de conceptos científicos, astronómicos y matemáticos. Herramientas diseñadas para fomentar el rigor deductivo y la curiosidad por el cosmos.'}
+          {/* Columna de Texto y Accesos Estructurados */}
+          <div className="hs-content-col">
+            <div className="hs-kicker-badge">
+              <span className="hs-kicker-dot" />
+              <span>{tek100Sec.badge || 'Ciencia, Lógica & Metodología STEAM'}</span>
+            </div>
+
+            <div className="hs-title-row">
+              <h2 className="hs-title">
+                <span className="hs-title-gradient">{tek100Sec.title || '100TEK'}</span>
+              </h2>
+              <p className="hs-subtitle">Rigor Deductivo & Curiosidad Científica</p>
+            </div>
+
+            <p className="hs-body">
+              {tek100Sec.body || 'Entorno interactivo para la exploración viva de conceptos astronómicos, anatómicos y físico-matemáticos. Diseñado para transformar ideas abstractas en simulaciones tridimensionales de alta fidelidad, cultivando el pensamiento analítico y la curiosidad por el cosmos.'}
             </p>
-            <ul className="feature-bullets">
-              {(tek100Sec.bullets && tek100Sec.bullets.length > 0 ? tek100Sec.bullets : [
-                'Atlas Anatómico 3D: Explorador interactivo en español con más de 3,400 estructuras, capas y despiece anatómico.',
-                'Sistema Solar 3D: Simulación del espacio para la comprensión de fenómenos astronómicos.',
-                'Secuencias Numéricas: Desafíos para fortalecer el razonamiento matemático abstracto.',
-                'Pensamiento Científico: Enfoque interdisciplinario centrado en la investigación.'
-              ]).map((bullet, idx) => (
-                <li key={idx}>⚡ {bullet}</li>
-              ))}
-            </ul>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+
+            {/* Matriz de Características Bento */}
+            <div className="hs-highlights-grid">
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🫀</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Cuerpo Humano Virtual 3D</span>
+                  <span className="hs-highlight-desc">Atlas anatómico en español con más de 3,400 órganos, capas diseccionables y despiece.</span>
+                </div>
+              </div>
+
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🪐</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Sistema Solar Interactivo</span>
+                  <span className="hs-highlight-desc">Simulador orbital 3D con velocidades reales, atmósferas y datos astronómicos precisos.</span>
+                </div>
+              </div>
+
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🔢</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Razonamiento & Secuencias</span>
+                  <span className="hs-highlight-desc">Desafíos lógicos y cálculo de patrones para fortalecer el pensamiento matemático abstracto.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hub de Accesos Directos */}
+            <div className="hs-actions-hub">
               <button
-                className="btn btn-primary"
+                className="hs-btn-primary"
                 onClick={() => handleNavigate('/atlas')}
-                style={{ background: 'linear-gradient(90deg, #f43f5e, #e11d48)', color: '#fff', fontWeight: 800, padding: '12px 24px', borderRadius: '12px', boxShadow: '0 4px 15px rgba(244, 63, 94, 0.35)' }}
                 title="Explorar el Cuerpo Humano Virtual 3D"
               >
-                🫀 Cuerpo Humano Virtual 3D ➔
+                <span>🫀 Explorar Cuerpo Humano 3D</span>
+                <span className="hs-btn-arrow">➔</span>
               </button>
-              <button
-                className="btn btn-primary"
-                onClick={() => handleNavigate('/100tek/sistema-solar')}
-                style={{ background: 'linear-gradient(90deg, #c084fc, #9333ea)', color: '#fff', fontWeight: 800, padding: '12px 24px', borderRadius: '12px' }}
-              >
-                🪐 Explorar Sistema Solar 3D ➔
-              </button>
-              <button
-                className="btn btn-glass"
-                onClick={() => handleNavigate('/100tek/secuencias-numericas')}
-                style={{ 
-                  padding: '12px 22px', 
-                  borderRadius: '12px',
-                  background: 'rgba(192, 132, 252, 0.12)',
-                  border: '1px solid rgba(192, 132, 252, 0.4)',
-                  color: '#f3e8ff',
-                  fontWeight: 700,
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
-                }}
-              >
-                🔢 Secuencias Numéricas
-              </button>
+
+              <div className="hs-submodules-row">
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/100tek/sistema-solar')}
+                  title="Abrir Simulador del Sistema Solar 3D"
+                >
+                  <span>🪐 Sistema Solar 3D</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/100tek/secuencias-numericas')}
+                  title="Abrir Retos de Secuencias Numéricas"
+                >
+                  <span>🔢 Secuencias Numéricas</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
+              </div>
             </div>
           </div>
         </div>
       </section>
 
-      {/* SECCIÓN DESCRIPTIVA 4: LAB */}
-      <section id="section-lab" className="landing-feature-section feature-lab" style={{ background: '#0b1120' }}>
-        <div className="feature-container reverse">
-          <div className="feature-info-right">
-            <span className="feature-tag" style={{ color: '#fb923c' }}>{labSec.badge || 'INTEGRACIÓN EDUCATIVA'}</span>
-            <h2 className="feature-title">
-              <span className="gradient-text-orange">{labSec.title || 'LAB'}</span>
-            </h2>
-            <p className="feature-body">
-              {labSec.body || 'Talleres y materiales originales para una perfecta integración educativa. Recursos diseñados para facilitar la labor docente y enriquecer las dinámicas en el aula.'}
-            </p>
-            <ul className="feature-bullets">
-              {(labSec.bullets && labSec.bullets.length > 0 ? labSec.bullets : [
-                'Materiales Didácticos: Recursos pedagógicos alineados a las competencias clave.',
-                'Animación Educativa: Laboratorios audiovisuales que potencian la comprensión.',
-                'Talleres Integrales: Guías metodológicas para docentes y estudiantes.'
-              ]).map((bullet, idx) => (
-                <li key={idx}>🧪 {bullet}</li>
-              ))}
-            </ul>
-            <div style={{ marginTop: '1.5rem', display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
-              <button
-                className="btn btn-primary"
-                onClick={() => handleNavigate('/laboratorios')}
-                style={{ background: 'linear-gradient(90deg, #fb923c, #ea580c)', color: '#fff', fontWeight: 800, padding: '12px 24px', borderRadius: '12px' }}
-              >
-                🧪 Inscribirse a Laboratorios ➔
-              </button>
-              <button
-                className="btn btn-glass"
-                onClick={() => handleNavigate('/juegos/bingo')}
-                style={{ 
-                  padding: '12px 22px', 
-                  borderRadius: '12px',
-                  background: 'rgba(251, 146, 60, 0.12)',
-                  border: '1px solid rgba(251, 146, 60, 0.4)',
-                  color: '#ffedd5',
-                  fontWeight: 700,
-                  boxShadow: '0 4px 15px rgba(0,0,0,0.35)'
-                }}
-              >
-                🎲 Bingotenango (Bingo Digital)
-              </button>
-            </div>
-          </div>
-
-          <div className="feature-card-left card-glass" onClick={() => handleNavigate('/laboratorios')} style={{ cursor: 'pointer' }} title="Clic para ver los Laboratorios Formativos">
-            <div 
-              className="sutz-illustration-box section-img-interactive" 
-              style={{ 
-                background: labSec.bgImage ? undefined : 'radial-gradient(circle at 50% 50%, #7c2d12 0%, #0f172a 100%)',
-                borderColor: 'rgba(251, 146, 60, 0.4)' 
-              }}
+      {/* =========================================================================
+          SECCIÓN PRINCIPAL 4: LAB (INTEGRACIÓN DOCENTE & PEDAGÓGICA)
+          ========================================================================= */}
+      <section id="section-lab" className="hs-section hs-lab">
+        <div className="hs-container reversed">
+          {/* Showcase Visual Interactivo */}
+          <div className="hs-showcase-col">
+            <div
+              className="hs-visual-card"
+              onClick={() => handleNavigate('/laboratorios')}
+              title="Haz clic para ver los Laboratorios Docentes"
             >
               {labSec.bgImage && (
-                <div 
-                  className="section-img-bg" 
+                <div
+                  className="hs-visual-bg"
                   style={{ backgroundImage: `url("${labSec.bgImage}")` }}
                 />
               )}
-              {labSec.bgImage && <div className="section-img-overlay"></div>}
+              <div className="hs-visual-overlay" />
 
-              <div className="section-box-content">
-                <div className="cloud-glow-effect">🧪</div>
-                <div className="sutz-badge-floating" style={{ borderColor: 'rgba(251, 146, 60, 0.4)' }}>
-                  <span style={{ color: '#fb923c' }}>Laboratorio Docente</span>
-                  <strong>Talleres & Materiales</strong>
+              <div className="hs-visual-content">
+                <div className="hs-visual-top">
+                  <div className="hs-visual-badge">
+                    <span>🧪</span>
+                    <span>LAB Formativo</span>
+                  </div>
+                  <span className="hs-visual-status" style={{ color: '#fb923c', background: 'rgba(251, 146, 60, 0.15)' }}>✦ Pedagogía</span>
                 </div>
-                <div className="hex-map-preview">
-                  <div className="hex-mini hex-1">🧪</div>
-                  <div className="hex-mini hex-2">📖</div>
-                  <div className="hex-mini hex-3">🎬</div>
-                  <div className="hex-mini hex-4">💡</div>
+
+                <div className="hs-visual-center">
+                  <span className="hs-visual-big-icon">🧪</span>
+                  <div className="hs-visual-label-box">
+                    <strong>Centro Pedagógico</strong>
+                    <small>Talleres Docentes & Gamificación</small>
+                  </div>
                 </div>
+
+                <div className="hs-visual-bottom">
+                  <div className="hs-visual-pills">
+                    <span className="hs-visual-pill-tag">🧪 Talleres Prácticos</span>
+                    <span className="hs-visual-pill-tag">🎲 Bingotenango</span>
+                    <span className="hs-visual-pill-tag">🧠 Neuroaprendizaje</span>
+                  </div>
+                  <div className="hs-visual-hint">
+                    <span>Explorar recursos para docentes</span>
+                    <span>➔</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Columna de Texto y Accesos Estructurados */}
+          <div className="hs-content-col">
+            <div className="hs-kicker-badge">
+              <span className="hs-kicker-dot" />
+              <span>{labSec.badge || 'Integración Docente & Pedagógica'}</span>
+            </div>
+
+            <div className="hs-title-row">
+              <h2 className="hs-title">
+                <span className="hs-title-gradient">{labSec.title || 'LAB Formativo'}</span>
+              </h2>
+              <p className="hs-subtitle">Metodologías Activas & Dinámicas de Aula</p>
+            </div>
+
+            <p className="hs-body">
+              {labSec.body || 'Ecosistema de capacitación y recursos didácticos originales diseñados para fortalecer la labor del maestro contemporáneo. Combina talleres metodológicos, rúbricas de evaluación activa y dinámicas lúdicas de refuerzo escolar aplicadas al aula.'}
+            </p>
+
+            {/* Matriz de Características Bento */}
+            <div className="hs-highlights-grid">
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🧪</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Talleres y Guías Docentes</span>
+                  <span className="hs-highlight-desc">Propuestas metodológicas transversales, recursos descargables y rúbricas pedagógicas.</span>
+                </div>
+              </div>
+
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🎲</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Bingotenango Gamificado</span>
+                  <span className="hs-highlight-desc">Dinámica lúdica digital para el repaso interactivo y competitivo de saberes en comunidad.</span>
+                </div>
+              </div>
+
+              <div className="hs-highlight-item">
+                <div className="hs-highlight-icon-box">🧠</div>
+                <div className="hs-highlight-text">
+                  <span className="hs-highlight-title">Neurociencia en el Aula</span>
+                  <span className="hs-highlight-desc">Pautas neurocognitivas para optimizar la atención, memoria y gestión emocional escolar.</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Hub de Accesos Directos */}
+            <div className="hs-actions-hub">
+              <button
+                className="hs-btn-primary"
+                onClick={() => handleNavigate('/laboratorios')}
+                title="Conocer los Laboratorios y Talleres"
+              >
+                <span>🧪 Ver Laboratorios y Talleres</span>
+                <span className="hs-btn-arrow">➔</span>
+              </button>
+
+              <div className="hs-submodules-row">
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/juegos/bingo')}
+                  title="Abrir Bingotenango"
+                >
+                  <span>🎲 Jugar Bingotenango</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
+                <button
+                  className="hs-submodule-pill"
+                  onClick={() => handleNavigate('/neurociencia')}
+                  title="Ver Guía de Neurociencia Educativa"
+                >
+                  <span>🧠 Neurociencia Aula</span>
+                  <span className="sub-arrow">➔</span>
+                </button>
               </div>
             </div>
           </div>

@@ -1,0 +1,572 @@
+/* ==========================================================================
+   HomeSections.css - Rediseño Premium de las Secciones Principales
+   Directrices: Sutz Neuro-Design, alto contraste, jerarquía tipográfica,
+   Bento Highlights y Hubs de Accesos Rápidos estructurados
+   ========================================================================== */
+
+/* Contenedor general de sección con gradientes oscuros sutiles y divisor limpio */
+.hs-section {
+  position: relative;
+  padding: 85px 24px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+  background: #060913;
+  overflow: hidden;
+}
+
+.hs-section::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 900px;
+  height: 280px;
+  background: radial-gradient(ellipse at center, var(--hs-glow, rgba(56, 189, 248, 0.08)) 0%, transparent 70%);
+  pointer-events: none;
+  z-index: 1;
+}
+
+/* Colores temáticos por pilar */
+.hs-section.hs-sutz {
+  --hs-glow: rgba(56, 189, 248, 0.09);
+  --hs-accent: #38bdf8;
+  --hs-accent-end: #0284c7;
+  --hs-accent-soft: rgba(56, 189, 248, 0.12);
+  --hs-accent-border: rgba(56, 189, 248, 0.3);
+  --hs-hover-glow: rgba(56, 189, 248, 0.25);
+}
+
+.hs-section.hs-creatika {
+  --hs-glow: rgba(251, 113, 133, 0.09);
+  --hs-accent: #fb7185;
+  --hs-accent-end: #e11d48;
+  --hs-accent-soft: rgba(251, 113, 133, 0.12);
+  --hs-accent-border: rgba(251, 113, 133, 0.3);
+  --hs-hover-glow: rgba(251, 113, 133, 0.25);
+  background: #080d1a;
+}
+
+.hs-section.hs-100tek {
+  --hs-glow: rgba(192, 132, 252, 0.09);
+  --hs-accent: #c084fc;
+  --hs-accent-end: #9333ea;
+  --hs-accent-soft: rgba(192, 132, 252, 0.12);
+  --hs-accent-border: rgba(192, 132, 252, 0.3);
+  --hs-hover-glow: rgba(192, 132, 252, 0.25);
+}
+
+.hs-section.hs-lab {
+  --hs-glow: rgba(251, 146, 60, 0.09);
+  --hs-accent: #fb923c;
+  --hs-accent-end: #ea580c;
+  --hs-accent-soft: rgba(251, 146, 60, 0.12);
+  --hs-accent-border: rgba(251, 146, 60, 0.3);
+  --hs-hover-glow: rgba(251, 146, 60, 0.25);
+  background: #080d1a;
+}
+
+/* Retícula de dos columnas: Showcase Visual + Contenido y Accesos */
+.hs-container {
+  max-width: 1400px;
+  width: 100%;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr 1.15fr;
+  gap: 56px;
+  align-items: center;
+  position: relative;
+  z-index: 2;
+  box-sizing: border-box;
+}
+
+/* Disposición alternada (Zig-zag ordenado para ritmo visual) */
+.hs-container.reversed {
+  grid-template-columns: 1.15fr 1fr;
+}
+
+.hs-container.reversed .hs-showcase-col {
+  order: 2;
+}
+
+.hs-container.reversed .hs-content-col {
+  order: 1;
+}
+
+/* ==========================================================================
+   COLUMNA DE CONTENIDO (TEXTO Y JERARQUÍA)
+   ========================================================================== */
+.hs-content-col {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* Badge superior tipo cápsula */
+.hs-kicker-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  padding: 6px 14px;
+  background: var(--hs-accent-soft);
+  border: 1px solid var(--hs-accent-border);
+  border-radius: 9999px;
+  font-size: 0.74rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hs-accent);
+  box-shadow: 0 0 15px var(--hs-accent-soft);
+}
+
+.hs-kicker-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--hs-accent);
+  box-shadow: 0 0 8px var(--hs-accent);
+  animation: hsPulse 2.4s ease-in-out infinite;
+}
+
+@keyframes hsPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.5; transform: scale(0.8); }
+}
+
+/* Título de la sección */
+.hs-title-row {
+  margin: 0;
+}
+
+.hs-title {
+  font-size: 2.35rem;
+  font-weight: 900;
+  line-height: 1.18;
+  margin: 0 0 6px 0;
+  color: #f8fafc;
+  letter-spacing: -0.02em;
+}
+
+.hs-title-gradient {
+  background: linear-gradient(135deg, #ffffff 30%, var(--hs-accent) 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.hs-subtitle {
+  font-size: 0.88rem;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #64748b;
+  margin: 0;
+}
+
+/* Párrafo descriptivo principal */
+.hs-body {
+  font-size: 1.05rem;
+  line-height: 1.68;
+  color: #cbd5e1;
+  margin: 0;
+  max-width: 650px;
+}
+
+/* ==========================================================================
+   MATRIZ DE CARACTERÍSTICAS / VALORES (BENTO HIGHLIGHTS)
+   ========================================================================== */
+.hs-highlights-grid {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.hs-highlight-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  background: rgba(13, 19, 34, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+  padding: 12px 16px;
+  transition: all 0.2s ease;
+}
+
+.hs-highlight-item:hover {
+  background: rgba(18, 27, 48, 0.85);
+  border-color: var(--hs-accent-border);
+  transform: translateX(4px);
+}
+
+.hs-highlight-icon-box {
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: var(--hs-accent-soft);
+  border: 1px solid var(--hs-accent-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.15rem;
+  flex-shrink: 0;
+}
+
+.hs-highlight-text {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.hs-highlight-title {
+  font-size: 0.92rem;
+  font-weight: 800;
+  color: #f1f5f9;
+  letter-spacing: -0.01em;
+}
+
+.hs-highlight-desc {
+  font-size: 0.84rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+/* ==========================================================================
+   HUB DE ACCESOS Y CTAS (ORDENADO Y JERÁRQUICO)
+   ========================================================================== */
+.hs-actions-hub {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  margin-top: 8px;
+  padding-top: 16px;
+  border-top: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+/* Botón de acceso principal primario */
+.hs-btn-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  width: fit-content;
+  padding: 14px 28px;
+  background: linear-gradient(135deg, var(--hs-accent) 0%, var(--hs-accent-end) 100%);
+  color: #ffffff;
+  font-size: 0.96rem;
+  font-weight: 800;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  cursor: pointer;
+  box-shadow: 0 8px 24px var(--hs-hover-glow), 0 0 0 1px var(--hs-accent);
+  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  text-decoration: none;
+}
+
+.hs-btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 30px var(--hs-hover-glow), 0 0 0 2px var(--hs-accent);
+  filter: brightness(1.08);
+}
+
+.hs-btn-primary:active {
+  transform: translateY(0);
+}
+
+.hs-btn-arrow {
+  font-size: 1.1rem;
+  transition: transform 0.2s ease;
+}
+
+.hs-btn-primary:hover .hs-btn-arrow {
+  transform: translateX(4px);
+}
+
+/* Módulos secundarios (Herramientas vinculadas) */
+.hs-submodules-row {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hs-submodule-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 8px 14px;
+  background: rgba(15, 23, 42, 0.6);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  color: #e2e8f0;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  backdrop-filter: blur(8px);
+}
+
+.hs-submodule-pill:hover {
+  background: var(--hs-accent-soft);
+  border-color: var(--hs-accent-border);
+  color: var(--hs-accent);
+  transform: translateY(-1px);
+}
+
+.hs-submodule-pill span.sub-arrow {
+  opacity: 0.45;
+  font-size: 0.72rem;
+  transition: opacity 0.2s ease, transform 0.2s ease;
+}
+
+.hs-submodule-pill:hover span.sub-arrow {
+  opacity: 1;
+  transform: translateX(2px);
+}
+
+/* ==========================================================================
+   COLUMNA SHOWCASE VISUAL (TARJETA INTERACTIVA DE ALTO IMPACTO)
+   ========================================================================== */
+.hs-showcase-col {
+  position: relative;
+}
+
+.hs-visual-card {
+  position: relative;
+  border-radius: 24px;
+  background: radial-gradient(circle at 50% 40%, rgba(15, 23, 42, 0.9) 0%, rgba(3, 7, 18, 0.98) 100%);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 34px 28px;
+  min-height: 420px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  overflow: hidden;
+  box-shadow: 0 25px 60px -10px rgba(0, 0, 0, 0.8), 0 0 40px var(--hs-glow);
+  cursor: pointer;
+  transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.hs-visual-card:hover {
+  transform: translateY(-4px) scale(1.01);
+  border-color: var(--hs-accent-border);
+  box-shadow: 0 30px 70px -10px rgba(0, 0, 0, 0.9), 0 0 50px var(--hs-hover-glow);
+}
+
+/* Imagen de fondo dinámica si existe en la configuración */
+.hs-visual-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  filter: brightness(0.7) contrast(1.1);
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1), filter 0.6s ease;
+  z-index: 1;
+}
+
+.hs-visual-card:hover .hs-visual-bg {
+  transform: scale(1.05);
+  filter: brightness(0.9) contrast(1.15);
+}
+
+.hs-visual-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(6, 9, 19, 0.6) 0%, rgba(6, 9, 19, 0.92) 100%);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* Contenido interno del visual */
+.hs-visual-content {
+  position: relative;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  height: 100%;
+  min-height: 360px;
+}
+
+/* Insignia superior del visual */
+.hs-visual-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.hs-visual-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 14px;
+  background: rgba(9, 14, 26, 0.85);
+  border: 1px solid var(--hs-accent-border);
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  color: #f8fafc;
+  backdrop-filter: blur(12px);
+}
+
+.hs-visual-status {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+/* Centro icónico del visual */
+.hs-visual-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 0;
+}
+
+.hs-visual-big-icon {
+  font-size: 4.8rem;
+  filter: drop-shadow(0 0 35px var(--hs-accent));
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  margin-bottom: 12px;
+}
+
+.hs-visual-card:hover .hs-visual-big-icon {
+  transform: scale(1.1) translateY(-6px);
+}
+
+.hs-visual-label-box {
+  background: rgba(9, 14, 26, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 14px;
+  padding: 10px 18px;
+  backdrop-filter: blur(12px);
+}
+
+.hs-visual-label-box strong {
+  display: block;
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #ffffff;
+}
+
+.hs-visual-label-box small {
+  font-size: 0.76rem;
+  color: var(--hs-accent);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Pie del visual con etiquetas interactivas */
+.hs-visual-bottom {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.hs-visual-pills {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.hs-visual-pill-tag {
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #cbd5e1;
+  font-size: 0.74rem;
+  font-weight: 600;
+  padding: 4px 10px;
+  border-radius: 8px;
+  backdrop-filter: blur(8px);
+}
+
+.hs-visual-hint {
+  text-align: center;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  opacity: 0.8;
+  transition: opacity 0.2s ease;
+}
+
+.hs-visual-card:hover .hs-visual-hint {
+  opacity: 1;
+  color: var(--hs-accent);
+}
+
+/* ==========================================================================
+   RESPONSIVIDAD Y DISPOSITIVOS MÓVILES
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .hs-container,
+  .hs-container.reversed {
+    grid-template-columns: 1fr;
+    gap: 36px;
+  }
+
+  .hs-container.reversed .hs-showcase-col {
+    order: 1;
+  }
+
+  .hs-container.reversed .hs-content-col {
+    order: 2;
+  }
+
+  .hs-title {
+    font-size: 2rem;
+  }
+
+  .hs-visual-card {
+    min-height: 350px;
+  }
+}
+
+@media (max-width: 640px) {
+  .hs-section {
+    padding: 50px 16px;
+  }
+
+  .hs-title {
+    font-size: 1.65rem;
+  }
+
+  .hs-body {
+    font-size: 0.95rem;
+    line-height: 1.55;
+  }
+
+  .hs-visual-card {
+    padding: 22px 16px;
+    min-height: 300px;
+  }
+
+  .hs-visual-big-icon {
+    font-size: 3.6rem;
+  }
+
+  .hs-btn-primary {
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .hs-submodules-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .hs-submodule-pill {
+    justify-content: space-between;
+  }
+}
+
