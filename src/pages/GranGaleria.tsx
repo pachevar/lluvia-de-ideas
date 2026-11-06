@@ -115,11 +115,18 @@ export const GranGaleria: React.FC = () => {
     }
   };
 
-  // Tab change handler with audio
-  const handleTabChange = (tab: GaleriaSection) => {
+  // Tab change handler with audio & smooth auto-centering on mobile
+  const handleTabChange = (tab: GaleriaSection, e?: React.MouseEvent<HTMLButtonElement>) => {
     soundEffects.playClick();
     setActiveTab(tab);
     setSearchQuery('');
+    if (e?.currentTarget) {
+      e.currentTarget.scrollIntoView({
+        behavior: 'smooth',
+        inline: 'center',
+        block: 'nearest'
+      });
+    }
   };
 
   // Filtered Texts (Wattpad)
@@ -194,7 +201,7 @@ export const GranGaleria: React.FC = () => {
           <button 
             type="button" 
             className={`gg-tab-btn ${activeTab === 'escriba' ? 'active' : ''}`}
-            onClick={() => handleTabChange('escriba')}
+            onClick={(e) => handleTabChange('escriba', e)}
           >
             <span className="tab-icon">📜</span>
             <div className="tab-text-group">
@@ -206,7 +213,7 @@ export const GranGaleria: React.FC = () => {
           <button 
             type="button" 
             className={`gg-tab-btn ${activeTab === 'museo' ? 'active' : ''}`}
-            onClick={() => handleTabChange('museo')}
+            onClick={(e) => handleTabChange('museo', e)}
           >
             <span className="tab-icon">🎨</span>
             <div className="tab-text-group">
@@ -218,7 +225,7 @@ export const GranGaleria: React.FC = () => {
           <button 
             type="button" 
             className={`gg-tab-btn ${activeTab === 'cine' ? 'active' : ''}`}
-            onClick={() => handleTabChange('cine')}
+            onClick={(e) => handleTabChange('cine', e)}
           >
             <span className="tab-icon">🎬</span>
             <div className="tab-text-group">
@@ -230,7 +237,7 @@ export const GranGaleria: React.FC = () => {
           <button 
             type="button" 
             className={`gg-tab-btn ${activeTab === 'concursos' ? 'active' : ''}`}
-            onClick={() => handleTabChange('concursos')}
+            onClick={(e) => handleTabChange('concursos', e)}
           >
             <span className="tab-icon">🏆</span>
             <div className="tab-text-group">

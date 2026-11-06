@@ -1697,15 +1697,16 @@
    Aprovechamiento máximo del ancho de pantalla, márgenes seguros y ergonomía táctil
    ========================================================================== */
 
+/* ==========================================================================
+   OPTIMIZACIÓN RESPONSIVA COMPLETA: TABLETS & SMARTPHONES
+   Parámetros: Ergonomía táctil >=44px, safe-area-insets, sin desbordamiento horizontal,
+   prevent-zoom en iOS (16px), auto-scroll en pestañas y formato bottom-sheet en modales.
+   ========================================================================== */
+
 /* 1. TABLETS (Hasta 1024px) */
 @media (max-width: 1024px) {
   .gg-hero-banner {
-    padding: 3rem 1.25rem 2rem;
-  }
-
-  .gg-stats-ribbon {
-    grid-template-columns: repeat(4, 1fr);
-    gap: 0.75rem;
+    padding: 2.75rem 1.25rem 1.85rem;
   }
 
   .gg-texts-grid,
@@ -1720,57 +1721,34 @@
   }
 }
 
-/* 2. MÓVILES (Menor a 768px) */
-@media (max-width: 767px) {
+/* 2. MÓVILES (Hasta 768px) */
+@media (max-width: 768px) {
   /* Contenedor general sin desbordamientos */
   .gran-galeria-page {
     overflow-x: hidden;
     width: 100%;
+    max-width: 100vw;
   }
 
   /* Hero Banner */
   .gg-hero-banner {
-    padding: 1.6rem 0.85rem 1.25rem;
+    padding: 1.6rem 1rem 1.25rem;
   }
 
   .gg-hero-title {
-    font-size: 1.85rem;
+    font-size: clamp(1.75rem, 6vw, 2.15rem);
     line-height: 1.2;
     margin-bottom: 0.4rem;
   }
 
   .gg-hero-desc {
-    font-size: 0.95rem;
+    font-size: 0.92rem;
     line-height: 1.45;
-    margin-bottom: 1.1rem;
+    margin-bottom: 1rem;
+    padding: 0 0.5rem;
   }
 
-  /* Estadísticas Ribbon en 2 columnas */
-  .gg-stats-ribbon {
-    grid-template-columns: repeat(2, 1fr);
-    gap: 0.5rem;
-    margin-bottom: 1.1rem;
-    width: 100%;
-  }
-
-  .gg-stat-box {
-    padding: 8px 10px;
-    gap: 8px;
-  }
-
-  .stat-icon {
-    font-size: 1.35rem;
-  }
-
-  .stat-info strong {
-    font-size: 1.15rem;
-  }
-
-  .stat-info span {
-    font-size: 0.68rem;
-  }
-
-  /* Botón volver al mapa centrado y cómodo al pulgar */
+  /* Botón volver al mapa centrado y ergonómico al pulgar */
   .gg-hero-cta-row {
     display: flex;
     justify-content: center;
@@ -1782,53 +1760,123 @@
     width: auto;
     min-width: 200px;
     max-width: 280px;
+    min-height: 44px;
     justify-content: center;
     padding: 0.65rem 1.25rem;
     font-size: 0.92rem;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Tabs de Pabellones en móvil: desplazamiento horizontal fluido */
+  .gg-hero-cta-row button:active {
+    transform: scale(0.97);
+  }
+
+  /* Barra de Pestañas / Pabellones fija y con desplazamiento fluido */
   .gg-tabs-nav-wrapper {
-    padding: 0.45rem 0.5rem;
+    position: sticky;
+    top: 0;
+    z-index: 30;
+    padding: 0.5rem 0.65rem;
+    padding-top: max(0.5rem, env(safe-area-inset-top));
+    background: rgba(6, 9, 19, 0.97);
+    backdrop-filter: blur(14px);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
   }
 
   .gg-tabs-container {
-    gap: 0.5rem;
-    padding: 0 0.25rem 4px;
+    gap: 0.55rem;
+    padding: 2px 0.25rem 4px;
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .gg-tabs-container::-webkit-scrollbar {
+    display: none;
   }
 
   .gg-tab-btn {
-    padding: 7px 13px;
+    min-height: 44px;
+    padding: 7px 14px;
     gap: 8px;
+    scroll-snap-align: center;
+    -webkit-tap-highlight-color: transparent;
+    border-radius: 12px;
+  }
+
+  .gg-tab-btn:active {
+    transform: scale(0.96);
   }
 
   .tab-icon {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
   }
 
   .tab-main-title {
-    font-size: 0.84rem;
+    font-size: 0.86rem;
+    font-weight: 700;
   }
 
   .tab-sub-title {
-    font-size: 0.65rem;
+    font-size: 0.68rem;
   }
 
-  /* Búsqueda y Chips */
+  /* Búsqueda y Filtros con prevención de auto-zoom en iOS Safari */
   .gg-search-filter-bar {
-    padding: 0 0.75rem;
+    padding: 0 1rem;
     margin: 1rem auto 0.75rem;
     gap: 0.75rem;
   }
 
   .gg-search-input {
-    padding: 10px 36px 10px 36px;
-    font-size: 0.88rem;
+    /* 16px exacto evita que iOS Safari haga zoom automático al enfocar */
+    font-size: 16px !important;
+    padding: 11px 44px 11px 38px;
+    border-radius: 12px;
   }
 
-  /* Encabezado de Sección */
+  .search-icon {
+    left: 12px;
+    font-size: 0.95rem;
+  }
+
+  .gg-search-clear {
+    right: 4px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Chips de filtro horizontales con buena superficie de toque */
+  .gg-chips-filter-list {
+    scroll-snap-type: x proximity;
+    -webkit-overflow-scrolling: touch;
+    padding: 2px 2px 6px 2px;
+    gap: 8px;
+  }
+
+  .gg-chip-btn {
+    min-height: 38px;
+    padding: 7px 15px;
+    font-size: 0.84rem;
+    scroll-snap-align: start;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .gg-chip-btn:active {
+    transform: scale(0.96);
+  }
+
+  /* Encabezado de Sección y Acciones */
   .gg-main-content-grid {
-    padding: 0 0.75rem;
+    padding: 0 1rem;
   }
 
   .gg-section-header {
@@ -1840,12 +1888,14 @@
   }
 
   .gg-section-title {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
+    line-height: 1.25;
   }
 
   .gg-section-subtitle {
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     line-height: 1.45;
+    margin-top: 4px;
   }
 
   .gg-section-header-actions {
@@ -1857,161 +1907,451 @@
 
   .gg-escriba-create-btn {
     width: 100%;
+    min-height: 48px;
     justify-content: center;
     padding: 0.75rem 1rem;
-    font-size: 0.92rem;
+    font-size: 0.95rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .gg-escriba-create-btn:active {
+    transform: scale(0.98);
   }
 
   .gg-results-counter {
     width: 100%;
     text-align: center;
-    padding: 5px 8px;
-    font-size: 0.78rem;
+    padding: 6px 8px;
+    font-size: 0.8rem;
   }
 
-  /* Grids de Contenido: 1 columna en móvil para que las tarjetas aprovechen el 100% */
+  /* Grids de Contenido: 1 columna completa para aprovechar el ancho */
   .gg-texts-grid,
   .gg-artworks-grid,
   .gg-videos-grid {
     grid-template-columns: 1fr;
-    gap: 1rem;
+    gap: 1.15rem;
   }
 
+  /* Tarjeta de Relato / Obra Literaria */
   .gg-story-card {
     padding: 1.1rem;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .gg-story-card:active {
+    transform: scale(0.99);
+  }
+
+  /* Corrección exacta de margen y ancho de portada en móvil */
+  .story-cover-wrapper {
+    width: calc(100% + 2.2rem);
+    height: 170px;
+    margin: -1.1rem -1.1rem 0.9rem -1.1rem;
   }
 
   .story-title {
     font-size: 1.2rem;
+    line-height: 1.3;
   }
 
-  .story-synopsis {
+  .story-synopsis-snippet {
     font-size: 0.86rem;
+    line-height: 1.5;
+    margin-bottom: 0.9rem;
+    -webkit-line-clamp: 2;
   }
 
   .story-card-footer {
-    flex-wrap: wrap;
-    gap: 0.5rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.65rem;
+    padding-top: 0.75rem;
+  }
+
+  .story-stats {
+    width: 100%;
+    justify-content: space-between;
+    font-size: 0.82rem;
   }
 
   .story-read-action-btn {
     width: 100%;
-    text-align: center;
-    padding: 6px;
+    min-height: 42px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 12px;
+    font-size: 0.86rem;
+    font-weight: 700;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Concursos en móvil */
+  .story-read-action-btn:active {
+    transform: scale(0.98);
+  }
+
+  /* Tarjeta de Obra Plástica en móvil */
+  .gg-art-card {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .gg-art-card:active {
+    transform: scale(0.99);
+  }
+
+  .art-card-details {
+    padding: 0.9rem;
+  }
+
+  .art-title {
+    font-size: 1.15rem;
+  }
+
+  .art-meta-row {
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+  }
+
+  .art-footer-likes {
+    justify-content: space-between;
+  }
+
+  /* Tarjeta de Video en móvil */
+  .gg-video-card {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .gg-video-card:active {
+    transform: scale(0.99);
+  }
+
+  .video-play-disc {
+    width: 46px;
+    height: 46px;
+    font-size: 1.15rem;
+  }
+
+  .video-card-info {
+    padding: 0.9rem;
+  }
+
+  .video-title {
+    font-size: 1.15rem;
+  }
+
+  /* Convocatorias en móvil */
   .gg-contest-card {
-    padding: 1.15rem;
+    padding: 1.25rem 1rem;
   }
 
   .contest-title {
-    font-size: 1.2rem;
+    font-size: 1.25rem;
   }
 
   .contest-details-grid {
     grid-template-columns: 1fr;
-    gap: 0.6rem;
-    padding: 0.75rem;
+    gap: 0.65rem;
+    padding: 0.85rem;
   }
 
-  .contest-action-btn {
+  .contest-card-actions button {
     width: 100%;
+    min-height: 46px;
     justify-content: center;
+    -webkit-tap-highlight-color: transparent;
   }
 
-  /* Modales de Lectura, Arte y Cine a pantalla completa o márgenes ajustados */
+  .contest-card-actions button:active {
+    transform: scale(0.98);
+  }
+
+  /* =========================================================================
+     MODALES EN MÓVIL: FORMATO BOTTOM-SHEET / FULL-HEIGHT INMERSIVO
+     ========================================================================= */
   .gg-modal-overlay {
-    padding: 0.4rem;
+    padding: 0;
+    align-items: flex-end;
   }
 
+  /* 1. Modal Lector Inmersivo */
   .gg-reader-modal {
     width: 100%;
     max-width: 100%;
-    height: 94vh;
-    max-height: 94vh;
-    border-radius: 14px;
+    height: 96dvh;
+    max-height: 96dvh;
+    border-radius: 18px 18px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.8);
   }
 
   .gg-reader-toolbar {
-    padding: 0.6rem 0.85rem;
+    padding: 0.75rem 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.6rem;
+  }
+
+  .gg-reader-meta-chips {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    flex-wrap: wrap;
     gap: 6px;
   }
 
-  .gg-reader-body {
-    padding: 1.15rem 1rem;
+  .gg-reader-controls {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 0.5rem;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
   }
 
-  .gg-reader-title {
-    font-size: 1.45rem;
+  .theme-light .gg-reader-controls {
+    border-top-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .theme-sepia .gg-reader-controls {
+    border-top-color: rgba(0, 0, 0, 0.08);
+  }
+
+  .gg-reader-theme-toggle {
+    gap: 2px;
+  }
+
+  .gg-reader-theme-toggle .theme-btn {
+    min-height: 36px;
+    min-width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1rem;
+  }
+
+  .gg-reader-font-controls button {
+    min-height: 36px;
+    min-width: 36px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.85rem;
+  }
+
+  .gg-reader-close-btn {
+    min-width: 40px;
+    min-height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .gg-reader-body {
+    padding: 1.25rem 1rem calc(2rem + env(safe-area-inset-bottom)) 1rem;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gg-reader-story-title {
+    font-size: clamp(1.4rem, 5vw, 1.85rem) !important;
+    line-height: 1.25;
+    margin-bottom: 0.75rem;
+  }
+
+  .gg-reader-cover-container {
+    max-width: 180px;
+    margin: 0.5rem auto 1rem;
+  }
+
+  .gg-reader-cover-img {
+    max-height: 250px;
+  }
+
+  .gg-reader-article-content p {
+    text-align: left;
+    line-height: 1.7;
+    margin-bottom: 1.15rem;
+    font-size: clamp(15px, 4.2vw, 18px);
   }
 
   .gg-reader-footer {
-    padding: 1rem 0.85rem;
-    flex-direction: column;
-    gap: 0.75rem;
+    padding: 1.25rem 0.85rem;
+    margin-top: 2rem;
   }
 
   .gg-reader-actions-bar {
+    flex-direction: column;
     width: 100%;
-    justify-content: center;
+    gap: 0.6rem;
   }
 
+  .gg-reader-actions-bar .gg-reaction-btn {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+    font-size: 0.92rem;
+  }
+
+  /* 2. Modal de Museo Virtual / Arte */
+  .gg-art-modal {
+    width: 100%;
+    max-width: 100%;
+    height: 96dvh;
+    max-height: 96dvh;
+    border-radius: 18px 18px 0 0;
+    border-bottom: none;
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.9);
+  }
+
+  .gg-art-modal-close {
+    top: 10px;
+    right: 12px;
+    width: 42px;
+    height: 42px;
+    font-size: 1.25rem;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 35;
+  }
+
+  .gg-art-modal-grid {
+    grid-template-columns: 1fr;
+    height: 100%;
+    max-height: 96dvh;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .gg-museum-gallery-chamber {
+    padding: 1rem 0.5rem;
+    min-height: 250px;
+  }
+
+  .museum-frame {
+    border-width: 6px;
+    outline-width: 1px;
+    max-width: 95%;
+    max-height: 42vh;
+  }
+
+  .gg-museum-placard {
+    padding: 1.25rem 1rem calc(2.5rem + env(safe-area-inset-bottom)) 1rem;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+  }
+
+  .placard-title {
+    font-size: 1.35rem;
+    line-height: 1.25;
+    margin-bottom: 0.75rem;
+  }
+
+  .placard-specs-grid {
+    grid-template-columns: 1fr 1fr;
+    gap: 6px;
+    padding: 8px;
+  }
+
+  .placard-actions {
+    flex-direction: column;
+    width: 100%;
+    gap: 0.6rem;
+  }
+
+  .placard-actions .gg-reaction-btn {
+    width: 100%;
+    min-height: 46px;
+    justify-content: center;
+    font-size: 0.92rem;
+  }
+
+  /* 3. Modal de Sala de Cine / Videos */
   .gg-theater-modal {
     width: 100%;
-    border-radius: 12px;
+    max-width: 100%;
+    max-height: 96dvh;
+    border-radius: 18px 18px 0 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
-  .gg-theater-body {
-    padding: 1rem;
+  .gg-theater-close-btn {
+    top: 10px;
+    right: 12px;
+    width: 42px;
+    height: 42px;
+    font-size: 1.25rem;
+    background: rgba(0, 0, 0, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    z-index: 35;
   }
 
-  .gg-theater-meta-grid {
-    grid-template-columns: 1fr 1fr;
+  .gg-theater-info {
+    padding: 1.15rem 1rem calc(2rem + env(safe-area-inset-bottom)) 1rem;
+  }
+
+  .gg-theater-title {
+    font-size: 1.25rem;
+    line-height: 1.25;
+  }
+
+  .gg-theater-credits-grid {
+    grid-template-columns: 1fr;
     gap: 0.5rem;
   }
 
+  /* 4. Modal Guía para Concursos */
   .gg-submit-guide-modal {
-    padding: 1.25rem 1rem;
-    max-height: 90vh;
+    width: 100%;
+    max-width: 100%;
+    max-height: 96dvh;
+    border-radius: 18px 18px 0 0;
+    padding: 1.25rem 1rem calc(2rem + env(safe-area-inset-bottom)) 1rem;
     overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .guide-step {
-    padding: 8px 10px;
+    padding: 10px 12px;
+    gap: 10px;
+  }
+
+  .guide-footer button {
+    width: 100%;
+    min-height: 46px;
   }
 }
 
 /* 3. PANTALLAS PEQUEÑAS (Hasta 480px) */
 @media (max-width: 480px) {
   .gg-hero-title {
-    font-size: 1.55rem;
+    font-size: 1.6rem;
   }
 
   .gg-tab-btn {
-    padding: 6px 11px;
+    padding: 6px 12px;
   }
 
   .tab-main-title {
-    font-size: 0.78rem;
+    font-size: 0.82rem;
   }
 
   .tab-sub-title {
     display: none;
   }
 
-  .gg-stats-ribbon {
-    grid-template-columns: 1fr 1fr;
-    gap: 0.45rem;
-  }
-
-  .stat-info strong {
-    font-size: 1rem;
-  }
-
   .art-meta-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 4px;
+  }
+
+  .story-cover-wrapper {
+    height: 155px;
   }
 }
