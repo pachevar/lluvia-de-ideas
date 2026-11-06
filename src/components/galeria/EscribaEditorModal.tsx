@@ -365,7 +365,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
           <div className="escriba-header-title">
             <span className="escriba-header-icon" aria-hidden="true">📜</span>
             <div>
-              <h2>El Pergamino del Escriba · Taller Literario</h2>
+              <h2>Gran Biblioteca · Taller Literario</h2>
               <p>Redacta, aprende reglas ortotipográficas y publica relatos estudiantiles</p>
             </div>
           </div>
@@ -958,7 +958,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                 if (activeTab === 'preview') setActiveTab('editor');
               }}
             >
-              <span>📜</span> {isSaving ? 'Guardando...' : 'Publicar en el Pergamino'}
+              <span>📜</span> {isSaving ? 'Guardando...' : 'Publicar en la Gran Biblioteca'}
             </button>
           </div>
         </footer>

@@ -292,7 +292,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           onClick={() => setActiveSubTab('wattpad')}
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <span>📜</span> Pergamino del Escriba ({texts.length})
+          <span>📜</span> Gran Biblioteca ({texts.length})
         </button>
         <button 
           type="button" 
@@ -300,7 +300,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           onClick={() => setActiveSubTab('museo')}
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <span>🎨</span> Museo Virtual ({artworks.length})
+          <span>🎨</span> Gran Galería ({artworks.length})
         </button>
         <button 
           type="button" 
@@ -308,7 +308,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           onClick={() => setActiveSubTab('cine')}
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <span>🎬</span> Cine & Mediateca ({videos.length})
+          <span>🎬</span> Gran Sala ({videos.length})
         </button>
         <button 
           type="button" 
@@ -316,7 +316,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           onClick={() => setActiveSubTab('concursos')}
           style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
         >
-          <span>🏆</span> Concursos ({contests.length})
+          <span>🏆</span> Convocatorias ({contests.length})
         </button>
         <button 
           type="button" 
@@ -329,12 +329,12 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
       </div>
 
       {/* ===================================================================
-          SUBTAB 1: EL PERGAMINO DEL ESCRIBA
+          SUBTAB 1: GRAN BIBLIOTECA
           =================================================================== */}
       {activeSubTab === 'wattpad' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h4 style={{ margin: 0, color: '#f8fafc' }}>El Pergamino del Escriba (Relatos, Cuentos & Poemas)</h4>
+            <h4 style={{ margin: 0, color: '#f8fafc' }}>Gran Biblioteca (Relatos, Cuentos & Poemas)</h4>
             <button 
               type="button" 
               className="btn btn-primary"
@@ -585,12 +585,12 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
       )}
 
       {/* ===================================================================
-          SUBTAB 2: MUSEO VIRTUAL (ARTE)
+          SUBTAB 2: GRAN GALERÍA (ARTE)
           =================================================================== */}
       {activeSubTab === 'museo' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h4 style={{ margin: 0, color: '#f8fafc' }}>Obras de Arte e Ilustración (Museo Virtual)</h4>
+            <h4 style={{ margin: 0, color: '#f8fafc' }}>Gran Galería (Obras de Arte e Ilustración)</h4>
             <button 
               type="button" 
               className="btn btn-primary"
@@ -808,12 +808,12 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
       )}
 
       {/* ===================================================================
-          SUBTAB 3: CINE & MEDIATECA
+          SUBTAB 3: GRAN SALA (CINE & MEDIATECA)
           =================================================================== */}
       {activeSubTab === 'cine' && (
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h4 style={{ margin: 0, color: '#f8fafc' }}>Cortometrajes, Documentales & Reportajes Escolares</h4>
+            <h4 style={{ margin: 0, color: '#f8fafc' }}>Gran Sala (Cortometrajes, Documentales & Reportajes Escolares)</h4>
             <button 
               type="button" 
               className="btn btn-primary"

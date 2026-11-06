@@ -137,38 +137,6 @@ export const GranGaleria: React.FC = () => {
             Un espacio para desarrollar tu talento y creatividad
           </p>
 
-          {/* Métricas del Ecosistema */}
-          <div className="gg-stats-ribbon">
-            <div className="gg-stat-box" onClick={() => handleTabChange('escriba')}>
-              <span className="stat-icon">📜</span>
-              <div className="stat-info">
-                <strong>{texts.length}</strong>
-                <span>Pergamino del Escriba</span>
-              </div>
-            </div>
-            <div className="gg-stat-box" onClick={() => handleTabChange('museo')}>
-              <span className="stat-icon">🎨</span>
-              <div className="stat-info">
-                <strong>{artworks.length}</strong>
-                <span>Obras en Museo</span>
-              </div>
-            </div>
-            <div className="gg-stat-box" onClick={() => handleTabChange('cine')}>
-              <span className="stat-icon">🎬</span>
-              <div className="stat-info">
-                <strong>{videos.length}</strong>
-                <span>Cortos & Videos</span>
-              </div>
-            </div>
-            <div className="gg-stat-box" onClick={() => handleTabChange('concursos')}>
-              <span className="stat-icon">🏆</span>
-              <div className="stat-info">
-                <strong>{contests.length}</strong>
-                <span>Concursos Activos</span>
-              </div>
-            </div>
-          </div>
-
           <div className="gg-hero-cta-row">
             <button 
               type="button" 
@@ -195,7 +163,7 @@ export const GranGaleria: React.FC = () => {
           >
             <span className="tab-icon">📜</span>
             <div className="tab-text-group">
-              <span className="tab-main-title">Pergamino del Escriba</span>
+              <span className="tab-main-title">Gran Biblioteca</span>
               <span className="tab-sub-title">Códice Literario & Taller</span>
             </div>
           </button>
@@ -207,7 +175,7 @@ export const GranGaleria: React.FC = () => {
           >
             <span className="tab-icon">🎨</span>
             <div className="tab-text-group">
-              <span className="tab-main-title">Museo Virtual</span>
+              <span className="tab-main-title">Gran Galería</span>
               <span className="tab-sub-title">Pintura, Dibujo & Digital</span>
             </div>
           </button>
@@ -219,7 +187,7 @@ export const GranGaleria: React.FC = () => {
           >
             <span className="tab-icon">🎬</span>
             <div className="tab-text-group">
-              <span className="tab-main-title">Mediateca Escolar</span>
+              <span className="tab-main-title">Gran Sala</span>
               <span className="tab-sub-title">Cortos, Documental & Reportajes</span>
             </div>
           </button>
@@ -231,8 +199,8 @@ export const GranGaleria: React.FC = () => {
           >
             <span className="tab-icon">🏆</span>
             <div className="tab-text-group">
-              <span className="tab-main-title">Salón de Concursos</span>
-              <span className="tab-sub-title">Convocatorias & Ganadores</span>
+              <span className="tab-main-title">Convocatorias</span>
+              <span className="tab-sub-title">Bases, Certámenes & Ganadores</span>
             </div>
           </button>
         </div>
@@ -245,10 +213,10 @@ export const GranGaleria: React.FC = () => {
           <input 
             type="text" 
             placeholder={
-              activeTab === 'escriba' ? "Buscar relato por título, autor o colegio..." :
-              activeTab === 'museo' ? "Buscar obra por título, artista o técnica..." :
-              activeTab === 'cine' ? "Buscar cortometraje o reportaje..." :
-              "Buscar concursos o convocatorias..."
+              activeTab === 'escriba' ? "Buscar en Gran Biblioteca por título, autor o colegio..." :
+              activeTab === 'museo' ? "Buscar en Gran Galería por título, artista o técnica..." :
+              activeTab === 'cine' ? "Buscar en Gran Sala por cortometraje o reportaje..." :
+              "Buscar en Convocatorias..."
             }
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
@@ -265,7 +233,7 @@ export const GranGaleria: React.FC = () => {
           )}
         </div>
 
-        {/* Filtros por Género Literario (Pergamino del Escriba) */}
+        {/* Filtros por Género Literario (Gran Biblioteca) */}
         {activeTab === 'escriba' && (
           <div className="gg-chips-filter-list">
             {[
@@ -292,7 +260,7 @@ export const GranGaleria: React.FC = () => {
           </div>
         )}
 
-        {/* Filtros por Técnica (Museo) */}
+        {/* Filtros por Técnica (Gran Galería) */}
         {activeTab === 'museo' && (
           <div className="gg-chips-filter-list">
             {[
@@ -318,7 +286,7 @@ export const GranGaleria: React.FC = () => {
           </div>
         )}
 
-        {/* Filtros por Categoría Audiovisual (Cine) */}
+        {/* Filtros por Categoría Audiovisual (Gran Sala) */}
         {activeTab === 'cine' && (
           <div className="gg-chips-filter-list">
             {[
@@ -347,14 +315,14 @@ export const GranGaleria: React.FC = () => {
       {/* 4. CONTENIDOS DE CADA SECCIÓN */}
       <main className="gg-main-content-grid">
         {/* ===================================================================
-            PABELLÓN 1: EL PERGAMINO DEL ESCRIBA (CÓDICE & TALLER LITERARIO)
+            PABELLÓN 1: GRAN BIBLIOTECA (CÓDICE & TALLER LITERARIO)
             =================================================================== */}
         {activeTab === 'escriba' && (
           <section className="gg-section-view animate-fade-in">
             <div className="gg-section-header">
               <div>
                 <h2 className="gg-section-title">
-                  <span>📜</span> El Pergamino del Escriba
+                  <span>📜</span> Gran Biblioteca
                 </h2>
                 <p className="gg-section-subtitle">
                   Historias originales, novelas cortas y poemas escritos por jóvenes creadores escolares. Haz clic en cualquier relato para abrir el visor inmersivo o abre el taller para redactar el tuyo con reglas ortotipográficas.
@@ -370,7 +338,7 @@ export const GranGaleria: React.FC = () => {
                   }}
                 >
                   <span>✍️</span>
-                  <span>Crear un códice nuevo</span>
+                  <span>Escribir en la Gran Biblioteca</span>
                 </button>
                 <span className="gg-results-counter">
                   Mostrando {filteredTexts.length} {filteredTexts.length === 1 ? 'relato' : 'relatos'}
@@ -433,17 +401,17 @@ export const GranGaleria: React.FC = () => {
         )}
 
         {/* ===================================================================
-            PABELLÓN 2: MUSEO VIRTUAL DE ARTE E ILUSTRACIÓN
+            PABELLÓN 2: GRAN GALERÍA (OBRAS & ARTES PLÁSTICAS)
             =================================================================== */}
         {activeTab === 'museo' && (
           <section className="gg-section-view animate-fade-in">
             <div className="gg-section-header">
               <div>
                 <h2 className="gg-section-title">
-                  <span>🎨</span> Museo Virtual de Ilustración & Artes Plásticas
+                  <span>🎨</span> Gran Galería · Obras & Artes Plásticas
                 </h2>
                 <p className="gg-section-subtitle">
-                  Pabellón de artes visuales. Admira las pinceladas, texturas y creatividad de los estudiantes. Haz clic en una pieza para apreciarla en alta resolución con iluminación museográfica.
+                  Exhibición de artes visuales. Admira las pinceladas, texturas y creatividad de los estudiantes. Haz clic en una pieza para apreciarla en alta resolución con iluminación museográfica.
                 </p>
               </div>
               <span className="gg-results-counter">
@@ -464,7 +432,7 @@ export const GranGaleria: React.FC = () => {
                   <div className="art-card-img-container">
                     <img src={a.imageUrl} alt={a.title} className="art-thumb-img" loading="lazy" />
                     <div className="art-overlay-glass">
-                      <span>🔍 Explorar en Museo</span>
+                      <span>🔍 Explorar en Gran Galería</span>
                     </div>
                     {a.awardBadge && (
                       <span className="art-award-badge">{a.awardBadge}</span>
@@ -498,14 +466,14 @@ export const GranGaleria: React.FC = () => {
         )}
 
         {/* ===================================================================
-            PABELLÓN 3: MEDIATECA ESCOLAR (CINE, CORTOMETRAJES & REPORTAJES)
+            PABELLÓN 3: GRAN SALA (CINE, CORTOMETRAJES & REPORTAJES)
             =================================================================== */}
         {activeTab === 'cine' && (
           <section className="gg-section-view animate-fade-in">
             <div className="gg-section-header">
               <div>
                 <h2 className="gg-section-title">
-                  <span>🎬</span> Cine & Mediateca Escolar
+                  <span>🎬</span> Gran Sala · Cortos & Videos Escolares
                 </h2>
                 <p className="gg-section-subtitle">
                   El cine y el periodismo en manos de los estudiantes: cortometrajes de ficción, documentales comunitarios, animaciones y reportajes científicos escolares.
@@ -565,14 +533,14 @@ export const GranGaleria: React.FC = () => {
         )}
 
         {/* ===================================================================
-            PABELLÓN 4: CONCURSOS & SALÓN DE GALARDONADOS
+            PABELLÓN 4: CONVOCATORIAS & SALÓN DE GALARDONADOS
             =================================================================== */}
         {activeTab === 'concursos' && (
           <section className="gg-section-view animate-fade-in">
             <div className="gg-section-header">
               <div>
                 <h2 className="gg-section-title">
-                  <span>🏆</span> Concursos Estudiantiles & Convocatorias
+                  <span>🏆</span> Convocatorias Estudiantiles & Certámenes
                 </h2>
                 <p className="gg-section-subtitle">
                   Certámenes abiertos y ediciones anteriores organizados por la Editorial Lluvia de Ideas y el Ecosistema Sutz para promover la literatura, el arte y el cine estudiantil.
@@ -692,7 +660,7 @@ export const GranGaleria: React.FC = () => {
                 <span className="step-number">1</span>
                 <div>
                   <strong>Prepara tu trabajo:</strong>
-                  <p>Revisa las bases del concurso activo en el Salón de Concursos. Puedes postular cuentos, pinturas en alta resolución o videos en YouTube.</p>
+                  <p>Revisa las bases activas en la sección de Convocatorias. Puedes postular cuentos, pinturas en alta resolución o videos en YouTube.</p>
                 </div>
               </div>
               <div className="guide-step">
