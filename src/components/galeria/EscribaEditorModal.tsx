@@ -1,6 +1,8 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
 import type { StudentTextItem, LiteraryGenre } from '../../types';
 import { soundEffects } from '../../utils/soundEffects';
+import ImageFramingModal from '../common/ImageFramingModal';
+import { uploadImageWithFallback } from '../../utils/imageUpload';
 import './EscribaEditorModal.css';
 
 interface EscribaEditorModalProps {
@@ -69,6 +71,25 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
   const [genre, setGenre] = useState<LiteraryGenre>(initialData?.genre || 'fantasia');
   const [synopsis, setSynopsis] = useState(initialData?.synopsis || '');
   const [content, setContent] = useState(initialData?.content || '');
+  const [coverImage, setCoverImage] = useState<string>(initialData?.coverImage || '');
+  const [coverFramingSource, setCoverFramingSource] = useState<File | string | null>(null);
+  const [isUploadingCover, setIsUploadingCover] = useState<boolean>(false);
+  const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Sincronizar datos si initialData cambia dinámicamente
+  useEffect(() => {
+    if (initialData) {
+      if (initialData.title !== undefined) setTitle(initialData.title);
+      if (initialData.genre !== undefined) setGenre(initialData.genre);
+      if (initialData.synopsis !== undefined) setSynopsis(initialData.synopsis);
+      if (initialData.content !== undefined) setContent(initialData.content);
+      if (initialData.coverImage !== undefined) setCoverImage(initialData.coverImage);
+      if (initialData.author && initialData.author !== 'Autor Estudiantil') {
+        setPseudonym(initialData.author);
+        setUsePseudonym(Boolean(initialData.isPseudonym));
+      }
+    }
+  }, [initialData]);
 
   // Pseudonym state (reemplaza solicitud manual de nombre, grado y colegio)
   const [usePseudonym, setUsePseudonym] = useState<boolean>(
@@ -337,6 +358,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
         genre,
         synopsis: synopsis.trim() || title.trim(),
         content: content.trim(),
+        coverImage: coverImage.trim() || undefined,
         likes: initialData?.likes || 0,
         reads: initialData?.reads || 1,
         featured: initialData?.featured || false,
@@ -488,6 +510,84 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                     onChange={(e) => setSynopsis(e.target.value)}
                     placeholder="Resume el enigma o conflicto central para atrapar a tus lectores..."
                   />
+                </div>
+
+                {/* PORTADA DE LA OBRA */}
+                <div className="escriba-field escriba-field-full escriba-cover-card">
+                  <div className="escriba-cover-header">
+                    <span className="escriba-cover-title">🖼️ Portada de la Obra (Opcional)</span>
+                    <span className="escriba-cover-subtitle">
+                      Sube una portada ilustrada para tu relato. Podrás recortar, centrar y optimizar con nuestro editor de alta precisión.
+                    </span>
+                  </div>
+
+                  <div className="escriba-cover-content">
+                    {coverImage ? (
+                      <div className="escriba-cover-active-box">
+                        <div className="escriba-cover-thumb-wrap">
+                          <img src={coverImage} alt="Portada de la obra" className="escriba-cover-thumb" />
+                        </div>
+                        <div className="escriba-cover-actions">
+                          <div className="escriba-cover-status">
+                            <span className="cover-badge-ready">✓ Portada lista</span>
+                            <small>Se exhibirá en la Gran Biblioteca y el visor de lectura</small>
+                          </div>
+                          <div className="escriba-cover-btn-group">
+                            <button
+                              type="button"
+                              className="btn btn-secondary escriba-cover-change-btn"
+                              onClick={() => coverFileInputRef.current?.click()}
+                              disabled={isUploadingCover}
+                            >
+                              🔄 Cambiar Portada
+                            </button>
+                            <button
+                              type="button"
+                              className="escriba-cover-remove-btn"
+                              onClick={() => {
+                                soundEffects.playClick();
+                                setCoverImage('');
+                              }}
+                              title="Quitar portada"
+                            >
+                              🗑️ Quitar
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    ) : (
+                      <div
+                        className="escriba-cover-empty-dropzone"
+                        onClick={() => coverFileInputRef.current?.click()}
+                      >
+                        <span className="dropzone-icon">🎨</span>
+                        <div className="dropzone-text-group">
+                          <strong>Subir ilustración o portada del libro</strong>
+                          <span>Haz clic para elegir una imagen · Enfoque interactivo y compresión WebP automática</span>
+                        </div>
+                        <button
+                          type="button"
+                          className="btn btn-secondary dropzone-upload-btn"
+                          disabled={isUploadingCover}
+                        >
+                          {isUploadingCover ? 'Subiendo...' : 'Seleccionar Imagen...'}
+                        </button>
+                      </div>
+                    )}
+
+                    <input
+                      ref={coverFileInputRef}
+                      type="file"
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (!file) return;
+                        setCoverFramingSource(file);
+                        e.target.value = '';
+                      }}
+                    />
+                  </div>
                 </div>
               </div>
 
@@ -922,6 +1022,12 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                 </p>
               </header>
 
+              {coverImage && (
+                <div className="escriba-preview-cover-wrapper">
+                  <img src={coverImage} alt="Portada de la historia" className="escriba-preview-cover-img" />
+                </div>
+              )}
+
               {synopsis && (
                 <div className="escriba-preview-synopsis">
                   «{synopsis}»
@@ -1065,6 +1171,38 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
           </div>
         </div>
       )}
+
+      {/* MODAL DE ENCUADRE Y CENTRADO PROFESIONAL DE PORTADA */}
+      <ImageFramingModal
+        isOpen={!!coverFramingSource}
+        imageSrc={coverFramingSource}
+        title="Encuadre y Centrado de Portada · Gran Biblioteca"
+        subtitle="Ajusta el zoom, panea o rota para posicionar la portada de tu obra literaria."
+        aspectRatio={3 / 4}
+        allowedAspectRatios={[
+          { label: '3:4 Libro / Portada', ratio: 3 / 4, icon: '📖' },
+          { label: '4:5 Retrato / Ficha', ratio: 4 / 5, icon: '📱' },
+          { label: '1:1 Cuadrado', ratio: 1, icon: '⏹️' },
+          { label: 'Libre / Original', ratio: null, icon: '🔄' }
+        ]}
+        targetWidth={750}
+        targetHeight={1000}
+        onSave={async (framedFile) => {
+          setIsUploadingCover(true);
+          setCoverFramingSource(null);
+          try {
+            const { url } = await uploadImageWithFallback(framedFile, 'gran_galeria_portadas', 750, 1000, 0.82);
+            setCoverImage(url);
+            soundEffects.playSuccessFanfare();
+          } catch (err) {
+            console.error('Error al subir la portada:', err);
+            alert('No se pudo procesar la portada. Por favor intenta con otra imagen.');
+          } finally {
+            setIsUploadingCover(false);
+          }
+        }}
+        onClose={() => setCoverFramingSource(null)}
+      />
     </div>
   );
 };

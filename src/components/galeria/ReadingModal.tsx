@@ -124,6 +124,16 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({ textItem, onClose, o
                 <span>{textItem.awardBadge}</span>
               </div>
             )}
+
+            {textItem.coverImage && (
+              <div className="gg-reader-cover-container">
+                <img 
+                  src={textItem.coverImage} 
+                  alt={`Portada de ${textItem.title}`} 
+                  className="gg-reader-cover-img" 
+                />
+              </div>
+            )}
             
             <h1 className="gg-reader-story-title">{textItem.title}</h1>
             

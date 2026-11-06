@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import type { 
   PortalConfig, 
   StudentTextItem, 
@@ -50,6 +50,22 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
   // --- STATE FOR EDITING TEXTS (WATTPAD) ---
   const [editingText, setEditingText] = useState<Partial<StudentTextItem> | null>(null);
   const [isNewText, setIsNewText] = useState<boolean>(false);
+  const [textCoverFramingSource, setTextCoverFramingSource] = useState<string | File | null>(null);
+  const textCoverInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleTextCoverFramingSave = async (framedFile: File) => {
+    setIsUploading(true);
+    setTextCoverFramingSource(null);
+    try {
+      const { url } = await uploadImageWithFallback(framedFile, 'gran_galeria_portadas', 750, 1000, 0.82);
+      setEditingText(prev => prev ? ({ ...prev, coverImage: url }) : prev);
+    } catch (err) {
+      console.error('Error subiendo portada de relato:', err);
+      alert('No se pudo subir la portada del relato.');
+    } finally {
+      setIsUploading(false);
+    }
+  };
 
   const handleSaveText = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,6 +86,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           genre: (editingText.genre as LiteraryGenre) || 'fantasia',
           synopsis: editingText.synopsis || '',
           content: editingText.content || '',
+          coverImage: editingText.coverImage || '',
           awardBadge: editingText.awardBadge || '',
           concursoId: editingText.concursoId || '',
           likes: editingText.likes || 0,
@@ -452,6 +469,69 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                 />
               </div>
 
+              {/* Portada de la Obra (Ilustración / Portada de Libro) */}
+              <div style={{ marginBottom: '14px' }}>
+                <label className="inspector-label">Portada de la Obra (Ilustración / Portada de Libro):</label>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '14px', background: 'rgba(255,255,255,0.03)', padding: '10px 14px', borderRadius: '8px', border: '1px solid rgba(255,255,255,0.08)' }}>
+                  {editingText.coverImage ? (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <img 
+                        src={editingText.coverImage} 
+                        alt="Portada" 
+                        style={{ width: '60px', height: '80px', objectFit: 'cover', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)' }} 
+                      />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                        <span style={{ fontSize: '0.80rem', color: '#10b981', fontWeight: 700 }}>✓ Portada cargada</span>
+                        <div style={{ display: 'flex', gap: '6px' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary"
+                            style={{ padding: '3px 10px', fontSize: '0.78rem' }}
+                            onClick={() => textCoverInputRef.current?.click()}
+                            disabled={isUploading}
+                          >
+                            🔄 Cambiar Portada
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-danger"
+                            style={{ padding: '3px 10px', fontSize: '0.78rem', background: 'rgba(239,68,68,0.2)', border: '1px solid #ef4444', color: '#fca5a5' }}
+                            onClick={() => setEditingText(prev => prev ? ({ ...prev, coverImage: '' }) : prev)}
+                          >
+                            🗑️ Quitar
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ) : (
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                      <span style={{ fontSize: '0.82rem', color: '#94a3b8' }}>Sin portada (se mostrará diseño tipográfico con insignia)</span>
+                      <button
+                        type="button"
+                        className="btn btn-secondary"
+                        style={{ padding: '4px 12px', fontSize: '0.80rem' }}
+                        onClick={() => textCoverInputRef.current?.click()}
+                        disabled={isUploading}
+                      >
+                        {isUploading ? 'Subiendo...' : '🖼️ Subir Portada con Encuadre'}
+                      </button>
+                    </div>
+                  )}
+                  <input
+                    ref={textCoverInputRef}
+                    type="file"
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    onChange={e => {
+                      const file = e.target.files?.[0];
+                      if (!file) return;
+                      setTextCoverFramingSource(file);
+                      e.target.value = '';
+                    }}
+                  />
+                </div>
+              </div>
+
               <div style={{ marginBottom: '10px' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
                   <label className="inspector-label" style={{ margin: 0 }}>Contenido completo de la obra:</label>
@@ -540,20 +620,29 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                   gap: '12px'
                 }}
               >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <strong style={{ color: '#f8fafc', fontSize: '1rem' }}>{t.title}</strong>
-                    <span style={{ fontSize: '0.72rem', background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', padding: '1px 6px', borderRadius: '4px' }}>
-                      {t.genre}
-                    </span>
-                    {t.awardBadge && (
-                      <span style={{ fontSize: '0.72rem', background: '#f59e0b', color: '#ffffff', padding: '1px 6px', borderRadius: '4px' }}>
-                        {t.awardBadge}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  {t.coverImage && (
+                    <img 
+                      src={t.coverImage} 
+                      alt={t.title} 
+                      style={{ width: '42px', height: '56px', objectFit: 'cover', borderRadius: '4px', border: '1px solid rgba(255,255,255,0.15)', flexShrink: 0 }} 
+                    />
+                  )}
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <strong style={{ color: '#f8fafc', fontSize: '1rem' }}>{t.title}</strong>
+                      <span style={{ fontSize: '0.72rem', background: 'rgba(168, 85, 247, 0.2)', color: '#c084fc', padding: '1px 6px', borderRadius: '4px' }}>
+                        {t.genre}
                       </span>
-                    )}
-                  </div>
-                  <div style={{ fontSize: '0.80rem', color: '#94a3b8', marginTop: '2px' }}>
-                    Por {t.author} · {t.authorSchool || 'Estudiante'} · {t.reads} lecturas · {t.likes} me gusta
+                      {t.awardBadge && (
+                        <span style={{ fontSize: '0.72rem', background: '#f59e0b', color: '#ffffff', padding: '1px 6px', borderRadius: '4px' }}>
+                          {t.awardBadge}
+                        </span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '0.80rem', color: '#94a3b8', marginTop: '2px' }}>
+                      Por {t.author} · {t.authorSchool || 'Estudiante'} · {t.reads} lecturas · {t.likes} me gusta
+                    </div>
                   </div>
                 </div>
 
@@ -1194,6 +1283,25 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
         targetHeight={1000}
         onSave={handleArtFramingSave}
         onClose={() => setArtFramingSource(null)}
+      />
+
+      {/* Módulo de Encuadre y Centrado Profesional para Portadas de la Gran Biblioteca */}
+      <ImageFramingModal
+        isOpen={!!textCoverFramingSource}
+        imageSrc={textCoverFramingSource}
+        title="Encuadre y Centrado de Portada · Gran Biblioteca"
+        subtitle="Ajusta el zoom, panea o rota para posicionar la portada de la obra literaria."
+        aspectRatio={3 / 4}
+        allowedAspectRatios={[
+          { label: '3:4 Libro / Portada', ratio: 3 / 4, icon: '📖' },
+          { label: '4:5 Retrato / Ficha', ratio: 4 / 5, icon: '📱' },
+          { label: '1:1 Cuadrado', ratio: 1, icon: '⏹️' },
+          { label: 'Libre / Original', ratio: null, icon: '🔄' }
+        ]}
+        targetWidth={750}
+        targetHeight={1000}
+        onSave={handleTextCoverFramingSave}
+        onClose={() => setTextCoverFramingSource(null)}
       />
     </div>
   );

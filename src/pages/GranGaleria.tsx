@@ -350,12 +350,19 @@ export const GranGaleria: React.FC = () => {
               {filteredTexts.map(t => (
                 <article 
                   key={t.id} 
-                  className="gg-story-card"
+                  className={`gg-story-card ${t.coverImage ? 'has-cover' : ''}`}
                   onClick={() => {
                     soundEffects.playClick();
                     setActiveReadingText(t);
                   }}
                 >
+                  {t.coverImage && (
+                    <div className="story-cover-wrapper">
+                      <img src={t.coverImage} alt={t.title} className="story-cover-img" loading="lazy" />
+                      <div className="story-cover-gradient" />
+                    </div>
+                  )}
+
                   <div className="story-card-top">
                     {t.awardBadge && (
                       <span className="story-award-chip">{t.awardBadge}</span>
