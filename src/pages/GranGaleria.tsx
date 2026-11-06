@@ -14,6 +14,7 @@ import { ReadingModal } from '../components/galeria/ReadingModal';
 import { ArtPieceModal } from '../components/galeria/ArtPieceModal';
 import { VideoTheaterModal } from '../components/galeria/VideoTheaterModal';
 import { EscribaEditorModal } from '../components/galeria/EscribaEditorModal';
+import { ObraEditorModal } from '../components/galeria/ObraEditorModal';
 import { AuthModal } from '../components/auth/AuthModal';
 import { soundEffects } from '../utils/soundEffects';
 import './GranGaleria.css';
@@ -48,6 +49,7 @@ export const GranGaleria: React.FC = () => {
   const [activeVideo, setActiveVideo] = useState<StudentVideoItem | null>(null);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
+  const [isArtEditorOpen, setIsArtEditorOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [editorInitialData, setEditorInitialData] = useState<Partial<StudentTextItem> | undefined>(undefined);
 
@@ -60,6 +62,17 @@ export const GranGaleria: React.FC = () => {
       return;
     }
     setIsEditorOpen(true);
+  };
+
+  // Apertura segura del taller de artes visuales (requiere sesión activa de estudiante/docente)
+  const handleOpenArtEditor = () => {
+    soundEffects.playClick();
+    if (!user) {
+      soundEffects.playSpacePulse();
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsArtEditorOpen(true);
   };
 
   // Detección de prompt detonador desde la Máquina de Cuentos (Suite Creatika)
@@ -107,6 +120,39 @@ export const GranGaleria: React.FC = () => {
       } catch (mergeErr) {
         console.error('[GranGaleria] Error persistiendo relato en Firestore:', mergeErr);
         // Fallback context
+        await saveConfigToFirestore({
+          ...config,
+          granGaleria: updatedGaleria
+        });
+      }
+    }
+  };
+
+  const handleSaveNewArtwork = async (newArt: StudentArtItem) => {
+    const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
+    const existingIndex = (currentGaleria.artworks || []).findIndex(a => a.id === newArt.id);
+    let updatedArtworks: StudentArtItem[];
+    if (existingIndex >= 0) {
+      updatedArtworks = [...(currentGaleria.artworks || [])];
+      updatedArtworks[existingIndex] = newArt;
+    } else {
+      updatedArtworks = [newArt, ...(currentGaleria.artworks || [])];
+    }
+    const updatedGaleria = {
+      ...currentGaleria,
+      artworks: updatedArtworks
+    };
+
+    // Actualización atómica en config/portal autorizada para usuarios autenticados
+    const portalDocRef = doc(db, 'config', 'portal');
+    try {
+      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
+    } catch (err) {
+      console.warn('[GranGaleria] updateDoc falló para obra, intentando setDoc merge:', err);
+      try {
+        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
+      } catch (mergeErr) {
+        console.error('[GranGaleria] Error persistiendo obra en Firestore:', mergeErr);
         await saveConfigToFirestore({
           ...config,
           granGaleria: updatedGaleria
@@ -466,9 +512,25 @@ export const GranGaleria: React.FC = () => {
                   Exhibición de artes visuales. Admira las pinceladas, texturas y creatividad de los estudiantes. Haz clic en una pieza para apreciarla en alta resolución con iluminación museográfica.
                 </p>
               </div>
-              <span className="gg-results-counter">
-                Mostrando {filteredArtworks.length} {filteredArtworks.length === 1 ? 'obra' : 'obras'}
-              </span>
+              <div className="gg-section-header-actions">
+                <button
+                  type="button"
+                  className="btn btn-primary gg-obra-create-btn"
+                  onClick={handleOpenArtEditor}
+                  title={user ? "Publicar una nueva obra en la Gran Galería" : "Inicia sesión con tu cuenta para publicar una obra"}
+                >
+                  <span>🎨</span>
+                  <span>Crear Gran Obra</span>
+                  {!user && (
+                    <span className="gg-btn-login-badge" style={{ fontSize: '0.72rem', background: 'rgba(0,0,0,0.3)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)' }}>
+                      🔒 Iniciar Sesión
+                    </span>
+                  )}
+                </button>
+                <span className="gg-results-counter">
+                  Mostrando {filteredArtworks.length} {filteredArtworks.length === 1 ? 'obra' : 'obras'}
+                </span>
+              </div>
             </div>
 
             <div className="gg-artworks-grid">
@@ -755,6 +817,15 @@ export const GranGaleria: React.FC = () => {
         }}
         onSave={handleSaveNewText}
         initialData={editorInitialData}
+        currentUser={user}
+        userProfile={userProfile}
+      />
+
+      {/* Modal Taller de Artes Visuales / Crear Gran Obra */}
+      <ObraEditorModal
+        isOpen={isArtEditorOpen}
+        onClose={() => setIsArtEditorOpen(false)}
+        onSave={handleSaveNewArtwork}
         currentUser={user}
         userProfile={userProfile}
       />

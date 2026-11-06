@@ -1,0 +1,749 @@
+/* ==========================================================================
+   TALLER DE ARTES VISUALES · OBRA EDITOR MODAL
+   Diseño de estudio de arte y cédula museográfica con ergonomía móvil
+   ========================================================================== */
+
+.obra-editor-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  background: rgba(3, 7, 18, 0.88);
+  backdrop-filter: blur(14px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.25rem;
+}
+
+.obra-editor-container {
+  width: 100%;
+  max-width: 1020px;
+  height: 90vh;
+  max-height: 840px;
+  background: #090e1a;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 20px;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  box-shadow: 0 25px 65px rgba(0, 0, 0, 0.9), 0 0 30px rgba(56, 189, 248, 0.15);
+  animation: modalScaleIn 0.28s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes modalScaleIn {
+  from {
+    opacity: 0;
+    transform: scale(0.96) translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
+}
+
+/* 1. HEADER */
+.obra-editor-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.15rem 1.75rem;
+  background: rgba(15, 23, 42, 0.95);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 1rem;
+}
+
+.obra-header-title {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.obra-header-icon {
+  font-size: 1.85rem;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 6px 10px;
+  border-radius: 12px;
+}
+
+.obra-header-title h2 {
+  font-size: 1.25rem;
+  font-weight: 800;
+  color: #f8fafc;
+  margin: 0;
+  line-height: 1.25;
+}
+
+.obra-header-title p {
+  font-size: 0.82rem;
+  color: #94a3b8;
+  margin: 3px 0 0 0;
+}
+
+.obra-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.obra-tabs-switch {
+  display: flex;
+  background: rgba(2, 6, 23, 0.8);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 10px;
+  padding: 3px;
+  gap: 3px;
+}
+
+.obra-tab-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.84rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.obra-tab-btn:hover {
+  color: #f8fafc;
+}
+
+.obra-tab-btn.active {
+  background: rgba(56, 189, 248, 0.2);
+  color: #38bdf8;
+  border: 1px solid rgba(56, 189, 248, 0.4);
+}
+
+.obra-close-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  color: #cbd5e1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.1rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.obra-close-btn:hover {
+  background: rgba(239, 68, 68, 0.2);
+  color: #f87171;
+  border-color: rgba(239, 68, 68, 0.4);
+}
+
+/* 2. BODY */
+.obra-editor-body {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1.5rem 1.75rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  -webkit-overflow-scrolling: touch;
+}
+
+.obra-form-layout {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+}
+
+/* SESIÓN */
+.obra-session-badge-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+}
+
+.obra-session-badge-bar .session-user-badge {
+  font-size: 0.82rem;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.obra-session-badge-bar .session-user-badge strong {
+  color: #f8fafc;
+}
+
+.obra-session-badge-bar .session-user-badge small {
+  color: #94a3b8;
+}
+
+.obra-session-badge-bar .session-mode-note {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+/* HERO STUDIO ROW: LIENZO Y METADATOS */
+.obra-hero-studio-row {
+  display: grid;
+  grid-template-columns: 360px 1fr;
+  gap: 1.5rem;
+  align-items: stretch;
+}
+
+/* COLUMNA 1: LIENZO Y SUBIDA */
+.obra-canvas-studio-col {
+  display: flex;
+  flex-direction: column;
+}
+
+.obra-canvas-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.15rem;
+}
+
+.obra-canvas-label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #38bdf8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.obra-canvas-preview-box {
+  position: relative;
+  width: 100%;
+  min-height: 260px;
+  aspect-ratio: 4 / 3;
+  border-radius: 12px;
+  overflow: hidden;
+  border: 2px dashed rgba(56, 189, 248, 0.45);
+  background: rgba(3, 7, 18, 0.75);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.5);
+}
+
+.obra-canvas-preview-box:hover {
+  border-color: #38bdf8;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(56, 189, 248, 0.25);
+}
+
+.obra-canvas-preview-box.has-art {
+  border-style: solid;
+  border-color: rgba(56, 189, 248, 0.35);
+}
+
+.canvas-art-wrapper {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.canvas-art-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  background: #020617;
+  display: block;
+}
+
+.canvas-art-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.75);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: #ffffff;
+  font-size: 0.85rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 0.5rem;
+}
+
+.canvas-art-wrapper:hover .canvas-art-hover-overlay {
+  opacity: 1;
+}
+
+.canvas-art-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 1rem;
+  color: #94a3b8;
+  gap: 0.45rem;
+}
+
+.placeholder-art-icon {
+  font-size: 2.2rem;
+}
+
+.canvas-art-placeholder strong {
+  color: #f1f5f9;
+  font-size: 0.92rem;
+}
+
+.canvas-art-placeholder small {
+  color: #64748b;
+  font-size: 0.76rem;
+  line-height: 1.35;
+}
+
+.canvas-framing-badge {
+  margin-top: 0.4rem;
+  font-size: 0.70rem;
+  font-weight: 700;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  padding: 3px 8px;
+  border-radius: 6px;
+}
+
+.obra-canvas-cta-row {
+  display: flex;
+  gap: 0.5rem;
+  width: 100%;
+}
+
+.obra-upload-btn {
+  flex: 1;
+  padding: 0.6rem 0.85rem !important;
+  font-size: 0.85rem !important;
+  font-weight: 700;
+  border-radius: 8px;
+  justify-content: center;
+  gap: 0.4rem;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border: 1px solid #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.35) !important;
+}
+
+.obra-upload-btn:hover {
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important;
+  box-shadow: 0 6px 18px rgba(56, 189, 248, 0.45) !important;
+}
+
+.obra-clear-btn {
+  padding: 0.6rem 0.85rem !important;
+  font-size: 0.85rem !important;
+  border-radius: 8px;
+}
+
+/* COLUMNA 2: METADATOS Y FICHA TÉCNICA */
+.obra-metadata-col {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.obra-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.obra-field label {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #94a3b8;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.obra-field input,
+.obra-field select,
+.obra-field textarea {
+  background: rgba(3, 7, 18, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  color: #f8fafc;
+  padding: 0.65rem 0.85rem;
+  border-radius: 8px;
+  font-size: 0.9rem;
+  outline: none;
+  transition: all 0.2s ease;
+  font-family: inherit;
+}
+
+.obra-field input:focus,
+.obra-field select:focus,
+.obra-field textarea:focus {
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.25);
+}
+
+.obra-fields-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.85rem;
+}
+
+/* SEUDÓNIMO / FIRMA */
+.obra-pseudonym-card {
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.6) 0%, rgba(15, 23, 42, 0.75) 100%);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+  padding: 0.6rem 0.85rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.pseudonym-checkbox-row {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  cursor: pointer;
+}
+
+.pseudonym-checkbox-row input[type="checkbox"] {
+  width: 17px;
+  height: 17px;
+  cursor: pointer;
+  accent-color: #38bdf8;
+}
+
+.pseudonym-checkbox-row label {
+  font-size: 0.82rem;
+  color: #cbd5e1;
+  cursor: pointer;
+}
+
+.pseudonym-input-group {
+  display: flex;
+  gap: 0.5rem;
+}
+
+.pseudonym-input-group input {
+  flex: 1;
+  background: rgba(3, 7, 18, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #f8fafc;
+  padding: 0.5rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.85rem;
+}
+
+.pseudonym-dice-btn {
+  background: rgba(56, 189, 248, 0.15);
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  color: #38bdf8;
+  padding: 0.45rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+}
+
+.pseudonym-dice-btn:hover {
+  background: #38bdf8;
+  color: #0f172a;
+}
+
+.obra-field-statement textarea {
+  resize: vertical;
+  min-height: 90px;
+  line-height: 1.5;
+}
+
+/* 3. VISTA PREVIA MUSEOGRÁFICA */
+.obra-preview-chamber-layout {
+  display: grid;
+  grid-template-columns: 1.2fr 1fr;
+  height: 100%;
+  min-height: 500px;
+  border-radius: 14px;
+  overflow: hidden;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.obra-preview-gallery {
+  position: relative;
+  background: radial-gradient(circle at 50% 40%, #1e293b 0%, #020617 80%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 2rem 1.5rem;
+  overflow: hidden;
+}
+
+.preview-empty-frame {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 2.5rem 1.5rem;
+  color: #94a3b8;
+  gap: 0.75rem;
+}
+
+.preview-empty-frame span {
+  font-size: 2.5rem;
+}
+
+.preview-empty-frame p {
+  font-size: 0.85rem;
+  margin: 0;
+  max-width: 240px;
+}
+
+.obra-preview-placard {
+  padding: 2rem 1.75rem;
+  overflow-y: auto;
+  background: #0d1527;
+  border-left: 1px solid rgba(255, 255, 255, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+/* 4. FOOTER */
+.obra-editor-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.75rem;
+  background: rgba(15, 23, 42, 0.95);
+  border-top: 1px solid rgba(255, 255, 255, 0.1);
+  gap: 1rem;
+}
+
+.obra-footer-note {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.obra-footer-buttons {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.obra-btn-cancel {
+  padding: 0.65rem 1.15rem;
+  font-size: 0.88rem;
+  font-weight: 700;
+  border-radius: 8px;
+}
+
+.obra-btn-submit {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.65rem 1.35rem;
+  font-size: 0.92rem;
+  font-weight: 800;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%) !important;
+  border: 1px solid #38bdf8 !important;
+  color: #ffffff !important;
+  box-shadow: 0 4px 16px rgba(2, 132, 199, 0.4) !important;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.obra-btn-submit:hover:not(:disabled) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(56, 189, 248, 0.5) !important;
+  background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%) !important;
+}
+
+.obra-btn-submit:disabled {
+  opacity: 0.55;
+  cursor: not-allowed;
+}
+
+/* ==========================================================================
+   RESPONSIVO MÓVIL (Conforme a .agents/rules/mobile-parameters.md)
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  .obra-editor-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .obra-editor-container {
+    width: 100%;
+    max-width: 100%;
+    height: 96dvh;
+    max-height: 96dvh;
+    border-radius: 18px 18px 0 0;
+    border-bottom: none;
+  }
+
+  .obra-editor-header {
+    padding: 0.75rem 0.85rem;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0.6rem;
+  }
+
+  .obra-header-title {
+    justify-content: space-between;
+    width: 100%;
+  }
+
+  .obra-header-icon {
+    font-size: 1.4rem;
+    padding: 0.2rem 0.4rem;
+  }
+
+  .obra-header-title h2 {
+    font-size: 1.05rem;
+  }
+
+  .obra-header-title p {
+    display: none;
+  }
+
+  .obra-header-actions {
+    width: 100%;
+    justify-content: space-between;
+    gap: 0.4rem;
+  }
+
+  .obra-tab-btn {
+    flex: 1;
+    justify-content: center;
+    font-size: 0.8rem;
+    padding: 0.5rem 0.6rem;
+    min-height: 40px;
+  }
+
+  .obra-close-btn {
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 1.15rem;
+  }
+
+  .obra-editor-body {
+    padding: 0.85rem;
+    gap: 0.85rem;
+  }
+
+  .obra-hero-studio-row {
+    grid-template-columns: 1fr;
+    gap: 0.85rem;
+  }
+
+  .obra-fields-row {
+    grid-template-columns: 1fr;
+    gap: 0.65rem;
+  }
+
+  .obra-canvas-card,
+  .obra-metadata-col {
+    padding: 0.85rem;
+  }
+
+  .obra-canvas-preview-box {
+    min-height: 220px;
+  }
+
+  /* 16px en móvil para evitar auto-zoom en iOS Safari */
+  .obra-field input,
+  .obra-field select,
+  .obra-field textarea,
+  .pseudonym-input-group input {
+    font-size: 16px !important;
+    padding: 0.6rem 0.75rem;
+  }
+
+  .obra-upload-btn {
+    min-height: 44px;
+    font-size: 0.9rem !important;
+  }
+
+  .obra-preview-chamber-layout {
+    grid-template-columns: 1fr;
+    min-height: auto;
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .obra-preview-gallery {
+    padding: 1rem 0.5rem;
+    min-height: 240px;
+  }
+
+  .obra-preview-placard {
+    padding: 1rem 0.85rem calc(2rem + env(safe-area-inset-bottom)) 0.85rem;
+    border-left: none;
+    border-top: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  .obra-editor-footer {
+    flex-direction: column;
+    gap: 0.65rem;
+    padding: 0.75rem 0.85rem calc(1rem + env(safe-area-inset-bottom)) 0.85rem;
+  }
+
+  .obra-footer-note {
+    font-size: 0.74rem;
+    text-align: center;
+    justify-content: center;
+  }
+
+  .obra-footer-buttons {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .obra-btn-cancel {
+    flex: 1;
+    min-height: 44px;
+    justify-content: center;
+  }
+
+  .obra-btn-submit {
+    flex: 2;
+    min-height: 44px;
+    justify-content: center;
+    font-size: 0.9rem;
+  }
+}
+
