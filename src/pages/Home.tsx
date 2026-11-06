@@ -238,8 +238,8 @@ export default function Home() {
           <div className="hs-showcase-col">
             <div
               className="hs-visual-card"
-              onClick={() => handleNavigate('/sutz')}
-              title="Haz clic para explorar el Mundo Virtual Sutz"
+              onClick={() => handleNavigate('/gran-galeria')}
+              title="Haz clic para explorar la Gran Galería de Sutz"
             >
               {sutzSec.bgImage && (
                 <div
@@ -252,28 +252,28 @@ export default function Home() {
               <div className="hs-visual-content">
                 <div className="hs-visual-top">
                   <div className="hs-visual-badge">
-                    <span>☁️</span>
-                    <span>Mundo Virtual Sutz</span>
+                    <span>🏛️</span>
+                    <span>Gran Galería Sutz</span>
                   </div>
-                  <span className="hs-visual-status">✦ Adaptativo</span>
+                  <span className="hs-visual-status">✦ Salón de Honor</span>
                 </div>
 
                 <div className="hs-visual-center">
-                  <span className="hs-visual-big-icon">☁️</span>
+                  <span className="hs-visual-big-icon">🏛️</span>
                   <div className="hs-visual-label-box">
-                    <strong>Sutz Descubre</strong>
-                    <small>Territorio Hexagonal & Biomas</small>
+                    <strong>La Gran Galería</strong>
+                    <small>Exhibición & Colección Viva</small>
                   </div>
                 </div>
 
                 <div className="hs-visual-bottom">
                   <div className="hs-visual-pills">
-                    <span className="hs-visual-pill-tag">🌲 Bioma Ancestral</span>
-                    <span className="hs-visual-pill-tag">📜 Mitos Popol Vuh</span>
-                    <span className="hs-visual-pill-tag">🗺️ 6 Reinos</span>
+                    <span className="hs-visual-pill-tag">🏛️ Obras Maestras</span>
+                    <span className="hs-visual-pill-tag">🎨 Creadores</span>
+                    <span className="hs-visual-pill-tag">🏆 Galería de Honor</span>
                   </div>
                   <div className="hs-visual-hint">
-                    <span>Explorar territorio interactivo</span>
+                    <span>Explorar la Gran Galería</span>
                     <span>➔</span>
                   </div>
                 </div>
@@ -326,35 +326,16 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Hub de Accesos Directos */}
+            {/* Hub de Acceso Exclusivo */}
             <div className="hs-actions-hub">
               <button
                 className="hs-btn-primary"
-                onClick={() => handleNavigate('/sutz')}
-                title="Entrar al Mundo Virtual Sutz"
+                onClick={() => handleNavigate('/gran-galeria')}
+                title="Explorar la Gran Galería de Sutz"
               >
-                <span>☁️ Entrar al Mundo Virtual Sutz</span>
+                <span>🏛️ Explorar la Gran Galería</span>
                 <span className="hs-btn-arrow">➔</span>
               </button>
-
-              <div className="hs-submodules-row">
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/libros')}
-                  title="Ver Cuentos del Popol Vuh"
-                >
-                  <span>📖 Cuentos del Popol Vuh</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/sutz')}
-                  title="Ver Mapa Hexagonal"
-                >
-                  <span>🗺️ Explorar Mapa Hexagonal</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -369,8 +350,8 @@ export default function Home() {
           <div className="hs-showcase-col">
             <div
               className="hs-visual-card"
-              onClick={() => handleNavigate('/creatika')}
-              title="Haz clic para entrar a la Suite Creatika"
+              onClick={() => handleNavigate('/creatika/teoria-del-color')}
+              title="Haz clic para entrar a Los Guardianes del Color"
             >
               {creatikaSec.bgImage && (
                 <div
@@ -383,28 +364,28 @@ export default function Home() {
               <div className="hs-visual-content">
                 <div className="hs-visual-top">
                   <div className="hs-visual-badge">
-                    <span>🎨</span>
-                    <span>Suite Creatika</span>
+                    <span>🐰</span>
+                    <span>Guardianes del Color</span>
                   </div>
                   <span className="hs-visual-status" style={{ color: '#fb7185', background: 'rgba(251, 113, 133, 0.15)' }}>✦ Creatividad</span>
                 </div>
 
                 <div className="hs-visual-center">
-                  <span className="hs-visual-big-icon">🎨</span>
+                  <span className="hs-visual-big-icon">🐰</span>
                   <div className="hs-visual-label-box">
-                    <strong>Estudio Creativo</strong>
-                    <small>Arte, Narrativa & Personajes</small>
+                    <strong>Los Guardianes del Color</strong>
+                    <small>Teoría Cromática & Armonía Visual</small>
                   </div>
                 </div>
 
                 <div className="hs-visual-bottom">
                   <div className="hs-visual-pills">
-                    <span className="hs-visual-pill-tag">🎭 12 Arquetipos</span>
-                    <span className="hs-visual-pill-tag">🎰 Viaje del Héroe</span>
-                    <span className="hs-visual-pill-tag">🎨 Cromática</span>
+                    <span className="hs-visual-pill-tag">🎨 Armonía Cromática</span>
+                    <span className="hs-visual-pill-tag">🐰 Guardianes</span>
+                    <span className="hs-visual-pill-tag">✨ Sensibilidad Visual</span>
                   </div>
                   <div className="hs-visual-hint">
-                    <span>Ingresar a la suite creativa</span>
+                    <span>Explorar Guardianes del Color</span>
                     <span>➔</span>
                   </div>
                 </div>
@@ -457,43 +438,16 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Hub de Accesos Directos */}
+            {/* Hub de Acceso Exclusivo */}
             <div className="hs-actions-hub">
               <button
                 className="hs-btn-primary"
-                onClick={() => handleNavigate('/creatika')}
-                title="Abrir la Suite Creatika"
+                onClick={() => handleNavigate('/creatika/teoria-del-color')}
+                title="Explorar Los Guardianes del Color"
               >
-                <span>✨ Abrir Suite Creatika</span>
+                <span>🐰 Explorar Guardianes del Color</span>
                 <span className="hs-btn-arrow">➔</span>
               </button>
-
-              <div className="hs-submodules-row">
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/creatika/personajes')}
-                  title="Abrir Laboratorio de Creación de Personajes"
-                >
-                  <span>🎭 Creación de Personajes</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/creatika/maquina-de-cuentos')}
-                  title="Abrir Máquina de Cuentos"
-                >
-                  <span>🎰 Máquina de Cuentos</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/creatika/teoria-del-color')}
-                  title="Abrir Laboratorio de Teoría del Color"
-                >
-                  <span>🎨 Teoría del Color</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -508,8 +462,8 @@ export default function Home() {
           <div className="hs-showcase-col">
             <div
               className="hs-visual-card"
-              onClick={() => handleNavigate('/100tek/sistema-solar')}
-              title="Haz clic para explorar el Sistema Solar 3D"
+              onClick={() => handleNavigate('/atlas')}
+              title="Haz clic para explorar el Cuerpo Humano Virtual 3D"
             >
               {tek100Sec.bgImage && (
                 <div
@@ -522,28 +476,28 @@ export default function Home() {
               <div className="hs-visual-content">
                 <div className="hs-visual-top">
                   <div className="hs-visual-badge">
-                    <span>⚡</span>
-                    <span>100TEK · STEAM</span>
+                    <span>🫀</span>
+                    <span>Atlas Anatómico 3D</span>
                   </div>
                   <span className="hs-visual-status" style={{ color: '#c084fc', background: 'rgba(192, 132, 252, 0.15)' }}>✦ Ciencia 3D</span>
                 </div>
 
                 <div className="hs-visual-center">
-                  <span className="hs-visual-big-icon">⚡</span>
+                  <span className="hs-visual-big-icon">🫀</span>
                   <div className="hs-visual-label-box">
-                    <strong>Laboratorio STEAM</strong>
-                    <small>Simulación Espacial & Anatomía</small>
+                    <strong>Cuerpo Humano 3D</strong>
+                    <small>+3,400 Estructuras & Disección</small>
                   </div>
                 </div>
 
                 <div className="hs-visual-bottom">
                   <div className="hs-visual-pills">
-                    <span className="hs-visual-pill-tag">🫀 +3,400 Estructuras</span>
-                    <span className="hs-visual-pill-tag">🪐 Órbitas 3D</span>
-                    <span className="hs-visual-pill-tag">🔢 Lógica Numérica</span>
+                    <span className="hs-visual-pill-tag">🫀 Atlas Anatómico 3D</span>
+                    <span className="hs-visual-pill-tag">🔬 Capas y Disección</span>
+                    <span className="hs-visual-pill-tag">🧬 Rigor Científico</span>
                   </div>
                   <div className="hs-visual-hint">
-                    <span>Explorar simulaciones 3D</span>
+                    <span>Explorar el Cuerpo Humano 3D</span>
                     <span>➔</span>
                   </div>
                 </div>
@@ -596,7 +550,7 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Hub de Accesos Directos */}
+            {/* Hub de Acceso Exclusivo */}
             <div className="hs-actions-hub">
               <button
                 className="hs-btn-primary"
@@ -606,25 +560,6 @@ export default function Home() {
                 <span>🫀 Explorar Cuerpo Humano 3D</span>
                 <span className="hs-btn-arrow">➔</span>
               </button>
-
-              <div className="hs-submodules-row">
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/100tek/sistema-solar')}
-                  title="Abrir Simulador del Sistema Solar 3D"
-                >
-                  <span>🪐 Sistema Solar 3D</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/100tek/secuencias-numericas')}
-                  title="Abrir Retos de Secuencias Numéricas"
-                >
-                  <span>🔢 Secuencias Numéricas</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-              </div>
             </div>
           </div>
         </div>
@@ -640,7 +575,7 @@ export default function Home() {
             <div
               className="hs-visual-card"
               onClick={() => handleNavigate('/laboratorios')}
-              title="Haz clic para ver los Laboratorios Docentes"
+              title="Haz clic para ver los Laboratorios y Talleres Pedagógicos"
             >
               {labSec.bgImage && (
                 <div
@@ -654,7 +589,7 @@ export default function Home() {
                 <div className="hs-visual-top">
                   <div className="hs-visual-badge">
                     <span>🧪</span>
-                    <span>LAB Formativo</span>
+                    <span>LAB Pedagógico</span>
                   </div>
                   <span className="hs-visual-status" style={{ color: '#fb923c', background: 'rgba(251, 146, 60, 0.15)' }}>✦ Pedagogía</span>
                 </div>
@@ -662,19 +597,19 @@ export default function Home() {
                 <div className="hs-visual-center">
                   <span className="hs-visual-big-icon">🧪</span>
                   <div className="hs-visual-label-box">
-                    <strong>Centro Pedagógico</strong>
-                    <small>Talleres Docentes & Gamificación</small>
+                    <strong>Laboratorios Pedagógicos</strong>
+                    <small>Talleres & Metodologías Activas</small>
                   </div>
                 </div>
 
                 <div className="hs-visual-bottom">
                   <div className="hs-visual-pills">
                     <span className="hs-visual-pill-tag">🧪 Talleres Prácticos</span>
-                    <span className="hs-visual-pill-tag">🎲 Bingotenango</span>
-                    <span className="hs-visual-pill-tag">🧠 Neuroaprendizaje</span>
+                    <span className="hs-visual-pill-tag">📋 Rúbricas Docentes</span>
+                    <span className="hs-visual-pill-tag">🧠 Metodologías Activas</span>
                   </div>
                   <div className="hs-visual-hint">
-                    <span>Explorar recursos para docentes</span>
+                    <span>Explorar Laboratorios y Talleres</span>
                     <span>➔</span>
                   </div>
                 </div>
@@ -727,35 +662,16 @@ export default function Home() {
               </div>
             </div>
 
-            {/* Hub de Accesos Directos */}
+            {/* Hub de Acceso Exclusivo */}
             <div className="hs-actions-hub">
               <button
                 className="hs-btn-primary"
                 onClick={() => handleNavigate('/laboratorios')}
-                title="Conocer los Laboratorios y Talleres"
+                title="Explorar Laboratorios y Talleres Pedagógicos"
               >
-                <span>🧪 Ver Laboratorios y Talleres</span>
+                <span>🧪 Explorar Laboratorios y Talleres</span>
                 <span className="hs-btn-arrow">➔</span>
               </button>
-
-              <div className="hs-submodules-row">
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/juegos/bingo')}
-                  title="Abrir Bingotenango"
-                >
-                  <span>🎲 Jugar Bingotenango</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-                <button
-                  className="hs-submodule-pill"
-                  onClick={() => handleNavigate('/neurociencia')}
-                  title="Ver Guía de Neurociencia Educativa"
-                >
-                  <span>🧠 Neurociencia Aula</span>
-                  <span className="sub-arrow">➔</span>
-                </button>
-              </div>
             </div>
           </div>
         </div>
