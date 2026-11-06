@@ -822,7 +822,8 @@
   border-radius: 6px;
 }
 
-.video-status-pipeline-pill {
+.video-status-pipeline-pill,
+.art-status-pipeline-pill {
   position: absolute;
   top: 8px;
   right: 8px;
@@ -834,6 +835,7 @@
   padding: 2px 8px;
   border-radius: 6px;
   backdrop-filter: blur(4px);
+  z-index: 2;
 }
 
 .video-card-info {

@@ -80,6 +80,12 @@ export const ArtPieceModal: React.FC<ArtPieceModalProps> = ({ artItem, onClose, 
                 </div>
               )}
 
+              {artItem.status === 'pendiente_revision' && (
+                <div style={{ background: 'rgba(234, 179, 8, 0.15)', border: '1px solid #eab308', color: '#fde047', padding: '3px 10px', borderRadius: '6px', fontSize: '0.78rem', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '5px', marginBottom: '8px' }}>
+                  <span>🟡</span> En Curaduría Oficial (Revisión Editorial)
+                </div>
+              )}
+
               <h2 className="placard-title">{artItem.title}</h2>
 
               <div className="placard-artist-row">
@@ -114,6 +120,15 @@ export const ArtPieceModal: React.FC<ArtPieceModalProps> = ({ artItem, onClose, 
                 <h4>Declaración de la Obra</h4>
                 <p>{artItem.description || 'Obra creada por el estudiante para la Gran Galería de Sutz.'}</p>
               </div>
+
+              {artItem.driveUrl && (
+                <div style={{ marginTop: '10px', background: 'rgba(56, 189, 248, 0.08)', border: '1px solid rgba(56, 189, 248, 0.25)', borderRadius: '8px', padding: '8px 12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.78rem', color: '#38bdf8' }}>📁 Fotografía original (300 DPI) archivada</span>
+                  <a href={artItem.driveUrl} target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.76rem', color: '#7dd3fc', textDecoration: 'none', fontWeight: 'bold' }}>
+                    Ver original en Drive ↗
+                  </a>
+                </div>
+              )}
 
               <div className="placard-actions">
                 <button 

@@ -747,3 +747,135 @@
   }
 }
 
+/* ==========================================================================
+   CONSERVACIÓN EN ALTA RESOLUCIÓN: GOOGLE DRIVE MÁSTER
+   ========================================================================== */
+.obra-drive-card {
+  margin-top: 1.15rem;
+  background: rgba(15, 23, 42, 0.7);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 14px;
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+}
+
+.obra-drive-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+}
+
+.obra-drive-title-area {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.obra-drive-icon {
+  font-size: 1.5rem;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.3);
+}
+
+.obra-drive-badge-line {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 2px;
+}
+
+.obra-drive-badge {
+  font-size: 0.68rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #38bdf8;
+  background: rgba(56, 189, 248, 0.15);
+  padding: 2px 7px;
+  border-radius: 5px;
+}
+
+.obra-drive-linked-badge {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #4ade80;
+  background: rgba(74, 222, 128, 0.15);
+  padding: 2px 7px;
+  border-radius: 5px;
+  border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.obra-drive-title {
+  margin: 0;
+  font-size: 0.96rem;
+  font-weight: 700;
+  color: #f1f5f9;
+}
+
+.obra-open-drive-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  padding: 6px 12px;
+  min-height: 38px;
+  color: #38bdf8;
+  border-color: rgba(56, 189, 248, 0.4);
+  background: rgba(56, 189, 248, 0.1);
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+}
+
+.obra-open-drive-btn:hover {
+  background: rgba(56, 189, 248, 0.22);
+  border-color: #38bdf8;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.obra-drive-desc {
+  margin: 0;
+  font-size: 0.82rem;
+  line-height: 1.45;
+  color: #94a3b8;
+}
+
+.obra-drive-input-row {
+  margin-top: 0.2rem;
+}
+
+.obra-drive-input-row label {
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #cbd5e1;
+  margin-bottom: 5px;
+  display: block;
+}
+
+.obra-drive-input-row input {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  background: rgba(2, 6, 23, 0.85);
+  border: 1px solid rgba(56, 189, 248, 0.3);
+  border-radius: 9px;
+  color: #f8fafc;
+  font-size: 16px; /* Touch standard to avoid auto-zoom */
+  box-sizing: border-box;
+}
+
+.obra-drive-input-row input:focus {
+  outline: none;
+  border-color: #38bdf8;
+  box-shadow: 0 0 0 3px rgba(56, 189, 248, 0.2);
+}
+
+

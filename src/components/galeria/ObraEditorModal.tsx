@@ -14,6 +14,7 @@ interface ObraEditorModalProps {
   initialData?: Partial<StudentArtItem>;
   currentUser?: User | null;
   userProfile?: UserProfile | null;
+  centralFolderUrl?: string; // Enlace a la carpeta central de Google Drive
 }
 
 export const ObraEditorModal: React.FC<ObraEditorModalProps> = ({
@@ -22,7 +23,8 @@ export const ObraEditorModal: React.FC<ObraEditorModalProps> = ({
   onSave,
   initialData,
   currentUser,
-  userProfile
+  userProfile,
+  centralFolderUrl
 }) => {
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
   const [isSaving, setIsSaving] = useState<boolean>(false);
@@ -33,6 +35,7 @@ export const ObraEditorModal: React.FC<ObraEditorModalProps> = ({
   const [dimensions, setDimensions] = useState(initialData?.dimensions || '');
   const [description, setDescription] = useState(initialData?.description || '');
   const [imageUrl, setImageUrl] = useState<string>(initialData?.imageUrl || '');
+  const [driveUrl, setDriveUrl] = useState<string>(initialData?.driveUrl || '');
 
   // Framing & Upload states
   const [imageFramingSource, setImageFramingSource] = useState<File | string | null>(null);
@@ -74,6 +77,7 @@ export const ObraEditorModal: React.FC<ObraEditorModalProps> = ({
       if (initialData.dimensions !== undefined) setDimensions(initialData.dimensions);
       if (initialData.description !== undefined) setDescription(initialData.description);
       if (initialData.imageUrl !== undefined) setImageUrl(initialData.imageUrl);
+      if (initialData.driveUrl !== undefined) setDriveUrl(initialData.driveUrl);
       if (initialData.artist) {
         setPseudonym(initialData.artist);
         setUsePseudonym(initialData.artist !== userFallbackName);
@@ -114,6 +118,8 @@ export const ObraEditorModal: React.FC<ObraEditorModalProps> = ({
     setIsSaving(true);
     try {
       const now = new Date().toISOString();
+      const calculatedStatus = initialData?.status || (driveUrl.trim() ? 'pendiente_revision' : 'aprobado');
+
       const newArtwork: StudentArtItem = {
         id: initialData?.id || `art-${Date.now()}`,
         title: title.trim(),
@@ -129,7 +135,10 @@ export const ObraEditorModal: React.FC<ObraEditorModalProps> = ({
         likes: initialData?.likes || 0,
         views: initialData?.views || 1,
         featured: initialData?.featured || false,
-        publishedAt: initialData?.publishedAt || now
+        publishedAt: initialData?.publishedAt || now,
+        driveUrl: driveUrl.trim() || undefined,
+        status: calculatedStatus,
+        authorEmail: currentUser?.email || undefined
       };
 
       await onSave(newArtwork);
@@ -409,6 +418,52 @@ export const ObraEditorModal: React.FC<ObraEditorModalProps> = ({
                       onChange={(e) => setDescription(e.target.value)}
                       placeholder="Comparte la historia detrás de tu creación: ¿Qué te inspiró? ¿Qué mensaje o emociones buscas transmitir con los colores y formas? ¿Qué materiales utilizaste?"
                     />
+                  </div>
+
+                  {/* CONSERVACIÓN EN ALTA RESOLUCIÓN: CARPETA CENTRAL GOOGLE DRIVE */}
+                  <div className="obra-drive-card">
+                    <div className="obra-drive-card-header">
+                      <div className="obra-drive-title-area">
+                        <span className="obra-drive-icon">📁</span>
+                        <div>
+                          <div className="obra-drive-badge-line">
+                            <span className="obra-drive-badge">Conservación & Imprenta</span>
+                            {driveUrl && <span className="obra-drive-linked-badge">✓ Máster Vinculado</span>}
+                          </div>
+                          <h4 className="obra-drive-title">Fotografía Original en Alta Resolución (Google Drive)</h4>
+                        </div>
+                      </div>
+
+                      {centralFolderUrl && (
+                        <a
+                          href={centralFolderUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="btn btn-secondary obra-open-drive-btn"
+                          title="Abrir la carpeta central de Google Drive de la editorial"
+                        >
+                          <span>📂</span>
+                          <span>Abrir Carpeta Central de Drive ↗</span>
+                        </a>
+                      )}
+                    </div>
+
+                    <p className="obra-drive-desc">
+                      La Gran Galería comprime automáticamente tu imagen a WebP para que cargue al instante en la web. Para que tu obra pueda ser impresa en diplomas, catálogos físicos o participar en bienales, deposita tu fotografía original (JPG/PNG en alta calidad) en nuestra carpeta central o nubes y pega su enlace aquí.
+                    </p>
+
+                    <div className="obra-field obra-drive-input-row">
+                      <label htmlFor="obra-drive-url">
+                        🔗 Enlace compartido de la foto original (Google Drive / OneDrive):
+                      </label>
+                      <input
+                        id="obra-drive-url"
+                        type="url"
+                        value={driveUrl}
+                        onChange={(e) => setDriveUrl(e.target.value)}
+                        placeholder="https://drive.google.com/file/d/... o enlace de tu nube"
+                      />
+                    </div>
                   </div>
                 </div>
               </div>

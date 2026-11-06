@@ -597,6 +597,9 @@ export const GranGaleria: React.FC = () => {
                     {a.awardBadge && (
                       <span className="art-award-badge">{a.awardBadge}</span>
                     )}
+                    {a.status === 'pendiente_revision' && (
+                      <span className="art-status-pipeline-pill">🟡 En Curaduría Oficial</span>
+                    )}
                   </div>
 
                   <div className="art-card-details">
@@ -893,6 +896,7 @@ export const GranGaleria: React.FC = () => {
         onSave={handleSaveNewArtwork}
         currentUser={user}
         userProfile={userProfile}
+        centralFolderUrl={galeriaData.centralArtDriveFolderUrl}
       />
 
       {/* Modal Taller Audiovisual / Postular Producción */}

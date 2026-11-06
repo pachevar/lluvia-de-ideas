@@ -367,6 +367,9 @@ export interface StudentArtItem {
   views: number;
   featured?: boolean;
   publishedAt: string;
+  driveUrl?: string; // Enlace a Google Drive con la foto original en alta resolución (300 DPI)
+  status?: 'aprobado' | 'pendiente_revision' | 'procesando'; // Estado en el pipeline editorial
+  authorEmail?: string;
 }
 
 export interface StudentVideoItem {
@@ -413,6 +416,8 @@ export interface GranGaleriaConfig {
   artworks: StudentArtItem[];
   videos: StudentVideoItem[];
   contests: ContestItem[];
+  centralArtDriveFolderUrl?: string; // Carpeta central de Google Drive para recepción de obras de arte en alta resolución
+  centralVideoDriveFolderUrl?: string; // Carpeta central de Google Drive para videos y producciones audiovisuales
 }
 
 export type PozoIdeaCategory = 'creatika' | '100tek' | 'lab' | 'mercado' | 'sutz';

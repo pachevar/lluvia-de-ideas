@@ -145,13 +145,21 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           likes: editingArt.likes || 0,
           views: editingArt.views || 0,
           featured: Boolean(editingArt.featured),
-          publishedAt: now
+          publishedAt: now,
+          driveUrl: editingArt.driveUrl ? editingArt.driveUrl.trim() : undefined,
+          status: editingArt.status || 'aprobado',
+          authorEmail: editingArt.authorEmail
         };
         return { ...prev, artworks: [newItem, ...(prev.artworks || [])] };
       } else {
         return {
           ...prev,
-          artworks: (prev.artworks || []).map(a => a.id === editingArt.id ? { ...a, ...editingArt } as StudentArtItem : a)
+          artworks: (prev.artworks || []).map(a => a.id === editingArt.id ? { 
+            ...a, 
+            ...editingArt,
+            driveUrl: editingArt.driveUrl ? editingArt.driveUrl.trim() : undefined,
+            status: editingArt.status || a.status || 'aprobado'
+          } as StudentArtItem : a)
         };
       }
     });
@@ -688,6 +696,52 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           =================================================================== */}
       {activeSubTab === 'museo' && (
         <div>
+          {/* Configuración de Carpeta Central de Google Drive para Obras de Arte */}
+          <div style={{ background: 'rgba(15, 23, 42, 0.75)', padding: '14px 18px', borderRadius: '12px', border: '1px solid rgba(56, 189, 248, 0.35)', marginBottom: '1.25rem', boxShadow: '0 4px 16px rgba(0,0,0,0.3)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', flexWrap: 'wrap', gap: '10px' }}>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '1.25rem' }}>📂</span>
+                  <h4 style={{ margin: 0, color: '#38bdf8', fontSize: '1rem', fontWeight: 700 }}>
+                    Carpeta Central de Google Drive · Recepción de Obras en Alta Resolución
+                  </h4>
+                  <span style={{ fontSize: '0.72rem', background: 'rgba(56, 189, 248, 0.15)', color: '#7dd3fc', border: '1px solid rgba(56, 189, 248, 0.3)', padding: '2px 8px', borderRadius: '6px' }}>
+                    Almacenamiento Seguro
+                  </span>
+                </div>
+                <p style={{ margin: 0, fontSize: '0.82rem', color: '#94a3b8', lineHeight: 1.45, maxWidth: '780px' }}>
+                  Enlaza la carpeta de Google Drive de tu nueva cuenta donde los estudiantes depositan sus fotografías originales en alta calidad (300 DPI). En el portal web solo se almacena una miniatura WebP ultraliviana para máximo ahorro de cuota.
+                </p>
+              </div>
+
+              {galeriaConfig.centralArtDriveFolderUrl && (
+                <a
+                  href={galeriaConfig.centralArtDriveFolderUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="btn btn-secondary"
+                  style={{ fontSize: '0.8rem', padding: '6px 12px', color: '#38bdf8', borderColor: 'rgba(56, 189, 248, 0.4)', background: 'rgba(56, 189, 248, 0.1)', textDecoration: 'none' }}
+                >
+                  ↗ Abrir Carpeta en Drive
+                </a>
+              )}
+            </div>
+
+            <div style={{ marginTop: '12px' }}>
+              <input
+                type="url"
+                className="inspector-input"
+                style={{ width: '100%', padding: '0.6rem 0.85rem', background: 'rgba(2, 6, 23, 0.8)', borderColor: 'rgba(56, 189, 248, 0.3)' }}
+                value={galeriaConfig.centralArtDriveFolderUrl || ''}
+                onChange={e => {
+                  const val = e.target.value;
+                  updateGranGaleria(prev => ({ ...prev, centralArtDriveFolderUrl: val }));
+                }}
+                placeholder="https://drive.google.com/drive/folders/... (Pega aquí el enlace de la carpeta compartida)"
+              />
+            </div>
+          </div>
+
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h4 style={{ margin: 0, color: '#f8fafc' }}>Gran Galería (Obras de Arte e Ilustración)</h4>
             <button 
@@ -706,7 +760,8 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                   awardBadge: '',
                   likes: 0,
                   views: 0,
-                  featured: true
+                  featured: true,
+                  status: 'aprobado'
                 });
                 setIsNewArt(true);
               }}
@@ -785,6 +840,47 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                   />
                 </div>
                 <div>
+                  <label className="inspector-label">Estado de Curaduría:</label>
+                  <select
+                    className="inspector-select"
+                    value={editingArt.status || 'aprobado'}
+                    onChange={e => setEditingArt(prev => ({ ...prev, status: e.target.value as any }))}
+                  >
+                    <option value="aprobado">🟢 Aprobado / Exhibición Oficial en Galería</option>
+                    <option value="pendiente_revision">🟡 Pendiente de Curaduría / Revisión</option>
+                    <option value="procesando">⚙️ En Proceso de Edición / Imprenta</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Master en Google Drive / Fotografía 300 DPI */}
+              <div style={{ background: 'rgba(2, 6, 23, 0.6)', padding: '10px 12px', borderRadius: '8px', border: '1px solid rgba(56, 189, 248, 0.3)', marginBottom: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                  <label className="inspector-label" style={{ margin: 0, color: '#38bdf8' }}>
+                    📁 Archivo Máster Original (Google Drive / Fotografía 300 DPI):
+                  </label>
+                  {editingArt.driveUrl && (
+                    <a 
+                      href={editingArt.driveUrl} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      style={{ fontSize: '0.78rem', color: '#38bdf8', textDecoration: 'none', fontWeight: 'bold' }}
+                    >
+                      📥 Abrir y Descargar Archivo en Drive ↗
+                    </a>
+                  )}
+                </div>
+                <input 
+                  type="text" 
+                  className="inspector-input"
+                  value={editingArt.driveUrl || ''}
+                  onChange={e => setEditingArt(prev => ({ ...prev, driveUrl: e.target.value }))}
+                  placeholder="https://drive.google.com/file/d/... o enlace compartido en la carpeta central"
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+                <div>
                   <label className="inspector-label">Premio / Mención (Opcional):</label>
                   <input 
                     type="text" 
@@ -792,6 +888,16 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                     value={editingArt.awardBadge || ''}
                     onChange={e => setEditingArt(prev => ({ ...prev, awardBadge: e.target.value }))}
                     placeholder="Ej: 🥇 1er Lugar - Bienal de Arte"
+                  />
+                </div>
+                <div>
+                  <label className="inspector-label">Dimensiones / Formato:</label>
+                  <input 
+                    type="text" 
+                    className="inspector-input"
+                    value={editingArt.dimensions || ''}
+                    onChange={e => setEditingArt(prev => ({ ...prev, dimensions: e.target.value }))}
+                    placeholder="Ej: 50 x 70 cm o 3840x2160 px"
                   />
                 </div>
               </div>
@@ -866,17 +972,46 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                 key={a.id}
                 style={{ 
                   background: 'rgba(255,255,255,0.03)', 
-                  border: '1px solid rgba(255,255,255,0.08)', 
+                  border: a.status === 'pendiente_revision' ? '1px solid #f59e0b' : '1px solid rgba(255,255,255,0.08)', 
                   borderRadius: '10px', 
-                  overflow: 'hidden' 
+                  overflow: 'hidden',
+                  position: 'relative'
                 }}
               >
-                <img src={a.imageUrl} alt={a.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                <div style={{ position: 'relative' }}>
+                  <img src={a.imageUrl} alt={a.title} style={{ width: '100%', height: '140px', objectFit: 'cover' }} />
+                  {a.status === 'pendiente_revision' && (
+                    <span style={{ position: 'absolute', top: '8px', right: '8px', background: 'rgba(245, 158, 11, 0.9)', color: '#000', fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px', borderRadius: '4px' }}>
+                      🟡 En Curaduría
+                    </span>
+                  )}
+                  {a.driveUrl && (
+                    <span style={{ position: 'absolute', top: '8px', left: '8px', background: 'rgba(14, 165, 233, 0.9)', color: '#fff', fontSize: '0.68rem', fontWeight: 800, padding: '2px 7px', borderRadius: '4px' }}>
+                      📁 Drive 300 DPI
+                    </span>
+                  )}
+                </div>
                 <div style={{ padding: '10px' }}>
                   <strong style={{ color: '#f8fafc', display: 'block' }}>{a.title}</strong>
                   <div style={{ fontSize: '0.78rem', color: '#94a3b8' }}>Por {a.artist} ({a.technique})</div>
+                  {a.authorEmail && (
+                    <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>✉️ {a.authorEmail}</div>
+                  )}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                    <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>❤️ {a.likes}</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.74rem', color: '#cbd5e1' }}>❤️ {a.likes}</span>
+                      {a.driveUrl && (
+                        <a 
+                          href={a.driveUrl} 
+                          target="_blank" 
+                          rel="noopener noreferrer" 
+                          style={{ fontSize: '0.72rem', color: '#38bdf8', textDecoration: 'none', background: 'rgba(56, 189, 248, 0.1)', padding: '1px 6px', borderRadius: '4px', border: '1px solid rgba(56, 189, 248, 0.3)' }}
+                          title="Descargar fotografía máster original en Drive"
+                        >
+                          📥 Original
+                        </a>
+                      )}
+                    </div>
                     <div style={{ display: 'flex', gap: '4px' }}>
                       <button 
                         type="button" 
