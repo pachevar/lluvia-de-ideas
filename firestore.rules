@@ -13,6 +13,14 @@ service cloud.firestore {
     }
 
     // Configuración general del portal y submódulos
+    // Los usuarios autenticados pueden publicar y enriquecer relatos en la Gran Galería
+    match /config/portal {
+      allow read: if true;
+      allow write: if isAdmin() || (
+        request.auth != null && 
+        request.resource.data.diff(resource.data).affectedKeys().hasOnly(['granGaleria'])
+      );
+    }
     match /config/{document=**} {
       allow read: if true;
       allow write: if isAdmin();

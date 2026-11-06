@@ -36,6 +36,15 @@ service firebase.storage {
       allow read: if true;
       allow write: if request.auth != null;
     }
+    // Portadas de relatos e ilustraciones de la Gran Biblioteca (subidas por estudiantes autenticados)
+    match /gran_galeria_portadas/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    match /gran_galeria_arte/{allPaths=**} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
     // Cualquier otra ruta: lectura pública, escritura solo para usuarios autenticados
     match /{allPaths=**} {
       allow read: if true;

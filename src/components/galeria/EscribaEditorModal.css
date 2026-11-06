@@ -150,6 +150,182 @@
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
+/* SESIÓN DEL ESTUDIANTE / AUTOR BAR */
+.escriba-session-badge-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding: 0.55rem 0.95rem;
+  background: rgba(15, 23, 42, 0.75);
+  border: 1px solid rgba(56, 189, 248, 0.25);
+  border-radius: 10px;
+}
+
+.session-user-badge {
+  font-size: 0.82rem;
+  color: #38bdf8;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.session-user-badge strong {
+  color: #f8fafc;
+}
+
+.session-user-badge small {
+  color: #94a3b8;
+}
+
+.session-mode-note {
+  font-size: 0.75rem;
+  color: #cbd5e1;
+  font-style: italic;
+}
+
+/* HERO METADATA ROW CON PORTADA DESTACADA (TIPO WATTPAD / EDITORIAL) */
+.escriba-hero-metadata-row {
+  display: flex;
+  gap: 1.25rem;
+  align-items: stretch;
+  background: rgba(15, 23, 42, 0.65);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 1.25rem;
+}
+
+.escriba-cover-studio-col {
+  width: 175px;
+  min-width: 175px;
+  display: flex;
+  flex-direction: column;
+}
+
+.escriba-cover-card-hero {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  gap: 0.55rem;
+}
+
+.escriba-cover-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #f59e0b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  display: flex;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.escriba-cover-preview-canvas {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  border-radius: 10px;
+  overflow: hidden;
+  border: 2px dashed rgba(245, 158, 11, 0.45);
+  background: rgba(3, 7, 18, 0.7);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.25s ease;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.4);
+}
+
+.escriba-cover-preview-canvas:hover {
+  border-color: #f59e0b;
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(245, 158, 11, 0.25);
+}
+
+.canvas-cover-image-box {
+  width: 100%;
+  height: 100%;
+  position: relative;
+}
+
+.canvas-cover-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.canvas-cover-hover-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(3, 7, 18, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  color: #ffffff;
+  font-size: 0.82rem;
+  font-weight: 700;
+  padding: 0.5rem;
+  text-align: center;
+}
+
+.canvas-cover-image-box:hover .canvas-cover-hover-overlay {
+  opacity: 1;
+}
+
+.canvas-cover-placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 0.75rem;
+  color: #94a3b8;
+  gap: 0.35rem;
+}
+
+.canvas-cover-placeholder .placeholder-icon {
+  font-size: 2rem;
+}
+
+.canvas-cover-placeholder strong {
+  color: #f1f5f9;
+  font-size: 0.85rem;
+}
+
+.canvas-cover-placeholder small {
+  color: #64748b;
+  font-size: 0.72rem;
+  line-height: 1.35;
+}
+
+.escriba-cover-cta-row {
+  display: flex;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.escriba-cover-choose-btn {
+  flex: 1;
+  padding: 0.5rem 0.65rem !important;
+  font-size: 0.8rem !important;
+  font-weight: 700;
+  border-radius: 8px;
+  justify-content: center;
+  gap: 0.35rem;
+  box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);
+}
+
+.escriba-meta-col {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.9rem;
+}
+
 .escriba-field {
   display: flex;
   flex-direction: column;
@@ -1573,6 +1749,18 @@
   }
 
   /* Formulario a 1 columna y fuentes de 16px para evitar auto-zoom en iOS Safari */
+  .escriba-hero-metadata-row {
+    flex-direction: column;
+    padding: 0.85rem;
+    gap: 0.85rem;
+  }
+
+  .escriba-cover-studio-col {
+    width: 100%;
+    max-width: 200px;
+    margin: 0 auto;
+  }
+
   .escriba-meta-grid {
     grid-template-columns: 1fr;
     padding: 0.85rem;

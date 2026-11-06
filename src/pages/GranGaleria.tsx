@@ -1,5 +1,8 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { doc, updateDoc, setDoc } from 'firebase/firestore';
+import { db } from '../firebase';
+import { useAuth } from '../context/AuthContext';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { DEFAULT_GRAN_GALERIA } from '../data/defaultGranGaleriaData';
 import type { 
@@ -11,6 +14,7 @@ import { ReadingModal } from '../components/galeria/ReadingModal';
 import { ArtPieceModal } from '../components/galeria/ArtPieceModal';
 import { VideoTheaterModal } from '../components/galeria/VideoTheaterModal';
 import { EscribaEditorModal } from '../components/galeria/EscribaEditorModal';
+import { AuthModal } from '../components/auth/AuthModal';
 import { soundEffects } from '../utils/soundEffects';
 import './GranGaleria.css';
 
@@ -19,6 +23,7 @@ type GaleriaSection = 'escriba' | 'museo' | 'cine' | 'concursos';
 export const GranGaleria: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const { user, userProfile } = useAuth();
   const { config, saveConfigToFirestore } = usePortalConfig();
 
   // Config data fallback
@@ -43,7 +48,19 @@ export const GranGaleria: React.FC = () => {
   const [activeVideo, setActiveVideo] = useState<StudentVideoItem | null>(null);
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState<boolean>(false);
   const [isEditorOpen, setIsEditorOpen] = useState<boolean>(false);
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [editorInitialData, setEditorInitialData] = useState<Partial<StudentTextItem> | undefined>(undefined);
+
+  // Apertura segura del taller literario (requiere sesión activa de estudiante/docente)
+  const handleOpenEditor = () => {
+    soundEffects.playClick();
+    if (!user) {
+      soundEffects.playSpacePulse();
+      setIsAuthModalOpen(true);
+      return;
+    }
+    setIsEditorOpen(true);
+  };
 
   // Detección de prompt detonador desde la Máquina de Cuentos (Suite Creatika)
   useEffect(() => {
@@ -56,9 +73,13 @@ export const GranGaleria: React.FC = () => {
         synopsis: state.initialPrompt || '',
         content: `Prompt detonador de la Máquina de Cuentos:\n"${state.initialPrompt}"\n\n---\n\n(Comienza a redactar tu historia aquí...)`
       });
-      setIsEditorOpen(true);
+      if (user) {
+        setIsEditorOpen(true);
+      } else {
+        setIsAuthModalOpen(true);
+      }
     }
-  }, [location.state]);
+  }, [location.state, user]);
 
   const handleSaveNewText = async (newText: StudentTextItem) => {
     const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
@@ -74,10 +95,24 @@ export const GranGaleria: React.FC = () => {
       ...currentGaleria,
       texts: updatedTexts
     };
-    await saveConfigToFirestore({
-      ...config,
-      granGaleria: updatedGaleria
-    });
+
+    // Actualización atómica en config/portal autorizada para usuarios autenticados
+    const portalDocRef = doc(db, 'config', 'portal');
+    try {
+      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
+    } catch (err) {
+      console.warn('[GranGaleria] updateDoc falló, intentando setDoc merge:', err);
+      try {
+        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
+      } catch (mergeErr) {
+        console.error('[GranGaleria] Error persistiendo relato en Firestore:', mergeErr);
+        // Fallback context
+        await saveConfigToFirestore({
+          ...config,
+          granGaleria: updatedGaleria
+        });
+      }
+    }
   };
 
   // Tab change handler with audio
@@ -332,13 +367,16 @@ export const GranGaleria: React.FC = () => {
                 <button
                   type="button"
                   className="btn btn-primary gg-escriba-create-btn"
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setIsEditorOpen(true);
-                  }}
+                  onClick={handleOpenEditor}
+                  title={user ? "Escribir y publicar un nuevo relato en la Gran Biblioteca" : "Inicia sesión con tu cuenta para publicar un relato"}
                 >
                   <span>✍️</span>
                   <span>Escribir en la Gran Biblioteca</span>
+                  {!user && (
+                    <span className="gg-btn-login-badge" style={{ fontSize: '0.72rem', background: 'rgba(0,0,0,0.3)', padding: '2px 8px', borderRadius: '6px', border: '1px solid rgba(255,255,255,0.2)' }}>
+                      🔒 Iniciar Sesión
+                    </span>
+                  )}
                 </button>
                 <span className="gg-results-counter">
                   Mostrando {filteredTexts.length} {filteredTexts.length === 1 ? 'relato' : 'relatos'}
@@ -710,6 +748,15 @@ export const GranGaleria: React.FC = () => {
         }}
         onSave={handleSaveNewText}
         initialData={editorInitialData}
+        currentUser={user}
+        userProfile={userProfile}
+      />
+
+      {/* Modal de Autenticación Requerida */}
+      <AuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => setIsAuthModalOpen(false)}
+        initialMode="login"
       />
     </div>
   );

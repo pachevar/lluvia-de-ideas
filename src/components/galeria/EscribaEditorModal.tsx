@@ -1,5 +1,7 @@
 import React, { useState, useRef, useMemo, useEffect } from 'react';
+import type { User } from 'firebase/auth';
 import type { StudentTextItem, LiteraryGenre } from '../../types';
+import type { UserProfile } from '../../context/AuthContext';
 import { soundEffects } from '../../utils/soundEffects';
 import ImageFramingModal from '../common/ImageFramingModal';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
@@ -10,6 +12,8 @@ interface EscribaEditorModalProps {
   onClose: () => void;
   onSave: (newText: StudentTextItem) => Promise<void> | void;
   initialData?: Partial<StudentTextItem>;
+  currentUser?: User | null;
+  userProfile?: UserProfile | null;
 }
 
 type EditorTheme = 'papiro' | 'noche' | 'manuscrito';
@@ -18,7 +22,9 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
   isOpen,
   onClose,
   onSave,
-  initialData
+  initialData,
+  currentUser,
+  userProfile
 }) => {
   const [activeTab, setActiveTab] = useState<'editor' | 'preview'>('editor');
   const [editorTheme, setEditorTheme] = useState<EditorTheme>('papiro');
@@ -75,6 +81,9 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
   const [coverFramingSource, setCoverFramingSource] = useState<File | string | null>(null);
   const [isUploadingCover, setIsUploadingCover] = useState<boolean>(false);
   const coverFileInputRef = useRef<HTMLInputElement | null>(null);
+
+  // Nombre resuelto para la sesión del estudiante
+  const userFallbackName = userProfile?.displayName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'Estudiante';
 
   // Sincronizar datos si initialData cambia dinámicamente
   useEffect(() => {
@@ -344,7 +353,10 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
 
     const resolvedAuthor = usePseudonym
       ? (pseudonym.trim() || 'Escriba Anónimo')
-      : (initialData?.author || 'Autor Estudiantil');
+      : (initialData?.author && initialData.author !== 'Autor Estudiantil' ? initialData.author : userFallbackName);
+    const resolvedSchool = usePseudonym 
+      ? 'Seudónimo Literario' 
+      : (userProfile?.institution || initialData?.authorSchool || 'Comunidad Estudiantil');
 
     setIsSaving(true);
     try {
@@ -354,7 +366,7 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
         author: resolvedAuthor,
         isPseudonym: usePseudonym,
         authorGrade: initialData?.authorGrade || '',
-        authorSchool: usePseudonym ? 'Seudónimo Literario' : (initialData?.authorSchool || 'Códice Estudiantil'),
+        authorSchool: resolvedSchool,
         genre,
         synopsis: synopsis.trim() || title.trim(),
         content: content.trim(),
@@ -422,160 +434,88 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
         <div className="escriba-modal-body">
           {activeTab === 'editor' ? (
             <form id="escriba-form" onSubmit={handleSubmit} className="escriba-form-layout">
-              {/* METADATA GRID */}
-              <div className="escriba-meta-grid">
-                <div className="escriba-field escriba-field-title">
-                  <label htmlFor="escriba-title">📌 Título de la Obra *</label>
-                  <input
-                    id="escriba-title"
-                    type="text"
-                    value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    placeholder="Ejemplo: Las Sombras del Valle de la Niebla"
-                    required
-                  />
-                </div>
+              {/* SESIÓN DEL ESTUDIANTE / AUTOR */}
+              <div className="escriba-session-badge-bar">
+                <span className="session-user-badge">
+                  🟢 Publicando como: <strong>{userFallbackName}</strong>
+                  {userProfile?.institution && <small> · {userProfile.institution}</small>}
+                </span>
+                <span className="session-mode-note">
+                  ✨ Obra vinculada a tu cuenta de estudiante en la Gran Biblioteca
+                </span>
+              </div>
 
-                <div className="escriba-field escriba-field-genre">
-                  <label htmlFor="escriba-genre">🎭 Género Literario</label>
-                  <select
-                    id="escriba-genre"
-                    value={genre}
-                    onChange={(e) => setGenre(e.target.value as LiteraryGenre)}
-                  >
-                    <option value="fantasia">Fantasía & Aventura</option>
-                    <option value="ciencia_ficcion">Ciencia Ficción & Futuro</option>
-                    <option value="mitos">Mitos & Popol Vuh</option>
-                    <option value="poesia">Poesía & Versos Líricos</option>
-                    <option value="misterio">Misterio & Suspenso</option>
-                    <option value="cronica">Crónica Escolar & Realismo</option>
-                    <option value="cuento">Cuento Infantil & Fábulas</option>
-                    <option value="ensayo">Ensayo & Reflexión</option>
-                  </select>
-                </div>
+              {/* BLOQUE PRINCIPAL: PORTADA Y METADATOS DEL RELATO */}
+              <div className="escriba-hero-metadata-row">
+                {/* PORTADA DEL LIBRO */}
+                <div className="escriba-cover-studio-col">
+                  <div className="escriba-cover-card-hero">
+                    <span className="escriba-cover-title">🖼️ Portada del Libro</span>
+                    
+                    <div 
+                      className="escriba-cover-preview-canvas"
+                      onDragOver={(e) => e.preventDefault()}
+                      onDrop={(e) => {
+                        e.preventDefault();
+                        const file = e.dataTransfer.files?.[0];
+                        if (file) setCoverFramingSource(file);
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        coverFileInputRef.current?.click();
+                      }}
+                      title="Haz clic para seleccionar o cambiar la portada"
+                    >
+                      {coverImage ? (
+                        <div className="canvas-cover-image-box">
+                          <img src={coverImage} alt="Portada de la obra" className="canvas-cover-img" />
+                          <div className="canvas-cover-hover-overlay">
+                            <span>🔄 Cambiar Portada</span>
+                          </div>
+                        </div>
+                      ) : (
+                        <div className="canvas-cover-placeholder">
+                          <span className="placeholder-icon">🎨</span>
+                          <strong>Elige tu Portada</strong>
+                          <small>Proporción 3:4 o 4:5<br />Encuadre profesional</small>
+                        </div>
+                      )}
+                    </div>
 
-                {/* OPCIÓN: PUBLICAR BAJO UN SEUDÓNIMO */}
-                <div className="escriba-field escriba-field-full escriba-pseudonym-card">
-                  <div className="escriba-pseudonym-header">
-                    <label className="escriba-pseudonym-toggle-label">
-                      <input
-                        type="checkbox"
-                        checked={usePseudonym}
-                        onChange={(e) => {
-                          soundEffects.playClick();
-                          setUsePseudonym(e.target.checked);
-                        }}
-                        className="escriba-pseudonym-checkbox"
-                      />
-                      <span className="pseudonym-checkbox-custom"></span>
-                      <div className="pseudonym-toggle-text">
-                        <span className="pseudonym-toggle-title">
-                          🎭 Publicar bajo un seudónimo literario
-                        </span>
-                      </div>
-                    </label>
-                  </div>
-
-                  {usePseudonym && (
-                    <div className="escriba-pseudonym-input-row animate-fade-in">
-                      <div className="pseudonym-input-wrapper">
-                        <span className="pseudonym-icon">🪶</span>
-                        <input
-                          id="escriba-pseudonym"
-                          type="text"
-                          value={pseudonym}
-                          onChange={(e) => setPseudonym(e.target.value)}
-                          placeholder="Escribe tu seudónimo (ej: Pluma del Viento...)"
-                          maxLength={40}
-                        />
-                      </div>
+                    <div className="escriba-cover-cta-row">
                       <button
                         type="button"
-                        className="escriba-pseudonym-random-btn"
-                        onClick={handleRandomPseudonym}
-                        title="Generar un seudónimo literario aleatorio"
+                        className="btn btn-primary escriba-cover-choose-btn"
+                        onClick={(e) => {
+                          e.preventDefault();
+                          e.stopPropagation();
+                          coverFileInputRef.current?.click();
+                        }}
+                        disabled={isUploadingCover}
                       >
-                        <span>🎲</span> Aleatorio
+                        <span>🎨</span>
+                        <span>{coverImage ? 'Cambiar Portada' : 'Elegir Portada'}</span>
                       </button>
-                    </div>
-                  )}
-                </div>
-
-                <div className="escriba-field escriba-field-full">
-                  <label htmlFor="escriba-synopsis">✨ Sinopsis o Breve Resumen (1 a 3 líneas)</label>
-                  <textarea
-                    id="escriba-synopsis"
-                    rows={2}
-                    value={synopsis}
-                    onChange={(e) => setSynopsis(e.target.value)}
-                    placeholder="Resume el enigma o conflicto central para atrapar a tus lectores..."
-                  />
-                </div>
-
-                {/* PORTADA DE LA OBRA */}
-                <div className="escriba-field escriba-field-full escriba-cover-card">
-                  <div className="escriba-cover-header">
-                    <span className="escriba-cover-title">🖼️ Portada de la Obra (Opcional)</span>
-                    <span className="escriba-cover-subtitle">
-                      Sube una portada ilustrada para tu relato. Podrás recortar, centrar y optimizar con nuestro editor de alta precisión.
-                    </span>
-                  </div>
-
-                  <div className="escriba-cover-content">
-                    {coverImage ? (
-                      <div className="escriba-cover-active-box">
-                        <div className="escriba-cover-thumb-wrap">
-                          <img src={coverImage} alt="Portada de la obra" className="escriba-cover-thumb" />
-                        </div>
-                        <div className="escriba-cover-actions">
-                          <div className="escriba-cover-status">
-                            <span className="cover-badge-ready">✓ Portada lista</span>
-                            <small>Se exhibirá en la Gran Biblioteca y el visor de lectura</small>
-                          </div>
-                          <div className="escriba-cover-btn-group">
-                            <button
-                              type="button"
-                              className="btn btn-secondary escriba-cover-change-btn"
-                              onClick={() => coverFileInputRef.current?.click()}
-                              disabled={isUploadingCover}
-                            >
-                              🔄 Cambiar Portada
-                            </button>
-                            <button
-                              type="button"
-                              className="escriba-cover-remove-btn"
-                              onClick={() => {
-                                soundEffects.playClick();
-                                setCoverImage('');
-                              }}
-                              title="Quitar portada"
-                            >
-                              🗑️ Quitar
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    ) : (
-                      <div
-                        className="escriba-cover-empty-dropzone"
-                        onClick={() => coverFileInputRef.current?.click()}
-                      >
-                        <span className="dropzone-icon">🎨</span>
-                        <div className="dropzone-text-group">
-                          <strong>Subir ilustración o portada del libro</strong>
-                          <span>Haz clic para elegir una imagen · Enfoque interactivo y compresión WebP automática</span>
-                        </div>
+                      {coverImage && (
                         <button
                           type="button"
-                          className="btn btn-secondary dropzone-upload-btn"
-                          disabled={isUploadingCover}
+                          className="btn btn-danger escriba-cover-clear-btn"
+                          onClick={(e) => {
+                            e.preventDefault();
+                            e.stopPropagation();
+                            soundEffects.playClick();
+                            setCoverImage('');
+                          }}
+                          title="Eliminar portada"
+                          style={{ padding: '7px 10px', fontSize: '0.80rem' }}
                         >
-                          {isUploadingCover ? 'Subiendo...' : 'Seleccionar Imagen...'}
+                          🗑️
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
 
                     <input
+                      id="escriba-cover-file-input"
                       ref={coverFileInputRef}
                       type="file"
                       accept="image/*"
@@ -586,6 +526,97 @@ export const EscribaEditorModal: React.FC<EscribaEditorModalProps> = ({
                         setCoverFramingSource(file);
                         e.target.value = '';
                       }}
+                    />
+                  </div>
+                </div>
+
+                {/* COLUMNA DE DATOS DE LA OBRA */}
+                <div className="escriba-meta-col">
+                  <div className="escriba-field escriba-field-title">
+                    <label htmlFor="escriba-title">📌 Título de la Obra *</label>
+                    <input
+                      id="escriba-title"
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
+                      placeholder="Ejemplo: Las Sombras del Valle de la Niebla"
+                      required
+                    />
+                  </div>
+
+                  <div className="escriba-field escriba-field-genre">
+                    <label htmlFor="escriba-genre">🎭 Género Literario</label>
+                    <select
+                      id="escriba-genre"
+                      value={genre}
+                      onChange={(e) => setGenre(e.target.value as LiteraryGenre)}
+                    >
+                      <option value="fantasia">Fantasía & Aventura</option>
+                      <option value="ciencia_ficcion">Ciencia Ficción & Futuro</option>
+                      <option value="mitos">Mitos & Popol Vuh</option>
+                      <option value="poesia">Poesía & Versos Líricos</option>
+                      <option value="misterio">Misterio & Suspenso</option>
+                      <option value="cronica">Crónica Escolar & Realismo</option>
+                      <option value="cuento">Cuento Infantil & Fábulas</option>
+                      <option value="ensayo">Ensayo & Reflexión</option>
+                    </select>
+                  </div>
+
+                  {/* OPCIÓN: PUBLICAR BAJO UN SEUDÓNIMO */}
+                  <div className="escriba-field escriba-pseudonym-card">
+                    <div className="escriba-pseudonym-header">
+                      <label className="escriba-pseudonym-toggle-label">
+                        <input
+                          type="checkbox"
+                          checked={usePseudonym}
+                          onChange={(e) => {
+                            soundEffects.playClick();
+                            setUsePseudonym(e.target.checked);
+                          }}
+                          className="escriba-pseudonym-checkbox"
+                        />
+                        <span className="pseudonym-checkbox-custom"></span>
+                        <div className="pseudonym-toggle-text">
+                          <span className="pseudonym-toggle-title">
+                            🎭 Publicar bajo un seudónimo literario
+                          </span>
+                        </div>
+                      </label>
+                    </div>
+
+                    {usePseudonym && (
+                      <div className="escriba-pseudonym-input-row animate-fade-in">
+                        <div className="pseudonym-input-wrapper">
+                          <span className="pseudonym-icon">🪶</span>
+                          <input
+                            id="escriba-pseudonym"
+                            type="text"
+                            value={pseudonym}
+                            onChange={(e) => setPseudonym(e.target.value)}
+                            placeholder="Escribe tu seudónimo (ej: Pluma del Viento...)"
+                            maxLength={40}
+                          />
+                        </div>
+                        <button
+                          type="button"
+                          className="escriba-pseudonym-random-btn"
+                          onClick={handleRandomPseudonym}
+                          title="Generar un seudónimo literario aleatorio"
+                        >
+                          <span>🎲</span> Aleatorio
+                        </button>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="escriba-field">
+                    <label htmlFor="escriba-synopsis">✨ Sinopsis o Breve Resumen (1 a 3 líneas)</label>
+                    <textarea
+                      id="escriba-synopsis"
+                      rows={2}
+                      value={synopsis}
+                      onChange={(e) => setSynopsis(e.target.value)}
+                      placeholder="Resume el enigma o conflicto central para atrapar a tus lectores..."
                     />
                   </div>
                 </div>
