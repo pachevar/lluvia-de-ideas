@@ -78,18 +78,6 @@ export default function Home() {
       icon: '🧪',
       colorClass: 'card-gradient-orange',
       accentColor: '#fb923c'
-    },
-    {
-      id: 'mercado',
-      targetId: 'section-mercado',
-      route: '/mercado',
-      title: cardsConf.mercado?.title || 'Mercado Pedagógico',
-      badge: cardsConf.mercado?.badge || 'Tienda Editorial · Libros & Kits',
-      kicheTag: cardsConf.mercado?.kicheTag || "Kʼaybʼal (Mercado)",
-      desc: cardsConf.mercado?.desc || 'Cuentos ilustrados de lujo, colecciones pedagógicas, proyectos STEAM, útiles y juegos didácticos.',
-      icon: '🛍️',
-      colorClass: 'card-gradient-amber',
-      accentColor: '#f59e0b'
     }
   ];
 
