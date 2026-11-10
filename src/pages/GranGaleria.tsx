@@ -207,6 +207,42 @@ export const GranGaleria: React.FC = () => {
     }
   };
 
+  const handleLikeText = async (textId: string) => {
+    const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
+    const updatedTexts = (currentGaleria.texts || []).map(t => 
+      t.id === textId ? { ...t, likes: (t.likes || 0) + 1 } : t
+    );
+    const updatedGaleria = { ...currentGaleria, texts: updatedTexts };
+    const portalDocRef = doc(db, 'config', 'portal');
+    try {
+      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
+    } catch {
+      try {
+        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
+      } catch (err) {
+        console.error('[GranGaleria] Error updating like for text:', err);
+      }
+    }
+  };
+
+  const handleLikeArt = async (artId: string) => {
+    const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
+    const updatedArtworks = (currentGaleria.artworks || []).map(a => 
+      a.id === artId ? { ...a, likes: (a.likes || 0) + 1 } : a
+    );
+    const updatedGaleria = { ...currentGaleria, artworks: updatedArtworks };
+    const portalDocRef = doc(db, 'config', 'portal');
+    try {
+      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
+    } catch {
+      try {
+        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
+      } catch (err) {
+        console.error('[GranGaleria] Error updating like for art:', err);
+      }
+    }
+  };
+
   // Tab change handler with audio & smooth auto-centering on mobile
   const handleTabChange = (tab: GaleriaSection, e?: React.MouseEvent<HTMLButtonElement>) => {
     soundEffects.playClick();
@@ -796,9 +832,7 @@ export const GranGaleria: React.FC = () => {
         <ReadingModal 
           textItem={activeReadingText} 
           onClose={() => setActiveReadingText(null)}
-          onLike={(id) => {
-            console.log('Liked text:', id);
-          }}
+          onLike={handleLikeText}
         />
       )}
 
@@ -807,9 +841,7 @@ export const GranGaleria: React.FC = () => {
         <ArtPieceModal 
           artItem={activeArtPiece} 
           onClose={() => setActiveArtPiece(null)}
-          onLike={(id) => {
-            console.log('Liked art piece:', id);
-          }}
+          onLike={handleLikeArt}
         />
       )}
 

@@ -123,7 +123,8 @@ const VALID_ADMIN_TABS: AdminTabType[] = [
             journeyStageImages: config.journeyStageImages || prev.journeyStageImages || {},
             mercadoConfig: prev.mercadoConfig || config.mercadoConfig,
             mercadoProducts: prev.mercadoProducts || config.mercadoProducts,
-            mercadoCollections: prev.mercadoCollections || config.mercadoCollections
+            mercadoCollections: prev.mercadoCollections || config.mercadoCollections,
+            granGaleria: config.granGaleria || prev.granGaleria
           };
         });
       }

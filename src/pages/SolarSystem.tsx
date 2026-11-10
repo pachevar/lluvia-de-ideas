@@ -717,7 +717,10 @@ const CELESTIAL_DATA: Record<string, CelestialBody> = {
     ringDetails: 'Compuesto por billones de partículas de hielo flotante. Se dividen en anillos A, B, C y la grieta gravitacional de Cassini provocada por la luna Mimas.',
     moons: [
       { name: 'Titán', desc: 'Satélite con atmósfera de nitrógeno denso, lluvias de metano líquido y mares de hidrocarburos como Kraken Mare.' },
-      { name: 'Encélado', desc: 'Expulsa géiseres de vapor de agua y sales orgánicas hacia el espacio desde su océano subterráneo calentado por fricción de marea.' }
+      { name: 'Encélado', desc: 'Expulsa géiseres de vapor de agua y sales orgánicas hacia el espacio desde su océano subterráneo calentado por fricción de marea.' },
+      { name: 'Mimas', desc: 'Pequeña luna con el enorme cráter Herschel (parece la Estrella de la Muerte). Su resonancia gravitatoria vacía la División de Cassini en los anillos.' },
+      { name: 'Rea', desc: 'Segunda luna más grande de Saturno, una esfera de hielo de agua con superficie intensamente craterizada.' },
+      { name: 'Jápeto', desc: 'Luna bicolor: un hemisferio negro como el carbón y otro blanco brillante, con una cordillera ecuatorial de 20 km de alto.' }
     ],
     atmosphere: [
       { gas: 'Hidrógeno (H₂)', percent: 96.3, color: '#f59e0b' },
@@ -742,7 +745,10 @@ const CELESTIAL_DATA: Record<string, CelestialBody> = {
     description: 'Gigante helado compuesto de fluidos de agua, metano y amoniaco sobre un núcleo rocoso. Es el planeta con la atmósfera más fría del Sistema Solar (-224°C).',
     moons: [
       { name: 'Titania', desc: 'La luna más grande de Urano con cañones gigantes cosidos por fallas tectónicas.' },
-      { name: 'Miranda', desc: 'Satélite con un acantilado de 20 km de profundidad (Verona Rupes), el más alto conocido.' }
+      { name: 'Miranda', desc: 'Satélite con un acantilado de 20 km de profundidad (Verona Rupes), el más alto conocido.' },
+      { name: 'Ariel', desc: 'La luna más brillante de Urano, surcada por valles de falla y posibles flujos de hielo criovolcánico.' },
+      { name: 'Umbriel', desc: 'Luna oscura y antigua, con un misterioso anillo brillante dentro del cráter Wunda.' },
+      { name: 'Oberón', desc: 'La luna más externa de las grandes de Urano, con cráteres profundos y montañas de hasta 11 km.' }
     ],
     atmosphere: [
       { gas: 'Hidrógeno (H₂)', percent: 82.5, color: '#60a5fa' },
@@ -917,6 +923,32 @@ const SPEED_PRESETS = [
   { id: 'light', name: '⚡ Velocidad de la Luz (1,080,000,000 km/h)', speedKmH: 1080000000 }
 ];
 
+// Datos físicos complementarios por astro (rotación, gravedad, temperatura, velocidad orbital)
+const PLANET_EXTRA: Record<string, { rotation: string; gravity: number; temperature: string; orbitalSpeedKmS: string }> = {
+  sol: { rotation: '25 días (ecuador) a 35 días (polos)', gravity: 274, temperature: '5,500 °C (superficie) · 15 millones °C (núcleo)', orbitalSpeedKmS: '220 km/s alrededor de la Vía Láctea' },
+  mercurio: { rotation: '58.6 días terrestres', gravity: 3.7, temperature: '-180 °C a 430 °C', orbitalSpeedKmS: '47.4 km/s' },
+  venus: { rotation: '243 días (retrógrada)', gravity: 8.87, temperature: '465 °C (constante)', orbitalSpeedKmS: '35.0 km/s' },
+  tierra: { rotation: '23 h 56 min', gravity: 9.81, temperature: '-89 °C a 57 °C (media 15 °C)', orbitalSpeedKmS: '29.8 km/s' },
+  luna: { rotation: '27.3 días (sincrónica)', gravity: 1.62, temperature: '-173 °C a 127 °C', orbitalSpeedKmS: '1.02 km/s alrededor de la Tierra' },
+  marte: { rotation: '24 h 37 min', gravity: 3.71, temperature: '-125 °C a 20 °C (media -63 °C)', orbitalSpeedKmS: '24.1 km/s' },
+  jupiter: { rotation: '9 h 56 min (la más rápida)', gravity: 24.79, temperature: '-110 °C (nubes superiores)', orbitalSpeedKmS: '13.1 km/s' },
+  saturno: { rotation: '10 h 33 min', gravity: 10.44, temperature: '-140 °C (nubes superiores)', orbitalSpeedKmS: '9.7 km/s' },
+  urano: { rotation: '17 h 14 min (retrógrada)', gravity: 8.69, temperature: '-224 °C', orbitalSpeedKmS: '6.8 km/s' },
+  neptuno: { rotation: '16 h 6 min', gravity: 11.15, temperature: '-214 °C', orbitalSpeedKmS: '5.4 km/s' }
+};
+
+// Distancias (UA) desde la Tierra hasta cada destino de la calculadora de viaje
+const TRAVEL_DISTANCES_AU: Record<string, number> = {
+  venus: 0.28,
+  marte: 0.52,
+  mercurio: 0.61,
+  sol: 1.0,
+  jupiter: 4.2,
+  saturno: 8.52,
+  neptuno: 29.05,
+  voyager1: 162.0
+};
+
 // Puntos Precalculados de Cinturón de Asteroides y Kuiper para Óptimo Rendimiento GPU
 const ASTEROID_BELT_DOTS = Array.from({ length: 80 }).map((_, idx) => {
   const ang = (idx * 4.5 * Math.PI) / 180;
@@ -959,6 +991,7 @@ export default function SolarSystem() {
   const [isPlaying, setIsPlaying] = useState(true);
   const [speedMultiplier, setSpeedMultiplier] = useState(1);
   const [selectedBody, setSelectedBody] = useState<CelestialBody>(CELESTIAL_DATA.sol);
+  const [cosmicWeightKg, setCosmicWeightKg] = useState<number>(40);
   const [zoomLevel, setZoomLevel] = useState(1);
   const [isTracking, setIsTracking] = useState(false);
 
@@ -1046,7 +1079,7 @@ export default function SolarSystem() {
 
   useEffect(() => {
     const animate = (time: number) => {
-      if (previousTimeRef.current !== 0 && isPlaying && activeTab === 'explorer') {
+      if (previousTimeRef.current !== 0 && isPlaying && activeTab === 'explorer' && !document.hidden) {
         const deltaTime = (time - previousTimeRef.current) / 1000;
         const step = deltaTime * 20 * speedMultiplier;
 
@@ -1109,6 +1142,7 @@ export default function SolarSystem() {
   // Animación del Laboratorio de Física
   const physicsAnimationRef = useRef<number>(0);
   const physicsPrevTimeRef = useRef<number>(0);
+  const physicsAngleRef = useRef<number>(0);
 
   useEffect(() => {
     if (activeTab !== 'physics') return;
@@ -1143,11 +1177,13 @@ export default function SolarSystem() {
         }
 
         // Variación de velocidad según la 2ª Ley de Kepler: mayor aceleración en el perihelio
-        const rad = (physicsAngle * Math.PI) / 180;
+        // Se usa una ref mutable: el estado physicsAngle quedaba obsoleto dentro del bucle rAF
+        const rad = (physicsAngleRef.current * Math.PI) / 180;
         const keplerFactor = (1 + orbitalEccentricity * Math.cos(rad)) / Math.max(0.1, 1 - orbitalEccentricity * orbitalEccentricity);
         const angularSpeed = (actualV / (orbitalDistance || 0.1)) * 38 * Math.min(3.5, keplerFactor);
         
-        setPhysicsAngle(prev => (prev + angularSpeed * dt * 1.5) % 360);
+        physicsAngleRef.current = (physicsAngleRef.current + angularSpeed * dt * 1.5) % 360;
+        setPhysicsAngle(physicsAngleRef.current);
 
         if (showPrecessionEinstein) {
           setPrecessionOffsetDeg(prev => (prev + dt * 14) % 360);
@@ -1530,7 +1566,8 @@ export default function SolarSystem() {
 
   // Cálculo de tiempo de viaje espacial
   const destData = CELESTIAL_DATA[travelDestination] || CELESTIAL_DATA.marte;
-  const distanceKm = (destData.distanceAU || 1.52) * 149597870.7; // AU a km
+  const travelDistanceAU = TRAVEL_DISTANCES_AU[travelDestination] ?? 0.52;
+  const distanceKm = travelDistanceAU * 149597870.7; // AU a km (desde la Tierra)
   const travelHours = distanceKm / (travelVehicleSpeed || 40000);
   const travelDays = travelHours / 24;
   const travelYears = travelDays / 365.25;
@@ -1641,6 +1678,19 @@ export default function SolarSystem() {
               </div>
             </div>
 
+            {/* Explicación científica del modo de observación activo */}
+            <div className="special-details-box jwst-card" style={{ margin: '8px 0' }}>
+              {spectrumMode === 'visible' && (
+                <p>👁️ <strong>Luz visible (380–750 nm):</strong> lo que vería un astronauta: los colores reales de las nubes, océanos y desiertos reflejando la luz solar.</p>
+              )}
+              {spectrumMode === 'infrared' && (
+                <p>🔴 <strong>Infrarrojo (JWST):</strong> revela el calor emitido por los mundos, atraviesa el polvo y muestra las bandas profundas de Júpiter y las moléculas de agua y CO₂ en atmósferas lejanas.</p>
+              )}
+              {spectrumMode === 'ultraviolet' && (
+                <p>🟣 <strong>Ultravioleta / Rayos X:</strong> muestra la corona solar a más de 1,000,000 °C, las llamaradas y las auroras polares de Júpiter y Saturno.</p>
+              )}
+            </div>
+
             {/* Panel de Información Educativa Ampliado */}
             <div className="sim-info-panel animate-zoom-in">
               <div className="panel-inner-scroll">
@@ -1675,7 +1725,55 @@ export default function SolarSystem() {
                     <span className="stat-label">Inclinación Axial</span>
                     <span className="stat-val">{selectedBody.axialTilt}</span>
                   </div>
+                  <div className="stat-card">
+                    <span className="stat-label">Periodo Orbital (Año)</span>
+                    <span className="stat-val">{selectedBody.orbitalPeriod}</span>
+                  </div>
+                  {PLANET_EXTRA[selectedBody.id] && (
+                    <>
+                      <div className="stat-card">
+                        <span className="stat-label">Duración del Día (Rotación)</span>
+                        <span className="stat-val">{PLANET_EXTRA[selectedBody.id].rotation}</span>
+                      </div>
+                      <div className="stat-card">
+                        <span className="stat-label">Gravedad Superficial</span>
+                        <span className="stat-val">{PLANET_EXTRA[selectedBody.id].gravity} m/s² ({(PLANET_EXTRA[selectedBody.id].gravity / 9.81).toFixed(2)} g)</span>
+                      </div>
+                      <div className="stat-card">
+                        <span className="stat-label">Temperatura</span>
+                        <span className="stat-val">{PLANET_EXTRA[selectedBody.id].temperature}</span>
+                      </div>
+                      <div className="stat-card">
+                        <span className="stat-label">Velocidad Orbital</span>
+                        <span className="stat-val">{PLANET_EXTRA[selectedBody.id].orbitalSpeedKmS}</span>
+                      </div>
+                    </>
+                  )}
                 </div>
+
+                {PLANET_EXTRA[selectedBody.id] && (
+                  <div className="special-details-box" style={{ marginTop: '12px' }}>
+                    <h4>⚖️ Calculadora de Peso Cósmico</h4>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                      <label htmlFor="cosmic-weight" style={{ fontSize: '0.85rem' }}>Tu peso en la Tierra (kg):</label>
+                      <input
+                        id="cosmic-weight"
+                        type="number"
+                        min="1"
+                        max="300"
+                        value={cosmicWeightKg}
+                        onChange={(e) => setCosmicWeightKg(Math.max(1, Math.min(300, parseFloat(e.target.value) || 1)))}
+                        style={{ width: '90px', minHeight: '44px', fontSize: '16px', padding: '4px 8px', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.4)', background: 'rgba(2,6,23,0.8)', color: '#f8fafc' }}
+                      />
+                    </div>
+                    <p style={{ marginTop: '8px' }}>
+                      En <strong>{selectedBody.name}</strong> pesarías{' '}
+                      <strong style={{ color: '#fbbf24' }}>{((cosmicWeightKg * PLANET_EXTRA[selectedBody.id].gravity) / 9.81).toFixed(1)} kg</strong>
+                      {' '}y un salto de 50 cm en la Tierra llegaría a{' '}
+                      <strong style={{ color: '#38bdf8' }}>{((0.5 * 9.81) / PLANET_EXTRA[selectedBody.id].gravity * 100).toFixed(0)} cm</strong>.
+                    </p>
+                  </div>
+                )}
 
                 <div className="body-desc-box">
                   <p>{selectedBody.description}</p>
@@ -2741,7 +2839,7 @@ export default function SolarSystem() {
 
                       {/* Textura de granulación solar (patrón fractal) */}
                       <filter id="solar-granulation" x="0%" y="0%" width="100%" height="100%">
-                        <feTurbulence type="turbulence" baseFrequency="0.035" numOctaves="6" seed="42" result="noise" />
+                      <feTurbulence type="turbulence" baseFrequency="0.035" numOctaves="3" seed="42" result="noise" />
                         <feDisplacementMap in="SourceGraphic" in2="noise" scale="8" xChannelSelector="R" yChannelSelector="G" />
                       </filter>
                     </defs>
@@ -3314,7 +3412,7 @@ export default function SolarSystem() {
                         <circle cx="0" cy="0" r="34" fill="none" stroke="#fbbf24" strokeWidth="1.2" strokeDasharray="4 3" />
                         <text x="0" y="48" fill="#fbbf24" fontSize="12" fontWeight="bold" textAnchor="middle">{destData.name}</text>
                         <text x="0" y="62" fill="rgba(255,255,255,0.7)" fontSize="9" textAnchor="middle">
-                          {destData.distanceAU ? `${destData.distanceAU} UA` : 'Interespacial'}
+                          {`${travelDistanceAU} UA`}
                         </text>
                       </g>
                     </svg>
@@ -3421,7 +3519,7 @@ export default function SolarSystem() {
                     {/* Selector de Planetas con Atmósfera */}
                     <div className="spectro-planet-bar-wrapper">
                       <div className="spectro-selector-row">
-                        {['tierra', 'marte', 'venus', 'jupiter', 'saturno', 'urano', 'neptuno', 'sol'].map((id) => {
+                        {['tierra', 'luna', 'mercurio', 'venus', 'marte', 'jupiter', 'saturno', 'urano', 'neptuno', 'sol'].map((id) => {
                           const item = CELESTIAL_DATA[id];
                           if (!item) return null;
                           return (
