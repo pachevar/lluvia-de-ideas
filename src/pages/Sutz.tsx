@@ -15,6 +15,9 @@ import { SutzAuthGateModal } from '../components/sutz/SutzAuthGateModal';
 import { SutzSessionConflictModal } from '../components/sutz/SutzSessionConflictModal';
 import { SutzCoordinationModal } from '../components/sutz/SutzCoordinationModal';
 import { HexIntroModal } from '../components/sutz/HexIntroModal';
+import { SutzGeoMissionModal } from '../components/sutz/SutzGeoMissionModal';
+import type { SutzGeoMission } from '../types';
+import { getActiveAcademiaQrHandshake } from '../services/academiaqrSyncService';
 import { 
   startSutzSession, 
   listenToSutzSession, 
@@ -180,7 +183,30 @@ export default function Sutz() {
   const [selectedRelic, setSelectedRelic] = useState<MayanRelic | null>(null);
   const [selectedHexId, setSelectedHexId] = useState<string | null>(null);
   const [activeIntroHex, setActiveIntroHex] = useState<CustomHexagon | null>(null);
+  const [activeGeoMission, setActiveGeoMission] = useState<SutzGeoMission | null>(null);
   const [isGuestMode, setIsGuestMode] = useState<boolean>(false);
+
+  // Detección automática de Geo-Misión proveniente de AcademiaQR / SOSQR
+  useEffect(() => {
+    const hs = getActiveAcademiaQrHandshake();
+    if (hs && hs.geoLat && hs.geoLng) {
+      const incomingMission: SutzGeoMission = {
+        id: hs.challengeId || hs.assignmentId || 'academiaqr-geo-task',
+        title: hs.geoName ? `Misión: ${hs.geoName}` : 'Misión Territorial AcademiaQR',
+        description: hs.geoHint || 'Llega al lugar asignado para validar tu asistencia o reto presencial.',
+        placeName: hs.geoName || 'Sitio Asignado',
+        targetLat: hs.geoLat,
+        targetLng: hs.geoLng,
+        radiusMeters: hs.geoRadius || 80,
+        clue: hs.geoHint,
+        assignmentId: hs.assignmentId,
+        rewardXp: 350,
+        rewardGems: 10,
+        rewardScrolls: 2
+      };
+      setActiveGeoMission(incomingMission);
+    }
+  }, []);
 
   // Controles de mapa para botón de Centrar/Radar
   const mapControlsRef = useRef<{ zoomIn: () => void; zoomOut: () => void; centerView: () => void } | null>(null);
@@ -196,6 +222,32 @@ export default function Sutz() {
 
   // Ejecución definitiva de la acción vinculada al hexágono (al pulsar el botón del modal)
   const executeHexAction = (hex: CustomHexagon) => {
+    // 1. Verificación prioritaria de Geo-Misión Territorial
+    if (hex.geoMission) {
+      sutzAudio.playOpenModal();
+      setActiveGeoMission(hex.geoMission);
+      return;
+    }
+
+    if (hex.action && hex.action.type === 'geo') {
+      sutzAudio.playOpenModal();
+      const defaultGeo: SutzGeoMission = {
+        id: hex.code || hex.id,
+        title: hex.title || 'Misión Territorial SUTZ',
+        description: hex.introModal?.description || 'Valida tu presencia física en este sitio para avanzar en el mapa.',
+        placeName: hex.title || 'Ubicación Clave',
+        targetLat: 14.8347,
+        targetLng: -91.5186,
+        radiusMeters: 75,
+        clue: 'Usa el radar satelital o la brújula táctica para ubicar las coordenadas exactas.',
+        rewardXp: 300,
+        rewardGems: 8,
+        rewardScrolls: 1
+      };
+      setActiveGeoMission(defaultGeo);
+      return;
+    }
+
     if (!hex.action || hex.action.type === 'none') return;
     
     switch (hex.action.type) {
@@ -1191,6 +1243,18 @@ export default function Sutz() {
           onEnter={(hex) => {
             setActiveIntroHex(null);
             executeHexAction(hex);
+          }}
+        />
+      )}
+
+      {/* Modal de Geo-Misión Territorial con GPS y Google Maps */}
+      {activeGeoMission && (
+        <SutzGeoMissionModal 
+          isOpen={Boolean(activeGeoMission)}
+          mission={activeGeoMission}
+          onClose={() => setActiveGeoMission(null)}
+          onComplete={(completedMission) => {
+            console.log('[Sutz] Geo-Misión completada con éxito:', completedMission.id);
           }}
         />
       )}

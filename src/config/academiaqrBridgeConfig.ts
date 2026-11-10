@@ -15,6 +15,12 @@ export interface AcademiaQrHandshake {
   maxScore?: number;
   returnUrl?: string;
   receivedAt: string;
+  // Parámetros geográficos opcionales para Geo-Misiones
+  geoLat?: number;
+  geoLng?: number;
+  geoRadius?: number;
+  geoName?: string;
+  geoHint?: string;
 }
 
 export interface AcademiaQrCompletionPayload {
@@ -54,7 +60,12 @@ export const ACADEMIAQR_BRIDGE_CONFIG = {
     assignmentId: "assignmentId",
     challengeId: "challengeId",
     maxScore: "maxScore",
-    returnUrl: "returnUrl"
+    returnUrl: "returnUrl",
+    geoLat: "geoLat",
+    geoLng: "geoLng",
+    geoRadius: "geoRadius",
+    geoName: "geoName",
+    geoHint: "geoHint"
   },
   // Colecciones compartidas en Firestore
   firestore: {

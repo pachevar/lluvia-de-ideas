@@ -34,7 +34,12 @@ export function detectAndStoreAcademiaQrHandshake(): AcademiaQrHandshake | null 
         challengeId: params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.challengeId) || '',
         maxScore: Number(params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.maxScore) || 20),
         returnUrl: params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.returnUrl) || ACADEMIAQR_BRIDGE_CONFIG.defaultReturnUrl,
-        receivedAt: new Date().toISOString()
+        receivedAt: new Date().toISOString(),
+        geoLat: params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.geoLat) ? Number(params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.geoLat)) : undefined,
+        geoLng: params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.geoLng) ? Number(params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.geoLng)) : undefined,
+        geoRadius: params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.geoRadius) ? Number(params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.geoRadius)) : undefined,
+        geoName: params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.geoName) || undefined,
+        geoHint: params.get(ACADEMIAQR_BRIDGE_CONFIG.urlParams.geoHint) || undefined
       };
 
       sessionStorage.setItem(

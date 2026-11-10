@@ -1482,7 +1482,28 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                       <select 
                         value={editingHex.action.type} 
                         onChange={e => {
-                          const updated = { ...editingHex, action: { ...editingHex.action, type: e.target.value as 'navigate' | 'external' | 'modal' | 'none' } };
+                          const newType = e.target.value as 'navigate' | 'external' | 'modal' | 'geo' | 'none';
+                          let nextGeo = editingHex.geoMission;
+                          if (newType === 'geo' && !nextGeo) {
+                            nextGeo = {
+                              id: editingHex.code || editingHex.id,
+                              title: editingHex.title || 'Misión Territorial',
+                              description: 'Verifica tu presencia física en este lugar para desbloquear este nodo.',
+                              placeName: editingHex.title || 'Punto Territorial',
+                              targetLat: 14.8347,
+                              targetLng: -91.5186,
+                              radiusMeters: 75,
+                              clue: 'Acércate al punto indicado en tu radar satelital.',
+                              rewardXp: 300,
+                              rewardGems: 8,
+                              rewardScrolls: 1
+                            };
+                          }
+                          const updated = { 
+                            ...editingHex, 
+                            action: { ...editingHex.action, type: newType },
+                            geoMission: nextGeo
+                          };
                           setEditingHex(updated);
                           updateHexInGlobalConfig(updated);
                         }}
@@ -1492,10 +1513,225 @@ export default function AdminTabMundoVirtual({ localConfig, setLocalConfig }: Ad
                         <option value="navigate">Navegar a Ruta Interna</option>
                         <option value="external">Abrir Enlace Externo</option>
                         <option value="modal">Abrir Modal de Cuento Popol Vuh</option>
+                        <option value="geo">📍 Geo-Misión Territorial (GPS / Google Maps)</option>
                       </select>
                     </div>
 
-                    {editingHex.action.type !== 'none' && (
+                    {editingHex.action.type === 'geo' && (
+                      <div className="inspector-geo-mission-panel" style={{ marginTop: '12px', padding: '12px', background: 'rgba(245, 158, 11, 0.08)', border: '1px solid rgba(245, 158, 11, 0.3)', borderRadius: '10px' }}>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 700, color: '#f59e0b', marginBottom: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                          <span>📍 Configuración de Geo-Misión Territorial</span>
+                          <button
+                            type="button"
+                            className="inspector-clear-submodule-btn"
+                            style={{ fontSize: '0.75rem', padding: '3px 8px' }}
+                            onClick={() => {
+                              if (typeof navigator !== 'undefined' && navigator.geolocation) {
+                                navigator.geolocation.getCurrentPosition(
+                                  (pos) => {
+                                    const lat = Number(pos.coords.latitude.toFixed(6));
+                                    const lng = Number(pos.coords.longitude.toFixed(6));
+                                    const currentGeo = editingHex.geoMission || {
+                                      id: editingHex.code || editingHex.id,
+                                      title: editingHex.title || 'Misión Territorial',
+                                      description: 'Valida tu presencia en este lugar.',
+                                      placeName: editingHex.title || 'Mi Ubicación',
+                                      targetLat: lat,
+                                      targetLng: lng,
+                                      radiusMeters: 75
+                                    };
+                                    const updated = {
+                                      ...editingHex,
+                                      geoMission: { ...currentGeo, targetLat: lat, targetLng: lng }
+                                    };
+                                    setEditingHex(updated);
+                                    updateHexInGlobalConfig(updated);
+                                  },
+                                  (err) => alert('No se pudo obtener la posición GPS: ' + err.message),
+                                  { enableHighAccuracy: true }
+                                );
+                              }
+                            }}
+                          >
+                            🛰️ Usar mi posición GPS
+                          </button>
+                        </div>
+
+                        <div className="inspector-form-group" style={{ marginBottom: '8px' }}>
+                          <label className="inspector-label">Nombre del Sitio o Escuela:</label>
+                          <input
+                            type="text"
+                            className="inspector-input"
+                            value={editingHex.geoMission?.placeName || ''}
+                            onChange={(e) => {
+                              const baseGeo = editingHex.geoMission || {
+                                id: editingHex.code || editingHex.id,
+                                title: editingHex.title || 'Misión Territorial',
+                                description: 'Valida tu presencia en este lugar.',
+                                placeName: e.target.value,
+                                targetLat: 14.8347,
+                                targetLng: -91.5186,
+                                radiusMeters: 75
+                              };
+                              const updated = {
+                                ...editingHex,
+                                geoMission: { ...baseGeo, placeName: e.target.value }
+                              };
+                              setEditingHex(updated);
+                              updateHexInGlobalConfig(updated);
+                            }}
+                            placeholder="Ej. Escuela Oficial Rural Mixta No. 1"
+                          />
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                          <div className="inspector-form-group">
+                            <label className="inspector-label">Latitud:</label>
+                            <input
+                              type="number"
+                              step="0.000001"
+                              className="inspector-input"
+                              value={editingHex.geoMission?.targetLat ?? 14.8347}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const baseGeo = editingHex.geoMission || {
+                                  id: editingHex.code || editingHex.id,
+                                  title: editingHex.title || 'Misión Territorial',
+                                  description: 'Valida tu presencia en este lugar.',
+                                  placeName: editingHex.title || 'Sitio Territorial',
+                                  targetLat: val,
+                                  targetLng: -91.5186,
+                                  radiusMeters: 75
+                                };
+                                const updated = {
+                                  ...editingHex,
+                                  geoMission: { ...baseGeo, targetLat: val }
+                                };
+                                setEditingHex(updated);
+                                updateHexInGlobalConfig(updated);
+                              }}
+                            />
+                          </div>
+
+                          <div className="inspector-form-group">
+                            <label className="inspector-label">Longitud:</label>
+                            <input
+                              type="number"
+                              step="0.000001"
+                              className="inspector-input"
+                              value={editingHex.geoMission?.targetLng ?? -91.5186}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const baseGeo = editingHex.geoMission || {
+                                  id: editingHex.code || editingHex.id,
+                                  title: editingHex.title || 'Misión Territorial',
+                                  description: 'Valida tu presencia en este lugar.',
+                                  placeName: editingHex.title || 'Sitio Territorial',
+                                  targetLat: 14.8347,
+                                  targetLng: val,
+                                  radiusMeters: 75
+                                };
+                                const updated = {
+                                  ...editingHex,
+                                  geoMission: { ...baseGeo, targetLng: val }
+                                };
+                                setEditingHex(updated);
+                                updateHexInGlobalConfig(updated);
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', marginBottom: '8px' }}>
+                          <div className="inspector-form-group">
+                            <label className="inspector-label">Radio Permitido (metros):</label>
+                            <input
+                              type="number"
+                              min="10"
+                              max="1000"
+                              className="inspector-input"
+                              value={editingHex.geoMission?.radiusMeters ?? 75}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const baseGeo = editingHex.geoMission || {
+                                  id: editingHex.code || editingHex.id,
+                                  title: editingHex.title || 'Misión Territorial',
+                                  description: 'Valida tu presencia en este lugar.',
+                                  placeName: editingHex.title || 'Sitio Territorial',
+                                  targetLat: 14.8347,
+                                  targetLng: -91.5186,
+                                  radiusMeters: val
+                                };
+                                const updated = {
+                                  ...editingHex,
+                                  geoMission: { ...baseGeo, radiusMeters: val }
+                                };
+                                setEditingHex(updated);
+                                updateHexInGlobalConfig(updated);
+                              }}
+                            />
+                          </div>
+
+                          <div className="inspector-form-group">
+                            <label className="inspector-label">Recompensa Sabiduría (XP):</label>
+                            <input
+                              type="number"
+                              min="50"
+                              step="50"
+                              className="inspector-input"
+                              value={editingHex.geoMission?.rewardXp ?? 300}
+                              onChange={(e) => {
+                                const val = Number(e.target.value);
+                                const baseGeo = editingHex.geoMission || {
+                                  id: editingHex.code || editingHex.id,
+                                  title: editingHex.title || 'Misión Territorial',
+                                  description: 'Valida tu presencia en este lugar.',
+                                  placeName: editingHex.title || 'Sitio Territorial',
+                                  targetLat: 14.8347,
+                                  targetLng: -91.5186,
+                                  radiusMeters: 75
+                                };
+                                const updated = {
+                                  ...editingHex,
+                                  geoMission: { ...baseGeo, rewardXp: val }
+                                };
+                                setEditingHex(updated);
+                                updateHexInGlobalConfig(updated);
+                              }}
+                            />
+                          </div>
+                        </div>
+
+                        <div className="inspector-form-group">
+                          <label className="inspector-label">Pista Didáctica para el Estudiante:</label>
+                          <textarea
+                            className="inspector-textarea"
+                            rows={2}
+                            value={editingHex.geoMission?.clue || ''}
+                            onChange={(e) => {
+                              const baseGeo = editingHex.geoMission || {
+                                id: editingHex.code || editingHex.id,
+                                title: editingHex.title || 'Misión Territorial',
+                                description: 'Valida tu presencia en este lugar.',
+                                placeName: editingHex.title || 'Sitio Territorial',
+                                targetLat: 14.8347,
+                                targetLng: -91.5186,
+                                radiusMeters: 75
+                              };
+                              const updated = {
+                                ...editingHex,
+                                geoMission: { ...baseGeo, clue: e.target.value }
+                              };
+                              setEditingHex(updated);
+                              updateHexInGlobalConfig(updated);
+                            }}
+                            placeholder="Ej. Busca la entrada principal del museo o la plaza central de la escuela."
+                          />
+                        </div>
+                      </div>
+                    )}
+
+                    {editingHex.action.type !== 'none' && editingHex.action.type !== 'geo' && (
                       <div className="inspector-form-group" style={{ marginTop: '10px' }}>
                         <label className="inspector-label">Ruta de Destino / URL / Modal:</label>
                         <input 

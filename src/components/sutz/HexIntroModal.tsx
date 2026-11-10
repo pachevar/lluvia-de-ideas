@@ -19,8 +19,12 @@ export const HexIntroModal: React.FC<HexIntroModalProps> = ({ hexagon, onClose, 
   const characterName = intro?.characterName?.trim() || 'Guardián de Sutz';
   const characterBadge = intro?.characterBadge?.trim() || 'Anfitrión del Saber';
   const welcomeTitle = intro?.welcomeTitle?.trim() || (hexagon.title ? `¡Explora ${hexagon.title}!` : '¡Bienvenido a este Destino!');
-  const description = intro?.description?.trim() || 'Adéntrate en este espacio de aprendizaje interactivo. Descubre nuevos desafíos, herramientas y aventuras diseñadas para expandir tu conocimiento.';
-  const buttonText = intro?.buttonText?.trim() || 'Continuar ➔';
+  const description = intro?.description?.trim() || (
+    hexagon.geoMission 
+      ? `Te espera un desafío en el mundo real. Dirígete a ${hexagon.geoMission.placeName} con tu dispositivo para verificar tu presencia con el radar GPS y reclamar valiosas recompensas.`
+      : 'Adéntrate en este espacio de aprendizaje interactivo. Descubre nuevos desafíos, herramientas y aventuras diseñadas para expandir tu conocimiento.'
+  );
+  const buttonText = intro?.buttonText?.trim() || (hexagon.geoMission ? 'Iniciar Geo-Misión 📍' : 'Continuar ➔');
   const characterImage = intro?.characterImage;
 
   // Pitch procedural único para cada personaje
@@ -213,9 +217,13 @@ export const HexIntroModal: React.FC<HexIntroModalProps> = ({ hexagon, onClose, 
             </div>
 
             <div className="sutz-intro-destination-meta">
-              <span className="sutz-intro-meta-icon">📍</span>
+              <span className="sutz-intro-meta-icon">{hexagon.geoMission ? '🎯' : '📍'}</span>
               <span className="sutz-intro-meta-text">
-                Ruta: <strong>{hexagon.action?.target || 'Destino libre'}</strong>
+                {hexagon.geoMission ? (
+                  <>Meta Territorial: <strong>{hexagon.geoMission.placeName}</strong> (±{hexagon.geoMission.radiusMeters} m)</>
+                ) : (
+                  <>Ruta: <strong>{hexagon.action?.target || 'Destino libre'}</strong></>
+                )}
               </span>
             </div>
           </div>

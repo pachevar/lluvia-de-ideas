@@ -32,8 +32,27 @@ export interface HexLayer {
 }
 
 export interface HexInteractiveAction {
-  type: 'navigate' | 'external' | 'modal' | 'none';
-  target: string; // Ej: '/catalogo', 'https://...', 'story-camazotz'
+  type: 'navigate' | 'external' | 'modal' | 'geo' | 'none';
+  target: string; // Ej: '/catalogo', 'https://...', 'story-camazotz', o ID de geo-misión
+}
+
+export interface SutzGeoMission {
+  id: string;
+  title: string;
+  description: string;
+  placeName: string;
+  targetLat: number;
+  targetLng: number;
+  radiusMeters: number; // Radio de validación en metros (ej. 50m, 100m)
+  addressHint?: string;
+  clue?: string; // Pista didáctica o acertijo para llegar al lugar
+  rewardXp?: number; // Puntos de sabiduría
+  rewardGems?: number; // Gemas
+  rewardScrolls?: number; // Pergaminos
+  badgeId?: string; // Título o insignia desbloqueable
+  code?: string; // ej. STZ-GEO-01
+  assignmentId?: string; // Vinculación opcional con AcademiaQR / SOSQR
+  isCompleted?: boolean;
 }
 
 export interface HexIntroModalConfig {
@@ -68,6 +87,7 @@ export interface CustomHexagon {
   introModal?: HexIntroModalConfig; // Modal interactivo con personaje y bienvenida antes de entrar
   pillar?: HexPillarId;       // Indicador de pertenencia al reino (Creatika, 100tek, Tienda, LAB, Mercado, Gran Galería)
   code?: string;             // Código curricular único SUTZ-CODE (ej. TEK-ATLAS-C01, CRK-COL-R01, STZ-CAM-P01)
+  geoMission?: SutzGeoMission; // Misión territorial o geolocalizada con validación GPS / Google Maps
 }
 
 export interface CreatikaConfig {
