@@ -50,7 +50,7 @@ export default function Laboratorios() {
   let activeSubLab = labId;
   if (!activeSubLab) {
     const path = location.pathname;
-    if (path.includes('animacion-educativa')) activeSubLab = 'animacion-educativa';
+    if (path.includes('animacion-educativa') || path.includes('inscripcion-animacion')) activeSubLab = 'animacion-educativa';
     else if (path.includes('robotica-educativa')) activeSubLab = 'robotica-educativa';
     else if (path.includes('pensamiento-cientifico')) activeSubLab = 'pensamiento-cientifico';
     else activeSubLab = 'lobby';
@@ -131,7 +131,17 @@ export default function Laboratorios() {
 
   // Estados de modales
   const [isPromoModalOpen, setIsPromoModalOpen] = useState(false);
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
+  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(() => {
+    if (typeof window === 'undefined') return false;
+    const params = new URLSearchParams(window.location.search);
+    return params.get('inscripcion') === 'true' || 
+           params.get('inscripcion') === '1' || 
+           params.get('inscribir') === 'true' || 
+           params.get('inscribir') === '1' ||
+           params.get('registro') === 'true' ||
+           window.location.pathname.includes('/inscripcion');
+  });
+  const [copiedShareLink, setCopiedShareLink] = useState(false);
   const [regName, setRegName] = useState('');
   const [regPhone, setRegPhone] = useState('');
   const [regSchool, setRegSchool] = useState('');
@@ -139,6 +149,20 @@ export default function Laboratorios() {
   const [regLoading, setRegLoading] = useState(false);
   const [regSuccess, setRegSuccess] = useState(false);
   const [regError, setRegError] = useState('');
+
+  // Detección de enlace directo de inscripción abierta (?inscripcion=true o /inscripcion)
+  useEffect(() => {
+    const params = new URLSearchParams(location.search);
+    const shouldOpen = params.get('inscripcion') === 'true' || 
+                       params.get('inscripcion') === '1' || 
+                       params.get('inscribir') === 'true' || 
+                       params.get('inscribir') === '1' ||
+                       params.get('registro') === 'true' ||
+                       location.pathname.includes('/inscripcion');
+    if (shouldOpen) {
+      setIsRegisterModalOpen(true);
+    }
+  }, [location.search, location.pathname]);
 
   // Cerrar modales con tecla Escape
   useEffect(() => {
@@ -959,6 +983,84 @@ export default function Laboratorios() {
                 </div>
 
               </div>
+
+              {/* BANNER DE INSCRIPCIÓN SIEMPRE VISIBLE AL FINAL DEL LABORATORIO DE ANIMACIÓN */}
+              <div 
+                className="lab-bottom-registration-card animate-fade-in"
+                style={{
+                  marginTop: '40px',
+                  padding: '32px 24px',
+                  borderRadius: '24px',
+                  background: 'linear-gradient(135deg, rgba(16, 185, 129, 0.12) 0%, rgba(56, 189, 248, 0.08) 50%, rgba(15, 23, 42, 0.8) 100%)',
+                  border: '1px solid rgba(16, 185, 129, 0.45)',
+                  boxShadow: '0 16px 40px rgba(0, 0, 0, 0.5), 0 0 25px rgba(16, 185, 129, 0.15)',
+                  textAlign: 'center'
+                }}
+              >
+                <span 
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '6px 16px',
+                    borderRadius: '999px',
+                    background: 'rgba(16, 185, 129, 0.2)',
+                    border: '1px solid rgba(16, 185, 129, 0.5)',
+                    color: '#34d399',
+                    fontSize: '0.82rem',
+                    fontWeight: 800,
+                    letterSpacing: '0.06em',
+                    textTransform: 'uppercase',
+                    marginBottom: '14px'
+                  }}
+                >
+                  <span>✨</span> Convocatoria Abierta · 100% Becado
+                </span>
+
+                <h3 style={{ fontSize: 'clamp(1.4rem, 3.5vw, 2rem)', fontWeight: 800, color: '#f8fafc', margin: '0 0 12px', lineHeight: 1.25 }}>
+                  Formulario de Inscripción para Participantes
+                </h3>
+
+                <p style={{ maxWidth: '640px', margin: '0 auto 24px', color: '#cbd5e1', fontSize: '1rem', lineHeight: '1.6' }}>
+                  Asegura tu plaza en el <strong>Laboratorio de Animación Educativa 2026</strong>. Formación práctica presencial con cupos limitados para docentes e innovadores educativos.
+                </p>
+
+                <div style={{ display: 'flex', gap: '14px', justifyContent: 'center', flexWrap: 'wrap', alignItems: 'center' }}>
+                  <button 
+                    type="button" 
+                    className="btn-main-register"
+                    style={{ fontSize: '1.05rem', padding: '16px 32px', minHeight: '52px' }}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setIsRegisterModalOpen(true);
+                    }}
+                  >
+                    <span>📝</span>
+                    <span>Llenar Formulario de Inscripción ➔</span>
+                  </button>
+
+                  <button 
+                    type="button" 
+                    className="btn-jump-schedule"
+                    style={{ minHeight: '52px', padding: '14px 22px', fontSize: '0.95rem' }}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      const url = `${window.location.origin}/animacion-educativa/inscripcion`;
+                      if (navigator.clipboard) {
+                        navigator.clipboard.writeText(url).then(() => {
+                          setCopiedShareLink(true);
+                          soundEffects.playSuccess();
+                          setTimeout(() => setCopiedShareLink(false), 3000);
+                        }).catch(() => {});
+                      }
+                    }}
+                    title="Copiar enlace para compartir por WhatsApp o redes"
+                  >
+                    <span>{copiedShareLink ? '✅ ¡Enlace Copiado al Portapapeles!' : '🔗 Copiar Enlace Directo'}</span>
+                  </button>
+                </div>
+              </div>
+
             </div>
           )}
 

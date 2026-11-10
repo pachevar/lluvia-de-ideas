@@ -117,6 +117,8 @@ function App() {
             <Route path="/laboratorios" element={<Laboratorios />} />
             <Route path="/laboratorios/:labId" element={<Laboratorios />} />
             <Route path="/animacion-educativa" element={<Laboratorios />} />
+            <Route path="/animacion-educativa/inscripcion" element={<Laboratorios />} />
+            <Route path="/inscripcion-animacion" element={<Laboratorios />} />
             <Route path="/robotica-educativa" element={<Laboratorios />} />
             <Route path="/pensamiento-cientifico" element={<Laboratorios />} />
             <Route path="/creatika" element={<CreatikaHub />} />
