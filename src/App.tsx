@@ -35,6 +35,7 @@ const BingoBoletosConfirmacion = React.lazy(() => import('./pages/BingoBoletosCo
 const GranGaleria = React.lazy(() => import('./pages/GranGaleria'));
 const MercadoRedirect = React.lazy(() => import('./pages/MercadoRedirect'));
 const AtlasAnatomia = React.lazy(() => import('./pages/AtlasAnatomia'));
+const TallerExpresion = React.lazy(() => import('./pages/TallerExpresion'));
 
 function App() {
   const navigate = useNavigate();
@@ -86,6 +87,8 @@ function App() {
             <Route path="/nuestros-libros" element={<NuestrosLibros />} />
             <Route path="/cuento/:storyId" element={<NuestrosLibros />} />
             <Route path="/creatika/maquina-de-cuentos" element={<StoryMachine />} />
+            <Route path="/creatika/taller-de-expresion" element={<TallerExpresion />} />
+            <Route path="/taller-de-expresion" element={<TallerExpresion />} />
             <Route path="/creatika/teoria-del-color" element={<ColorTheory />} />
             <Route path="/creatika/creacion-de-personajes" element={<CreacionPersonajes />} />
             <Route path="/creatika/creacion-personajes" element={<CreacionPersonajes />} />

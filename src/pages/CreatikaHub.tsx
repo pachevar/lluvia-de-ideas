@@ -29,6 +29,17 @@ const CREATIKA_APPS: CreatikaApp[] = [
     gradient: 'linear-gradient(135deg, rgba(244,63,94,0.2) 0%, rgba(225,29,72,0.05) 100%)'
   },
   {
+    id: 'taller-de-expresion',
+    title: 'Taller de Expresión',
+    badge: 'Escritura, Voz & Lectura',
+    tag: 'ORATORIA & ESCRITURA',
+    desc: 'Taller interactivo: mostrar vs. contar, modulación de voz, partitura de lectura expresiva, dicción, improvisación y respiración.',
+    icon: '🎙️',
+    path: '/creatika/taller-de-expresion',
+    accentColor: '#818cf8',
+    gradient: 'linear-gradient(135deg, rgba(129,140,248,0.2) 0%, rgba(79,70,229,0.05) 100%)'
+  },
+  {
     id: 'teoria-del-color',
     title: 'Teoría del Color',
     badge: 'Laboratorio Cromático',

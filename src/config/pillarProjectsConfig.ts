@@ -35,6 +35,7 @@ export const PILLAR_CATEGORIES: PillarCategory[] = [
 export const BUILTIN_PILLAR_ROUTES: PillarAppRoute[] = [
   // ✨ Creatika (Artes & Humanidades)
   { id: 'creatika_cuentos', code: 'CRK-STORY-C01', label: '🎰 Máquina de Cuentos', target: '/creatika/maquina-de-cuentos', type: 'navigate', pillarId: 'creatika' },
+  { id: 'creatika_taller_expresion', code: 'CRK-EXPRESION-C01', label: '🎙️ Taller de Expresión', target: '/creatika/taller-de-expresion', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_color', code: 'CRK-COLOR-C01', label: '🎨 Teoría del Color', target: '/creatika/teoria-del-color', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_personaje', code: 'CRK-PERSONAJE-C01', label: '🎭 Construyendo Personaje', target: '/creatika/construyendo-el-personaje', type: 'navigate', pillarId: 'creatika' },
   { id: 'creatika_gran_galeria', code: 'CRK-GALERIA-C01', label: '🏛️ Gran Galería', target: '/gran-galeria', type: 'navigate', pillarId: 'creatika' },
