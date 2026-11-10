@@ -193,7 +193,7 @@ export function loadGoogleMapsScript(customApiKey?: string): Promise<boolean> {
     return googleMapsScriptPromise;
   }
 
-  const apiKey = customApiKey || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY;
+  const apiKey = customApiKey || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBQgO1lm87nx9AKgPjFrFyxO3PeOHNGC4E';
 
   if (!apiKey || apiKey.trim() === '') {
     // Si no hay API key configurada, no intentamos inyectar el script
