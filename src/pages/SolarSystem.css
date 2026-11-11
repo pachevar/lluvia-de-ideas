@@ -278,28 +278,69 @@
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
 }
 
+/* Workspace de Pestaña 1: Banda HUD arriba + Grid 2 Columnas abajo */
+.explorer-workspace {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+  min-width: 0;
+}
+
+.observatory-hud-strip {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+}
+
+.spectrum-mode-banner {
+  margin: 0 !important;
+  padding: 12px 18px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.spectrum-mode-banner p {
+  margin: 0;
+  line-height: 1.5;
+}
+
 /* Dashboard del Simulador */
 .sim-dashboard {
   display: flex;
-  gap: 30px;
+  flex-direction: column;
+  align-items: center;
+  gap: 24px;
+  width: 100%;
+  min-width: 0;
+}
+
+.explorer-workspace > .sim-dashboard {
+  display: grid;
+  grid-template-columns: minmax(340px, 410px) minmax(0, 1fr);
+  gap: 24px;
   align-items: stretch;
-  flex-wrap: wrap;
+  width: 100%;
 }
 
 /* Panel lateral */
 .sim-info-panel {
-  flex: 1;
-  min-width: 320px;
+  width: 100%;
+  min-width: 0;
   background: rgba(13, 5, 24, 0.55);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 24px;
-  padding: 30px;
+  padding: 28px;
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
-  max-height: 800px;
+  max-height: 820px;
   display: flex;
   flex-direction: column;
+  box-sizing: border-box;
 }
 
 .panel-inner-scroll {
@@ -470,23 +511,27 @@
   background: rgba(255, 255, 255, 0.03);
   border: 1.2px solid rgba(255, 255, 255, 0.04);
   border-radius: 12px;
-  padding: 10px 16px;
+  padding: 10px 14px;
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: 12px;
 }
 
 .stat-label {
   font-size: 0.75rem;
   font-weight: 700;
   text-transform: uppercase;
-  opacity: 0.5;
+  opacity: 0.55;
+  flex-shrink: 0;
 }
 
 .stat-val {
   font-size: 0.88rem;
   font-weight: 700;
   text-align: right;
+  min-width: 0;
+  word-break: break-word;
 }
 
 .body-desc-box {
@@ -512,6 +557,50 @@
   font-size: 0.95rem;
   font-weight: 700;
 }
+
+/* Calculadora de Peso Cósmico */
+.cosmic-weight-card {
+  margin: 0 0 22px 0;
+  background: rgba(56, 189, 248, 0.06);
+  border-color: rgba(56, 189, 248, 0.25);
+}
+
+.cosmic-weight-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.cosmic-weight-row label {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #e2e8f0;
+}
+
+.cosmic-weight-input {
+  width: 96px;
+  min-height: 44px;
+  font-size: 16px;
+  font-weight: 700;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  background: rgba(2, 6, 23, 0.85);
+  color: #f8fafc;
+  text-align: center;
+  box-sizing: border-box;
+}
+
+.cosmic-weight-result {
+  margin: 10px 0 0 0;
+  line-height: 1.5;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.weight-val-amber { color: #fbbf24; }
+.weight-val-cyan { color: #38bdf8; }
 
 /* Ficha de Lunas */
 .moons-section {
@@ -587,8 +676,8 @@
 
 /* Lienzo SVG Map Canvas */
 .sim-map-canvas {
-  flex: 1.8;
-  min-width: 480px;
+  width: 100%;
+  min-width: 0;
   background: rgba(7, 2, 14, 0.7);
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
@@ -602,6 +691,7 @@
   overflow: hidden;
   isolation: isolate;
   contain: paint;
+  box-sizing: border-box;
 }
 
 .canvas-controls-bar {
@@ -1822,15 +1912,18 @@
 /* Layout del Simulador Gravitacional */
 .physics-grid-layout {
   display: grid;
-  grid-template-columns: 340px 1fr;
+  grid-template-columns: minmax(300px, 350px) minmax(0, 1fr);
   gap: 22px;
   align-items: flex-start;
+  width: 100%;
+  min-width: 0;
 }
 
 .physics-controls-panel {
   display: flex;
   flex-direction: column;
   gap: 14px;
+  min-width: 0;
 }
 
 .control-slider-box {
@@ -2342,8 +2435,9 @@
 
 .light-curve-svg {
   width: 100%;
-  min-width: 600px;
-  height: 130px;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 800 / 130;
   display: block;
 }
 
@@ -2358,13 +2452,15 @@
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  width: 100%;
   background: rgba(13, 6, 28, 0.85);
   border: 1px solid rgba(168, 85, 247, 0.3);
   border-radius: 18px;
   padding: 12px 20px;
-  margin-bottom: 20px;
+  margin: 0;
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
+  box-sizing: border-box;
 }
 
 .hud-title {
@@ -2618,8 +2714,9 @@
 
 .travel-trajectory-svg {
   width: 100%;
-  min-width: 720px;
-  height: 160px;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 850 / 160;
   display: block;
 }
 
@@ -3050,7 +3147,8 @@
 
 /* Display Gráfico del Espectro & Cursor */
 .spectro-graph-display-container {
-  margin-bottom: 22px;
+  margin-bottom: 26px;
+  padding-bottom: 6px;
 }
 
 .spectrum-axis-labels {
@@ -3066,7 +3164,8 @@
 .spectro-graph-display {
   position: relative;
   width: 100%;
-  margin-top: 14px;
+  margin-top: 50px;
+  margin-bottom: 26px;
 }
 
 .spectrum-gradient-bar {
@@ -3106,22 +3205,45 @@
   width: 3px;
   background: #000;
   box-shadow: 0 0 6px rgba(0, 0, 0, 0.95);
-  opacity: 0.9;
+  opacity: 0.92;
+}
+
+.spectral-dip-line::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 1px;
+  background: rgba(248, 250, 252, 0.35);
+}
+
+.spectral-dip-line:nth-child(odd)::before {
+  top: -8px;
+  height: 8px;
+}
+
+.spectral-dip-line:nth-child(even)::before {
+  top: -28px;
+  height: 28px;
 }
 
 .dip-label {
   position: absolute;
-  top: -22px;
+  top: -26px;
   left: 50%;
   transform: translateX(-50%);
   white-space: nowrap;
   font-size: 0.68rem;
   font-weight: 800;
   color: #f8fafc;
-  background: rgba(0, 0, 0, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  padding: 2px 5px;
+  background: rgba(0, 0, 0, 0.88);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  padding: 2px 6px;
   border-radius: 4px;
+}
+
+.spectral-dip-line:nth-child(even) .dip-label {
+  top: -46px;
 }
 
 /* Cursor Dinámico Luminoso */
@@ -3576,8 +3698,9 @@
 
 .scale-planets-svg {
   width: 100%;
-  min-width: 780px;
-  height: 160px;
+  min-width: 0;
+  height: auto;
+  aspect-ratio: 920 / 200;
   display: block;
 }
 
@@ -3601,24 +3724,40 @@
   box-sizing: border-box;
 }
 
+@media (max-width: 960px) and (min-width: 769px) {
+  .explorer-workspace > .sim-dashboard {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .explorer-workspace > .sim-dashboard .sim-map-canvas {
+    order: -1;
+  }
+
+  .explorer-workspace > .sim-dashboard .sim-info-panel {
+    max-height: none;
+  }
+
+  .physics-grid-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .physics-viewport-column {
+    order: -1;
+  }
+}
+
 @media (min-width: 769px) {
-  .sim-dashboard {
-    display: flex;
-    justify-content: center;
-    align-items: flex-start;
-    gap: 24px;
+  .observatory-hud-strip {
+    max-width: 100%;
+    margin: 0 auto;
   }
 
   .scale-comparer-container, 
   .spectroscopy-container, 
   .physics-lab-container {
-    max-width: 1040px;
+    max-width: 1080px;
     margin: 0 auto;
-  }
-
-  .spectrum-hud-bar {
-    max-width: 1040px;
-    margin: 0 auto 20px auto;
   }
 }
 
@@ -3820,13 +3959,13 @@
   .solarsystem-content {
     width: 100%;
     max-width: 100%;
-    padding: 0 3px;
+    padding: 0 8px;
     box-sizing: border-box;
   }
 
   .solarsystem-header {
     margin-bottom: 15px;
-    padding: 0 8px;
+    padding: 0 4px;
   }
 
   .solar-top-bar {
@@ -3843,18 +3982,18 @@
 
   .solar-back-map-btn {
     width: 100%;
-    max-width: 200px;
+    max-width: 220px;
     justify-content: center;
-    min-height: 38px;
-    padding: 6px 16px;
+    min-height: 44px;
+    padding: 8px 16px;
     font-size: 0.85rem;
   }
 
   .solar-floating-map-btn {
     bottom: 16px;
     left: 12px;
-    padding: 7px 14px;
-    min-height: 38px;
+    padding: 8px 14px;
+    min-height: 44px;
     font-size: 0.82rem;
   }
 
@@ -3920,7 +4059,14 @@
   }
 
   /* Layout de la Simulación (Pestaña 1) */
-  .sim-dashboard, .physics-simulation-grid {
+  .explorer-workspace {
+    gap: 12px;
+  }
+
+  .explorer-workspace > .sim-dashboard,
+  .sim-dashboard,
+  .physics-simulation-grid {
+    display: flex;
     flex-direction: column;
     gap: 12px;
     width: 100%;
@@ -3997,10 +4143,10 @@
 
   .camera-preset-btn {
     flex-shrink: 0;
-    padding: 5px 10px;
-    font-size: 0.72rem;
-    min-height: 30px;
-    border-radius: 8px;
+    padding: 6px 12px;
+    font-size: 0.74rem;
+    min-height: 40px;
+    border-radius: 10px;
     touch-action: manipulation;
   }
 
@@ -4034,9 +4180,9 @@
 
   .subpreset-chip {
     flex-shrink: 0;
-    padding: 5px 10px;
-    font-size: 0.72rem;
-    min-height: 32px;
+    padding: 6px 12px;
+    font-size: 0.74rem;
+    min-height: 40px;
     touch-action: manipulation;
   }
 
@@ -4048,15 +4194,16 @@
 
   .btn-mobile-layers-toggle {
     width: 100%;
+    min-height: 44px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     background: rgba(255, 255, 255, 0.05);
     border: 1px solid rgba(255, 255, 255, 0.1);
     color: #94a3b8;
-    padding: 6px 12px;
+    padding: 8px 12px;
     border-radius: 10px;
-    font-size: 0.75rem;
+    font-size: 0.78rem;
     font-weight: 700;
     cursor: pointer;
     touch-action: manipulation;
@@ -4090,9 +4237,9 @@
 
   .toggle-chip {
     flex-shrink: 0;
-    font-size: 0.72rem;
-    padding: 5px 9px;
-    min-height: 32px;
+    font-size: 0.74rem;
+    padding: 6px 10px;
+    min-height: 40px;
     touch-action: manipulation;
   }
 
@@ -4173,8 +4320,8 @@
   }
 
   .mobile-touch-btn {
-    width: 42px;
-    height: 42px;
+    width: 44px;
+    height: 44px;
     border-radius: 50%;
     background: rgba(9, 3, 22, 0.88);
     backdrop-filter: blur(14px);
@@ -4436,9 +4583,10 @@
 
   .transit-planet-btn {
     flex-shrink: 0;
-    height: 34px;
-    padding: 5px 10px;
-    font-size: 0.74rem;
+    min-height: 44px;
+    height: auto;
+    padding: 6px 12px;
+    font-size: 0.76rem;
     touch-action: manipulation;
   }
 
@@ -4456,17 +4604,23 @@
   .transit-controls-group {
     display: flex;
     flex-direction: column;
-    gap: 6px;
+    gap: 8px;
     width: 100%;
     max-width: 100%;
     min-width: 0;
     box-sizing: border-box;
   }
 
+  .transit-controls-group .spectrum-btn {
+    width: 100%;
+    min-height: 44px;
+  }
+
   .transit-zoom-group {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    gap: 6px;
     width: 100%;
     max-width: 100%;
     min-width: 0;
@@ -4477,10 +4631,10 @@
   }
 
   .transit-zoom-group .spectrum-btn {
-    min-width: 34px;
-    min-height: 32px;
-    padding: 3px 6px;
-    font-size: 0.74rem;
+    min-width: 44px;
+    min-height: 44px;
+    padding: 4px 8px;
+    font-size: 0.76rem;
   }
 
   .solar-transit-viewport-box {
@@ -4607,8 +4761,10 @@
   }
 
   .light-curve-svg {
-    min-width: 440px;
-    height: 105px;
+    width: 100%;
+    min-width: 0;
+    height: auto;
+    aspect-ratio: 800 / 130;
     display: block;
   }
 
@@ -4647,8 +4803,10 @@
   }
 
   .scale-planets-svg {
-    min-width: 520px;
-    height: 125px;
+    min-width: 640px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 920 / 200;
     display: block;
   }
 
@@ -4691,9 +4849,10 @@
     width: 100%;
     max-width: 100%;
     min-width: 0;
+    min-height: 44px;
     box-sizing: border-box;
-    padding: 10px 8px;
-    font-size: 0.8rem;
+    padding: 10px 10px;
+    font-size: 16px;
     text-overflow: ellipsis;
     white-space: nowrap;
     overflow: hidden;
@@ -4766,8 +4925,10 @@
   }
 
   .travel-trajectory-svg {
-    min-width: 500px;
-    height: 120px;
+    min-width: 540px;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 850 / 160;
     display: block;
   }
 
@@ -4864,9 +5025,10 @@
 
   .spectro-subnav-btn {
     min-width: auto;
+    min-height: 44px;
     flex-shrink: 0;
-    padding: 8px 12px;
-    font-size: 0.78rem;
+    padding: 8px 14px;
+    font-size: 0.8rem;
     white-space: nowrap;
   }
 
@@ -4890,7 +5052,8 @@
 
   .spectro-planet-chip {
     flex-shrink: 0;
-    padding: 7px 12px;
+    min-height: 42px;
+    padding: 8px 14px;
     font-size: 0.78rem;
   }
 
@@ -4953,8 +5116,9 @@
   }
 
   .wl-step-btn {
+    min-height: 44px;
     padding: 8px 10px;
-    font-size: 0.82rem;
+    font-size: 0.84rem;
     text-align: center;
   }
 
@@ -4984,12 +5148,18 @@
   }
 
   .preset-chip {
-    padding: 5px 8px;
-    font-size: 0.72rem;
+    min-height: 40px;
+    padding: 6px 10px;
+    font-size: 0.74rem;
   }
 
   .spectrum-axis-labels {
     font-size: 0.68rem;
+  }
+
+  .spectro-graph-display {
+    margin-top: 44px;
+    margin-bottom: 24px;
   }
 
   .spectrum-gradient-bar {
@@ -5002,10 +5172,16 @@
     width: 2px;
   }
 
-  .dip-label {
+  .spectral-dip-line:nth-child(odd) .dip-label {
     font-size: 0.6rem;
     padding: 1px 4px;
-    top: -20px;
+    top: -22px;
+  }
+
+  .spectral-dip-line:nth-child(even) .dip-label {
+    font-size: 0.6rem;
+    padding: 1px 4px;
+    top: -39px;
   }
 
   .spectro-active-cursor {
@@ -5061,8 +5237,9 @@
   }
 
   .instrument-tab-btn {
-    padding: 8px 12px;
-    font-size: 0.78rem;
+    min-height: 44px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
   }
 
   .instrument-detail-card {
@@ -5157,7 +5334,8 @@
   }
 
   .spectrum-btn {
-    padding: 8px 2px;
+    min-height: 44px;
+    padding: 8px 4px;
     font-size: 0.72rem;
     text-align: center;
   }
@@ -5192,9 +5370,10 @@
 
   .physics-subnav-btn {
     min-width: auto;
+    min-height: 44px;
     flex-shrink: 0;
-    padding: 8px 12px;
-    font-size: 0.78rem;
+    padding: 8px 14px;
+    font-size: 0.8rem;
     white-space: nowrap;
   }
 
@@ -5215,7 +5394,8 @@
   }
 
   .physics-preset-chip {
-    padding: 6px 10px;
+    min-height: 44px;
+    padding: 8px 12px;
     gap: 8px;
   }
 
@@ -5261,8 +5441,9 @@
   }
 
   .stepper-btn {
-    padding: 6px 8px;
-    font-size: 0.72rem;
+    min-height: 40px;
+    padding: 6px 10px;
+    font-size: 0.74rem;
   }
 
   .slider-hint {
@@ -5274,7 +5455,8 @@
   }
 
   .toggle-card {
-    padding: 8px 10px;
+    min-height: 44px;
+    padding: 10px 12px;
   }
 
   .toggle-card strong {
@@ -5286,6 +5468,7 @@
   }
 
   .physics-viewport-column {
+    order: -1;
     width: 100%;
     min-width: 0;
     gap: 12px;
@@ -5317,6 +5500,7 @@
   .physics-svg-canvas {
     width: 100%;
     height: auto;
+    aspect-ratio: 7 / 5;
     display: block;
   }
 
@@ -5371,8 +5555,9 @@
   }
 
   .experiment-tab-btn {
-    padding: 8px 12px;
-    font-size: 0.78rem;
+    min-height: 44px;
+    padding: 8px 14px;
+    font-size: 0.8rem;
   }
 
   .experiment-detail-card {
@@ -5507,13 +5692,15 @@
   }
 
   .wl-step-btn {
-    padding: 6px 8px;
-    font-size: 0.75rem;
+    min-height: 44px;
+    padding: 8px 10px;
+    font-size: 0.78rem;
   }
 
   .preset-chip {
-    padding: 4px 6px;
-    font-size: 0.68rem;
+    min-height: 38px;
+    padding: 5px 8px;
+    font-size: 0.7rem;
   }
 }
 

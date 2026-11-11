@@ -1572,6 +1572,12 @@ export default function SolarSystem() {
   const travelDays = travelHours / 24;
   const travelYears = travelDays / 365.25;
 
+  const centerChipInView = (target: EventTarget | null) => {
+    if (target instanceof HTMLElement) {
+      target.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
+    }
+  };
+
   return (
     <div className={`solarsystem-container spectrum-${spectrumMode}`}>
       {/* Botón flotante permanente para volver al mapa desde cualquier altura de la página */}
@@ -1651,45 +1657,49 @@ export default function SolarSystem() {
             PESTAÑA 1: EXPLORADOR & ÓRBITAS DE KEPLER
            ========================================================= */}
         {activeTab === 'explorer' && (
-          <div className="sim-dashboard animate-fade-in">
-            
-            {/* Barra de Filtro del Espectro Electromagnético (HUD Bar) */}
-            <div className="spectrum-hud-bar">
-              <span className="hud-title">👁️ Visión del Observatorio:</span>
-              <div className="spectrum-btn-group">
-                <button 
-                  className={`spectrum-btn ${spectrumMode === 'visible' ? 'active' : ''}`}
-                  onClick={() => setSpectrumMode('visible')}
-                >
-                  👁️ Luz Visible (Color Real)
-                </button>
-                <button 
-                  className={`spectrum-btn infrared ${spectrumMode === 'infrared' ? 'active' : ''}`}
-                  onClick={() => setSpectrumMode('infrared')}
-                >
-                  🔴 Infrarrojo (Telescopio James Webb)
-                </button>
-                <button 
-                  className={`spectrum-btn uv ${spectrumMode === 'ultraviolet' ? 'active' : ''}`}
-                  onClick={() => setSpectrumMode('ultraviolet')}
-                >
-                  🟣 Corona Solar (Rayos X / UV)
-                </button>
+          <div className="explorer-workspace animate-fade-in">
+            {/* Banda Superior HUD del Observatorio (Ancho completo sobre las columnas) */}
+            <div className="observatory-hud-strip">
+              {/* Barra de Filtro del Espectro Electromagnético (HUD Bar) */}
+              <div className="spectrum-hud-bar">
+                <span className="hud-title">👁️ Visión del Observatorio:</span>
+                <div className="spectrum-btn-group">
+                  <button 
+                    className={`spectrum-btn ${spectrumMode === 'visible' ? 'active' : ''}`}
+                    onClick={() => setSpectrumMode('visible')}
+                  >
+                    👁️ Luz Visible (Color Real)
+                  </button>
+                  <button 
+                    className={`spectrum-btn infrared ${spectrumMode === 'infrared' ? 'active' : ''}`}
+                    onClick={() => setSpectrumMode('infrared')}
+                  >
+                    🔴 Infrarrojo (Telescopio James Webb)
+                  </button>
+                  <button 
+                    className={`spectrum-btn uv ${spectrumMode === 'ultraviolet' ? 'active' : ''}`}
+                    onClick={() => setSpectrumMode('ultraviolet')}
+                  >
+                    🟣 Corona Solar (Rayos X / UV)
+                  </button>
+                </div>
+              </div>
+
+              {/* Explicación científica del modo de observación activo */}
+              <div className="special-details-box jwst-card spectrum-mode-banner">
+                {spectrumMode === 'visible' && (
+                  <p>👁️ <strong>Luz visible (380–750 nm):</strong> lo que vería un astronauta: los colores reales de las nubes, océanos y desiertos reflejando la luz solar.</p>
+                )}
+                {spectrumMode === 'infrared' && (
+                  <p>🔴 <strong>Infrarrojo (JWST):</strong> revela el calor emitido por los mundos, atraviesa el polvo y muestra las bandas profundas de Júpiter y las moléculas de agua y CO₂ en atmósferas lejanas.</p>
+                )}
+                {spectrumMode === 'ultraviolet' && (
+                  <p>🟣 <strong>Ultravioleta / Rayos X:</strong> muestra la corona solar a más de 1,000,000 °C, las llamaradas y las auroras polares de Júpiter y Saturno.</p>
+                )}
               </div>
             </div>
 
-            {/* Explicación científica del modo de observación activo */}
-            <div className="special-details-box jwst-card" style={{ margin: '8px 0' }}>
-              {spectrumMode === 'visible' && (
-                <p>👁️ <strong>Luz visible (380–750 nm):</strong> lo que vería un astronauta: los colores reales de las nubes, océanos y desiertos reflejando la luz solar.</p>
-              )}
-              {spectrumMode === 'infrared' && (
-                <p>🔴 <strong>Infrarrojo (JWST):</strong> revela el calor emitido por los mundos, atraviesa el polvo y muestra las bandas profundas de Júpiter y las moléculas de agua y CO₂ en atmósferas lejanas.</p>
-              )}
-              {spectrumMode === 'ultraviolet' && (
-                <p>🟣 <strong>Ultravioleta / Rayos X:</strong> muestra la corona solar a más de 1,000,000 °C, las llamaradas y las auroras polares de Júpiter y Saturno.</p>
-              )}
-            </div>
+            <div className="sim-dashboard">
 
             {/* Panel de Información Educativa Ampliado */}
             <div className="sim-info-panel animate-zoom-in">
@@ -1752,10 +1762,10 @@ export default function SolarSystem() {
                 </div>
 
                 {PLANET_EXTRA[selectedBody.id] && (
-                  <div className="special-details-box" style={{ marginTop: '12px' }}>
+                  <div className="special-details-box cosmic-weight-card">
                     <h4>⚖️ Calculadora de Peso Cósmico</h4>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-                      <label htmlFor="cosmic-weight" style={{ fontSize: '0.85rem' }}>Tu peso en la Tierra (kg):</label>
+                    <div className="cosmic-weight-row">
+                      <label htmlFor="cosmic-weight">Tu peso en la Tierra (kg):</label>
                       <input
                         id="cosmic-weight"
                         type="number"
@@ -1763,14 +1773,14 @@ export default function SolarSystem() {
                         max="300"
                         value={cosmicWeightKg}
                         onChange={(e) => setCosmicWeightKg(Math.max(1, Math.min(300, parseFloat(e.target.value) || 1)))}
-                        style={{ width: '90px', minHeight: '44px', fontSize: '16px', padding: '4px 8px', borderRadius: '8px', border: '1px solid rgba(56,189,248,0.4)', background: 'rgba(2,6,23,0.8)', color: '#f8fafc' }}
+                        className="cosmic-weight-input"
                       />
                     </div>
-                    <p style={{ marginTop: '8px' }}>
+                    <p className="cosmic-weight-result">
                       En <strong>{selectedBody.name}</strong> pesarías{' '}
-                      <strong style={{ color: '#fbbf24' }}>{((cosmicWeightKg * PLANET_EXTRA[selectedBody.id].gravity) / 9.81).toFixed(1)} kg</strong>
+                      <strong className="weight-val-amber">{((cosmicWeightKg * PLANET_EXTRA[selectedBody.id].gravity) / 9.81).toFixed(1)} kg</strong>
                       {' '}y un salto de 50 cm en la Tierra llegaría a{' '}
-                      <strong style={{ color: '#38bdf8' }}>{((0.5 * 9.81) / PLANET_EXTRA[selectedBody.id].gravity * 100).toFixed(0)} cm</strong>.
+                      <strong className="weight-val-cyan">{((0.5 * 9.81) / PLANET_EXTRA[selectedBody.id].gravity * 100).toFixed(0)} cm</strong>.
                     </p>
                   </div>
                 )}
@@ -1928,7 +1938,10 @@ export default function SolarSystem() {
                     <button 
                       key={item.id}
                       className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
-                      onClick={() => handleSelectBody(CELESTIAL_DATA[item.id])}
+                      onClick={(e) => {
+                        centerChipInView(e.currentTarget);
+                        handleSelectBody(CELESTIAL_DATA[item.id]);
+                      }}
                       title={`Centrar y seguir ${item.label}`}
                     >
                       {item.label}
@@ -1944,7 +1957,10 @@ export default function SolarSystem() {
                     <button 
                       key={item.id}
                       className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
-                      onClick={() => handleSelectBody(CELESTIAL_DATA[item.id])}
+                      onClick={(e) => {
+                        centerChipInView(e.currentTarget);
+                        handleSelectBody(CELESTIAL_DATA[item.id]);
+                      }}
                       title={`Centrar y seguir ${item.label}`}
                     >
                       {item.label}
@@ -1962,7 +1978,8 @@ export default function SolarSystem() {
                     <button 
                       key={item.id}
                       className={`subpreset-chip ${selectedBody.id === item.id ? 'active' : ''}`}
-                      onClick={() => {
+                      onClick={(e) => {
+                        centerChipInView(e.currentTarget);
                         setShowProbes(true);
                         handleSelectBody(CELESTIAL_DATA[item.id]);
                       }}
@@ -2714,6 +2731,7 @@ export default function SolarSystem() {
               </div>
             </div>
           </div>
+          </div>
         )}
 
         {/* =========================================================
@@ -2749,7 +2767,10 @@ export default function SolarSystem() {
                     <button
                       key={item.id}
                       className={`transit-planet-btn ${selectedScalePlanet === item.id ? 'active' : ''}`}
-                      onClick={() => setSelectedScalePlanet(item.id)}
+                      onClick={(e) => {
+                        centerChipInView(e.currentTarget);
+                        setSelectedScalePlanet(item.id);
+                      }}
                     >
                       <span>{item.icon}</span> {item.name}
                     </button>
@@ -2900,16 +2921,21 @@ export default function SolarSystem() {
                             { id: 'marte', offset: 115 },
                             { id: 'mercurio', offset: 135 },
                             { id: 'luna', offset: 155 }
-                          ].map((pItem) => {
+                          ].map((pItem, idx) => {
                             const bData = SCALE_BODIES_DATA[pItem.id] || { diameterKm: 12742, color: '#3b82f6', name: pItem.id };
                             const rPx = Math.max(1.0, (240 * (bData.diameterKm / 1392700)));
                             const px = 450 + pItem.offset;
                             const py = 310;
+                            const isBelow = idx % 2 === 1;
+                            const stemLen = pItem.id === 'jupiter' || pItem.id === 'saturno' ? 18 : 22 + Math.floor(idx / 2) * 14;
+                            const lineY1 = isBelow ? py + rPx + 3 : py - rPx - 3;
+                            const lineY2 = isBelow ? py + rPx + stemLen : py - rPx - stemLen;
+                            const textY = isBelow ? lineY2 + 11 : lineY2 - 5;
                             return (
                               <g key={pItem.id}>
                                 <circle cx={px} cy={py} r={rPx} fill="#020005" stroke={bData.color} strokeWidth="1" filter="url(#planet-transit-shadow)" />
-                                <line x1={px} y1={py - rPx - 3} x2={px} y2={py - rPx - 20} stroke={bData.color} strokeWidth="0.8" />
-                                <text x={px} y={py - rPx - 24} fill="#ffffff" fontSize="8" fontWeight="bold" textAnchor="middle">{bData.name}</text>
+                                <line x1={px} y1={lineY1} x2={px} y2={lineY2} stroke={bData.color} strokeWidth="0.9" />
+                                <text x={px} y={textY} fill="#ffffff" fontSize="9" fontWeight="bold" textAnchor="middle">{bData.name}</text>
                               </g>
                             );
                           })}
@@ -2920,6 +2946,9 @@ export default function SolarSystem() {
                           const rPx = Math.max(1.0, (240 * (bData.diameterKm / 1392700)));
                           const px = 450 + transitXOffset;
                           const py = 310;
+                          const flipLeft = px > 580;
+                          const elbowX = flipLeft ? px - 42 : px + 42;
+                          const boxX = flipLeft ? px - 252 : px + 42;
 
                           return (
                             <g className="single-planet-transit-group">
@@ -2934,14 +2963,14 @@ export default function SolarSystem() {
                               {/* Silueta oscura del planeta */}
                               <circle cx={px} cy={py} r={rPx} fill="#020005" stroke={bData.color} strokeWidth="1.5" filter="url(#planet-transit-shadow)" />
 
-                              {/* Puntero e Indicador de Texto */}
+                              {/* Puntero e Indicador de Texto (se invierte a la izquierda cerca del borde derecho) */}
                               <g className="transit-pointer-callout">
                                 <circle cx={px} cy={py} r={Math.max(rPx + 8, 14)} fill="none" stroke="#38bdf8" strokeWidth="0.8" strokeDasharray="3 2" />
                                 <line x1={px} y1={py - Math.max(rPx + 8, 14)} x2={px} y2={py - 65} stroke="#38bdf8" strokeWidth="1" />
-                                <line x1={px} y1={py - 65} x2={px + 50} y2={py - 65} stroke="#38bdf8" strokeWidth="1" />
-                                <rect x={px + 50} y={py - 86} width="210" height="44" rx="8" fill="rgba(8, 3, 20, 0.92)" stroke="#38bdf8" strokeWidth="0.8" />
-                                <text x={px + 62} y={py - 68} fill="#ffffff" fontSize="11" fontWeight="bold">{bData.name}</text>
-                                <text x={px + 62} y={py - 52} fill="#38bdf8" fontSize="10">{bData.diameterKm.toLocaleString('es-GT')} km (r = {rPx.toFixed(2)}px)</text>
+                                <line x1={px} y1={py - 65} x2={elbowX} y2={py - 65} stroke="#38bdf8" strokeWidth="1" />
+                                <rect x={boxX} y={py - 86} width="210" height="44" rx="8" fill="rgba(8, 3, 20, 0.92)" stroke="#38bdf8" strokeWidth="0.8" />
+                                <text x={boxX + 12} y={py - 68} fill="#ffffff" fontSize="11" fontWeight="bold">{bData.name}</text>
+                                <text x={boxX + 12} y={py - 52} fill="#38bdf8" fontSize="10">{bData.diameterKm.toLocaleString('es-GT')} km (r = {rPx.toFixed(2)}px)</text>
                               </g>
                             </g>
                           );
@@ -3076,7 +3105,7 @@ export default function SolarSystem() {
                 <h3>🪐 Escala Planetaria Relativa Lado a Lado (km)</h3>
                 <p>Demostración en escala continua donde los 8 planetas se colocan en fila directa frente al limbo del Sol:</p>
                 <div className="scale-svg-wrapper">
-                  <svg viewBox="0 0 920 200" className="scale-planets-svg" style={{ height: '200px' }}>
+                  <svg viewBox="0 0 920 200" className="scale-planets-svg">
                     <defs>
                       {/* Sol: gradiente realista para sección lateral */}
                       <radialGradient id="grad-sol-side" cx="50%" cy="50%" r="50%">
@@ -3364,6 +3393,16 @@ export default function SolarSystem() {
                           <stop offset="50%" stopColor="#38bdf8" stopOpacity="0.8" />
                           <stop offset="100%" stopColor="#fbbf24" stopOpacity="0.9" />
                         </linearGradient>
+                        <radialGradient id="travel-earth-grad" cx="35%" cy="35%" r="65%">
+                          <stop offset="0%" stopColor="#bfdbfe" />
+                          <stop offset="45%" stopColor="#3b82f6" />
+                          <stop offset="100%" stopColor="#0c1a3d" />
+                        </radialGradient>
+                        <radialGradient id="travel-dest-grad" cx="38%" cy="38%" r="65%">
+                          <stop offset="0%" stopColor="#fef9c3" />
+                          <stop offset="45%" stopColor="#f59e0b" />
+                          <stop offset="100%" stopColor="#7c2d12" />
+                        </radialGradient>
                         <filter id="rocket-glow">
                           <feDropShadow dx="0" dy="0" stdDeviation="4" floodColor="#38bdf8" floodOpacity="0.9" />
                         </filter>
@@ -3371,7 +3410,7 @@ export default function SolarSystem() {
 
                       {/* Origen: PLANETA TIERRA */}
                       <g transform="translate(90, 75)">
-                        <circle cx="0" cy="0" r="28" fill="url(#ge)" />
+                        <circle cx="0" cy="0" r="28" fill="url(#travel-earth-grad)" />
                         <circle cx="0" cy="0" r="32" fill="none" stroke="#38bdf8" strokeWidth="1" strokeDasharray="3 2" />
                         <text x="0" y="48" fill="#93c5fd" fontSize="12" fontWeight="bold" textAnchor="middle">Tierra (Origen)</text>
                         <text x="0" y="62" fill="rgba(255,255,255,0.6)" fontSize="9" textAnchor="middle">0 UA</text>
@@ -3408,7 +3447,7 @@ export default function SolarSystem() {
 
                       {/* Destino Seleccionado */}
                       <g transform="translate(760, 75)">
-                        <circle cx="0" cy="0" r="30" fill="url(#grad-solar-photosphere)" />
+                        <circle cx="0" cy="0" r="30" fill="url(#travel-dest-grad)" />
                         <circle cx="0" cy="0" r="34" fill="none" stroke="#fbbf24" strokeWidth="1.2" strokeDasharray="4 3" />
                         <text x="0" y="48" fill="#fbbf24" fontSize="12" fontWeight="bold" textAnchor="middle">{destData.name}</text>
                         <text x="0" y="62" fill="rgba(255,255,255,0.7)" fontSize="9" textAnchor="middle">
@@ -3474,7 +3513,8 @@ export default function SolarSystem() {
               <div className="spectro-subnav-bar">
                 <button 
                   className={`spectro-subnav-btn ${activeSpectroSection === 'analyzer' ? 'active' : ''}`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    centerChipInView(e.currentTarget);
                     setActiveSpectroSection('analyzer');
                     soundEffects.playClick();
                   }}
@@ -3483,7 +3523,8 @@ export default function SolarSystem() {
                 </button>
                 <button 
                   className={`spectro-subnav-btn ${activeSpectroSection === 'instruments' ? 'active' : ''}`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    centerChipInView(e.currentTarget);
                     setActiveSpectroSection('instruments');
                     soundEffects.playClick();
                   }}
@@ -3492,7 +3533,8 @@ export default function SolarSystem() {
                 </button>
                 <button 
                   className={`spectro-subnav-btn ${activeSpectroSection === 'learning' ? 'active' : ''}`}
-                  onClick={() => {
+                  onClick={(e) => {
+                    centerChipInView(e.currentTarget);
                     setActiveSpectroSection('learning');
                     soundEffects.playClick();
                   }}
@@ -3526,7 +3568,8 @@ export default function SolarSystem() {
                             <button 
                               key={id}
                               className={`spectro-planet-chip ${selectedSpectroBody === id ? 'active' : ''}`}
-                              onClick={() => {
+                              onClick={(e) => {
+                                centerChipInView(e.currentTarget);
                                 setSelectedSpectroBody(id);
                                 soundEffects.playClick();
                               }}
@@ -3943,7 +3986,8 @@ export default function SolarSystem() {
                 <div className="physics-subnav-bar">
                   <button 
                     className={`physics-subnav-btn ${activePhysicsSection === 'simulator' ? 'active' : ''}`}
-                    onClick={() => {
+                    onClick={(e) => {
+                      centerChipInView(e.currentTarget);
                       setActivePhysicsSection('simulator');
                       soundEffects.playClick();
                     }}
@@ -3952,7 +3996,8 @@ export default function SolarSystem() {
                   </button>
                   <button 
                     className={`physics-subnav-btn ${activePhysicsSection === 'experiments' ? 'active' : ''}`}
-                    onClick={() => {
+                    onClick={(e) => {
+                      centerChipInView(e.currentTarget);
                       setActivePhysicsSection('experiments');
                       soundEffects.playClick();
                     }}
@@ -3961,7 +4006,8 @@ export default function SolarSystem() {
                   </button>
                   <button 
                     className={`physics-subnav-btn ${activePhysicsSection === 'learning' ? 'active' : ''}`}
-                    onClick={() => {
+                    onClick={(e) => {
+                      centerChipInView(e.currentTarget);
                       setActivePhysicsSection('learning');
                       soundEffects.playClick();
                     }}
@@ -4264,11 +4310,12 @@ export default function SolarSystem() {
                               markerEnd="url(#arrow-fg)" 
                             />
                             <text 
-                              x={fgEndX + (fgUnitX > 0 ? 6 : -18)} 
-                              y={fgEndY + (fgUnitY > 0 ? 6 : -6)} 
+                              x={Math.max(20, Math.min(680, fgEndX + (fgUnitX > 0 ? 8 : -8)))} 
+                              y={Math.max(20, Math.min(484, fgEndY + (fgUnitY > 0 ? 12 : -8)))} 
                               fill="#ef4444" 
                               fontSize="11" 
                               fontWeight="bold"
+                              textAnchor={fgUnitX > 0 ? 'start' : 'end'}
                             >
                               Fg
                             </text>
@@ -4282,11 +4329,12 @@ export default function SolarSystem() {
                               markerEnd="url(#arrow-vt)" 
                             />
                             <text 
-                              x={vtEndX + (vtEndX > planetPx ? 6 : -18)} 
-                              y={vtEndY + (vtEndY > planetPy ? 6 : -6)} 
+                              x={Math.max(18, Math.min(682, vtEndX + (vtEndX > planetPx ? 8 : -8)))} 
+                              y={Math.max(20, Math.min(484, vtEndY + (vtEndY > planetPy ? 14 : -8)))} 
                               fill="#06b6d4" 
                               fontSize="11" 
                               fontWeight="bold"
+                              textAnchor={vtEndX > 575 ? 'end' : vtEndX < 125 ? 'start' : vtEndX > planetPx ? 'start' : 'end'}
                             >
                               Vt ({currentOrbitalSpeedKmS} km/s)
                             </text>
