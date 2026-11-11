@@ -320,7 +320,10 @@ export const SutzGeoMissionModal: React.FC<SutzGeoMissionModalProps> = ({
         <div className="sutz-geo-display-area">
           {activeView === 'map' ? (
             <div className="sutz-geo-map-wrapper">
-              <div ref={mapContainerRef} className="sutz-geo-google-map" />
+              <div
+                ref={mapContainerRef}
+                className={`sutz-geo-google-map ${layerMode === 'dark' ? 'sutz-tiles-dark' : ''}`}
+              />
               <button
                 type="button"
                 className="sutz-geo-layer-pill"

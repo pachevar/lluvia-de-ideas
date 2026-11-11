@@ -210,7 +210,11 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
           🛰️ Satélite
         </button>
       </div>
-      <div ref={containerRef} className="ssc-map" aria-label="Mapa del reto" />
+      <div
+        ref={containerRef}
+        className={`ssc-map ${layerMode === 'dark' ? 'sutz-tiles-dark' : ''}`}
+        aria-label="Mapa del reto"
+      />
     </div>
   );
 }

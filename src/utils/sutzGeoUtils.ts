@@ -3,6 +3,7 @@
 // Implementa cálculo Haversine de alta precisión, brújula/radar y capas Leaflet (OpenStreetMap/CARTO/Satélite).
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
+import '../styles/sutz-leaflet.css';
 
 /**
  * Radio medio de la Tierra en metros (WGS-84 esférico estándar).
@@ -114,8 +115,8 @@ export function getCardinalDirection(bearing: number): { code: string; label: st
 export type SutzMapLayerMode = 'dark' | 'satellite';
 
 /**
- * Crea la capa base de teselas para Leaflet siguiendo el neurodiseño Sutz:
- * - 'dark': CARTO Dark Matter (calles oscuras de bajo estímulo visual).
+ * Crea la capa base de teselas para Leaflet (100% libre de API Keys):
+ * - 'dark': Esri World Street Map estilizado en modo oscuro vía `.sutz-tiles-dark`.
  * - 'satellite': Esri World Imagery (vista satelital para patios escolares y campo).
  */
 export function createSutzTileLayer(mode: SutzMapLayerMode): L.TileLayer {
@@ -123,17 +124,18 @@ export function createSutzTileLayer(mode: SutzMapLayerMode): L.TileLayer {
     return L.tileLayer(
       'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
       {
-        maxZoom: 19,
+        maxNativeZoom: 18,
+        maxZoom: 20,
         attribution: 'Tiles &copy; Esri'
       }
     );
   }
   return L.tileLayer(
-    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    'https://server.arcgisonline.com/ArcGIS/rest/services/World_Street_Map/MapServer/tile/{z}/{y}/{x}',
     {
-      subdomains: 'abcd',
+      maxNativeZoom: 18,
       maxZoom: 20,
-      attribution: '&copy; OpenStreetMap &copy; CARTO'
+      attribution: 'Tiles &copy; Esri'
     }
   );
 }

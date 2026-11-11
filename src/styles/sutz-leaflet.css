@@ -1,0 +1,5 @@
+/* Estilización neuroeducativa oscura para las teselas de Leaflet (sin alterar pines ni órbitas) */
+.sutz-tiles-dark .leaflet-tile-pane {
+  filter: invert(93%) hue-rotate(180deg) brightness(92%) contrast(92%) saturate(85%);
+}
+
