@@ -3,7 +3,7 @@
 // Diseñado de forma genérica: las "salas" y "grupos" pueden reutilizarse en otras dinámicas.
 
 import {
-  doc, setDoc, getDoc, updateDoc, collection, onSnapshot, serverTimestamp, type Unsubscribe
+  doc, setDoc, getDoc, getDocs, updateDoc, collection, onSnapshot, serverTimestamp, writeBatch, type Unsubscribe
 } from 'firebase/firestore';
 import { db } from '../firebase';
 
@@ -18,6 +18,7 @@ export interface SolarScaleRoom {
   /** Si es true se muestra la distancia real (millones de km) como dato del problema. */
   showRealKm: boolean;
   revealed: boolean;
+  resetCount?: number;
   createdAt?: unknown;
 }
 
@@ -137,4 +138,31 @@ export async function lockSolarScalePin(code: string, team: string, astro: strin
 
 export async function setSolarScaleRevealed(code: string, revealed: boolean): Promise<void> {
   await updateDoc(doc(db, ROOMS, code), { revealed });
+}
+
+export async function resetSolarScaleRoom(
+  code: string,
+  newSun?: { sunLat: number; sunLng: number; sunAccuracy: number }
+): Promise<number> {
+  const pinsSnap = await getDocs(collection(db, ROOMS, code, 'pins'));
+  const docs = pinsSnap.docs;
+  for (let i = 0; i < docs.length; i += 400) {
+    const batch = writeBatch(db);
+    docs.slice(i, i + 400).forEach(d => batch.delete(d.ref));
+    await batch.commit();
+  }
+
+  const roomRef = doc(db, ROOMS, code);
+  const roomSnap = await getDoc(roomRef);
+  const currentReset = roomSnap.exists() && typeof roomSnap.data().resetCount === 'number'
+    ? (roomSnap.data().resetCount as number)
+    : 0;
+
+  await updateDoc(roomRef, {
+    revealed: false,
+    resetCount: currentReset + 1,
+    ...(newSun ?? {})
+  });
+
+  return docs.length;
 }

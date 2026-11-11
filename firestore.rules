@@ -179,8 +179,9 @@ service cloud.firestore {
         && request.resource.data.sunLat is number
         && request.resource.data.sunLng is number
         && request.resource.data.revealed == false;
-      // Cualquier cliente solo puede cambiar el estado de revelación
-      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['revealed']);
+      // Permite revelar/ocultar órbitas o reiniciar el ejercicio (y reubicar el Sol si el docente lo solicita)
+      allow update: if request.resource.data.diff(resource.data).affectedKeys()
+        .hasOnly(['revealed', 'resetCount', 'sunLat', 'sunLng', 'sunAccuracy']);
       allow delete: if isAdmin();
 
       match /pins/{pinDocId} {
@@ -203,7 +204,7 @@ service cloud.firestore {
           && !('locked' in resource.data && resource.data.locked == true)
           && (!('correctionsUsed' in resource.data) || resource.data.correctionsUsed < 3)
           && (!('correctionsUsed' in request.resource.data) || (request.resource.data.correctionsUsed >= 0 && request.resource.data.correctionsUsed <= 3));
-        allow delete: if isAdmin();
+        allow delete: if true;
       }
     }
 

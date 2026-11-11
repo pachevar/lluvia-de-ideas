@@ -6,7 +6,7 @@ import { isAcademiaQrSessionActive, reportChallengeCompletion } from '../../serv
 import {
   MAX_CORRECTION_ATTEMPTS,
   createSolarScaleRoom, getSolarScaleRoom, listenToSolarScalePins, listenToSolarScaleRoom,
-  lockSolarScalePin, saveSolarScalePin, setSolarScaleRevealed,
+  lockSolarScalePin, resetSolarScaleRoom, saveSolarScalePin, setSolarScaleRevealed,
   type SolarScalePin, type SolarScaleRoom
 } from '../../services/solarScaleService';
 import {
@@ -250,17 +250,34 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
   const [locating, setLocating] = useState(false);
   const [lockingAstro, setLockingAstro] = useState<string | null>(null);
   const [togglingReveal, setTogglingReveal] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [confirmResetOpen, setConfirmResetOpen] = useState(false);
   const [confirmAstroId, setConfirmAstroId] = useState<string | null>(null);
   const [showCorrectionsMenu, setShowCorrectionsMenu] = useState(false);
   const lastHandledNonceRef = useRef<number | null>(null);
+  const lastResetCountRef = useRef<number | null>(null);
 
   const isHost = Boolean(session && localStorage.getItem(hostKey(session.code)) === '1');
 
   // Escuchar sala y pines
   useEffect(() => {
-    if (!session) { setRoom(null); setPins([]); setRoomLoaded(false); return; }
+    if (!session) { setRoom(null); setPins([]); setRoomLoaded(false); lastResetCountRef.current = null; return; }
     setRoomLoaded(false);
-    const unsubRoom = listenToSolarScaleRoom(session.code, r => { setRoom(r); setRoomLoaded(true); });
+    const unsubRoom = listenToSolarScaleRoom(session.code, r => {
+      setRoom(r);
+      setRoomLoaded(true);
+      const count = r?.resetCount ?? 0;
+      if (lastResetCountRef.current !== null && count > lastResetCountRef.current) {
+        setSelectedAstro('');
+        setShowCorrectionsMenu(false);
+        setConfirmAstroId(null);
+        setPinMessage({
+          kind: 'info',
+          text: '🔄 El docente limpió el mapa y reinició el ejercicio. Escanea una tarjeta para empezar una nueva ronda.'
+        });
+      }
+      lastResetCountRef.current = count;
+    });
     const unsubPins = listenToSolarScalePins(session.code, setPins);
     return () => { unsubRoom(); unsubPins(); };
   }, [session]);
@@ -511,7 +528,7 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
   const leaveRoom = () => persistSession(null);
 
   const toggleReveal = async () => {
-    if (!room || togglingReveal) return;
+    if (!room || togglingReveal || resetting) return;
     const next = !room.revealed;
     setTogglingReveal(true);
     try {
@@ -526,6 +543,35 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
       setPinMessage({ kind: 'err', text: 'No se pudo cambiar el estado de las órbitas. Revisa tu conexión.' });
     } finally {
       setTogglingReveal(false);
+    }
+  };
+
+  const handleResetExercise = async (reanchorSun: boolean) => {
+    if (!room || resetting) return;
+    setResetting(true);
+    try {
+      let newSun: { sunLat: number; sunLng: number; sunAccuracy: number } | undefined;
+      if (reanchorSun) {
+        const fix = await captureBestPosition(8000);
+        newSun = { sunLat: fix.lat, sunLng: fix.lng, sunAccuracy: Math.round(fix.accuracy) };
+      }
+      const deletedCount = await resetSolarScaleRoom(room.code, newSun);
+      setConfirmResetOpen(false);
+      setSelectedAstro('');
+      setShowCorrectionsMenu(false);
+      setPinMessage({
+        kind: 'ok',
+        text: reanchorSun
+          ? `☀️ Sol reubicado (±${newSun?.sunAccuracy} m), órbitas ocultadas y ${deletedCount} ${deletedCount === 1 ? 'pin eliminado' : 'pines eliminados'}. ¡Listo para reiniciar!`
+          : `🧹 Ejercicio reiniciado: órbitas limpiadas y ${deletedCount} ${deletedCount === 1 ? 'pin eliminado' : 'pines eliminados'}.`
+      });
+    } catch (e) {
+      setPinMessage({
+        kind: 'err',
+        text: e instanceof Error ? e.message : 'No se pudo reiniciar el ejercicio. Revisa tu conexión.'
+      });
+    } finally {
+      setResetting(false);
     }
   };
 
@@ -684,18 +730,28 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
             Comparte el código <strong>{room.code}</strong> o este enlace: <a href={shareLink}>{shareLink}</a>
           </p>
           <p className="ssc-hint">Sol anclado con precisión de ±{room.sunAccuracy} m.</p>
-          <button
-            type="button"
-            className={`ssc-btn ${room.revealed ? 'ghost' : 'primary'}`}
-            onClick={() => void toggleReveal()}
-            disabled={togglingReveal}
-          >
-            {togglingReveal
-              ? 'Actualizando mapa…'
-              : room.revealed
-                ? '🙈 Ocultar órbitas'
-                : '🛰️ Revelar órbitas reales'}
-          </button>
+          <div className="ssc-host-actions">
+            <button
+              type="button"
+              className={`ssc-btn ${room.revealed ? 'ghost' : 'primary'}`}
+              onClick={() => void toggleReveal()}
+              disabled={togglingReveal || resetting}
+            >
+              {togglingReveal
+                ? 'Actualizando mapa…'
+                : room.revealed
+                  ? '🙈 Ocultar órbitas'
+                  : '🛰️ Revelar órbitas reales'}
+            </button>
+            <button
+              type="button"
+              className="ssc-btn danger"
+              onClick={() => setConfirmResetOpen(true)}
+              disabled={resetting || togglingReveal}
+            >
+              🧹 Limpiar órbitas y reiniciar
+            </button>
+          </div>
           <h4>Progreso de los grupos (tiempo real)</h4>
           {teamsProgress.length === 0 ? <p className="ssc-hint">Aún no hay grupos con pines. En cuanto un grupo escanee y confirme una tarjeta aparecerá aquí.</p> : (
             <ul className="ssc-progress-list">
@@ -954,6 +1010,62 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
                   ✅ Sí, estoy seguro · Pinchar aquí
                 </button>
               )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {confirmResetOpen && isHost && (
+        <div
+          className="ssc-confirm-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ssc-reset-title"
+          onClick={() => { if (!resetting) setConfirmResetOpen(false); }}
+        >
+          <div className="ssc-confirm-modal ssc-reset-modal" onClick={e => e.stopPropagation()}>
+            <div className="ssc-confirm-header">
+              <span className="ssc-astro-icon ssc-reset-icon">🧹</span>
+              <div>
+                <span className="ssc-kicker">Consola docente</span>
+                <h3 id="ssc-reset-title">Limpiar órbitas y reiniciar ejercicio</h3>
+              </div>
+            </div>
+
+            <div className="ssc-confirm-body">
+              <p>
+                Esta acción ocultará las órbitas reveladas y eliminará todos los pines ({pins.length}) registrados en la sala <strong>{room.code}</strong> para comenzar una ronda nueva.
+              </p>
+              <p className="ssc-hint">
+                Los grupos conectados verán su progreso reiniciado automáticamente sin tener que volver a entrar a la sala.
+              </p>
+            </div>
+
+            <div className="ssc-confirm-actions ssc-reset-actions">
+              <button
+                type="button"
+                className="ssc-btn danger"
+                disabled={resetting}
+                onClick={() => void handleResetExercise(false)}
+              >
+                {resetting ? 'Limpiando mapa…' : '🧹 Limpiar pines y órbitas (mismo Sol)'}
+              </button>
+              <button
+                type="button"
+                className="ssc-btn primary"
+                disabled={resetting}
+                onClick={() => void handleResetExercise(true)}
+              >
+                {resetting ? 'Leyendo GPS…' : '☀️ Mover el Sol a mi GPS actual y limpiar'}
+              </button>
+              <button
+                type="button"
+                className="ssc-btn ghost"
+                disabled={resetting}
+                onClick={() => setConfirmResetOpen(false)}
+              >
+                Cancelar
+              </button>
             </div>
           </div>
         </div>

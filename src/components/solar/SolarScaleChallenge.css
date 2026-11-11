@@ -115,6 +115,8 @@
 .ssc-btn.primary { background: linear-gradient(135deg, #f59e0b, #d97706); color: #1c1203; box-shadow: 0 6px 18px rgba(245, 158, 11, 0.3); }
 .ssc-btn.primary:hover:not(:disabled) { transform: translateY(-2px); }
 .ssc-btn.ghost { background: transparent; border-color: hsla(215, 25%, 55%, 0.5); color: #cbd5e1; }
+.ssc-btn.danger { background: hsla(0, 65%, 42%, 0.22); border-color: hsla(0, 72%, 58%, 0.55); color: #fecaca; }
+.ssc-btn.danger:hover:not(:disabled) { background: hsla(0, 68%, 45%, 0.35); }
 .ssc-btn.small { min-height: 44px; padding: 6px 14px; }
 .ssc-btn.big { width: 100%; font-size: 1.02rem; padding: 14px 18px; }
 .ssc-btn:disabled { opacity: 0.6; cursor: progress; }
@@ -397,6 +399,35 @@
 
 .ssc-host-head h3 {
   margin: 0;
+}
+
+.ssc-host-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.ssc-host-actions .ssc-btn {
+  flex: 1 1 200px;
+}
+
+.ssc-reset-modal {
+  border-color: hsla(0, 70%, 55%, 0.55);
+}
+
+.ssc-reset-icon {
+  background: hsla(0, 65%, 42%, 0.25);
+  color: #fecaca;
+}
+
+.ssc-reset-actions {
+  flex-direction: column;
+}
+
+.ssc-reset-actions .ssc-btn {
+  flex: 0 0 auto;
+  width: 100%;
 }
 
 .ssc-live-pill {
