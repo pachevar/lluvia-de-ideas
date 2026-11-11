@@ -140,9 +140,7 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
     }).bindTooltip('☀️ El Sol (punto cero)').addTo(group);
 
     if (showRings) {
-      const pinnedAstroIds = new Set(pins.map(p => p.astro));
-      const astrosToDraw = CHALLENGE_ASTROS.filter(a => pinnedAstroIds.has(a.id));
-      astrosToDraw.forEach(a => {
+      CHALLENGE_ASTROS.forEach(a => {
         const d = getScaleDistances(a);
         L.circle(sunLatLng, {
           radius: d.perihelion, color: a.color, weight: 1, opacity: 0.45, dashArray: '5 5', fillOpacity: 0, interactive: false
@@ -159,12 +157,14 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
           icon: L.divIcon({
             className: 'ssc-leaflet-orbit-label',
             html: `<span style="color:${a.color}">Órbita ${a.name} (${formatMeters(d.mean)})</span>`,
-            iconSize: [150, 20],
-            iconAnchor: [75, 10]
+            iconSize: [160, 20],
+            iconAnchor: [80, 10]
           })
         }).addTo(group);
 
-        bounds.extend(aph.getBounds());
+        if (a.id === 'neptuno') {
+          bounds.extend(aph.getBounds());
+        }
       });
     }
 
@@ -189,7 +189,7 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
       bounds.extend(pos);
     });
 
-    if (pins.length > 0) {
+    if (showRings || pins.length > 0) {
       map.fitBounds(bounds, { padding: [36, 36], maxZoom: 19 });
     } else {
       map.setView(sunLatLng, 18);
@@ -249,6 +249,8 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
   const [pinMessage, setPinMessage] = useState<{ kind: 'ok' | 'err' | 'info'; text: string } | null>(null);
   const [locating, setLocating] = useState(false);
   const [lockingAstro, setLockingAstro] = useState<string | null>(null);
+  const [togglingReveal, setTogglingReveal] = useState(false);
+  const [confirmAstroId, setConfirmAstroId] = useState<string | null>(null);
   const [showCorrectionsMenu, setShowCorrectionsMenu] = useState(false);
   const lastHandledNonceRef = useRef<number | null>(null);
 
@@ -276,8 +278,8 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
   );
   const visiblePins = useMemo(() => {
     if (!room) return [];
-    if (room.revealed) return pins;
-    return isHost ? [] : myPins;
+    if (isHost || room.revealed) return pins;
+    return myPins;
   }, [room, pins, myPins, isHost]);
 
   const scoreFor = useCallback((p: SolarScalePin): PinScore | null => {
@@ -454,17 +456,18 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalScan?.nonce]);
 
-  // Ejecutar automáticamente el pinchado GPS de la tarjeta escaneada en cuanto la sala esté lista
+  // Abrir modal de confirmación al detectar una tarjeta escaneada dentro de la sala
   useEffect(() => {
-    if (!room || !session || isHost || locating) return;
+    if (!room || !session || locating) return;
     const astroToPin = pendingScanAstro;
     if (!astroToPin) return;
     const currentNonce = externalScan?.nonce ?? 0;
     if (currentNonce > 0 && lastHandledNonceRef.current === currentNonce && !pendingScanAstro) return;
     lastHandledNonceRef.current = currentNonce;
     setPendingScanAstro('');
-    void handlePinAstro(astroToPin);
-  }, [room, session, isHost, locating, pendingScanAstro, externalScan?.nonce, handlePinAstro]);
+    setSelectedAstro(astroToPin);
+    setConfirmAstroId(astroToPin);
+  }, [room, session, locating, pendingScanAstro, externalScan?.nonce]);
 
   // ───── Acciones ─────
 
@@ -508,13 +511,25 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
   const leaveRoom = () => persistSession(null);
 
   const toggleReveal = async () => {
-    if (!room) return;
+    if (!room || togglingReveal) return;
     const next = !room.revealed;
-    if (next && !window.confirm('¿Revelar las órbitas reales a todos los grupos? Ya no podrán cambiar sus pines.')) return;
-    await setSolarScaleRevealed(room.code, next);
+    setTogglingReveal(true);
+    try {
+      await setSolarScaleRevealed(room.code, next);
+      setPinMessage({
+        kind: next ? 'ok' : 'info',
+        text: next
+          ? '🛰️ Órbitas reales reveladas en el mapa para toda la sala.'
+          : '🙈 Órbitas ocultadas nuevamente en el mapa.'
+      });
+    } catch {
+      setPinMessage({ kind: 'err', text: 'No se pudo cambiar el estado de las órbitas. Revisa tu conexión.' });
+    } finally {
+      setTogglingReveal(false);
+    }
   };
 
-  // ───── Ranking ─────
+  // ───── Ranking y progreso en vivo ─────
   const ranking = useMemo(() => {
     if (!room?.revealed) return [];
     const byTeam = new Map<string, { team: string; pins: number; points: number; oro: number; plata: number; bronce: number }>();
@@ -533,9 +548,15 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
   }, [room?.revealed, pins, scoreFor]);
 
   const teamsProgress = useMemo(() => {
-    const m = new Map<string, number>();
-    pins.forEach(p => m.set(p.team, (m.get(p.team) ?? 0) + 1));
-    return [...m.entries()].sort((a, b) => b[1] - a[1]);
+    const m = new Map<string, SolarScalePin[]>();
+    pins.forEach(p => {
+      const list = m.get(p.team) ?? [];
+      list.push(p);
+      m.set(p.team, list);
+    });
+    return [...m.entries()]
+      .map(([team, teamPins]) => ({ team, pins: teamPins }))
+      .sort((a, b) => b.pins.length - a.pins.length);
   }, [pins]);
 
   // ───────────────────────── Render ─────────────────────────
@@ -630,6 +651,11 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
   const astroCorrectionsUsed = myPinForAstro?.correctionsUsed ?? 0;
   const astroRemaining = Math.max(0, MAX_CORRECTION_ATTEMPTS - astroCorrectionsUsed);
   const astroLocked = Boolean(myPinForAstro?.locked) || astroRemaining <= 0;
+  const confirmAstro = confirmAstroId ? getChallengeAstro(confirmAstroId) ?? null : null;
+  const confirmPin = confirmAstro ? myPins.find(p => p.astro === confirmAstro.id) : undefined;
+  const confirmUsed = confirmPin?.correctionsUsed ?? 0;
+  const confirmRemaining = Math.max(0, MAX_CORRECTION_ATTEMPTS - confirmUsed);
+  const confirmLocked = Boolean(confirmPin?.locked) || confirmRemaining <= 0;
   const shareLink = `${window.location.origin}/sistema-solar?reto=1&sala=${room.code}`;
 
   return (
@@ -650,22 +676,48 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
 
       {isHost && (
         <div className="ssc-card">
-          <h3>Control del reto</h3>
+          <div className="ssc-host-head">
+            <h3>Control del reto</h3>
+            <span className="ssc-live-pill">🟢 En vivo · {pins.length} {pins.length === 1 ? 'pin' : 'pines'}</span>
+          </div>
           <p className="ssc-hint">
             Comparte el código <strong>{room.code}</strong> o este enlace: <a href={shareLink}>{shareLink}</a>
           </p>
           <p className="ssc-hint">Sol anclado con precisión de ±{room.sunAccuracy} m.</p>
-          <button className={`ssc-btn ${room.revealed ? 'ghost' : 'primary'}`} onClick={toggleReveal}>
-            {room.revealed ? '🙈 Ocultar órbitas' : '🛰️ Revelar órbitas reales'}
+          <button
+            type="button"
+            className={`ssc-btn ${room.revealed ? 'ghost' : 'primary'}`}
+            onClick={() => void toggleReveal()}
+            disabled={togglingReveal}
+          >
+            {togglingReveal
+              ? 'Actualizando mapa…'
+              : room.revealed
+                ? '🙈 Ocultar órbitas'
+                : '🛰️ Revelar órbitas reales'}
           </button>
-          <h4>Progreso de los grupos</h4>
-          {teamsProgress.length === 0 ? <p className="ssc-hint">Aún no hay grupos con pines.</p> : (
+          <h4>Progreso de los grupos (tiempo real)</h4>
+          {teamsProgress.length === 0 ? <p className="ssc-hint">Aún no hay grupos con pines. En cuanto un grupo escanee y confirme una tarjeta aparecerá aquí.</p> : (
             <ul className="ssc-progress-list">
-              {teamsProgress.map(([team, n]) => (
-                <li key={team}>
-                  <span className="ssc-dot" style={{ background: teamColor(team) }} />
-                  <strong>{team}</strong>
-                  <span>{n}/{CHALLENGE_ASTROS.length} planetas</span>
+              {teamsProgress.map(({ team, pins: teamPins }) => (
+                <li key={team} className="ssc-progress-team-item">
+                  <div className="ssc-progress-team-top">
+                    <span className="ssc-dot" style={{ background: teamColor(team) }} />
+                    <strong>{team}</strong>
+                    <span className="ssc-progress-count">{teamPins.length}/{CHALLENGE_ASTROS.length} planetas</span>
+                  </div>
+                  <div className="ssc-progress-badges">
+                    {teamPins.map(tp => {
+                      const pa = getChallengeAstro(tp.astro);
+                      const used = tp.correctionsUsed ?? 0;
+                      const isPinLocked = Boolean(tp.locked) || used >= MAX_CORRECTION_ATTEMPTS;
+                      return (
+                        <span key={tp.id} className={`ssc-mini-pin ${isPinLocked ? 'locked' : ''}`}>
+                          {pa?.icon ?? '🪐'} {pa?.name ?? tp.astro} · ±{tp.accuracy} m {isPinLocked ? '🔒' : ''}
+                        </span>
+                      );
+                    })}
+                  </div>
                 </li>
               ))}
             </ul>
@@ -816,10 +868,96 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
       )}
 
       <div className="ssc-card ssc-map-card">
-        <h3>{room.revealed ? '🛰️ Órbitas reales y pines de todos' : '🗺️ Tu mapa'}</h3>
+        <h3>
+          {room.revealed
+            ? '🛰️ Órbitas reales y pines de todos'
+            : isHost
+              ? '📡 Mapa docente en vivo (todos los grupos)'
+              : '🗺️ Tu mapa'}
+        </h3>
         <ChallengeMap room={room} pins={visiblePins} showRings={room.revealed} />
-        {!room.revealed && <p className="ssc-hint">Las órbitas se muestran cuando el docente revela el resultado.</p>}
+        {!room.revealed && (
+          <p className="ssc-hint">
+            {isHost
+              ? 'Cada planeta clavado por los grupos aparece aquí al instante. Pulsa «Revelar órbitas reales» para comparar con las órbitas a escala.'
+              : 'Las órbitas se muestran cuando el docente revela el resultado.'}
+          </p>
+        )}
       </div>
+
+      {confirmAstro && (
+        <div
+          className="ssc-confirm-overlay"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="ssc-confirm-title"
+          onClick={() => setConfirmAstroId(null)}
+        >
+          <div className="ssc-confirm-modal" onClick={e => e.stopPropagation()}>
+            <div className="ssc-confirm-header">
+              <span className="ssc-astro-icon" style={{ background: confirmAstro.color }}>{confirmAstro.icon}</span>
+              <div>
+                <span className="ssc-kicker">Verificar ubicación</span>
+                <h3 id="ssc-confirm-title">¿Estás seguro de que aquí está {confirmAstro.name}?</h3>
+              </div>
+            </div>
+
+            <div className="ssc-confirm-body">
+              <p>
+                Diámetro en tu tarjeta: <strong>{getScaleDiameterMm(confirmAstro).toFixed(1)} mm</strong> (Sol = {SUN_CARD_CM} cm).
+              </p>
+              {room.showRealKm && (
+                <p>
+                  Distancia real media al Sol: <strong>{confirmAstro.meanMkm.toLocaleString('es-GT')} millones de km</strong>.
+                </p>
+              )}
+              {isHost && (
+                <p className="ssc-msg info">
+                  Estás conectado en modo Docente: si confirmas, este pin de prueba quedará registrado con el grupo «Docente».
+                </p>
+              )}
+              {room.revealed ? (
+                <p className="ssc-msg info">🛰️ El docente ya reveló las órbitas. No se pueden agregar ni modificar pines.</p>
+              ) : confirmLocked ? (
+                <p className="ssc-msg err">🔒 Ya usaste tus {MAX_CORRECTION_ATTEMPTS} intentos de corrección para {confirmAstro.name}. El resultado quedó fijado.</p>
+              ) : confirmPin ? (
+                <p className="ssc-msg info">
+                  🛠️ Ya clavaste {confirmAstro.name} anteriormente. Si confirmas ahora, usarás 1 intento de corrección (te quedan {confirmRemaining}/{MAX_CORRECTION_ATTEMPTS}).
+                </p>
+              ) : (
+                <p className="ssc-hint">
+                  Al confirmar, capturaremos tu ubicación GPS actual y se actualizará automáticamente la consola del docente.
+                </p>
+              )}
+            </div>
+
+            <div className="ssc-confirm-actions">
+              <button
+                type="button"
+                className="ssc-btn ghost"
+                onClick={() => setConfirmAstroId(null)}
+              >
+                {room.revealed || confirmLocked ? 'Cerrar' : 'Cancelar'}
+              </button>
+              {!room.revealed && !confirmLocked && (
+                <button
+                  type="button"
+                  className="ssc-btn primary"
+                  disabled={locating}
+                  onClick={() => {
+                    const idToPin = confirmAstro.id;
+                    const isCorr = Boolean(confirmPin);
+                    setConfirmAstroId(null);
+                    void handlePinAstro(idToPin, { isCorrection: isCorr });
+                  }}
+                >
+                  ✅ Sí, estoy seguro · Pinchar aquí
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
 
       {room.revealed && (
         <div className="ssc-card">
