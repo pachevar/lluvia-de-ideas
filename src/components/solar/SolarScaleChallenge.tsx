@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import L from 'leaflet';
 import { useAuth } from '../../context/AuthContext';
 import { useSutzResources } from '../../context/SutzResourcesContext';
 import { isAcademiaQrSessionActive, reportChallengeCompletion } from '../../services/academiaqrSyncService';
@@ -12,7 +13,7 @@ import {
   generateRoomCode, getChallengeAstro, getScaleDiameterMm, getScaleDistances,
   normalizeRoomCode, scorePin, teamColor, type PinScore, type SolarScaleQrScanResult
 } from '../../data/solarScaleChallenge';
-import { calculateHaversineDistance, loadGoogleMapsScript, SUTZ_GOOGLE_MAPS_STYLE } from '../../utils/sutzGeoUtils';
+import { calculateHaversineDistance, createSutzTileLayer, type SutzMapLayerMode } from '../../utils/sutzGeoUtils';
 import './SolarScaleChallenge.css';
 
 interface Props {
@@ -72,37 +73,7 @@ function readSession(): Session | null {
   } catch { return null; }
 }
 
-// ───────────────────────── Mapa ─────────────────────────
-
-interface GoogleBoundsLike {
-  extend: (pos: { lat: number; lng: number }) => void;
-  union: (other: GoogleBoundsLike) => void;
-}
-
-interface GoogleOverlayLike {
-  setMap: (map: unknown) => void;
-  getBounds?: () => GoogleBoundsLike | null;
-}
-
-interface GoogleMapLike {
-  fitBounds: (bounds: GoogleBoundsLike, padding?: number) => void;
-  setCenter: (pos: { lat: number; lng: number }) => void;
-  setZoom: (zoom: number) => void;
-}
-
-interface GoogleNamespace {
-  maps: {
-    Map: new (el: HTMLElement, opts: Record<string, unknown>) => GoogleMapLike;
-    Marker: new (opts: Record<string, unknown>) => GoogleOverlayLike;
-    Circle: new (opts: Record<string, unknown>) => GoogleOverlayLike;
-    LatLngBounds: new () => GoogleBoundsLike;
-    SymbolPath: { CIRCLE: unknown };
-  };
-}
-
-function getGoogleMaps(): GoogleNamespace | undefined {
-  return (window as unknown as { google?: GoogleNamespace }).google;
-}
+// ───────────────────────── Mapa (Leaflet) ─────────────────────────
 
 function ChallengeMap({ room, pins, showRings, focusTeam }: {
   room: SolarScaleRoom;
@@ -111,72 +82,86 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
   focusTeam?: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<GoogleMapLike | null>(null);
-  const overlaysRef = useRef<GoogleOverlayLike[]>([]);
-  const [ready, setReady] = useState<boolean | null>(null);
+  const mapRef = useRef<L.Map | null>(null);
+  const tileRef = useRef<L.TileLayer | null>(null);
+  const overlayGroupRef = useRef<L.LayerGroup | null>(null);
+  const [layerMode, setLayerMode] = useState<SutzMapLayerMode>('dark');
 
   useEffect(() => {
-    let alive = true;
-    loadGoogleMapsScript().then(ok => {
-      if (!alive) return;
-      setReady(ok);
-      const g = getGoogleMaps();
-      if (ok && g && containerRef.current && !mapRef.current) {
-        mapRef.current = new g.maps.Map(containerRef.current, {
-          center: { lat: room.sunLat, lng: room.sunLng },
-          zoom: 18,
-          styles: SUTZ_GOOGLE_MAPS_STYLE,
-          disableDefaultUI: true,
-          zoomControl: true,
-          gestureHandling: 'greedy'
-        });
-      }
+    if (!containerRef.current || mapRef.current) return;
+    const map = L.map(containerRef.current, {
+      center: [room.sunLat, room.sunLng],
+      zoom: 18,
+      zoomControl: true,
+      attributionControl: true
     });
-    return () => { alive = false; };
-  }, [room.sunLat, room.sunLng]);
+    const tile = createSutzTileLayer('dark').addTo(map);
+    const group = L.layerGroup().addTo(map);
+    mapRef.current = map;
+    tileRef.current = tile;
+    overlayGroupRef.current = group;
+
+    return () => {
+      map.remove();
+      mapRef.current = null;
+      tileRef.current = null;
+      overlayGroupRef.current = null;
+    };
+    // Solo se crea una instancia; los cambios de coordenadas se actualizan abajo
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
-    const g = getGoogleMaps();
     const map = mapRef.current;
-    if (!ready || !g || !map) return;
-    overlaysRef.current.forEach(o => o.setMap(null));
-    overlaysRef.current = [];
-    const sunPos = { lat: room.sunLat, lng: room.sunLng };
+    if (!map) return;
+    if (tileRef.current) map.removeLayer(tileRef.current);
+    tileRef.current = createSutzTileLayer(layerMode).addTo(map);
+  }, [layerMode]);
 
-    overlaysRef.current.push(new g.maps.Marker({
-      position: sunPos, map, title: 'El Sol',
-      label: { text: '☀️', fontSize: '22px' },
-      icon: { path: g.maps.SymbolPath.CIRCLE, scale: 0 }
-    }));
+  useEffect(() => {
+    const map = mapRef.current;
+    const group = overlayGroupRef.current;
+    if (!map || !group) return;
 
-    const bounds = new g.maps.LatLngBounds();
-    bounds.extend(sunPos);
+    group.clearLayers();
+    const sunLatLng: L.LatLngExpression = [room.sunLat, room.sunLng];
+    const bounds = L.latLngBounds([sunLatLng]);
+
+    L.marker(sunLatLng, {
+      title: 'El Sol',
+      icon: L.divIcon({
+        className: 'ssc-leaflet-sun-icon',
+        html: '<span aria-hidden="true">☀️</span>',
+        iconSize: [34, 34],
+        iconAnchor: [17, 17]
+      })
+    }).bindTooltip('☀️ El Sol (punto cero)').addTo(group);
 
     if (showRings) {
       CHALLENGE_ASTROS.forEach(a => {
         const d = getScaleDistances(a);
-        const mk = (radius: number, dashed: boolean) => {
-          const c = new g.maps.Circle({
-            map, center: sunPos, radius,
-            strokeColor: a.color, strokeOpacity: dashed ? 0.45 : 0.95, strokeWeight: dashed ? 1 : 2,
-            fillOpacity: 0, clickable: false
-          });
-          overlaysRef.current.push(c);
-          return c;
-        };
-        mk(d.perihelion, true);
-        mk(d.mean, false);
-        const aph = mk(d.aphelion, true);
-        const label = new g.maps.Marker({
-          position: { lat: room.sunLat + d.mean / 111320, lng: room.sunLng },
-          map, clickable: false,
-          label: { text: `${a.icon} ${a.name}`, color: a.color, fontSize: '11px', fontWeight: '700' },
-          icon: { path: g.maps.SymbolPath.CIRCLE, scale: 0 }
-        });
-        overlaysRef.current.push(label);
+        L.circle(sunLatLng, {
+          radius: d.perihelion, color: a.color, weight: 1, opacity: 0.45, dashArray: '5 5', fillOpacity: 0, interactive: false
+        }).addTo(group);
+        L.circle(sunLatLng, {
+          radius: d.mean, color: a.color, weight: 2, opacity: 0.95, fillOpacity: 0, interactive: false
+        }).addTo(group);
+        const aph = L.circle(sunLatLng, {
+          radius: d.aphelion, color: a.color, weight: 1, opacity: 0.45, dashArray: '5 5', fillOpacity: 0, interactive: false
+        }).addTo(group);
+
+        L.marker([room.sunLat + d.mean / 111320, room.sunLng], {
+          interactive: false,
+          icon: L.divIcon({
+            className: 'ssc-leaflet-orbit-label',
+            html: `<span style="color:${a.color}">${a.icon} ${a.name}</span>`,
+            iconSize: [110, 20],
+            iconAnchor: [55, 10]
+          })
+        }).addTo(group);
+
         if (a.id === 'neptuno') {
-          const b = aph.getBounds?.();
-          if (b) bounds.union(b);
+          bounds.extend(aph.getBounds());
         }
       });
     }
@@ -184,23 +169,50 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
     pins.forEach(p => {
       if (focusTeam && p.team !== focusTeam) return;
       const astro = getChallengeAstro(p.astro);
-      const pos = { lat: p.lat, lng: p.lng };
-      overlaysRef.current.push(new g.maps.Marker({
-        position: pos, map, title: `${p.team} · ${astro?.name ?? p.astro}`,
-        label: { text: astro?.icon ?? '●', fontSize: '13px', color: '#0b1020', fontWeight: '800' },
-        icon: { path: g.maps.SymbolPath.CIRCLE, scale: 12, fillColor: teamColor(p.team), fillOpacity: 1, strokeColor: '#0b1020', strokeWeight: 2 }
-      }));
+      const pos: L.LatLngExpression = [p.lat, p.lng];
+      const bg = teamColor(p.team);
+      L.marker(pos, {
+        title: `${p.team} · ${astro?.name ?? p.astro}`,
+        icon: L.divIcon({
+          className: 'ssc-leaflet-pin-icon',
+          html: `<span style="background:${bg}">${astro?.icon ?? '●'}</span>`,
+          iconSize: [28, 28],
+          iconAnchor: [14, 14]
+        })
+      })
+        .bindTooltip(`${p.team} · ${astro?.name ?? p.astro} (±${p.accuracy} m)`)
+        .addTo(group);
       bounds.extend(pos);
     });
 
-    if (showRings || pins.length > 0) map.fitBounds(bounds, 40);
-    else { map.setCenter(sunPos); map.setZoom(18); }
-  }, [ready, room.sunLat, room.sunLng, pins, showRings, focusTeam]);
+    if (showRings || pins.length > 0) {
+      map.fitBounds(bounds, { padding: [36, 36], maxZoom: 19 });
+    } else {
+      map.setView(sunLatLng, 18);
+    }
+  }, [room.sunLat, room.sunLng, pins, showRings, focusTeam]);
 
-  if (ready === false) {
-    return <div className="ssc-map-fallback">No se pudo cargar Google Maps. Revisa tu conexión.</div>;
-  }
-  return <div ref={containerRef} className="ssc-map" aria-label="Mapa del reto" />;
+  return (
+    <div className="ssc-map-wrap">
+      <div className="ssc-map-layer-toggle" role="group" aria-label="Tipo de mapa">
+        <button
+          type="button"
+          className={`ssc-layer-btn ${layerMode === 'dark' ? 'active' : ''}`}
+          onClick={() => setLayerMode('dark')}
+        >
+          🗺️ Calles
+        </button>
+        <button
+          type="button"
+          className={`ssc-layer-btn ${layerMode === 'satellite' ? 'active' : ''}`}
+          onClick={() => setLayerMode('satellite')}
+        >
+          🛰️ Satélite
+        </button>
+      </div>
+      <div ref={containerRef} className="ssc-map" aria-label="Mapa del reto" />
+    </div>
+  );
 }
 
 // ───────────────────────── Componente principal ─────────────────────────

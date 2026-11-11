@@ -1,12 +1,13 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import L from 'leaflet';
 import type { SutzGeoMission } from '../../types';
-import { 
-  calculateHaversineDistance, 
-  calculateBearing, 
-  formatDistance, 
+import {
+  calculateHaversineDistance,
+  calculateBearing,
+  formatDistance,
   getCardinalDirection,
-  loadGoogleMapsScript,
-  SUTZ_GOOGLE_MAPS_STYLE
+  createSutzTileLayer,
+  type SutzMapLayerMode
 } from '../../utils/sutzGeoUtils';
 import { sutzAudio } from '../../utils/sutzSoundEffects';
 import { useSutzResources } from '../../context/SutzResourcesContext';
@@ -38,17 +39,17 @@ export const SutzGeoMissionModal: React.FC<SutzGeoMissionModalProps> = ({
   const [isCompleted, setIsCompleted] = useState<boolean>(Boolean(mission.isCompleted));
   const [rewardClaimed, setRewardClaimed] = useState<boolean>(false);
 
-  // Estados de Google Maps vs Radar
-  const [hasGoogleMaps, setHasGoogleMaps] = useState<boolean>(false);
-  const [activeView, setActiveView] = useState<'map' | 'radar'>('radar');
-  const [mapLoading, setMapLoading] = useState<boolean>(false);
+  // Estados de Mapa Leaflet vs Radar
+  const [activeView, setActiveView] = useState<'map' | 'radar'>('map');
+  const [layerMode, setLayerMode] = useState<SutzMapLayerMode>('dark');
 
-  // Referencias para Google Maps
+  // Referencias para Leaflet
   const mapContainerRef = useRef<HTMLDivElement | null>(null);
-  const googleMapRef = useRef<any>(null);
-  const userMarkerRef = useRef<any>(null);
-  const targetMarkerRef = useRef<any>(null);
-  const targetCircleRef = useRef<any>(null);
+  const leafletMapRef = useRef<L.Map | null>(null);
+  const tileLayerRef = useRef<L.TileLayer | null>(null);
+  const userMarkerRef = useRef<L.CircleMarker | null>(null);
+  const targetMarkerRef = useRef<L.CircleMarker | null>(null);
+  const targetCircleRef = useRef<L.Circle | null>(null);
   const watchIdRef = useRef<number | null>(null);
 
   // Cálculos geodésicos en tiempo real
@@ -81,22 +82,6 @@ export const SutzGeoMissionModal: React.FC<SutzGeoMissionModalProps> = ({
     if (currentBearing === null) return null;
     return getCardinalDirection(currentBearing);
   }, [currentBearing]);
-
-  // Cargar Google Maps API si hay key disponible
-  useEffect(() => {
-    let isMounted = true;
-    loadGoogleMapsScript().then((loaded) => {
-      if (isMounted) {
-        setHasGoogleMaps(loaded);
-        if (loaded) {
-          setActiveView('map');
-        }
-      }
-    });
-    return () => {
-      isMounted = false;
-    };
-  }, []);
 
   // Iniciar geolocalización
   const startGeolocation = useCallback(() => {
@@ -159,106 +144,90 @@ export const SutzGeoMissionModal: React.FC<SutzGeoMissionModalProps> = ({
     };
   }, [isOpen, startGeolocation]);
 
-  // Inicializar o actualizar mapa de Google Maps
+  // Inicializar instancia de Leaflet cuando se abre la vista de mapa
   useEffect(() => {
-    if (!isOpen || activeView !== 'map' || !hasGoogleMaps || !mapContainerRef.current) return;
-    if (!(window as any).google?.maps) return;
+    if (!isOpen || activeView !== 'map' || !mapContainerRef.current) return;
 
-    setMapLoading(true);
+    const map = L.map(mapContainerRef.current, {
+      center: [mission.targetLat, mission.targetLng],
+      zoom: 17,
+      zoomControl: true,
+      attributionControl: true
+    });
+    tileLayerRef.current = createSutzTileLayer(layerMode).addTo(map);
 
-    try {
-      const g = (window as any).google.maps;
+    targetCircleRef.current = L.circle([mission.targetLat, mission.targetLng], {
+      radius: mission.radiusMeters,
+      color: '#f59e0b',
+      weight: 2,
+      opacity: 0.85,
+      fillColor: '#f59e0b',
+      fillOpacity: 0.15
+    }).addTo(map);
 
-      // Si no existe mapa, instanciarlo
-      if (!googleMapRef.current) {
-        const map = new g.Map(mapContainerRef.current, {
-          center: { lat: mission.targetLat, lng: mission.targetLng },
-          zoom: 17,
-          styles: SUTZ_GOOGLE_MAPS_STYLE,
-          disableDefaultUI: true,
-          zoomControl: true,
-          gestureHandling: 'greedy'
-        });
-        googleMapRef.current = map;
+    targetMarkerRef.current = L.circleMarker([mission.targetLat, mission.targetLng], {
+      radius: 9,
+      color: '#ffffff',
+      weight: 2,
+      fillColor: '#f59e0b',
+      fillOpacity: 1
+    }).bindTooltip(mission.placeName).addTo(map);
 
-        // Marcador de la meta (escuela / sitio)
-        targetMarkerRef.current = new g.Marker({
-          position: { lat: mission.targetLat, lng: mission.targetLng },
-          map,
-          title: mission.placeName,
-          icon: {
-            path: g.SymbolPath.CIRCLE,
-            scale: 10,
-            fillColor: '#f59e0b', // Ámbar interactivo Sutz
-            fillOpacity: 1,
-            strokeColor: '#ffffff',
-            strokeWeight: 2
-          }
-        });
+    leafletMapRef.current = map;
 
-        // Círculo del radio de tolerancia
-        targetCircleRef.current = new g.Circle({
-          strokeColor: '#f59e0b',
-          strokeOpacity: 0.8,
-          strokeWeight: 2,
-          fillColor: '#f59e0b',
-          fillOpacity: 0.15,
-          map,
-          center: { lat: mission.targetLat, lng: mission.targetLng },
-          radius: mission.radiusMeters
-        });
+    return () => {
+      map.remove();
+      leafletMapRef.current = null;
+      tileLayerRef.current = null;
+      userMarkerRef.current = null;
+      targetMarkerRef.current = null;
+      targetCircleRef.current = null;
+    };
+    // Solo re-instanciar al abrir/cerrar o cambiar a la vista de mapa
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOpen, activeView, mission.targetLat, mission.targetLng, mission.radiusMeters, mission.placeName]);
+
+  // Cambiar capa Calles Oscuro <-> Satélite
+  useEffect(() => {
+    const map = leafletMapRef.current;
+    if (!map) return;
+    if (tileLayerRef.current) map.removeLayer(tileLayerRef.current);
+    tileLayerRef.current = createSutzTileLayer(layerMode).addTo(map);
+  }, [layerMode]);
+
+  // Actualizar marcador del usuario y encuadre geográfico
+  useEffect(() => {
+    const map = leafletMapRef.current;
+    if (!isOpen || activeView !== 'map' || !map) return;
+
+    const activeColor = isInsideRadius ? '#10b981' : '#38bdf8';
+    targetCircleRef.current?.setStyle({
+      color: isInsideRadius ? '#10b981' : '#f59e0b',
+      fillColor: isInsideRadius ? '#10b981' : '#f59e0b'
+    });
+
+    if (userCoords) {
+      const userLatLng: L.LatLngExpression = [userCoords.lat, userCoords.lng];
+      if (!userMarkerRef.current) {
+        userMarkerRef.current = L.circleMarker(userLatLng, {
+          radius: 8,
+          color: '#ffffff',
+          weight: 2,
+          fillColor: activeColor,
+          fillOpacity: 1
+        }).bindTooltip('Tu ubicación').addTo(map);
+      } else {
+        userMarkerRef.current.setLatLng(userLatLng);
+        userMarkerRef.current.setStyle({ fillColor: activeColor });
       }
 
-      // Actualizar marcador del usuario si hay coordenadas
-      if (googleMapRef.current && userCoords) {
-        const userPos = { lat: userCoords.lat, lng: userCoords.lng };
-
-        if (!userMarkerRef.current) {
-          userMarkerRef.current = new g.Marker({
-            position: userPos,
-            map: googleMapRef.current,
-            title: 'Tu Ubicación',
-            icon: {
-              path: g.SymbolPath.CIRCLE,
-              scale: 8,
-              fillColor: isInsideRadius ? '#10b981' : '#38bdf8', // Verde éxito o cian guía
-              fillOpacity: 1,
-              strokeColor: '#ffffff',
-              strokeWeight: 2
-            }
-          });
-        } else {
-          userMarkerRef.current.setPosition(userPos);
-          userMarkerRef.current.setIcon({
-            path: g.SymbolPath.CIRCLE,
-            scale: 8,
-            fillColor: isInsideRadius ? '#10b981' : '#38bdf8',
-            fillOpacity: 1,
-            strokeColor: '#ffffff',
-            strokeWeight: 2
-          });
-        }
-
-        // Ajustar círculo a verde si está adentro
-        if (targetCircleRef.current) {
-          targetCircleRef.current.setOptions({
-            strokeColor: isInsideRadius ? '#10b981' : '#f59e0b',
-            fillColor: isInsideRadius ? '#10b981' : '#f59e0b'
-          });
-        }
-
-        // Ajustar vista para encuadrar usuario y meta
-        const bounds = new g.LatLngBounds();
-        bounds.extend(new g.LatLng(mission.targetLat, mission.targetLng));
-        bounds.extend(new g.LatLng(userCoords.lat, userCoords.lng));
-        googleMapRef.current.fitBounds(bounds, 50);
-      }
-    } catch (err) {
-      console.warn('[SutzGeoMission] Error inicializando Google Map:', err);
-    } finally {
-      setMapLoading(false);
+      const bounds = L.latLngBounds([
+        [mission.targetLat, mission.targetLng],
+        [userCoords.lat, userCoords.lng]
+      ]);
+      map.fitBounds(bounds, { padding: [45, 45], maxZoom: 18 });
     }
-  }, [isOpen, activeView, hasGoogleMaps, mission, userCoords, isInsideRadius]);
+  }, [isOpen, activeView, mission.targetLat, mission.targetLng, userCoords, isInsideRadius]);
 
   // Completar reto y otorgar recompensas
   const handleClaimReward = async () => {
@@ -325,18 +294,16 @@ export const SutzGeoMissionModal: React.FC<SutzGeoMissionModalProps> = ({
 
         {/* Selector de Vista (Mapa vs Radar) */}
         <div className="sutz-geo-view-switcher">
-          {hasGoogleMaps && (
-            <button
-              type="button"
-              className={`sutz-geo-switch-tab ${activeView === 'map' ? 'active' : ''}`}
-              onClick={() => {
-                sutzAudio.playClick();
-                setActiveView('map');
-              }}
-            >
-              🗺️ Mapa de Satélite
-            </button>
-          )}
+          <button
+            type="button"
+            className={`sutz-geo-switch-tab ${activeView === 'map' ? 'active' : ''}`}
+            onClick={() => {
+              sutzAudio.playClick();
+              setActiveView('map');
+            }}
+          >
+            🗺️ Mapa
+          </button>
           <button
             type="button"
             className={`sutz-geo-switch-tab ${activeView === 'radar' ? 'active' : ''}`}
@@ -351,15 +318,19 @@ export const SutzGeoMissionModal: React.FC<SutzGeoMissionModalProps> = ({
 
         {/* Contenido Visual Central */}
         <div className="sutz-geo-display-area">
-          {activeView === 'map' && hasGoogleMaps ? (
+          {activeView === 'map' ? (
             <div className="sutz-geo-map-wrapper">
               <div ref={mapContainerRef} className="sutz-geo-google-map" />
-              {mapLoading && (
-                <div className="sutz-geo-loading-overlay">
-                  <div className="sutz-geo-spinner" />
-                  <span>Cargando cartografía...</span>
-                </div>
-              )}
+              <button
+                type="button"
+                className="sutz-geo-layer-pill"
+                onClick={() => {
+                  sutzAudio.playClick();
+                  setLayerMode(m => (m === 'dark' ? 'satellite' : 'dark'));
+                }}
+              >
+                {layerMode === 'dark' ? '🛰️ Satélite' : '🗺️ Calles'}
+              </button>
             </div>
           ) : (
             <div className="sutz-geo-radar-wrapper">

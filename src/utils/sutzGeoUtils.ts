@@ -1,6 +1,8 @@
 // src/utils/sutzGeoUtils.ts
-// Utilidades geodésicas y de cartografía para SUTZ Mundo Virtual.
-// Implementa cálculo Haversine de alta precisión, brújula/radar y cargador seguro de Google Maps API.
+// Utilidades geodésicas y de cartografía para SUTZ Mundo Virtual y Reto de Escala.
+// Implementa cálculo Haversine de alta precisión, brújula/radar y capas Leaflet (OpenStreetMap/CARTO/Satélite).
+import L from 'leaflet';
+import 'leaflet/dist/leaflet.css';
 
 /**
  * Radio medio de la Tierra en metros (WGS-84 esférico estándar).
@@ -109,123 +111,29 @@ export function getCardinalDirection(bearing: number): { code: string; label: st
   return { code: 'NO', label: 'Noroeste', arrow: '↖' };
 }
 
-/**
- * Estilo visual oscuro neuroeducativo para Google Maps.
- * Respeta la paleta de Sutz: fondos desaturados y oscuros para inducir calma mental (#060913),
- * agua en cian profundo, y sin elementos estridentes innecesarios.
- */
-export const SUTZ_GOOGLE_MAPS_STYLE: any[] = [
-  { elementType: 'geometry', stylers: [{ color: '#090d1a' }] },
-  { elementType: 'labels.text.stroke', stylers: [{ color: '#060913' }, { weight: 2 }] },
-  { elementType: 'labels.text.fill', stylers: [{ color: '#94a3b8' }] },
-  {
-    featureType: 'administrative.locality',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#38bdf8' }]
-  },
-  {
-    featureType: 'poi',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#64748b' }]
-  },
-  {
-    featureType: 'poi.park',
-    elementType: 'geometry',
-    stylers: [{ color: '#0d221e' }]
-  },
-  {
-    featureType: 'poi.school',
-    elementType: 'geometry',
-    stylers: [{ color: '#162b3d' }]
-  },
-  {
-    featureType: 'road',
-    elementType: 'geometry',
-    stylers: [{ color: '#1e293b' }]
-  },
-  {
-    featureType: 'road',
-    elementType: 'geometry.stroke',
-    stylers: [{ color: '#0f172a' }]
-  },
-  {
-    featureType: 'road',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#94a3b8' }]
-  },
-  {
-    featureType: 'road.highway',
-    elementType: 'geometry',
-    stylers: [{ color: '#293548' }]
-  },
-  {
-    featureType: 'transit',
-    elementType: 'geometry',
-    stylers: [{ color: '#172033' }]
-  },
-  {
-    featureType: 'water',
-    elementType: 'geometry',
-    stylers: [{ color: '#051329' }]
-  },
-  {
-    featureType: 'water',
-    elementType: 'labels.text.fill',
-    stylers: [{ color: '#38bdf8' }]
-  }
-];
-
-let googleMapsScriptPromise: Promise<boolean> | null = null;
+export type SutzMapLayerMode = 'dark' | 'satellite';
 
 /**
- * Carga dinámica y segura del script de Google Maps JavaScript API.
- * Retorna true si se cargó exitosamente, o false si no hay API key o falló la carga.
+ * Crea la capa base de teselas para Leaflet siguiendo el neurodiseño Sutz:
+ * - 'dark': CARTO Dark Matter (calles oscuras de bajo estímulo visual).
+ * - 'satellite': Esri World Imagery (vista satelital para patios escolares y campo).
  */
-export function loadGoogleMapsScript(customApiKey?: string): Promise<boolean> {
-  if (typeof window === 'undefined') return Promise.resolve(false);
-
-  // Si ya está disponible en window, resolver de inmediato
-  if ((window as any).google?.maps) {
-    return Promise.resolve(true);
+export function createSutzTileLayer(mode: SutzMapLayerMode): L.TileLayer {
+  if (mode === 'satellite') {
+    return L.tileLayer(
+      'https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}',
+      {
+        maxZoom: 19,
+        attribution: 'Tiles &copy; Esri'
+      }
+    );
   }
-
-  if (googleMapsScriptPromise) {
-    return googleMapsScriptPromise;
-  }
-
-  const apiKey = customApiKey || (import.meta as any).env?.VITE_GOOGLE_MAPS_API_KEY || 'AIzaSyBQgO1lm87nx9AKgPjFrFyxO3PeOHNGC4E';
-
-  if (!apiKey || apiKey.trim() === '') {
-    // Si no hay API key configurada, no intentamos inyectar el script
-    return Promise.resolve(false);
-  }
-
-  googleMapsScriptPromise = new Promise<boolean>((resolve) => {
-    // Revisar si ya existe la etiqueta de script en el documento
-    const existingScript = document.getElementById('sutz-google-maps-script');
-    if (existingScript) {
-      existingScript.addEventListener('load', () => resolve(true));
-      existingScript.addEventListener('error', () => resolve(false));
-      return;
+  return L.tileLayer(
+    'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    {
+      subdomains: 'abcd',
+      maxZoom: 20,
+      attribution: '&copy; OpenStreetMap &copy; CARTO'
     }
-
-    const script = document.createElement('script');
-    script.id = 'sutz-google-maps-script';
-    script.src = `https://maps.googleapis.com/maps/api/js?key=${encodeURIComponent(apiKey)}&libraries=places`;
-    script.async = true;
-    script.defer = true;
-
-    script.onload = () => {
-      resolve(true);
-    };
-
-    script.onerror = (err) => {
-      console.warn('[SutzGeo] No se pudo cargar Google Maps API:', err);
-      resolve(false);
-    };
-
-    document.head.appendChild(script);
-  });
-
-  return googleMapsScriptPromise;
+  );
 }

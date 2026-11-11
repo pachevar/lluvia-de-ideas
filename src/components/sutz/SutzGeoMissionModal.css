@@ -166,6 +166,23 @@
 .sutz-geo-google-map {
   width: 100%;
   height: 100%;
+  z-index: 1;
+}
+
+.sutz-geo-layer-pill {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 450;
+  min-height: 36px;
+  padding: 6px 12px;
+  border-radius: 99px;
+  border: 1px solid hsla(215, 25%, 45%, 0.6);
+  background: rgba(15, 23, 42, 0.92);
+  color: #f8fafc;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
 }
 
 .sutz-geo-loading-overlay {
