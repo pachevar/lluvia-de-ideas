@@ -146,20 +146,12 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
           radius: d.perihelion, color: a.color, weight: 1, opacity: 0.45, dashArray: '5 5', fillOpacity: 0, interactive: false
         }).addTo(group);
         L.circle(sunLatLng, {
-          radius: d.mean, color: a.color, weight: 2, opacity: 0.95, fillOpacity: 0, interactive: false
-        }).addTo(group);
+          radius: d.mean, color: a.color, weight: 2, opacity: 0.95, fillOpacity: 0, interactive: true
+        })
+          .bindTooltip(`Órbita de ${a.name} (${formatMeters(d.mean)})`, { sticky: true })
+          .addTo(group);
         const aph = L.circle(sunLatLng, {
           radius: d.aphelion, color: a.color, weight: 1, opacity: 0.45, dashArray: '5 5', fillOpacity: 0, interactive: false
-        }).addTo(group);
-
-        L.marker([room.sunLat + d.mean / 111320, room.sunLng], {
-          interactive: false,
-          icon: L.divIcon({
-            className: 'ssc-leaflet-orbit-label',
-            html: `<span style="color:${a.color}">Órbita ${a.name} (${formatMeters(d.mean)})</span>`,
-            iconSize: [160, 20],
-            iconAnchor: [80, 10]
-          })
         }).addTo(group);
 
         if (a.id === 'neptuno') {
