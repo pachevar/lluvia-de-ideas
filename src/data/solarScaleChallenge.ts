@@ -1,5 +1,5 @@
 // src/data/solarScaleChallenge.ts
-// Datos y lógica pura del "Reto Urbano: Sistema Solar a Escala".
+// Datos y lógica pura del "Reto de Escala: Sistema Solar".
 // Escala fija: el Sol mide 26 cm de diámetro en la tarjeta física.
 
 export const SUN_CARD_CM = 26;
@@ -133,5 +133,38 @@ export const teamColor = (name: string): string => {
   let h = 0;
   for (let i = 0; i < name.length; i++) h = (h * 31 + name.charCodeAt(i)) % 360;
   return `hsl(${h}, 70%, 60%)`;
+};
+
+export interface SolarScaleQrScanResult {
+  astro?: ChallengeAstroId;
+  isSun: boolean;
+  sala?: string;
+}
+
+/** Interpreta un QR del Reto de Escala (URL con ?astro=&sala= o identificador de astro). */
+export const parseSolarScaleQr = (rawText: string): SolarScaleQrScanResult | null => {
+  const clean = rawText.trim();
+  if (!clean) return null;
+
+  let astroRaw = '';
+  let salaRaw = '';
+  try {
+    const url = new URL(clean, 'https://lluviadeideas-educativo.web.app');
+    astroRaw = (url.searchParams.get('astro') || '').trim().toLowerCase();
+    salaRaw = url.searchParams.get('sala') || '';
+  } catch {
+    astroRaw = clean.toLowerCase();
+  }
+
+  if (!astroRaw && !salaRaw && /^[a-z]+$/i.test(clean)) {
+    astroRaw = clean.toLowerCase();
+  }
+
+  const matchedAstro = CHALLENGE_ASTROS.find(a => a.id === astroRaw)?.id;
+  const isSun = astroRaw === 'sol' || astroRaw === 'sun';
+  const sala = salaRaw ? normalizeRoomCode(salaRaw) : undefined;
+
+  if (!matchedAstro && !isSun && !sala) return null;
+  return { astro: matchedAstro, isSun, sala };
 };
 

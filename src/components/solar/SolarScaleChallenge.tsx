@@ -10,7 +10,7 @@ import {
 import {
   CHALLENGE_ASTROS, PARTICIPATION_REWARD, SUN_CARD_CM, TIER_REWARDS, formatMeters,
   generateRoomCode, getChallengeAstro, getScaleDiameterMm, getScaleDistances,
-  normalizeRoomCode, scorePin, teamColor, type PinScore
+  normalizeRoomCode, scorePin, teamColor, type PinScore, type SolarScaleQrScanResult
 } from '../../data/solarScaleChallenge';
 import { calculateHaversineDistance, loadGoogleMapsScript, SUTZ_GOOGLE_MAPS_STYLE } from '../../utils/sutzGeoUtils';
 import './SolarScaleChallenge.css';
@@ -18,6 +18,7 @@ import './SolarScaleChallenge.css';
 interface Props {
   initialRoom?: string;
   initialAstro?: string;
+  externalScan?: (SolarScaleQrScanResult & { nonce: number }) | null;
 }
 
 interface Session {
@@ -73,6 +74,36 @@ function readSession(): Session | null {
 
 // ───────────────────────── Mapa ─────────────────────────
 
+interface GoogleBoundsLike {
+  extend: (pos: { lat: number; lng: number }) => void;
+  union: (other: GoogleBoundsLike) => void;
+}
+
+interface GoogleOverlayLike {
+  setMap: (map: unknown) => void;
+  getBounds?: () => GoogleBoundsLike | null;
+}
+
+interface GoogleMapLike {
+  fitBounds: (bounds: GoogleBoundsLike, padding?: number) => void;
+  setCenter: (pos: { lat: number; lng: number }) => void;
+  setZoom: (zoom: number) => void;
+}
+
+interface GoogleNamespace {
+  maps: {
+    Map: new (el: HTMLElement, opts: Record<string, unknown>) => GoogleMapLike;
+    Marker: new (opts: Record<string, unknown>) => GoogleOverlayLike;
+    Circle: new (opts: Record<string, unknown>) => GoogleOverlayLike;
+    LatLngBounds: new () => GoogleBoundsLike;
+    SymbolPath: { CIRCLE: unknown };
+  };
+}
+
+function getGoogleMaps(): GoogleNamespace | undefined {
+  return (window as unknown as { google?: GoogleNamespace }).google;
+}
+
 function ChallengeMap({ room, pins, showRings, focusTeam }: {
   room: SolarScaleRoom;
   pins: SolarScalePin[];
@@ -80,8 +111,8 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
   focusTeam?: string;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const mapRef = useRef<any>(null);
-  const overlaysRef = useRef<any[]>([]);
+  const mapRef = useRef<GoogleMapLike | null>(null);
+  const overlaysRef = useRef<GoogleOverlayLike[]>([]);
   const [ready, setReady] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -89,8 +120,8 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
     loadGoogleMapsScript().then(ok => {
       if (!alive) return;
       setReady(ok);
-      if (ok && containerRef.current && !mapRef.current) {
-        const g = (window as any).google;
+      const g = getGoogleMaps();
+      if (ok && g && containerRef.current && !mapRef.current) {
         mapRef.current = new g.maps.Map(containerRef.current, {
           center: { lat: room.sunLat, lng: room.sunLng },
           zoom: 18,
@@ -105,7 +136,7 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
   }, [room.sunLat, room.sunLng]);
 
   useEffect(() => {
-    const g = (window as any).google;
+    const g = getGoogleMaps();
     const map = mapRef.current;
     if (!ready || !g || !map) return;
     overlaysRef.current.forEach(o => o.setMap(null));
@@ -144,7 +175,7 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
         });
         overlaysRef.current.push(label);
         if (a.id === 'neptuno') {
-          const b = aph.getBounds();
+          const b = aph.getBounds?.();
           if (b) bounds.union(b);
         }
       });
@@ -174,7 +205,7 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
 
 // ───────────────────────── Componente principal ─────────────────────────
 
-export default function SolarScaleChallenge({ initialRoom, initialAstro }: Props) {
+export default function SolarScaleChallenge({ initialRoom, initialAstro, externalScan }: Props) {
   const { user } = useAuth();
   const { addResources } = useSutzResources();
 
@@ -256,7 +287,7 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro }: Props
         reportChallengeCompletion({
           challengeId: 'solar_scale_urban',
           percentage: Math.round(totalPct / scored),
-          feedback: `Reto urbano Sistema Solar a escala (grupo ${session.team}).`
+          feedback: `Reto de Escala · Sistema Solar (grupo ${session.team}).`
         });
       }
     }
@@ -268,6 +299,34 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro }: Props
     if (el instanceof HTMLElement) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
   }, [selectedAstro, room?.code]);
 
+  // Aplicar escaneo externo de tarjeta QR
+  useEffect(() => {
+    if (!externalScan) return;
+    if (externalScan.sala && !session) {
+      setRoomInput(normalizeRoomCode(externalScan.sala));
+    }
+    if (externalScan.astro) {
+      const target = getChallengeAstro(externalScan.astro);
+      if (target) {
+        setSelectedAstro(target.id);
+        setPinMessage({
+          kind: 'ok',
+          text: `📷 Tarjeta escaneada: ${target.icon} ${target.name}. Camina hasta su posición y clava el GPS.`
+        });
+      }
+      if (!session && mode !== 'host') setMode('join');
+    } else if (externalScan.isSun) {
+      setPinMessage({
+        kind: 'info',
+        text: `☀️ Tarjeta de El Sol escaneada (${SUN_CARD_CM} cm, punto cero). Camina desde aquí o escanea un planeta.`
+      });
+      if (!session && externalScan.sala && mode !== 'host') setMode('join');
+    } else if (externalScan.sala && !session && mode !== 'host') {
+      setMode('join');
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [externalScan?.nonce]);
+
   // ───── Acciones ─────
 
   const handleCreateRoom = async () => {
@@ -278,7 +337,7 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro }: Props
       const fix = await captureBestPosition(9000);
       await createSolarScaleRoom({
         code,
-        title: titleInput.trim() || 'Reto Sistema Solar a Escala',
+        title: titleInput.trim() || 'Reto de Escala',
         sunLat: fix.lat, sunLng: fix.lng, sunAccuracy: Math.round(fix.accuracy),
         showRealKm
       });
@@ -380,12 +439,13 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro }: Props
       <section className="ssc-root">
         <header className="ssc-hero">
           <span className="ssc-kicker">🌍 Laboratorio Colectivo</span>
-          <h2>Reto Urbano: el Sistema Solar a Escala</h2>
+          <h2>Reto de Escala</h2>
           <p>
-            Con un Sol de <strong>{SUN_CARD_CM} cm</strong>, ¿a qué distancia de tu ciudad quedaría cada planeta?
+            Con un Sol de <strong>{SUN_CARD_CM} cm</strong>, ¿a qué distancia real quedaría cada planeta?
             Camina, escanea el QR de la tarjeta y clava tu planeta con el GPS. ¡Gana el grupo que mejor acierte!
           </p>
         </header>
+        {pinMessage && <p className={`ssc-msg ${pinMessage.kind}`}>{pinMessage.text}</p>}
 
         {mode === 'home' && (
           <div className="ssc-choice-grid">
@@ -475,6 +535,7 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro }: Props
       </header>
 
       {room.revealed && <p className="ssc-msg ok">🛰️ ¡Órbitas reveladas! Mira qué tan cerca quedó cada grupo.</p>}
+      {isHost && pinMessage && <p className={`ssc-msg ${pinMessage.kind}`}>{pinMessage.text}</p>}
 
       {isHost && (
         <div className="ssc-card">

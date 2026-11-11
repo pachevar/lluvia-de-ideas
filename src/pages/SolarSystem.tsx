@@ -1,7 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { soundEffects } from '../utils/soundEffects';
+import QrScannerModal from '../components/common/QrScannerModal';
 import SolarScaleChallenge from '../components/solar/SolarScaleChallenge';
+import { parseSolarScaleQr, SUN_CARD_CM, type SolarScaleQrScanResult } from '../data/solarScaleChallenge';
 import './SolarSystem.css';
 
 // Interfaces de Datos Astronómicos Avanzados
@@ -988,6 +990,8 @@ export default function SolarSystem() {
   const [activeTab, setActiveTab] = useState<'explorer' | 'scale' | 'spectroscopy' | 'physics' | 'challenge'>(
     challengeParams.active ? 'challenge' : 'explorer'
   );
+  const [qrScannerOpen, setQrScannerOpen] = useState(false);
+  const [externalScan, setExternalScan] = useState<(SolarScaleQrScanResult & { nonce: number }) | null>(null);
 
   // Filtro del Espectro Electromagnético (HUD Bar)
   const [spectrumMode, setSpectrumMode] = useState<'visible' | 'infrared' | 'ultraviolet'>('visible');
@@ -1593,83 +1597,112 @@ export default function SolarSystem() {
 
   return (
     <div className={`solarsystem-container spectrum-${spectrumMode}`}>
-      {/* Botón flotante permanente para volver al mapa desde cualquier altura de la página */}
-      <button 
-        type="button" 
-        className="solar-floating-map-btn"
-        onClick={() => {
-          soundEffects.playClick();
-          navigate('/sutz');
-        }}
-        title="Volver al Mapa Virtual Sutz"
-        aria-label="Ir al mapa Sutz"
-      >
-        <span className="solar-floating-map-icon">🗺️</span>
-        <span className="solar-floating-map-text">Ir al mapa</span>
-      </button>
+      {/* Botón flotante permanente para volver al mapa fuera del Reto de Escala */}
+      {activeTab !== 'challenge' && (
+        <button 
+          type="button" 
+          className="solar-floating-map-btn"
+          onClick={() => {
+            soundEffects.playClick();
+            navigate('/sutz');
+          }}
+          title="Volver al Mapa Virtual Sutz"
+          aria-label="Ir al mapa Sutz"
+        >
+          <span className="solar-floating-map-icon">🗺️</span>
+          <span className="solar-floating-map-text">Ir al mapa</span>
+        </button>
+      )}
 
       <div className="solarsystem-content">
         
         {/* Encabezado Principal */}
-        <header className="solarsystem-header animate-zoom-in">
-          <div className="solar-top-bar">
-            <button 
-              type="button" 
-              className="solar-back-map-btn"
-              onClick={() => {
-                soundEffects.playClick();
-                navigate('/sutz');
-              }}
-              title="Volver al Mapa Virtual Sutz"
-              aria-label="Ir al mapa"
-            >
-              <span className="solar-back-map-icon">🗺️</span>
-              <span className="solar-back-map-text">Ir al mapa</span>
-            </button>
+        <header className={`solarsystem-header animate-zoom-in ${activeTab === 'challenge' ? 'solar-header-challenge' : ''}`}>
+          {activeTab === 'challenge' ? (
+            <div className="solar-top-bar solar-challenge-topbar">
+              <button
+                type="button"
+                className="solar-back-map-btn"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setActiveTab('scale');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                title="Regresar a Sistema Solar Interactivo"
+              >
+                <span className="solar-back-map-icon">←</span>
+                <span className="solar-back-map-text">Sistema Solar Interactivo</span>
+              </button>
 
-            <div className="solarsystem-badge">📡 Observatorio de Astrofísica Avanzada</div>
+              <button
+                type="button"
+                className="solar-scan-card-btn"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setQrScannerOpen(true);
+                }}
+                title="Escanear código QR de tarjeta"
+              >
+                <span aria-hidden="true">📷</span>
+                <span>Escanear tarjeta</span>
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="solar-top-bar">
+                <button 
+                  type="button" 
+                  className="solar-back-map-btn"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    navigate('/sutz');
+                  }}
+                  title="Volver al Mapa Virtual Sutz"
+                  aria-label="Ir al mapa"
+                >
+                  <span className="solar-back-map-icon">🗺️</span>
+                  <span className="solar-back-map-text">Ir al mapa</span>
+                </button>
 
-            <div className="solar-top-spacer" aria-hidden="true" />
-          </div>
+                <div className="solarsystem-badge">📡 Observatorio de Astrofísica Avanzada</div>
 
-          <h1 className="solarsystem-title">El Sistema Solar Interactivo</h1>
-          <p className="solarsystem-subtitle">
-            Explora las órbitas elípticas de Kepler, analiza atmósferas espectroscópicas y descubre el equilibrio físico del vecindario cósmico.
-          </p>
+                <div className="solar-top-spacer" aria-hidden="true" />
+              </div>
 
-          {/* Navegación por Pestañas */}
-          <nav className="solar-nav-tabs">
-            <button 
-              className={`tab-btn ${activeTab === 'explorer' ? 'active' : ''}`}
-              onClick={() => setActiveTab('explorer')}
-            >
-              🪐 1. Explorador & Órbitas de Kepler
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'scale' ? 'active' : ''}`}
-              onClick={() => setActiveTab('scale')}
-            >
-              📏 2. Escalas & Calculadora de Viaje
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'spectroscopy' ? 'active' : ''}`}
-              onClick={() => setActiveTab('spectroscopy')}
-            >
-              🔬 3. Espectroscopía Atmosférica
-            </button>
-            <button 
-              className={`tab-btn ${activeTab === 'physics' ? 'active' : ''}`}
-              onClick={() => setActiveTab('physics')}
-            >
-              🧪 4. Física Orbital (3ª Ley & Einstein)
-            </button>
-            <button 
-              className={`tab-btn tab-btn-challenge ${activeTab === 'challenge' ? 'active' : ''}`}
-              onClick={() => setActiveTab('challenge')}
-            >
-              🌍 5. Reto Urbano a Escala
-            </button>
-          </nav>
+              <h1 className="solarsystem-title">El Sistema Solar Interactivo</h1>
+              <p className="solarsystem-subtitle">
+                Explora las órbitas elípticas de Kepler, analiza atmósferas espectroscópicas y descubre el equilibrio físico del vecindario cósmico.
+              </p>
+
+              {/* Navegación por Pestañas */}
+              <nav className="solar-nav-tabs">
+                <button 
+                  className={`tab-btn ${activeTab === 'explorer' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('explorer')}
+                >
+                  🪐 1. Explorador & Órbitas de Kepler
+                </button>
+                <button 
+                  className={`tab-btn ${activeTab === 'scale' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('scale')}
+                >
+                  📏 2. Escalas & Calculadora de Viaje
+                </button>
+                <button 
+                  className={`tab-btn ${activeTab === 'spectroscopy' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('spectroscopy')}
+                >
+                  🔬 3. Espectroscopía Atmosférica
+                </button>
+                <button 
+                  className={`tab-btn ${activeTab === 'physics' ? 'active' : ''}`}
+                  onClick={() => setActiveTab('physics')}
+                >
+                  🧪 4. Física Orbital (3ª Ley & Einstein)
+                </button>
+              </nav>
+            </>
+          )}
         </header>
 
         {/* =========================================================
@@ -3512,6 +3545,28 @@ export default function SolarSystem() {
                 </div>
               </div>
             </div>
+
+            {/* Acceso al Reto de Escala al final de Escalas & Calculadora de Viaje */}
+            <div className="scale-challenge-cta-card">
+              <div className="scale-challenge-cta-info">
+                <span className="scale-challenge-cta-kicker">🌍 Laboratorio Colectivo GPS</span>
+                <h3>Reto de Escala: Lleva el Sistema Solar al mundo real</h3>
+                <p>
+                  Parte de un Sol de <strong>{SUN_CARD_CM} cm</strong>, escanea las tarjetas QR de cada planeta y compite con tu grupo para clavar las órbitas reales con GPS.
+                </p>
+              </div>
+              <button
+                type="button"
+                className="scale-challenge-cta-btn"
+                onClick={() => {
+                  soundEffects.playClick();
+                  setActiveTab('challenge');
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+              >
+                🌍 Ir al Reto de Escala
+              </button>
+            </div>
           </div>
         )}
 
@@ -4540,13 +4595,30 @@ export default function SolarSystem() {
         })()}
 
         {/* =========================================================
-            PESTAÑA 5: RETO URBANO COLECTIVO (SISTEMA SOLAR A ESCALA)
+            RETO DE ESCALA (SISTEMA SOLAR COLECTIVO)
            ========================================================= */}
         {activeTab === 'challenge' && (
-          <SolarScaleChallenge initialRoom={challengeParams.sala} initialAstro={challengeParams.astro} />
+          <SolarScaleChallenge
+            initialRoom={challengeParams.sala}
+            initialAstro={challengeParams.astro}
+            externalScan={externalScan}
+          />
         )}
 
       </div>
+
+      <QrScannerModal
+        isOpen={qrScannerOpen}
+        onClose={() => setQrScannerOpen(false)}
+        title="Escanear tarjeta del Reto de Escala"
+        subtitle="Apunta la cámara al código QR de tu tarjeta de planeta (o de El Sol)."
+        validateValue={raw => (parseSolarScaleQr(raw) ? null : 'Ese QR no corresponde a una tarjeta del Reto de Escala.')}
+        onScan={raw => {
+          const parsed = parseSolarScaleQr(raw);
+          if (parsed) setExternalScan({ ...parsed, nonce: Date.now() });
+          setQrScannerOpen(false);
+        }}
+      />
     </div>
   );
 }

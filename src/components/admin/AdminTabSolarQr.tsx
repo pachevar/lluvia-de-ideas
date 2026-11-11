@@ -58,7 +58,7 @@ function buildCardSvg(card: CardAstro, url: string): string {
     `<path d="${qrPath(url, qrSize, 0)}" transform="translate(${qrX} ${qrY})" fill="#0b1020"/>` +
     `<text x="${W / 2}" y="${qrY + qrSize + 52}" text-anchor="middle" font-size="26" font-weight="700" fill="#0b1020">Escanea y clava tu planeta con el GPS</text>` +
     `<text x="${W / 2}" y="${qrY + qrSize + 92}" text-anchor="middle" font-size="22" fill="#475569">${escapeXml(card.footer)}</text>` +
-    `<text x="${W / 2}" y="${H - 40}" text-anchor="middle" font-size="18" fill="#94a3b8">Lluvia de Ideas · Reto Sistema Solar a Escala</text>` +
+    `<text x="${W / 2}" y="${H - 40}" text-anchor="middle" font-size="18" fill="#94a3b8">Lluvia de Ideas · Reto de Escala</text>` +
     `</svg>`;
 }
 
@@ -129,7 +129,7 @@ export default function AdminTabSolarQr() {
 
   return (
     <div className="admin-card card-glass animate-fade-in" style={{ marginTop: 24 }}>
-      <h3 style={{ marginTop: 0 }}>🌍 Reto Urbano: códigos QR de los planetas</h3>
+      <h3 style={{ marginTop: 0 }}>🌍 Reto de Escala: códigos QR de los planetas</h3>
       <p style={{ color: '#94a3b8', lineHeight: 1.5 }}>
         Un QR por astro (Sol de {SUN_CARD_CM} cm). Las tarjetas son reutilizables: el código de sala y el grupo se piden al escanear.
         Descarga cada tarjeta en <strong>SVG</strong> (vectorial, ideal para imprimir a cualquier tamaño o enviar por WhatsApp) o <strong>PNG</strong>.
