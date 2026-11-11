@@ -1,0 +1,211 @@
+/* Reto Urbano: Sistema Solar a Escala — paleta neuroeducativa Sutz
+   Fondos azul/verde desaturados; ámbar solo en acciones; verde=éxito, rojo=error, cian=ayuda. */
+.ssc-root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  width: 100%;
+  max-width: 960px;
+  margin: 0 auto;
+  min-width: 0;
+  box-sizing: border-box;
+  color: #e2e8f0;
+}
+
+.ssc-hero {
+  text-align: center;
+  padding: 8px 4px;
+}
+
+.ssc-hero h2,
+.ssc-room-bar h2 {
+  font-family: var(--font-title, inherit);
+  margin: 4px 0 8px;
+  font-size: 1.6rem;
+  color: #f8fafc;
+}
+
+.ssc-hero p { margin: 0 auto; max-width: 640px; line-height: 1.55; color: #cbd5e1; }
+
+.ssc-kicker {
+  display: inline-block;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: #38bdf8;
+}
+
+.ssc-card {
+  background: hsla(220, 38%, 10%, 0.85);
+  border: 1px solid hsla(215, 25%, 35%, 0.45);
+  border-radius: 18px;
+  padding: 18px;
+  box-sizing: border-box;
+  min-width: 0;
+}
+
+.ssc-card h3 { margin: 0 0 10px; font-size: 1.1rem; color: #f1f5f9; }
+.ssc-card h4 { margin: 16px 0 8px; font-size: 0.95rem; color: #cbd5e1; }
+
+.ssc-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.ssc-choice {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  min-height: 44px;
+  padding: 22px 16px;
+  text-align: center;
+  background: hsla(218, 30%, 15%, 0.9);
+  border: 1.5px solid hsla(205, 60%, 50%, 0.35);
+  border-radius: 18px;
+  color: #e2e8f0;
+  cursor: pointer;
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.ssc-choice:hover { transform: translateY(-3px); border-color: #f59e0b; box-shadow: 0 10px 28px rgba(0, 0, 0, 0.4); }
+.ssc-choice strong { font-size: 1.1rem; color: #f8fafc; }
+.ssc-choice span:last-child { font-size: 0.85rem; color: #94a3b8; }
+.ssc-choice-icon { font-size: 2.2rem; }
+
+.ssc-form { display: flex; flex-direction: column; gap: 8px; }
+.ssc-form label { font-size: 0.85rem; font-weight: 700; color: #cbd5e1; }
+
+.ssc-form input[type='text'],
+.ssc-form input:not([type]),
+.ssc-form input[type='search'] {
+  min-height: 44px;
+  font-size: 16px;
+  padding: 8px 12px;
+  border-radius: 12px;
+  border: 1px solid hsla(205, 60%, 50%, 0.4);
+  background: hsl(222, 47%, 7%);
+  color: #f8fafc;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.ssc-form input:focus { outline: 2px solid #38bdf8; outline-offset: 1px; }
+
+.ssc-check { display: flex; align-items: flex-start; gap: 10px; min-height: 44px; font-weight: 500 !important; }
+.ssc-check input { width: 22px; height: 22px; margin-top: 2px; accent-color: #f59e0b; flex-shrink: 0; }
+
+.ssc-row { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+.ssc-row .ssc-btn { flex: 1 1 140px; }
+
+.ssc-btn {
+  min-height: 44px;
+  padding: 10px 18px;
+  border-radius: 12px;
+  font-weight: 800;
+  font-size: 0.92rem;
+  cursor: pointer;
+  border: 1.5px solid transparent;
+  touch-action: manipulation;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, background 0.2s ease;
+}
+
+.ssc-btn.primary { background: linear-gradient(135deg, #f59e0b, #d97706); color: #1c1203; box-shadow: 0 6px 18px rgba(245, 158, 11, 0.3); }
+.ssc-btn.primary:hover:not(:disabled) { transform: translateY(-2px); }
+.ssc-btn.ghost { background: transparent; border-color: hsla(215, 25%, 55%, 0.5); color: #cbd5e1; }
+.ssc-btn.small { min-height: 44px; padding: 6px 14px; }
+.ssc-btn.big { width: 100%; font-size: 1.02rem; padding: 14px 18px; }
+.ssc-btn:disabled { opacity: 0.6; cursor: progress; }
+
+.ssc-room-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; flex-wrap: wrap; }
+.ssc-room-bar h2 { font-size: 1.3rem; margin: 2px 0 0; }
+.ssc-room-meta { display: flex; align-items: center; gap: 10px; }
+
+.ssc-code {
+  font-family: monospace;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: hsla(205, 60%, 40%, 0.18);
+  border: 1px solid hsla(205, 60%, 55%, 0.5);
+  color: #7dd3fc;
+}
+
+.ssc-msg { margin: 8px 0 0; padding: 10px 14px; border-radius: 12px; font-size: 0.9rem; line-height: 1.45; border: 1px solid; }
+.ssc-msg.ok { background: hsla(150, 55%, 30%, 0.18); border-color: hsla(150, 55%, 45%, 0.5); color: #86efac; }
+.ssc-msg.err { background: hsla(0, 65%, 40%, 0.16); border-color: hsla(0, 70%, 55%, 0.5); color: #fca5a5; }
+.ssc-msg.info { background: hsla(195, 70%, 40%, 0.14); border-color: hsla(195, 70%, 55%, 0.45); color: #7dd3fc; }
+
+.ssc-hint { margin: 0 0 8px; font-size: 0.86rem; color: #94a3b8; line-height: 1.5; }
+.ssc-hint a { color: #38bdf8; word-break: break-all; }
+
+.ssc-progress-bar {
+  position: relative;
+  height: 28px;
+  border-radius: 99px;
+  background: hsla(220, 30%, 18%, 0.9);
+  border: 1px solid hsla(215, 25%, 35%, 0.45);
+  overflow: hidden;
+}
+.ssc-progress-bar div { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, hsl(160, 50%, 32%), hsl(175, 55%, 38%)); transition: width 0.4s ease; }
+.ssc-progress-bar span { position: relative; display: block; text-align: center; line-height: 28px; font-size: 0.78rem; font-weight: 800; color: #f8fafc; }
+
+.ssc-chip-row { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
+.ssc-chip-row::-webkit-scrollbar { display: none; }
+
+.ssc-chip {
+  flex-shrink: 0;
+  min-height: 44px;
+  padding: 8px 14px;
+  border-radius: 12px;
+  background: hsla(218, 30%, 15%, 0.9);
+  border: 1px solid hsla(215, 25%, 40%, 0.5);
+  color: #cbd5e1;
+  font-weight: 700;
+  font-size: 0.86rem;
+  cursor: pointer;
+  white-space: nowrap;
+  touch-action: manipulation;
+}
+.ssc-chip.done { border-color: hsla(150, 55%, 45%, 0.6); color: #86efac; }
+.ssc-chip.active { background: linear-gradient(135deg, #f59e0b, #d97706); color: #1c1203; border-color: transparent; }
+
+.ssc-astro-card { border-width: 2px; display: flex; flex-direction: column; gap: 10px; }
+.ssc-astro-head { display: flex; align-items: center; gap: 14px; }
+.ssc-astro-head h3 { margin: 0; }
+.ssc-astro-icon { width: 54px; height: 54px; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 1.7rem; color: #0b1020; flex-shrink: 0; }
+.ssc-astro-card p { margin: 0; }
+
+.ssc-help { background: hsla(195, 70%, 40%, 0.08); border: 1px solid hsla(195, 70%, 55%, 0.3); border-radius: 12px; padding: 10px 14px; font-size: 0.88rem; }
+.ssc-help summary { cursor: pointer; min-height: 32px; display: flex; align-items: center; font-weight: 700; color: #7dd3fc; }
+.ssc-help code { display: block; margin-top: 6px; padding: 8px 10px; background: hsl(222, 47%, 7%); border-radius: 8px; color: #fde68a; font-size: 0.84rem; overflow-wrap: anywhere; }
+.ssc-help ul { margin: 8px 0 0; padding-left: 18px; line-height: 1.6; }
+
+.ssc-result p { margin: 4px 0; }
+
+.ssc-map { width: 100%; height: 360px; border-radius: 14px; overflow: hidden; }
+.ssc-map-fallback { padding: 24px; text-align: center; border-radius: 14px; background: hsla(0, 65%, 40%, 0.12); color: #fca5a5; }
+.ssc-map-card h3 { margin-bottom: 12px; }
+
+.ssc-progress-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.ssc-progress-list li { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-radius: 10px; background: hsla(218, 30%, 15%, 0.8); }
+.ssc-progress-list li span:last-child { margin-left: auto; color: #94a3b8; font-size: 0.84rem; }
+
+.ssc-dot { display: inline-block; width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+
+.ssc-table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.ssc-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 420px; }
+.ssc-table th, .ssc-table td { padding: 10px 8px; text-align: center; border-bottom: 1px solid hsla(215, 25%, 35%, 0.3); }
+.ssc-table th:nth-child(2), .ssc-table td:nth-child(2) { text-align: left; }
+.ssc-table tr.me { background: hsla(205, 60%, 40%, 0.15); }
+
+@media (max-width: 768px) {
+  .ssc-choice-grid { grid-template-columns: 1fr; }
+  .ssc-hero h2 { font-size: 1.35rem; }
+  .ssc-card { padding: 14px 12px; border-radius: 16px; }
+  .ssc-map { height: 320px; }
+}
+

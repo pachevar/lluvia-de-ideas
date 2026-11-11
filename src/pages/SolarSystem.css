@@ -5704,3 +5704,10 @@
   }
 }
 
+
+/* Pestaña 5: Reto Urbano a Escala (ocupa todo el ancho en la rejilla móvil 2x2) */
+@media (max-width: 768px) {
+  .tab-btn-challenge {
+    grid-column: 1 / -1;
+  }
+}

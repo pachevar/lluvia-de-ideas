@@ -19,6 +19,7 @@ import AdminBingoTab from './components/admin/AdminBingoTab';
 import AdminTabMundoVirtual from './components/admin/AdminTabMundoVirtual';
 import AdminTabCreatika from './components/admin/AdminTabCreatika';
 import AdminTab100tek from './components/admin/AdminTab100tek';
+import AdminTabSolarQr from './components/admin/AdminTabSolarQr';
 import AdminTabTiendaExternal from './components/admin/AdminTabTiendaExternal';
 import AdminTabTechTree from './components/admin/AdminTabTechTree';
 import AdminTabCurriculum from './components/admin/AdminTabCurriculum';
@@ -475,11 +476,14 @@ const VALID_ADMIN_TABS: AdminTabType[] = [
           )}
 
           {activeAdminTab === 'sistema_solar' && (
-            <AdminTab100tek 
-              localConfig={localConfig} 
-              updateField={updateField} 
-              mode="solar"
-            />
+            <>
+              <AdminTab100tek 
+                localConfig={localConfig} 
+                updateField={updateField} 
+                mode="solar"
+              />
+              <AdminTabSolarQr />
+            </>
           )}
 
           {activeAdminTab === 'mapa' && (

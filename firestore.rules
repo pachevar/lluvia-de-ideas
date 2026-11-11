@@ -168,6 +168,34 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    // =========================================================================
+    // RETO URBANO "SISTEMA SOLAR A ESCALA" (salas colectivas con código + grupo)
+    // Estudiantes en campo participan sin cuenta; los datos son pequeños y validados.
+    // =========================================================================
+    match /solar_scale_rooms/{roomCode} {
+      allow read: if true;
+      allow create: if roomCode.matches('^[A-Z0-9-]{3,24}$')
+        && request.resource.data.code == roomCode
+        && request.resource.data.sunLat is number
+        && request.resource.data.sunLng is number
+        && request.resource.data.revealed == false;
+      // Cualquier cliente solo puede cambiar el estado de revelación
+      allow update: if request.resource.data.diff(resource.data).affectedKeys().hasOnly(['revealed']);
+      allow delete: if isAdmin();
+
+      match /pins/{pinDocId} {
+        allow read: if true;
+        allow create, update: if request.resource.data.team is string
+          && request.resource.data.team.size() > 0
+          && request.resource.data.team.size() <= 40
+          && request.resource.data.astro is string
+          && request.resource.data.lat is number
+          && request.resource.data.lng is number
+          && request.resource.data.accuracy is number;
+        allow delete: if isAdmin();
+      }
+    }
+
     // Colegios y parámetros de enlace Sutz ⇄ AcademiaQR
     match /sutz_schools/{schoolId} {
       allow read: if true;

@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { soundEffects } from '../utils/soundEffects';
+import SolarScaleChallenge from '../components/solar/SolarScaleChallenge';
 import './SolarSystem.css';
 
 // Interfaces de Datos Astronómicos Avanzados
@@ -973,8 +974,20 @@ const KUIPER_BELT_DOTS = Array.from({ length: 90 }).map((_, idx) => {
 export default function SolarSystem() {
   const navigate = useNavigate();
 
+  // Parámetros del reto urbano (enlace desde QR: ?reto=1&sala=CODIGO&astro=tierra)
+  const [challengeParams] = useState(() => {
+    const p = new URLSearchParams(window.location.search);
+    return {
+      active: p.has('reto') || p.has('sala') || p.has('astro'),
+      sala: p.get('sala') || undefined,
+      astro: p.get('astro') || undefined
+    };
+  });
+
   // Pestañas Principales
-  const [activeTab, setActiveTab] = useState<'explorer' | 'scale' | 'spectroscopy' | 'physics'>('explorer');
+  const [activeTab, setActiveTab] = useState<'explorer' | 'scale' | 'spectroscopy' | 'physics' | 'challenge'>(
+    challengeParams.active ? 'challenge' : 'explorer'
+  );
 
   // Filtro del Espectro Electromagnético (HUD Bar)
   const [spectrumMode, setSpectrumMode] = useState<'visible' | 'infrared' | 'ultraviolet'>('visible');
@@ -1649,6 +1662,12 @@ export default function SolarSystem() {
               onClick={() => setActiveTab('physics')}
             >
               🧪 4. Física Orbital (3ª Ley & Einstein)
+            </button>
+            <button 
+              className={`tab-btn tab-btn-challenge ${activeTab === 'challenge' ? 'active' : ''}`}
+              onClick={() => setActiveTab('challenge')}
+            >
+              🌍 5. Reto Urbano a Escala
             </button>
           </nav>
         </header>
@@ -4519,6 +4538,13 @@ export default function SolarSystem() {
             </div>
           );
         })()}
+
+        {/* =========================================================
+            PESTAÑA 5: RETO URBANO COLECTIVO (SISTEMA SOLAR A ESCALA)
+           ========================================================= */}
+        {activeTab === 'challenge' && (
+          <SolarScaleChallenge initialRoom={challengeParams.sala} initialAstro={challengeParams.astro} />
+        )}
 
       </div>
     </div>
