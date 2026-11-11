@@ -4602,6 +4602,10 @@ export default function SolarSystem() {
             initialRoom={challengeParams.sala}
             initialAstro={challengeParams.astro}
             externalScan={externalScan}
+            onRequestScan={() => {
+              soundEffects.playClick();
+              setQrScannerOpen(true);
+            }}
           />
         )}
 

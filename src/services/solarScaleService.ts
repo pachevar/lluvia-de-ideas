@@ -21,6 +21,8 @@ export interface SolarScaleRoom {
   createdAt?: unknown;
 }
 
+export const MAX_CORRECTION_ATTEMPTS = 3;
+
 export interface SolarScalePin {
   id: string;
   team: string;
@@ -28,7 +30,19 @@ export interface SolarScalePin {
   lat: number;
   lng: number;
   accuracy: number;
+  /** Número de correcciones usadas después del escaneo inicial (0 a 3). */
+  correctionsUsed?: number;
+  /** Cuando es true (o correctionsUsed >= 3), la posición queda fijada definitivamente. */
+  locked?: boolean;
   createdAt?: unknown;
+  updatedAt?: unknown;
+}
+
+export interface SaveSolarScalePinResult {
+  correctionsUsed: number;
+  remainingAttempts: number;
+  locked: boolean;
+  isInitial: boolean;
 }
 
 const pinId = (team: string, astro: string) =>
@@ -57,9 +71,68 @@ export function listenToSolarScalePins(code: string, cb: (pins: SolarScalePin[])
   }, err => { console.warn('[SolarScale] pins listener', err); cb([]); });
 }
 
-export async function saveSolarScalePin(code: string, pin: Omit<SolarScalePin, 'id' | 'createdAt'>): Promise<void> {
+export async function saveSolarScalePin(
+  code: string,
+  pin: Omit<SolarScalePin, 'id' | 'createdAt' | 'updatedAt' | 'correctionsUsed' | 'locked'>
+): Promise<SaveSolarScalePinResult> {
   const id = pinId(pin.team, pin.astro);
-  await setDoc(doc(db, ROOMS, code, 'pins', id), { ...pin, createdAt: serverTimestamp() });
+  const ref = doc(db, ROOMS, code, 'pins', id);
+  const snap = await getDoc(ref);
+
+  if (!snap.exists()) {
+    await setDoc(ref, {
+      ...pin,
+      correctionsUsed: 0,
+      locked: false,
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp()
+    });
+    return {
+      correctionsUsed: 0,
+      remainingAttempts: MAX_CORRECTION_ATTEMPTS,
+      locked: false,
+      isInitial: true
+    };
+  }
+
+  const prev = snap.data() as Omit<SolarScalePin, 'id'>;
+  const prevCorrections = typeof prev.correctionsUsed === 'number' ? prev.correctionsUsed : 0;
+  const isAlreadyLocked = Boolean(prev.locked) || prevCorrections >= MAX_CORRECTION_ATTEMPTS;
+
+  if (isAlreadyLocked) {
+    throw new Error('🔒 El resultado de este planeta ya quedó fijado (se agotaron los 3 intentos de corrección).');
+  }
+
+  const nextCorrections = prevCorrections + 1;
+  const nextLocked = nextCorrections >= MAX_CORRECTION_ATTEMPTS;
+
+  await setDoc(ref, {
+    ...prev,
+    ...pin,
+    correctionsUsed: nextCorrections,
+    locked: nextLocked,
+    updatedAt: serverTimestamp()
+  });
+
+  return {
+    correctionsUsed: nextCorrections,
+    remainingAttempts: Math.max(0, MAX_CORRECTION_ATTEMPTS - nextCorrections),
+    locked: nextLocked,
+    isInitial: false
+  };
+}
+
+export async function lockSolarScalePin(code: string, team: string, astro: string): Promise<void> {
+  const id = pinId(team, astro);
+  const ref = doc(db, ROOMS, code, 'pins', id);
+  const snap = await getDoc(ref);
+  if (!snap.exists()) return;
+  const prev = snap.data() as Omit<SolarScalePin, 'id'>;
+  await setDoc(ref, {
+    ...prev,
+    locked: true,
+    updatedAt: serverTimestamp()
+  });
 }
 
 export async function setSolarScaleRevealed(code: string, revealed: boolean): Promise<void> {

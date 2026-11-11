@@ -185,13 +185,24 @@ service cloud.firestore {
 
       match /pins/{pinDocId} {
         allow read: if true;
-        allow create, update: if request.resource.data.team is string
+        allow create: if request.resource.data.team is string
           && request.resource.data.team.size() > 0
           && request.resource.data.team.size() <= 40
           && request.resource.data.astro is string
           && request.resource.data.lat is number
           && request.resource.data.lng is number
-          && request.resource.data.accuracy is number;
+          && request.resource.data.accuracy is number
+          && (!('correctionsUsed' in request.resource.data) || request.resource.data.correctionsUsed == 0);
+        allow update: if request.resource.data.team is string
+          && request.resource.data.team.size() > 0
+          && request.resource.data.team.size() <= 40
+          && request.resource.data.astro is string
+          && request.resource.data.lat is number
+          && request.resource.data.lng is number
+          && request.resource.data.accuracy is number
+          && !('locked' in resource.data && resource.data.locked == true)
+          && (!('correctionsUsed' in resource.data) || resource.data.correctionsUsed < 3)
+          && (!('correctionsUsed' in request.resource.data) || (request.resource.data.correctionsUsed >= 0 && request.resource.data.correctionsUsed <= 3));
         allow delete: if isAdmin();
       }
     }

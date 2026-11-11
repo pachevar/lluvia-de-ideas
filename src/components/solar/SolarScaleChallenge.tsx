@@ -4,8 +4,9 @@ import { useAuth } from '../../context/AuthContext';
 import { useSutzResources } from '../../context/SutzResourcesContext';
 import { isAcademiaQrSessionActive, reportChallengeCompletion } from '../../services/academiaqrSyncService';
 import {
+  MAX_CORRECTION_ATTEMPTS,
   createSolarScaleRoom, getSolarScaleRoom, listenToSolarScalePins, listenToSolarScaleRoom,
-  saveSolarScalePin, setSolarScaleRevealed,
+  lockSolarScalePin, saveSolarScalePin, setSolarScaleRevealed,
   type SolarScalePin, type SolarScaleRoom
 } from '../../services/solarScaleService';
 import {
@@ -20,6 +21,7 @@ interface Props {
   initialRoom?: string;
   initialAstro?: string;
   externalScan?: (SolarScaleQrScanResult & { nonce: number }) | null;
+  onRequestScan?: () => void;
 }
 
 interface Session {
@@ -138,7 +140,9 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
     }).bindTooltip('☀️ El Sol (punto cero)').addTo(group);
 
     if (showRings) {
-      CHALLENGE_ASTROS.forEach(a => {
+      const pinnedAstroIds = new Set(pins.map(p => p.astro));
+      const astrosToDraw = CHALLENGE_ASTROS.filter(a => pinnedAstroIds.has(a.id));
+      astrosToDraw.forEach(a => {
         const d = getScaleDistances(a);
         L.circle(sunLatLng, {
           radius: d.perihelion, color: a.color, weight: 1, opacity: 0.45, dashArray: '5 5', fillOpacity: 0, interactive: false
@@ -154,15 +158,13 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
           interactive: false,
           icon: L.divIcon({
             className: 'ssc-leaflet-orbit-label',
-            html: `<span style="color:${a.color}">${a.icon} ${a.name}</span>`,
-            iconSize: [110, 20],
-            iconAnchor: [55, 10]
+            html: `<span style="color:${a.color}">Órbita ${a.name} (${formatMeters(d.mean)})</span>`,
+            iconSize: [150, 20],
+            iconAnchor: [75, 10]
           })
         }).addTo(group);
 
-        if (a.id === 'neptuno') {
-          bounds.extend(aph.getBounds());
-        }
+        bounds.extend(aph.getBounds());
       });
     }
 
@@ -171,6 +173,8 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
       const astro = getChallengeAstro(p.astro);
       const pos: L.LatLngExpression = [p.lat, p.lng];
       const bg = teamColor(p.team);
+      const used = p.correctionsUsed ?? 0;
+      const isPinLocked = Boolean(p.locked) || used >= MAX_CORRECTION_ATTEMPTS;
       L.marker(pos, {
         title: `${p.team} · ${astro?.name ?? p.astro}`,
         icon: L.divIcon({
@@ -180,12 +184,12 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
           iconAnchor: [14, 14]
         })
       })
-        .bindTooltip(`${p.team} · ${astro?.name ?? p.astro} (±${p.accuracy} m)`)
+        .bindTooltip(`${p.team} · ${astro?.name ?? p.astro} (±${p.accuracy} m · ${isPinLocked ? '🔒 Fijado' : `${MAX_CORRECTION_ATTEMPTS - used} int. disp.`})`)
         .addTo(group);
       bounds.extend(pos);
     });
 
-    if (showRings || pins.length > 0) {
+    if (pins.length > 0) {
       map.fitBounds(bounds, { padding: [36, 36], maxZoom: 19 });
     } else {
       map.setView(sunLatLng, 18);
@@ -221,7 +225,7 @@ function ChallengeMap({ room, pins, showRings, focusTeam }: {
 
 // ───────────────────────── Componente principal ─────────────────────────
 
-export default function SolarScaleChallenge({ initialRoom, initialAstro, externalScan }: Props) {
+export default function SolarScaleChallenge({ initialRoom, initialAstro, externalScan, onRequestScan }: Props) {
   const { user } = useAuth();
   const { addResources } = useSutzResources();
 
@@ -240,10 +244,13 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
   const [room, setRoom] = useState<SolarScaleRoom | null>(null);
   const [roomLoaded, setRoomLoaded] = useState(false);
   const [pins, setPins] = useState<SolarScalePin[]>([]);
-  const [selectedAstro, setSelectedAstro] = useState<string>(initialAstro && getChallengeAstro(initialAstro) ? initialAstro : 'tierra');
+  const [selectedAstro, setSelectedAstro] = useState<string>(initialAstro && getChallengeAstro(initialAstro) ? initialAstro : '');
+  const [pendingScanAstro, setPendingScanAstro] = useState<string>(initialAstro && getChallengeAstro(initialAstro) ? initialAstro : '');
   const [pinMessage, setPinMessage] = useState<{ kind: 'ok' | 'err' | 'info'; text: string } | null>(null);
   const [locating, setLocating] = useState(false);
-  const chipRowRef = useRef<HTMLDivElement | null>(null);
+  const [lockingAstro, setLockingAstro] = useState<string | null>(null);
+  const [showCorrectionsMenu, setShowCorrectionsMenu] = useState(false);
+  const lastHandledNonceRef = useRef<number | null>(null);
 
   const isHost = Boolean(session && localStorage.getItem(hostKey(session.code)) === '1');
 
@@ -309,13 +316,114 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
     }
   }, [room?.revealed, myPins, session, isHost, user, scoreFor, addResources]);
 
-  // Centrar el chip activo
-  useEffect(() => {
-    const el = chipRowRef.current?.querySelector('.ssc-chip.active');
-    if (el instanceof HTMLElement) el.scrollIntoView({ behavior: 'smooth', inline: 'center', block: 'nearest' });
-  }, [selectedAstro, room?.code]);
+  const handlePinAstro = useCallback(async (astroId: string, options?: { isCorrection?: boolean }) => {
+    if (!room || !session) return;
+    if (room.revealed) {
+      setPinMessage({ kind: 'info', text: '🛰️ El docente ya reveló las órbitas. Los pines quedaron cerrados.' });
+      return;
+    }
+    const astro = getChallengeAstro(astroId);
+    if (!astro) return;
 
-  // Aplicar escaneo externo de tarjeta QR
+    const existing = myPins.find(p => p.astro === astro.id);
+    const used = existing?.correctionsUsed ?? 0;
+    const isLocked = Boolean(existing?.locked) || used >= MAX_CORRECTION_ATTEMPTS;
+
+    if (isLocked) {
+      setSelectedAstro(astro.id);
+      setPinMessage({
+        kind: 'info',
+        text: `🔒 ${astro.icon} ${astro.name} ya tiene su resultado fijado (${used}/${MAX_CORRECTION_ATTEMPTS} intentos de corrección usados).`
+      });
+      return;
+    }
+
+    if (existing && !options?.isCorrection) {
+      setSelectedAstro(astro.id);
+      setShowCorrectionsMenu(true);
+      const remaining = MAX_CORRECTION_ATTEMPTS - used;
+      setPinMessage({
+        kind: 'info',
+        text: `📍 ${astro.icon} ${astro.name} ya fue clavado. Si quieres ajustar su ubicación, usa el Menú de Correcciones (te quedan ${remaining} ${remaining === 1 ? 'intento' : 'intentos'}).`
+      });
+      return;
+    }
+
+    setSelectedAstro(astro.id);
+    setLocating(true);
+    setPinMessage({
+      kind: 'info',
+      text: `📡 Escaneo confirmado de ${astro.icon} ${astro.name}. Leyendo tu GPS actual… quédate quieto unos segundos.`
+    });
+
+    try {
+      const fix = await captureBestPosition(8000);
+      if (fix.accuracy > MAX_PIN_ACCURACY_M) {
+        setPinMessage({
+          kind: 'err',
+          text: `Tu GPS tiene ±${Math.round(fix.accuracy)} m de margen. Busca cielo abierto e inténtalo de nuevo (máximo ±${MAX_PIN_ACCURACY_M} m).`
+        });
+        return;
+      }
+
+      const result = await saveSolarScalePin(session.code, {
+        team: session.team,
+        astro: astro.id,
+        lat: fix.lat,
+        lng: fix.lng,
+        accuracy: Math.round(fix.accuracy)
+      });
+
+      if (user && result.isInitial) {
+        const key = `solar_scale_part_${session.code}_${session.team}_${astro.id}_${user.uid}`;
+        if (!localStorage.getItem(key)) {
+          localStorage.setItem(key, '1');
+          addResources({ puntos: PARTICIPATION_REWARD.puntos, monedas: PARTICIPATION_REWARD.monedas });
+        }
+      }
+
+      if (result.isInitial) {
+        setPinMessage({
+          kind: 'ok',
+          text: `📍 ¡${astro.icon} ${astro.name} clavado en tu posición actual (±${Math.round(fix.accuracy)} m)!${user ? ` +${PARTICIPATION_REWARD.puntos} puntos.` : ''} Tienes ${MAX_CORRECTION_ATTEMPTS} intentos en el Menú de Correcciones si necesitas ajustarlo.`
+        });
+      } else if (result.locked) {
+        setPinMessage({
+          kind: 'ok',
+          text: `🔒 Corrección #${result.correctionsUsed}/3 aplicada para ${astro.icon} ${astro.name} (±${Math.round(fix.accuracy)} m). Tu resultado quedó fijado definitivamente.`
+        });
+      } else {
+        setPinMessage({
+          kind: 'ok',
+          text: `🛠️ Corrección #${result.correctionsUsed}/3 aplicada para ${astro.icon} ${astro.name} (±${Math.round(fix.accuracy)} m). Te quedan ${result.remainingAttempts} ${result.remainingAttempts === 1 ? 'intento' : 'intentos'}.`
+        });
+      }
+    } catch (e) {
+      setPinMessage({ kind: 'err', text: e instanceof Error ? e.message : 'No se pudo clavar la ubicación.' });
+    } finally {
+      setLocating(false);
+    }
+  }, [room, session, myPins, user, addResources]);
+
+  const handleLockAstro = async (astroId: string) => {
+    if (!room || !session || room.revealed) return;
+    const astro = getChallengeAstro(astroId);
+    if (!astro) return;
+    setLockingAstro(astroId);
+    try {
+      await lockSolarScalePin(session.code, session.team, astroId);
+      setPinMessage({
+        kind: 'ok',
+        text: `🔒 ${astro.icon} ${astro.name} quedó fijado definitivamente en el mapa.`
+      });
+    } catch {
+      setPinMessage({ kind: 'err', text: 'No se pudo fijar la posición. Revisa tu conexión.' });
+    } finally {
+      setLockingAstro(null);
+    }
+  };
+
+  // Aplicar escaneo externo de tarjeta QR: al entrar en la sala, pincha SOLO el planeta escaneado en la posición GPS actual
   useEffect(() => {
     if (!externalScan) return;
     if (externalScan.sala && !session) {
@@ -325,16 +433,19 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
       const target = getChallengeAstro(externalScan.astro);
       if (target) {
         setSelectedAstro(target.id);
-        setPinMessage({
-          kind: 'ok',
-          text: `📷 Tarjeta escaneada: ${target.icon} ${target.name}. Camina hasta su posición y clava el GPS.`
-        });
+        setPendingScanAstro(target.id);
+        if (!session && mode !== 'host') {
+          setMode('join');
+          setPinMessage({
+            kind: 'info',
+            text: `📷 Tarjeta detectada: ${target.icon} ${target.name}. Ingresa a la sala con tu grupo para clavar su ubicación aquí.`
+          });
+        }
       }
-      if (!session && mode !== 'host') setMode('join');
     } else if (externalScan.isSun) {
       setPinMessage({
         kind: 'info',
-        text: `☀️ Tarjeta de El Sol escaneada (${SUN_CARD_CM} cm, punto cero). Camina desde aquí o escanea un planeta.`
+        text: `☀️ Tarjeta de El Sol escaneada (${SUN_CARD_CM} cm, punto cero). Camina desde aquí y escanea un planeta.`
       });
       if (!session && externalScan.sala && mode !== 'host') setMode('join');
     } else if (externalScan.sala && !session && mode !== 'host') {
@@ -342,6 +453,18 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [externalScan?.nonce]);
+
+  // Ejecutar automáticamente el pinchado GPS de la tarjeta escaneada en cuanto la sala esté lista
+  useEffect(() => {
+    if (!room || !session || isHost || locating) return;
+    const astroToPin = pendingScanAstro;
+    if (!astroToPin) return;
+    const currentNonce = externalScan?.nonce ?? 0;
+    if (currentNonce > 0 && lastHandledNonceRef.current === currentNonce && !pendingScanAstro) return;
+    lastHandledNonceRef.current = currentNonce;
+    setPendingScanAstro('');
+    void handlePinAstro(astroToPin);
+  }, [room, session, isHost, locating, pendingScanAstro, externalScan?.nonce, handlePinAstro]);
 
   // ───── Acciones ─────
 
@@ -380,38 +503,6 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
     } catch {
       setFormError('No se pudo conectar. Revisa tu internet e inténtalo otra vez.');
     } finally { setBusy(false); }
-  };
-
-  const handlePin = async () => {
-    if (!room || !session) return;
-    const astro = getChallengeAstro(selectedAstro);
-    if (!astro) return;
-    setLocating(true);
-    setPinMessage({ kind: 'info', text: 'Leyendo tu GPS… quédate quieto unos segundos.' });
-    try {
-      const fix = await captureBestPosition(8000);
-      if (fix.accuracy > MAX_PIN_ACCURACY_M) {
-        setPinMessage({ kind: 'err', text: `Tu GPS tiene ±${Math.round(fix.accuracy)} m de margen. Busca cielo abierto e inténtalo de nuevo (máximo ±${MAX_PIN_ACCURACY_M} m).` });
-        return;
-      }
-      const alreadyPinned = myPins.some(p => p.astro === astro.id);
-      await saveSolarScalePin(session.code, {
-        team: session.team, astro: astro.id, lat: fix.lat, lng: fix.lng, accuracy: Math.round(fix.accuracy)
-      });
-      if (user && !alreadyPinned) {
-        const key = `solar_scale_part_${session.code}_${session.team}_${astro.id}_${user.uid}`;
-        if (!localStorage.getItem(key)) {
-          localStorage.setItem(key, '1');
-          addResources({ puntos: PARTICIPATION_REWARD.puntos, monedas: PARTICIPATION_REWARD.monedas });
-        }
-      }
-      setPinMessage({
-        kind: 'ok',
-        text: `📍 ${astro.name} clavado (±${Math.round(fix.accuracy)} m).${user && !alreadyPinned ? ` +${PARTICIPATION_REWARD.puntos} puntos` : ''} Puedes volver a clavarlo si te moviste.`
-      });
-    } catch (e) {
-      setPinMessage({ kind: 'err', text: e instanceof Error ? e.message : 'No se pudo clavar la ubicación.' });
-    } finally { setLocating(false); }
   };
 
   const leaveRoom = () => persistSession(null);
@@ -531,10 +622,14 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
     );
   }
 
-  const astro = getChallengeAstro(selectedAstro) ?? CHALLENGE_ASTROS[2];
-  const myPinForAstro = myPins.find(p => p.astro === astro.id);
+  const activeAstroId = selectedAstro || myPins[myPins.length - 1]?.astro || '';
+  const astro = activeAstroId ? getChallengeAstro(activeAstroId) ?? null : null;
+  const myPinForAstro = astro ? myPins.find(p => p.astro === astro.id) : undefined;
   const myScore = myPinForAstro && room.revealed ? scoreFor(myPinForAstro) : null;
-  const dist = getScaleDistances(astro);
+  const dist = astro ? getScaleDistances(astro) : null;
+  const astroCorrectionsUsed = myPinForAstro?.correctionsUsed ?? 0;
+  const astroRemaining = Math.max(0, MAX_CORRECTION_ATTEMPTS - astroCorrectionsUsed);
+  const astroLocked = Boolean(myPinForAstro?.locked) || astroRemaining <= 0;
   const shareLink = `${window.location.origin}/sistema-solar?reto=1&sala=${room.code}`;
 
   return (
@@ -585,55 +680,138 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
             <span>{myPins.length}/{CHALLENGE_ASTROS.length} planetas clavados</span>
           </div>
 
-          <div className="ssc-chip-row" ref={chipRowRef}>
-            {CHALLENGE_ASTROS.map(a => (
-              <button key={a.id} className={`ssc-chip ${a.id === selectedAstro ? 'active' : ''} ${myPins.some(p => p.astro === a.id) ? 'done' : ''}`}
-                onClick={() => { setSelectedAstro(a.id); setPinMessage(null); }}>
-                <span>{a.icon}</span> {a.name} {myPins.some(p => p.astro === a.id) ? '✓' : ''}
-              </button>
-            ))}
-          </div>
-
-          <article className="ssc-card ssc-astro-card" style={{ borderColor: astro.color }}>
-            <div className="ssc-astro-head">
-              <span className="ssc-astro-icon" style={{ background: astro.color }}>{astro.icon}</span>
-              <div>
-                <h3>{astro.name}</h3>
-                <p className="ssc-hint">En tu tarjeta mide <strong>{getScaleDiameterMm(astro).toFixed(1)} mm</strong> (Sol = {SUN_CARD_CM} cm)</p>
-              </div>
-            </div>
-            {room.showRealKm && (
-              <p>Distancia real media al Sol: <strong>{astro.meanMkm.toLocaleString('es-GT')} millones de km</strong></p>
-            )}
-            <details className="ssc-help">
-              <summary>💡 Pista: ¿cómo calculo la escala?</summary>
-              <p>Regla de tres: si el Sol real mide 1 392 700 km y en la tarjeta mide {SUN_CARD_CM} cm, entonces
-                <code> metros = km reales × 0,26 ÷ 1 392 700</code>.</p>
-            </details>
-
-            {!room.revealed && (
-              <>
-                <p className="ssc-hint">Camina desde el Sol hasta donde creas que está {astro.name} y pulsa el botón.</p>
-                <button className="ssc-btn primary big" onClick={handlePin} disabled={locating}>
-                  {locating ? 'Leyendo GPS…' : `📍 ${myPinForAstro ? 'Volver a clavar' : 'Clavar'} ${astro.name} aquí`}
+          {!room.revealed && (
+            <div className="ssc-scan-cta-bar">
+              {onRequestScan && (
+                <button
+                  type="button"
+                  className="ssc-btn primary big"
+                  onClick={onRequestScan}
+                  disabled={locating}
+                >
+                  {locating ? '📡 Leyendo GPS…' : '📷 Escanear tarjeta de planeta aquí'}
                 </button>
-              </>
-            )}
-            {pinMessage && <p className={`ssc-msg ${pinMessage.kind}`}>{pinMessage.text}</p>}
+              )}
+              {myPins.length > 0 && (
+                <button
+                  type="button"
+                  className={`ssc-btn ghost ${showCorrectionsMenu ? 'active' : ''}`}
+                  onClick={() => setShowCorrectionsMenu(v => !v)}
+                >
+                  🛠️ Menú de Correcciones ({myPins.length})
+                </button>
+              )}
+            </div>
+          )}
 
-            {room.revealed && (
-              <div className="ssc-result">
-                <p>Distancia real a escala: <strong>{formatMeters(dist.mean)}</strong> (rango {formatMeters(dist.perihelion)} – {formatMeters(dist.aphelion)})</p>
-                <p className="ssc-hint">{astro.everyday}</p>
-                {myScore ? (
-                  <p className={`ssc-msg ${myScore.tier === 'explorador' ? 'info' : 'ok'}`}>
-                    {myScore.icon} <strong>{myScore.label}</strong> — tu pin quedó a {formatMeters(myScore.distanceM)} del Sol
-                    (error {myScore.errorPct.toFixed(1)} %).{myScore.bonusXp > 0 && user ? ` +${myScore.bonusXp} puntos` : ''}
-                  </p>
-                ) : <p className="ssc-msg info">Tu grupo no clavó este planeta.</p>}
+          {pinMessage && <p className={`ssc-msg ${pinMessage.kind}`}>{pinMessage.text}</p>}
+
+          {!room.revealed && showCorrectionsMenu && myPins.length > 0 && (
+            <section className="ssc-card ssc-corrections-card" aria-label="Menú de Correcciones">
+              <div className="ssc-corrections-head">
+                <h3>🛠️ Menú de Correcciones</h3>
+                <span className="ssc-badge-limit">Máx. {MAX_CORRECTION_ATTEMPTS} intentos</span>
               </div>
-            )}
-          </article>
+              <p className="ssc-hint">
+                Cada planeta escaneado tiene hasta <strong>{MAX_CORRECTION_ATTEMPTS} intentos</strong> de corrección GPS. Al llegar a 3 o al pulsar Fijar, el resultado queda definitivo.
+              </p>
+              <ul className="ssc-correction-list">
+                {myPins.map(p => {
+                  const pAstro = getChallengeAstro(p.astro);
+                  if (!pAstro) return null;
+                  const used = p.correctionsUsed ?? 0;
+                  const remaining = Math.max(0, MAX_CORRECTION_ATTEMPTS - used);
+                  const isPinLocked = Boolean(p.locked) || remaining <= 0;
+                  return (
+                    <li key={p.id} className={`ssc-correction-item ${isPinLocked ? 'locked' : ''}`}>
+                      <div className="ssc-correction-info">
+                        <span className="ssc-correction-icon" style={{ background: pAstro.color }}>{pAstro.icon}</span>
+                        <div>
+                          <strong>{pAstro.name}</strong>
+                          <span className="ssc-correction-meta">
+                            ±{p.accuracy} m · {isPinLocked ? `🔒 Resultado fijado (${used}/${MAX_CORRECTION_ATTEMPTS})` : `Intentos restantes: ${remaining}/${MAX_CORRECTION_ATTEMPTS}`}
+                          </span>
+                        </div>
+                      </div>
+                      {!isPinLocked ? (
+                        <div className="ssc-correction-actions">
+                          <button
+                            type="button"
+                            className="ssc-btn primary small"
+                            disabled={locating}
+                            onClick={() => void handlePinAstro(pAstro.id, { isCorrection: true })}
+                          >
+                            {locating && selectedAstro === pAstro.id ? 'Leyendo…' : `📍 Corregir aquí (${remaining})`}
+                          </button>
+                          <button
+                            type="button"
+                            className="ssc-btn ghost small"
+                            disabled={locating || lockingAstro === pAstro.id}
+                            onClick={() => void handleLockAstro(pAstro.id)}
+                          >
+                            {lockingAstro === pAstro.id ? 'Fijando…' : '🔒 Fijar'}
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="ssc-locked-pill">🔒 Fijado</span>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          )}
+
+          {astro ? (
+            <article className="ssc-card ssc-astro-card" style={{ borderColor: astro.color }}>
+              <div className="ssc-astro-head">
+                <span className="ssc-astro-icon" style={{ background: astro.color }}>{astro.icon}</span>
+                <div>
+                  <h3>{astro.name}</h3>
+                  <p className="ssc-hint">En tu tarjeta mide <strong>{getScaleDiameterMm(astro).toFixed(1)} mm</strong> (Sol = {SUN_CARD_CM} cm)</p>
+                </div>
+              </div>
+              {room.showRealKm && (
+                <p>Distancia real media al Sol: <strong>{astro.meanMkm.toLocaleString('es-GT')} millones de km</strong></p>
+              )}
+              <details className="ssc-help">
+                <summary>💡 Pista: ¿cómo calculo la escala?</summary>
+                <p>Regla de tres: si el Sol real mide 1 392 700 km y en la tarjeta mide {SUN_CARD_CM} cm, entonces
+                  <code> metros = km reales × 0,26 ÷ 1 392 700</code>.</p>
+              </details>
+
+              {!room.revealed && myPinForAstro && (
+                <div className="ssc-pin-status">
+                  <span>
+                    {astroLocked
+                      ? `🔒 Resultado fijado (${astroCorrectionsUsed}/${MAX_CORRECTION_ATTEMPTS} correcciones usadas)`
+                      : `📍 Clavado (±${myPinForAstro.accuracy} m) · Quedan ${astroRemaining}/${MAX_CORRECTION_ATTEMPTS} intentos de corrección`}
+                  </span>
+                </div>
+              )}
+
+              {room.revealed && dist && (
+                <div className="ssc-result">
+                  <p>Distancia real a escala: <strong>{formatMeters(dist.mean)}</strong> (rango {formatMeters(dist.perihelion)} – {formatMeters(dist.aphelion)})</p>
+                  <p className="ssc-hint">{astro.everyday}</p>
+                  {myScore ? (
+                    <p className={`ssc-msg ${myScore.tier === 'explorador' ? 'info' : 'ok'}`}>
+                      {myScore.icon} <strong>{myScore.label}</strong> — tu pin quedó a {formatMeters(myScore.distanceM)} del Sol
+                      (error {myScore.errorPct.toFixed(1)} %).{myScore.bonusXp > 0 && user ? ` +${myScore.bonusXp} puntos` : ''}
+                    </p>
+                  ) : <p className="ssc-msg info">Tu grupo no clavó este planeta.</p>}
+                </div>
+              )}
+            </article>
+          ) : (
+            <div className="ssc-card ssc-empty-scan">
+              <h3>📷 Listo para explorar</h3>
+              <p className="ssc-hint">
+                Camina desde la tarjeta de <strong>El Sol ({SUN_CARD_CM} cm)</strong> hasta donde calcules que está un planeta.
+                Al llegar, pulsa <strong>«Escanear tarjeta»</strong> y se clavará únicamente ese planeta en tu ubicación GPS actual.
+              </p>
+            </div>
+          )}
         </>
       )}
 

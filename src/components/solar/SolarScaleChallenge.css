@@ -173,6 +173,130 @@
 .ssc-chip.done { border-color: hsla(150, 55%, 45%, 0.6); color: #86efac; }
 .ssc-chip.active { background: linear-gradient(135deg, #f59e0b, #d97706); color: #1c1203; border-color: transparent; }
 
+.ssc-scan-cta-bar {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ssc-btn.ghost.active {
+  border-color: #f59e0b;
+  color: #fde68a;
+  background: hsla(38, 92%, 50%, 0.12);
+}
+
+.ssc-corrections-card {
+  border-color: hsla(38, 92%, 50%, 0.45);
+}
+
+.ssc-corrections-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.ssc-corrections-head h3 {
+  margin: 0;
+}
+
+.ssc-badge-limit {
+  font-size: 0.76rem;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 99px;
+  background: hsla(38, 92%, 50%, 0.16);
+  border: 1px solid hsla(38, 92%, 50%, 0.45);
+  color: #fcd34d;
+  white-space: nowrap;
+}
+
+.ssc-correction-list {
+  list-style: none;
+  margin: 10px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.ssc-correction-item {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: hsla(218, 30%, 15%, 0.85);
+  border: 1px solid hsla(215, 25%, 35%, 0.45);
+}
+
+.ssc-correction-item.locked {
+  border-color: hsla(150, 55%, 45%, 0.4);
+  background: hsla(160, 30%, 12%, 0.6);
+}
+
+.ssc-correction-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  min-width: 0;
+}
+
+.ssc-correction-info > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ssc-correction-meta {
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.ssc-correction-icon {
+  width: 38px;
+  height: 38px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  color: #0b1020;
+  flex-shrink: 0;
+}
+
+.ssc-correction-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.ssc-locked-pill {
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #86efac;
+  padding: 6px 12px;
+  border-radius: 99px;
+  background: hsla(150, 55%, 30%, 0.22);
+  border: 1px solid hsla(150, 55%, 45%, 0.45);
+}
+
+.ssc-pin-status {
+  padding: 10px 12px;
+  border-radius: 12px;
+  background: hsla(195, 70%, 40%, 0.12);
+  border: 1px solid hsla(195, 70%, 55%, 0.35);
+  font-size: 0.86rem;
+  color: #bae6fd;
+}
+
+.ssc-empty-scan h3 {
+  margin-bottom: 6px;
+}
+
 .ssc-astro-card { border-width: 2px; display: flex; flex-direction: column; gap: 10px; }
 .ssc-astro-head { display: flex; align-items: center; gap: 14px; }
 .ssc-astro-head h3 { margin: 0; }
