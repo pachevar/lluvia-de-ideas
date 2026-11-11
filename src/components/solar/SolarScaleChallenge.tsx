@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import L from 'leaflet';
 import { useAuth } from '../../context/AuthContext';
 import { useSutzResources } from '../../context/SutzResourcesContext';
@@ -279,6 +280,15 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
     else localStorage.removeItem(SESSION_KEY);
     setSession(s);
   };
+
+  useEffect(() => {
+    if (!confirmAstroId && !confirmResetOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [confirmAstroId, confirmResetOpen]);
 
   // Mi equipo
   const myPins = useMemo(
@@ -933,7 +943,7 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
         )}
       </div>
 
-      {confirmAstro && (
+      {confirmAstro && createPortal(
         <div
           className="ssc-confirm-overlay"
           role="dialog"
@@ -1004,10 +1014,11 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
               )}
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
-      {confirmResetOpen && isHost && (
+      {confirmResetOpen && isHost && createPortal(
         <div
           className="ssc-confirm-overlay"
           role="dialog"
@@ -1060,7 +1071,8 @@ export default function SolarScaleChallenge({ initialRoom, initialAstro, externa
               </button>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {room.revealed && (

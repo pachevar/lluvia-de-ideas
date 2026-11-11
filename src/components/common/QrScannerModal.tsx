@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { decodeQrFromCanvas, decodeQrFromImageFile } from '../../utils/qrScanner';
 import { soundEffects } from '../../utils/soundEffects';
 import './QrScannerModal.css';
@@ -213,9 +214,18 @@ export default function QrScannerModal({
     }
   };
 
+  useEffect(() => {
+    if (!isOpen) return;
+    const prevOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.body.style.overflow = prevOverflow;
+    };
+  }, [isOpen]);
+
   if (!isOpen) return null;
 
-  return (
+  return createPortal(
     <div
       className="qrm-overlay"
       role="dialog"
@@ -291,7 +301,8 @@ export default function QrScannerModal({
 
         {hint && <p className="qrm-hint">{hint}</p>}
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
