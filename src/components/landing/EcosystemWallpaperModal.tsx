@@ -44,7 +44,7 @@ export const EcosystemWallpaperModal: React.FC<EcosystemWallpaperModalProps> = (
     if (!isOpen || !showQrPanel) return;
     let active = true;
     QRCode.toDataURL(contactFormUrl, {
-      width: 240,
+      width: 380,
       margin: 2,
       color: {
         dark: '#061024',
@@ -323,50 +323,60 @@ export const EcosystemWallpaperModal: React.FC<EcosystemWallpaperModalProps> = (
         )}
 
         {showQrPanel && (
-          <div className="eco-qr-popover" role="region" aria-label="Código QR de registro de contacto">
-            <div className="eco-qr-header">
-              <span>📲 Conecta con nosotros</span>
-              <button
-                type="button"
-                className="eco-qr-close"
-                onClick={() => setShowQrPanel(false)}
-                aria-label="Cerrar QR"
-              >
-                ✕
-              </button>
-            </div>
-            <p className="eco-qr-desc">
-              Escanea este QR para dejar tu nombre, puesto, institución y contacto.
-            </p>
-            <div className="eco-qr-img-box">
-              {qrDataUrl ? (
-                <img src={qrDataUrl} alt="QR formulario de contacto" className="eco-qr-img" />
-              ) : (
-                <div className="eco-qr-loading">Generando QR...</div>
-              )}
-            </div>
-            <div className="eco-qr-actions">
-              <a
-                href={contactFormUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="eco-qr-link-btn"
-              >
-                Abrir formulario ↗
-              </a>
-              <button
-                type="button"
-                className="eco-qr-copy-btn"
-                onClick={() => {
-                  if (navigator.clipboard) {
-                    navigator.clipboard.writeText(contactFormUrl);
-                    setQrCopied(true);
-                    setTimeout(() => setQrCopied(false), 2000);
-                  }
-                }}
-              >
-                {qrCopied ? '✅ Copiado' : '🔗 Copiar enlace'}
-              </button>
+          <div
+            className="eco-qr-overlay"
+            onClick={() => setShowQrPanel(false)}
+          >
+            <div
+              className="eco-qr-popover"
+              role="region"
+              aria-label="Código QR de registro de contacto"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <div className="eco-qr-header">
+                <span>📲 Conecta con nosotros</span>
+                <button
+                  type="button"
+                  className="eco-qr-close"
+                  onClick={() => setShowQrPanel(false)}
+                  aria-label="Cerrar QR"
+                >
+                  ✕
+                </button>
+              </div>
+              <p className="eco-qr-desc">
+                Escanea este QR para dejar tu nombre, puesto, institución y contacto.
+              </p>
+              <div className="eco-qr-img-box">
+                {qrDataUrl ? (
+                  <img src={qrDataUrl} alt="QR formulario de contacto" className="eco-qr-img" />
+                ) : (
+                  <div className="eco-qr-loading">Generando QR...</div>
+                )}
+              </div>
+              <div className="eco-qr-actions">
+                <a
+                  href={contactFormUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="eco-qr-link-btn"
+                >
+                  Abrir formulario ↗
+                </a>
+                <button
+                  type="button"
+                  className="eco-qr-copy-btn"
+                  onClick={() => {
+                    if (navigator.clipboard) {
+                      navigator.clipboard.writeText(contactFormUrl);
+                      setQrCopied(true);
+                      setTimeout(() => setQrCopied(false), 2000);
+                    }
+                  }}
+                >
+                  {qrCopied ? '✅ Copiado' : '🔗 Copiar enlace'}
+                </button>
+              </div>
             </div>
           </div>
         )}
