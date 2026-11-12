@@ -6,9 +6,11 @@ interface ReadingModalProps {
   textItem: StudentTextItem;
   onClose: () => void;
   onLike?: (id: string) => void;
+  onShare?: () => void;
+  shareCopied?: boolean;
 }
 
-export const ReadingModal: React.FC<ReadingModalProps> = ({ textItem, onClose, onLike }) => {
+export const ReadingModal: React.FC<ReadingModalProps> = ({ textItem, onClose, onLike, onShare, shareCopied }) => {
   const [theme, setTheme] = useState<'dark' | 'sepia' | 'light'>('dark');
   const [fontSize, setFontSize] = useState<number>(18);
   const [liked, setLiked] = useState<boolean>(false);
@@ -203,17 +205,18 @@ export const ReadingModal: React.FC<ReadingModalProps> = ({ textItem, onClose, o
 
               <button 
                 type="button" 
-                className="gg-reaction-btn secondary"
+                className={`gg-reaction-btn secondary ${shareCopied ? 'copied' : ''}`}
                 onClick={() => {
                   soundEffects.playClick();
-                  if (navigator.clipboard) {
+                  if (onShare) {
+                    onShare();
+                  } else if (navigator.clipboard) {
                     navigator.clipboard.writeText(window.location.href);
-                    alert('¡Enlace de la obra copiado al portapapeles!');
                   }
                 }}
               >
-                <span>🔗</span>
-                <span>Compartir</span>
+                <span>{shareCopied ? '✅' : '🔗'}</span>
+                <span>{shareCopied ? 'Enlace copiado' : 'Compartir'}</span>
               </button>
             </div>
           </footer>

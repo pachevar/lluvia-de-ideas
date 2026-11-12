@@ -6,9 +6,11 @@ interface ArtPieceModalProps {
   artItem: StudentArtItem;
   onClose: () => void;
   onLike?: (id: string) => void;
+  onShare?: () => void;
+  shareCopied?: boolean;
 }
 
-export const ArtPieceModal: React.FC<ArtPieceModalProps> = ({ artItem, onClose, onLike }) => {
+export const ArtPieceModal: React.FC<ArtPieceModalProps> = ({ artItem, onClose, onLike, onShare, shareCopied }) => {
   const [isZoomed, setIsZoomed] = useState<boolean>(false);
   const [liked, setLiked] = useState<boolean>(false);
   const [likeCount, setLikeCount] = useState<number>(artItem.likes || 0);
@@ -142,17 +144,18 @@ export const ArtPieceModal: React.FC<ArtPieceModalProps> = ({ artItem, onClose, 
 
                 <button 
                   type="button"
-                  className="gg-reaction-btn secondary"
+                  className={`gg-reaction-btn secondary ${shareCopied ? 'copied' : ''}`}
                   onClick={() => {
                     soundEffects.playClick();
-                    if (navigator.clipboard) {
+                    if (onShare) {
+                      onShare();
+                    } else if (navigator.clipboard) {
                       navigator.clipboard.writeText(window.location.href);
-                      alert('¡Enlace de la obra copiado!');
                     }
                   }}
                 >
-                  <span>🔗</span>
-                  <span>Compartir</span>
+                  <span>{shareCopied ? '✅' : '🔗'}</span>
+                  <span>{shareCopied ? 'Enlace copiado' : 'Compartir'}</span>
                 </button>
               </div>
             </div>

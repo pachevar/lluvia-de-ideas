@@ -1,13 +1,16 @@
 import React, { useEffect } from 'react';
 import type { StudentVideoItem } from '../../types';
 import { extractYouTubeId } from '../admin/AdminTabVideos';
+import { soundEffects } from '../../utils/soundEffects';
 
 interface VideoTheaterModalProps {
   videoItem: StudentVideoItem;
   onClose: () => void;
+  onShare?: () => void;
+  shareCopied?: boolean;
 }
 
-export const VideoTheaterModal: React.FC<VideoTheaterModalProps> = ({ videoItem, onClose }) => {
+export const VideoTheaterModal: React.FC<VideoTheaterModalProps> = ({ videoItem, onClose, onShare, shareCopied }) => {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
@@ -100,6 +103,22 @@ export const VideoTheaterModal: React.FC<VideoTheaterModalProps> = ({ videoItem,
             <div className="gg-theater-synopsis">
               <h4>Sinopsis</h4>
               <p>{videoItem.synopsis}</p>
+            </div>
+          )}
+
+          {onShare && (
+            <div className="gg-theater-actions" style={{ marginTop: '1rem', display: 'flex', justifyContent: 'flex-end' }}>
+              <button
+                type="button"
+                className={`gg-reaction-btn secondary ${shareCopied ? 'copied' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  onShare();
+                }}
+              >
+                <span>{shareCopied ? '✅' : '🔗'}</span>
+                <span>{shareCopied ? 'Enlace copiado' : 'Compartir producción'}</span>
+              </button>
             </div>
           )}
         </div>

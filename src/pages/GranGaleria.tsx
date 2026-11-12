@@ -1,5 +1,5 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { DEFAULT_GRAN_GALERIA } from '../data/defaultGranGaleriaData';
@@ -16,6 +16,7 @@ import { ObraEditorModal } from '../components/galeria/ObraEditorModal';
 import { VideoEditorModal } from '../components/galeria/VideoEditorModal';
 import { AuthModal } from '../components/auth/AuthModal';
 import { soundEffects } from '../utils/soundEffects';
+import { buildGranGaleriaShareUrl, shareGranGaleriaPost } from '../utils/sharePost';
 import './GranGaleria.css';
 
 type GaleriaSection = 'escriba' | 'museo' | 'cine' | 'concursos';
@@ -23,6 +24,7 @@ type GaleriaSection = 'escriba' | 'museo' | 'cine' | 'concursos';
 export const GranGaleria: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const [searchParams, setSearchParams] = useSearchParams();
   const { user, userProfile } = useAuth();
   const { config, saveGranGaleriaToFirestore } = usePortalConfig();
 
@@ -52,6 +54,111 @@ export const GranGaleria: React.FC = () => {
   const [isVideoEditorOpen, setIsVideoEditorOpen] = useState<boolean>(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState<boolean>(false);
   const [editorInitialData, setEditorInitialData] = useState<Partial<StudentTextItem> | undefined>(undefined);
+
+  // Estado para enlaces compartibles (visibles sin autenticación)
+  const [copiedPostId, setCopiedPostId] = useState<string | null>(null);
+  const [shareToast, setShareToast] = useState<string | null>(null);
+  const [highlightedContestId, setHighlightedContestId] = useState<string | null>(null);
+
+  const openReadingText = useCallback((item: StudentTextItem) => {
+    setActiveReadingText(item);
+    setSearchParams({ tab: 'escriba', post: item.id }, { replace: true });
+  }, [setSearchParams]);
+
+  const openArtPiece = useCallback((item: StudentArtItem) => {
+    setActiveArtPiece(item);
+    setSearchParams({ tab: 'museo', post: item.id }, { replace: true });
+  }, [setSearchParams]);
+
+  const openVideoItem = useCallback((item: StudentVideoItem) => {
+    setActiveVideo(item);
+    setSearchParams({ tab: 'cine', post: item.id }, { replace: true });
+  }, [setSearchParams]);
+
+  const closePostModal = useCallback((tab: GaleriaSection) => {
+    setActiveReadingText(null);
+    setActiveArtPiece(null);
+    setActiveVideo(null);
+    setSearchParams({ tab }, { replace: true });
+  }, [setSearchParams]);
+
+  const handleSharePost = useCallback(async (
+    e: React.MouseEvent | null,
+    tab: GaleriaSection,
+    postId: string,
+    title: string
+  ) => {
+    if (e) e.stopPropagation();
+    soundEffects.playClick();
+    const shareUrl = buildGranGaleriaShareUrl(tab, postId);
+    const result = await shareGranGaleriaPost(shareUrl, title);
+    if (result === 'copied') {
+      setCopiedPostId(postId);
+      setShareToast(`Enlace de "${title}" copiado para compartir`);
+      setTimeout(() => {
+        setCopiedPostId(prev => (prev === postId ? null : prev));
+      }, 2400);
+      setTimeout(() => {
+        setShareToast(null);
+      }, 2800);
+    } else if (result === 'shared') {
+      setShareToast(`Compartiendo "${title}"`);
+      setTimeout(() => setShareToast(null), 2200);
+    }
+  }, []);
+
+  // Deep-linking público: abrir directamente cualquier post o concurso compartido sin pedir sesión
+  useEffect(() => {
+    const tabParam = searchParams.get('tab') as GaleriaSection | null;
+    const postParam = searchParams.get('post');
+
+    if (tabParam && ['escriba', 'museo', 'cine', 'concursos'].includes(tabParam)) {
+      setActiveTab(tabParam);
+    }
+
+    if (!postParam) return;
+
+    if (tabParam === 'escriba' || !tabParam) {
+      const matchedText = texts.find(t => t.id === postParam);
+      if (matchedText) {
+        setActiveTab('escriba');
+        setActiveReadingText(matchedText);
+        return;
+      }
+    }
+
+    if (tabParam === 'museo' || !tabParam) {
+      const matchedArt = artworks.find(a => a.id === postParam);
+      if (matchedArt) {
+        setActiveTab('museo');
+        setActiveArtPiece(matchedArt);
+        return;
+      }
+    }
+
+    if (tabParam === 'cine' || !tabParam) {
+      const matchedVideo = videos.find(v => v.id === postParam);
+      if (matchedVideo) {
+        setActiveTab('cine');
+        setActiveVideo(matchedVideo);
+        return;
+      }
+    }
+
+    if (tabParam === 'concursos' || !tabParam) {
+      const matchedContest = contests.find(c => c.id === postParam);
+      if (matchedContest) {
+        setActiveTab('concursos');
+        setHighlightedContestId(matchedContest.id);
+        setTimeout(() => {
+          document.getElementById(`contest-${matchedContest.id}`)?.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center',
+          });
+        }, 180);
+      }
+    }
+  }, [searchParams, texts, artworks, videos, contests]);
 
   // Apertura segura del taller literario (requiere sesión activa de estudiante/docente)
   const handleOpenEditor = () => {
@@ -460,7 +567,7 @@ export const GranGaleria: React.FC = () => {
                   className={`gg-story-card ${t.coverImage ? 'has-cover' : ''}`}
                   onClick={() => {
                     soundEffects.playClick();
-                    setActiveReadingText(t);
+                    openReadingText(t);
                   }}
                 >
                   {t.coverImage && (
@@ -496,9 +603,21 @@ export const GranGaleria: React.FC = () => {
                       <span>❤️ {t.likes}</span>
                       <span>👁️ {t.reads} lecturas</span>
                     </div>
-                    <button type="button" className="story-read-action-btn">
-                      Leer ahora ➔
-                    </button>
+                    <div className="gg-card-footer-actions">
+                      <button
+                        type="button"
+                        className={`gg-share-card-btn ${copiedPostId === t.id ? 'copied' : ''}`}
+                        onClick={e => handleSharePost(e, 'escriba', t.id, t.title)}
+                        title="Copiar enlace directo para compartir este relato"
+                        aria-label={`Compartir ${t.title}`}
+                      >
+                        <span>{copiedPostId === t.id ? '✅' : '🔗'}</span>
+                        <span>{copiedPostId === t.id ? 'Copiado' : 'Compartir'}</span>
+                      </button>
+                      <button type="button" className="story-read-action-btn">
+                        Leer ahora ➔
+                      </button>
+                    </div>
                   </div>
                 </article>
               ))}
@@ -556,7 +675,7 @@ export const GranGaleria: React.FC = () => {
                   className="gg-art-card"
                   onClick={() => {
                     soundEffects.playClick();
-                    setActiveArtPiece(a);
+                    openArtPiece(a);
                   }}
                 >
                   <div className="art-card-img-container">
@@ -582,6 +701,18 @@ export const GranGaleria: React.FC = () => {
                     <div className="art-footer-likes">
                       <span>❤️ {a.likes} apreciaciones</span>
                       <span>👁️ {a.views} vistas</span>
+                    </div>
+                    <div className="gg-card-share-row">
+                      <button
+                        type="button"
+                        className={`gg-share-card-btn full ${copiedPostId === a.id ? 'copied' : ''}`}
+                        onClick={e => handleSharePost(e, 'museo', a.id, a.title)}
+                        title="Copiar enlace directo para compartir esta obra"
+                        aria-label={`Compartir ${a.title}`}
+                      >
+                        <span>{copiedPostId === a.id ? '✅' : '🔗'}</span>
+                        <span>{copiedPostId === a.id ? 'Enlace copiado' : 'Compartir obra'}</span>
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -640,7 +771,7 @@ export const GranGaleria: React.FC = () => {
                   className="gg-video-card"
                   onClick={() => {
                     soundEffects.playClick();
-                    setActiveVideo(v);
+                    openVideoItem(v);
                   }}
                 >
                   <div className="video-thumb-container">
@@ -669,6 +800,18 @@ export const GranGaleria: React.FC = () => {
                     <p className="video-team">👥 {v.team}</p>
                     <p className="video-school">{v.school || 'Equipo Escolar'}</p>
                     <p className="video-synopsis-line">{v.synopsis}</p>
+                    <div className="gg-card-share-row">
+                      <button
+                        type="button"
+                        className={`gg-share-card-btn full ${copiedPostId === v.id ? 'copied' : ''}`}
+                        onClick={e => handleSharePost(e, 'cine', v.id, v.title)}
+                        title="Copiar enlace directo para compartir esta producción"
+                        aria-label={`Compartir ${v.title}`}
+                      >
+                        <span>{copiedPostId === v.id ? '✅' : '🔗'}</span>
+                        <span>{copiedPostId === v.id ? 'Enlace copiado' : 'Compartir producción'}</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -702,7 +845,11 @@ export const GranGaleria: React.FC = () => {
 
             <div className="gg-contests-list">
               {contests.map(c => (
-                <div key={c.id} className="gg-contest-card">
+                <div
+                  key={c.id}
+                  id={`contest-${c.id}`}
+                  className={`gg-contest-card ${highlightedContestId === c.id ? 'highlighted' : ''}`}
+                >
                   <div className="contest-status-bar">
                     <span className={`contest-status-pill ${c.status}`}>
                       {c.status === 'convocatoria' ? '🟢 Convocatoria Abierta' :
@@ -752,6 +899,16 @@ export const GranGaleria: React.FC = () => {
                       <span>📝</span>
                       <span>Postular mi Proyecto a este Concurso</span>
                     </button>
+                    <button
+                      type="button"
+                      className={`gg-share-card-btn contest ${copiedPostId === c.id ? 'copied' : ''}`}
+                      onClick={e => handleSharePost(e, 'concursos', c.id, c.title)}
+                      title="Copiar enlace directo de esta convocatoria"
+                      aria-label={`Compartir ${c.title}`}
+                    >
+                      <span>{copiedPostId === c.id ? '✅' : '🔗'}</span>
+                      <span>{copiedPostId === c.id ? 'Enlace copiado' : 'Compartir convocatoria'}</span>
+                    </button>
                   </div>
                 </div>
               ))}
@@ -765,8 +922,10 @@ export const GranGaleria: React.FC = () => {
       {activeReadingText && (
         <ReadingModal 
           textItem={activeReadingText} 
-          onClose={() => setActiveReadingText(null)}
+          onClose={() => closePostModal('escriba')}
           onLike={handleLikeText}
+          onShare={() => handleSharePost(null, 'escriba', activeReadingText.id, activeReadingText.title)}
+          shareCopied={copiedPostId === activeReadingText.id}
         />
       )}
 
@@ -774,8 +933,10 @@ export const GranGaleria: React.FC = () => {
       {activeArtPiece && (
         <ArtPieceModal 
           artItem={activeArtPiece} 
-          onClose={() => setActiveArtPiece(null)}
+          onClose={() => closePostModal('museo')}
           onLike={handleLikeArt}
+          onShare={() => handleSharePost(null, 'museo', activeArtPiece.id, activeArtPiece.title)}
+          shareCopied={copiedPostId === activeArtPiece.id}
         />
       )}
 
@@ -783,8 +944,17 @@ export const GranGaleria: React.FC = () => {
       {activeVideo && (
         <VideoTheaterModal 
           videoItem={activeVideo} 
-          onClose={() => setActiveVideo(null)}
+          onClose={() => closePostModal('cine')}
+          onShare={() => handleSharePost(null, 'cine', activeVideo.id, activeVideo.title)}
+          shareCopied={copiedPostId === activeVideo.id}
         />
+      )}
+
+      {shareToast && (
+        <div className="gg-share-toast" role="status" aria-live="polite">
+          <span>🔗</span>
+          <span>{shareToast}</span>
+        </div>
       )}
 
       {/* Modal Guía para Enviar Obra */}
