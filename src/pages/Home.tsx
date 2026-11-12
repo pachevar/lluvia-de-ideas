@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import PromoVideoSection from '../components/landing/PromoVideoSection';
 import PromoTipsModal from '../components/landing/PromoTipsModal';
+import EcosystemWallpaperModal from '../components/landing/EcosystemWallpaperModal';
 import LandingTopBar from '../components/landing/LandingTopBar';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { soundEffects } from '../utils/soundEffects';
@@ -19,6 +20,7 @@ export default function Home() {
     }
     return false;
   });
+  const [isWallpaperModalOpen, setIsWallpaperModalOpen] = useState(false);
 
   useEffect(() => {
     document.body.classList.add('home-page-active');
@@ -129,8 +131,27 @@ export default function Home() {
           <p className="hero-description hero-description-prominent">
             Elige una experiencia para ingresar de inmediato o desplázate para conocer más información.
           </p>
+          <div className="hero-wallpaper-cta-wrap">
+            <button
+              type="button"
+              className="hero-wallpaper-btn"
+              onClick={() => {
+                soundEffects.playClick();
+                setIsWallpaperModalOpen(true);
+              }}
+              title="Abrir lienzo animado en modo fondo de pantalla (80% ancho y alto)"
+            >
+              <span>🌌</span>
+              <span>Modo Fondo de Pantalla · Visión Ecosistema</span>
+            </button>
+          </div>
         </div>
       </section>
+
+      <EcosystemWallpaperModal
+        isOpen={isWallpaperModalOpen}
+        onClose={() => setIsWallpaperModalOpen(false)}
+      />
 
       {/* LAS 4 FICHAS PRINCIPALES (CARDS CON ACCIÓN DIRECTA Y SCROLL) */}
       <section className="landing-cards-section">
