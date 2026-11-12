@@ -50,6 +50,12 @@ service cloud.firestore {
       allow read, update, delete: if isAdmin();
     }
 
+    // Colección de contactos captados vía QR en el modal del ecosistema
+    match /ecosystem_contacts/{contactId} {
+      allow create: if true;
+      allow read, update, delete: if isAdmin();
+    }
+
     // Colección de cotizaciones web (enlaces públicos)
     match /cotizaciones/{cotizacionId} {
       allow read: if true; // Lectura pública para que el cliente vea el link

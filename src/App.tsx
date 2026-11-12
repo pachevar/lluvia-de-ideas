@@ -36,6 +36,7 @@ const GranGaleria = React.lazy(() => import('./pages/GranGaleria'));
 const MercadoRedirect = React.lazy(() => import('./pages/MercadoRedirect'));
 const AtlasAnatomia = React.lazy(() => import('./pages/AtlasAnatomia'));
 const TallerExpresion = React.lazy(() => import('./pages/TallerExpresion'));
+const ContactoQr = React.lazy(() => import('./pages/ContactoQr'));
 
 function App() {
   const navigate = useNavigate();
@@ -148,6 +149,7 @@ function App() {
             <Route path="/tienda" element={<MercadoRedirect />} />
             <Route path="/tienda/:productId" element={<MercadoRedirect />} />
             <Route path="/catalogo" element={<MercadoRedirect />} />
+            <Route path="/contacto-qr" element={<ContactoQr />} />
             <Route path="/catalogo/:productId" element={<MercadoRedirect />} />
             <Route path="*" element={<NotFound />} />
           </Routes>

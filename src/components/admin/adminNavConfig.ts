@@ -14,6 +14,7 @@ export type AdminTabType =
   | 'tienda' 
   | 'viaje_del_heroe'
   | 'inscripciones' 
+  | 'contactos'
   | 'cotizador' 
   | 'colors'
   | 'pozo_ideas'
@@ -414,6 +415,14 @@ export const OPERATIONAL_NAV_CATEGORIES: AdminCategory[] = [
         icon: '📝',
         description: 'Registro de docentes, instituciones y solicitudes de capacitación',
         keywords: ['maestros', 'inscripciones', 'docentes', 'profesores', 'registros', 'contactos', 'colegios'],
+        pillar: 'soporte'
+      },
+      {
+        id: 'contactos',
+        label: '📇 Contactos',
+        icon: '📇',
+        description: 'Contactos captados vía QR desde el fondo de pantalla del ecosistema',
+        keywords: ['contactos', 'qr', 'leads', 'instituciones', 'puesto', 'directorio'],
         pillar: 'soporte'
       }
     ]

@@ -14,6 +14,7 @@ import AdminTabVideos from './components/admin/AdminTabVideos';
 import AdminTabLaboratorios from './components/admin/AdminTabLaboratorios';
 import AdminColorsTab from './components/admin/AdminColorsTab';
 import AdminTabInscripciones from './components/admin/AdminTabInscripciones';
+import AdminTabContactos from './components/admin/AdminTabContactos';
 import AdminTabCotizador from './components/admin/AdminTabCotizador';
 import AdminBingoTab from './components/admin/AdminBingoTab';
 import AdminTabMundoVirtual from './components/admin/AdminTabMundoVirtual';
@@ -36,7 +37,7 @@ export default function Gerencia() {
 const VALID_ADMIN_TABS: AdminTabType[] = [
   'inicio', 'videos', 'neurociencia', 'libros', 'mapa', 'curriculum', 'techtree', 
   'creatika', '100tek', 'sistema_solar', 'laboratorios', 'bingo', 
-  'tienda', 'viaje_del_heroe', 'inscripciones', 'cotizador', 
+  'tienda', 'viaje_del_heroe', 'inscripciones', 'contactos', 'cotizador', 
   'colors', 'pozo_ideas', 'ajustes'
 ];
 
@@ -536,6 +537,10 @@ const VALID_ADMIN_TABS: AdminTabType[] = [
 
           {activeAdminTab === 'inscripciones' && (
             <AdminTabInscripciones />
+          )}
+
+          {activeAdminTab === 'contactos' && (
+            <AdminTabContactos />
           )}
 
           {activeAdminTab === 'cotizador' && (

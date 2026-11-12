@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
+import QRCode from 'qrcode';
 import { soundEffects } from '../../utils/soundEffects';
 import './EcosystemWallpaperModal.css';
 
@@ -30,6 +31,36 @@ export const EcosystemWallpaperModal: React.FC<EcosystemWallpaperModalProps> = (
   const stageRef = useRef<HTMLDivElement | null>(null);
   const [hideControls, setHideControls] = useState(false);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [showQrPanel, setShowQrPanel] = useState(false);
+  const [qrDataUrl, setQrDataUrl] = useState('');
+  const [qrCopied, setQrCopied] = useState(false);
+
+  const contactFormUrl =
+    typeof window !== 'undefined'
+      ? `${window.location.origin}/contacto-qr`
+      : '/contacto-qr';
+
+  useEffect(() => {
+    if (!isOpen || !showQrPanel) return;
+    let active = true;
+    QRCode.toDataURL(contactFormUrl, {
+      width: 240,
+      margin: 2,
+      color: {
+        dark: '#061024',
+        light: '#ffffff',
+      },
+    })
+      .then((url) => {
+        if (active) setQrDataUrl(url);
+      })
+      .catch((err) => {
+        console.error('Error generating QR code:', err);
+      });
+    return () => {
+      active = false;
+    };
+  }, [isOpen, showQrPanel, contactFormUrl]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -207,6 +238,19 @@ export const EcosystemWallpaperModal: React.FC<EcosystemWallpaperModalProps> = (
           <div className="eco-wall-btn-group">
             <button
               type="button"
+              className={`eco-wall-btn qr-btn ${showQrPanel ? 'active' : ''}`}
+              onClick={() => {
+                soundEffects.playClick();
+                setShowQrPanel((prev) => !prev);
+              }}
+              title="Mostrar código QR para formulario corto de contacto"
+            >
+              <span>📱</span>
+              <span>QR Contacto</span>
+            </button>
+
+            <button
+              type="button"
               className="eco-wall-btn"
               onClick={toggleFullscreen}
               title="Proyectar en pantalla completa"
@@ -276,6 +320,55 @@ export const EcosystemWallpaperModal: React.FC<EcosystemWallpaperModalProps> = (
           >
             Mostrar controles
           </button>
+        )}
+
+        {showQrPanel && (
+          <div className="eco-qr-popover" role="region" aria-label="Código QR de registro de contacto">
+            <div className="eco-qr-header">
+              <span>📲 Conecta con nosotros</span>
+              <button
+                type="button"
+                className="eco-qr-close"
+                onClick={() => setShowQrPanel(false)}
+                aria-label="Cerrar QR"
+              >
+                ✕
+              </button>
+            </div>
+            <p className="eco-qr-desc">
+              Escanea este QR para dejar tu nombre, puesto, institución y contacto.
+            </p>
+            <div className="eco-qr-img-box">
+              {qrDataUrl ? (
+                <img src={qrDataUrl} alt="QR formulario de contacto" className="eco-qr-img" />
+              ) : (
+                <div className="eco-qr-loading">Generando QR...</div>
+              )}
+            </div>
+            <div className="eco-qr-actions">
+              <a
+                href={contactFormUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="eco-qr-link-btn"
+              >
+                Abrir formulario ↗
+              </a>
+              <button
+                type="button"
+                className="eco-qr-copy-btn"
+                onClick={() => {
+                  if (navigator.clipboard) {
+                    navigator.clipboard.writeText(contactFormUrl);
+                    setQrCopied(true);
+                    setTimeout(() => setQrCopied(false), 2000);
+                  }
+                }}
+              >
+                {qrCopied ? '✅ Copiado' : '🔗 Copiar enlace'}
+              </button>
+            </div>
+          </div>
         )}
       </div>
     </div>,
