@@ -1,7 +1,5 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { doc, updateDoc, setDoc } from 'firebase/firestore';
-import { db } from '../firebase';
 import { useAuth } from '../context/AuthContext';
 import { usePortalConfig } from '../context/PortalConfigContext';
 import { DEFAULT_GRAN_GALERIA } from '../data/defaultGranGaleriaData';
@@ -26,7 +24,7 @@ export const GranGaleria: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, userProfile } = useAuth();
-  const { config, saveConfigToFirestore } = usePortalConfig();
+  const { config, saveGranGaleriaToFirestore } = usePortalConfig();
 
   // Config data fallback
   const galeriaData = config.granGaleria || DEFAULT_GRAN_GALERIA;
@@ -117,28 +115,10 @@ export const GranGaleria: React.FC = () => {
     } else {
       updatedTexts = [newText, ...(currentGaleria.texts || [])];
     }
-    const updatedGaleria = {
+    await saveGranGaleriaToFirestore({
       ...currentGaleria,
       texts: updatedTexts
-    };
-
-    // Actualización atómica en config/portal autorizada para usuarios autenticados
-    const portalDocRef = doc(db, 'config', 'portal');
-    try {
-      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
-    } catch (err) {
-      console.warn('[GranGaleria] updateDoc falló, intentando setDoc merge:', err);
-      try {
-        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
-      } catch (mergeErr) {
-        console.error('[GranGaleria] Error persistiendo relato en Firestore:', mergeErr);
-        // Fallback context
-        await saveConfigToFirestore({
-          ...config,
-          granGaleria: updatedGaleria
-        });
-      }
-    }
+    });
   };
 
   const handleSaveNewArtwork = async (newArt: StudentArtItem) => {
@@ -151,27 +131,10 @@ export const GranGaleria: React.FC = () => {
     } else {
       updatedArtworks = [newArt, ...(currentGaleria.artworks || [])];
     }
-    const updatedGaleria = {
+    await saveGranGaleriaToFirestore({
       ...currentGaleria,
       artworks: updatedArtworks
-    };
-
-    // Actualización atómica en config/portal autorizada para usuarios autenticados
-    const portalDocRef = doc(db, 'config', 'portal');
-    try {
-      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
-    } catch (err) {
-      console.warn('[GranGaleria] updateDoc falló para obra, intentando setDoc merge:', err);
-      try {
-        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
-      } catch (mergeErr) {
-        console.error('[GranGaleria] Error persistiendo obra en Firestore:', mergeErr);
-        await saveConfigToFirestore({
-          ...config,
-          granGaleria: updatedGaleria
-        });
-      }
-    }
+    });
   };
 
   const handleSaveNewVideo = async (newVideo: StudentVideoItem) => {
@@ -184,27 +147,10 @@ export const GranGaleria: React.FC = () => {
     } else {
       updatedVideos = [newVideo, ...(currentGaleria.videos || [])];
     }
-    const updatedGaleria = {
+    await saveGranGaleriaToFirestore({
       ...currentGaleria,
       videos: updatedVideos
-    };
-
-    // Actualización atómica en config/portal autorizada para usuarios autenticados
-    const portalDocRef = doc(db, 'config', 'portal');
-    try {
-      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
-    } catch (err) {
-      console.warn('[GranGaleria] updateDoc falló para video, intentando setDoc merge:', err);
-      try {
-        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
-      } catch (mergeErr) {
-        console.error('[GranGaleria] Error persistiendo video en Firestore:', mergeErr);
-        await saveConfigToFirestore({
-          ...config,
-          granGaleria: updatedGaleria
-        });
-      }
-    }
+    });
   };
 
   const handleLikeText = async (textId: string) => {
@@ -212,16 +158,10 @@ export const GranGaleria: React.FC = () => {
     const updatedTexts = (currentGaleria.texts || []).map(t => 
       t.id === textId ? { ...t, likes: (t.likes || 0) + 1 } : t
     );
-    const updatedGaleria = { ...currentGaleria, texts: updatedTexts };
-    const portalDocRef = doc(db, 'config', 'portal');
     try {
-      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
-    } catch {
-      try {
-        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
-      } catch (err) {
-        console.error('[GranGaleria] Error updating like for text:', err);
-      }
+      await saveGranGaleriaToFirestore({ ...currentGaleria, texts: updatedTexts });
+    } catch (err) {
+      console.error('[GranGaleria] Error updating like for text:', err);
     }
   };
 
@@ -230,16 +170,10 @@ export const GranGaleria: React.FC = () => {
     const updatedArtworks = (currentGaleria.artworks || []).map(a => 
       a.id === artId ? { ...a, likes: (a.likes || 0) + 1 } : a
     );
-    const updatedGaleria = { ...currentGaleria, artworks: updatedArtworks };
-    const portalDocRef = doc(db, 'config', 'portal');
     try {
-      await updateDoc(portalDocRef, { granGaleria: updatedGaleria });
-    } catch {
-      try {
-        await setDoc(portalDocRef, { granGaleria: updatedGaleria }, { merge: true });
-      } catch (err) {
-        console.error('[GranGaleria] Error updating like for art:', err);
-      }
+      await saveGranGaleriaToFirestore({ ...currentGaleria, artworks: updatedArtworks });
+    } catch (err) {
+      console.error('[GranGaleria] Error updating like for art:', err);
     }
   };
 

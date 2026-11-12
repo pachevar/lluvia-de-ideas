@@ -66,11 +66,14 @@ export async function uploadImageWithFallback(
   maxHeight = 1000,
   quality = 0.78
 ): Promise<{ url: string; isBase64: boolean }> {
-  // Para assets de libros o catálogo, dimensiones balanceadas para nitidez y peso liviano
-  const isBookAsset = folder.includes('libros') || folder.includes('mercado');
-  const targetMaxW = isBookAsset ? Math.min(maxWidth, 600) : maxWidth;
-  const targetMaxH = isBookAsset ? Math.min(maxHeight, 800) : maxHeight;
-  const targetQuality = isBookAsset ? 0.72 : quality;
+  // Para assets de libros, catálogo o Gran Galería, dimensiones balanceadas para nitidez y peso liviano
+  const isCompactAsset =
+    folder.includes('libros') ||
+    folder.includes('mercado') ||
+    folder.includes('gran_galeria');
+  const targetMaxW = isCompactAsset ? Math.min(maxWidth, 600) : maxWidth;
+  const targetMaxH = isCompactAsset ? Math.min(maxHeight, 800) : maxHeight;
+  const targetQuality = isCompactAsset ? 0.72 : quality;
 
   const compressedBlob = await compressImageWebP(file, targetMaxW, targetMaxH, targetQuality);
   const cleanName = file.name.replace(/\.[^/.]+$/, '').replace(/[^a-zA-Z0-9_-]/g, '_') + '.webp';
@@ -80,11 +83,12 @@ export async function uploadImageWithFallback(
     await uploadBytes(fileRef, compressedBlob, { contentType: 'image/webp' });
     const downloadUrl = await getDownloadURL(fileRef);
     return { url: downloadUrl, isBase64: false };
-  } catch (storageErr: any) {
-    console.warn(`[ImageUpload] Firebase Storage no disponible o cuota excedida (${storageErr?.code || storageErr?.message}). Usando fallback Base64 WebP optimizado.`);
+  } catch (storageErr: unknown) {
+    const errObj = storageErr as { code?: string; message?: string } | null;
+    console.warn(`[ImageUpload] Firebase Storage no disponible o cuota excedida (${errObj?.code || errObj?.message}). Usando fallback Base64 WebP optimizado.`);
     // En caso de fallback base64, comprimimos con dimensiones compactas para no saturar Firestore
-    const compactBlob = isBookAsset
-      ? await compressImageWebP(file, 450, 600, 0.65)
+    const compactBlob = isCompactAsset
+      ? await compressImageWebP(file, 420, 560, 0.62)
       : compressedBlob;
     const dataUrl = await blobToDataURL(compactBlob);
     return { url: dataUrl, isBase64: true };

@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { doc, onSnapshot, setDoc } from 'firebase/firestore';
+import { deleteField, doc, onSnapshot, setDoc } from 'firebase/firestore';
 import { db } from '../firebase';
-import type { PortalConfig, TiendaConfig, CustomHexagon, BookCollectionConfig, MercadoProductConfig, MercadoCategoryConfig } from '../types';
+import type { PortalConfig, TiendaConfig, CustomHexagon, BookCollectionConfig, MercadoProductConfig, MercadoCategoryConfig, GranGaleriaConfig } from '../types';
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
 import { subscribeArchetypeAssets } from '../services/archetypeAssetsService';
@@ -16,6 +16,7 @@ interface PortalConfigContextProps {
   saveMercadoCollectionsToFirestore: (collections: BookCollectionConfig[]) => Promise<void>;
   saveMercadoProductsToFirestore: (products: MercadoProductConfig[]) => Promise<void>;
   saveMercadoCategoriesToFirestore: (categories: MercadoCategoryConfig[]) => Promise<void>;
+  saveGranGaleriaToFirestore: (granGaleria: GranGaleriaConfig) => Promise<void>;
   resetConfigToFirestore: () => Promise<void>;
 }
 
@@ -666,7 +667,8 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
             : (prev.mercadoProducts && prev.mercadoProducts.length > 0 ? prev.mercadoProducts : (DEFAULT_CONFIG.mercadoProducts || [])),
           mercadoCategories: (Array.isArray(data.mercadoCategories) && data.mercadoCategories.length > 0)
             ? data.mercadoCategories
-            : (prev.mercadoCategories && prev.mercadoCategories.length > 0 ? prev.mercadoCategories : (DEFAULT_CONFIG.mercadoCategories || []))
+            : (prev.mercadoCategories && prev.mercadoCategories.length > 0 ? prev.mercadoCategories : (DEFAULT_CONFIG.mercadoCategories || [])),
+          granGaleria: data.granGaleria || prev.granGaleria || DEFAULT_CONFIG.granGaleria
         }));
       } else {
         setDoc(configDocRef, DEFAULT_CONFIG).catch(err => {
@@ -781,6 +783,26 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     return () => unsubProd();
   }, []);
 
+  // Sincronización en tiempo real con el documento independiente 'config/gran_galeria'
+  // Desacopla Gran Galería / Gran Biblioteca para que nunca sature los 1 MiB de config/portal
+  useEffect(() => {
+    const galeriaDocRef = doc(db, 'config', 'gran_galeria');
+    const unsubGaleria = onSnapshot(galeriaDocRef, (snap) => {
+      if (snap.exists()) {
+        const data = snap.data() as { granGaleria?: GranGaleriaConfig };
+        if (data.granGaleria) {
+          setConfig(prev => ({
+            ...prev,
+            granGaleria: data.granGaleria
+          }));
+        }
+      }
+    }, (err) => {
+      console.warn('[PortalConfigContext] Listener config/gran_galeria:', err);
+    });
+    return () => unsubGaleria();
+  }, []);
+
   // Sincronización en tiempo real con el documento independiente 'config/mercado_categories'
   useEffect(() => {
     const catDocRef = doc(db, 'config', 'mercado_categories');
@@ -818,7 +840,9 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
       const updated = { ...prev, map: newMap };
       try {
         localStorage.setItem('portal_config_cache', JSON.stringify(updated));
-      } catch {}
+      } catch {
+        // ignore quota
+      }
       return updated;
     });
   };
@@ -897,13 +921,68 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     }));
   };
 
+  const saveGranGaleriaToFirestore = async (granGaleria: GranGaleriaConfig) => {
+    const shrinkIfBase64 = (url?: string) =>
+      url && url.startsWith('data:image') ? shrinkBase64Image(url, 420, 560, 0.65) : Promise.resolve(url);
+
+    const sanitizedTexts = await Promise.all(
+      (granGaleria.texts || []).map(async (t) => ({
+        ...t,
+        ...(t.coverImage ? { coverImage: await shrinkIfBase64(t.coverImage) } : {})
+      }))
+    );
+
+    const sanitizedArtworks = await Promise.all(
+      (granGaleria.artworks || []).map(async (a) => ({
+        ...a,
+        imageUrl: (await shrinkIfBase64(a.imageUrl)) || a.imageUrl
+      }))
+    );
+
+    const sanitizedVideos = await Promise.all(
+      (granGaleria.videos || []).map(async (v) => ({
+        ...v,
+        ...(v.thumbnailUrl ? { thumbnailUrl: await shrinkIfBase64(v.thumbnailUrl) } : {})
+      }))
+    );
+
+    const sanitizedContests = await Promise.all(
+      (granGaleria.contests || []).map(async (c) => ({
+        ...c,
+        ...(c.bannerImage ? { bannerImage: await shrinkIfBase64(c.bannerImage) } : {})
+      }))
+    );
+
+    const sanitizedGaleria: GranGaleriaConfig = {
+      ...granGaleria,
+      texts: sanitizedTexts,
+      artworks: sanitizedArtworks,
+      videos: sanitizedVideos,
+      contests: sanitizedContests
+    };
+
+    const galeriaDocRef = doc(db, 'config', 'gran_galeria');
+    await setDoc(galeriaDocRef, { granGaleria: sanitizedGaleria, updatedAt: new Date().toISOString() }, { merge: true });
+
+    setConfig(prev => {
+      const updated = { ...prev, granGaleria: sanitizedGaleria };
+      try {
+        localStorage.setItem('portal_config_cache', JSON.stringify(updated));
+      } catch {
+        // ignore quota
+      }
+      return updated;
+    });
+  };
+
   const saveConfigToFirestore = async (newConfig: PortalConfig) => {
-    // IMPORTANTE: Excluir archetypeImages, journeyStageImages, map, mercadoProducts, mercadoCollections y mercadoCategories
-    // de config/portal para que NUNCA excedan el límite estricto de 1MB de Firestore (1,048,576 bytes)
+    // IMPORTANTE: Excluir archetypeImages, journeyStageImages, map, granGaleria, mercadoProducts,
+    // mercadoCollections y mercadoCategories de config/portal para que NUNCA excedan 1 MiB (1,048,576 bytes)
     const {
       archetypeImages,
       journeyStageImages,
       map,
+      granGaleria,
       mercadoProducts,
       mercadoCollections,
       mercadoCategories,
@@ -911,7 +990,11 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
     } = newConfig;
 
     const configDocRef = doc(db, 'config', 'portal');
-    await setDoc(configDocRef, portalDocData, { merge: true });
+    await setDoc(configDocRef, { ...portalDocData, granGaleria: deleteField() }, { merge: true });
+
+    if (granGaleria !== undefined) {
+      await saveGranGaleriaToFirestore(granGaleria);
+    }
 
     if (map && Array.isArray(map) && map.length > 0) {
       await saveSutzMapToFirestore(map);
@@ -949,6 +1032,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
       saveMercadoCollectionsToFirestore,
       saveMercadoProductsToFirestore,
       saveMercadoCategoriesToFirestore,
+      saveGranGaleriaToFirestore,
       resetConfigToFirestore
     }}>
       {children}
