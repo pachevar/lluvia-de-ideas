@@ -93,6 +93,17 @@ const CREATIKA_APPS: CreatikaApp[] = [
     path: '/creatika/codigo-estudiante',
     accentColor: '#10b981',
     gradient: 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(5,150,105,0.05) 100%)'
+  },
+  {
+    id: 'emprendimiento-en-el-aula',
+    title: 'Emprendiendo en el Aula',
+    badge: 'Módulo 8 · Habilidades & Producto',
+    tag: 'EMPRENDIMIENTO ESCOLAR',
+    desc: 'Herramientas prácticas para las 5 habilidades clave (pensamiento crítico, liderazgo, logro, resiliencia y vocación) y taller de producto de aula.',
+    icon: '🚀',
+    path: '/creatika/emprendimiento-en-el-aula',
+    accentColor: '#f59e0b',
+    gradient: 'linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.05) 100%)'
   }
 ];
 
