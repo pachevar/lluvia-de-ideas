@@ -111,10 +111,11 @@ export default function ArteTerapia() {
   const [selectedMotivationId, setSelectedMotivationId] = useState('imaginar');
   const [promptIndex, setPromptIndex] = useState(0);
 
-  // Paso 2: Respiración 4-4-6
+  // Paso 2: Respiración 4-4-6 (Smartwatch)
   const [breathRunning, setBreathRunning] = useState(false);
   const [breathPhase, setBreathPhase] = useState<'idle' | 'inhale' | 'hold' | 'exhale'>('idle');
-  const [breathLabel, setBreathLabel] = useState('Toca para activar');
+  const [breathLabel, setBreathLabel] = useState('Listo para iniciar');
+  const [breathElapsed, setBreathElapsed] = useState(0);
 
   // Paso 3: Lienzo de Pintura
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -177,43 +178,43 @@ export default function ArteTerapia() {
     setSearchParams({ sec: tab }, { replace: true });
   };
 
-  // Ciclo de Respiración 4-4-6
+  // Ciclo de Respiración 4-4-6 con progreso por segundo para Smartwatch
   useEffect(() => {
     if (!breathRunning) {
       setBreathPhase('idle');
-      setBreathLabel('Toca para activar');
+      setBreathLabel('Listo para iniciar');
+      setBreathElapsed(0);
       return;
     }
 
-    let cancelled = false;
+    setBreathElapsed(0);
     setBreathPhase('inhale');
-    setBreathLabel('Inhala luz (4s)');
+    setBreathLabel('Inhala luz');
 
-    const t1 = setTimeout(() => {
-      if (cancelled) return;
-      setBreathPhase('hold');
-      setBreathLabel('Sostén calma (4s)');
-    }, 4000);
+    const interval = setInterval(() => {
+      setBreathElapsed((prev) => {
+        const next = prev + 1;
+        if (next < 4) {
+          setBreathPhase('inhale');
+          setBreathLabel('Inhala luz');
+        } else if (next < 8) {
+          setBreathPhase('hold');
+          setBreathLabel('Sostén calma');
+        } else if (next < 14) {
+          setBreathPhase('exhale');
+          setBreathLabel('Exhala tensión');
+        } else {
+          clearInterval(interval);
+          soundEffects.playSuccess();
+          awardXp(15, 'Mente lista para pintar', 'Respiración Consciente');
+          setBreathRunning(false);
+          return 0;
+        }
+        return next;
+      });
+    }, 1000);
 
-    const t2 = setTimeout(() => {
-      if (cancelled) return;
-      setBreathPhase('exhale');
-      setBreathLabel('Exhala tensión (6s)');
-    }, 8000);
-
-    const t3 = setTimeout(() => {
-      if (cancelled) return;
-      soundEffects.playSuccess();
-      awardXp(15, 'Mente lista para pintar', 'Respiración Consciente');
-      setBreathRunning(false);
-    }, 14000);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(t1);
-      clearTimeout(t2);
-      clearTimeout(t3);
-    };
+    return () => clearInterval(interval);
   }, [breathRunning, awardXp]);
 
   // Inicializar / restaurar canvas al entrar al Paso 3
@@ -667,22 +668,131 @@ export default function ArteTerapia() {
               </section>
             )}
 
-            {/* PASO 2: RESPIRACIÓN MÁGICA */}
-            {step === 2 && (
-              <section className="na-card na-pop-in" style={{ textAlign: 'center' }}>
-                <span className="na-badge">🫁 Paso 2 · Calma antes del Trazo</span>
-                <h2 style={{ margin: '10px 0 6px' }}>Respiración Sensorial 4-4-6</h2>
-                <p style={{ maxWidth: '620px', margin: '0 auto 10px' }}>
-                  Antes de pintar, inhala como si llenaras tus pulmones de luz, sostén la calma y
-                  exhala soltando la prisa. No hay dibujo “bonito” o “feo”: todo trazo es válido.
-                </p>
+            {/* PASO 2: SMARTWATCH DE RESPIRACIÓN & CORAZÓN */}
+            {step === 2 && (() => {
+              const phaseSecondsLeft = !breathRunning
+                ? 14
+                : breathElapsed < 4
+                  ? 4 - breathElapsed
+                  : breathElapsed < 8
+                    ? 8 - breathElapsed
+                    : 14 - breathElapsed;
+              const liveBpm = !breathRunning
+                ? 76
+                : breathPhase === 'inhale'
+                  ? 78
+                  : breathPhase === 'hold'
+                    ? 70
+                    : 62;
+              const ringRadius = 112;
+              const ringCirc = 2 * Math.PI * ringRadius;
+              const ringOffset = ringCirc * (1 - (breathRunning ? breathElapsed / 14 : 0));
 
-                <div className="na-breathing-stage">
-                  <div className={`na-breathing-circle ${breathPhase}`}>
-                    <span>{breathLabel}</span>
+              return (
+                <section className="na-card na-pop-in" style={{ textAlign: 'center' }}>
+                  <span className="na-badge">⌚ Paso 2 · Calma antes del Trazo</span>
+                  <h2 style={{ margin: '10px 0 6px' }}>Respirar y Soltar · Reloj de Calma</h2>
+                  <p style={{ maxWidth: '620px', margin: '0 auto 18px' }}>
+                    Sigue el pulso del corazón en tu smartwatch sensorial: inhala 4s, sostén 4s y
+                    exhala suave 6s para relajar la mano antes de pintar.
+                  </p>
+
+                  <div className="na-watch-wrapper">
+                    <div className="na-watch-strap top" aria-hidden="true" />
+                    <div className="na-watch-case">
+                      <div className="na-watch-crown" aria-hidden="true" />
+                      <div className="na-watch-side-btn" aria-hidden="true" />
+
+                      <div className="na-watch-screen">
+                        {/* Barra superior del smartwatch */}
+                        <div className="na-watch-topbar">
+                          <span className="na-watch-status-dot" />
+                          <span>SUTZ CALM</span>
+                          <span>4·4·6</span>
+                        </div>
+
+                        {/* Anillo SVG + Aura + Corazón Latiente */}
+                        <div className="na-watch-dial">
+                          <svg className="na-watch-ring-svg" viewBox="0 0 250 250" aria-hidden="true">
+                            <defs>
+                              <linearGradient id="watchRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" stopColor="#34d399" />
+                                <stop offset="50%" stopColor="#38bdf8" />
+                                <stop offset="100%" stopColor="#fb7185" />
+                              </linearGradient>
+                            </defs>
+                            <circle
+                              cx="125"
+                              cy="125"
+                              r={ringRadius}
+                              stroke="rgba(148, 163, 184, 0.16)"
+                              strokeWidth="10"
+                              fill="none"
+                            />
+                            <circle
+                              cx="125"
+                              cy="125"
+                              r={ringRadius}
+                              stroke="url(#watchRingGrad)"
+                              strokeWidth="10"
+                              strokeLinecap="round"
+                              fill="none"
+                              strokeDasharray={ringCirc}
+                              strokeDashoffset={ringOffset}
+                              transform="rotate(-90 125 125)"
+                              style={{ transition: 'stroke-dashoffset 0.9s linear' }}
+                            />
+                          </svg>
+
+                          <div className={`na-watch-aura ${breathPhase}`} aria-hidden="true" />
+
+                          <div className={`na-watch-heart-box ${breathPhase}`}>
+                            <svg
+                              className="na-watch-heart-svg"
+                              viewBox="0 0 24 24"
+                              fill="url(#heartGrad)"
+                              aria-hidden="true"
+                            >
+                              <defs>
+                                <linearGradient id="heartGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                                  <stop offset="0%" stopColor="#fb7185" />
+                                  <stop offset="100%" stopColor="#f43f5e" />
+                                </linearGradient>
+                              </defs>
+                              <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z" />
+                            </svg>
+
+                            <div className="na-watch-phase-text">{breathLabel}</div>
+                            <div className="na-watch-timer-num">
+                              {breathRunning ? `${phaseSecondsLeft}s` : '14s'}
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Pie de métricas del smartwatch */}
+                        <div className="na-watch-metrics">
+                          <div className="na-watch-bpm">
+                            <span className="na-bpm-heart">♥</span>
+                            <span>{liveBpm} BPM</span>
+                          </div>
+                          <div className="na-watch-ecg" aria-hidden="true">
+                            <svg viewBox="0 0 80 20" fill="none">
+                              <polyline
+                                points="0,10 18,10 24,3 30,17 36,6 42,12 48,10 80,10"
+                                stroke="#34d399"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="na-watch-strap bottom" aria-hidden="true" />
                   </div>
 
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '22px' }}>
                     <button
                       type="button"
                       className={`na-btn ${breathRunning ? 'na-btn-warm' : 'na-btn-primary'}`}
@@ -691,7 +801,7 @@ export default function ArteTerapia() {
                         setBreathRunning((prev) => !prev);
                       }}
                     >
-                      {breathRunning ? '⏹ Detener respiración' : '▶ Iniciar ciclo mágico (14s)'}
+                      {breathRunning ? '⏹ Detener ciclo' : '▶ Iniciar ciclo en reloj (14s)'}
                     </button>
 
                     <button
@@ -705,9 +815,9 @@ export default function ArteTerapia() {
                       Ir al Estudio de Pintura ➔
                     </button>
                   </div>
-                </div>
-              </section>
-            )}
+                </section>
+              );
+            })()}
 
             {/* PASO 3: ESTUDIO DE PINTURA LÚDICO */}
             {step === 3 && (
