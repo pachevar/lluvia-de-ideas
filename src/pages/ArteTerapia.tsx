@@ -6,7 +6,7 @@ import { soundEffects } from '../utils/soundEffects';
 import './ArteTerapia.css';
 
 type NeuroTheme = 'warm-paper' | 'night-calm' | 'high-contrast';
-type TabSection = 'taller_guiado' | 'psicologia_color' | 'neurociencia' | 'gamificacion';
+type TabSection = 'taller_guiado' | 'neurociencia' | 'gamificacion';
 type WorkshopStep = 1 | 2 | 3 | 4;
 type BrushMode = 'soft' | 'stars' | 'bubbles';
 
@@ -42,6 +42,7 @@ const STUDIO_SWATCHES = [
   { name: 'Ámbar Solar', meaning: 'Motivación', hsl: 'hsl(38, 92%, 52%)' },
   { name: 'Cian Sutz', meaning: 'Claridad', hsl: 'hsl(198, 82%, 48%)' },
   { name: 'Coral Vivo', meaning: 'Alegría', hsl: 'hsl(348, 78%, 58%)' },
+  { name: 'Violeta', meaning: 'Asombro', hsl: 'hsl(272, 58%, 54%)' },
   { name: 'Carbón', meaning: 'Descarga', hsl: 'hsl(225, 24%, 20%)' },
   { name: 'Papel', meaning: 'Luz / Borrar', hsl: '#fffdf8' },
 ];
@@ -164,14 +165,14 @@ export default function ArteTerapia() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const initialSec = (searchParams.get('sec') as TabSection) || 'taller_guiado';
+  const initialSec = searchParams.get('sec');
   const [activeTab, setActiveTab] = useState<TabSection>(
-    ['taller_guiado', 'psicologia_color', 'neurociencia', 'gamificacion'].includes(initialSec)
-      ? initialSec
+    initialSec && ['taller_guiado', 'neurociencia', 'gamificacion'].includes(initialSec)
+      ? (initialSec as TabSection)
       : 'taller_guiado'
   );
   const [theme, setTheme] = useState<NeuroTheme>('night-calm');
-  const [step, setStep] = useState<WorkshopStep>(1);
+  const [step, setStep] = useState<WorkshopStep>(initialSec === 'psicologia_color' ? 3 : 1);
 
   // Gamificación XP
   const [xp, setXp] = useState<number>(() => {
@@ -576,7 +577,6 @@ export default function ArteTerapia() {
           <nav className="na-nav-links" aria-label="Navegación de Arte Terapia">
             {[
               { id: 'taller_guiado', label: '🎨 Taller de Pintura (4 Pasos)' },
-              { id: 'psicologia_color', label: '🌈 Psicología del Color' },
               { id: 'neurociencia', label: '🧠 Neurociencia & ETC' },
               { id: 'gamificacion', label: '🏆 Logros XP' },
             ].map((item) => (
@@ -892,9 +892,14 @@ export default function ArteTerapia() {
               );
             })()}
 
-            {/* PASO 3: ESTUDIO DE PINTURA LÚDICO */}
-            {step === 3 && (
-              <section className="na-studio-grid na-pop-in">
+            {/* PASO 3: ESTUDIO DE PINTURA LÚDICO + PSICOLOGÍA DEL COLOR */}
+            {step === 3 && (() => {
+              const activeColor =
+                COLOR_PSYCHOLOGY.find((c) => c.id === selectedColorId) || COLOR_PSYCHOLOGY[0];
+
+              return (
+                <div className="na-pop-in" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+                  <section className="na-studio-grid">
                 <div className="na-card">
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '10px' }}>
                     <h2 style={{ margin: 0 }}>🎨 Paso 3: Pinta tu Mundo Interior</h2>
@@ -930,6 +935,8 @@ export default function ArteTerapia() {
                         onClick={() => {
                           soundEffects.playClick();
                           setBrushColor(sw.hsl);
+                          const matchedColor = COLOR_PSYCHOLOGY.find((c) => c.hsl === sw.hsl);
+                          if (matchedColor) setSelectedColorId(matchedColor.id);
                         }}
                       >
                         <span className="na-swatch-dot" style={{ backgroundColor: sw.hsl }} />
@@ -1017,7 +1024,90 @@ export default function ArteTerapia() {
                   </div>
                 </div>
               </section>
-            )}
+
+              {/* Psicología del Color integrada dentro del Taller de Pintura */}
+              <section className="na-card" aria-label="Psicología del Color en el Taller">
+                <div className="na-grid-2" style={{ alignItems: 'start' }}>
+                  <div>
+                    <span className="na-badge warm">🌈 Psicología del Color · Guía en Vivo</span>
+                    <h3 style={{ margin: '10px 0 6px' }}>¿Qué activa cada color en tu mente?</h3>
+                    <p style={{ margin: '0 0 14px', fontSize: '0.9rem' }}>
+                      Selecciona un color para conocer su efecto neuroemocional y usarlo en tu pincel.
+                    </p>
+                    <div className="na-grid-2" style={{ gap: '8px' }}>
+                      {COLOR_PSYCHOLOGY.map((c) => (
+                        <button
+                          key={c.id}
+                          type="button"
+                          className={`na-choice-btn ${selectedColorId === c.id ? 'active' : ''}`}
+                          onClick={() => {
+                            soundEffects.playClick();
+                            setSelectedColorId(c.id);
+                            setBrushColor(c.hsl);
+                          }}
+                          style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px' }}
+                        >
+                          <span
+                            style={{
+                              width: '22px',
+                              height: '22px',
+                              borderRadius: '50%',
+                              backgroundColor: c.hsl,
+                              border: '2px solid rgba(255,255,255,0.45)',
+                              flexShrink: 0,
+                            }}
+                          />
+                          <strong style={{ fontSize: '0.88rem' }}>{c.name}</strong>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="na-card soft">
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                      <span
+                        style={{
+                          width: '38px',
+                          height: '38px',
+                          borderRadius: '12px',
+                          backgroundColor: activeColor.hsl,
+                          border: '2px solid rgba(255,255,255,0.5)',
+                          boxShadow: `0 6px 18px ${activeColor.hsl}`,
+                          flexShrink: 0,
+                        }}
+                      />
+                      <div>
+                        <span className="na-badge">Color seleccionado en pincel</span>
+                        <h3 style={{ margin: '4px 0 0' }}>{activeColor.name}</h3>
+                      </div>
+                    </div>
+
+                    <p style={{ fontSize: '0.92rem' }}>
+                      <strong>🧠 Qué activa en la mente:</strong> {activeColor.mindActivation}
+                    </p>
+
+                    <div style={{ marginBottom: '12px' }}>
+                      <strong style={{ display: 'block', marginBottom: '8px', fontSize: '0.9rem' }}>
+                        💓 Emociones que puede representar:
+                      </strong>
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                        {activeColor.emotions.map((em) => (
+                          <span key={em} className="na-badge warm">
+                            {em}
+                          </span>
+                        ))}
+                      </div>
+                    </div>
+
+                    <p style={{ margin: 0, fontSize: '0.9rem' }}>
+                      <strong>🖌️ En tu pintura de hoy:</strong> {activeColor.classroomUse}
+                    </p>
+                  </div>
+                </div>
+              </section>
+            </div>
+              );
+            })()}
 
             {/* PASO 4: ESPEJO DE EMOCIONES Y MOTIVACIONES */}
             {step === 4 && (
@@ -1117,109 +1207,6 @@ export default function ArteTerapia() {
             )}
           </div>
         )}
-
-        {/* ====================================================================
-            PSICOLOGÍA DEL COLOR
-            ==================================================================== */}
-        {activeTab === 'psicologia_color' && (() => {
-          const activeColor =
-            COLOR_PSYCHOLOGY.find((c) => c.id === selectedColorId) || COLOR_PSYCHOLOGY[0];
-
-          return (
-            <section className="na-grid-2 na-pop-in">
-              <div className="na-card">
-                <span className="na-badge warm">🌈 Psicología del Color en el Aula</span>
-                <h2 style={{ margin: '10px 0 8px' }}>Explora qué activa cada color</h2>
-                <p style={{ margin: '0 0 16px' }}>
-                  Toca cualquier color para descubrir cómo influye en tu mente y qué emociones puede representar en tus dibujos.
-                </p>
-
-                <div className="na-grid-2" style={{ gap: '10px' }}>
-                  {COLOR_PSYCHOLOGY.map((c) => (
-                    <button
-                      key={c.id}
-                      type="button"
-                      className={`na-choice-btn ${selectedColorId === c.id ? 'active' : ''}`}
-                      onClick={() => {
-                        soundEffects.playClick();
-                        setSelectedColorId(c.id);
-                      }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
-                    >
-                      <span
-                        style={{
-                          width: '26px',
-                          height: '26px',
-                          borderRadius: '50%',
-                          backgroundColor: c.hsl,
-                          border: '2px solid rgba(255,255,255,0.45)',
-                          flexShrink: 0,
-                        }}
-                      />
-                      <strong>{c.name}</strong>
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="na-card soft">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                  <span
-                    style={{
-                      width: '42px',
-                      height: '42px',
-                      borderRadius: '14px',
-                      backgroundColor: activeColor.hsl,
-                      border: '2px solid rgba(255,255,255,0.5)',
-                      boxShadow: `0 8px 22px ${activeColor.hsl}`,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <div>
-                    <span className="na-badge">Lectura Neuroemocional</span>
-                    <h2 style={{ margin: '4px 0 0' }}>{activeColor.name}</h2>
-                  </div>
-                </div>
-
-                <p>
-                  <strong>🧠 Qué activa en la mente:</strong> {activeColor.mindActivation}
-                </p>
-
-                <div style={{ marginBottom: '14px' }}>
-                  <strong style={{ display: 'block', marginBottom: '8px' }}>
-                    💓 Emociones que puede representar:
-                  </strong>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    {activeColor.emotions.map((em) => (
-                      <span key={em} className="na-badge warm">
-                        {em}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-
-                <p>
-                  <strong>🖌️ En tu pintura de hoy:</strong> {activeColor.classroomUse}
-                </p>
-
-                <button
-                  type="button"
-                  className="na-btn na-btn-primary"
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setBrushColor(activeColor.hsl);
-                    setActiveTab('taller_guiado');
-                    setStep(3);
-                    setSearchParams({ sec: 'taller_guiado' }, { replace: true });
-                    awardXp(10, `Color ${activeColor.name} elegido para pintar`, 'Explorador Cromático');
-                  }}
-                >
-                  🎨 Llevar {activeColor.name} al Lienzo (+10 XP)
-                </button>
-              </div>
-            </section>
-          );
-        })()}
 
         {/* ====================================================================
             NEUROCIENCIA & ETC
