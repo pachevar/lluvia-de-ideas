@@ -6,7 +6,7 @@ import { soundEffects } from '../utils/soundEffects';
 import './ArteTerapia.css';
 
 type NeuroTheme = 'warm-paper' | 'night-calm' | 'high-contrast';
-type TabSection = 'taller_guiado' | 'neurociencia' | 'gamificacion';
+type TabSection = 'taller_guiado' | 'psicologia_color' | 'neurociencia' | 'gamificacion';
 type WorkshopStep = 1 | 2 | 3 | 4;
 type BrushMode = 'soft' | 'stars' | 'bubbles';
 
@@ -77,13 +77,96 @@ const ETC_LEVELS = [
   },
 ];
 
+const COLOR_PSYCHOLOGY = [
+  {
+    id: 'salvia',
+    name: 'Verde Salvia',
+    hsl: 'hsl(148, 42%, 38%)',
+    mindActivation:
+      'Reduce el ruido visual, favorece el sistema nervioso parasimpático y genera sensación de descanso mental y seguridad.',
+    emotions: ['Calma profunda', 'Esperanza', 'Equilibrio', 'Sanación y renovación'],
+    classroomUse:
+      'Úsalo como fondo o abrazo circular cuando necesites bajar el ritmo después de un día agitado.',
+  },
+  {
+    id: 'indigo',
+    name: 'Azul Índigo',
+    hsl: 'hsl(228, 52%, 44%)',
+    mindActivation:
+      'Estimula la introspección, la memoria reflexiva y la concentración sostenida sin sobresaturar la atención.',
+    emotions: ['Serenidad', 'Nostalgia', 'Sabiduría interior', 'Tristeza reflexiva'],
+    classroomUse:
+      'Ideal para dibujar pensamientos profundos, paisajes nocturnos o preguntas importantes sobre tu futuro.',
+  },
+  {
+    id: 'ambar',
+    name: 'Amarillo Ámbar',
+    hsl: 'hsl(38, 92%, 52%)',
+    mindActivation:
+      'Activa redes de curiosidad, alerta positiva y asociación rápida de ideas (impulso dopaminérgico suave).',
+    emotions: ['Entusiasmo', 'Optimismo', 'Motivación', 'Inquietud o energía por salir'],
+    classroomUse:
+      'Agrégalo en los puntos de luz o metas de tu dibujo para señalar aquello que te ilumina o te da ilusión.',
+  },
+  {
+    id: 'terracota',
+    name: 'Rojo / Terracota',
+    hsl: 'hsl(18, 68%, 52%)',
+    mindActivation:
+      'Eleva el nivel de activación y enfoque inmediato; conecta con el instinto de acción, defensa y vitalidad.',
+    emotions: ['Valentía', 'Pasión y fuerza', 'Enojo o frustración', 'Necesidad de límites'],
+    classroomUse:
+      'Úsalo sin miedo cuando sientas rabia o mucha energía: permite descargar tensión en trazos firmes.',
+  },
+  {
+    id: 'coral',
+    name: 'Coral / Rosa Vivo',
+    hsl: 'hsl(348, 78%, 58%)',
+    mindActivation:
+      'Suaviza la respuesta de alerta y activa circuitos vinculados al afecto, la empatía y el vínculo social.',
+    emotions: ['Ternura', 'Alegría compartida', 'Gratitud', 'Sensibilidad emocional'],
+    classroomUse:
+      'Perfecto para representar personas queridas, gestos de cuidado o recuerdos que te hacen sentir acompañado.',
+  },
+  {
+    id: 'cian',
+    name: 'Cian Claridad',
+    hsl: 'hsl(198, 82%, 48%)',
+    mindActivation:
+      'Despeja la fatiga cognitiva, da sensación de amplitud espacial y facilita la comunicación fluida de ideas.',
+    emotions: ['Alivio', 'Curiosidad abierta', 'Libertad', 'Frescura mental'],
+    classroomUse:
+      'Úsalo en líneas de movimiento, agua o aire para representar soluciones nuevas a un problema.',
+  },
+  {
+    id: 'violeta',
+    name: 'Violeta Creativo',
+    hsl: 'hsl(272, 58%, 54%)',
+    mindActivation:
+      'Integra pensamiento divergente con sensibilidad estética; invita a imaginar escenarios fuera de lo común.',
+    emotions: ['Asombro', 'Inspiración', 'Misterio', 'Transformación personal'],
+    classroomUse:
+      'Empléalo cuando inventes metáforas, criaturas simbólicas o mundos fantásticos en tu obra.',
+  },
+  {
+    id: 'carbon',
+    name: 'Negro / Carbón',
+    hsl: 'hsl(225, 24%, 20%)',
+    mindActivation:
+      'Ayuda a definir límites claros, estructurar el espacio y contener emociones intensas que buscan forma.',
+    emotions: ['Firmeza', 'Protección', 'Agotamiento o peso', 'Duelo o cierre de etapa'],
+    classroomUse:
+      'No es un color negativo: úsalo para trazar contornos fuertes o soltar aquello que pesa antes de transformarlo.',
+  },
+];
+
 export default function ArteTerapia() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
   const initialSec = (searchParams.get('sec') as TabSection) || 'taller_guiado';
   const [activeTab, setActiveTab] = useState<TabSection>(
-    ['taller_guiado', 'neurociencia', 'gamificacion'].includes(initialSec)
+    ['taller_guiado', 'psicologia_color', 'neurociencia', 'gamificacion'].includes(initialSec)
       ? initialSec
       : 'taller_guiado'
   );
@@ -141,8 +224,9 @@ export default function ArteTerapia() {
   const [motivationSpark, setMotivationSpark] = useState('');
   const [nextStepAction, setNextStepAction] = useState('');
 
-  // ETC tab
+  // ETC & Psicología del Color
   const [selectedEtcId, setSelectedEtcId] = useState('kinestesico');
+  const [selectedColorId, setSelectedColorId] = useState('salvia');
 
   const showToast = useCallback((msg: string) => {
     setToastMsg(msg);
@@ -492,6 +576,7 @@ export default function ArteTerapia() {
           <nav className="na-nav-links" aria-label="Navegación de Arte Terapia">
             {[
               { id: 'taller_guiado', label: '🎨 Taller de Pintura (4 Pasos)' },
+              { id: 'psicologia_color', label: '🌈 Psicología del Color' },
               { id: 'neurociencia', label: '🧠 Neurociencia & ETC' },
               { id: 'gamificacion', label: '🏆 Logros XP' },
             ].map((item) => (
@@ -1032,6 +1117,109 @@ export default function ArteTerapia() {
             )}
           </div>
         )}
+
+        {/* ====================================================================
+            PSICOLOGÍA DEL COLOR
+            ==================================================================== */}
+        {activeTab === 'psicologia_color' && (() => {
+          const activeColor =
+            COLOR_PSYCHOLOGY.find((c) => c.id === selectedColorId) || COLOR_PSYCHOLOGY[0];
+
+          return (
+            <section className="na-grid-2 na-pop-in">
+              <div className="na-card">
+                <span className="na-badge warm">🌈 Psicología del Color en el Aula</span>
+                <h2 style={{ margin: '10px 0 8px' }}>Explora qué activa cada color</h2>
+                <p style={{ margin: '0 0 16px' }}>
+                  Toca cualquier color para descubrir cómo influye en tu mente y qué emociones puede representar en tus dibujos.
+                </p>
+
+                <div className="na-grid-2" style={{ gap: '10px' }}>
+                  {COLOR_PSYCHOLOGY.map((c) => (
+                    <button
+                      key={c.id}
+                      type="button"
+                      className={`na-choice-btn ${selectedColorId === c.id ? 'active' : ''}`}
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setSelectedColorId(c.id);
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '10px' }}
+                    >
+                      <span
+                        style={{
+                          width: '26px',
+                          height: '26px',
+                          borderRadius: '50%',
+                          backgroundColor: c.hsl,
+                          border: '2px solid rgba(255,255,255,0.45)',
+                          flexShrink: 0,
+                        }}
+                      />
+                      <strong>{c.name}</strong>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              <div className="na-card soft">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
+                  <span
+                    style={{
+                      width: '42px',
+                      height: '42px',
+                      borderRadius: '14px',
+                      backgroundColor: activeColor.hsl,
+                      border: '2px solid rgba(255,255,255,0.5)',
+                      boxShadow: `0 8px 22px ${activeColor.hsl}`,
+                      flexShrink: 0,
+                    }}
+                  />
+                  <div>
+                    <span className="na-badge">Lectura Neuroemocional</span>
+                    <h2 style={{ margin: '4px 0 0' }}>{activeColor.name}</h2>
+                  </div>
+                </div>
+
+                <p>
+                  <strong>🧠 Qué activa en la mente:</strong> {activeColor.mindActivation}
+                </p>
+
+                <div style={{ marginBottom: '14px' }}>
+                  <strong style={{ display: 'block', marginBottom: '8px' }}>
+                    💓 Emociones que puede representar:
+                  </strong>
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
+                    {activeColor.emotions.map((em) => (
+                      <span key={em} className="na-badge warm">
+                        {em}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+
+                <p>
+                  <strong>🖌️ En tu pintura de hoy:</strong> {activeColor.classroomUse}
+                </p>
+
+                <button
+                  type="button"
+                  className="na-btn na-btn-primary"
+                  onClick={() => {
+                    soundEffects.playClick();
+                    setBrushColor(activeColor.hsl);
+                    setActiveTab('taller_guiado');
+                    setStep(3);
+                    setSearchParams({ sec: 'taller_guiado' }, { replace: true });
+                    awardXp(10, `Color ${activeColor.name} elegido para pintar`, 'Explorador Cromático');
+                  }}
+                >
+                  🎨 Llevar {activeColor.name} al Lienzo (+10 XP)
+                </button>
+              </div>
+            </section>
+          );
+        })()}
 
         {/* ====================================================================
             NEUROCIENCIA & ETC
