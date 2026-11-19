@@ -111,11 +111,17 @@ export default function ArteTerapia() {
   const [selectedMotivationId, setSelectedMotivationId] = useState('imaginar');
   const [promptIndex, setPromptIndex] = useState(0);
 
-  // Paso 2: Respiración 4-4-6 (Smartwatch)
+  // Paso 2: Respiración 4-4-6 (Burbuja)
   const [breathRunning, setBreathRunning] = useState(false);
+  const [breathInfinite, setBreathInfinite] = useState(false);
+  const breathInfiniteRef = useRef(false);
   const [breathPhase, setBreathPhase] = useState<'idle' | 'inhale' | 'hold' | 'exhale'>('idle');
   const [breathLabel, setBreathLabel] = useState('Listo para iniciar');
   const [breathElapsed, setBreathElapsed] = useState(0);
+
+  useEffect(() => {
+    breathInfiniteRef.current = breathInfinite;
+  }, [breathInfinite]);
 
   // Paso 3: Lienzo de Pintura
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -212,6 +218,12 @@ export default function ArteTerapia() {
         } else if (next < 14) {
           setBreathPhase('exhale');
           setBreathLabel('Exhala tensión');
+        } else if (breathInfiniteRef.current) {
+          soundEffects.playBreathPhase('inhale');
+          setBreathPhase('inhale');
+          setBreathLabel('Inhala luz');
+          awardXp(15, 'Ciclo continuo completado', 'Respiración Consciente');
+          return 0;
         } else {
           clearInterval(interval);
           soundEffects.playSuccess();
@@ -776,13 +788,19 @@ export default function ArteTerapia() {
 
                     <button
                       type="button"
-                      className="na-btn na-btn-secondary"
+                      className={`na-btn ${breathInfinite ? 'na-btn-primary' : 'na-btn-secondary'}`}
                       onClick={() => {
                         soundEffects.playClick();
-                        setStep(3);
+                        setBreathInfinite((prev) => {
+                          const next = !prev;
+                          if (next && !breathRunning) {
+                            setBreathRunning(true);
+                          }
+                          return next;
+                        });
                       }}
                     >
-                      Ir al Estudio de Pintura ➔
+                      {breathInfinite ? '♾️ Ciclo infinito activo' : '♾️ Activar ciclo infinito'}
                     </button>
                   </div>
                 </section>
