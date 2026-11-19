@@ -656,108 +656,65 @@
 
 
 /* ============================================================================
-   SMARTWATCH DE RESPIRACIÓN & CORAZÓN (PASO 2)
+   BURBUJA EXPANSIVA DE RESPIRACIÓN & CORAZÓN (PASO 2)
    ============================================================================ */
-.na-watch-wrapper {
-  position: relative;
+.na-breath-bubble-stage {
   display: flex;
   flex-direction: column;
   align-items: center;
-  margin: 10px auto 4px;
-  width: fit-content;
+  gap: 18px;
+  padding: 20px 0 8px;
 }
 
-.na-watch-strap {
-  width: 146px;
-  height: 30px;
-  background: linear-gradient(90deg, #1e293b 0%, #334155 50%, #1e293b 100%);
-  border: 1px solid rgba(148, 163, 184, 0.25);
-  box-shadow: inset 0 4px 10px rgba(0, 0, 0, 0.45);
-}
-
-.na-watch-strap.top {
-  border-radius: 18px 18px 0 0;
-  border-bottom: none;
-}
-
-.na-watch-strap.bottom {
-  border-radius: 0 0 18px 18px;
-  border-top: none;
-}
-
-.na-watch-case {
+.na-breath-bubble {
   position: relative;
-  width: 286px;
-  padding: 12px;
-  border-radius: 52px;
-  background: linear-gradient(145deg, #475569, #1e293b 45%, #0f172a 100%);
-  border: 2px solid rgba(203, 213, 225, 0.28);
-  box-shadow:
-    0 24px 54px rgba(0, 0, 0, 0.55),
-    inset 0 2px 6px rgba(255, 255, 255, 0.2);
-}
-
-.na-watch-crown {
-  position: absolute;
-  right: -10px;
-  top: 76px;
-  width: 10px;
-  height: 44px;
-  border-radius: 4px 8px 8px 4px;
-  background: linear-gradient(180deg, #94a3b8, #475569, #94a3b8);
-  border: 1px solid rgba(15, 23, 42, 0.8);
-}
-
-.na-watch-side-btn {
-  position: absolute;
-  right: -7px;
-  top: 138px;
-  width: 7px;
-  height: 62px;
-  border-radius: 2px 6px 6px 2px;
-  background: linear-gradient(180deg, #64748b, #334155);
-}
-
-.na-watch-screen {
-  background: radial-gradient(circle at 50% 42%, #0b1933 0%, #050a16 70%, #02040a 100%);
-  border-radius: 42px;
-  padding: 16px 14px 14px;
-  border: 1px solid rgba(56, 189, 248, 0.22);
-  color: #f8fafc;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
-  box-shadow: inset 0 0 24px rgba(0, 0, 0, 0.85);
-}
-
-.na-watch-topbar {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 10px;
-  font-size: 0.7rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  color: #94a3b8;
-}
-
-.na-watch-status-dot {
-  width: 7px;
-  height: 7px;
+  width: 256px;
+  height: 256px;
   border-radius: 50%;
-  background: #34d399;
-  box-shadow: 0 0 8px #34d399;
-}
-
-.na-watch-dial {
-  position: relative;
-  width: 224px;
-  height: 224px;
+  background: radial-gradient(circle at 42% 36%, #0f274d 0%, #071228 65%, #040914 100%);
+  border: 1px solid rgba(125, 211, 252, 0.28);
+  box-shadow:
+    0 20px 52px rgba(0, 0, 0, 0.45),
+    0 0 40px rgba(56, 189, 248, 0.16),
+    inset 0 0 28px rgba(56, 189, 248, 0.14);
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: transform 3.4s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 2s ease;
+}
+
+.na-breath-bubble.inhale {
+  transform: scale(1.18);
+  box-shadow:
+    0 26px 64px rgba(14, 165, 233, 0.35),
+    0 0 65px rgba(52, 211, 153, 0.32),
+    inset 0 0 36px rgba(56, 189, 248, 0.25);
+}
+
+.na-breath-bubble.hold {
+  transform: scale(1.18);
+  box-shadow:
+    0 26px 64px rgba(52, 211, 153, 0.35),
+    0 0 70px rgba(56, 189, 248, 0.34),
+    inset 0 0 38px rgba(52, 211, 153, 0.26);
+}
+
+.na-breath-bubble.exhale {
+  transform: scale(0.88);
+  transition-duration: 5.2s;
+  box-shadow:
+    0 12px 32px rgba(0, 0, 0, 0.38),
+    0 0 24px rgba(56, 189, 248, 0.14),
+    inset 0 0 20px rgba(56, 189, 248, 0.1);
+}
+
+.na-watch-metrics.compact {
+  width: 240px;
+  padding: 10px 16px;
+  border-radius: 999px;
+  background: rgba(15, 23, 42, 0.85);
+  border: 1px solid rgba(125, 211, 252, 0.24);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.28);
 }
 
 .na-watch-ring-svg {
