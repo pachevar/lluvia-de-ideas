@@ -314,6 +314,79 @@ class SoundManager {
       // Ignorar
     }
   }
+
+  /**
+   * Sintetiza un sonido orgánico de respiración (flujo de aire filtrado) para guiar cada etapa.
+   */
+  public playBreathPhase(phase: 'inhale' | 'hold' | 'exhale') {
+    if (this.muted) return;
+    try {
+      this.initContext();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+
+      if (phase === 'hold') {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(220, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.028, now + 0.6);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 3.6);
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+        osc.start(now);
+        osc.stop(now + 3.7);
+        return;
+      }
+
+      const duration = phase === 'inhale' ? 3.8 : 5.8;
+      const sampleRate = this.ctx.sampleRate;
+      const bufferSize = Math.floor(sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
+      const data = buffer.getChannelData(0);
+
+      // Ruido suavizado (brown/pinkish) para imitar aire real
+      let lastOut = 0;
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        lastOut = (lastOut + 0.04 * white) / 1.04;
+        data[i] = lastOut * 3.2;
+      }
+
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      filter.type = 'bandpass';
+      filter.Q.setValueAtTime(1.4, now);
+
+      const gain = this.ctx.createGain();
+      gain.gain.setValueAtTime(0.001, now);
+
+      if (phase === 'inhale') {
+        filter.frequency.setValueAtTime(260, now);
+        filter.frequency.exponentialRampToValueAtTime(720, now + duration);
+        gain.gain.linearRampToValueAtTime(0.16, now + duration * 0.65);
+        gain.gain.exponentialRampToValueAtTime(0.015, now + duration);
+      } else {
+        filter.frequency.setValueAtTime(660, now);
+        filter.frequency.exponentialRampToValueAtTime(190, now + duration);
+        gain.gain.linearRampToValueAtTime(0.17, now + 0.8);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      }
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      source.start(now);
+      source.stop(now + duration);
+    } catch {
+      // Ignorar errores de audio
+    }
+  }
 }
 
 export const soundEffects = new SoundManager();

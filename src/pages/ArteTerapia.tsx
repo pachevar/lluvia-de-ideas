@@ -178,7 +178,7 @@ export default function ArteTerapia() {
     setSearchParams({ sec: tab }, { replace: true });
   };
 
-  // Ciclo de Respiración 4-4-6 con progreso por segundo para Smartwatch
+  // Ciclo de Respiración 4-4-6 con sonido y cambio de color por etapa
   useEffect(() => {
     if (!breathRunning) {
       setBreathPhase('idle');
@@ -190,6 +190,7 @@ export default function ArteTerapia() {
     setBreathElapsed(0);
     setBreathPhase('inhale');
     setBreathLabel('Inhala luz');
+    soundEffects.playBreathPhase('inhale');
 
     const interval = setInterval(() => {
       setBreathElapsed((prev) => {
@@ -197,9 +198,17 @@ export default function ArteTerapia() {
         if (next < 4) {
           setBreathPhase('inhale');
           setBreathLabel('Inhala luz');
+        } else if (next === 4) {
+          setBreathPhase('hold');
+          setBreathLabel('Sostén calma');
+          soundEffects.playBreathPhase('hold');
         } else if (next < 8) {
           setBreathPhase('hold');
           setBreathLabel('Sostén calma');
+        } else if (next === 8) {
+          setBreathPhase('exhale');
+          setBreathLabel('Exhala tensión');
+          soundEffects.playBreathPhase('exhale');
         } else if (next < 14) {
           setBreathPhase('exhale');
           setBreathLabel('Exhala tensión');
@@ -668,7 +677,7 @@ export default function ArteTerapia() {
               </section>
             )}
 
-            {/* PASO 2: SMARTWATCH DE RESPIRACIÓN & CORAZÓN */}
+            {/* PASO 2: BURBUJA DE RESPIRACIÓN & CORAZÓN */}
             {step === 2 && (() => {
               const phaseSecondsLeft = !breathRunning
                 ? 14
@@ -677,36 +686,30 @@ export default function ArteTerapia() {
                   : breathElapsed < 8
                     ? 8 - breathElapsed
                     : 14 - breathElapsed;
-              const liveBpm = !breathRunning
-                ? 76
-                : breathPhase === 'inhale'
-                  ? 78
+              const ringColor =
+                breathPhase === 'inhale'
+                  ? '#34d399'
                   : breathPhase === 'hold'
-                    ? 70
-                    : 62;
+                    ? '#fbbf24'
+                    : breathPhase === 'exhale'
+                      ? '#fb7185'
+                      : '#38bdf8';
               const ringRadius = 112;
               const ringCirc = 2 * Math.PI * ringRadius;
               const ringOffset = ringCirc * (1 - (breathRunning ? breathElapsed / 14 : 0));
 
               return (
                 <section className="na-card na-pop-in" style={{ textAlign: 'center' }}>
-                  <span className="na-badge">⌚ Paso 2 · Calma antes del Trazo</span>
-                  <h2 style={{ margin: '10px 0 6px' }}>Respirar y Soltar · Reloj de Calma</h2>
+                  <span className="na-badge">🫁 Paso 2 · Calma antes del Trazo</span>
+                  <h2 style={{ margin: '10px 0 6px' }}>Respirar y Soltar</h2>
                   <p style={{ maxWidth: '620px', margin: '0 auto 18px' }}>
-                    Sigue el pulso del corazón en tu smartwatch sensorial: inhala 4s, sostén 4s y
-                    exhala suave 6s para relajar la mano antes de pintar.
+                    Sigue el ritmo de la burbuja y el sonido de la respiración: inhala 4s, sostén 4s
+                    y exhala suave 6s para relajar la mano antes de pintar.
                   </p>
 
                   <div className="na-breath-bubble-stage">
                     <div className={`na-breath-bubble ${breathPhase}`}>
                       <svg className="na-watch-ring-svg" viewBox="0 0 250 250" aria-hidden="true">
-                        <defs>
-                          <linearGradient id="watchRingGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" stopColor="#34d399" />
-                            <stop offset="50%" stopColor="#38bdf8" />
-                            <stop offset="100%" stopColor="#fb7185" />
-                          </linearGradient>
-                        </defs>
                         <circle
                           cx="125"
                           cy="125"
@@ -719,14 +722,17 @@ export default function ArteTerapia() {
                           cx="125"
                           cy="125"
                           r={ringRadius}
-                          stroke="url(#watchRingGrad)"
+                          stroke={ringColor}
                           strokeWidth="10"
                           strokeLinecap="round"
                           fill="none"
                           strokeDasharray={ringCirc}
                           strokeDashoffset={ringOffset}
                           transform="rotate(-90 125 125)"
-                          style={{ transition: 'stroke-dashoffset 0.9s linear' }}
+                          style={{
+                            transition: 'stroke 0.7s ease, stroke-dashoffset 0.9s linear',
+                            filter: `drop-shadow(0 0 8px ${ringColor})`,
+                          }}
                         />
                       </svg>
 
@@ -749,27 +755,9 @@ export default function ArteTerapia() {
                         </svg>
 
                         <div className="na-watch-phase-text">{breathLabel}</div>
-                        <div className="na-watch-timer-num">
+                        <div className="na-watch-timer-num" style={{ color: ringColor }}>
                           {breathRunning ? `${phaseSecondsLeft}s` : '14s'}
                         </div>
-                      </div>
-                    </div>
-
-                    <div className="na-watch-metrics compact">
-                      <div className="na-watch-bpm">
-                        <span className="na-bpm-heart">♥</span>
-                        <span>{liveBpm} BPM</span>
-                      </div>
-                      <div className="na-watch-ecg" aria-hidden="true">
-                        <svg viewBox="0 0 80 20" fill="none">
-                          <polyline
-                            points="0,10 18,10 24,3 30,17 36,6 42,12 48,10 80,10"
-                            stroke="#34d399"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                          />
-                        </svg>
                       </div>
                     </div>
                   </div>
@@ -783,7 +771,7 @@ export default function ArteTerapia() {
                         setBreathRunning((prev) => !prev);
                       }}
                     >
-                      {breathRunning ? '⏹ Detener ciclo' : '▶ Iniciar ciclo en reloj (14s)'}
+                      {breathRunning ? '⏹ Detener ciclo' : '▶ Iniciar respiración guiada (14s)'}
                     </button>
 
                     <button
