@@ -1,6 +1,5 @@
 /* ============================================================================
-   NEUROARTE LAB · ARTE TERAPIA, NEUROCIENCIA Y PSICOPEDAGOGÍA (CREATIKA / SUTZ)
-   Tokens HSL de Neurodiseño: Papel Cálido, Calma Nocturna y Alto Contraste
+   NEUROARTE LAB · TALLER LÚDICO DE PINTURA, EMOCIONES Y MOTIVACIONES (CREATIKA)
    ============================================================================ */
 .na-shell {
   --hue-sage: 148;
@@ -8,71 +7,139 @@
   --hue-indigo: 228;
   --hue-cream: 40;
 
-  --na-bg-canvas: hsl(var(--hue-cream), 33%, 97%);
-  --na-bg-surface: hsl(var(--hue-cream), 42%, 99%);
-  --na-bg-elevated: hsl(var(--hue-sage), 22%, 92%);
-  --na-bg-accent-soft: hsl(var(--hue-terracotta), 45%, 94%);
+  --na-bg-canvas: hsl(var(--hue-cream), 38%, 97%);
+  --na-bg-surface: hsl(var(--hue-cream), 50%, 99%);
+  --na-bg-elevated: hsl(var(--hue-sage), 26%, 92%);
+  --na-bg-accent-soft: hsl(var(--hue-terracotta), 55%, 93%);
 
-  --na-text-primary: hsl(var(--hue-indigo), 28%, 16%);
-  --na-text-secondary: hsl(var(--hue-indigo), 14%, 36%);
-  --na-text-muted: hsl(var(--hue-indigo), 10%, 48%);
+  --na-text-primary: hsl(var(--hue-indigo), 32%, 14%);
+  --na-text-secondary: hsl(var(--hue-indigo), 18%, 32%);
+  --na-text-muted: hsl(var(--hue-indigo), 12%, 44%);
   --na-text-on-accent: hsl(0, 0%, 100%);
 
-  --na-accent-calm: hsl(var(--hue-sage), 34%, 35%);
-  --na-accent-calm-hover: hsl(var(--hue-sage), 38%, 28%);
-  --na-accent-warm: hsl(var(--hue-terracotta), 56%, 48%);
-  --na-accent-neural: hsl(var(--hue-indigo), 42%, 38%);
+  --na-accent-calm: hsl(var(--hue-sage), 42%, 34%);
+  --na-accent-calm-hover: hsl(var(--hue-sage), 46%, 27%);
+  --na-accent-warm: hsl(var(--hue-terracotta), 70%, 48%);
+  --na-accent-neural: hsl(var(--hue-indigo), 55%, 45%);
+  --na-accent-glow: hsla(198, 90%, 55%, 0.22);
 
-  --na-border-subtle: hsl(var(--hue-cream), 18%, 85%);
-  --na-shadow-soft: 0 12px 30px -10px hsla(var(--hue-indigo), 25%, 18%, 0.09);
-  --na-shadow-card: 0 4px 16px -4px hsla(var(--hue-indigo), 25%, 18%, 0.06);
+  --na-border-subtle: hsl(var(--hue-cream), 20%, 84%);
+  --na-shadow-soft: 0 16px 38px -10px hsla(var(--hue-indigo), 30%, 18%, 0.12);
+  --na-shadow-card: 0 8px 22px -6px hsla(var(--hue-indigo), 28%, 18%, 0.08);
 
+  position: relative;
+  overflow-x: hidden;
   min-height: 100dvh;
   background-color: var(--na-bg-canvas);
   color: var(--na-text-primary);
-  transition: background-color 220ms ease, color 220ms ease;
-  padding-bottom: calc(64px + env(safe-area-inset-bottom));
+  transition: background-color 240ms ease, color 240ms ease;
+  padding-bottom: calc(72px + env(safe-area-inset-bottom));
 }
 
 .na-shell[data-theme='night-calm'] {
-  --na-bg-canvas: hsl(var(--hue-indigo), 24%, 11%);
-  --na-bg-surface: hsl(var(--hue-indigo), 22%, 15%);
-  --na-bg-elevated: hsl(var(--hue-indigo), 20%, 21%);
-  --na-bg-accent-soft: hsl(var(--hue-terracotta), 24%, 20%);
+  --na-bg-canvas: #071022;
+  --na-bg-surface: #0f1b33;
+  --na-bg-elevated: #172746;
+  --na-bg-accent-soft: rgba(245, 158, 11, 0.16);
 
-  --na-text-primary: hsl(var(--hue-cream), 28%, 92%);
-  --na-text-secondary: hsl(var(--hue-cream), 16%, 76%);
-  --na-text-muted: hsl(var(--hue-cream), 12%, 60%);
+  --na-text-primary: #f8fafc;
+  --na-text-secondary: #cbd5e1;
+  --na-text-muted: #94a3b8;
 
-  --na-accent-calm: hsl(var(--hue-sage), 42%, 52%);
-  --na-accent-calm-hover: hsl(var(--hue-sage), 46%, 60%);
-  --na-accent-warm: hsl(var(--hue-terracotta), 62%, 62%);
-  --na-accent-neural: hsl(var(--hue-indigo), 55%, 70%);
+  --na-accent-calm: #34d399;
+  --na-accent-calm-hover: #10b981;
+  --na-accent-warm: #fb923c;
+  --na-accent-neural: #7dd3fc;
+  --na-accent-glow: rgba(56, 189, 248, 0.24);
 
-  --na-border-subtle: hsl(var(--hue-indigo), 18%, 26%);
-  --na-shadow-soft: 0 12px 32px -8px hsla(0, 0%, 0%, 0.45);
-  --na-shadow-card: 0 4px 16px -4px hsla(0, 0%, 0%, 0.35);
+  --na-border-subtle: rgba(125, 211, 252, 0.22);
+  --na-shadow-soft: 0 18px 44px -8px rgba(0, 0, 0, 0.55);
+  --na-shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.42);
 }
 
 .na-shell[data-theme='high-contrast'] {
-  --na-bg-canvas: hsl(0, 0%, 100%);
-  --na-bg-surface: hsl(0, 0%, 98%);
-  --na-bg-elevated: hsl(0, 0%, 92%);
-  --na-bg-accent-soft: hsl(48, 90%, 92%);
+  --na-bg-canvas: #ffffff;
+  --na-bg-surface: #f8fafc;
+  --na-bg-elevated: #e2e8f0;
+  --na-bg-accent-soft: #fef3c7;
 
-  --na-text-primary: hsl(0, 0%, 6%);
-  --na-text-secondary: hsl(0, 0%, 20%);
-  --na-text-muted: hsl(0, 0%, 34%);
+  --na-text-primary: #090d16;
+  --na-text-secondary: #1e293b;
+  --na-text-muted: #334155;
 
-  --na-accent-calm: hsl(148, 65%, 24%);
-  --na-accent-calm-hover: hsl(148, 70%, 18%);
-  --na-accent-warm: hsl(18, 80%, 36%);
-  --na-accent-neural: hsl(228, 72%, 28%);
+  --na-accent-calm: #047857;
+  --na-accent-calm-hover: #065f46;
+  --na-accent-warm: #c2410c;
+  --na-accent-neural: #1d4ed8;
+  --na-accent-glow: rgba(29, 78, 216, 0.18);
 
-  --na-border-subtle: hsl(0, 0%, 55%);
+  --na-border-subtle: #64748b;
 }
 
-/* Barra interna de NeuroArte Lab */
+/* Contraste garantizado en todos los títulos y textos dentro de .na-shell */
+.na-shell h1,
+.na-shell h2,
+.na-shell h3,
+.na-shell h4,
+.na-shell strong,
+.na-shell label {
+  color: var(--na-text-primary);
+}
+
+.na-shell p {
+  color: var(--na-text-secondary);
+}
+
+/* Fondo lúdico animado con burbujas cromáticas */
+.na-bg-orbs {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  overflow: hidden;
+}
+
+.na-orb {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(55px);
+  opacity: 0.34;
+  animation: naOrbFloat 16s ease-in-out infinite alternate;
+}
+
+.na-orb-1 {
+  width: 340px;
+  height: 340px;
+  top: 8%;
+  left: -80px;
+  background: radial-gradient(circle, #38bdf8, transparent 70%);
+}
+
+.na-orb-2 {
+  width: 380px;
+  height: 380px;
+  bottom: 5%;
+  right: -90px;
+  background: radial-gradient(circle, #fb923c, transparent 70%);
+  animation-delay: -5s;
+}
+
+.na-orb-3 {
+  width: 300px;
+  height: 300px;
+  top: 48%;
+  left: 42%;
+  background: radial-gradient(circle, #34d399, transparent 70%);
+  animation-delay: -9s;
+}
+
+@keyframes naOrbFloat {
+  0% { transform: translate(0, 0) scale(1); }
+  50% { transform: translate(34px, -28px) scale(1.12); }
+  100% { transform: translate(-24px, 26px) scale(0.95); }
+}
+
+/* Sub-barra sticky */
 .na-subbar {
   position: sticky;
   top: 0;
@@ -80,10 +147,13 @@
   background-color: var(--na-bg-surface);
   border-bottom: 1px solid var(--na-border-subtle);
   box-shadow: var(--na-shadow-card);
+  backdrop-filter: blur(10px);
 }
 
 .na-container {
-  width: min(1140px, 92vw);
+  position: relative;
+  z-index: 2;
+  width: min(1160px, 92vw);
   margin: 0 auto;
 }
 
@@ -92,7 +162,7 @@
   align-items: center;
   justify-content: space-between;
   gap: 12px;
-  padding: 12px 0;
+  padding: 10px 0;
   flex-wrap: wrap;
 }
 
@@ -106,14 +176,20 @@
 }
 
 .na-brand-mark {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  background: linear-gradient(135deg, var(--na-accent-calm), var(--na-accent-neural));
-  color: var(--na-text-on-accent);
+  width: 36px;
+  height: 36px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #34d399, #38bdf8, #fb923c);
+  color: #ffffff;
   display: grid;
   place-items: center;
-  font-size: 1rem;
+  font-size: 1.1rem;
+  animation: naSpinPop 7s ease-in-out infinite;
+}
+
+@keyframes naSpinPop {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  50% { transform: rotate(10deg) scale(1.08); }
 }
 
 .na-nav-links {
@@ -127,27 +203,28 @@
 
 .na-nav-link {
   min-height: 40px;
-  padding: 6px 14px;
+  padding: 7px 14px;
   border-radius: 999px;
   border: 1px solid transparent;
   background: transparent;
   color: var(--na-text-secondary);
   font-size: 0.88rem;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
   white-space: nowrap;
-  transition: background-color 180ms ease, color 180ms ease, border-color 180ms ease;
+  transition: transform 150ms ease, background-color 180ms ease, color 180ms ease;
 }
 
-.na-nav-link:hover,
-.na-nav-link.active {
+.na-nav-link:hover {
+  transform: translateY(-2px);
   background-color: var(--na-bg-elevated);
   color: var(--na-text-primary);
 }
 
 .na-nav-link.active {
-  border-color: var(--na-border-subtle);
-  font-weight: 700;
+  background: linear-gradient(135deg, var(--na-accent-calm), var(--na-accent-neural));
+  color: #ffffff;
+  box-shadow: 0 6px 16px var(--na-accent-glow);
 }
 
 .na-header-controls {
@@ -165,7 +242,7 @@
   background-color: var(--na-bg-surface);
   color: var(--na-text-primary);
   font-size: 14px;
-  font-weight: 600;
+  font-weight: 700;
   cursor: pointer;
 }
 
@@ -179,33 +256,56 @@
   background-color: var(--na-bg-elevated);
   border: 1px solid var(--na-border-subtle);
   font-size: 0.82rem;
-  font-weight: 700;
+  font-weight: 800;
   color: var(--na-accent-calm);
+  animation: naPulseGlow 3.2s ease-in-out infinite;
 }
 
-/* Contenido principal */
+@keyframes naPulseGlow {
+  0%, 100% { box-shadow: 0 0 0 0 transparent; }
+  50% { box-shadow: 0 0 0 4px var(--na-accent-glow); }
+}
+
+/* Main & Animación de entrada */
 .na-main {
-  padding: 28px 0 40px;
+  padding: 26px 0 44px;
 }
 
+.na-pop-in {
+  animation: naPopIn 0.36s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@keyframes naPopIn {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Hero lúdico */
 .na-hero {
   display: grid;
   grid-template-columns: 1.15fr 0.85fr;
-  gap: 28px;
+  gap: 24px;
   align-items: center;
-  margin-bottom: 28px;
+  margin-bottom: 24px;
 }
 
 .na-badge {
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  padding: 5px 12px;
+  padding: 6px 13px;
   border-radius: 999px;
   font-size: 0.78rem;
-  font-weight: 700;
+  font-weight: 800;
   background-color: var(--na-bg-elevated);
   color: var(--na-accent-calm);
+  border: 1px solid var(--na-border-subtle);
 }
 
 .na-badge.warm {
@@ -215,17 +315,15 @@
 
 .na-hero-title {
   font-family: Georgia, 'Times New Roman', serif;
-  font-size: clamp(1.9rem, 3.2vw, 2.75rem);
-  line-height: 1.14;
-  margin: 12px 0 14px;
-  color: var(--na-text-primary);
+  font-size: clamp(1.9rem, 3.4vw, 2.85rem);
+  line-height: 1.12;
+  margin: 12px 0 12px;
 }
 
 .na-hero-subtitle {
-  font-size: 1.02rem;
-  line-height: 1.6;
-  color: var(--na-text-secondary);
-  margin: 0 0 20px;
+  font-size: 1.03rem;
+  line-height: 1.58;
+  margin: 0 0 18px;
 }
 
 .na-hero-actions {
@@ -234,6 +332,7 @@
   gap: 10px;
 }
 
+/* Botones lúdicos */
 .na-btn {
   display: inline-flex;
   align-items: center;
@@ -245,22 +344,29 @@
   border: 1px solid transparent;
   font-family: inherit;
   font-size: 0.9rem;
-  font-weight: 700;
+  font-weight: 800;
   cursor: pointer;
-  transition: transform 160ms ease, background-color 180ms ease;
+  transition: transform 160ms cubic-bezier(0.34, 1.56, 0.64, 1), box-shadow 180ms ease, background-color 180ms ease;
 }
 
 .na-btn:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px) scale(1.02);
+}
+
+.na-btn:active {
+  transform: scale(0.97);
 }
 
 .na-btn-primary {
-  background-color: var(--na-accent-calm);
-  color: var(--na-text-on-accent);
+  background: linear-gradient(135deg, var(--na-accent-calm), var(--na-accent-neural));
+  color: #ffffff;
+  box-shadow: 0 8px 20px var(--na-accent-glow);
 }
 
-.na-btn-primary:hover {
-  background-color: var(--na-accent-calm-hover);
+.na-btn-warm {
+  background: linear-gradient(135deg, #f59e0b, #fb7185);
+  color: #ffffff;
+  box-shadow: 0 8px 20px rgba(245, 158, 11, 0.25);
 }
 
 .na-btn-secondary {
@@ -269,17 +375,23 @@
   border-color: var(--na-border-subtle);
 }
 
-.na-btn-warm {
-  background-color: var(--na-accent-warm);
-  color: var(--na-text-on-accent);
+.na-btn-secondary:hover {
+  background-color: var(--na-bg-elevated);
 }
 
+/* Tarjetas */
 .na-card {
   background-color: var(--na-bg-surface);
   border: 1px solid var(--na-border-subtle);
-  border-radius: 18px;
+  border-radius: 20px;
   padding: 22px;
   box-shadow: var(--na-shadow-card);
+  transition: transform 200ms ease, box-shadow 200ms ease;
+}
+
+.na-card.interactive:hover {
+  transform: translateY(-4px);
+  box-shadow: var(--na-shadow-soft);
 }
 
 .na-card.soft {
@@ -298,6 +410,99 @@
   gap: 16px;
 }
 
+.na-grid-4 {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+}
+
+/* Stepper del Taller de Pintura */
+.na-stepper {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+  margin-bottom: 22px;
+}
+
+.na-step-pill {
+  min-height: 52px;
+  padding: 10px 12px;
+  border-radius: 16px;
+  border: 1px solid var(--na-border-subtle);
+  background-color: var(--na-bg-surface);
+  color: var(--na-text-secondary);
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  text-align: center;
+  transition: transform 160ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.na-step-pill:hover {
+  transform: translateY(-2px);
+}
+
+.na-step-pill.active {
+  background: linear-gradient(135deg, rgba(52, 211, 153, 0.2), rgba(56, 189, 248, 0.18));
+  border-color: var(--na-accent-calm);
+  color: var(--na-text-primary);
+  box-shadow: 0 8px 20px var(--na-accent-glow);
+}
+
+/* Dado / Ruleta de Reto Creativo */
+.na-prompt-banner {
+  margin-top: 16px;
+  padding: 16px 18px;
+  border-radius: 18px;
+  background: linear-gradient(135deg, var(--na-bg-accent-soft), var(--na-bg-elevated));
+  border: 1px dashed var(--na-accent-warm);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* Respiración mágica */
+.na-breathing-stage {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 20px 12px;
+}
+
+.na-breathing-circle {
+  width: 158px;
+  height: 158px;
+  border-radius: 50%;
+  margin: 18px auto;
+  background: radial-gradient(circle at 35% 35%, #34d399, #38bdf8, #818cf8);
+  color: #ffffff;
+  display: grid;
+  place-items: center;
+  text-align: center;
+  padding: 14px;
+  font-weight: 800;
+  font-size: 0.98rem;
+  box-shadow: 0 14px 36px var(--na-accent-glow);
+  transition: transform 1.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.na-breathing-circle.inhale,
+.na-breathing-circle.hold {
+  transform: scale(1.24);
+}
+
+.na-breathing-circle.exhale {
+  transform: scale(0.9);
+}
+
+/* Taller de Pintura */
 .na-studio-grid {
   display: grid;
   grid-template-columns: 1.45fr 0.85fr;
@@ -305,47 +510,18 @@
   align-items: start;
 }
 
-/* Respiración guiada */
-.na-breathing-circle {
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  margin: 18px auto;
-  background: radial-gradient(circle, var(--na-accent-calm), var(--na-accent-neural));
-  color: var(--na-text-on-accent);
-  display: grid;
-  place-items: center;
-  text-align: center;
-  font-weight: 800;
-  font-size: 0.96rem;
-  box-shadow: 0 12px 28px hsla(148, 34%, 35%, 0.25);
-  transition: transform 1.8s ease-in-out;
-}
-
-.na-breathing-circle.inhale {
-  transform: scale(1.22);
-}
-
-.na-breathing-circle.hold {
-  transform: scale(1.22);
-}
-
-.na-breathing-circle.exhale {
-  transform: scale(0.92);
-}
-
-/* Canvas de Arte Terapia */
 .na-canvas-wrap {
   position: relative;
-  border-radius: 16px;
+  border-radius: 18px;
   overflow: hidden;
-  border: 1px solid var(--na-border-subtle);
-  background: hsl(40, 45%, 99%);
+  border: 2px solid var(--na-border-subtle);
+  background: #fffdf8;
+  box-shadow: var(--na-shadow-soft);
 }
 
 .na-studio-canvas {
   width: 100%;
-  height: 420px;
+  height: 430px;
   display: block;
   cursor: crosshair;
   touch-action: none;
@@ -358,43 +534,64 @@
   margin-top: 8px;
 }
 
-.na-swatch {
-  width: 34px;
-  height: 34px;
-  border-radius: 50%;
-  border: 2px solid rgba(0, 0, 0, 0.15);
+.na-swatch-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 38px;
+  padding: 4px 10px 4px 6px;
+  border-radius: 999px;
+  border: 1px solid var(--na-border-subtle);
+  background-color: var(--na-bg-surface);
+  color: var(--na-text-primary);
+  font-size: 0.78rem;
+  font-weight: 700;
   cursor: pointer;
   transition: transform 140ms ease, border-color 140ms ease;
 }
 
-.na-swatch.active {
-  border-color: var(--na-text-primary);
-  transform: scale(1.16);
-  box-shadow: 0 0 0 2px var(--na-bg-surface);
+.na-swatch-btn.active {
+  border-color: var(--na-accent-warm);
+  transform: scale(1.05);
+  box-shadow: 0 0 0 2px var(--na-accent-glow);
 }
 
-/* ETC y emociones */
+.na-swatch-dot {
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  flex-shrink: 0;
+}
+
+/* Choices, Inputs & Reflexión */
 .na-choice-btn {
   width: 100%;
   text-align: left;
   padding: 14px 16px;
-  border-radius: 14px;
+  border-radius: 16px;
   border: 1px solid var(--na-border-subtle);
   background-color: var(--na-bg-surface);
   color: var(--na-text-primary);
   cursor: pointer;
-  transition: border-color 180ms ease, background-color 180ms ease;
+  transition: transform 150ms ease, border-color 180ms ease, background-color 180ms ease;
+}
+
+.na-choice-btn:hover {
+  transform: translateY(-2px);
+  border-color: var(--na-accent-neural);
 }
 
 .na-choice-btn.active {
-  border-color: var(--na-accent-calm);
+  border-color: var(--na-accent-warm);
   background-color: var(--na-bg-elevated);
+  box-shadow: 0 6px 18px var(--na-accent-glow);
 }
 
+.na-input,
 .na-textarea {
   width: 100%;
-  min-height: 96px;
-  padding: 12px 14px;
+  padding: 11px 14px;
   border-radius: 12px;
   border: 1px solid var(--na-border-subtle);
   background-color: var(--na-bg-canvas);
@@ -402,7 +599,20 @@
   font-family: inherit;
   font-size: 16px;
   box-sizing: border-box;
+}
+
+.na-textarea {
+  min-height: 92px;
   resize: vertical;
+}
+
+.na-reflection-preview {
+  width: 100%;
+  max-height: 300px;
+  object-fit: contain;
+  border-radius: 14px;
+  border: 1px solid var(--na-border-subtle);
+  background: #fffdf8;
 }
 
 .na-toast {
@@ -410,12 +620,13 @@
   bottom: calc(20px + env(safe-area-inset-bottom));
   right: 20px;
   z-index: 60;
-  padding: 11px 18px;
+  padding: 12px 20px;
   border-radius: 999px;
-  background-color: var(--na-text-primary);
-  color: var(--na-bg-surface);
-  font-size: 0.86rem;
-  font-weight: 700;
+  background: linear-gradient(135deg, #0f172a, #1e293b);
+  color: #f8fafc;
+  border: 1px solid rgba(125, 211, 252, 0.45);
+  font-size: 0.88rem;
+  font-weight: 800;
   box-shadow: var(--na-shadow-soft);
 }
 
@@ -423,11 +634,22 @@
   .na-hero,
   .na-studio-grid,
   .na-grid-2,
-  .na-grid-3 {
+  .na-grid-3,
+  .na-grid-4,
+  .na-stepper {
     grid-template-columns: 1fr;
   }
 
   .na-studio-canvas {
     height: 340px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .na-orb,
+  .na-brand-mark,
+  .na-xp-pill,
+  .na-pop-in {
+    animation: none !important;
   }
 }
