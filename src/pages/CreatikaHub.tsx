@@ -104,6 +104,17 @@ const CREATIKA_APPS: CreatikaApp[] = [
     path: '/creatika/emprendimiento-en-el-aula',
     accentColor: '#f59e0b',
     gradient: 'linear-gradient(135deg, rgba(245,158,11,0.22) 0%, rgba(217,119,6,0.05) 100%)'
+  },
+  {
+    id: 'arte-terapia',
+    title: 'NeuroArte Lab · Arte Terapia',
+    badge: 'Módulo 4 · ETC & Neurodiseño HSL',
+    tag: 'ARTE TERAPIA & PSICOPEDAGOGÍA',
+    desc: 'Contención emocional en el aula con modelo ETC, respiración 4-4-6, termómetro cromático, lienzo terapéutico tipo mandala y gamificación XP.',
+    icon: '🪷',
+    path: '/creatika/arte-terapia',
+    accentColor: '#10b981',
+    gradient: 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(56,189,248,0.08) 100%)'
   }
 ];
 
