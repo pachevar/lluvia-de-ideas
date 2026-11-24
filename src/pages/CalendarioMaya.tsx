@@ -85,9 +85,9 @@ export default function CalendarioMaya() {
   const [dateInput, setDateInput] = useState<string>(() => getTodayIso());
   const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const prevDateRef = useRef<string>(dateInput);
-  const initialRes = useMemo(() => calcCholqij(dateInput), [dateInput]);
-  const [angle13, setAngle13] = useState<number>(() => -((initialRes.energy - 1) * (360 / 13)));
-  const [angle20, setAngle20] = useState<number>(() => 180 + 9 + initialRes.nawal.index * (360 / 20));
+  const result = useMemo(() => calcCholqij(dateInput), [dateInput]);
+  const [angle13, setAngle13] = useState<number>(() => -((result.energy - 1) * (360 / 13)));
+  const [angle20, setAngle20] = useState<number>(() => 180 + 9 + result.nawal.index * (360 / 20));
   const [autoPlay, setAutoPlay] = useState(false);
 
   // Enciclopedia, Simulador, Quiz y Gamificación XP
@@ -153,8 +153,6 @@ export default function CalendarioMaya() {
     },
     [addXp, showToast]
   );
-
-  const result = useMemo(() => calcCholqij(dateInput), [dateInput]);
 
   // Registrar descubrimiento del nawal actual y rotar engranajes suavemente según días avanzados
   useEffect(() => {
@@ -249,10 +247,13 @@ export default function CalendarioMaya() {
     }
   };
 
-  const filteredNawales =
-    elementFilter === 'Todos'
-      ? KICHE_NAWALES
-      : KICHE_NAWALES.filter((n) => n.element === elementFilter);
+  const filteredNawales = useMemo(
+    () =>
+      elementFilter === 'Todos'
+        ? KICHE_NAWALES
+        : KICHE_NAWALES.filter((n) => n.element === elementFilter),
+    [elementFilter]
+  );
 
   return (
     <div className="cm-shell" data-theme={theme}>
@@ -646,41 +647,69 @@ export default function CalendarioMaya() {
             </header>
 
             <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '20px' }}>
-              {(['Todos', 'Agua', 'Aire', 'Fuego', 'Tierra'] as const).map((el) => (
+              {(
+                [
+                  { id: 'Todos', icon: '✨', label: 'Todos (20)' },
+                  { id: 'Agua', icon: '💧', label: 'Agua' },
+                  { id: 'Aire', icon: '🌬️', label: 'Aire' },
+                  { id: 'Fuego', icon: '🔥', label: 'Fuego' },
+                  { id: 'Tierra', icon: '🌱', label: 'Tierra' },
+                ] as const
+              ).map((el) => (
                 <button
-                  key={el}
+                  key={el.id}
                   type="button"
-                  className={`cm-btn ${elementFilter === el ? 'cm-btn-primary' : 'cm-btn-secondary'}`}
+                  data-element={el.id}
+                  className={`cm-btn cm-el-filter ${elementFilter === el.id ? 'active' : ''}`}
                   onClick={() => {
                     soundEffects.playClick();
-                    setElementFilter(el);
+                    setElementFilter(el.id);
                   }}
                 >
-                  {el}
+                  <span>{el.icon}</span>
+                  <span>{el.label}</span>
                 </button>
               ))}
             </div>
 
             <div className="cm-grid-3">
               {filteredNawales.map((n) => (
-                <article key={n.slug} className="cm-card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                <article
+                  key={n.slug}
+                  data-element={n.element}
+                  className="cm-card cm-nawal-card"
+                  style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}
+                >
                   <div>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span className="cm-badge warm">{n.element}</span>
-                      <span style={{ fontSize: '1.5rem' }}>{n.emoji}</span>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px' }}>
+                      <span className="cm-el-badge" data-element={n.element}>
+                        {n.element === 'Agua'
+                          ? '💧'
+                          : n.element === 'Aire'
+                            ? '🌬️'
+                            : n.element === 'Fuego'
+                              ? '🔥'
+                              : '🌱'}{' '}
+                        {n.element}
+                      </span>
+                      <span className="cm-nawal-emoji-pill" aria-hidden="true">
+                        {n.emoji}
+                      </span>
                     </div>
                     <h2 style={{ margin: '10px 0 4px' }}>{n.name}</h2>
-                    <p style={{ fontSize: '0.84rem', margin: '0 0 8px' }}>Guía: {n.animal}</p>
+                    <p style={{ fontSize: '0.82rem', margin: '0 0 8px' }}>
+                      Guía: <strong>{n.animal}</strong> · {n.cardinal}
+                    </p>
                     <p style={{ fontSize: '0.9rem', margin: 0 }}>{n.essence}</p>
                   </div>
 
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '14px', gap: '8px' }}>
                     <button
                       type="button"
-                      className="cm-btn cm-btn-primary"
+                      className="cm-btn cm-el-action-btn"
                       onClick={() => openNawalModal(n)}
                     >
-                      Aprender más
+                      Ver ficha y cruz
                     </button>
                     {discovered.includes(n.slug) && <span className="cm-badge">✓ Explorado</span>}
                   </div>
@@ -836,10 +865,16 @@ export default function CalendarioMaya() {
             aria-modal="true"
             aria-label={`Ficha del Nawal ${modalNawal.name}`}
           >
-            <div className="cm-modal-card" onClick={(e) => e.stopPropagation()}>
+            <div
+              className="cm-modal-card cm-nawal-modal-accent"
+              data-element={modalNawal.element}
+              onClick={(e) => e.stopPropagation()}
+            >
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px' }}>
                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                  <span className="cm-badge warm">Elemento: {modalNawal.element}</span>
+                  <span className="cm-el-badge" data-element={modalNawal.element}>
+                    Elemento: {modalNawal.element}
+                  </span>
                   <span className="cm-badge">Rumbo: {modalNawal.cardinal}</span>
                   <span className="cm-badge">Yucateco: {modalNawal.yucatec}</span>
                 </div>

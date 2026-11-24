@@ -380,6 +380,7 @@
 
 .cm-gear-rotator {
   transition: transform 0.72s cubic-bezier(0.22, 1, 0.36, 1);
+  will-change: transform;
 }
 
 .cm-pulse-glow {
@@ -1197,6 +1198,144 @@
   background-color: var(--cm-bg-surface);
   border: 1px solid var(--cm-border);
   border-left: 4px solid var(--cm-accent-jade);
+}
+
+/* Categorías de Color por Elemento (Agua, Aire, Fuego, Tierra) */
+[data-element='Agua'] {
+  --el-accent: #0284c7;
+  --el-accent-strong: #0369a1;
+  --el-tint: rgba(14, 165, 233, 0.11);
+  --el-border: rgba(14, 165, 233, 0.42);
+  --el-text: #0369a1;
+}
+
+[data-element='Aire'] {
+  --el-accent: #7c3aed;
+  --el-accent-strong: #6d28d9;
+  --el-tint: rgba(139, 92, 246, 0.11);
+  --el-border: rgba(139, 92, 246, 0.42);
+  --el-text: #6d28d9;
+}
+
+[data-element='Fuego'] {
+  --el-accent: #ea580c;
+  --el-accent-strong: #c2410c;
+  --el-tint: rgba(249, 115, 22, 0.12);
+  --el-border: rgba(249, 115, 22, 0.44);
+  --el-text: #c2410c;
+}
+
+[data-element='Tierra'] {
+  --el-accent: #059669;
+  --el-accent-strong: #047857;
+  --el-tint: rgba(16, 185, 129, 0.11);
+  --el-border: rgba(16, 185, 129, 0.42);
+  --el-text: #047857;
+}
+
+[data-theme='observatory-night'] [data-element='Agua'] {
+  --el-accent: #38bdf8;
+  --el-accent-strong: #0284c7;
+  --el-tint: rgba(56, 189, 248, 0.13);
+  --el-border: rgba(56, 189, 248, 0.42);
+  --el-text: #7dd3fc;
+}
+
+[data-theme='observatory-night'] [data-element='Aire'] {
+  --el-accent: #a78bfa;
+  --el-accent-strong: #7c3aed;
+  --el-tint: rgba(167, 139, 250, 0.13);
+  --el-border: rgba(167, 139, 250, 0.42);
+  --el-text: #c4b5fd;
+}
+
+[data-theme='observatory-night'] [data-element='Fuego'] {
+  --el-accent: #fb923c;
+  --el-accent-strong: #ea580c;
+  --el-tint: rgba(251, 146, 60, 0.14);
+  --el-border: rgba(251, 146, 60, 0.45);
+  --el-text: #fdba74;
+}
+
+[data-theme='observatory-night'] [data-element='Tierra'] {
+  --el-accent: #34d399;
+  --el-accent-strong: #059669;
+  --el-tint: rgba(52, 211, 153, 0.13);
+  --el-border: rgba(52, 211, 153, 0.42);
+  --el-text: #6ee7b7;
+}
+
+.cm-el-filter {
+  background-color: var(--cm-bg-surface);
+  color: var(--cm-text-primary);
+  border: 1px solid var(--el-border, var(--cm-border));
+}
+
+.cm-el-filter:hover {
+  background-color: var(--el-tint, var(--cm-bg-elevated));
+  border-color: var(--el-accent, var(--cm-accent-jade));
+  transform: translateY(-1px);
+}
+
+.cm-el-filter.active {
+  background-color: var(--el-accent-strong, var(--cm-accent-jade));
+  border-color: var(--el-accent, var(--cm-accent-jade));
+  color: #ffffff;
+  box-shadow: 0 6px 16px -6px var(--el-border, rgba(16, 185, 129, 0.45));
+}
+
+.cm-nawal-card {
+  border-top: 4px solid var(--el-accent, var(--cm-accent-jade));
+  background: linear-gradient(180deg, var(--el-tint, transparent) 0%, var(--cm-bg-surface) 38%);
+  transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  content-visibility: auto;
+  contain-intrinsic-size: 230px;
+}
+
+.cm-nawal-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--el-border, var(--cm-border));
+  border-top-color: var(--el-accent, var(--cm-accent-jade));
+  box-shadow: 0 14px 28px -12px var(--el-border, rgba(0, 0, 0, 0.35));
+}
+
+.cm-el-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 800;
+  background-color: var(--el-tint, var(--cm-bg-elevated));
+  color: var(--el-text, var(--cm-text-primary));
+  border: 1px solid var(--el-border, var(--cm-border));
+}
+
+.cm-nawal-emoji-pill {
+  width: 40px;
+  height: 40px;
+  border-radius: 12px;
+  display: grid;
+  place-items: center;
+  font-size: 1.4rem;
+  background-color: var(--el-tint, var(--cm-bg-elevated));
+  border: 1px solid var(--el-border, var(--cm-border));
+}
+
+.cm-el-action-btn {
+  background-color: var(--el-accent-strong, var(--cm-accent-jade));
+  color: #ffffff;
+  border: 1px solid transparent;
+}
+
+.cm-el-action-btn:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1px);
+}
+
+.cm-nawal-modal-accent {
+  border-top: 5px solid var(--el-accent, var(--cm-accent-jade));
 }
 
 @media (max-width: 920px) {

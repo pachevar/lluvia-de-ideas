@@ -22,6 +22,19 @@ function getCycleDayForPair(energy: number, nawalIndex: number): number {
 // Orden tradicional K'iche' iniciando en B'atz' (índice 10) hasta Tz'i' (índice 9)
 const ORDERED_NAWALES = [...KICHE_NAWALES.slice(10), ...KICHE_NAWALES.slice(0, 10)];
 
+// Matriz estática precalculada una sola vez (20 × 13 = 260) para animación fluida a 8x
+const MATRIX_ROWS = ORDERED_NAWALES.map((nawal, nIdx) => ({
+  nawal,
+  nIdx,
+  cells: Array.from({ length: 13 }, (_, eIdx) => {
+    const energy = eIdx + 1;
+    return {
+      energy,
+      cellDay: getCycleDayForPair(energy, nIdx),
+    };
+  }),
+}));
+
 const MILESTONES = [
   { day: 1, label: "Día 1 · 1 B'atz'", hint: 'Inicio alineado' },
   { day: 13, label: "Día 13 · 13 Aq'ab'al", hint: 'Fin 1.ª trecena' },
@@ -317,15 +330,13 @@ export const CholqijMechanicsLab: React.FC<CholqijMechanicsLabProps> = ({
             ))}
 
             {/* 20 filas (Nahuales) × 13 columnas (Energías) */}
-            {ORDERED_NAWALES.map((n, nIdx) => (
+            {MATRIX_ROWS.map(({ nawal: n, nIdx, cells }) => (
               <React.Fragment key={n.slug}>
                 <div className={`cm-matrix-row-head ${nIdx === simNawalIndex ? 'highlight' : ''}`}>
                   <span>{n.emoji}</span>
                   <span>{n.name}</span>
                 </div>
-                {Array.from({ length: 13 }, (_, eIdx) => {
-                  const energy = eIdx + 1;
-                  const cellDay = getCycleDayForPair(energy, nIdx);
+                {cells.map(({ energy, cellDay }) => {
                   const isCurrent = cellDay === simDay;
                   const isVisited = cellDay < simDay;
                   return (
