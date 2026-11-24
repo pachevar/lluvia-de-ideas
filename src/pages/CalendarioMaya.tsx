@@ -2,6 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import LandingTopBar from '../components/landing/LandingTopBar';
+import {
+  MayaDatePickerModal,
+  formatGregorianLongEs,
+} from '../components/calendario/MayaDatePickerModal';
 import { soundEffects } from '../utils/soundEffects';
 import {
   CHOLQIJ_QUIZ,
@@ -77,6 +81,7 @@ export default function CalendarioMaya() {
 
   // Estado principal de fecha y rotación acumulada diente a diente
   const [dateInput, setDateInput] = useState<string>(() => getTodayIso());
+  const [isDateModalOpen, setIsDateModalOpen] = useState(false);
   const prevDateRef = useRef<string>(dateInput);
   const initialRes = useMemo(() => calcCholqij(dateInput), [dateInput]);
   const [angle13, setAngle13] = useState<number>(() => -((initialRes.energy - 1) * (360 / 13)));
@@ -499,44 +504,69 @@ export default function CalendarioMaya() {
               {/* Panel derecho de fecha y lectura */}
               <aside style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 <div className="cm-card">
-                  <label htmlFor="cholqij-date" style={{ display: 'block', fontWeight: 700, marginBottom: '8px' }}>
+                  <span style={{ display: 'block', fontWeight: 700, marginBottom: '10px' }}>
                     Selecciona una fecha gregoriana (o tu nacimiento):
-                  </label>
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    <input
+                  </span>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                    <button
                       id="cholqij-date"
-                      type="date"
-                      className="cm-date-input"
-                      value={dateInput}
-                      onChange={(e) => {
-                        if (e.target.value) {
+                      type="button"
+                      className="cm-date-trigger"
+                      onClick={() => {
+                        soundEffects.playClick();
+                        setAutoPlay(false);
+                        setIsDateModalOpen(true);
+                      }}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                        <span className="cm-date-trigger-icon" aria-hidden="true">
+                          🗓️
+                        </span>
+                        <div style={{ minWidth: 0 }}>
+                          <div
+                            style={{
+                              fontWeight: 800,
+                              fontSize: '0.98rem',
+                              textTransform: 'capitalize',
+                              color: 'var(--cm-text-primary)',
+                            }}
+                          >
+                            {formatGregorianLongEs(dateInput)}
+                          </div>
+                          <div style={{ fontSize: '0.78rem', color: 'var(--cm-text-muted)' }}>
+                            Toca para abrir el calendario astronómico
+                          </div>
+                        </div>
+                      </div>
+                      <span className="cm-badge" style={{ flexShrink: 0 }}>
+                        Cambiar ▾
+                      </span>
+                    </button>
+
+                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                      <button
+                        type="button"
+                        className="cm-btn cm-btn-primary"
+                        onClick={() => {
+                          soundEffects.playClick();
                           setAutoPlay(false);
-                          updateDateAndRotate(e.target.value);
-                        }
-                      }}
-                    />
-                    <button
-                      type="button"
-                      className="cm-btn cm-btn-primary"
-                      onClick={() => {
-                        soundEffects.playClick();
-                        setAutoPlay(false);
-                        updateDateAndRotate(getTodayIso());
-                      }}
-                    >
-                      ☀️ Hoy
-                    </button>
-                    <button
-                      type="button"
-                      className="cm-btn cm-btn-secondary"
-                      onClick={() => {
-                        soundEffects.playClick();
-                        setAutoPlay(false);
-                        updateDateAndRotate('2012-12-21');
-                      }}
-                    >
-                      13 Baktun (2012)
-                    </button>
+                          updateDateAndRotate(getTodayIso());
+                        }}
+                      >
+                        ☀️ Hoy
+                      </button>
+                      <button
+                        type="button"
+                        className="cm-btn cm-btn-secondary"
+                        onClick={() => {
+                          soundEffects.playClick();
+                          setAutoPlay(false);
+                          updateDateAndRotate('2012-12-21');
+                        }}
+                      >
+                        13 Baktun (2012)
+                      </button>
+                    </div>
                   </div>
                 </div>
 
@@ -832,6 +862,18 @@ export default function CalendarioMaya() {
           </div>
         )}
       </main>
+
+      {/* Modal Pro Selector de Fecha */}
+      <MayaDatePickerModal
+        isOpen={isDateModalOpen}
+        value={dateInput}
+        theme={theme}
+        onSelect={(iso) => {
+          setAutoPlay(false);
+          updateDateAndRotate(iso);
+        }}
+        onClose={() => setIsDateModalOpen(false)}
+      />
 
       {/* Modal de Ficha del Nawal */}
       {modalNawal &&
