@@ -7,6 +7,7 @@ import {
   formatGregorianLongEs,
 } from '../components/calendario/MayaDatePickerModal';
 import { CholqijMechanicsLab } from '../components/calendario/CholqijMechanicsLab';
+import { MayanCrossCard } from '../components/calendario/MayanCrossCard';
 import { soundEffects } from '../utils/soundEffects';
 import {
   CHOLQIJ_QUIZ,
@@ -96,6 +97,7 @@ export default function CalendarioMaya() {
     const slug = searchParams.get('nawal');
     return slug ? KICHE_NAWALES.find((n) => n.slug === slug) || null : null;
   });
+  const [modalEnergy, setModalEnergy] = useState<number | undefined>(undefined);
 
   const [xp, setXp] = useState<number>(() => {
     const saved = localStorage.getItem('sutz_cholqij_xp');
@@ -212,15 +214,17 @@ export default function CalendarioMaya() {
     setSearchParams({ sec: tab }, { replace: true });
   };
 
-  const openNawalModal = (n: KicheNawal) => {
+  const openNawalModal = (n: KicheNawal, energy?: number) => {
     soundEffects.playClick();
     recordDiscovery(n.slug, n.name);
     setModalNawal(n);
+    setModalEnergy(energy);
     setSearchParams({ sec: activeTab, nawal: n.slug }, { replace: true });
   };
 
   const closeNawalModal = () => {
     setModalNawal(null);
+    setModalEnergy(undefined);
     setSearchParams({ sec: activeTab }, { replace: true });
   };
 
@@ -612,9 +616,9 @@ export default function CalendarioMaya() {
                     <button
                       type="button"
                       className="cm-btn cm-btn-primary"
-                      onClick={() => openNawalModal(result.nawal)}
+                      onClick={() => openNawalModal(result.nawal, result.energy)}
                     >
-                      📖 Ficha de {result.nawal.name}
+                      ✚ Ficha y Cruz Maya de {result.nawal.name}
                     </button>
                     <button
                       type="button"
@@ -874,6 +878,15 @@ export default function CalendarioMaya() {
                   <h3 style={{ fontSize: '1.02rem' }}>Consejo para Estudiantes</h3>
                   <p style={{ marginBottom: 0 }}>{modalNawal.advice}</p>
                 </div>
+              </div>
+
+              <div style={{ marginTop: '18px' }}>
+                <MayanCrossCard
+                  key={`${modalNawal.slug}-${modalEnergy ?? 'base'}`}
+                  nawal={modalNawal}
+                  energy={modalEnergy}
+                  onInspectNawal={(target) => openNawalModal(target)}
+                />
               </div>
 
               <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '20px' }}>

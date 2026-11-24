@@ -160,3 +160,103 @@ export function createGearPath(
   }
   return `${d}Z`;
 }
+
+export type MayanCrossKey = 'conception' | 'rightArm' | 'center' | 'leftArm' | 'destiny';
+
+export interface MayanCrossNode {
+  key: MayanCrossKey;
+  positionLabel: string;
+  subLabel: string;
+  offsetLabel: string;
+  nawal: KicheNawal;
+  energy?: number;
+  roleDescription: string;
+  interactionInsight: string;
+}
+
+export interface MayanCrossData {
+  conception: MayanCrossNode;
+  rightArm: MayanCrossNode;
+  center: MayanCrossNode;
+  leftArm: MayanCrossNode;
+  destiny: MayanCrossNode;
+}
+
+function shiftEnergy(energy: number, delta: number): number {
+  return ((((energy - 1 + delta) % 13) + 13) % 13) + 1;
+}
+
+/**
+ * Calcula la Cruz Maya (Kajb'al) tradicional K'iche' para un nawal (y energía opcional 1..13):
+ * - Concepción (Arriba): -8 posiciones (~9 lunas / 268 días antes del nacimiento)
+ * - Destino (Abajo): +8 posiciones (proyección y madurez de vida)
+ * - Brazo Derecho (Material / Acción): -6 posiciones
+ * - Brazo Izquierdo (Espiritual / Intuición): +6 posiciones
+ */
+export function getMayanCross(nawalIndex: number, energy?: number): MayanCrossData {
+  const centerNawal = KICHE_NAWALES[((nawalIndex % 20) + 20) % 20];
+  const conceptionNawal = KICHE_NAWALES[(centerNawal.index - 8 + 20) % 20];
+  const destinyNawal = KICHE_NAWALES[(centerNawal.index + 8) % 20];
+  const rightArmNawal = KICHE_NAWALES[(centerNawal.index - 6 + 20) % 20];
+  const leftArmNawal = KICHE_NAWALES[(centerNawal.index + 6) % 20];
+
+  const hasEnergy = typeof energy === 'number' && energy >= 1 && energy <= 13;
+
+  return {
+    conception: {
+      key: 'conception',
+      positionLabel: 'Concepción',
+      subLabel: 'Cabeza · Origen',
+      offsetLabel: '-8 días (9 lunas)',
+      nawal: conceptionNawal,
+      energy: hasEnergy ? shiftEnergy(energy, -8) : undefined,
+      roleDescription:
+        'Representa la energía del engendramiento (aprox. 9 lunas o 268 días antes de nacer), las raíces familiares y los dones con los que se siembra la vida.',
+      interactionInsight: `${conceptionNawal.name} aporta ${conceptionNawal.essence.toLowerCase()} como base profunda para nutrir la naturaleza de ${centerNawal.name}.`,
+    },
+    rightArm: {
+      key: 'rightArm',
+      positionLabel: 'Brazo Derecho',
+      subLabel: 'Fuerza Material',
+      offsetLabel: '-6 días',
+      nawal: rightArmNawal,
+      energy: hasEnergy ? shiftEnergy(energy, -6) : undefined,
+      roleDescription:
+        'Simboliza la acción en el mundo tangible, el trabajo, el hemisferio práctico/racional y las herramientas concretas para materializar metas.',
+      interactionInsight: `${rightArmNawal.name} sostiene a ${centerNawal.name} en el plano práctico mediante ${rightArmNawal.essence.toLowerCase()}.`,
+    },
+    center: {
+      key: 'center',
+      positionLabel: 'Nacimiento',
+      subLabel: 'Centro · Corazón',
+      offsetLabel: 'Eje principal',
+      nawal: centerNawal,
+      energy: hasEnergy ? energy : undefined,
+      roleDescription:
+        'Es la energía regente del día de nacimiento: define el carácter central, los talentos cotidianos y el punto de equilibrio entre los cuatro rumbos.',
+      interactionInsight: `${centerNawal.name} es el corazón de esta cruz (${centerNawal.element}, rumbo ${centerNawal.cardinal}), guiado por ${centerNawal.animal}.`,
+    },
+    leftArm: {
+      key: 'leftArm',
+      positionLabel: 'Brazo Izquierdo',
+      subLabel: 'Fuerza Espiritual',
+      offsetLabel: '+6 días',
+      nawal: leftArmNawal,
+      energy: hasEnergy ? shiftEnergy(energy, 6) : undefined,
+      roleDescription:
+        'Representa el mundo interior, la intuición, la sensibilidad emocional, los sueños y los aprendizajes sutiles que equilibran el carácter.',
+      interactionInsight: `${leftArmNawal.name} equilibra el mundo interior de ${centerNawal.name} a través de ${leftArmNawal.essence.toLowerCase()}.`,
+    },
+    destiny: {
+      key: 'destiny',
+      positionLabel: 'Destino',
+      subLabel: 'Pies · Misión',
+      offsetLabel: '+8 días',
+      nawal: destinyNawal,
+      energy: hasEnergy ? shiftEnergy(energy, 8) : undefined,
+      roleDescription:
+        'Indica hacia dónde camina la persona, el propósito de madurez y las cualidades que florecen al integrar sus experiencias de vida.',
+      interactionInsight: `${destinyNawal.name} proyecta el camino de crecimiento de ${centerNawal.name} hacia ${destinyNawal.essence.toLowerCase()}.`,
+    },
+  };
+}
