@@ -470,7 +470,7 @@
 }
 
 .cm-date-modal-card {
-  width: min(500px, 96vw);
+  width: min(560px, 96vw);
   max-height: 92dvh;
   overflow-y: auto;
   border-radius: 24px;
@@ -668,10 +668,49 @@
   line-height: 1;
 }
 
-.cm-cal-months-grid,
-.cm-cal-years-grid {
+.cm-cal-months-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.cm-decade-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px;
+  margin-bottom: 12px;
+}
+
+.cm-decade-chip {
+  min-height: 38px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--cm-border);
+  background-color: var(--cm-bg-elevated);
+  color: var(--cm-text-secondary);
+  font-family: inherit;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.cm-decade-chip:hover {
+  border-color: var(--cm-accent-jade);
+  color: var(--cm-text-primary);
+  transform: translateY(-1px);
+}
+
+.cm-decade-chip.active {
+  background: var(--cm-bg-warm);
+  color: var(--cm-text-primary);
+  border-color: var(--cm-accent-gold);
+  box-shadow: 0 0 0 1px var(--cm-accent-gold);
+}
+
+.cm-cal-years-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
   gap: 8px;
 }
 
@@ -704,7 +743,9 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px dashed var(--cm-border);
   flex-wrap: wrap;
 }
 
@@ -741,6 +782,290 @@
   border: 1px solid var(--cm-border);
 }
 
+/* Laboratorio Interactivo Mecánica 13 x 20 */
+.cm-mech-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.cm-mech-numeral-box {
+  padding: 8px 12px;
+  border-radius: 16px;
+  background-color: var(--cm-bg-elevated);
+  border: 1px solid var(--cm-border);
+}
+
+.cm-mech-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.cm-speed-group {
+  display: inline-flex;
+  border-radius: 999px;
+  padding: 3px;
+  background-color: var(--cm-bg-elevated);
+  border: 1px solid var(--cm-border);
+}
+
+.cm-speed-btn {
+  min-height: 34px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--cm-text-secondary);
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.cm-speed-btn.active {
+  background-color: var(--cm-accent-jade);
+  color: #ffffff;
+}
+
+.cm-mech-insight {
+  padding: 12px 14px;
+  border-radius: 14px;
+  background-color: var(--cm-bg-elevated);
+  border-left: 4px solid var(--cm-accent-gold);
+  margin-bottom: 14px;
+}
+
+.cm-mech-milestones {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(145px, 1fr));
+  gap: 8px;
+}
+
+.cm-milestone-btn {
+  min-height: 48px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  border: 1px solid var(--cm-border);
+  background-color: var(--cm-bg-elevated);
+  color: var(--cm-text-primary);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  text-align: left;
+  font-family: inherit;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.cm-milestone-btn strong {
+  font-size: 0.82rem;
+}
+
+.cm-milestone-btn span {
+  font-size: 0.74rem;
+  color: var(--cm-text-muted);
+}
+
+.cm-milestone-btn:hover {
+  border-color: var(--cm-accent-jade);
+  transform: translateY(-1px);
+}
+
+.cm-milestone-btn.active {
+  border-color: var(--cm-accent-gold);
+  background-color: var(--cm-bg-warm);
+}
+
+.cm-track-13 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(46px, 1fr));
+  gap: 6px;
+}
+
+.cm-track-chip {
+  min-height: 44px;
+  border-radius: 12px;
+  border: 1px solid var(--cm-border);
+  background-color: var(--cm-bg-elevated);
+  color: var(--cm-text-primary);
+  font-family: inherit;
+  font-size: 0.92rem;
+  font-weight: 800;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.cm-track-chip.passed {
+  border-color: rgba(16, 185, 129, 0.4);
+  background-color: rgba(16, 185, 129, 0.14);
+}
+
+.cm-track-chip.active-jade {
+  background: linear-gradient(135deg, var(--cm-accent-jade), var(--cm-accent-indigo));
+  color: #ffffff;
+  border-color: var(--cm-accent-gold);
+  transform: scale(1.06);
+  box-shadow: 0 4px 12px -2px rgba(16, 185, 129, 0.45);
+}
+
+.cm-track-20 {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  gap: 6px;
+}
+
+.cm-track-nawal {
+  min-height: 42px;
+  padding: 5px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--cm-border);
+  background-color: var(--cm-bg-elevated);
+  color: var(--cm-text-primary);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.16s ease;
+}
+
+.cm-track-nawal.passed {
+  border-color: rgba(234, 88, 12, 0.38);
+  background-color: rgba(234, 88, 12, 0.12);
+}
+
+.cm-track-nawal.active-terra {
+  background: linear-gradient(135deg, var(--cm-accent-terra), var(--cm-accent-gold));
+  color: #ffffff;
+  border-color: #fde047;
+  transform: scale(1.05);
+  box-shadow: 0 4px 12px -2px rgba(234, 88, 12, 0.45);
+}
+
+.cm-matrix-legend {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: var(--cm-text-secondary);
+}
+
+.cm-matrix-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.cm-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.cm-dot.current {
+  background-color: var(--cm-accent-gold);
+}
+
+.cm-dot.visited {
+  background-color: var(--cm-accent-jade);
+}
+
+.cm-dot.pending {
+  background-color: var(--cm-bg-elevated);
+  border: 1px solid var(--cm-border);
+}
+
+.cm-matrix-scroll {
+  overflow-x: auto;
+  padding-bottom: 4px;
+}
+
+.cm-matrix-table {
+  display: grid;
+  grid-template-columns: 112px repeat(13, minmax(36px, 1fr));
+  gap: 4px;
+  min-width: 620px;
+}
+
+.cm-matrix-corner,
+.cm-matrix-col-head {
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-align: center;
+  padding: 6px 4px;
+  border-radius: 8px;
+  background-color: var(--cm-bg-elevated);
+  color: var(--cm-text-secondary);
+}
+
+.cm-matrix-col-head.highlight,
+.cm-matrix-row-head.highlight {
+  background-color: var(--cm-bg-warm);
+  color: var(--cm-text-primary);
+  box-shadow: inset 0 0 0 1px var(--cm-accent-gold);
+}
+
+.cm-matrix-row-head {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 4px 8px;
+  border-radius: 8px;
+  background-color: var(--cm-bg-elevated);
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: var(--cm-text-primary);
+  white-space: nowrap;
+}
+
+.cm-matrix-cell {
+  min-height: 30px;
+  border-radius: 6px;
+  border: 1px solid var(--cm-border);
+  background-color: var(--cm-bg-surface);
+  color: var(--cm-text-muted);
+  font-family: inherit;
+  font-size: 0.7rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: transform 0.14s ease, background-color 0.14s ease, color 0.14s ease;
+}
+
+.cm-matrix-cell:hover {
+  transform: scale(1.12);
+  border-color: var(--cm-accent-gold);
+  color: var(--cm-text-primary);
+  z-index: 2;
+}
+
+.cm-matrix-cell.visited {
+  background-color: rgba(16, 185, 129, 0.22);
+  border-color: rgba(16, 185, 129, 0.48);
+  color: var(--cm-text-primary);
+}
+
+.cm-matrix-cell.current {
+  background: linear-gradient(135deg, var(--cm-accent-gold), var(--cm-accent-terra));
+  border-color: #fef08a;
+  color: #ffffff;
+  font-weight: 900;
+  transform: scale(1.14);
+  box-shadow: 0 0 12px rgba(251, 191, 36, 0.65);
+  z-index: 3;
+}
+
 @media (max-width: 920px) {
   .cm-calc-grid,
   .cm-grid-2,
@@ -761,6 +1086,24 @@
     border-bottom-left-radius: 0;
     border-bottom-right-radius: 0;
     padding: 18px 14px calc(18px + env(safe-area-inset-bottom));
+  }
+
+  .cm-decade-bar {
+    display: flex;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .cm-decade-bar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .cm-decade-chip {
+    flex-shrink: 0;
+  }
+
+  .cm-cal-years-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

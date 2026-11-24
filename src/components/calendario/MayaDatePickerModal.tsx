@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { calcCholqij } from '../../data/cholqijData';
 import { soundEffects } from '../../utils/soundEffects';
@@ -39,6 +39,7 @@ const MONTHS_ES = [
 ];
 
 const WEEKDAYS_ES = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
+const QUICK_DECADES = [1950, 1960, 1970, 1980, 1990, 2000, 2010, 2020];
 
 function parseIsoParts(iso: string): { year: number; month: number; day: number } {
   const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
@@ -87,6 +88,7 @@ export const MayaDatePickerModal: React.FC<MayaDatePickerModalProps> = ({
   const [viewMode, setViewMode] = useState<PickerView>('days');
   const [yearInput, setYearInput] = useState<string>(String(initialParts.year));
   const [gridAnimKey, setGridAnimKey] = useState<number>(0);
+  const lastWheelRef = useRef<number>(0);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -169,11 +171,29 @@ export const MayaDatePickerModal: React.FC<MayaDatePickerModalProps> = ({
     return cells;
   }, [viewYear, viewMonth]);
 
-  const yearBlockStart = Math.floor(viewYear / 12) * 12;
+  const decadeStart = Math.floor(viewYear / 10) * 10;
   const yearList = useMemo(
-    () => Array.from({ length: 12 }, (_, idx) => yearBlockStart + idx),
-    [yearBlockStart]
+    () => Array.from({ length: 10 }, (_, idx) => decadeStart + idx),
+    [decadeStart]
   );
+
+  const selectDecade = (startYear: number) => {
+    soundEffects.playClick();
+    setViewYear(startYear);
+    setYearInput(String(startYear));
+    setViewMode('years');
+    setGridAnimKey((k) => k + 1);
+  };
+
+  const handleYearsWheel = (e: React.WheelEvent<HTMLDivElement>) => {
+    const now = Date.now();
+    if (now - lastWheelRef.current < 220) return;
+    if (Math.abs(e.deltaY) < 12) return;
+    lastWheelRef.current = now;
+    const step = e.deltaY > 0 ? 10 : -10;
+    setViewYear((y) => Math.max(1000, Math.min(2490, y + step)));
+    setGridAnimKey((k) => k + 1);
+  };
 
   if (!isOpen) return null;
 
@@ -269,28 +289,23 @@ export const MayaDatePickerModal: React.FC<MayaDatePickerModalProps> = ({
           <button
             type="button"
             className="cm-preset-chip"
-            onClick={() => {
-              soundEffects.playClick();
-              setViewYear(2000);
-              setYearInput('2000');
-              setViewMode('years');
-              setGridAnimKey((k) => k + 1);
-            }}
+            onClick={() => selectDecade(2000)}
           >
-            🎂 Década 2000
+            🎂 2000s
           </button>
           <button
             type="button"
             className="cm-preset-chip"
-            onClick={() => {
-              soundEffects.playClick();
-              setViewYear(1990);
-              setYearInput('1990');
-              setViewMode('years');
-              setGridAnimKey((k) => k + 1);
-            }}
+            onClick={() => selectDecade(1990)}
           >
-            🎂 Década 1990
+            🎂 1990s
+          </button>
+          <button
+            type="button"
+            className="cm-preset-chip"
+            onClick={() => selectDecade(1980)}
+          >
+            🎂 1980s
           </button>
         </div>
 
@@ -307,7 +322,7 @@ export const MayaDatePickerModal: React.FC<MayaDatePickerModalProps> = ({
                 setGridAnimKey((k) => k + 1);
               } else {
                 soundEffects.playClick();
-                setViewYear((y) => y - 12);
+                setViewYear((y) => Math.max(1000, y - 10));
                 setGridAnimKey((k) => k + 1);
               }
             }}
@@ -337,7 +352,7 @@ export const MayaDatePickerModal: React.FC<MayaDatePickerModalProps> = ({
                 setGridAnimKey((k) => k + 1);
               }}
             >
-              {viewMode === 'years' ? `${yearBlockStart} – ${yearBlockStart + 11}` : viewYear} ▾
+              {viewMode === 'years' ? `${decadeStart} – ${decadeStart + 9}` : viewYear} ▾
             </button>
           </div>
 
@@ -352,7 +367,7 @@ export const MayaDatePickerModal: React.FC<MayaDatePickerModalProps> = ({
                 setGridAnimKey((k) => k + 1);
               } else {
                 soundEffects.playClick();
-                setViewYear((y) => y + 12);
+                setViewYear((y) => Math.min(2490, y + 10));
                 setGridAnimKey((k) => k + 1);
               }
             }}
@@ -429,25 +444,23 @@ export const MayaDatePickerModal: React.FC<MayaDatePickerModalProps> = ({
           )}
 
           {viewMode === 'years' && (
-            <div>
-              <form onSubmit={handleYearJumpSubmit} className="cm-cal-year-jump">
-                <label htmlFor="cm-year-input" style={{ fontSize: '0.84rem', fontWeight: 600 }}>
-                  Ir directo al año:
-                </label>
-                <input
-                  id="cm-year-input"
-                  type="number"
-                  min={1000}
-                  max={2500}
-                  value={yearInput}
-                  onChange={(e) => setYearInput(e.target.value)}
-                  className="cm-cal-year-input"
-                  placeholder="Ej. 1995"
-                />
-                <button type="submit" className="cm-btn cm-btn-secondary">
-                  Ir
-                </button>
-              </form>
+            <div onWheel={handleYearsWheel}>
+              <div className="cm-decade-bar" role="group" aria-label="Seleccionar década">
+                {QUICK_DECADES.map((dec) => {
+                  const isCurrentDecade = decadeStart === dec;
+                  return (
+                    <button
+                      key={dec}
+                      type="button"
+                      className={`cm-decade-chip ${isCurrentDecade ? 'active' : ''}`}
+                      onClick={() => selectDecade(dec)}
+                    >
+                      {dec}s
+                    </button>
+                  );
+                })}
+              </div>
+
               <div className="cm-cal-years-grid">
                 {yearList.map((yr) => {
                   const isActive = yr === viewYear;
@@ -469,6 +482,25 @@ export const MayaDatePickerModal: React.FC<MayaDatePickerModalProps> = ({
                   );
                 })}
               </div>
+
+              <form onSubmit={handleYearJumpSubmit} className="cm-cal-year-jump">
+                <label htmlFor="cm-year-input" style={{ fontSize: '0.84rem', fontWeight: 600 }}>
+                  O escribe un año exacto:
+                </label>
+                <input
+                  id="cm-year-input"
+                  type="number"
+                  min={1000}
+                  max={2500}
+                  value={yearInput}
+                  onChange={(e) => setYearInput(e.target.value)}
+                  className="cm-cal-year-input"
+                  placeholder="Ej. 1995"
+                />
+                <button type="submit" className="cm-btn cm-btn-secondary">
+                  Ir
+                </button>
+              </form>
             </div>
           )}
         </div>

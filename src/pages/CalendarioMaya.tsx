@@ -6,6 +6,7 @@ import {
   MayaDatePickerModal,
   formatGregorianLongEs,
 } from '../components/calendario/MayaDatePickerModal';
+import { CholqijMechanicsLab } from '../components/calendario/CholqijMechanicsLab';
 import { soundEffects } from '../utils/soundEffects';
 import {
   CHOLQIJ_QUIZ,
@@ -248,9 +249,6 @@ export default function CalendarioMaya() {
     elementFilter === 'Todos'
       ? KICHE_NAWALES
       : KICHE_NAWALES.filter((n) => n.element === elementFilter);
-
-  const simEnergy = ((simDay - 1) % 13) + 1;
-  const simNawal = KICHE_NAWALES[(simDay - 1 + 10) % 20];
 
   return (
     <div className="cm-shell" data-theme={theme}>
@@ -701,65 +699,13 @@ export default function CalendarioMaya() {
               </p>
             </header>
 
-            <section className="cm-card" style={{ marginBottom: '20px' }}>
-              <h2 style={{ marginTop: 0 }}>Simulador Paso a Paso desde 1 B'atz'</h2>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '20px', flexWrap: 'wrap', margin: '14px 0' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <MayaNumeralSvg value={simEnergy} size={62} />
-                  <div>
-                    <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>
-                      {simEnergy} {simNawal.name} {simNawal.emoji}
-                    </div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--cm-text-secondary)' }}>
-                      Día {simDay} de 260
-                    </div>
-                  </div>
-                </div>
-
-                <input
-                  type="range"
-                  min={1}
-                  max={260}
-                  value={simDay}
-                  onChange={(e) => setSimDay(Number(e.target.value))}
-                  style={{ flex: 1, minWidth: '220px' }}
-                  aria-label="Día del ciclo 13 por 20"
-                />
-              </div>
-
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  className="cm-btn cm-btn-primary"
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setSimDay((d) => (d >= 260 ? 1 : d + 1));
-                  }}
-                >
-                  Avanzar 1 día
-                </button>
-                <button
-                  type="button"
-                  className="cm-btn cm-btn-secondary"
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setSimDay(14);
-                  }}
-                >
-                  Ir al Día 14 (1 Ix)
-                </button>
-                <button
-                  type="button"
-                  className="cm-btn cm-btn-secondary"
-                  onClick={() => {
-                    soundEffects.playClick();
-                    setSimDay(21);
-                  }}
-                >
-                  Ir al Día 21 (8 B'atz')
-                </button>
-              </div>
-            </section>
+            <div style={{ marginBottom: '20px' }}>
+              <CholqijMechanicsLab
+                simDay={simDay}
+                onChangeSimDay={setSimDay}
+                renderNumeral={(val) => <MayaNumeralSvg value={val} size={62} />}
+              />
+            </div>
 
             <section className="cm-grid-3">
               <div className="cm-card">
