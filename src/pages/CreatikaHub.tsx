@@ -115,6 +115,17 @@ const CREATIKA_APPS: CreatikaApp[] = [
     path: '/creatika/arte-terapia',
     accentColor: '#10b981',
     gradient: 'linear-gradient(135deg, rgba(16,185,129,0.2) 0%, rgba(56,189,248,0.08) 100%)'
+  },
+  {
+    id: 'calendario-maya',
+    title: "Cholq'ij Lab · Calendario Maya",
+    badge: "Tzolk'in K'iche' · 13×20",
+    tag: 'COSMOVISIÓN & MATEMÁTICA MAYA',
+    desc: 'Calculadora mecánica animada del Cholq’ij (13 energías × 20 nahuales), Haab’, Cuenta Larga, enciclopedia de Nahuales y desafío gamificado.',
+    icon: '☀️',
+    path: '/creatika/calendario-maya',
+    accentColor: '#fbbf24',
+    gradient: 'linear-gradient(135deg, rgba(251,191,36,0.22) 0%, rgba(234,88,12,0.08) 100%)'
   }
 ];
 
