@@ -137,11 +137,12 @@ export function createGearPath(
   const step = (Math.PI * 2) / teeth;
   let d = '';
   for (let i = 0; i < teeth; i++) {
-    const a0 = i * step;
-    const a1 = a0 + step * 0.22;
-    const a2 = a0 + step * 0.32;
-    const a3 = a0 + step * 0.68;
-    const a4 = a0 + step * 0.78;
+    const center = i * step;
+    const a0 = center - step * 0.44;
+    const a1 = center - step * 0.22;
+    const a2 = center - step * 0.14;
+    const a3 = center + step * 0.14;
+    const a4 = center + step * 0.22;
     const p = (r: number, a: number) =>
       `${(cx + r * Math.cos(a)).toFixed(2)} ${(cy + r * Math.sin(a)).toFixed(2)}`;
     d +=

@@ -80,7 +80,7 @@ export default function CalendarioMaya() {
   const prevDateRef = useRef<string>(dateInput);
   const initialRes = useMemo(() => calcCholqij(dateInput), [dateInput]);
   const [angle13, setAngle13] = useState<number>(() => -((initialRes.energy - 1) * (360 / 13)));
-  const [angle20, setAngle20] = useState<number>(() => 180 - initialRes.nawal.index * (360 / 20));
+  const [angle20, setAngle20] = useState<number>(() => 180 + 9 + initialRes.nawal.index * (360 / 20));
   const [autoPlay, setAutoPlay] = useState(false);
 
   // Enciclopedia, Simulador, Quiz y Gamificación XP
@@ -167,7 +167,7 @@ export default function CalendarioMaya() {
       } else {
         const nextRes = calcCholqij(nextIso);
         setAngle13(-((nextRes.energy - 1) * (360 / 13)) - 360);
-        setAngle20(180 - nextRes.nawal.index * (360 / 20) + 180);
+        setAngle20(180 + 9 + nextRes.nawal.index * (360 / 20) + 180);
       }
     }
   }, []);
@@ -196,8 +196,8 @@ export default function CalendarioMaya() {
     return "Iniciado del Cholq'ij";
   }, [xp]);
 
-  const gear13Path = useMemo(() => createGearPath(175, 210, 118, 102, 13), []);
-  const gear20Path = useMemo(() => createGearPath(445, 210, 168, 152, 20), []);
+  const gear13Path = useMemo(() => createGearPath(172, 210, 114, 98, 13), []);
+  const gear20Path = useMemo(() => createGearPath(441, 210, 168, 152, 20), []);
 
   const changeTab = (tab: TabSection) => {
     soundEffects.playClick();
@@ -347,24 +347,24 @@ export default function CalendarioMaya() {
                       </radialGradient>
                     </defs>
 
-                    <circle cx="175" cy="210" r="134" fill="none" stroke="var(--cm-border)" strokeDasharray="4 6" />
-                    <circle cx="445" cy="210" r="184" fill="none" stroke="var(--cm-border)" strokeDasharray="4 6" />
+                    <circle cx="172" cy="210" r="130" fill="none" stroke="var(--cm-border)" strokeDasharray="4 6" />
+                    <circle cx="441" cy="210" r="184" fill="none" stroke="var(--cm-border)" strokeDasharray="4 6" />
 
                     {/* Engranaje de 13 Energías */}
                     <g
                       className="cm-gear-rotator"
                       style={{
                         transform: `rotate(${angle13}deg)`,
-                        transformOrigin: '175px 210px',
+                        transformOrigin: '172px 210px',
                       }}
                     >
                       <path d={gear13Path} fill="url(#cmJadeGrad)" stroke="hsl(42, 80%, 56%)" strokeWidth="2" />
-                      <circle cx="175" cy="210" r="76" fill="var(--cm-bg-surface)" stroke="hsl(42, 80%, 56%)" strokeWidth="2" />
+                      <circle cx="172" cy="210" r="74" fill="var(--cm-bg-surface)" stroke="hsl(42, 80%, 56%)" strokeWidth="2" />
                       {Array.from({ length: 13 }).map((_, i) => {
                         const deg = i * (360 / 13);
                         const rad = (deg * Math.PI) / 180;
-                        const tx = 175 + 88 * Math.cos(rad);
-                        const ty = 210 + 88 * Math.sin(rad);
+                        const tx = 172 + 86 * Math.cos(rad);
+                        const ty = 210 + 86 * Math.sin(rad);
                         const isActive = i + 1 === result.energy;
                         return (
                           <g key={i} transform={`translate(${tx.toFixed(1)}, ${ty.toFixed(1)}) rotate(${deg + 90})`}>
@@ -381,8 +381,8 @@ export default function CalendarioMaya() {
                           </g>
                         );
                       })}
-                      <circle cx="175" cy="210" r="27" fill="var(--cm-accent-jade)" />
-                      <text x="175" y="214" textAnchor="middle" fill="#ffffff" fontSize="11.5" fontWeight="800">
+                      <circle cx="172" cy="210" r="27" fill="var(--cm-accent-jade)" />
+                      <text x="172" y="214" textAnchor="middle" fill="#ffffff" fontSize="11.5" fontWeight="800">
                         13
                       </text>
                     </g>
@@ -392,15 +392,15 @@ export default function CalendarioMaya() {
                       className="cm-gear-rotator"
                       style={{
                         transform: `rotate(${angle20}deg)`,
-                        transformOrigin: '445px 210px',
+                        transformOrigin: '441px 210px',
                       }}
                     >
                       <path d={gear20Path} fill="url(#cmTerraGrad)" stroke="hsl(42, 80%, 56%)" strokeWidth="2" />
-                      <circle cx="445" cy="210" r="122" fill="var(--cm-bg-surface)" stroke="hsl(42, 80%, 56%)" strokeWidth="2" />
+                      <circle cx="441" cy="210" r="122" fill="var(--cm-bg-surface)" stroke="hsl(42, 80%, 56%)" strokeWidth="2" />
                       {KICHE_NAWALES.map((n, i) => {
-                        const deg = i * (360 / 20);
+                        const deg = -i * (360 / 20);
                         const rad = (deg * Math.PI) / 180;
-                        const tx = 445 + 136 * Math.cos(rad);
+                        const tx = 441 + 136 * Math.cos(rad);
                         const ty = 210 + 136 * Math.sin(rad);
                         const isActive = i === result.nawal.index;
                         return (
@@ -418,17 +418,17 @@ export default function CalendarioMaya() {
                           </g>
                         );
                       })}
-                      <circle cx="445" cy="210" r="32" fill="var(--cm-accent-terra)" />
-                      <text x="445" y="214" textAnchor="middle" fill="#ffffff" fontSize="11.5" fontWeight="800">
+                      <circle cx="441" cy="210" r="32" fill="var(--cm-accent-terra)" />
+                      <text x="441" y="214" textAnchor="middle" fill="#ffffff" fontSize="11.5" fontWeight="800">
                         20
                       </text>
                     </g>
 
                     {/* Visor central de engraje */}
                     <g className="cm-pulse-glow">
-                      <rect x="262" y="186" width="52" height="48" rx="12" fill="none" stroke="#fbbf24" strokeWidth="3" />
-                      <polygon points="288,172 281,184 295,184" fill="#fbbf24" />
-                      <text x="288" y="254" textAnchor="middle" fontSize="10" fontWeight="800" fill="var(--cm-text-secondary)">
+                      <rect x="252" y="186" width="56" height="48" rx="12" fill="none" stroke="#fbbf24" strokeWidth="3" />
+                      <polygon points="280,172 273,184 287,184" fill="#fbbf24" />
+                      <text x="280" y="254" textAnchor="middle" fontSize="10" fontWeight="800" fill="var(--cm-text-secondary)">
                         ENGRAJE DEL Q'IJ
                       </text>
                     </g>
@@ -838,6 +838,7 @@ export default function CalendarioMaya() {
         createPortal(
           <div
             className="cm-modal-backdrop"
+            data-theme={theme}
             onClick={closeNawalModal}
             role="dialog"
             aria-modal="true"

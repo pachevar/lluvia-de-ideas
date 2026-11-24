@@ -1,7 +1,8 @@
 /* ============================================================================
    CHOLQ'IJ LAB · CALCULADORA MECÁNICA DEL CALENDARIO MAYA K'ICHE' (CREATIKA)
    ============================================================================ */
-.cm-shell {
+.cm-shell,
+.cm-modal-backdrop {
   --hue-jade: 152;
   --hue-terracotta: 16;
   --hue-indigo: 226;
@@ -36,7 +37,8 @@
   padding-bottom: calc(68px + env(safe-area-inset-bottom));
 }
 
-.cm-shell[data-theme='observatory-night'] {
+.cm-shell[data-theme='observatory-night'],
+.cm-modal-backdrop[data-theme='observatory-night'] {
   --cm-bg-canvas: #070e1f;
   --cm-bg-surface: #0f1a33;
   --cm-bg-elevated: #172747;
@@ -57,7 +59,8 @@
   --cm-shadow-card: 0 8px 24px -4px rgba(0, 0, 0, 0.42);
 }
 
-.cm-shell[data-theme='high-contrast'] {
+.cm-shell[data-theme='high-contrast'],
+.cm-modal-backdrop[data-theme='high-contrast'] {
   --cm-bg-canvas: #ffffff;
   --cm-bg-surface: #f8fafc;
   --cm-bg-elevated: #e2e8f0;
@@ -81,11 +84,19 @@
 .cm-shell h3,
 .cm-shell h4,
 .cm-shell strong,
-.cm-shell label {
+.cm-shell label,
+.cm-modal-backdrop h1,
+.cm-modal-backdrop h2,
+.cm-modal-backdrop h3,
+.cm-modal-backdrop h4,
+.cm-modal-backdrop strong,
+.cm-modal-backdrop label {
   color: var(--cm-text-primary);
 }
 
-.cm-shell p {
+.cm-shell p,
+.cm-modal-backdrop p,
+.cm-modal-backdrop li {
   color: var(--cm-text-secondary);
 }
 
@@ -400,6 +411,7 @@
   border-radius: 24px;
   padding: 24px;
   background-color: var(--cm-bg-surface);
+  color: var(--cm-text-primary);
   border: 1px solid var(--cm-border);
   box-shadow: var(--cm-shadow-soft);
   animation: cmPopIn 0.25s ease-out;
