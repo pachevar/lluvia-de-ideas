@@ -33,6 +33,7 @@ import {
   LuChevronUp,
 } from 'react-icons/lu';
 import LandingTopBar from '../components/landing/LandingTopBar';
+import { LiveStageConsole } from '../components/teatro/LiveStageConsole';
 import { StageMapInteractive } from '../components/teatro/StageMapInteractive';
 import { LiveRescueSimulator } from '../components/teatro/LiveRescueSimulator';
 import { soundEffects } from '../utils/soundEffects';
@@ -84,15 +85,12 @@ const TheaterBrandIcon: React.FC = () => (
 // ============================================================================
 
 interface HomeViewProps {
+  theme: TheaterTheme;
   onNavigate: (route: RouteId) => void;
+  onStudioReward: (reason: string) => void;
 }
 
-const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
-  const [curtainOpen, setCurtainOpen] = useState(true);
-  const [amberBeam, setAmberBeam] = useState(true);
-  const [cyanBeam, setCyanBeam] = useState(true);
-  const [emeraldBeam, setEmeraldBeam] = useState(false);
-
+const HomeView: React.FC<HomeViewProps> = ({ theme, onNavigate, onStudioReward }) => {
   const [pillars, setPillars] = useState<ThermometerItem[]>(INITIAL_THERMOMETER_PILLARS);
 
   const updateScore = (id: string, value: number) => {
@@ -171,84 +169,8 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          {/* Consola Interactiva de Escenario en Vivo */}
-          <div className="el-spotlight-box" aria-label="Consola interactiva de escenario">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--el-guide-light)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
-                🎛️ Consola de Escenario en Vivo
-              </span>
-              <span className={`el-badge ${curtainOpen ? 'el-badge-success' : 'el-badge-challenge'}`}>
-                {curtainOpen ? 'Telón Abierto' : 'Telón Cerrado'}
-              </span>
-            </div>
-
-            <div className={`el-spotlight-stage ${curtainOpen ? 'open' : ''}`}>
-              <div className={`el-beam el-beam-cyan ${cyanBeam ? 'on' : ''}`} />
-              <div className={`el-beam el-beam-amber ${amberBeam ? 'on' : ''}`} />
-              <div className={`el-beam el-beam-emerald ${emeraldBeam ? 'on' : ''}`} />
-
-              <div className="el-curtain-left" />
-              <div className="el-curtain-right" />
-
-              <div className="el-stage-actor">
-                <div style={{ fontSize: '2.1rem', lineHeight: 1 }}>🎭</div>
-                <div style={{ fontSize: '0.76rem', fontWeight: 700, marginTop: '4px', opacity: 0.9 }}>
-                  {amberBeam && cyanBeam
-                    ? 'Escena en Clímax'
-                    : amberBeam
-                      ? 'Foco Protagónico'
-                      : cyanBeam
-                        ? 'Atmósfera Nocturna'
-                        : emeraldBeam
-                          ? 'Bosque / Naturaleza'
-                          : 'Oscuro en Escena'}
-                </div>
-              </div>
-            </div>
-
-            <div className="el-console-btns">
-              <button
-                type="button"
-                className={`el-console-btn ${curtainOpen ? 'on-wisdom' : ''}`}
-                onClick={() => {
-                  soundEffects.playClick();
-                  setCurtainOpen((v) => !v);
-                }}
-              >
-                {curtainOpen ? '🎬 Cerrar Telón' : '🎬 Abrir Telón'}
-              </button>
-              <button
-                type="button"
-                className={`el-console-btn ${amberBeam ? 'on-amber' : ''}`}
-                onClick={() => {
-                  soundEffects.playClick();
-                  setAmberBeam((v) => !v);
-                }}
-              >
-                ☀️ Foco Ámbar
-              </button>
-              <button
-                type="button"
-                className={`el-console-btn ${cyanBeam ? 'on-cyan' : ''}`}
-                onClick={() => {
-                  soundEffects.playClick();
-                  setCyanBeam((v) => !v);
-                }}
-              >
-                💠 Atmósfera Cian
-              </button>
-              <button
-                type="button"
-                className={`el-console-btn ${emeraldBeam ? 'on-emerald' : ''}`}
-                onClick={() => {
-                  soundEffects.playClick();
-                  setEmeraldBeam((v) => !v);
-                }}
-              >
-                🌿 Luz Esmeralda
-              </button>
-            </div>
-          </div>
+          {/* Consola Interactiva de Escenario en Vivo (con vista ampliada) */}
+          <LiveStageConsole theme={theme} onActionReward={onStudioReward} />
         </div>
       </section>
 
@@ -1938,7 +1860,13 @@ export default function TeatroEscolar() {
       </header>
 
       <main className="el-main-container">
-        {route === 'inicio' && <HomeView onNavigate={handleNavClick} />}
+        {route === 'inicio' && (
+          <HomeView
+            theme={theme}
+            onNavigate={handleNavClick}
+            onStudioReward={(reason) => awardXp(20, reason)}
+          />
+        )}
         {route === 'proceso' && (
           <ProcessView checkedItems={checkedItems} onToggleCheck={handleToggleCheck} />
         )}

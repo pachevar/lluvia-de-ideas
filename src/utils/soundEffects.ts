@@ -387,6 +387,103 @@ class SoundManager {
       // Ignorar errores de audio
     }
   }
+
+  /**
+   * Efectos teatrales sintetizados en vivo para la Consola de Escenario (Escena Lab)
+   */
+  public playTheaterFx(fx: 'bell' | 'applause' | 'thunder' | 'drum') {
+    if (this.muted) return;
+    try {
+      this.initContext();
+      if (!this.ctx) return;
+
+      const now = this.ctx.currentTime;
+
+      if (fx === 'bell') {
+        [0, 0.32, 0.64].forEach((offset, idx) => {
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'triangle';
+          osc.frequency.setValueAtTime(idx === 2 ? 1046.5 : 880, now + offset);
+          gain.gain.setValueAtTime(0.001, now + offset);
+          gain.gain.linearRampToValueAtTime(0.16, now + offset + 0.02);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.55);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + offset);
+          osc.stop(now + offset + 0.58);
+        });
+        return;
+      }
+
+      if (fx === 'drum') {
+        [0, 0.22, 0.42, 0.58, 0.72, 0.86].forEach((offset, idx) => {
+          if (!this.ctx) return;
+          const osc = this.ctx.createOscillator();
+          const gain = this.ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(110 + idx * 8, now + offset);
+          osc.frequency.exponentialRampToValueAtTime(52, now + offset + 0.16);
+          gain.gain.setValueAtTime(0.001, now + offset);
+          gain.gain.linearRampToValueAtTime(0.2, now + offset + 0.015);
+          gain.gain.exponentialRampToValueAtTime(0.001, now + offset + 0.18);
+          osc.connect(gain);
+          gain.connect(this.ctx.destination);
+          osc.start(now + offset);
+          osc.stop(now + offset + 0.2);
+        });
+        return;
+      }
+
+      const duration = fx === 'thunder' ? 2.1 : 1.8;
+      const sampleRate = this.ctx.sampleRate;
+      const bufferSize = Math.floor(sampleRate * duration);
+      const buffer = this.ctx.createBuffer(1, bufferSize, sampleRate);
+      const data = buffer.getChannelData(0);
+
+      for (let i = 0; i < bufferSize; i++) {
+        const white = Math.random() * 2 - 1;
+        if (fx === 'applause') {
+          const pulse = 0.65 + 0.35 * Math.sin((i / sampleRate) * 42);
+          data[i] = white * pulse * 0.6;
+        } else {
+          data[i] = white;
+        }
+      }
+
+      const source = this.ctx.createBufferSource();
+      source.buffer = buffer;
+
+      const filter = this.ctx.createBiquadFilter();
+      const gain = this.ctx.createGain();
+
+      if (fx === 'thunder') {
+        filter.type = 'lowpass';
+        filter.frequency.setValueAtTime(240, now);
+        filter.frequency.exponentialRampToValueAtTime(65, now + duration);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.32, now + 0.08);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      } else {
+        filter.type = 'bandpass';
+        filter.frequency.setValueAtTime(1350, now);
+        filter.Q.setValueAtTime(0.85, now);
+        gain.gain.setValueAtTime(0.001, now);
+        gain.gain.linearRampToValueAtTime(0.18, now + 0.2);
+        gain.gain.setValueAtTime(0.16, now + duration * 0.65);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + duration);
+      }
+
+      source.connect(filter);
+      filter.connect(gain);
+      gain.connect(this.ctx.destination);
+      source.start(now);
+      source.stop(now + duration);
+    } catch {
+      // Ignorar errores de audio
+    }
+  }
 }
 
 export const soundEffects = new SoundManager();
