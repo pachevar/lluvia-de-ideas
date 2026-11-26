@@ -39,6 +39,7 @@ const TallerExpresion = React.lazy(() => import('./pages/TallerExpresion'));
 const EmprendimientoAula = React.lazy(() => import('./pages/EmprendimientoAula'));
 const ArteTerapia = React.lazy(() => import('./pages/ArteTerapia'));
 const CalendarioMaya = React.lazy(() => import('./pages/CalendarioMaya'));
+const TeatroEscolar = React.lazy(() => import('./pages/TeatroEscolar'));
 const ContactoQr = React.lazy(() => import('./pages/ContactoQr'));
 
 function App() {
@@ -99,6 +100,8 @@ function App() {
             <Route path="/arte-terapia" element={<ArteTerapia />} />
             <Route path="/creatika/calendario-maya" element={<CalendarioMaya />} />
             <Route path="/calendario-maya" element={<CalendarioMaya />} />
+            <Route path="/creatika/teatro" element={<TeatroEscolar />} />
+            <Route path="/teatro" element={<TeatroEscolar />} />
             <Route path="/creatika/teoria-del-color" element={<ColorTheory />} />
             <Route path="/creatika/creacion-de-personajes" element={<CreacionPersonajes />} />
             <Route path="/creatika/creacion-personajes" element={<CreacionPersonajes />} />

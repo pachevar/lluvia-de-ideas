@@ -126,6 +126,17 @@ const CREATIKA_APPS: CreatikaApp[] = [
     path: '/creatika/calendario-maya',
     accentColor: '#fbbf24',
     gradient: 'linear-gradient(135deg, rgba(251,191,36,0.22) 0%, rgba(234,88,12,0.08) 100%)'
+  },
+  {
+    id: 'teatro-escolar',
+    title: 'Escena Lab · Teatro Escolar',
+    badge: '6 Fases · Ejercicios · Elenco',
+    tag: 'ARTES ESCÉNICAS & MONTAJE',
+    desc: 'Estudio interactivo para montar obras escolares: termómetro escénico, ruta de 6 fases con checklist, laboratorio con cronómetro, distribuidor de grupos y respiración 4-4-4.',
+    icon: '🎭',
+    path: '/creatika/teatro',
+    accentColor: '#be123c',
+    gradient: 'linear-gradient(135deg, rgba(190,18,60,0.22) 0%, rgba(217,119,6,0.08) 100%)'
   }
 ];
 
