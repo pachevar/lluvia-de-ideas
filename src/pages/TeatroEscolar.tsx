@@ -33,6 +33,8 @@ import {
   LuChevronUp,
 } from 'react-icons/lu';
 import LandingTopBar from '../components/landing/LandingTopBar';
+import { StageMapInteractive } from '../components/teatro/StageMapInteractive';
+import { LiveRescueSimulator } from '../components/teatro/LiveRescueSimulator';
 import { soundEffects } from '../utils/soundEffects';
 import {
   DEPARTMENTS,
@@ -52,7 +54,10 @@ import {
 } from '../data/teatroData';
 import './TeatroEscolar.css';
 
+type TheaterTheme = 'sutz-night' | 'classroom-light' | 'high-contrast';
+
 const CHECKLIST_STORAGE_KEY = 'creatika_escenalab_checklist';
+const XP_STORAGE_KEY = 'creatika_escenalab_xp';
 
 const TheaterBrandIcon: React.FC = () => (
   <svg
@@ -61,7 +66,7 @@ const TheaterBrandIcon: React.FC = () => (
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    strokeWidth="1.9"
+    strokeWidth="2"
     strokeLinecap="round"
     strokeLinejoin="round"
     aria-hidden="true"
@@ -75,7 +80,7 @@ const TheaterBrandIcon: React.FC = () => (
 );
 
 // ============================================================================
-// VISTA 1: INICIO (Fundamentos + Termómetro de Preparación Escénica)
+// VISTA 1: INICIO (Escenario Interactivo de Reflectores + Termómetro Radial)
 // ============================================================================
 
 interface HomeViewProps {
@@ -83,6 +88,11 @@ interface HomeViewProps {
 }
 
 const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
+  const [curtainOpen, setCurtainOpen] = useState(true);
+  const [amberBeam, setAmberBeam] = useState(true);
+  const [cyanBeam, setCyanBeam] = useState(true);
+  const [emeraldBeam, setEmeraldBeam] = useState(false);
+
   const [pillars, setPillars] = useState<ThermometerItem[]>(INITIAL_THERMOMETER_PILLARS);
 
   const updateScore = (id: string, value: number) => {
@@ -93,13 +103,17 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
   const totalScore = useMemo(() => pillars.reduce((acc, item) => acc + item.score, 0), [pillars]);
   const percentage = Math.round((totalScore / (pillars.length * 5)) * 100);
 
+  const gaugeRadius = 62;
+  const gaugeCirc = 2 * Math.PI * gaugeRadius;
+  const gaugeOffset = gaugeCirc * (1 - percentage / 100);
+
   const diagnosis = useMemo(() => {
     if (percentage < 45) {
       return {
         stage: 'Fase Semilla: Construyendo los cimientos',
-        color: 'var(--el-accent-ochre-dark)',
+        color: 'var(--el-challenge)',
         message:
-          'Están en el momento ideal para organizar el proceso con método. Antes de memorizar diálogos, dediquen dos sesiones a cohesión grupal y a repartir roles técnicos.',
+          'Momento ideal para organizar el proceso con método. Antes de memorizar diálogos, dediquen dos sesiones a cohesión grupal y a repartir roles técnicos.',
         recommendedRoute: 'proceso' as RouteId,
         actionLabel: 'Explorar la Ruta de Montaje',
       };
@@ -107,7 +121,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     if (percentage < 75) {
       return {
         stage: 'Fase Ensayo Activo: En crecimiento firme',
-        color: 'var(--el-accent-burgundy)',
+        color: 'var(--el-guide-light)',
         message:
           'El grupo ya tiene impulso y base creativa. Ahora conviene reforzar el entrenamiento de voz/cuerpo y asegurar que ningún área técnica quede para la última semana.',
         recommendedRoute: 'ejercicios' as RouteId,
@@ -116,9 +130,9 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
     }
     return {
       stage: 'Fase Compañía Lista: Estándar profesional',
-      color: 'var(--el-accent-sage)',
+      color: 'var(--el-success-light)',
       message:
-        '¡Excelente nivel de organización! Tu grupo demuestra cultura teatral sólida. Afinen los detalles de escucha escénica, transiciones y control de nervios para brillar en el estreno.',
+        '¡Excelente nivel de organización! Tu grupo demuestra cultura teatral sólida. Afinen los detalles de escucha escénica, transiciones y control de nervios para el estreno.',
       recommendedRoute: 'consejos' as RouteId,
       actionLabel: 'Revisar Consejos de Escena',
     };
@@ -131,13 +145,13 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
         <div className="el-hero-grid">
           <div>
             <span className="el-section-eyebrow">
-              <LuSparkles size={14} /> Estudio Teatral Escolar
+              <LuSparkles size={14} /> Suite Creatika · Estudio Teatral Sutz
             </span>
             <h1 className="el-page-title">
               Del aula al escenario con oficio, método y emoción
             </h1>
             <p className="el-page-lead">
-              <strong>Escena Lab</strong> es una guía práctica diseñada para estudiantes de nivel medio y docentes que desean montar una obra escolar con la disciplina, claridad estética y trabajo colaborativo de una compañía profesional.
+              <strong>Escena Lab</strong> integra el neurodiseño visual de Sutz con herramientas prácticas para montar una obra escolar: escenario interactivo, ruta de 6 fases, cronómetro de ensayos, distribuidor de elenco y simulador en vivo.
             </p>
             <div className="el-hero-actions">
               <button
@@ -157,29 +171,88 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             </div>
           </div>
 
-          <div className="el-hero-pillars">
-            <div className="el-pillar-mini">
-              <strong>Enfoque Profesional Adaptado</strong>
-              <span>
-                Metodología real de dirección, ensayo y producción pensada para tiempos escolares.
+          {/* Consola Interactiva de Escenario en Vivo */}
+          <div className="el-spotlight-box" aria-label="Consola interactiva de escenario">
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.76rem', fontWeight: 800, color: 'var(--el-guide-light)', letterSpacing: '0.06em', textTransform: 'uppercase' }}>
+                🎛️ Consola de Escenario en Vivo
+              </span>
+              <span className={`el-badge ${curtainOpen ? 'el-badge-success' : 'el-badge-challenge'}`}>
+                {curtainOpen ? 'Telón Abierto' : 'Telón Cerrado'}
               </span>
             </div>
-            <div className="el-pillar-mini" style={{ borderLeftColor: 'var(--el-accent-burgundy)' }}>
-              <strong>Herramientas Listas para el Aula</strong>
-              <span>
-                Temporizador de ejercicios, checklists de montaje y distribuidor automático de elenco.
-              </span>
+
+            <div className={`el-spotlight-stage ${curtainOpen ? 'open' : ''}`}>
+              <div className={`el-beam el-beam-cyan ${cyanBeam ? 'on' : ''}`} />
+              <div className={`el-beam el-beam-amber ${amberBeam ? 'on' : ''}`} />
+              <div className={`el-beam el-beam-emerald ${emeraldBeam ? 'on' : ''}`} />
+
+              <div className="el-curtain-left" />
+              <div className="el-curtain-right" />
+
+              <div className="el-stage-actor">
+                <div style={{ fontSize: '2.1rem', lineHeight: 1 }}>🎭</div>
+                <div style={{ fontSize: '0.76rem', fontWeight: 700, marginTop: '4px', opacity: 0.9 }}>
+                  {amberBeam && cyanBeam
+                    ? 'Escena en Clímax'
+                    : amberBeam
+                      ? 'Foco Protagónico'
+                      : cyanBeam
+                        ? 'Atmósfera Nocturna'
+                        : emeraldBeam
+                          ? 'Bosque / Naturaleza'
+                          : 'Oscuro en Escena'}
+                </div>
+              </div>
             </div>
-            <div className="el-pillar-mini" style={{ borderLeftColor: 'var(--el-accent-sage)' }}>
-              <strong>Todos Tienen un Lugar en Escena</strong>
-              <span>
-                El teatro escolar integra actuación, diseño, sonido, gestión y liderazgo colectivo.
-              </span>
+
+            <div className="el-console-btns">
+              <button
+                type="button"
+                className={`el-console-btn ${curtainOpen ? 'on-wisdom' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setCurtainOpen((v) => !v);
+                }}
+              >
+                {curtainOpen ? '🎬 Cerrar Telón' : '🎬 Abrir Telón'}
+              </button>
+              <button
+                type="button"
+                className={`el-console-btn ${amberBeam ? 'on-amber' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setAmberBeam((v) => !v);
+                }}
+              >
+                ☀️ Foco Ámbar
+              </button>
+              <button
+                type="button"
+                className={`el-console-btn ${cyanBeam ? 'on-cyan' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setCyanBeam((v) => !v);
+                }}
+              >
+                💠 Atmósfera Cian
+              </button>
+              <button
+                type="button"
+                className={`el-console-btn ${emeraldBeam ? 'on-emerald' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setEmeraldBeam((v) => !v);
+                }}
+              >
+                🌿 Luz Esmeralda
+              </button>
             </div>
           </div>
         </div>
       </section>
 
+      {/* Accesos directos codificados por semántica Sutz */}
       <section aria-label="Módulos principales">
         <div className="el-modules-grid">
           <button
@@ -188,12 +261,15 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('proceso')}
           >
             <div>
-              <div className="el-module-icon-wrap">
+              <div
+                className="el-module-icon-wrap"
+                style={{ backgroundColor: 'var(--el-challenge-soft)', color: 'var(--el-challenge)' }}
+              >
                 <LuLayers size={22} />
               </div>
               <h3>El Proceso Teatral</h3>
               <p>
-                Recorre las 6 fases del montaje desde la elección del guion hasta el estreno, con listas de verificación.
+                Recorre las 6 fases del montaje desde la elección del guion hasta el estreno, con checklist y XP.
               </p>
             </div>
             <span className="el-module-link">
@@ -207,12 +283,15 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('ejercicios')}
           >
             <div>
-              <div className="el-module-icon-wrap">
+              <div
+                className="el-module-icon-wrap"
+                style={{ backgroundColor: 'var(--el-guide-soft)', color: 'var(--el-guide-light)' }}
+              >
                 <LuClock size={22} />
               </div>
               <h3>Laboratorio de Ejercicios</h3>
               <p>
-                Dinámicas filtrables de cuerpo, voz, improvisación y cohesión con cronómetro de ensayo integrado.
+                8 dinámicas prácticas de cuerpo, voz, improvisación y cohesión con cronómetro circular interactivo.
               </p>
             </div>
             <span className="el-module-link">
@@ -226,12 +305,15 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('organizacion')}
           >
             <div>
-              <div className="el-module-icon-wrap">
+              <div
+                className="el-module-icon-wrap"
+                style={{ backgroundColor: 'var(--el-success-soft)', color: 'var(--el-success-light)' }}
+              >
                 <LuUsers size={22} />
               </div>
               <h3>Organización de Grupos</h3>
               <p>
-                Explora los 6 departamentos teatrales y calcula automáticamente el reparto ideal para tu salón.
+                Plano interactivo del escenario, 6 departamentos, distribuidor automático de elenco y plan de 8 semanas.
               </p>
             </div>
             <span className="el-module-link">
@@ -245,31 +327,35 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             onClick={() => onNavigate('consejos')}
           >
             <div>
-              <div className="el-module-icon-wrap">
+              <div
+                className="el-module-icon-wrap"
+                style={{ backgroundColor: 'var(--el-wisdom-soft)', color: 'var(--el-wisdom)' }}
+              >
                 <LuCompass size={22} />
               </div>
               <h3>Consejos de Escena</h3>
               <p>
-                Reglas de oro de proyección, salvavidas si alguien olvida su texto y respiración 4-4-4 guiada.
+                Simulador de salvavidas en vivo, reglas de oro de proyección y respiración 4-4-4 multicolor.
               </p>
             </div>
             <span className="el-module-link">
-              Leer reglas de oro <LuChevronRight size={15} />
+              Explorar consejos <LuChevronRight size={15} />
             </span>
           </button>
         </div>
       </section>
 
+      {/* Termómetro con medidor radial SVG */}
       <section className="el-card" aria-label="Termómetro de Preparación Escénica">
         <div style={{ marginBottom: '1.25rem' }}>
           <span className="el-section-eyebrow">
             <LuTarget size={14} /> Diagnóstico Interactivo
           </span>
-          <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.65rem', margin: '0 0 0.35rem' }}>
+          <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.6rem', margin: '0 0 0.35rem' }}>
             Termómetro de Preparación Escénica
           </h2>
-          <p style={{ margin: 0, color: 'var(--el-text-secondary)', fontSize: '0.95rem' }}>
-            Evalúa del 1 (en inicio) al 5 (consolidado) cómo se encuentra tu grupo hoy para recibir una recomendación práctica.
+          <p style={{ margin: 0, fontSize: '0.94rem' }}>
+            Evalúa del 1 (en inicio) al 5 (consolidado) cómo se encuentra tu grupo hoy para recibir una ruta recomendada.
           </p>
         </div>
 
@@ -278,10 +364,10 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
             {pillars.map((item) => (
               <div key={item.id} className="el-thermo-row">
                 <div className="el-thermo-header">
-                  <strong style={{ fontSize: '0.95rem' }}>{item.label}</strong>
-                  <span className="el-badge el-badge-ochre">{item.score} / 5</span>
+                  <strong style={{ fontSize: '0.94rem' }}>{item.label}</strong>
+                  <span className="el-badge el-badge-challenge">{item.score} / 5</span>
                 </div>
-                <div style={{ fontSize: '0.84rem', color: 'var(--el-text-muted)' }}>
+                <div style={{ fontSize: '0.83rem', color: 'var(--el-text-muted)' }}>
                   {item.hint}
                 </div>
                 <div
@@ -305,38 +391,44 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
           </div>
 
           <div className="el-thermo-result-box">
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-              <span
-                style={{
-                  fontSize: '0.82rem',
-                  fontWeight: 700,
-                  textTransform: 'uppercase',
-                  letterSpacing: '0.08em',
-                  color: 'var(--el-text-muted)',
-                }}
-              >
-                Nivel de Preparación
-              </span>
-              <span
-                style={{
-                  fontFamily: 'var(--el-font-serif)',
-                  fontSize: '2.1rem',
-                  fontWeight: 700,
-                  color: 'var(--el-accent-burgundy)',
-                }}
-              >
-                {percentage}%
-              </span>
+            <div className="el-gauge-wrap">
+              <svg width="152" height="152" viewBox="0 0 152 152" aria-hidden="true">
+                <circle
+                  cx="76"
+                  cy="76"
+                  r={gaugeRadius}
+                  fill="none"
+                  stroke="var(--el-border)"
+                  strokeWidth="12"
+                />
+                <circle
+                  cx="76"
+                  cy="76"
+                  r={gaugeRadius}
+                  fill="none"
+                  stroke={diagnosis.color}
+                  strokeWidth="12"
+                  strokeLinecap="round"
+                  strokeDasharray={gaugeCirc}
+                  strokeDashoffset={gaugeOffset}
+                  transform="rotate(-90 76 76)"
+                  style={{ transition: 'stroke-dashoffset 420ms ease, stroke 300ms ease' }}
+                />
+              </svg>
+              <div className="el-gauge-label">
+                <span style={{ fontFamily: 'var(--el-font-serif)', fontSize: '2rem', fontWeight: 800, color: diagnosis.color }}>
+                  {percentage}%
+                </span>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--el-text-muted)', textTransform: 'uppercase' }}>
+                  Preparación
+                </span>
+              </div>
             </div>
 
-            <div className="el-thermo-meter-track" aria-hidden="true">
-              <div className="el-thermo-meter-fill" style={{ width: `${percentage}%` }} />
-            </div>
-
-            <h3 style={{ margin: '0.75rem 0 0.45rem', fontSize: '1.12rem', color: diagnosis.color }}>
+            <h3 style={{ margin: '0.25rem 0 0.45rem', fontSize: '1.08rem', color: diagnosis.color }}>
               {diagnosis.stage}
             </h3>
-            <p style={{ margin: '0 0 1.25rem', fontSize: '0.93rem', color: 'var(--el-text-secondary)' }}>
+            <p style={{ margin: '0 0 1.25rem', fontSize: '0.9rem' }}>
               {diagnosis.message}
             </p>
 
@@ -356,7 +448,7 @@ const HomeView: React.FC<HomeViewProps> = ({ onNavigate }) => {
 };
 
 // ============================================================================
-// VISTA 2: EL PROCESO TEATRAL (6 Fases + Checklist Persistente)
+// VISTA 2: EL PROCESO TEATRAL (6 Fases + Checklist Persistente + XP)
 // ============================================================================
 
 interface ProcessViewProps {
@@ -392,7 +484,7 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
         </span>
         <h1 className="el-page-title">El Proceso Teatral en 6 Fases</h1>
         <p className="el-page-lead">
-          Un montaje exitoso no ocurre por improvisación de última hora. Sigue esta ruta paso a paso y marca los hitos que tu grupo vaya completando.
+          Un montaje exitoso se construye con método. Recorre cada estación y marca los hitos completados por tu compañía escolar.
         </p>
       </div>
 
@@ -401,13 +493,13 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
           <strong style={{ fontSize: '0.98rem', display: 'block' }}>
             Progreso de tu Montaje Escolar
           </strong>
-          <span style={{ fontSize: '0.86rem', color: 'var(--el-text-secondary)' }}>
+          <span style={{ fontSize: '0.86rem', color: 'var(--el-text-muted)' }}>
             {completedChecks} de {totalChecks} hitos clave completados ({globalPercent}%)
           </span>
         </div>
         <div style={{ flex: '1 1 260px', maxWidth: '380px' }}>
-          <div className="el-thermo-meter-track" style={{ margin: 0 }}>
-            <div className="el-thermo-meter-fill" style={{ width: `${globalPercent}%` }} />
+          <div className="el-meter-track">
+            <div className="el-meter-fill" style={{ width: `${globalPercent}%` }} />
           </div>
         </div>
       </div>
@@ -422,7 +514,7 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
               type="button"
               role="tab"
               aria-selected={activePhaseId === phase.id}
-              className={`el-phase-tab ${activePhaseId === phase.id ? 'active' : ''}`}
+              className={`el-phase-tab ${activePhaseId === phase.id ? 'active' : ''} ${isFullyDone ? 'done' : ''}`}
               onClick={() => {
                 soundEffects.playClick();
                 setActivePhaseId(phase.id);
@@ -430,7 +522,7 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
             >
               <span className="el-phase-num">
                 <span>Fase 0{phase.id}</span>
-                {isFullyDone && <LuCircleCheck size={14} />}
+                {isFullyDone && <LuCircleCheck size={15} color="var(--el-success-light)" />}
               </span>
               <span className="el-phase-tab-title">{phase.title}</span>
             </button>
@@ -439,7 +531,7 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
       </div>
 
       <div key={activePhase.id} className="el-phase-detail-grid el-view-animate">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
           <div className="el-card">
             <div
               style={{
@@ -451,40 +543,38 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
                 marginBottom: '0.65rem',
               }}
             >
-              <span className="el-badge el-badge-burgundy">Fase 0{activePhase.id}</span>
-              <span className="el-badge el-badge-ochre">
+              <span className="el-badge el-badge-challenge">Fase 0{activePhase.id}</span>
+              <span className="el-badge el-badge-guide">
                 <LuCalendar size={13} /> {activePhase.durationHint}
               </span>
             </div>
-            <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.65rem', margin: '0 0 0.25rem' }}>
+            <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.6rem', margin: '0 0 0.25rem' }}>
               {activePhase.title}
             </h2>
-            <p style={{ margin: '0 0 1rem', color: 'var(--el-text-muted)', fontSize: '0.92rem' }}>
+            <p style={{ margin: '0 0 1rem', color: 'var(--el-text-muted)', fontSize: '0.9rem' }}>
               {activePhase.subtitle}
             </p>
             <div
               style={{
-                background: 'var(--el-surface-cream)',
+                background: 'var(--el-surface-elevated)',
                 padding: '1rem 1.15rem',
                 borderRadius: 'var(--el-radius-sm)',
-                borderLeft: '4px solid var(--el-accent-burgundy)',
+                borderLeft: '4px solid var(--el-guide-light)',
               }}
             >
               <strong
                 style={{
                   display: 'block',
-                  fontSize: '0.84rem',
+                  fontSize: '0.8rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.06em',
-                  color: 'var(--el-accent-burgundy)',
+                  color: 'var(--el-guide-light)',
                   marginBottom: '0.25rem',
                 }}
               >
                 Objetivo Pedagógico y Artístico
               </strong>
-              <p style={{ margin: 0, fontSize: '0.95rem', color: 'var(--el-text-charcoal)' }}>
-                {activePhase.objective}
-              </p>
+              <p style={{ margin: 0, fontSize: '0.94rem' }}>{activePhase.objective}</p>
             </div>
           </div>
 
@@ -492,18 +582,18 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
             <h3
               style={{
                 margin: '0 0 0.35rem',
-                fontSize: '1.05rem',
+                fontSize: '1.04rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
               }}
             >
-              <LuBookOpen size={18} color="var(--el-accent-sage)" /> Entregables Prácticos
+              <LuBookOpen size={18} color="var(--el-success-light)" /> Entregables Prácticos
             </h3>
             <ul className="el-list-styled">
               {activePhase.deliverables.map((item, idx) => (
                 <li key={idx}>
-                  <LuCheck size={16} color="var(--el-accent-sage)" style={{ flexShrink: 0, marginTop: '4px' }} />
+                  <LuCheck size={16} color="var(--el-success-light)" style={{ flexShrink: 0, marginTop: '4px' }} />
                   <span>{item}</span>
                 </li>
               ))}
@@ -513,18 +603,18 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
           <div
             className="el-card"
             style={{
-              borderColor: 'var(--el-accent-ochre-border)',
-              backgroundColor: 'hsl(38, 60%, 98%)',
+              borderColor: 'var(--el-error-border)',
+              backgroundColor: 'var(--el-error-soft)',
             }}
           >
             <h3
               style={{
                 margin: '0 0 0.35rem',
-                fontSize: '1.05rem',
+                fontSize: '1.04rem',
                 display: 'flex',
                 alignItems: 'center',
                 gap: '0.5rem',
-                color: 'var(--el-accent-ochre-dark)',
+                color: 'var(--el-error)',
               }}
             >
               <LuTriangleAlert size={18} /> Errores Comunes a Evitar
@@ -532,7 +622,7 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
             <ul className="el-list-styled">
               {activePhase.commonMistakes.map((mistake, idx) => (
                 <li key={idx}>
-                  <span style={{ color: 'var(--el-accent-ochre-dark)', fontWeight: 700 }}>•</span>
+                  <span style={{ color: 'var(--el-error)', fontWeight: 800 }}>•</span>
                   <span>{mistake}</span>
                 </li>
               ))}
@@ -541,14 +631,14 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
         </div>
 
         <div className="el-card" style={{ height: 'fit-content' }}>
-          <span className="el-badge el-badge-sage" style={{ marginBottom: '0.65rem' }}>
-            Lista de Verificación
+          <span className="el-badge el-badge-success" style={{ marginBottom: '0.65rem' }}>
+            ✓ Lista de Verificación (+15 XP c/u)
           </span>
-          <h3 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.3rem', margin: '0 0 0.4rem' }}>
+          <h3 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.28rem', margin: '0 0 0.4rem' }}>
             Control de Calidad — Fase {activePhase.id}
           </h3>
-          <p style={{ margin: '0 0 1.15rem', fontSize: '0.88rem', color: 'var(--el-text-secondary)' }}>
-            Marca cada punto conforme tu grupo lo logre en clase o ensayo (se guarda automáticamente).
+          <p style={{ margin: '0 0 1.15rem', fontSize: '0.88rem' }}>
+            Marca cada logro conforme tu grupo lo complete en clase o ensayo (se guarda automáticamente).
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
@@ -565,7 +655,7 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
                   {isChecked ? (
                     <LuCircleCheck
                       size={20}
-                      color="var(--el-accent-sage)"
+                      color="var(--el-success-light)"
                       style={{ flexShrink: 0, marginTop: '2px' }}
                     />
                   ) : (
@@ -586,16 +676,15 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
               display: 'flex',
               justifyContent: 'space-between',
               gap: '0.75rem',
-              marginTop: '1.5rem',
-              paddingTop: '1.15rem',
-              borderTop: '1px solid var(--el-border-subtle)',
+              marginTop: '1.45rem',
+              paddingTop: '1.1rem',
+              borderTop: '1px solid var(--el-border)',
             }}
           >
             <button
               type="button"
               className="el-btn el-btn-secondary el-btn-sm"
               disabled={activePhaseId === 1}
-              style={{ opacity: activePhaseId === 1 ? 0.45 : 1 }}
               onClick={() => {
                 soundEffects.playClick();
                 setActivePhaseId((prev) => Math.max(1, prev - 1));
@@ -607,7 +696,6 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
               type="button"
               className="el-btn el-btn-primary el-btn-sm"
               disabled={activePhaseId === 6}
-              style={{ opacity: activePhaseId === 6 ? 0.45 : 1 }}
               onClick={() => {
                 soundEffects.playClick();
                 setActivePhaseId((prev) => Math.min(6, prev + 1));
@@ -623,16 +711,21 @@ const ProcessView: React.FC<ProcessViewProps> = ({ checkedItems, onToggleCheck }
 };
 
 // ============================================================================
-// VISTA 3: LABORATORIO DE EJERCICIOS (Filtros + Temporizador de Ensayo)
+// VISTA 3: LABORATORIO DE EJERCICIOS (Anillo SVG + Pasos Interactivos)
 // ============================================================================
 
-const ExercisesView: React.FC = () => {
+interface ExercisesViewProps {
+  onExerciseDone: (title: string) => void;
+}
+
+const ExercisesView: React.FC<ExercisesViewProps> = ({ onExerciseDone }) => {
   const [selectedCategory, setSelectedCategory] = useState<ExerciseCategory>('Todos');
   const [activeExercise, setActiveExercise] = useState<TheaterExercise>(THEATER_EXERCISES[0]);
   const [totalSeconds, setTotalSeconds] = useState<number>(THEATER_EXERCISES[0].durationMinutes * 60);
   const [secondsLeft, setSecondsLeft] = useState<number>(THEATER_EXERCISES[0].durationMinutes * 60);
   const [isRunning, setIsRunning] = useState<boolean>(false);
   const [timerFinished, setTimerFinished] = useState<boolean>(false);
+  const [checkedSteps, setCheckedSteps] = useState<Record<number, boolean>>({});
 
   const filteredExercises = useMemo(() => {
     if (selectedCategory === 'Todos') return THEATER_EXERCISES;
@@ -647,6 +740,7 @@ const ExercisesView: React.FC = () => {
           setIsRunning(false);
           setTimerFinished(true);
           soundEffects.playSuccess();
+          onExerciseDone(activeExercise.title);
           return 0;
         }
         return prev - 1;
@@ -654,7 +748,7 @@ const ExercisesView: React.FC = () => {
     }, 1000);
 
     return () => window.clearInterval(interval);
-  }, [isRunning]);
+  }, [isRunning, activeExercise.title, onExerciseDone]);
 
   const loadExerciseInTimer = (exercise: TheaterExercise) => {
     soundEffects.playClick();
@@ -664,6 +758,7 @@ const ExercisesView: React.FC = () => {
     setSecondsLeft(secs);
     setIsRunning(false);
     setTimerFinished(false);
+    setCheckedSteps({});
   };
 
   const resetTimer = () => {
@@ -688,7 +783,10 @@ const ExercisesView: React.FC = () => {
     return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
   };
 
-  const timerProgress = totalSeconds > 0 ? ((totalSeconds - secondsLeft) / totalSeconds) * 100 : 0;
+  const ringRadius = 78;
+  const ringCirc = 2 * Math.PI * ringRadius;
+  const progressRatio = totalSeconds > 0 ? secondsLeft / totalSeconds : 0;
+  const ringOffset = ringCirc * (1 - progressRatio);
 
   return (
     <div className="el-view-animate">
@@ -698,7 +796,7 @@ const ExercisesView: React.FC = () => {
         </span>
         <h1 className="el-page-title">Laboratorio de Ejercicios Teatrales</h1>
         <p className="el-page-lead">
-          Selecciona una categoría, lee las instrucciones paso a paso y utiliza el temporizador integrado para dirigir el entrenamiento directamente en el salón o escenario.
+          Filtra por categoría, carga una dinámica en el cronómetro circular y marca cada paso conforme guías al grupo.
         </p>
       </div>
 
@@ -727,8 +825,8 @@ const ExercisesView: React.FC = () => {
                 key={ex.id}
                 className="el-card"
                 style={{
-                  borderColor: isSelected ? 'var(--el-accent-burgundy)' : undefined,
-                  backgroundColor: isSelected ? 'hsl(350, 50%, 99%)' : undefined,
+                  borderColor: isSelected ? 'var(--el-challenge)' : undefined,
+                  boxShadow: isSelected ? '0 0 18px rgba(245, 158, 11, 0.18)' : undefined,
                 }}
               >
                 <div
@@ -742,9 +840,9 @@ const ExercisesView: React.FC = () => {
                   }}
                 >
                   <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
-                    <span className="el-badge el-badge-burgundy">{ex.category}</span>
-                    <span className="el-badge el-badge-ochre">Nivel {ex.level}</span>
-                    <span className="el-badge el-badge-sage">
+                    <span className="el-badge el-badge-guide">{ex.category}</span>
+                    <span className="el-badge el-badge-wisdom">Nivel {ex.level}</span>
+                    <span className="el-badge el-badge-success">
                       <LuClock size={12} /> {ex.durationMinutes} min
                     </span>
                   </div>
@@ -753,14 +851,14 @@ const ExercisesView: React.FC = () => {
                     className={`el-btn el-btn-sm ${isSelected ? 'el-btn-primary' : 'el-btn-secondary'}`}
                     onClick={() => loadExerciseInTimer(ex)}
                   >
-                    {isSelected ? 'En el temporizador' : 'Cargar en cronómetro'}
+                    {isSelected ? '✓ En cronómetro' : 'Cargar en cronómetro'}
                   </button>
                 </div>
 
-                <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.28rem', margin: '0 0 0.4rem' }}>
+                <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.25rem', margin: '0 0 0.4rem' }}>
                   {ex.title}
                 </h2>
-                <p style={{ margin: '0 0 0.85rem', fontSize: '0.92rem', color: 'var(--el-text-secondary)' }}>
+                <p style={{ margin: '0 0 0.85rem', fontSize: '0.92rem' }}>
                   <strong>Objetivo:</strong> {ex.objective}
                 </p>
 
@@ -768,8 +866,8 @@ const ExercisesView: React.FC = () => {
                   style={{
                     margin: '0 0 0.9rem',
                     paddingLeft: '1.25rem',
-                    color: 'var(--el-text-charcoal)',
-                    fontSize: '0.91rem',
+                    color: 'var(--el-text-secondary)',
+                    fontSize: '0.9rem',
                     display: 'flex',
                     flexDirection: 'column',
                     gap: '0.35rem',
@@ -780,21 +878,10 @@ const ExercisesView: React.FC = () => {
                   ))}
                 </ol>
 
-                <div
-                  style={{
-                    background: 'var(--el-surface-cream)',
-                    padding: '0.7rem 0.9rem',
-                    borderRadius: 'var(--el-radius-sm)',
-                    fontSize: '0.85rem',
-                    color: 'var(--el-text-secondary)',
-                    display: 'flex',
-                    gap: '0.5rem',
-                    alignItems: 'flex-start',
-                  }}
-                >
+                <div className="el-tip-callout" style={{ display: 'flex', gap: '0.5rem', alignItems: 'flex-start' }}>
                   <LuLightbulb
                     size={16}
-                    color="var(--el-accent-ochre-dark)"
+                    color="var(--el-guide-light)"
                     style={{ flexShrink: 0, marginTop: '2px' }}
                   />
                   <span>
@@ -807,40 +894,66 @@ const ExercisesView: React.FC = () => {
         </div>
 
         <aside className="el-card el-timer-sticky" aria-label="Temporizador de ensayo">
-          <span className="el-badge el-badge-burgundy">Temporizador de Ensayo</span>
-          <h3 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.25rem', margin: '0.6rem 0 0.2rem' }}>
+          <span className="el-badge el-badge-challenge">⏱ Temporizador de Ensayo</span>
+          <h3 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.22rem', margin: '0.6rem 0 0.2rem' }}>
             {activeExercise.title}
           </h3>
-          <p style={{ margin: 0, fontSize: '0.84rem', color: 'var(--el-text-muted)' }}>
-            {activeExercise.category} • Sugerido: {activeExercise.durationMinutes} min
+          <p style={{ margin: 0, fontSize: '0.83rem', color: 'var(--el-text-muted)' }}>
+            {activeExercise.category} · Sugerido: {activeExercise.durationMinutes} min
           </p>
 
-          <div className="el-timer-display" aria-live="polite">
-            {formatTime(secondsLeft)}
-          </div>
-
-          <div className="el-timer-progress-bar">
-            <div className="el-timer-progress-fill" style={{ width: `${timerProgress}%` }} />
+          {/* Reloj circular SVG */}
+          <div className="el-timer-ring-wrap">
+            <svg width="184" height="184" viewBox="0 0 184 184" aria-hidden="true">
+              <circle
+                cx="92"
+                cy="92"
+                r={ringRadius}
+                fill="none"
+                stroke="var(--el-surface-elevated)"
+                strokeWidth="12"
+              />
+              <circle
+                cx="92"
+                cy="92"
+                r={ringRadius}
+                fill="none"
+                stroke={timerFinished ? 'var(--el-success-light)' : isRunning ? 'var(--el-challenge)' : 'var(--el-guide-light)'}
+                strokeWidth="12"
+                strokeLinecap="round"
+                strokeDasharray={ringCirc}
+                strokeDashoffset={ringOffset}
+                transform="rotate(-90 92 92)"
+                style={{ transition: 'stroke-dashoffset 400ms linear, stroke 250ms ease' }}
+              />
+            </svg>
+            <div className="el-timer-ring-center" aria-live="polite">
+              <span className="el-timer-digits">{formatTime(secondsLeft)}</span>
+              <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--el-text-muted)', marginTop: '4px' }}>
+                {timerFinished ? '¡COMPLETADO!' : isRunning ? 'EN CURSO' : 'LISTO'}
+              </span>
+            </div>
           </div>
 
           {timerFinished && (
             <div
               style={{
-                background: 'var(--el-accent-sage-soft)',
-                color: 'var(--el-accent-sage)',
+                background: 'var(--el-success-soft)',
+                border: '1px solid var(--el-success-border)',
+                color: 'var(--el-success-light)',
                 padding: '0.65rem 0.85rem',
                 borderRadius: 'var(--el-radius-sm)',
-                fontSize: '0.86rem',
-                fontWeight: 600,
+                fontSize: '0.84rem',
+                fontWeight: 700,
                 textAlign: 'center',
-                marginBottom: '1rem',
+                marginBottom: '0.9rem',
               }}
             >
-              ¡Tiempo completado! Tomen 30 segundos para compartir qué observaron.
+              ¡Tiempo completado! Tomen 30 s para compartir qué observaron.
             </div>
           )}
 
-          <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '1rem' }}>
+          <div style={{ display: 'flex', gap: '0.6rem', marginBottom: '0.9rem' }}>
             <button
               type="button"
               className="el-btn el-btn-primary"
@@ -870,13 +983,12 @@ const ExercisesView: React.FC = () => {
               display: 'flex',
               justifyContent: 'space-between',
               alignItems: 'center',
-              paddingTop: '0.9rem',
-              borderTop: '1px solid var(--el-border-subtle)',
+              paddingBottom: '0.9rem',
+              marginBottom: '0.9rem',
+              borderBottom: '1px solid var(--el-border)',
             }}
           >
-            <span style={{ fontSize: '0.82rem', color: 'var(--el-text-muted)' }}>
-              Ajustar duración:
-            </span>
+            <span style={{ fontSize: '0.82rem', color: 'var(--el-text-muted)' }}>Ajustar:</span>
             <div style={{ display: 'flex', gap: '0.4rem' }}>
               <button
                 type="button"
@@ -894,6 +1006,38 @@ const ExercisesView: React.FC = () => {
               </button>
             </div>
           </div>
+
+          {/* Pasos clicables en vivo para el docente */}
+          <div>
+            <span style={{ display: 'block', fontSize: '0.78rem', fontWeight: 800, color: 'var(--el-guide-light)', textTransform: 'uppercase', marginBottom: '0.5rem' }}>
+              Guía Rápida de Pasos
+            </span>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.45rem' }}>
+              {activeExercise.steps.map((step, i) => {
+                const done = Boolean(checkedSteps[i]);
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    className={`el-step-check-btn ${done ? 'done' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      setCheckedSteps((prev) => ({ ...prev, [i]: !prev[i] }));
+                    }}
+                  >
+                    {done ? (
+                      <LuCircleCheck size={16} color="var(--el-success-light)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    ) : (
+                      <LuCircle size={16} color="var(--el-text-muted)" style={{ flexShrink: 0, marginTop: '2px' }} />
+                    )}
+                    <span>
+                      <strong>{i + 1}.</strong> {step}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
         </aside>
       </div>
     </div>
@@ -901,7 +1045,7 @@ const ExercisesView: React.FC = () => {
 };
 
 // ============================================================================
-// VISTA 4: ORGANIZACIÓN DE GRUPOS (Departamentos + Distribuidor + Cronograma)
+// VISTA 4: ORGANIZACIÓN (Plano Escénico Interactivo + Departamentos + Plan)
 // ============================================================================
 
 const OrganizationView: React.FC = () => {
@@ -941,12 +1085,12 @@ const OrganizationView: React.FC = () => {
     }
 
     const rows = [
-      { label: 'Elenco Actoral', count: actors, color: 'hsl(38, 75%, 48%)', note: 'Protagonistas, secundarios y ensamble' },
-      { label: 'Dirección y Asistencia', count: direction, color: 'hsl(350, 65%, 35%)', note: 'Coordinación artística y libro de dirección' },
-      { label: 'Escenografía y Utilería', count: scenography, color: 'hsl(152, 38%, 36%)', note: 'Espacio, objetos y cambios de escena' },
-      { label: 'Iluminación y Sonido', count: lightingSound, color: 'hsl(210, 50%, 40%)', note: 'Guion técnico, pistas y atmósfera' },
-      { label: 'Vestuario y Maquillaje', count: wardrobe, color: 'hsl(268, 35%, 45%)', note: 'Identidad visual y camerinos' },
-      { label: 'Producción y Comunicación', count: production, color: 'hsl(18, 65%, 45%)', note: 'Difusión, programas y recepción' },
+      { label: 'Elenco Actoral', count: actors, color: '#f59e0b', note: 'Protagonistas, secundarios y ensamble' },
+      { label: 'Dirección y Asistencia', count: direction, color: '#818cf8', note: 'Coordinación artística y libro de dirección' },
+      { label: 'Escenografía y Utilería', count: scenography, color: '#10b981', note: 'Espacio, objetos y cambios de escena' },
+      { label: 'Iluminación y Sonido', count: lightingSound, color: '#38bdf8', note: 'Guion técnico, pistas y atmósfera' },
+      { label: 'Vestuario y Maquillaje', count: wardrobe, color: '#a78bfa', note: 'Identidad visual y camerinos' },
+      { label: 'Producción y Comunicación', count: production, color: '#fb923c', note: 'Difusión, programas y recepción' },
     ].filter((r) => r.count > 0);
 
     const advice =
@@ -985,14 +1129,18 @@ const OrganizationView: React.FC = () => {
         <span className="el-section-eyebrow">
           <LuUsers size={14} /> Producción Escolar Profesional
         </span>
-        <h1 className="el-page-title">Organización de Grupos y Departamentos</h1>
+        <h1 className="el-page-title">Organización de Grupos y Escenario</h1>
         <p className="el-page-lead">
-          El teatro es un ecosistema colaborativo. Conoce las funciones reales de cada departamento y utiliza el distribuidor inteligente para organizar tu clase sin dejar a nadie fuera.
+          Explora cómo se reparte el espacio en el plano interactivo, conoce los 6 departamentos y calcula la distribución ideal para tu clase.
         </p>
       </div>
 
-      <section style={{ marginBottom: '2.75rem' }}>
-        <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.45rem', margin: '0 0 1rem' }}>
+      {/* Plano Interactivo del Escenario */}
+      <StageMapInteractive />
+
+      {/* Explorador de Departamentos */}
+      <section style={{ marginBottom: '2.25rem' }}>
+        <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.42rem', margin: '0 0 1rem' }}>
           1. Explorador de Departamentos Teatrales
         </h2>
 
@@ -1019,9 +1167,9 @@ const OrganizationView: React.FC = () => {
                     flexShrink: 0,
                   }}
                 />
-                <strong style={{ fontSize: '0.93rem' }}>{dept.name}</strong>
+                <strong style={{ fontSize: '0.92rem' }}>{dept.name}</strong>
               </div>
-              <span style={{ fontSize: '0.8rem', color: 'var(--el-text-muted)', display: 'block' }}>
+              <span style={{ fontSize: '0.79rem', color: 'var(--el-text-muted)', display: 'block' }}>
                 {dept.tagline}
               </span>
             </button>
@@ -1035,18 +1183,16 @@ const OrganizationView: React.FC = () => {
         >
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))', gap: '1.5rem' }}>
             <div>
-              <h3 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.4rem', margin: '0 0 0.4rem' }}>
+              <h3 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.38rem', margin: '0 0 0.4rem' }}>
                 {activeDept.name}
               </h3>
-              <p style={{ margin: '0 0 1rem', color: 'var(--el-text-secondary)', fontSize: '0.94rem' }}>
-                {activeDept.mission}
-              </p>
+              <p style={{ margin: '0 0 1rem', fontSize: '0.93rem' }}>{activeDept.mission}</p>
               <div
                 style={{
-                  background: 'var(--el-surface-cream)',
+                  background: 'var(--el-surface-elevated)',
                   padding: '0.85rem 1rem',
                   borderRadius: 'var(--el-radius-sm)',
-                  fontSize: '0.88rem',
+                  fontSize: '0.87rem',
                 }}
               >
                 <strong style={{ display: 'block', marginBottom: '0.2rem' }}>
@@ -1059,10 +1205,10 @@ const OrganizationView: React.FC = () => {
             <div>
               <strong
                 style={{
-                  fontSize: '0.85rem',
+                  fontSize: '0.82rem',
                   textTransform: 'uppercase',
                   letterSpacing: '0.07em',
-                  color: 'var(--el-accent-burgundy)',
+                  color: 'var(--el-guide-light)',
                 }}
               >
                 Funciones Clave en un Montaje Escolar
@@ -1072,21 +1218,14 @@ const OrganizationView: React.FC = () => {
                   <li key={idx}>
                     <LuCheck
                       size={16}
-                      color="var(--el-accent-burgundy)"
+                      color="var(--el-success-light)"
                       style={{ flexShrink: 0, marginTop: '4px' }}
                     />
                     <span>{resp}</span>
                   </li>
                 ))}
               </ul>
-              <div
-                style={{
-                  fontSize: '0.86rem',
-                  color: 'var(--el-text-secondary)',
-                  borderLeft: '3px solid var(--el-accent-ochre)',
-                  paddingLeft: '0.8rem',
-                }}
-              >
+              <div className="el-tip-callout">
                 <strong>Consejo profesional:</strong> {activeDept.proTip}
               </div>
             </div>
@@ -1094,36 +1233,37 @@ const OrganizationView: React.FC = () => {
         </div>
       </section>
 
+      {/* Distribuidor + Cronograma */}
       <section className="el-card">
         <span className="el-section-eyebrow">
           <LuSlidersHorizontal size={14} /> Herramienta de Planificación
         </span>
-        <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.55rem', margin: '0 0 0.4rem' }}>
+        <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.5rem', margin: '0 0 0.4rem' }}>
           2. Distribuidor de Elenco, Equipo Técnico y Cronograma
         </h2>
-        <p style={{ margin: '0 0 1.5rem', color: 'var(--el-text-secondary)', fontSize: '0.94rem' }}>
-          Ajusta el tamaño de tu grupo y el formato de la obra para obtener una distribución equilibrada de roles y un plan de 8 semanas.
+        <p style={{ margin: '0 0 1.4rem', fontSize: '0.93rem' }}>
+          Ajusta el tamaño de tu grupo y el formato de la obra para calcular el reparto equilibrado y el plan de 8 semanas.
         </p>
 
         <div className="el-distributor-grid">
           <div
             style={{
-              background: 'var(--el-surface-cream)',
-              padding: '1.35rem',
+              background: 'var(--el-surface-elevated)',
+              padding: '1.3rem',
               borderRadius: 'var(--el-radius-md)',
-              border: '1px solid var(--el-border-subtle)',
+              border: '1px solid var(--el-border)',
             }}
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-              <label htmlFor="el-student-range" style={{ fontWeight: 700, fontSize: '0.95rem' }}>
+              <label htmlFor="el-student-range" style={{ fontWeight: 700, fontSize: '0.94rem' }}>
                 Cantidad total de estudiantes
               </label>
               <span
                 style={{
                   fontFamily: 'var(--el-font-serif)',
                   fontSize: '1.75rem',
-                  fontWeight: 700,
-                  color: 'var(--el-accent-burgundy)',
+                  fontWeight: 800,
+                  color: 'var(--el-challenge)',
                 }}
               >
                 {studentCount}
@@ -1145,7 +1285,7 @@ const OrganizationView: React.FC = () => {
                 justifyContent: 'space-between',
                 fontSize: '0.78rem',
                 color: 'var(--el-text-muted)',
-                marginBottom: '1.25rem',
+                marginBottom: '1.2rem',
               }}
             >
               <span>6 alumnos</span>
@@ -1153,7 +1293,7 @@ const OrganizationView: React.FC = () => {
               <span>40 alumnos</span>
             </div>
 
-            <div style={{ marginBottom: '1.25rem' }}>
+            <div style={{ marginBottom: '1.2rem' }}>
               <span style={{ display: 'block', fontWeight: 700, fontSize: '0.9rem', marginBottom: '0.5rem' }}>
                 Formato del montaje
               </span>
@@ -1177,12 +1317,12 @@ const OrganizationView: React.FC = () => {
                       textAlign: 'left',
                       padding: '0.6rem 0.85rem',
                       borderRadius: 'var(--el-radius-sm)',
-                      border: `1px solid ${playFormat === opt.id ? 'var(--el-accent-burgundy)' : 'var(--el-border-subtle)'}`,
-                      background: playFormat === opt.id ? 'var(--el-surface-white)' : 'transparent',
-                      color: playFormat === opt.id ? 'var(--el-accent-burgundy)' : 'var(--el-text-charcoal)',
-                      fontWeight: playFormat === opt.id ? 600 : 500,
+                      border: `1px solid ${playFormat === opt.id ? 'var(--el-challenge)' : 'var(--el-border)'}`,
+                      background: playFormat === opt.id ? 'var(--el-challenge-soft)' : 'var(--el-surface-1)',
+                      color: playFormat === opt.id ? 'var(--el-challenge)' : 'var(--el-text-primary)',
+                      fontWeight: playFormat === opt.id ? 700 : 500,
                       fontFamily: 'inherit',
-                      fontSize: '0.86rem',
+                      fontSize: '0.85rem',
                       cursor: 'pointer',
                     }}
                   >
@@ -1192,22 +1332,13 @@ const OrganizationView: React.FC = () => {
               </div>
             </div>
 
-            <div
-              style={{
-                background: 'var(--el-surface-white)',
-                padding: '0.85rem',
-                borderRadius: 'var(--el-radius-sm)',
-                fontSize: '0.85rem',
-                color: 'var(--el-text-secondary)',
-                borderLeft: '3px solid var(--el-accent-sage)',
-              }}
-            >
+            <div className="el-tip-callout">
               <strong>Sugerencia pedagógica:</strong> {distribution.advice}
             </div>
           </div>
 
           <div>
-            <h3 style={{ margin: '0 0 1rem', fontSize: '1.05rem' }}>
+            <h3 style={{ margin: '0 0 1rem', fontSize: '1.04rem' }}>
               Distribución Sugerida para {distribution.total} Estudiantes
             </h3>
             {distribution.rows.map((row) => {
@@ -1217,7 +1348,7 @@ const OrganizationView: React.FC = () => {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', fontSize: '0.92rem' }}>
                     <strong>{row.label}</strong>
                     <span>
-                      <strong style={{ color: 'var(--el-accent-burgundy)' }}>{row.count}</strong>{' '}
+                      <strong style={{ color: row.color }}>{row.count}</strong>{' '}
                       <span style={{ color: 'var(--el-text-muted)', fontSize: '0.82rem' }}>({pct}%)</span>
                     </span>
                   </div>
@@ -1239,35 +1370,33 @@ const OrganizationView: React.FC = () => {
           </div>
         </div>
 
-        <div style={{ marginTop: '2rem', paddingTop: '1.75rem', borderTop: '1px solid var(--el-border-subtle)' }}>
+        <div style={{ marginTop: '2rem', paddingTop: '1.65rem', borderTop: '1px solid var(--el-border)' }}>
           <h3
             style={{
               fontFamily: 'var(--el-font-serif)',
-              fontSize: '1.3rem',
+              fontSize: '1.28rem',
               margin: '0 0 0.3rem',
               display: 'flex',
               alignItems: 'center',
               gap: '0.5rem',
             }}
           >
-            <LuCalendar size={20} color="var(--el-accent-burgundy)" /> Cronograma Sugerido de 8 Semanas
+            <LuCalendar size={20} color="var(--el-challenge)" /> Cronograma Sugerido de 8 Semanas
           </h3>
-          <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--el-text-secondary)' }}>
+          <p style={{ margin: 0, fontSize: '0.87rem' }}>
             Pensado para 2 sesiones de ensayo por semana de 60 a 90 minutos.
           </p>
 
           <div className="el-schedule-grid">
             {weeklyPlan.map((item) => (
               <div key={item.week} className="el-week-card">
-                <span className="el-badge el-badge-ochre" style={{ marginBottom: '0.45rem' }}>
+                <span className="el-badge el-badge-guide" style={{ marginBottom: '0.45rem' }}>
                   {item.week}
                 </span>
-                <strong style={{ display: 'block', fontSize: '0.92rem', marginBottom: '0.25rem' }}>
+                <strong style={{ display: 'block', fontSize: '0.91rem', marginBottom: '0.25rem' }}>
                   {item.title}
                 </strong>
-                <p style={{ margin: 0, fontSize: '0.82rem', color: 'var(--el-text-secondary)', lineHeight: 1.45 }}>
-                  {item.detail}
-                </p>
+                <p style={{ margin: 0, fontSize: '0.81rem', lineHeight: 1.45 }}>{item.detail}</p>
               </div>
             ))}
           </div>
@@ -1278,12 +1407,16 @@ const OrganizationView: React.FC = () => {
 };
 
 // ============================================================================
-// VISTA 5: CONSEJOS DE ESCENA (Reglas de Oro + Respiración 4-4-4 Guiada)
+// VISTA 5: CONSEJOS DE ESCENA (Simulador Salvavidas + Reglas + Respiración)
 // ============================================================================
 
 type BreathPhase = 'idle' | 'inhalar' | 'sostener' | 'exhalar';
 
-const AdviceView: React.FC = () => {
+interface AdviceViewProps {
+  onRescueSolved: () => void;
+}
+
+const AdviceView: React.FC<AdviceViewProps> = ({ onRescueSolved }) => {
   const [expandedRuleId, setExpandedRuleId] = useState<string>(GOLDEN_RULES[0].id);
 
   const [breathActive, setBreathActive] = useState<boolean>(false);
@@ -1295,9 +1428,7 @@ const AdviceView: React.FC = () => {
   const secRef = useRef<number>(4);
 
   useEffect(() => {
-    if (!breathActive) {
-      return;
-    }
+    if (!breathActive) return;
 
     phaseRef.current = 'inhalar';
     secRef.current = 4;
@@ -1346,30 +1477,59 @@ const AdviceView: React.FC = () => {
   const renderRuleIcon = (iconName: GoldenRule['iconName']) => {
     switch (iconName) {
       case 'volume':
-        return <LuVolume2 size={20} color="var(--el-accent-burgundy)" />;
+        return <LuVolume2 size={20} color="var(--el-guide-light)" />;
       case 'eye':
-        return <LuEye size={20} color="var(--el-accent-burgundy)" />;
+        return <LuEye size={20} color="var(--el-challenge)" />;
       case 'heart':
-        return <LuHeartHandshake size={20} color="var(--el-accent-burgundy)" />;
+        return <LuHeartHandshake size={20} color="var(--el-success-light)" />;
       case 'shield':
-        return <LuShieldAlert size={20} color="var(--el-accent-burgundy)" />;
+        return <LuShieldAlert size={20} color="var(--el-error)" />;
       case 'award':
-        return <LuAward size={20} color="var(--el-accent-burgundy)" />;
+        return <LuAward size={20} color="var(--el-wisdom)" />;
     }
   };
 
-  const breathInstruction = useMemo(() => {
+  const breathVisual = useMemo(() => {
     switch (breathPhase) {
       case 'inhalar':
-        return { label: 'Inhala', sub: 'Llena el abdomen lentamente por la nariz', orbClass: 'expand' };
+        return {
+          label: 'Inhala',
+          sub: 'Llena el abdomen lentamente por la nariz',
+          orbClass: 'expand',
+          ringColor: '#38bdf8',
+          orbBg: 'linear-gradient(135deg, #38bdf8, #0ea5e9)',
+        };
       case 'sostener':
-        return { label: 'Sostén', sub: 'Mantén los hombros relajados y la mente serena', orbClass: 'hold' };
+        return {
+          label: 'Sostén',
+          sub: 'Mantén los hombros relajados y la mente serena',
+          orbClass: 'hold',
+          ringColor: '#f59e0b',
+          orbBg: 'linear-gradient(135deg, #fbbf24, #f59e0b)',
+        };
       case 'exhalar':
-        return { label: 'Exhala', sub: 'Suelta el aire suave por la boca liberando tensión', orbClass: 'contract' };
+        return {
+          label: 'Exhala',
+          sub: 'Suelta el aire suave por la boca liberando tensión',
+          orbClass: 'contract',
+          ringColor: '#34d399',
+          orbBg: 'linear-gradient(135deg, #34d399, #10b981)',
+        };
       default:
-        return { label: 'Listo', sub: 'Presiona iniciar para realizar 3 ciclos antes de salir a escena', orbClass: '' };
+        return {
+          label: 'Listo',
+          sub: 'Presiona iniciar para realizar 3 ciclos antes de salir a escena',
+          orbClass: '',
+          ringColor: '#818cf8',
+          orbBg: 'linear-gradient(135deg, #818cf8, #6366f1)',
+        };
     }
   }, [breathPhase]);
+
+  const bRadius = 82;
+  const bCirc = 2 * Math.PI * bRadius;
+  const bProgress = breathActive ? (5 - breathSecond) / 4 : 0;
+  const bOffset = bCirc * (1 - bProgress);
 
   return (
     <div className="el-view-animate">
@@ -1379,12 +1539,14 @@ const AdviceView: React.FC = () => {
         </span>
         <h1 className="el-page-title">Consejos Prácticos de Escena</h1>
         <p className="el-page-lead">
-          Principios esenciales que distinguen un montaje improvisado de una puesta en escena segura, viva y memorable.
+          Entrena tus reflejos con el simulador de emergencias en vivo, domina las reglas de oro y calma tus nervios con la respiración 4-4-4.
         </p>
       </div>
 
       <div className="el-consejos-layout">
         <div>
+          <LiveRescueSimulator onSuccess={onRescueSolved} />
+
           {GOLDEN_RULES.map((rule) => {
             const isOpen = expandedRuleId === rule.id;
             return (
@@ -1404,7 +1566,8 @@ const AdviceView: React.FC = () => {
                         width: '40px',
                         height: '40px',
                         borderRadius: '10px',
-                        backgroundColor: 'var(--el-accent-burgundy-soft)',
+                        backgroundColor: 'var(--el-surface-elevated)',
+                        border: '1px solid var(--el-border)',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
@@ -1416,21 +1579,19 @@ const AdviceView: React.FC = () => {
                     <div>
                       <span
                         style={{
-                          fontSize: '0.75rem',
-                          fontWeight: 700,
+                          fontSize: '0.74rem',
+                          fontWeight: 800,
                           textTransform: 'uppercase',
                           letterSpacing: '0.07em',
-                          color: 'var(--el-accent-ochre-dark)',
+                          color: 'var(--el-guide-light)',
                         }}
                       >
                         {rule.category}
                       </span>
-                      <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.16rem', margin: '0.15rem 0 0.25rem' }}>
+                      <h2 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.14rem', margin: '0.15rem 0 0.25rem' }}>
                         {rule.title}
                       </h2>
-                      <p style={{ margin: 0, fontSize: '0.9rem', color: 'var(--el-text-secondary)' }}>
-                        {rule.summary}
-                      </p>
+                      <p style={{ margin: 0, fontSize: '0.89rem' }}>{rule.summary}</p>
                     </div>
                   </div>
                   <span style={{ color: 'var(--el-text-muted)', flexShrink: 0, marginTop: '0.35rem' }}>
@@ -1441,9 +1602,9 @@ const AdviceView: React.FC = () => {
                 {isOpen && (
                   <div
                     style={{
-                      marginTop: '1.1rem',
+                      marginTop: '1.05rem',
                       paddingTop: '1rem',
-                      borderTop: '1px solid var(--el-border-subtle)',
+                      borderTop: '1px solid var(--el-border)',
                     }}
                   >
                     <ul className="el-list-styled" style={{ marginTop: 0 }}>
@@ -1451,7 +1612,7 @@ const AdviceView: React.FC = () => {
                         <li key={idx}>
                           <LuCircleCheck
                             size={16}
-                            color="var(--el-accent-sage)"
+                            color="var(--el-success-light)"
                             style={{ flexShrink: 0, marginTop: '4px' }}
                           />
                           <span>{step}</span>
@@ -1462,13 +1623,13 @@ const AdviceView: React.FC = () => {
                       <div
                         style={{
                           marginTop: '1rem',
-                          background: 'var(--el-accent-ochre-soft)',
-                          borderLeft: '4px solid var(--el-accent-ochre)',
+                          background: 'var(--el-challenge-soft)',
+                          borderLeft: '4px solid var(--el-challenge)',
                           padding: '0.8rem 1rem',
                           borderRadius: 'var(--el-radius-sm)',
-                          fontSize: '0.88rem',
-                          color: 'var(--el-text-charcoal)',
-                          fontWeight: 500,
+                          fontSize: '0.87rem',
+                          color: 'var(--el-text-primary)',
+                          fontWeight: 600,
                         }}
                       >
                         {rule.emergencyPhrase}
@@ -1481,36 +1642,63 @@ const AdviceView: React.FC = () => {
           })}
         </div>
 
+        {/* Respiración 4-4-4 con anillo de color por etapa + sonido */}
         <aside className="el-card el-timer-sticky" aria-label="Guía de respiración 4-4-4">
-          <span className="el-badge el-badge-sage">
+          <span className="el-badge el-badge-success">
             <LuWind size={13} /> Control del Miedo Escénico
           </span>
-          <h3 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.35rem', margin: '0.6rem 0 0.35rem' }}>
+          <h3 style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.3rem', margin: '0.6rem 0 0.35rem' }}>
             Respiración Guiada 4-4-4
           </h3>
-          <p style={{ margin: 0, fontSize: '0.88rem', color: 'var(--el-text-secondary)' }}>
-            Los nervios antes del estreno son energía lista para actuar. Usa esta técnica de 3 ciclos para regular tu pulso y aclarar la voz.
+          <p style={{ margin: 0, fontSize: '0.87rem' }}>
+            El anillo cambia de color en cada etapa (Cian · Ámbar · Verde) acompañado de sonido suave de respiración.
           </p>
 
           <div className="el-breathing-stage">
-            <div className="el-breath-orb-outer">
-              <div className={`el-breath-orb-inner ${breathInstruction.orbClass}`}>
-                <span style={{ fontSize: '0.85rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-                  {breathInstruction.label}
+            <div className="el-breath-ring-wrap">
+              <svg
+                width="186"
+                height="186"
+                viewBox="0 0 186 186"
+                style={{ position: 'absolute', inset: 0 }}
+                aria-hidden="true"
+              >
+                <circle cx="93" cy="93" r={bRadius} fill="none" stroke="var(--el-border)" strokeWidth="8" />
+                <circle
+                  cx="93"
+                  cy="93"
+                  r={bRadius}
+                  fill="none"
+                  stroke={breathVisual.ringColor}
+                  strokeWidth="8"
+                  strokeLinecap="round"
+                  strokeDasharray={bCirc}
+                  strokeDashoffset={bOffset}
+                  transform="rotate(-90 93 93)"
+                  style={{ transition: 'stroke-dashoffset 850ms linear, stroke 320ms ease' }}
+                />
+              </svg>
+
+              <div
+                className={`el-breath-orb-inner ${breathVisual.orbClass}`}
+                style={{ background: breathVisual.orbBg }}
+              >
+                <span style={{ fontSize: '0.82rem', fontWeight: 800, textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  {breathVisual.label}
                 </span>
                 {breathActive && (
-                  <span style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.7rem', fontWeight: 700, lineHeight: 1.1 }}>
+                  <span style={{ fontFamily: 'var(--el-font-serif)', fontSize: '1.7rem', fontWeight: 800, lineHeight: 1.1 }}>
                     {breathSecond}
                   </span>
                 )}
               </div>
             </div>
 
-            <p style={{ margin: '0 0 0.5rem', textAlign: 'center', fontSize: '0.9rem', fontWeight: 600 }}>
-              {breathInstruction.sub}
+            <p style={{ margin: '0 0 0.45rem', textAlign: 'center', fontSize: '0.89rem', fontWeight: 600 }}>
+              {breathVisual.sub}
             </p>
             <span style={{ fontSize: '0.8rem', color: 'var(--el-text-muted)' }}>
-              Ciclos completados en esta sesión: <strong>{cyclesDone}</strong>
+              Ciclos completados: <strong>{cyclesDone}</strong>
             </span>
           </div>
 
@@ -1542,16 +1730,8 @@ const AdviceView: React.FC = () => {
             )}
           </div>
 
-          <div
-            style={{
-              marginTop: '1.15rem',
-              paddingTop: '1rem',
-              borderTop: '1px solid var(--el-border-subtle)',
-              fontSize: '0.83rem',
-              color: 'var(--el-text-secondary)',
-            }}
-          >
-            <strong>Tip antes de abrir el telón:</strong> Reemplaza el pensamiento{' '}
+          <div className="el-tip-callout" style={{ marginTop: '1.1rem' }}>
+            <strong>Tip antes del telón:</strong> Reemplaza{' '}
             <em>&ldquo;¿y si me equivoco?&rdquo;</em> por{' '}
             <em>&ldquo;vengo a regalar esta historia al público&rdquo;</em>.
           </div>
@@ -1562,18 +1742,30 @@ const AdviceView: React.FC = () => {
 };
 
 // ============================================================================
-// COMPONENTE PRINCIPAL INTEGRADO A CREATIKA
+// COMPONENTE PRINCIPAL INTEGRADO A SUTZ / CREATIKA
 // ============================================================================
 
 export default function TeatroEscolar() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const [mobileMenuOpen, setMobileMenuOpen] = useState<boolean>(false);
+  const [theme, setTheme] = useState<TheaterTheme>('sutz-night');
+  const [toastMsg, setToastMsg] = useState('');
 
   const initialSec = searchParams.get('sec') as RouteId | null;
   const [route, setRoute] = useState<RouteId>(
     initialSec && VALID_THEATER_ROUTES.includes(initialSec) ? initialSec : 'inicio'
   );
+
+  const [xp, setXp] = useState<number>(() => {
+    try {
+      const saved = localStorage.getItem(XP_STORAGE_KEY);
+      const parsed = saved ? parseInt(saved, 10) : 20;
+      return Number.isNaN(parsed) ? 20 : parsed;
+    } catch {
+      return 20;
+    }
+  });
 
   const [checkedItems, setCheckedItems] = useState<Record<string, boolean>>(() => {
     try {
@@ -1591,18 +1783,46 @@ export default function TeatroEscolar() {
     };
   }, []);
 
-  const handleToggleCheck = useCallback((id: string) => {
-    soundEffects.playClick();
-    setCheckedItems((prev) => {
-      const next = { ...prev, [id]: !prev[id] };
-      try {
-        localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(next));
-      } catch {
-        // Ignorar si almacenamiento está restringido
-      }
-      return next;
-    });
+  const showToast = useCallback((msg: string) => {
+    setToastMsg(msg);
+    window.setTimeout(() => setToastMsg(''), 2600);
   }, []);
+
+  const awardXp = useCallback(
+    (amount: number, reason: string) => {
+      setXp((prev) => {
+        const next = prev + amount;
+        try {
+          localStorage.setItem(XP_STORAGE_KEY, String(next));
+        } catch {
+          // Ignorar si almacenamiento está restringido
+        }
+        return next;
+      });
+      showToast(`+${amount} XP · ${reason}`);
+    },
+    [showToast]
+  );
+
+  const handleToggleCheck = useCallback(
+    (id: string) => {
+      soundEffects.playClick();
+      setCheckedItems((prev) => {
+        const wasChecked = Boolean(prev[id]);
+        const next = { ...prev, [id]: !wasChecked };
+        try {
+          localStorage.setItem(CHECKLIST_STORAGE_KEY, JSON.stringify(next));
+        } catch {
+          // Ignorar si almacenamiento está restringido
+        }
+        if (!wasChecked) {
+          awardXp(15, 'Hito de montaje completado');
+        }
+        return next;
+      });
+    },
+    [awardXp]
+  );
 
   const handleNavClick = useCallback(
     (target: RouteId) => {
@@ -1615,8 +1835,19 @@ export default function TeatroEscolar() {
     [setSearchParams]
   );
 
+  const cycleTheme = () => {
+    soundEffects.playClick();
+    setTheme((prev) =>
+      prev === 'sutz-night'
+        ? 'classroom-light'
+        : prev === 'classroom-light'
+          ? 'high-contrast'
+          : 'sutz-night'
+    );
+  };
+
   return (
-    <div className="el-app">
+    <div className="el-app" data-theme={theme}>
       <LandingTopBar slogan="Suite Creatika · Escena Lab (Teatro Escolar)" showHomeButton />
 
       <header className="el-subnav-header">
@@ -1645,7 +1876,7 @@ export default function TeatroEscolar() {
               </div>
               <div>
                 <span className="el-brand-title">Escena Lab</span>
-                <span className="el-brand-sub">Guía de Teatro Escolar</span>
+                <span className="el-brand-sub">Teatro · Neurodiseño Sutz</span>
               </div>
             </button>
           </div>
@@ -1664,18 +1895,31 @@ export default function TeatroEscolar() {
             ))}
           </nav>
 
-          <button
-            type="button"
-            className="el-mobile-menu-btn"
-            onClick={() => {
-              soundEffects.playClick();
-              setMobileMenuOpen((prev) => !prev);
-            }}
-            aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
-            aria-expanded={mobileMenuOpen}
-          >
-            {mobileMenuOpen ? <LuX size={22} /> : <LuMenu size={22} />}
-          </button>
+          <div className="el-hud-right">
+            <span className="el-xp-pill" title="Experiencia teatral acumulada">
+              ★ {xp} XP
+            </span>
+            <button
+              type="button"
+              className="el-theme-btn"
+              onClick={cycleTheme}
+              title="Cambiar tema visual"
+            >
+              {theme === 'sutz-night' ? '🌌 Sutz' : theme === 'classroom-light' ? '☀️ Aula' : '◑ Alto'}
+            </button>
+            <button
+              type="button"
+              className="el-mobile-menu-btn"
+              onClick={() => {
+                soundEffects.playClick();
+                setMobileMenuOpen((prev) => !prev);
+              }}
+              aria-label={mobileMenuOpen ? 'Cerrar menú' : 'Abrir menú'}
+              aria-expanded={mobileMenuOpen}
+            >
+              {mobileMenuOpen ? <LuX size={22} /> : <LuMenu size={22} />}
+            </button>
+          </div>
         </div>
 
         <nav className={`el-mobile-drawer ${mobileMenuOpen ? 'open' : ''}`} aria-label="Navegación móvil">
@@ -1698,9 +1942,13 @@ export default function TeatroEscolar() {
         {route === 'proceso' && (
           <ProcessView checkedItems={checkedItems} onToggleCheck={handleToggleCheck} />
         )}
-        {route === 'ejercicios' && <ExercisesView />}
+        {route === 'ejercicios' && (
+          <ExercisesView onExerciseDone={(title) => awardXp(25, `Ejercicio completado: ${title}`)} />
+        )}
         {route === 'organizacion' && <OrganizationView />}
-        {route === 'consejos' && <AdviceView />}
+        {route === 'consejos' && (
+          <AdviceView onRescueSolved={() => awardXp(20, 'Salvavidas en escena dominado')} />
+        )}
       </main>
 
       <footer className="el-site-footer">
@@ -1708,9 +1956,15 @@ export default function TeatroEscolar() {
           <div>
             <strong style={{ fontFamily: 'var(--el-font-serif)' }}>Escena Lab</strong> — Suite Creatika · Lluvia de Ideas Editorial.
           </div>
-          <div>Diseñado para el aula y el escenario escolar</div>
+          <div>Integrado con sistema de Neurodiseño Sutz</div>
         </div>
       </footer>
+
+      {toastMsg && (
+        <div className="el-toast" role="status" aria-live="polite">
+          {toastMsg}
+        </div>
+      )}
     </div>
   );
 }
