@@ -2529,3 +2529,670 @@
     min-height: 44px;
   }
 }
+
+
+/* ============================================================================
+   CONVOCATORIA OFICIAL REDISEÑADA — PREMIO GRAN TALLER LITERARIO SUTZ
+   ============================================================================ */
+
+@keyframes ggBeamFlow {
+  0% { background-position: 0% 50%; }
+  50% { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+
+@keyframes ggPulseDot {
+  0%, 100% { transform: scale(1); opacity: 1; }
+  50% { transform: scale(1.45); opacity: 0.55; }
+}
+
+@keyframes ggGoldFloat {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-4px); }
+}
+
+@keyframes ggPanelPop {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.99);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.gg-contest-pro-card {
+  position: relative;
+  border-radius: 24px;
+  background: linear-gradient(160deg, #131b2e 0%, #0d1424 55%, #11192b 100%);
+  border: 1px solid rgba(245, 158, 11, 0.32);
+  padding: clamp(1.35rem, 3vw, 2.25rem);
+  box-shadow: 0 20px 50px -14px rgba(0, 0, 0, 0.65), 0 0 0 1px rgba(56, 189, 248, 0.12);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.gg-contest-pro-card.highlighted {
+  border-color: #f59e0b;
+  box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.55), 0 22px 54px -10px rgba(245, 158, 11, 0.25);
+}
+
+.gg-contest-pro-beam {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 5px;
+  background: linear-gradient(90deg, #f59e0b, #38bdf8, #10b981, #fbbf24, #f59e0b);
+  background-size: 260% 100%;
+  animation: ggBeamFlow 6s linear infinite;
+}
+
+.gg-contest-pro-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+}
+
+.gg-contest-pro-badges {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  align-items: center;
+}
+
+.gg-pro-status-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.45);
+}
+
+.gg-pro-status-pill.evaluacion {
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border-color: rgba(251, 191, 36, 0.45);
+}
+
+.gg-status-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: ggPulseDot 1.6s ease-in-out infinite;
+}
+
+.gg-pro-edition-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: rgba(245, 158, 11, 0.16);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.45);
+}
+
+.gg-pro-discipline-pill {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  background: rgba(56, 189, 248, 0.14);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+}
+
+.gg-contest-pro-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1.2rem;
+  flex-wrap: wrap;
+}
+
+.gg-contest-pro-title {
+  margin: 0;
+  font-family: Georgia, 'Times New Roman', serif;
+  font-size: clamp(1.65rem, 3.2vw, 2.35rem);
+  line-height: 1.15;
+  background: linear-gradient(135deg, #ffffff 0%, #fef08a 60%, #fbbf24 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.gg-contest-pro-subtitle {
+  margin: 0.35rem 0 0;
+  font-size: 0.98rem;
+  font-weight: 600;
+  color: #7dd3fc;
+}
+
+.gg-contest-deadline-box {
+  background: #17223a;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-radius: 14px;
+  padding: 0.7rem 1rem;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 210px;
+}
+
+.gg-deadline-label {
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #94a3b8;
+}
+
+.gg-deadline-val {
+  font-size: 0.92rem;
+  color: #f8fafc;
+}
+
+.gg-contest-pro-desc {
+  margin: 0;
+  font-size: 0.98rem;
+  line-height: 1.65;
+  color: #cbd5e1;
+  max-width: 78ch;
+}
+
+/* Requisito Obligatorio: Herramienta Sutz */
+.gg-sutz-requirement-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 1rem 1.25rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.16), rgba(16, 185, 129, 0.12));
+  border: 1px solid rgba(56, 189, 248, 0.45);
+}
+
+.gg-sutz-req-content {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+  flex: 1 1 320px;
+}
+
+.gg-sutz-req-icon {
+  width: 46px;
+  height: 46px;
+  border-radius: 14px;
+  background: #0f172a;
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  display: grid;
+  place-items: center;
+  font-size: 1.45rem;
+  flex-shrink: 0;
+}
+
+.gg-sutz-req-tag {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  color: #38bdf8;
+}
+
+.gg-sutz-req-text {
+  margin: 2px 0 0;
+  font-size: 0.93rem;
+  font-weight: 600;
+  color: #f8fafc;
+}
+
+.gg-sutz-req-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+}
+
+/* Botones CTA */
+.gg-pro-cta-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.45rem;
+  min-height: 44px;
+  padding: 0.65rem 1.25rem;
+  border-radius: 999px;
+  border: none;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #0b1120;
+  font-family: inherit;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+  box-shadow: 0 8px 22px -6px rgba(245, 158, 11, 0.55);
+  transition: transform 180ms ease, box-shadow 180ms ease;
+}
+
+.gg-pro-cta-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px -6px rgba(245, 158, 11, 0.75);
+}
+
+.gg-pro-cta-btn.sm {
+  min-height: 40px;
+  padding: 0.45rem 1rem;
+  font-size: 0.83rem;
+}
+
+.gg-pro-cta-btn.lg {
+  min-height: 48px;
+  padding: 0.75rem 1.55rem;
+  font-size: 0.96rem;
+}
+
+.gg-pro-ghost-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  min-height: 44px;
+  padding: 0.6rem 1.1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.45);
+  background: #151f36;
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 0.86rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.gg-pro-ghost-btn:hover {
+  border-color: #38bdf8;
+  color: #7dd3fc;
+}
+
+/* Encabezado de subbloques */
+.gg-block-heading {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.9rem;
+}
+
+.gg-block-heading h4 {
+  margin: 0;
+  font-size: 1.15rem;
+  color: #f8fafc;
+}
+
+.gg-block-heading span {
+  font-size: 0.84rem;
+  color: #94a3b8;
+}
+
+/* Podio de Premios */
+.gg-prizes-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.gg-prize-card {
+  border-radius: 18px;
+  padding: 1.2rem;
+  background: #162038;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.gg-prize-card:hover {
+  transform: translateY(-4px);
+}
+
+.gg-prize-card.is-gold {
+  background: linear-gradient(155deg, rgba(245, 158, 11, 0.2), #182238 65%);
+  border-color: rgba(251, 191, 36, 0.65);
+  box-shadow: 0 12px 28px -10px rgba(245, 158, 11, 0.35);
+}
+
+.gg-prize-card.is-gold .gg-prize-medal {
+  animation: ggGoldFloat 2.8s ease-in-out infinite;
+}
+
+.gg-prize-card.is-silver {
+  background: linear-gradient(155deg, rgba(56, 189, 248, 0.16), #182238 65%);
+  border-color: rgba(56, 189, 248, 0.45);
+}
+
+.gg-prize-card.is-bronze {
+  background: linear-gradient(155deg, rgba(16, 185, 129, 0.15), #182238 65%);
+  border-color: rgba(52, 211, 153, 0.42);
+}
+
+.gg-prize-medal {
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 0.2rem;
+}
+
+.gg-prize-place {
+  font-size: 0.74rem;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: #fbbf24;
+}
+
+.gg-prize-card.is-silver .gg-prize-place {
+  color: #7dd3fc;
+}
+
+.gg-prize-card.is-bronze .gg-prize-place {
+  color: #6ee7b7;
+}
+
+.gg-prize-headline {
+  font-size: 1.08rem;
+  line-height: 1.25;
+  color: #f8fafc;
+}
+
+.gg-prize-details {
+  margin: 0.2rem 0 0;
+  font-size: 0.84rem;
+  line-height: 1.5;
+  color: #cbd5e1;
+}
+
+.gg-sponsors-strip {
+  margin-top: 0.9rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(129, 140, 248, 0.12);
+  border: 1px dashed rgba(129, 140, 248, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  font-size: 0.9rem;
+  color: #e2e8f0;
+}
+
+.gg-sponsors-icon {
+  font-size: 1.45rem;
+  flex-shrink: 0;
+}
+
+/* Explorador de Categorías y Estándares */
+.gg-toggle-cats-btn {
+  min-height: 38px;
+  padding: 0.4rem 0.95rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.4);
+  background: #17223a;
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gg-toggle-cats-btn:hover {
+  border-color: #38bdf8;
+  color: #7dd3fc;
+}
+
+.gg-cat-tabs-bar {
+  display: flex;
+  gap: 0.55rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.95rem;
+}
+
+.gg-cat-tab-chip {
+  min-height: 44px;
+  padding: 0.5rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: #151f36;
+  color: #cbd5e1;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.gg-cat-tab-chip:hover {
+  border-color: #fbbf24;
+  color: #ffffff;
+  transform: translateY(-1px);
+}
+
+.gg-cat-tab-chip.active {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  border-color: #fbbf24;
+  color: #0b1120;
+  box-shadow: 0 6px 18px -4px rgba(245, 158, 11, 0.5);
+}
+
+.gg-cat-detail-panel {
+  border-radius: 18px;
+  padding: 1.25rem;
+  background: #162139;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  border-left: 4px solid #f59e0b;
+  animation: ggPanelPop 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.gg-cat-detail-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 0.85rem;
+}
+
+.gg-cat-detail-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 0.85rem;
+}
+
+.gg-cat-big-icon {
+  width: 52px;
+  height: 52px;
+  border-radius: 14px;
+  background: #0d1424;
+  border: 1px solid rgba(245, 158, 11, 0.4);
+  display: grid;
+  place-items: center;
+  font-size: 1.7rem;
+  flex-shrink: 0;
+}
+
+.gg-cat-detail-title-wrap h5 {
+  margin: 0 0 0.35rem;
+  font-size: 1.22rem;
+  color: #f8fafc;
+}
+
+.gg-cat-meta-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.gg-cat-meta-pill {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+}
+
+.gg-cat-meta-pill.ext {
+  background: rgba(56, 189, 248, 0.16);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.38);
+}
+
+.gg-cat-meta-pill.aud {
+  background: rgba(16, 185, 129, 0.15);
+  color: #6ee7b7;
+  border: 1px solid rgba(52, 211, 153, 0.36);
+}
+
+.gg-cat-standard-text {
+  margin: 0 0 0.75rem;
+  font-size: 0.94rem;
+  line-height: 1.6;
+  color: #e2e8f0;
+}
+
+.gg-cat-tip-box {
+  padding: 0.7rem 0.95rem;
+  border-radius: 10px;
+  background: rgba(245, 158, 11, 0.11);
+  border-left: 3px solid #f59e0b;
+  font-size: 0.86rem;
+  color: #fef3c7;
+}
+
+.gg-cat-compare-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(210px, 1fr));
+  gap: 0.85rem;
+  animation: ggPanelPop 240ms ease both;
+}
+
+.gg-cat-compare-card {
+  border-radius: 14px;
+  padding: 1rem;
+  background: #162139;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.gg-cat-compare-head {
+  display: flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-size: 1rem;
+  color: #f8fafc;
+}
+
+.gg-cat-compare-ext {
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #7dd3fc;
+}
+
+.gg-cat-compare-aud {
+  font-size: 0.76rem;
+  font-weight: 700;
+  color: #6ee7b7;
+}
+
+.gg-cat-compare-card p {
+  margin: 0.25rem 0 0;
+  font-size: 0.82rem;
+  line-height: 1.48;
+  color: #cbd5e1;
+}
+
+/* Bases Generales */
+.gg-pro-guidelines {
+  border-radius: 16px;
+  padding: 1.15rem 1.25rem;
+  background: #121a2e;
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.gg-pro-guidelines h4 {
+  margin: 0 0 0.7rem;
+  font-size: 1.02rem;
+  color: #f8fafc;
+}
+
+.gg-pro-guidelines ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 0.5rem;
+}
+
+.gg-pro-guidelines li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55rem;
+  font-size: 0.9rem;
+  color: #cbd5e1;
+}
+
+.gg-guide-check {
+  color: #34d399;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+
+.gg-contest-pro-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.85rem;
+  flex-wrap: wrap;
+  padding-top: 0.5rem;
+  border-top: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+@media (max-width: 820px) {
+  .gg-prizes-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 560px) {
+  .gg-cat-tabs-bar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+  .gg-cat-tabs-bar::-webkit-scrollbar {
+    display: none;
+  }
+  .gg-cat-tab-chip {
+    flex-shrink: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gg-contest-pro-beam,
+  .gg-status-pulse-dot,
+  .gg-prize-card.is-gold .gg-prize-medal,
+  .gg-cat-detail-panel,
+  .gg-cat-compare-grid {
+    animation: none !important;
+  }
+}

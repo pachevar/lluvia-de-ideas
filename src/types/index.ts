@@ -414,12 +414,37 @@ export interface StudentVideoItem {
   authorEmail?: string;
 }
 
+export interface ContestCategoryStandard {
+  id: string;
+  name: string;
+  icon: string;
+  extension: string;
+  targetAudience: string;
+  standardDetails: string;
+  tips?: string;
+}
+
+export interface ContestPrizeTier {
+  id: string;
+  place: string;
+  medal: string;
+  headline: string;
+  details: string;
+  highlight?: boolean;
+}
+
 export interface ContestItem {
   id: string;
   title: string;
+  subtitle?: string;
+  editionBadge?: string;
   discipline: 'literatura' | 'arte' | 'video' | 'multidisciplinar';
   genreOrCategory?: string;
   description: string;
+  mandatoryTool?: string;
+  categories?: ContestCategoryStandard[];
+  prizes?: ContestPrizeTier[];
+  sponsorsNote?: string;
   guidelines: string[];
   deadline: string;
   rewardDetails: string;

@@ -1,58 +1,121 @@
-import type { GranGaleriaConfig } from '../types';
+import type { ContestItem, GranGaleriaConfig } from '../types';
+
+export const LEGACY_FICTIONAL_CONTEST_IDS = [
+  'concurso-popol-vuh-2026',
+  'bienal-arte-sutz-2026',
+  'festival-cine-escolar-2026',
+];
+
+export const OFFICIAL_SUTZ_CONTEST: ContestItem = {
+  id: 'premio-gran-taller-literario-sutz',
+  title: 'Premio Gran Taller Literario Sutz',
+  subtitle: 'Primera Convocatoria Oficial de Producción Literaria Estudiantil',
+  editionBadge: '✨ 1.ª Edición Oficial · Producción',
+  discipline: 'literatura',
+  genreOrCategory: '5 Categorías Literarias',
+  description:
+    'Certamen oficial impulsado por Editorial Lluvia de Ideas y el Ecosistema Sutz para descubrir, formar y premiar a las nuevas voces literarias estudiantiles a través de cinco categorías creativas con estándares editoriales claros.',
+  mandatoryTool:
+    'Requisito indispensable: redactar y enviar tu obra mediante la herramienta de publicación de Sutz (Códice del Escriba).',
+  categories: [
+    {
+      id: 'cuento-infantil',
+      name: 'Cuento Infantil',
+      icon: '🧸',
+      extension: '300 a 1,200 palabras',
+      targetAudience: 'Primaria y Básicos',
+      standardDetails:
+        'Narrativa imaginativa con lenguaje claro, valores positivos, ritmo ágil y personajes memorables. Debe presentar inicio, nudo y desenlace bien definidos.',
+      tips: 'Usa descripciones sensoriales, diálogos dinámicos y un mensaje que inspire curiosidad o empatía.',
+    },
+    {
+      id: 'cuento-libre',
+      name: 'Cuento Libre',
+      icon: '📖',
+      extension: '800 a 3,000 palabras',
+      targetAudience: 'Todas las edades escolares',
+      standardDetails:
+        'Temática y género abiertos (fantasía, ciencia ficción, misterio, realismo o aventura). Se evalúa originalidad de la trama, atmósfera, profundidad de personajes y ortografía.',
+      tips: 'Construye un conflicto central sólido desde el primer tercio del relato y cuida el cierre.',
+    },
+    {
+      id: 'poesia',
+      name: 'Poesía',
+      icon: '🪶',
+      extension: '1 a 3 poemas (12 a 80 versos en total)',
+      targetAudience: 'Todas las edades escolares',
+      standardDetails:
+        'Verso libre o métrica clásica. Se valora la musicalidad, originalidad de las imágenes poéticas, autenticidad emocional y riqueza metafórica.',
+      tips: 'Lee tus versos en voz alta antes de publicar para comprobar el ritmo y las pausas.',
+    },
+    {
+      id: 'microcuento-gatos',
+      name: 'Microcuento de Gatos',
+      icon: '🐱',
+      extension: 'Máximo 250 palabras (incluyendo el título)',
+      targetAudience: 'Todas las edades escolares',
+      standardDetails:
+        'Relato ultrabreve donde uno o más gatos sean protagonistas, cómplices o símbolo central de la historia. Se evalúa economía del lenguaje, ingenio y un final sorprendente o emotivo.',
+      tips: 'Cada palabra cuenta: sugiere más de lo que explicas y reserva el giro para la última línea.',
+    },
+    {
+      id: 'micro-novela',
+      name: 'Micro Novela',
+      icon: '📚',
+      extension: '3,500 a 8,000 palabras (mínimo 3 capítulos)',
+      targetAudience: 'Básicos y Diversificado',
+      standardDetails:
+        'Obra narrativa de aliento intermedio estructurada en capítulos cortos, con arco de transformación claro del protagonista, subtramas coherentes y ritmo sostenido.',
+      tips: 'Planifica el arco de cada capítulo en la herramienta de publicación de Sutz para mantener coherencia.',
+    },
+  ],
+  prizes: [
+    {
+      id: 'prize-1',
+      place: '1.er Lugar',
+      medal: '🥇',
+      headline: 'Tablet + Vale de Q1,500 en libros',
+      details:
+        'Tablet para los primeros lugares + vale de Q1,500 para comprar libros + publicación destacada en la Gran Galería.',
+      highlight: true,
+    },
+    {
+      id: 'prize-2',
+      place: '2.º Lugar',
+      medal: '🥈',
+      headline: 'Tablet + Vale de Q800 en libros',
+      details:
+        'Tablet educativa + vale de Q800 para comprar libros + diploma oficial de honor editorial.',
+    },
+    {
+      id: 'prize-3',
+      place: '3.er Lugar',
+      medal: '🥉',
+      headline: 'Vale de Q500 en libros',
+      details:
+        'Vale de Q500 para comprar libros + reconocimiento destacado en el Códice del Escriba.',
+    },
+  ],
+  sponsorsNote:
+    'Además, premios especiales, kits creativos y sorpresas otorgados por nuestras marcas patrocinadoras oficiales.',
+  guidelines: [
+    'Uso obligatorio de la herramienta de publicación de Sutz (Códice del Escriba) para redactar y postular la obra.',
+    'La obra debe ser 100% original e inédita, escrita en español por el estudiante participante.',
+    'Cumplir estrictamente el estándar de extensión y estructura de la categoría elegida.',
+    'Un mismo estudiante puede postular en más de una categoría, siempre con una obra distinta por categoría.',
+    'El jurado editorial evaluará creatividad, coherencia narrativa/poética, dominio del lenguaje y presentación.',
+  ],
+  deadline: 'Convocatoria Oficial 2026 · Recepción Abierta',
+  rewardDetails:
+    '1.º Lugar: Tablet + Q1,500 en libros · 2.º Lugar: Tablet + Q800 en libros · 3.º Lugar: Q500 en libros + premios de marcas patrocinadoras.',
+  status: 'convocatoria',
+  featured: true,
+};
 
 export const DEFAULT_GRAN_GALERIA: GranGaleriaConfig = {
   intro: "La Gran Galería es el espacio de honor y celebración del talento estudiantil. Aquí se exhiben los relatos de nuestra plataforma de lectura y escritura juvenil, las pinturas de nuestro museo virtual y los cortometrajes y reportajes de la mediateca escolar.",
   bannerSubtitle: "El escenario donde la creatividad, la narrativa y el arte de los estudiantes cobran vida.",
-  contests: [
-    {
-      id: "concurso-popol-vuh-2026",
-      title: "I Concurso Nacional de Cuento Fantástico 'Mitos y Futuro'",
-      discipline: "literatura",
-      genreOrCategory: "Fantasía & Popol Vuh",
-      description: "Convocatoria dirigida a estudiantes de primaria alta, básicos y diversificado para reinterpretar las leyendas ancestrales y la ciencia ficción desde su propia voz.",
-      guidelines: [
-        "Extensión entre 600 y 2,500 palabras.",
-        "Temática libre inspirada en elementos de la naturaleza, leyendas mesoamericanas o aventuras de ciencia ficción.",
-        "Se evalúa originalidad, riqueza descriptiva y ortografía."
-      ],
-      deadline: "30 de Octubre de 2026",
-      rewardDetails: "Publicación en el Códice Editorial oficial, diploma de honor y lote de libros ilustrados.",
-      status: "galardonados",
-      featured: true
-    },
-    {
-      id: "bienal-arte-sutz-2026",
-      title: "Bienal Estudiantil de Pintura, Dibujo e Ilustración Digital",
-      discipline: "arte",
-      genreOrCategory: "Artes Visuales",
-      description: "Muestra abierta para que los jóvenes artistas presenten obras en técnicas tradicionales o digitales explorando el tema 'El Ecosistema y las Nubes de Sutz'.",
-      guidelines: [
-        "Formatos aceptados: Ilustración digital (PNG/WebP alta resolución), acuarela, óleo, témpera o técnica mixta.",
-        "Acompañar la obra con una breve declaración del artista (máximo 150 palabras).",
-        "Abierto a todas las edades escolares."
-      ],
-      deadline: "15 de Noviembre de 2026",
-      rewardDetails: "Exhibición permanente en el Salón Principal del Museo Virtual y kit profesional de arte.",
-      status: "convocatoria",
-      featured: true
-    },
-    {
-      id: "festival-cine-escolar-2026",
-      title: "Festival Escolar de Cortometrajes, Documentales & Reportajes",
-      discipline: "video",
-      genreOrCategory: "Cine & Periodismo Escolar",
-      description: "Certamen audiovisual para premiar la narrativa en movimiento: cortometrajes de ficción, documentales ecológicos y reportajes de investigación escolar.",
-      guidelines: [
-        "Duración máxima de 10 minutos.",
-        "Participación individual o en equipos escolares de hasta 5 integrantes.",
-        "Resolución mínima 720p (HD). Alojado en YouTube o Vimeo."
-      ],
-      deadline: "20 de Diciembre de 2026",
-      rewardDetails: "Proyección estelar en la Mediateca de Sutz y estatuilla digital de realizador.",
-      status: "evaluacion",
-      featured: true
-    }
-  ],
+  contests: [OFFICIAL_SUTZ_CONTEST],
   texts: [
     {
       id: "texto-1",

@@ -5,12 +5,18 @@ import type {
   StudentArtItem, 
   StudentVideoItem, 
   ContestItem,
+  ContestCategoryStandard,
+  ContestPrizeTier,
   LiteraryGenre,
   ArtTechnique,
   VideoCategory,
   ContestStatus
 } from '../../types';
-import { DEFAULT_GRAN_GALERIA } from '../../data/defaultGranGaleriaData';
+import {
+  DEFAULT_GRAN_GALERIA,
+  LEGACY_FICTIONAL_CONTEST_IDS,
+  OFFICIAL_SUTZ_CONTEST
+} from '../../data/defaultGranGaleriaData';
 import { extractYouTubeId } from './AdminTabVideos';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
 import AdminTabPozoDeIdeas from './AdminTabPozoDeIdeas';
@@ -272,17 +278,32 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
       return;
     }
 
+    const cleanedGuidelines = (editingContest.guidelines || [])
+      .map((g) => g.trim())
+      .filter(Boolean);
+
+    const prizeSummary =
+      (editingContest.prizes && editingContest.prizes.length > 0
+        ? editingContest.prizes.map((p) => `${p.place}: ${p.headline}`).join(' · ')
+        : editingContest.rewardDetails) || 'Premios oficiales del certamen.';
+
     updateGranGaleria(prev => {
       if (isNewContest) {
         const newItem: ContestItem = {
           id: `concurso-${Date.now()}`,
           title: editingContest.title!.trim(),
+          subtitle: editingContest.subtitle?.trim() || '',
+          editionBadge: editingContest.editionBadge?.trim() || '',
           discipline: editingContest.discipline || 'literatura',
-          genreOrCategory: editingContest.genreOrCategory || '',
+          genreOrCategory: editingContest.genreOrCategory || `${(editingContest.categories || []).length || 1} Categorías`,
           description: editingContest.description || '',
-          guidelines: editingContest.guidelines || ['Revisar con el asesor escolar.'],
-          deadline: editingContest.deadline || '30 de Noviembre de 2026',
-          rewardDetails: editingContest.rewardDetails || 'Diploma de Honor y lote de libros.',
+          mandatoryTool: editingContest.mandatoryTool?.trim() || '',
+          categories: editingContest.categories || [],
+          prizes: editingContest.prizes || [],
+          sponsorsNote: editingContest.sponsorsNote?.trim() || '',
+          guidelines: cleanedGuidelines.length > 0 ? cleanedGuidelines : ['Revisar bases con el equipo editorial.'],
+          deadline: editingContest.deadline || 'Convocatoria Oficial 2026',
+          rewardDetails: prizeSummary,
           status: (editingContest.status as ContestStatus) || 'convocatoria',
           featured: Boolean(editingContest.featured)
         };
@@ -290,13 +311,37 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
       } else {
         return {
           ...prev,
-          contests: (prev.contests || []).map(c => c.id === editingContest.id ? { ...c, ...editingContest } as ContestItem : c)
+          contests: (prev.contests || []).map(c =>
+            c.id === editingContest.id
+              ? ({
+                  ...c,
+                  ...editingContest,
+                  guidelines: cleanedGuidelines.length > 0 ? cleanedGuidelines : c.guidelines,
+                  rewardDetails: prizeSummary
+                } as ContestItem)
+              : c
+          )
         };
       }
     });
 
     setEditingContest(null);
     setIsNewContest(false);
+  };
+
+  const handleLoadOfficialSutzContest = () => {
+    if (!window.confirm('¿Deseas limpiar las convocatorias ficticias y cargar/restaurar la convocatoria oficial "Premio Gran Taller Literario Sutz"? (Luego pulsa Guardar Cambios para aplicar en producción)')) {
+      return;
+    }
+    updateGranGaleria(prev => {
+      const nonFictional = (prev.contests || []).filter(
+        c => !LEGACY_FICTIONAL_CONTEST_IDS.includes(c.id) && c.id !== OFFICIAL_SUTZ_CONTEST.id
+      );
+      return {
+        ...prev,
+        contests: [OFFICIAL_SUTZ_CONTEST, ...nonFictional]
+      };
+    });
   };
 
   const handleDeleteContest = (id: string) => {
@@ -1282,52 +1327,90 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
         <div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h4 style={{ margin: 0, color: '#f8fafc' }}>Convocatorias de Concursos Escolares</h4>
-            <button 
-              type="button" 
-              className="btn btn-primary"
-              onClick={() => {
-                setEditingContest({
-                  title: '',
-                  discipline: 'literatura',
-                  genreOrCategory: '',
-                  description: '',
-                  deadline: '30 de Noviembre de 2026',
-                  rewardDetails: 'Lote de libros y medalla digital.',
-                  status: 'convocatoria',
-                  guidelines: ['Tener matrícula escolar activa.', 'Originalidad comprobada.']
-                });
-                setIsNewContest(true);
-              }}
-            >
-              + Nuevo Concurso
-            </button>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                className="btn btn-secondary"
+                onClick={handleLoadOfficialSutzContest}
+              >
+                ✨ Restaurar Premio Sutz
+              </button>
+              <button
+                type="button"
+                className="btn btn-primary"
+                onClick={() => {
+                  setEditingContest({
+                    title: '',
+                    subtitle: '',
+                    editionBadge: '✨ Convocatoria Oficial',
+                    discipline: 'literatura',
+                    genreOrCategory: 'Certamen Literario',
+                    description: '',
+                    mandatoryTool: 'Requisito indispensable: redactar y enviar tu obra mediante la herramienta de publicación de Sutz.',
+                    deadline: 'Convocatoria Oficial 2026',
+                    rewardDetails: '',
+                    sponsorsNote: 'Premios especiales de marcas patrocinadoras.',
+                    status: 'convocatoria',
+                    categories: [
+                      {
+                        id: `cat-${Date.now()}`,
+                        name: 'Cuento Libre',
+                        icon: '📖',
+                        extension: '800 a 3,000 palabras',
+                        targetAudience: 'Todas las edades escolares',
+                        standardDetails: 'Temática y género abiertos. Se evalúa originalidad, coherencia y ortografía.',
+                        tips: ''
+                      }
+                    ],
+                    prizes: [
+                      {
+                        id: `prize-${Date.now()}-1`,
+                        place: '1.er Lugar',
+                        medal: '🥇',
+                        headline: 'Tablet + Vale de Q1,500 en libros',
+                        details: 'Premio mayor al primer lugar.',
+                        highlight: true
+                      }
+                    ],
+                    guidelines: [
+                      'Uso obligatorio de la herramienta de publicación de Sutz.',
+                      'Obra 100% original e inédita.'
+                    ]
+                  });
+                  setIsNewContest(true);
+                }}
+              >
+                + Nuevo Concurso
+              </button>
+            </div>
           </div>
 
-          {/* Formulario de Concurso */}
+          {/* Formulario Estructurado de Concurso */}
           {editingContest && (
-            <form onSubmit={handleSaveContest} style={{ background: 'rgba(15, 23, 42, 0.9)', padding: '1.25rem', borderRadius: '12px', border: '1px solid #10b981', marginBottom: '1.5rem' }}>
-              <h4 style={{ margin: '0 0 1rem', color: '#10b981' }}>
-                {isNewContest ? '🏆 Abrir Nueva Convocatoria' : `✏️ Editar Concurso: ${editingContest.title}`}
+            <form onSubmit={handleSaveContest} style={{ background: 'rgba(15, 23, 42, 0.94)', padding: '1.35rem', borderRadius: '14px', border: '1px solid #f59e0b', marginBottom: '1.5rem', display: 'flex', flexDirection: 'column', gap: '14px' }}>
+              <h4 style={{ margin: 0, color: '#fbbf24' }}>
+                {isNewContest ? '🏆 Abrir Nueva Convocatoria Oficial' : `✏️ Editar Convocatoria: ${editingContest.title}`}
               </h4>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              {/* 1. Datos principales */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1.8fr 1fr 1fr', gap: '10px' }}>
                 <div>
                   <label className="inspector-label">Título del Concurso:</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     className="inspector-input"
                     value={editingContest.title || ''}
                     onChange={e => setEditingContest(prev => ({ ...prev, title: e.target.value }))}
-                    placeholder="Ej: Certamen Escolar de Cuentos Popol Vuh"
+                    placeholder="Ej: Premio Gran Taller Literario Sutz"
                     required
                   />
                 </div>
                 <div>
                   <label className="inspector-label">Disciplina:</label>
-                  <select 
+                  <select
                     className="inspector-select"
                     value={editingContest.discipline || 'literatura'}
-                    onChange={e => setEditingContest(prev => ({ ...prev, discipline: e.target.value as any }))}
+                    onChange={e => setEditingContest(prev => ({ ...prev, discipline: e.target.value as ContestItem['discipline'] }))}
                   >
                     <option value="literatura">📜 Literatura / Cuento</option>
                     <option value="arte">🎨 Pintura & Ilustración</option>
@@ -1337,7 +1420,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                 </div>
                 <div>
                   <label className="inspector-label">Estado:</label>
-                  <select 
+                  <select
                     className="inspector-select"
                     value={editingContest.status || 'convocatoria'}
                     onChange={e => setEditingContest(prev => ({ ...prev, status: e.target.value as ContestStatus }))}
@@ -1350,37 +1433,288 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '10px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr 1fr', gap: '10px' }}>
                 <div>
-                  <label className="inspector-label">Fecha Límite de Recepción:</label>
-                  <input 
-                    type="text" 
+                  <label className="inspector-label">Subtítulo:</label>
+                  <input
+                    type="text"
                     className="inspector-input"
-                    value={editingContest.deadline || ''}
-                    onChange={e => setEditingContest(prev => ({ ...prev, deadline: e.target.value }))}
-                    placeholder="Ej: 30 de Octubre de 2026"
+                    value={editingContest.subtitle || ''}
+                    onChange={e => setEditingContest(prev => ({ ...prev, subtitle: e.target.value }))}
+                    placeholder="Ej: Primera Convocatoria Oficial de Producción Literaria"
                   />
                 </div>
                 <div>
-                  <label className="inspector-label">Detalles de Premios y Reconocimientos:</label>
-                  <input 
-                    type="text" 
+                  <label className="inspector-label">Badge de Edición:</label>
+                  <input
+                    type="text"
                     className="inspector-input"
-                    value={editingContest.rewardDetails || ''}
-                    onChange={e => setEditingContest(prev => ({ ...prev, rewardDetails: e.target.value }))}
-                    placeholder="Ej: Publicación oficial, medallas y diplomas"
+                    value={editingContest.editionBadge || ''}
+                    onChange={e => setEditingContest(prev => ({ ...prev, editionBadge: e.target.value }))}
+                    placeholder="Ej: ✨ 1.ª Edición Oficial"
+                  />
+                </div>
+                <div>
+                  <label className="inspector-label">Fecha Límite / Recepción:</label>
+                  <input
+                    type="text"
+                    className="inspector-input"
+                    value={editingContest.deadline || ''}
+                    onChange={e => setEditingContest(prev => ({ ...prev, deadline: e.target.value }))}
+                    placeholder="Ej: Convocatoria Oficial 2026"
                   />
                 </div>
               </div>
 
-              <div style={{ marginBottom: '10px' }}>
-                <label className="inspector-label">Descripción del certamen:</label>
-                <textarea 
+              <div>
+                <label className="inspector-label">Descripción principal del certamen:</label>
+                <textarea
                   rows={2}
                   className="inspector-input"
                   value={editingContest.description || ''}
                   onChange={e => setEditingContest(prev => ({ ...prev, description: e.target.value }))}
-                  placeholder="Objetivo, destinatarios y temática central del concurso..."
+                  placeholder="Objetivo, destinatarios y visión del certamen..."
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+                <div>
+                  <label className="inspector-label">Requisito Obligatorio (Herramienta Sutz):</label>
+                  <input
+                    type="text"
+                    className="inspector-input"
+                    value={editingContest.mandatoryTool || ''}
+                    onChange={e => setEditingContest(prev => ({ ...prev, mandatoryTool: e.target.value }))}
+                    placeholder="Uso obligatorio de la herramienta de publicación de Sutz..."
+                  />
+                </div>
+                <div>
+                  <label className="inspector-label">Nota de Marcas Patrocinadoras:</label>
+                  <input
+                    type="text"
+                    className="inspector-input"
+                    value={editingContest.sponsorsNote || ''}
+                    onChange={e => setEditingContest(prev => ({ ...prev, sponsorsNote: e.target.value }))}
+                    placeholder="Premios especiales de marcas patrocinadoras..."
+                  />
+                </div>
+              </div>
+
+              {/* 2. Constructor de Premios (Podio) */}
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(245,158,11,0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <strong style={{ color: '#fbbf24', fontSize: '0.9rem' }}>🏆 Premios Escalonados ({(editingContest.prizes || []).length})</strong>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                    onClick={() => {
+                      const nextPrize: ContestPrizeTier = {
+                        id: `prize-${Date.now()}`,
+                        place: `${(editingContest.prizes || []).length + 1}.º Lugar`,
+                        medal: '🏅',
+                        headline: '',
+                        details: '',
+                        highlight: false
+                      };
+                      setEditingContest(prev => ({ ...prev, prizes: [...(prev?.prizes || []), nextPrize] }));
+                    }}
+                  >
+                    + Agregar Premio
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gap: '8px' }}>
+                  {(editingContest.prizes || []).map((prize, idx) => (
+                    <div key={prize.id || idx} style={{ display: 'grid', gridTemplateColumns: '64px 120px 1.2fr 1.5fr auto', gap: '8px', alignItems: 'center' }}>
+                      <input
+                        type="text"
+                        className="inspector-input"
+                        value={prize.medal}
+                        onChange={e => {
+                          const updated = [...(editingContest.prizes || [])];
+                          updated[idx] = { ...prize, medal: e.target.value };
+                          setEditingContest(prev => ({ ...prev, prizes: updated }));
+                        }}
+                        placeholder="🥇"
+                      />
+                      <input
+                        type="text"
+                        className="inspector-input"
+                        value={prize.place}
+                        onChange={e => {
+                          const updated = [...(editingContest.prizes || [])];
+                          updated[idx] = { ...prize, place: e.target.value };
+                          setEditingContest(prev => ({ ...prev, prizes: updated }));
+                        }}
+                        placeholder="1.er Lugar"
+                      />
+                      <input
+                        type="text"
+                        className="inspector-input"
+                        value={prize.headline}
+                        onChange={e => {
+                          const updated = [...(editingContest.prizes || [])];
+                          updated[idx] = { ...prize, headline: e.target.value };
+                          setEditingContest(prev => ({ ...prev, prizes: updated }));
+                        }}
+                        placeholder="Tablet + Vale de Q1,500"
+                      />
+                      <input
+                        type="text"
+                        className="inspector-input"
+                        value={prize.details}
+                        onChange={e => {
+                          const updated = [...(editingContest.prizes || [])];
+                          updated[idx] = { ...prize, details: e.target.value };
+                          setEditingContest(prev => ({ ...prev, prizes: updated }));
+                        }}
+                        placeholder="Detalle del premio..."
+                      />
+                      <button
+                        type="button"
+                        className="btn btn-danger"
+                        style={{ padding: '4px 8px', fontSize: '0.76rem' }}
+                        onClick={() => {
+                          const updated = (editingContest.prizes || []).filter((_, i) => i !== idx);
+                          setEditingContest(prev => ({ ...prev, prizes: updated }));
+                        }}
+                      >
+                        ✕
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 3. Constructor de Categorías y Estándares */}
+              <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: '10px', border: '1px solid rgba(56,189,248,0.3)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                  <strong style={{ color: '#7dd3fc', fontSize: '0.9rem' }}>📚 Categorías y Estándares ({(editingContest.categories || []).length})</strong>
+                  <button
+                    type="button"
+                    className="btn btn-secondary"
+                    style={{ padding: '4px 10px', fontSize: '0.78rem' }}
+                    onClick={() => {
+                      const nextCat: ContestCategoryStandard = {
+                        id: `cat-${Date.now()}`,
+                        name: 'Nueva Categoría',
+                        icon: '✨',
+                        extension: '500 a 1,500 palabras',
+                        targetAudience: 'Todas las edades escolares',
+                        standardDetails: '',
+                        tips: ''
+                      };
+                      setEditingContest(prev => ({ ...prev, categories: [...(prev?.categories || []), nextCat] }));
+                    }}
+                  >
+                    + Agregar Categoría
+                  </button>
+                </div>
+
+                <div style={{ display: 'grid', gap: '10px' }}>
+                  {(editingContest.categories || []).map((cat, idx) => (
+                    <div key={cat.id || idx} style={{ background: 'rgba(15,23,42,0.75)', padding: '10px', borderRadius: '8px', border: '1px solid rgba(148,163,184,0.2)', display: 'grid', gap: '8px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: '64px 1.2fr 1.2fr 1fr auto', gap: '8px', alignItems: 'center' }}>
+                        <input
+                          type="text"
+                          className="inspector-input"
+                          value={cat.icon}
+                          onChange={e => {
+                            const updated = [...(editingContest.categories || [])];
+                            updated[idx] = { ...cat, icon: e.target.value };
+                            setEditingContest(prev => ({ ...prev, categories: updated }));
+                          }}
+                          placeholder="📖"
+                        />
+                        <input
+                          type="text"
+                          className="inspector-input"
+                          value={cat.name}
+                          onChange={e => {
+                            const updated = [...(editingContest.categories || [])];
+                            updated[idx] = { ...cat, name: e.target.value };
+                            setEditingContest(prev => ({ ...prev, categories: updated }));
+                          }}
+                          placeholder="Nombre categoría"
+                        />
+                        <input
+                          type="text"
+                          className="inspector-input"
+                          value={cat.extension}
+                          onChange={e => {
+                            const updated = [...(editingContest.categories || [])];
+                            updated[idx] = { ...cat, extension: e.target.value };
+                            setEditingContest(prev => ({ ...prev, categories: updated }));
+                          }}
+                          placeholder="Extensión (ej. 300-1200 palabras)"
+                        />
+                        <input
+                          type="text"
+                          className="inspector-input"
+                          value={cat.targetAudience}
+                          onChange={e => {
+                            const updated = [...(editingContest.categories || [])];
+                            updated[idx] = { ...cat, targetAudience: e.target.value };
+                            setEditingContest(prev => ({ ...prev, categories: updated }));
+                          }}
+                          placeholder="Público / Nivel"
+                        />
+                        <button
+                          type="button"
+                          className="btn btn-danger"
+                          style={{ padding: '4px 8px', fontSize: '0.76rem' }}
+                          onClick={() => {
+                            const updated = (editingContest.categories || []).filter((_, i) => i !== idx);
+                            setEditingContest(prev => ({ ...prev, categories: updated }));
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
+                      <div style={{ display: 'grid', gridTemplateColumns: '1.4fr 1fr', gap: '8px' }}>
+                        <input
+                          type="text"
+                          className="inspector-input"
+                          value={cat.standardDetails}
+                          onChange={e => {
+                            const updated = [...(editingContest.categories || [])];
+                            updated[idx] = { ...cat, standardDetails: e.target.value };
+                            setEditingContest(prev => ({ ...prev, categories: updated }));
+                          }}
+                          placeholder="Estándares editoriales de esta categoría..."
+                        />
+                        <input
+                          type="text"
+                          className="inspector-input"
+                          value={cat.tips || ''}
+                          onChange={e => {
+                            const updated = [...(editingContest.categories || [])];
+                            updated[idx] = { ...cat, tips: e.target.value };
+                            setEditingContest(prev => ({ ...prev, categories: updated }));
+                          }}
+                          placeholder="Consejo editorial opcional..."
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* 4. Bases Generales (una por línea) */}
+              <div>
+                <label className="inspector-label">Bases Generales (una regla por línea):</label>
+                <textarea
+                  rows={4}
+                  className="inspector-input"
+                  value={(editingContest.guidelines || []).join('\n')}
+                  onChange={e =>
+                    setEditingContest(prev => ({
+                      ...prev,
+                      guidelines: e.target.value.split('\n')
+                    }))
+                  }
+                  placeholder="Escribe cada base en una línea nueva..."
                 />
               </div>
 
@@ -1389,7 +1723,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
                   Cancelar
                 </button>
                 <button type="submit" className="btn btn-primary">
-                  💾 Guardar Concurso
+                  💾 Guardar Convocatoria
                 </button>
               </div>
             </form>
@@ -1398,28 +1732,39 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           {/* Lista de Concursos */}
           <div style={{ display: 'grid', gap: '10px' }}>
             {contests.map(c => (
-              <div 
-                key={c.id} 
-                style={{ 
-                  background: 'rgba(255,255,255,0.03)', 
-                  border: '1px solid rgba(255,255,255,0.08)', 
-                  borderRadius: '10px', 
+              <div
+                key={c.id}
+                style={{
+                  background: 'rgba(255,255,255,0.03)',
+                  border: '1px solid rgba(255,255,255,0.08)',
+                  borderRadius: '10px',
                   padding: '12px 16px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'space-between',
-                  gap: '12px'
+                  gap: '12px',
+                  flexWrap: 'wrap'
                 }}
               >
                 <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                     <strong style={{ color: '#f8fafc', fontSize: '1rem' }}>{c.title}</strong>
-                    <span style={{ fontSize: '0.72rem', background: '#10b981', color: '#ffffff', padding: '1px 6px', borderRadius: '4px' }}>
+                    <span style={{ fontSize: '0.72rem', background: '#10b981', color: '#ffffff', padding: '1px 7px', borderRadius: '999px' }}>
                       {c.status}
                     </span>
+                    {(c.categories?.length || 0) > 0 && (
+                      <span style={{ fontSize: '0.72rem', background: 'rgba(56,189,248,0.18)', color: '#7dd3fc', padding: '1px 7px', borderRadius: '999px' }}>
+                        {c.categories?.length} categorías
+                      </span>
+                    )}
+                    {(c.prizes?.length || 0) > 0 && (
+                      <span style={{ fontSize: '0.72rem', background: 'rgba(245,158,11,0.18)', color: '#fbbf24', padding: '1px 7px', borderRadius: '999px' }}>
+                        {c.prizes?.length} premios
+                      </span>
+                    )}
                   </div>
-                  <div style={{ fontSize: '0.80rem', color: '#94a3b8', marginTop: '2px' }}>
-                    Cierre: {c.deadline} · {c.rewardDetails}
+                  <div style={{ fontSize: '0.80rem', color: '#94a3b8', marginTop: '3px' }}>
+                    {c.deadline} · {c.rewardDetails}
                   </div>
                 </div>
 

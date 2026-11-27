@@ -14,6 +14,7 @@ import { VideoTheaterModal } from '../components/galeria/VideoTheaterModal';
 import { EscribaEditorModal } from '../components/galeria/EscribaEditorModal';
 import { ObraEditorModal } from '../components/galeria/ObraEditorModal';
 import { VideoEditorModal } from '../components/galeria/VideoEditorModal';
+import { ContestShowcaseCard } from '../components/galeria/ContestShowcaseCard';
 import { AuthModal } from '../components/auth/AuthModal';
 import { soundEffects } from '../utils/soundEffects';
 import { buildGranGaleriaShareUrl, shareGranGaleriaPost } from '../utils/sharePost';
@@ -844,73 +845,15 @@ export const GranGaleria: React.FC = () => {
             </div>
 
             <div className="gg-contests-list">
-              {contests.map(c => (
-                <div
+              {contests.map((c) => (
+                <ContestShowcaseCard
                   key={c.id}
-                  id={`contest-${c.id}`}
-                  className={`gg-contest-card ${highlightedContestId === c.id ? 'highlighted' : ''}`}
-                >
-                  <div className="contest-status-bar">
-                    <span className={`contest-status-pill ${c.status}`}>
-                      {c.status === 'convocatoria' ? '🟢 Convocatoria Abierta' :
-                       c.status === 'evaluacion' ? '🟡 En Evaluación del Jurado' :
-                       c.status === 'galardonados' ? '🏆 Ganadores Publicados' : '📦 Concluido'}
-                    </span>
-                    <span className="contest-discipline">
-                      {c.discipline === 'literatura' ? '📜 Concurso de Escritura' :
-                       c.discipline === 'arte' ? '🎨 Bienal de Arte' : '🎬 Festival de Cine'}
-                    </span>
-                  </div>
-
-                  <h3 className="contest-title">{c.title}</h3>
-                  <p className="contest-desc">{c.description}</p>
-
-                  <div className="contest-details-grid">
-                    <div className="detail-item">
-                      <span className="detail-label">CIERRE DE RECEPCIÓN</span>
-                      <strong className="detail-val">{c.deadline}</strong>
-                    </div>
-                    <div className="detail-item">
-                      <span className="detail-label">PREMIACIÓN & RECONOCIMIENTOS</span>
-                      <strong className="detail-val">{c.rewardDetails}</strong>
-                    </div>
-                  </div>
-
-                  {c.guidelines && c.guidelines.length > 0 && (
-                    <div className="contest-guidelines-box">
-                      <h4>Bases del Concurso:</h4>
-                      <ul>
-                        {c.guidelines.map((g, idx) => (
-                          <li key={idx}>{g}</li>
-                        ))}
-                      </ul>
-                    </div>
-                  )}
-
-                  <div className="contest-card-actions">
-                    <button 
-                      type="button" 
-                      className="btn btn-primary"
-                      onClick={() => {
-                        soundEffects.playClick();
-                        setIsSubmitModalOpen(true);
-                      }}
-                    >
-                      <span>📝</span>
-                      <span>Postular mi Proyecto a este Concurso</span>
-                    </button>
-                    <button
-                      type="button"
-                      className={`gg-share-card-btn contest ${copiedPostId === c.id ? 'copied' : ''}`}
-                      onClick={e => handleSharePost(e, 'concursos', c.id, c.title)}
-                      title="Copiar enlace directo de esta convocatoria"
-                      aria-label={`Compartir ${c.title}`}
-                    >
-                      <span>{copiedPostId === c.id ? '✅' : '🔗'}</span>
-                      <span>{copiedPostId === c.id ? 'Enlace copiado' : 'Compartir convocatoria'}</span>
-                    </button>
-                  </div>
-                </div>
+                  contest={c}
+                  isHighlighted={highlightedContestId === c.id}
+                  copiedPostId={copiedPostId}
+                  onPostulate={() => setIsSubmitModalOpen(true)}
+                  onShare={(e) => handleSharePost(e, 'concursos', c.id, c.title)}
+                />
               ))}
             </div>
           </section>

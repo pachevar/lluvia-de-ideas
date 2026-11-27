@@ -5,7 +5,20 @@ import type { PortalConfig, TiendaConfig, CustomHexagon, BookCollectionConfig, M
 import { generateDefaultTechTree } from '../utils/techTreeUtils';
 import { CONTACT } from '../constants';
 import { subscribeArchetypeAssets } from '../services/archetypeAssetsService';
-import { DEFAULT_GRAN_GALERIA } from '../data/defaultGranGaleriaData';
+import {
+  DEFAULT_GRAN_GALERIA,
+  LEGACY_FICTIONAL_CONTEST_IDS,
+  OFFICIAL_SUTZ_CONTEST,
+} from '../data/defaultGranGaleriaData';
+
+function normalizeGranGaleriaContests(galeria: GranGaleriaConfig): GranGaleriaConfig {
+  const rawContests = Array.isArray(galeria.contests) ? galeria.contests : [];
+  const cleaned = rawContests.filter((c) => !LEGACY_FICTIONAL_CONTEST_IDS.includes(c.id));
+  return {
+    ...galeria,
+    contests: cleaned.length > 0 ? cleaned : [OFFICIAL_SUTZ_CONTEST],
+  };
+}
 import { shrinkBase64Image } from '../utils/imageUpload';
 
 interface PortalConfigContextProps {
@@ -793,7 +806,7 @@ export const PortalConfigProvider: React.FC<{ children: React.ReactNode }> = ({ 
         if (data.granGaleria) {
           setConfig(prev => ({
             ...prev,
-            granGaleria: data.granGaleria
+            granGaleria: normalizeGranGaleriaContests(data.granGaleria!)
           }));
         }
       }
