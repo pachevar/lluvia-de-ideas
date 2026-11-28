@@ -3196,3 +3196,626 @@
     animation: none !important;
   }
 }
+
+
+/* ============================================================================
+   RED SOCIAL LITERARIA — GRAN BIBLIOTECA (LIKES, COMENTARIOS, EMOJIS & GOTAS)
+   ============================================================================ */
+
+.gg-social-reader-hud {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
+  padding: 0.9rem 1.15rem;
+  border-radius: 16px;
+  background: linear-gradient(135deg, #131c31 0%, #0f172a 100%);
+  border: 1px solid rgba(56, 189, 248, 0.32);
+  margin-bottom: 1.35rem;
+}
+
+.gg-hud-wallet {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.gg-hud-wallet-icon {
+  width: 42px;
+  height: 42px;
+  border-radius: 12px;
+  background: rgba(56, 189, 248, 0.16);
+  border: 1px solid rgba(56, 189, 248, 0.4);
+  display: grid;
+  place-items: center;
+  font-size: 1.35rem;
+  flex-shrink: 0;
+}
+
+.gg-hud-wallet strong {
+  display: block;
+  font-size: 0.96rem;
+  color: #7dd3fc;
+}
+
+.gg-hud-wallet span {
+  display: block;
+  font-size: 0.8rem;
+  color: #94a3b8;
+}
+
+.gg-shelf-toggle-btn {
+  min-height: 42px;
+  padding: 0.45rem 1rem;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: #17233b;
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.85rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.gg-shelf-toggle-btn:hover {
+  border-color: #fbbf24;
+  color: #ffffff;
+}
+
+.gg-shelf-toggle-btn.active {
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  border-color: #fbbf24;
+  color: #0b1120;
+}
+
+/* Tarjeta Social en Gran Biblioteca */
+.gg-read-done-chip {
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.72rem;
+  font-weight: 800;
+  background: rgba(16, 185, 129, 0.18);
+  color: #34d399;
+  border: 1px solid rgba(52, 211, 153, 0.4);
+}
+
+.gg-card-bookmark-btn {
+  min-width: 36px;
+  min-height: 36px;
+  border-radius: 10px;
+  border: 1px solid rgba(148, 163, 184, 0.25);
+  background: rgba(15, 23, 42, 0.75);
+  font-size: 1rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.gg-card-bookmark-btn:hover {
+  transform: scale(1.08);
+  border-color: #fbbf24;
+}
+
+.gg-card-bookmark-btn.saved {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+}
+
+.gg-card-gifts-strip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 10px;
+}
+
+.gg-card-gift-pill {
+  padding: 3px 9px;
+  border-radius: 999px;
+  font-size: 0.76rem;
+  font-weight: 700;
+  background: rgba(245, 158, 11, 0.14);
+  border: 1px solid rgba(245, 158, 11, 0.35);
+  color: #fde68a;
+}
+
+.gg-card-social-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  padding-top: 12px;
+  margin-top: auto;
+  border-top: 1px solid rgba(148, 163, 184, 0.16);
+}
+
+.gg-card-social-btn {
+  min-height: 36px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.72);
+  color: #e2e8f0;
+  font-family: inherit;
+  font-size: 0.8rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease, background-color 150ms ease;
+}
+
+.gg-card-social-btn:hover {
+  transform: translateY(-1px);
+  border-color: #38bdf8;
+}
+
+.gg-card-social-btn.liked {
+  background: rgba(244, 63, 94, 0.18);
+  border-color: rgba(244, 63, 94, 0.55);
+  color: #fda4af;
+}
+
+.gg-card-social-btn.gift {
+  background: rgba(245, 158, 11, 0.14);
+  border-color: rgba(245, 158, 11, 0.42);
+  color: #fcd34d;
+}
+
+.gg-card-social-btn.copied {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: #10b981;
+  color: #6ee7b7;
+}
+
+/* Visor de Lectura Social: Barra de Progreso + Lluvia de Emojis */
+.gg-read-progress-track {
+  position: sticky;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: rgba(148, 163, 184, 0.18);
+  z-index: 25;
+}
+
+.gg-read-progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #38bdf8, #f59e0b, #10b981);
+  transition: width 160ms linear;
+}
+
+.gg-emoji-burst-layer {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 40;
+}
+
+@keyframes ggEmojiRise {
+  0% {
+    transform: translateY(85%) scale(0.7);
+    opacity: 0;
+  }
+  20% {
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(-120%) scale(1.45);
+    opacity: 0;
+  }
+}
+
+.gg-emoji-burst-particle {
+  position: absolute;
+  bottom: 0;
+  font-size: 2rem;
+  animation: ggEmojiRise 1.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.gg-reader-drops-chip {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  background: rgba(56, 189, 248, 0.18);
+  color: #7dd3fc;
+  border: 1px solid rgba(56, 189, 248, 0.42);
+}
+
+.gg-reader-save-btn {
+  min-height: 36px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.75);
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 0.78rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.gg-reader-save-btn.saved {
+  background: rgba(245, 158, 11, 0.22);
+  border-color: #f59e0b;
+  color: #fde68a;
+}
+
+.gg-read-reward-banner {
+  margin: 1.5rem 0 0.5rem;
+  padding: 0.85rem 1.1rem;
+  border-radius: 14px;
+  background: rgba(16, 185, 129, 0.16);
+  border: 1px solid rgba(52, 211, 153, 0.45);
+  color: #d1fae5;
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  font-size: 0.9rem;
+}
+
+.gg-literary-reactions-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 0.55rem;
+  margin-top: 1rem;
+}
+
+.gg-lit-react-chip {
+  min-height: 40px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: 1px solid rgba(148, 163, 184, 0.32);
+  background: rgba(15, 23, 42, 0.55);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.84rem;
+  font-weight: 700;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+  transition: transform 150ms ease, border-color 150ms ease;
+}
+
+.gg-lit-react-chip:hover {
+  transform: translateY(-2px);
+  border-color: #fbbf24;
+}
+
+.gg-lit-react-chip.active {
+  background: rgba(245, 158, 11, 0.2);
+  border-color: #f59e0b;
+}
+
+/* Paneles Sociales dentro del Lector (Donaciones con Emojis + Comentarios) */
+.gg-social-panel {
+  margin-top: 1.75rem;
+  padding: 1.35rem;
+  border-radius: 18px;
+  background: rgba(15, 23, 42, 0.62);
+  border: 1px solid rgba(148, 163, 184, 0.24);
+}
+
+.gg-reader-modal.theme-light .gg-social-panel,
+.gg-reader-modal.theme-sepia .gg-social-panel {
+  background: rgba(15, 23, 42, 0.05);
+  border-color: rgba(15, 23, 42, 0.16);
+}
+
+.gg-social-panel-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.gg-social-panel-head h4 {
+  margin: 0 0 0.25rem;
+  font-size: 1.12rem;
+}
+
+.gg-social-panel-head p {
+  margin: 0;
+  font-size: 0.86rem;
+  opacity: 0.82;
+}
+
+.gg-drops-balance-badge {
+  padding: 5px 12px;
+  border-radius: 999px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  background: rgba(56, 189, 248, 0.18);
+  border: 1px solid rgba(56, 189, 248, 0.45);
+  color: #38bdf8;
+}
+
+.gg-gift-emoji-grid {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1rem;
+}
+
+.gg-gift-emoji-card {
+  position: relative;
+  padding: 0.8rem 0.5rem;
+  border-radius: 14px;
+  border: 1px solid rgba(148, 163, 184, 0.28);
+  background: rgba(15, 23, 42, 0.55);
+  color: inherit;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  text-align: center;
+  font-family: inherit;
+  cursor: pointer;
+  transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease;
+}
+
+.gg-reader-modal.theme-light .gg-gift-emoji-card,
+.gg-reader-modal.theme-sepia .gg-gift-emoji-card {
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.gg-gift-emoji-card:hover {
+  transform: translateY(-3px);
+  border-color: var(--gift-accent, #f59e0b);
+}
+
+.gg-gift-emoji-card.selected {
+  border-color: var(--gift-accent, #f59e0b);
+  box-shadow: 0 0 0 2px var(--gift-accent, #f59e0b);
+  transform: translateY(-2px);
+}
+
+.gg-gift-received-count {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  font-size: 0.68rem;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(245, 158, 11, 0.22);
+  color: #f59e0b;
+}
+
+.gg-gift-big-emoji {
+  font-size: 1.9rem;
+  line-height: 1.1;
+}
+
+.gg-gift-emoji-card strong {
+  font-size: 0.78rem;
+  line-height: 1.2;
+}
+
+.gg-gift-cost {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #38bdf8;
+}
+
+.gg-gift-form {
+  display: grid;
+  grid-template-columns: 0.9fr 1.4fr auto;
+  gap: 0.6rem;
+}
+
+.gg-social-input,
+.gg-social-textarea {
+  width: 100%;
+  padding: 0.65rem 0.85rem;
+  border-radius: 12px;
+  border: 1px solid rgba(148, 163, 184, 0.35);
+  background: rgba(15, 23, 42, 0.72);
+  color: #f8fafc;
+  font-family: inherit;
+  font-size: 16px;
+}
+
+.gg-reader-modal.theme-light .gg-social-input,
+.gg-reader-modal.theme-light .gg-social-textarea,
+.gg-reader-modal.theme-sepia .gg-social-input,
+.gg-reader-modal.theme-sepia .gg-social-textarea {
+  background: #ffffff;
+  color: #0f172a;
+}
+
+.gg-social-submit-btn {
+  min-height: 44px;
+  padding: 0.6rem 1.2rem;
+  border-radius: 12px;
+  border: none;
+  background: linear-gradient(135deg, #f59e0b, #f97316);
+  color: #0b1120;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 800;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.gg-social-submit-btn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.gg-social-feedback {
+  margin-top: 0.75rem;
+  padding: 0.6rem 0.9rem;
+  border-radius: 10px;
+  background: rgba(56, 189, 248, 0.14);
+  border: 1px solid rgba(56, 189, 248, 0.38);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.gg-social-error {
+  padding: 0.55rem 0.85rem;
+  border-radius: 10px;
+  background: rgba(239, 68, 68, 0.16);
+  border: 1px solid rgba(239, 68, 68, 0.45);
+  color: #fca5a5;
+  font-size: 0.84rem;
+  font-weight: 600;
+}
+
+.gg-patrons-wall {
+  margin-top: 1.1rem;
+  padding-top: 0.95rem;
+  border-top: 1px dashed rgba(148, 163, 184, 0.25);
+}
+
+.gg-patrons-title {
+  display: block;
+  font-size: 0.8rem;
+  font-weight: 800;
+  margin-bottom: 0.6rem;
+  color: #fbbf24;
+}
+
+.gg-patrons-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.6rem;
+}
+
+.gg-patron-pill {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.6rem;
+  padding: 0.6rem 0.8rem;
+  border-radius: 12px;
+  background: rgba(245, 158, 11, 0.08);
+  border: 1px solid rgba(245, 158, 11, 0.25);
+  font-size: 0.82rem;
+}
+
+.gg-patron-emoji {
+  font-size: 1.35rem;
+  line-height: 1;
+}
+
+.gg-patron-pill p {
+  margin: 3px 0 0;
+  font-size: 0.78rem;
+  opacity: 0.85;
+}
+
+/* Comentarios */
+.gg-comment-starters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-bottom: 0.85rem;
+}
+
+.gg-starter-chip {
+  min-height: 34px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(56, 189, 248, 0.35);
+  background: rgba(56, 189, 248, 0.1);
+  color: inherit;
+  font-family: inherit;
+  font-size: 0.76rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.gg-starter-chip:hover {
+  border-color: #38bdf8;
+}
+
+.gg-comment-form {
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+  margin-bottom: 1.15rem;
+}
+
+.gg-comments-empty {
+  text-align: center;
+  padding: 1rem;
+  border-radius: 12px;
+  border: 1px dashed rgba(148, 163, 184, 0.28);
+  font-size: 0.88rem;
+  opacity: 0.82;
+}
+
+.gg-comments-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.7rem;
+}
+
+.gg-comment-item {
+  padding: 0.85rem 1rem;
+  border-radius: 12px;
+  background: rgba(15, 23, 42, 0.45);
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+
+.gg-reader-modal.theme-light .gg-comment-item,
+.gg-reader-modal.theme-sepia .gg-comment-item {
+  background: rgba(255, 255, 255, 0.8);
+}
+
+.gg-comment-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.84rem;
+}
+
+.gg-comment-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: rgba(16, 185, 129, 0.16);
+  color: #34d399;
+}
+
+.gg-comment-date {
+  font-size: 0.75rem;
+  opacity: 0.7;
+}
+
+.gg-comment-body {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+}
+
+@media (max-width: 780px) {
+  .gg-gift-emoji-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+  .gg-gift-form {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 520px) {
+  .gg-gift-emoji-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

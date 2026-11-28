@@ -224,5 +224,34 @@ service cloud.firestore {
       allow read: if true;
       allow write: if isAdmin();
     }
+
+    // Interacciones sociales de la Gran Biblioteca (Likes, Reacciones, Comentarios y Donaciones con Emojis)
+    match /gran_galeria_stats/{textId} {
+      allow read: if true;
+      allow create, update: if true;
+      allow delete: if isAdmin();
+
+      match /comments/{commentId} {
+        allow read: if true;
+        allow create: if request.resource.data.authorName is string
+          && request.resource.data.authorName.size() > 0
+          && request.resource.data.authorName.size() <= 60
+          && request.resource.data.text is string
+          && request.resource.data.text.size() >= 2
+          && request.resource.data.text.size() <= 500;
+        allow update, delete: if isAdmin();
+      }
+
+      match /gifts/{giftId} {
+        allow read: if true;
+        allow create: if request.resource.data.emojiId is string
+          && request.resource.data.senderName is string
+          && request.resource.data.senderName.size() > 0
+          && request.resource.data.senderName.size() <= 60
+          && request.resource.data.cost is number
+          && request.resource.data.cost > 0;
+        allow update, delete: if isAdmin();
+      }
+    }
   }
 }

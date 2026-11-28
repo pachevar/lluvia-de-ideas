@@ -18,6 +18,18 @@ import { ContestShowcaseCard } from '../components/galeria/ContestShowcaseCard';
 import { AuthModal } from '../components/auth/AuthModal';
 import { soundEffects } from '../utils/soundEffects';
 import { buildGranGaleriaShareUrl, shareGranGaleriaPost } from '../utils/sharePost';
+import {
+  CUSTOM_GIFT_EMOJIS,
+  getCompletedReadIds,
+  getLikedTextIds,
+  getRaindropsBalance,
+  getSavedTextIds,
+  setLikedTextId,
+  subscribeAllTextStats,
+  toggleSavedTextId,
+  toggleTextLikeFirestore,
+  type TextSocialStats,
+} from '../services/granGaleriaSocialService';
 import './GranGaleria.css';
 
 type GaleriaSection = 'escriba' | 'museo' | 'cine' | 'concursos';
@@ -61,7 +73,46 @@ export const GranGaleria: React.FC = () => {
   const [shareToast, setShareToast] = useState<string | null>(null);
   const [highlightedContestId, setHighlightedContestId] = useState<string | null>(null);
 
-  const openReadingText = useCallback((item: StudentTextItem) => {
+  // Capa Social de la Gran Biblioteca (Likes, Comentarios, Emojis Donados, Estantería y Gotas)
+  const [socialStatsMap, setSocialStatsMap] = useState<Record<string, TextSocialStats>>({});
+  const [raindrops, setRaindrops] = useState<number>(() => getRaindropsBalance());
+  const [likedIds, setLikedIds] = useState<string[]>(() => getLikedTextIds());
+  const [savedIds, setSavedIds] = useState<string[]>(() => getSavedTextIds());
+  const [completedReadIds, setCompletedReadIds] = useState<string[]>(() => getCompletedReadIds());
+  const [onlySavedFilter, setOnlySavedFilter] = useState<boolean>(false);
+  const [readerFocusSection, setReaderFocusSection] = useState<'read' | 'comments' | 'gifts'>('read');
+
+  useEffect(() => {
+    const unsub = subscribeAllTextStats(setSocialStatsMap);
+    return () => unsub();
+  }, []);
+
+  const handleToggleSocialLike = useCallback((textId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    const currentlyLiked = likedIds.includes(textId);
+    const nextLiked = !currentlyLiked;
+    if (nextLiked) {
+      soundEffects.playSuccess();
+    } else {
+      soundEffects.playClick();
+    }
+    setLikedIds(setLikedTextId(textId, nextLiked));
+    toggleTextLikeFirestore(textId, nextLiked).catch(() => {
+      // Silencioso en modo offline
+    });
+  }, [likedIds]);
+
+  const handleToggleSocialSave = useCallback((textId: string, e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    soundEffects.playClick();
+    const res = toggleSavedTextId(textId);
+    setSavedIds(res.list);
+    setShareToast(res.saved ? '🔖 Guardado en Mi Estantería' : 'Quitado de Mi Estantería');
+    window.setTimeout(() => setShareToast(null), 2200);
+  }, []);
+
+  const openReadingText = useCallback((item: StudentTextItem, focusSection: 'read' | 'comments' | 'gifts' = 'read') => {
+    setReaderFocusSection(focusSection);
     setActiveReadingText(item);
     setSearchParams({ tab: 'escriba', post: item.id }, { replace: true });
   }, [setSearchParams]);
@@ -261,18 +312,6 @@ export const GranGaleria: React.FC = () => {
     });
   };
 
-  const handleLikeText = async (textId: string) => {
-    const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
-    const updatedTexts = (currentGaleria.texts || []).map(t => 
-      t.id === textId ? { ...t, likes: (t.likes || 0) + 1 } : t
-    );
-    try {
-      await saveGranGaleriaToFirestore({ ...currentGaleria, texts: updatedTexts });
-    } catch (err) {
-      console.error('[GranGaleria] Error updating like for text:', err);
-    }
-  };
-
   const handleLikeArt = async (artId: string) => {
     const currentGaleria = config.granGaleria || DEFAULT_GRAN_GALERIA;
     const updatedArtworks = (currentGaleria.artworks || []).map(a => 
@@ -299,17 +338,18 @@ export const GranGaleria: React.FC = () => {
     }
   };
 
-  // Filtered Texts (Wattpad)
+  // Filtered Texts (Gran Biblioteca)
   const filteredTexts = useMemo(() => {
     return texts.filter(t => {
+      const matchSaved = !onlySavedFilter || savedIds.includes(t.id);
       const matchGenre = selectedGenre === 'todos' || t.genre === selectedGenre;
       const matchQuery = searchQuery === '' || 
         t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         t.author.toLowerCase().includes(searchQuery.toLowerCase()) ||
         (t.authorSchool && t.authorSchool.toLowerCase().includes(searchQuery.toLowerCase()));
-      return matchGenre && matchQuery;
+      return matchSaved && matchGenre && matchQuery;
     });
-  }, [texts, selectedGenre, searchQuery]);
+  }, [texts, selectedGenre, searchQuery, onlySavedFilter, savedIds]);
 
   // Filtered Artworks (Museo)
   const filteredArtworks = useMemo(() => {
@@ -561,67 +601,165 @@ export const GranGaleria: React.FC = () => {
               </div>
             </div>
 
+            {/* Barra Social de la Gran Biblioteca (Gotas de Lluvia + Mi Estantería) */}
+            <div className="gg-social-reader-hud">
+              <div className="gg-hud-wallet">
+                <span className="gg-hud-wallet-icon" aria-hidden="true">🌧️</span>
+                <div>
+                  <strong>{raindrops} Gotas de Lluvia</strong>
+                  <span>Lee relatos (+10) y comenta (+5) para donar emojis personalizados a los autores</span>
+                </div>
+              </div>
+              <button
+                type="button"
+                className={`gg-shelf-toggle-btn ${onlySavedFilter ? 'active' : ''}`}
+                onClick={() => {
+                  soundEffects.playClick();
+                  setOnlySavedFilter(prev => !prev);
+                }}
+              >
+                <span>🔖</span>
+                <span>Mi Estantería ({savedIds.length})</span>
+              </button>
+            </div>
+
             <div className="gg-texts-grid">
-              {filteredTexts.map(t => (
-                <article 
-                  key={t.id} 
-                  className={`gg-story-card ${t.coverImage ? 'has-cover' : ''}`}
-                  onClick={() => {
-                    soundEffects.playClick();
-                    openReadingText(t);
-                  }}
-                >
-                  {t.coverImage && (
-                    <div className="story-cover-wrapper">
-                      <img src={t.coverImage} alt={t.title} className="story-cover-img" loading="lazy" />
-                      <div className="story-cover-gradient" />
-                    </div>
-                  )}
+              {filteredTexts.map(t => {
+                const stats = socialStatsMap[t.id];
+                const totalLikes = (t.likes || 0) + (stats?.likes || 0);
+                const commentsCount = stats?.commentsCount || 0;
+                const giftPoints = stats?.giftPoints || 0;
+                const isLiked = likedIds.includes(t.id);
+                const isSaved = savedIds.includes(t.id);
+                const isCompleted = completedReadIds.includes(t.id);
+                const wordCount = t.content.trim().split(/\s+/).length;
+                const readMin = Math.max(1, Math.ceil(wordCount / 180));
 
-                  <div className="story-card-top">
-                    {t.awardBadge && (
-                      <span className="story-award-chip">{t.awardBadge}</span>
+                const topGifts = CUSTOM_GIFT_EMOJIS
+                  .map(g => ({ ...g, count: stats?.gifts?.[g.id] || 0 }))
+                  .filter(g => g.count > 0)
+                  .sort((a, b) => b.count - a.count)
+                  .slice(0, 3);
+
+                return (
+                  <article
+                    key={t.id}
+                    className={`gg-story-card gg-social-story-card ${t.coverImage ? 'has-cover' : ''}`}
+                    onClick={() => {
+                      soundEffects.playClick();
+                      openReadingText(t, 'read');
+                    }}
+                  >
+                    {t.coverImage && (
+                      <div className="story-cover-wrapper">
+                        <img src={t.coverImage} alt={t.title} className="story-cover-img" loading="lazy" />
+                        <div className="story-cover-gradient" />
+                      </div>
                     )}
-                    <span className="story-genre-badge">{t.genre}</span>
-                  </div>
 
-                  <h3 className="story-title">{t.title}</h3>
-
-                  <div className="story-author-row">
-                    <span className="author-icon">{t.isPseudonym ? '🎭' : '✍️'}</span>
-                    <div>
-                      <strong className="author-name">{t.author}</strong>
-                      <span className="author-school">
-                        {t.isPseudonym ? '🎭 Seudónimo Literario' : (t.authorSchool || 'Estudiante')}
-                      </span>
-                    </div>
-                  </div>
-
-                  <p className="story-synopsis-snippet">{t.synopsis}</p>
-
-                  <div className="story-card-footer">
-                    <div className="story-stats">
-                      <span>❤️ {t.likes}</span>
-                      <span>👁️ {t.reads} lecturas</span>
-                    </div>
-                    <div className="gg-card-footer-actions">
+                    <div className="story-card-top">
+                      <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
+                        {t.awardBadge && (
+                          <span className="story-award-chip">{t.awardBadge}</span>
+                        )}
+                        <span className="story-genre-badge">{t.genre}</span>
+                        {isCompleted && (
+                          <span className="gg-read-done-chip">✓ Leído</span>
+                        )}
+                      </div>
                       <button
                         type="button"
-                        className={`gg-share-card-btn ${copiedPostId === t.id ? 'copied' : ''}`}
+                        className={`gg-card-bookmark-btn ${isSaved ? 'saved' : ''}`}
+                        onClick={e => handleToggleSocialSave(t.id, e)}
+                        title={isSaved ? 'Quitar de Mi Estantería' : 'Guardar en Mi Estantería'}
+                        aria-label={isSaved ? 'Quitar de guardados' : 'Guardar relato'}
+                      >
+                        {isSaved ? '🔖' : '📑'}
+                      </button>
+                    </div>
+
+                    <h3 className="story-title">{t.title}</h3>
+
+                    <div className="story-author-row">
+                      <span className="author-icon">{t.isPseudonym ? '🎭' : '✍️'}</span>
+                      <div>
+                        <strong className="author-name">{t.author}</strong>
+                        <span className="author-school">
+                          {t.isPseudonym ? '🎭 Seudónimo Literario' : (t.authorSchool || 'Estudiante')} · ⏱️ {readMin} min
+                        </span>
+                      </div>
+                    </div>
+
+                    <p className="story-synopsis-snippet">{t.synopsis}</p>
+
+                    {/* Vitrina rápida de emojis donados */}
+                    {topGifts.length > 0 && (
+                      <div className="gg-card-gifts-strip" aria-label="Apoyos recibidos">
+                        {topGifts.map(g => (
+                          <span key={g.id} className="gg-card-gift-pill" title={`${g.name}: ${g.count}`}>
+                            {g.emoji} {g.count}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+
+                    {/* Barra Social Interactiva en la Tarjeta */}
+                    <div className="gg-card-social-bar">
+                      <button
+                        type="button"
+                        className={`gg-card-social-btn ${isLiked ? 'liked' : ''}`}
+                        onClick={e => handleToggleSocialLike(t.id, e)}
+                        title="Dar Me gusta"
+                      >
+                        <span>{isLiked ? '❤️' : '🤍'}</span>
+                        <span>{totalLikes}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="gg-card-social-btn"
+                        onClick={e => {
+                          e.stopPropagation();
+                          soundEffects.playClick();
+                          openReadingText(t, 'comments');
+                        }}
+                        title="Ver o dejar comentarios"
+                      >
+                        <span>💬</span>
+                        <span>{commentsCount}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className="gg-card-social-btn gift"
+                        onClick={e => {
+                          e.stopPropagation();
+                          soundEffects.playClick();
+                          openReadingText(t, 'gifts');
+                        }}
+                        title="Donar un emoji personalizado al autor"
+                      >
+                        <span>🎁</span>
+                        <span>{giftPoints > 0 ? `${giftPoints} 🌧️` : 'Apoyar'}</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        className={`gg-card-social-btn ${copiedPostId === t.id ? 'copied' : ''}`}
                         onClick={e => handleSharePost(e, 'escriba', t.id, t.title)}
-                        title="Copiar enlace directo para compartir este relato"
+                        title="Copiar enlace directo"
                         aria-label={`Compartir ${t.title}`}
                       >
                         <span>{copiedPostId === t.id ? '✅' : '🔗'}</span>
-                        <span>{copiedPostId === t.id ? 'Copiado' : 'Compartir'}</span>
                       </button>
-                      <button type="button" className="story-read-action-btn">
-                        Leer ahora ➔
+
+                      <button type="button" className="story-read-action-btn" style={{ marginLeft: 'auto' }}>
+                        Leer ➔
                       </button>
                     </div>
-                  </div>
-                </article>
-              ))}
+                  </article>
+                );
+              })}
             </div>
 
             {filteredTexts.length === 0 && (
@@ -861,12 +999,26 @@ export const GranGaleria: React.FC = () => {
       </main>
 
       {/* 5. MODALES INTERACTIVOS */}
-      {/* Modal de Lectura Wattpad */}
+      {/* Modal de Lectura Social */}
       {activeReadingText && (
-        <ReadingModal 
-          textItem={activeReadingText} 
-          onClose={() => closePostModal('escriba')}
-          onLike={handleLikeText}
+        <ReadingModal
+          textItem={activeReadingText}
+          socialStats={socialStatsMap[activeReadingText.id]}
+          isLiked={likedIds.includes(activeReadingText.id)}
+          isSaved={savedIds.includes(activeReadingText.id)}
+          raindrops={raindrops}
+          currentUserName={userProfile?.displayName || user?.displayName || ''}
+          initialFocusSection={readerFocusSection}
+          onClose={() => {
+            setCompletedReadIds(getCompletedReadIds());
+            closePostModal('escriba');
+          }}
+          onToggleLike={(id) => handleToggleSocialLike(id)}
+          onToggleSave={(id) => handleToggleSocialSave(id)}
+          onRaindropsChange={(next) => {
+            setRaindrops(next);
+            setCompletedReadIds(getCompletedReadIds());
+          }}
           onShare={() => handleSharePost(null, 'escriba', activeReadingText.id, activeReadingText.title)}
           shareCopied={copiedPostId === activeReadingText.id}
         />

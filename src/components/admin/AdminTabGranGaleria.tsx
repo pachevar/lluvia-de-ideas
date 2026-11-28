@@ -20,6 +20,7 @@ import {
 import { extractYouTubeId } from './AdminTabVideos';
 import { uploadImageWithFallback } from '../../utils/imageUpload';
 import AdminTabPozoDeIdeas from './AdminTabPozoDeIdeas';
+import { AdminCommentsModerationPanel } from './AdminCommentsModerationPanel';
 import ImageFramingModal from '../common/ImageFramingModal';
 
 interface AdminTabGranGaleriaProps {
@@ -413,6 +414,7 @@ export default function AdminTabGranGaleria({ localConfig, setLocalConfig }: Adm
           =================================================================== */}
       {activeSubTab === 'wattpad' && (
         <div>
+          <AdminCommentsModerationPanel texts={texts} />
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h4 style={{ margin: 0, color: '#f8fafc' }}>Gran Biblioteca (Relatos, Cuentos & Poemas)</h4>
             <button 
